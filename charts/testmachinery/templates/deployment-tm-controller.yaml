@@ -1,0 +1,116 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testmachinery-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: tm-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tm-controller
+  template:
+    metadata:
+      labels:
+        app: tm-controller
+    spec:
+{{ if .Values.controller.imagePullSecretName }}
+      imagePullSecrets:
+      - name: "{{.Values.controller.imagePullSecretName}}"
+{{end}}
+      serviceAccountName: {{ required ".Values.controller.serviceAccountName is required" .Values.controller.serviceAccountName }}
+      containers:
+      - name: testmachinery-controller
+        image: "{{ .Values.controller.image }}:{{ .Values.controller.tag }}"
+{{ if .Values.local.enabled }}
+        command: ["/testmachinery-controller", "-insecure=true"]
+{{end}}
+        env:
+        - name: TM_NAMESPACE
+          value: {{ .Release.Namespace }}
+        - name: WEBHOOK_HTTP_BINDADDRESS
+          value: "0.0.0.0"
+        - name: WEBHOOK_HTTPS_BINDADDRESS
+          value: "0.0.0.0"
+        - name: WEBHOOK_HTTP_PORT
+          value: "{{.Values.controller.webhook.http.port}}"
+        - name: WEBHOOK_HTTPS_PORT
+          value: "{{.Values.controller.webhook.https.port}}"
+        - name: WEBHOOK_CERT_FILE
+          value: /etc/testmachinery-controller/srv/tls.crt
+        - name: WEBHOOK_KEY_FILE
+          value: /etc/testmachinery-controller/srv/tls.key
+        - name: BASE_IMAGE
+          value: "{{ .Values.controller.steps.baseImage }}"
+        - name: PREPARE_IMAGE
+          value: "{{ .Values.controller.steps.prepareImage }}"
+        - name: S3_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: {{.Values.config.name}}
+              key: objectstore.url
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.objectStorage.secret.name}}
+              key: accessKey
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.objectStorage.secret.name}}
+              key: secretKey
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{.Values.config.name}}
+              key: objectstore.bucketName
+        - name: GIT_SECRETS
+          valueFrom:
+            secretKeyRef:
+              name: tm-git
+              key: config.yaml
+              optional: true
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{.Values.controller.webhook.http.port}}
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: {{.Values.controller.webhook.http.port}}
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        volumeMounts:
+        - name: certs
+          mountPath: /etc/testmachinery-controller/srv
+          readOnly: true
+{{ if and (.Values.local.enabled) (.Values.local.hostPath) }}
+        - name: local-host
+          mountPath: "{{.Values.local.hostPath}}"
+{{ end }}
+      volumes:
+      - name: certs
+        secret:
+          secretName: testmachinery-controller-cert
+{{ if and (.Values.local.enabled) (.Values.local.hostPath) }}
+      - name: local-host
+        hostPath:
+          path: "{{.Values.local.hostPath}}"
+{{end }}

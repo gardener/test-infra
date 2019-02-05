@@ -1,0 +1,61 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: testruns.testmachinery.sapcloud.io
+spec:
+  group: testmachinery.sapcloud.io
+  version: v1beta1
+  scope: Namespaced
+  names:
+    kind: Testrun
+    plural: testruns
+    shortNames:
+    - tr
+  additionalPrinterColumns:
+  - name: Workflow
+    type: string
+    description: The corresponding Argo Workflow.
+    JSONPath: .status.workflow
+  - name: Phase
+    type: string
+    description: The phase indicates the current status of the overall testrun.
+    JSONPath: .status.phase
+  - name: StartTime
+    type: date
+    description: The StarTime indicates the time the testrun was triggered.
+    JSONPath: .status.startTime
+  - name: Duration
+    type: number
+    description: The Duration inidcates the complete duration of the workflow.
+    JSONPath: .status.duration
+  # TODO: add validation
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: workflows.argoproj.io
+spec:
+  group: argoproj.io
+  names:
+    kind: Workflow
+    plural: workflows
+    shortNames:
+    - wf
+  scope: Namespaced
+  version: v1alpha1

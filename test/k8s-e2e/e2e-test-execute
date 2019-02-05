@@ -1,0 +1,275 @@
+#!/bin/bash -eu
+#
+# Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+own_dir="/src/test/k8s-e2e"
+
+readonly SHOOT_KUBECONFIG="$TM_KUBECONFIG_PATH/shoot.config"
+readonly K8S_SRC_PATH="/k8s_src"
+export K8S_ROOT="$GOPATH/src/k8s.io"
+
+readonly TRUE=0
+readonly FALSE=1
+
+readonly log_dir="${own_dir}/../artifacts"
+readonly json_dir="$TM_EXPORT_PATH"
+readonly junit_file="$log_dir/junit_01.xml"
+readonly e2e_log="${log_dir}/e2e.log"
+
+TESTDESCRIPTION_PATH="$own_dir/descriptions/$TESTDESCRIPTION_NAME"
+echo "runnning e2e tests"
+
+# Max. time to wait for creation/deletion of shoot
+MAX_RETRY_TIME=$((60 * 60))     # 60min
+MAX_KUBETEST_RETRY_TIME=$((1 * 60)) # 1min
+
+## init directories
+mkdir -p $K8S_SRC_PATH
+mkdir -p $K8S_ROOT
+
+rm -Rf "${json_dir:?}" # clean up if data has been created in previous run
+mkdir -p "$json_dir"
+rm -Rf "${log_dir:?}" # clean up if data has been created in previous run
+mkdir -p "$log_dir"
+
+
+
+# Build and run the K8s e2e test suite
+# -----------------------------------------------------------------------------
+function build_k8s() {
+	# Install additional python packages
+	pip3 install xmltodict
+
+	pushd "$K8S_SRC_PATH"
+
+	echo "download k8s v$K8S_VERSION"
+	if ! wget --quiet "https://github.com/kubernetes/kubernetes/archive/v${K8S_VERSION}.tar.gz"; then
+		echo "wget failed"
+		success="$FALSE"
+		return $success
+	fi
+	echo "extract k8s archive"
+
+	if ! tar xf "v${K8S_VERSION}.tar.gz" -C "$K8S_ROOT"; then
+		echo "tar extract failed"
+		success="$FALSE"
+		return $success
+	fi
+
+	mv "$K8S_ROOT/kubernetes-${K8S_VERSION}" "$K8S_ROOT/kubernetes"
+	pushd "$K8S_ROOT/kubernetes"
+
+	echo "Build k8s test suite components"
+	make WHAT=test/e2e/e2e.test
+	make WHAT=cmd/kubectl
+	make WHAT=vendor/github.com/onsi/ginkgo/ginkgo
+
+	popd > /dev/null
+	popd > /dev/null
+}
+
+# Runs the e2e tests
+# -----------------------------------------------------------------------------
+function run_e2e_tests_kubetest() {
+	local success="$FALSE"
+
+	if ! [ -f "$SHOOT_KUBECONFIG" ]; then
+		echo "$SHOOT_KUBECONFIG does not exist"
+		success="$FALSE"
+		return $success
+	fi
+
+	export KUBECONFIG="$SHOOT_KUBECONFIG"
+	export KUBERNETES_CONFORMANCE_TEST=y
+	export GINKGO_NO_COLOR=y
+	K8S_VERSION="$(kubectl version -ojson | jq '.serverVersion.gitVersion' | sed 's/v//g' | sed 's/"//g')"
+
+	build_k8s
+	pushd "$K8S_ROOT/kubernetes"
+	echo "Get kubetest"
+	go get -u k8s.io/test-infra/kubetest
+
+	success="$TRUE"
+
+	echo "using test description ${TESTDESCRIPTION_PATH}"
+	if [ ! -f "${TESTDESCRIPTION_PATH}" ]; then
+		echo "file ${TESTDESCRIPTION_PATH} does not exist."
+		success="$FALSE"
+		return $success
+	fi
+
+	# prepare test summary variables
+	executed_testcases=0
+	failed_testcases=0
+	successful_testcases=0
+	test_duration=0
+	test_execution_timestamp=$(date +"%Y/%m/%d %T")
+	testsuite_successful="true"
+
+	local counter=0
+	while read -r e2e_test; do
+
+		echo ""
+		if [[ ! $e2e_test == *[!\ ]* ]]; then
+			echo "${TESTDESCRIPTION_PATH} contains empty lines"
+			continue
+		fi
+
+		echo "run test \"$e2e_test\""
+
+		# replace all spaces (use //) by \s
+		printf -v e2e_test "%q" "$e2e_test" #escape special characters
+		e2e_test="${e2e_test//\\ /\\s}"     #escpae blanks with \s
+
+		# run kubetest
+		local retry_stop=$(($(date +%s) + $MAX_KUBETEST_RETRY_TIME))
+
+		# kubetest returns a non-zero value in case any test fails
+		# Unclear how to checkwhile read e2e_test ; do if the kubetest call failed
+		local max_kubectl_test_time=180 # 3mins
+		echo "test max. ${max_kubectl_test_time} seconds if kube-apiserver is available"
+		retry_stop=$(($(date +%s) + $max_kubectl_test_time))
+		success="$FALSE"
+		while [[ $(date +%s) -lt $retry_stop ]]; do
+
+			if [ "$(kubectl get nodes)" ]; then
+				echo "kube-apiserver is reachable"
+				success="$TRUE"
+				break
+			else
+				echo "kube-apiserver not reachable. Try again in 15s"
+				sleep 15
+			fi
+		done
+
+		if [ "$success" -eq "$FALSE" ]; then
+			echo "kube-apiserver not reachable the last ${max_kubectl_test_time}."
+			return "$success"
+		fi
+
+		rm -Rf "${log_dir:?}" # clean up if data has been created in previous run, this is neccessary for summary calculation
+		mkdir -p "$log_dir"
+
+		kubetest --provider local --deployment local --test --check-version-skew false \
+			--test_args="--ginkgo.skip=Alpha|Experimental|Disruptive|Flaky --ginkgo.dryRun=false --ginkgo.flakeAttempts=2 --ginkgo.focus=${e2e_test}" --dump="$log_dir" > "$e2e_log"
+
+		local res=$?
+
+		if [ ! -f "$log_dir/junit_01.xml" ] ; then
+			echo "$log_dir/junit_01.xml does not exist"
+			success="$FALSE"
+			return $success
+		fi
+
+		if [ ! -f "$e2e_log" ] ; then
+			echo "$e2e_log does not exist"
+			success="$FALSE"
+			return $success
+		fi
+
+		if [ $res -ne 0 ] ; then
+			echo "one or more Conformance tests failed"
+			# Print e2e_log to stdout
+			cat "$e2e_log"
+			echo ""
+			success="$FALSE"
+		fi
+
+		# Analyse junit_01.xml
+		if [ -f "$junit_file" ]; then
+			gather_test_summary_data_for_elastic_search
+			# Convert junit_01.xml to json
+			echo "$PWD"
+			if ! python3 "${own_dir}"/convtojson.py -d "$json_dir" --index "e2e_testcase" -c "$CLOUDPROVIDER" -i "$junit_file" -t "$test_execution_timestamp"; then
+				echo "XML to Json conversion failed."
+			fi
+		else
+			echo "${log_dir}/junit_01.xml not created for test search string \"${e2e_test}\"!"
+			success="$FALSE"
+			continue
+		fi
+		counter=$((counter + 1))
+
+	done <<<"$(cat "${TESTDESCRIPTION_PATH}")"
+
+	push_test_summary_to_elastic_search
+
+	if [ $counter -eq 0 ]; then
+		echo "No test has been executed."
+		success="$FALSE"
+	fi
+
+	return "$success"
+}
+
+function gather_test_summary_data_for_elastic_search() {
+	if junit_summary="$(head -2 "$junit_file" | tail -1)"; then #example "<testsuite tests=1 failures=0 time=12.1982894>"
+		declare -a array
+		mapfile -t array <<<"$(echo "$junit_summary" | grep -oE "[0-9.]+")"
+		if [ ${array[0]} -eq 0 ]; then
+			echo "test with search string \"${e2e_test}\" was not found/executed"
+		fi
+		executed_testcases=$(echo "$executed_testcases + ${array[0]}" | bc)
+		failed_testcases=$(echo "$failed_testcases + ${array[1]}" | bc)
+		successful_testcases=$(echo "$successful_testcases + ${array[0]} - ${array[1]}" | bc)
+		test_duration=$(echo "$test_duration + ${array[2]}" | bc)
+		if [ "$failed_testcases" -eq "0" ]; then
+			testsuite_successful="true"
+		else
+			testsuite_successful="false"
+		fi
+		echo "Test status: executed_testcases: $executed_testcases, successful_testcases: $successful_testcases, failed_tests: $failed_testcases, test_duration: $test_duration,  testsuite_successful: $testsuite_successful"
+	else
+		echo "Couldn't read junit file."
+	fi
+}
+
+function push_test_summary_to_elastic_search() {
+	json_index=$(
+		tr -d "\n" <<EOF
+{
+ "index": {
+ "_index": "e2e_testsuite",
+ "_type": "_doc"
+ }
+}
+EOF
+	)
+
+	json_payload=$(
+		tr -d "\n" <<EOF
+{
+  "executed_testcases": $executed_testcases,
+  "successful_testcases": $successful_testcases,
+  "failed_testcases": $failed_testcases,
+  "duration": $test_duration,
+  "successful": "$testsuite_successful",
+  "date": "$test_execution_timestamp"
+}
+EOF
+	)
+	echo "test summary ${json_payload}"
+	echo "Test status: executed_testcases: $executed_testcases, successful_testcases: $successful_testcases, failed_tests: $failed_testcases, test_duration: $test_duration,  testsuite_successful: $testsuite_successful"
+	echo "${json_index}" >> $json_dir/test_summary.json
+	echo "${json_payload}" >> $json_dir/test_summary.json
+}
+
+if run_e2e_tests_kubetest; then
+	echo "K8s e2e tests SUCCESSFULLY finished"
+	exit 0
+else
+	echo "K8s e2e tests FAILED"
+	exit 1
+fi

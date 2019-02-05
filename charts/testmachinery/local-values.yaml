@@ -1,0 +1,86 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+controller:
+  tag: latest
+  serviceAccountName: testmachinery-controller
+  tls:
+    crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDFzCCAf8CCQDjITarTRnezTANBgkqhkiG9w0BAQsFADA2MQswCQYDVQQGEwJE
+      RTEPMA0GA1UECgwGU0FQIFNFMRYwFAYDVQQLDA10ZXN0bWFjaGluZXJ5MB4XDTE4
+      MTIxMDExMTAxN1oXDTE5MTIxMDExMTAxN1owZTELMAkGA1UEBhMCREUxDzANBgNV
+      BAoMBlNBUCBTRTEWMBQGA1UECwwNdGVzdG1hY2hpbmVyeTEtMCsGA1UEAwwkdGVz
+      dG1hY2hpbmVyeS1jb250cm9sbGVyLmRlZmF1bHQuc3ZjMIIBIjANBgkqhkiG9w0B
+      AQEFAAOCAQ8AMIIBCgKCAQEAyMghpHaAz0EcL1VNvKj0qY9enNwM3YHC+2FDMb/l
+      vCLpz31ENMzj8tQlV8LxKV6L7ngnqRc1SpLwIC2iIPC4IY6wFS//64HYDIhDy87J
+      nLYPobGhCSRu3itcy1QYTzm43qxPJhl4xd1uzIVACH7ceiZeZbu6lymFUOPFSjoE
+      oalYpz8cT1mwgi/0g9Ci3WHb74QlJbs1B7ic27YR/s5Xjw4IAWrseMIPzBQcl7dg
+      2tatl6/a9tTOqKMC3CR8xbCTD8sFLB/KpU8UNjsA0JNOv/SPgAmPH8DyXY2u7jgZ
+      BgqKBv5Nx3LJsm81k+YpOTshB9nDKcfIv5DG8SU3aHhAiQIDAQABMA0GCSqGSIb3
+      DQEBCwUAA4IBAQBF3bOc03CjwALW06Ae7bDHRan4yRoiG/4MBZKd6OUCMNwDI9mU
+      OCz7ho/FtOnOjcWqOMBxPUPZIZ//lbLfDYB6Rtoh9btMzFj/EU7WNpI0WEuS/Flu
+      NxNyhByuSd4jSE/5ZrhmzIkZQXG/h/KIlRwtRqNoChqnkMoz8dhmHDZsRji1l92p
+      gidE7FqE0YLoyjI30WLumyLzDj669SetwoBGGbMkVAUYe2MpQoKK58bfHDcAQ9bG
+      ypCFvdM97K1UZxjsEa/XZ/22cKK+Gw6+nAjyyHg6DXtCtNQpDBaqYLDW4RtphoUd
+      Oz3gdGeK/rVqGOuRRuAxEKa4QzTimMyl9Acc
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEAyMghpHaAz0EcL1VNvKj0qY9enNwM3YHC+2FDMb/lvCLpz31E
+      NMzj8tQlV8LxKV6L7ngnqRc1SpLwIC2iIPC4IY6wFS//64HYDIhDy87JnLYPobGh
+      CSRu3itcy1QYTzm43qxPJhl4xd1uzIVACH7ceiZeZbu6lymFUOPFSjoEoalYpz8c
+      T1mwgi/0g9Ci3WHb74QlJbs1B7ic27YR/s5Xjw4IAWrseMIPzBQcl7dg2tatl6/a
+      9tTOqKMC3CR8xbCTD8sFLB/KpU8UNjsA0JNOv/SPgAmPH8DyXY2u7jgZBgqKBv5N
+      x3LJsm81k+YpOTshB9nDKcfIv5DG8SU3aHhAiQIDAQABAoIBAF7MV04OgYzZghQ7
+      I4QDBdmVDqfjIdPn84a7Cn3PzAmDNn+39l8zqiC515PTQAg3UrxaUOd+RLQcInIe
+      +aCx5044z5yBWET6vmZUZCYzUW/Daif+9Tia0hnlwV9jKkMlzsqb8pbbifFqNmks
+      NOqN801dFk7UTyoV+ZMSp9D/CbbFpnsmsHPNJRcRRi1Y2jq1ePAWCjCOao7Hd+Z1
+      yFd+MtO/3wXgl3T1rlaj+0DdK5jSO69Zguyy/cqaiZyrDQbJHab5wd9UsGKY41KY
+      pF9836qy2ik/63QsVUW7lWyUevPhRcpD9OWrdJ1RN23lfBxilmmN76yWIKjj9AZ9
+      NQGn6m0CgYEA9jv1cCyJYo9u3iqvZ9wB8bp9nD+9eb0cQ6JrljjNGhwx6iDWWybV
+      K8pYXD/RjLSJAZm5zXHhsne836DxncuAVSZ217tiDP9a0E7d/4LUDhWhcAbrjVZT
+      PIv7tu2LJzGSDxVxf0Us60iRK0IToqpw+VQ4baM1kRQqbxiGFQJaArcCgYEA0L6w
+      dGDZnOG/6RR2HArIqm6dsYpCo4drSmgtoMCye+utTvK6EVHREK4HrzGyUMMEaGUA
+      0GckSEyYXfYnGcTAC1gruPGThk5SRFJahfstgEHcrPQdh5K+dCcxB4v5OEg+uA3F
+      s14KlIS9h0c7uGOH/LIt8/zY+gzN5GWv9UcPlr8CgYAs9Vmk95zGECZQDj8kmXkJ
+      Z+GTa9fuqGbGupsmPIzGXauHciNxVS/K5REpFsXuCPCTCDxylH5/FXm44yv6gbOW
+      2IUOcro+YUl1i1DhXEPXpn9pcvoDPmXIQk7dYZXsvBJNCr9EW58N/pvy6AepxbEG
+      9SewbQJU0PfGfRXONDW3FQKBgDBU1no7qmb+hfarfCVGAewkLHLc9kzyn87cjCP6
+      OdkjWj87SAWWkfdws+rGcOjuHmklaajXGLl8spKe2bLHsUdvJMBvfp7MJ5QWFUuM
+      Op7FoRiSdPvc6CfwoxOCPzPe1la7KZk8HusASPm3boZk1SmW/7jMRFiw+kL1oGYE
+      DAH1AoGAF/vSrJRL2Mshor0H75utPoOVrlpHwd864TTscGNcE8iZ2BgVA+TQ63/m
+      +lvF4jjsCeiTGfBtHskQq3Vu9P5NaeObH3ewP1iuDmugMCAS3Ildp314ryFeiq2E
+      N6TCDLqC76xkAN77KuT9PUqwpjMloV2PT4jrKw8cEY5bwc0o0PU=
+      -----END RSA PRIVATE KEY-----
+    caBundle: |
+      -----BEGIN CERTIFICATE-----
+      MIIC6DCCAdACCQDI4DtHSoLIGDANBgkqhkiG9w0BAQsFADA2MQswCQYDVQQGEwJE
+      RTEPMA0GA1UECgwGU0FQIFNFMRYwFAYDVQQLDA10ZXN0bWFjaGluZXJ5MB4XDTE4
+      MTIxMDExMTAxNloXDTE5MTIxMDExMTAxNlowNjELMAkGA1UEBhMCREUxDzANBgNV
+      BAoMBlNBUCBTRTEWMBQGA1UECwwNdGVzdG1hY2hpbmVyeTCCASIwDQYJKoZIhvcN
+      AQEBBQADggEPADCCAQoCggEBAN9twluX/KIHEtQSqMPS2RPMSQp65f7bAIFziLb4
+      aiM1aTlOLDpnf4I3mKOgENeTuC0y2HNS0X7APB2gDKbZ6NfkLDFw8um45S8Rv6YE
+      h+6xnOKlLD2JGm96zi1Q3ME7erDI4bb9cbkmGvIW9Qd7UOhno3KHCRgJa55Ca4Zx
+      2PPlx/QuGTjSRY1k+MUwKMmQr30Y2orfnKLRbB02BC1MA1PTxWEPTBAUFj80ed9/
+      hjjvsdS3YCQsz/nND3+WCxTJirl16HdbCGSylHpChSR2nyTr5mQ9u2DXpCFdC5zS
+      YMxg55XDtYLbTgDpQ65mxdxajMZ7R0v9/y9cFrBnbFYsZWsCAwEAATANBgkqhkiG
+      9w0BAQsFAAOCAQEAcdOkFo3AiEU7aakonzFNQw1Kw/Bvux4bHKwe5AhA3xxLxT54
+      SKHczPHt0v6IDkOp3LmwRzU+a/fO3lDSWqBkEzcvRWQjlnifyW62xFO08drG3qUb
+      pts170qnDfvcagpe4aJZXeLsNkaeNLKoSRhoTcMrGOlNpqGYziQuTsvum7eXN+Xk
+      A/uwTc5NFQFjbgGNKYUYgpwB5Se1WozTW7PBRNG4xRKfPcOwP5w/vP5No6qX93XK
+      3YK8iGe6ae5dor/u/N6wDEZeSNA3FqAwDvRDLkP3FLsZVgD1HjaJYGq2ics/J6TC
+      mEvYQw+mgvGxixCjwInQiQ6/FkEiEdWEYA/X0w==
+      -----END CERTIFICATE-----

@@ -1,0 +1,4 @@
+{"index":{"_index":"test-index1","_type":"_doc"}}
+{"test": "bulk_no_1"}
+{"index":{"_index":"test-index2","_type":"_doc"}}
+{"test": 2}

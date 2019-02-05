@@ -1,0 +1,177 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo
+  namespace: {{.Release.Namespace}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-ui
+  namespace: {{.Release.Namespace}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# argo needs Cluster wide permissions, otherwise it won't watch workflows at all (not even ones in the same namespace)
+kind: ClusterRole
+metadata:
+  name: argo-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  - workflows/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# needs to be Cluster wide as UI wants to list workflows for the whole cluster
+kind: ClusterRole
+metadata:
+  name: argo-ui-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  - pods/log
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-workflow-role
+rules:
+# pod get/watch is used to identify the container IDs of the current pod
+# pod patch is used to annotate the step's outputs back to controller (e.g. artifact location)
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - patch
+# logs get/watch are used to get the pods logs for script outputs, and for log archival
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - watch
+# secrets get is used to retrieve credentials to artifact repository. NOTE: starting n Argo v2.3,
+# the API secret access will be removed in favor of volume mounting the secrets to the workflow pod
+# (issue #1072)
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# argo needs Cluster wide permissions, otherwise it won't watch workflows at all (not even ones in the same namespace)
+kind: ClusterRoleBinding
+metadata:
+  name: argo-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-role
+subjects:
+- kind: ServiceAccount
+  name: argo
+  namespace: {{.Release.Namespace}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo-wf-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-workflow-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: {{.Release.Namespace}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# needs to be Cluster wide as UI wants to list workflows for the whole cluster
+kind: ClusterRoleBinding
+metadata:
+  name: argo-ui-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-ui-role
+subjects:
+- kind: ServiceAccount
+  name: argo-ui
+  namespace: {{.Release.Namespace}}

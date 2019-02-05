@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+set -e
+
+printf "\nIntegration tests\n"
+
+
+if [[ -z "${SOURCE_PATH}" ]]; then
+  export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
+else
+  export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
+fi
+
+VERSION_PATH="$(readlink -f "${VERSION_PATH}")"
+
+VERSION="$(cat $VERSION_PATH/version)"
+GIT_COMMIT_SHA="$(cat $SOURCE_PATH/.git/ref)"
+NAMESPACE=default
+
+
+# The `go <cmd>` commands requires to see the target repository to be part of a
+# Go workspace. Thus, if we are not yet in a Go workspace, let's create one
+# temporarily by using symbolic links.
+if [[ "${SOURCE_PATH}" != *"src/github.com/gardener/test-infra" ]]; then
+  SOURCE_SYMLINK_PATH="${GOPATH}/src/github.com/gardener/test-infra"
+  mkdir -p "${GOPATH}/src/github.com/gardener"
+  ln -s "${SOURCE_PATH}" "${SOURCE_SYMLINK_PATH}"
+  cd "${SOURCE_SYMLINK_PATH}"
+
+  export PATH="${GOBIN}:${PATH}"
+fi
+
+# Install Kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+mv ./kubectl /usr/local/bin/kubectl
+
+# Install Helm (see https://docs.helm.sh/using_helm/#from-script).
+if ! which helm 1>/dev/null; then
+  echo -n "Installing helm... "
+  install_helm_path="./get_helm.sh"
+  curl https://raw.githubusercontent.com/helm/helm/v2.9.1/scripts/get > "${install_helm_path}"
+  chmod 700 "${install_helm_path}"
+  bash "${install_helm_path}"
+  rm ./"${install_helm_path}"
+  echo "done."
+fi
+
+
+# Install Ginkgo (test framework) to be able to execute the tests.
+go get -u github.com/onsi/ginkgo/ginkgo
+
+
+# Download Testmachinery Kubeconfig
+TM_KUBECONFIG=/tm/kubeconfig
+mkdir -p /tm
+/cc/utils/cli.py config attribute --cfg-type kubernetes --cfg-name testmachinery-it --key kubeconfig > $TM_KUBECONFIG
+
+export S3_ENDPOINT="minio.ingress.tm-it.core.shoot.office.k8s-hana.ondemand.com:80"
+
+echo "Testmachinery version: $VERSION"
+
+###################
+# Generate charts #
+###################
+make -C $SOURCE_PATH gen-certs
+ca_bundle="$(cat $SOURCE_PATH/assets/ca.crt)"
+crt="$(cat $SOURCE_PATH/assets/tls.crt)"
+key="$(cat $SOURCE_PATH/assets/tls.key)"
+
+github_config=$($SOURCE_PATH/.ci/scripts/gh_config.py | base64 -w 0)
+pull_secrets_value_file_path="$SOURCE_PATH/.ci/pull_secrets.yaml"
+$SOURCE_PATH/.ci/scripts/pull_secrets.py > $pull_secrets_value_file_path
+
+prerequisites_chart="$(helm template --namespace ${NAMESPACE} -f $pull_secrets_value_file_path \
+  --set "secrets.github=${github_config}" $SOURCE_PATH/charts/bootstrap_tm_prerequisites)"
+controller_chart="$(helm template --namespace ${NAMESPACE} \
+  --set "controller.tag=${VERSION},controller.tls.caBundle=${ca_bundle},controller.tls.crt=${crt},controller.tls.key=${key}" $SOURCE_PATH/charts/testmachinery)"
+
+################################
+# clean previous installation  #
+################################
+set +e
+kubectl --kubeconfig=$TM_KUBECONFIG delete tr --all --force=true --grace-period=0
+# remove zombies
+kubectl get tr -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl get wf -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl --kubeconfig=$TM_KUBECONFIG delete tr --all
+kubectl get wf -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl --kubeconfig=$TM_KUBECONFIG delete wf --all
+echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
+echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
+set -e
+
+############################################################################
+# installation of prerequisites, controller, validation webhooks and roles #
+############################################################################
+# install prerequisites
+echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
+# install controller, validation webhook and roles
+echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
+
+# run integration tests with ginkgo
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/validationwebhook
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/testflow
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/garbagecollection
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/resultcollection
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/testrunner
+
+
+#######################
+# clean installation  #
+#######################
+# wait for controller to clean up all testruns.
+# sleep 30
+# echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
+# echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
