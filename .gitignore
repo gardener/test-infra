@@ -1,0 +1,13 @@
+.vscode
+.idea
+.DS_Store
+temp/
+tmp/
+
+# Generated testlogs
+tests
+
+# Generated secrets
+assets
+
+**/*.coverprofile
