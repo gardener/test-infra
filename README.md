@@ -12,7 +12,7 @@
     - [Use with GitHub Authentication](#use-with-github-authentication)
   - [Local TestMachinery development](#local-testmachinery-development)
 
-![testmachinery diagram overview](https://github.com/gardener/test-infra/blob/oss/docs/test_machinary_overview.png?raw=true)
+![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/test_machinary_overview.png)
 
 Read the [design draft here](docs/DesignDraft.md).
 
