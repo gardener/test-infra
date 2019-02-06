@@ -71,6 +71,7 @@ type StepExportMetadata struct {
 	Metadata
 	TestDefName string           `json:"testdefinition"`
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
+	StartTime   *metav1.Time     `json:"startTime,omitempty"`
 	Duration    int64            `json:"duration,omitempty"`
 }
 
