@@ -59,7 +59,7 @@ var _ = Describe("Testrun validation tests", func() {
 	})
 
 	Context("Metadata", func() {
-		FIt("should reject when name contains '.'", func() {
+		It("should reject when name contains '.'", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				[]tmv1beta1.TestflowStep{

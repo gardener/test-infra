@@ -143,7 +143,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			Expect(jsonBody["tm_meta"]).ToNot(BeNil())
 			Expect(jsonBody["tm_meta"].(map[string]interface{})["testrun_id"]).To(Equal(tr.Name))
 
-			Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integrationtestdef"))
+			Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
 		})
 
 	})

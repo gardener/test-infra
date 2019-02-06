@@ -242,7 +242,7 @@ var _ = Describe("Testflow execution tests", func() {
 	Context("TTL", func() {
 		It("should delete the testrun after ttl has finished", func() {
 			var ttl int32 = 90
-			var maxWaitTime int64 = 300
+			var maxWaitTime int64 = 600
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
@@ -267,7 +267,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 		It("should delete the testrun after workflow has finished", func() {
 			var ttl int32 = 1
-			var maxWaitTime int64 = 300
+			var maxWaitTime int64 = 600
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 

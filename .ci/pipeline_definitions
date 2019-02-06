@@ -35,8 +35,15 @@ test-infra:
   jobs:
     head-update:
       traits:
-        pull-request: ~
         draft_release: ~
+      steps:
+        integration:
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
+          depends:
+          - publish
+    pull-request:
+      traits:
+        pull-request: ~
       steps:
         integration:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'

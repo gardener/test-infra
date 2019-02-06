@@ -17,7 +17,6 @@ metadata:
   name: integration-testdef
 spec:
   owner: OutputQualification-Team
-
   description: Tests the deployment of a guestbook app with redis.
 
   labels: ["tm-integration"]

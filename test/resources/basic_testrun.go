@@ -56,7 +56,7 @@ func GetFailingTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 	tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 		[]tmv1beta1.TestflowStep{
 			tmv1beta1.TestflowStep{
-				Name: "FailingIntegrationTestDef",
+				Name: "failing-integration-testdef",
 			},
 		},
 	}
@@ -68,7 +68,7 @@ func GetTestrunWithExitHandler(tr *tmv1beta1.Testrun, condition tmv1beta1.Condit
 	tr.Spec.OnExit = [][]tmv1beta1.TestflowStep{
 		[]tmv1beta1.TestflowStep{
 			tmv1beta1.TestflowStep{
-				Name:      "ExitHandlerTestDef",
+				Name:      "exit-handler-testdef",
 				Condition: condition,
 			},
 		},

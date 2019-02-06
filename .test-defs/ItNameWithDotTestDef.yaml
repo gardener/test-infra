@@ -20,7 +20,5 @@ spec:
 
   description: Tests the deployment of a guestbook app with redis.
 
-  labels: ["tm-integration"]
-
   command: [bash, -c]
   args: ["echo hello! && mkdir -p $TM_EXPORT_PATH && echo '{\"export\": true}' > $TM_EXPORT_PATH/test.json"]

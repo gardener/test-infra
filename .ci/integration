@@ -27,7 +27,7 @@ fi
 VERSION_PATH="$(readlink -f "${VERSION_PATH}")"
 
 VERSION="$(cat $VERSION_PATH/version)"
-GIT_COMMIT_SHA="$(cat $SOURCE_PATH/.git/ref)"
+GIT_COMMIT_SHA="$(GIT_DIR=$SOURCE_PATH/.git git rev-parse @)"
 NAMESPACE=default
 
 
@@ -69,7 +69,7 @@ TM_KUBECONFIG=/tm/kubeconfig
 mkdir -p /tm
 /cc/utils/cli.py config attribute --cfg-type kubernetes --cfg-name testmachinery-it --key kubeconfig > $TM_KUBECONFIG
 
-export S3_ENDPOINT="minio.ingress.tm-it.core.shoot.office.k8s-hana.ondemand.com:80"
+export S3_ENDPOINT="minio.ingress.tm-it.core.shoot.canary.k8s-hana.ondemand.com:80"
 
 echo "Testmachinery version: $VERSION"
 
