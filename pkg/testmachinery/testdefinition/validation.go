@@ -17,6 +17,7 @@ package testdefinition
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -38,6 +39,12 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 
 	if len(td.Spec.Command) == 0 {
 		return fmt.Errorf("Invalid TestDefinition (%s) Name: \"%s\": spec.command : Required value: command has to be defined", identifier, td.Metadata.Name)
+	}
+	if td.Spec.Owner == "" || !isEmailValid(td.Spec.Owner) {
+		return fmt.Errorf("Invalid TestDefinition (%s) Owner: \"%s\": spec.owner : Required value: valid email has to be defined", identifier, td.Spec.Owner)
+	}
+	if td.Spec.RecipientsOnFailure != "" && !isEmailListValid(td.Spec.RecipientsOnFailure) {
+		return fmt.Errorf("Invalid TestDefinition (%s) ReceipientsOnFailure: \"%s\": spec.notifyOnFailure : Required value: valid email has to be defined", identifier, td.Spec.RecipientsOnFailure)
 	}
 	return nil
 }
@@ -65,6 +72,21 @@ func validateName(identifier, name string) error {
 	}
 
 	return nil
+}
+
+func isEmailListValid(emailList string) bool {
+	for _, email := range strings.Split(emailList, ",") {
+		email = strings.Trim(email, " ")
+		if !isEmailValid(email) {
+			return false
+		}
+	}
+	return true
+}
+
+func isEmailValid(email string) bool {
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return re.MatchString(email)
 }
 
 // ValidateLocation validates a TestDefinition Location of a testrun

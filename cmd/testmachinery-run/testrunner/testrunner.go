@@ -49,11 +49,11 @@ var (
 func Run(config *TestrunConfig, parameters *TestrunParameters) {
 	log.Info("Get Testmachinery clients")
 
-	if config.ESConfigName != "" {
-		esCfgName = config.ESConfigName
+	if config.ESConfigName == "" {
+		config.ESConfigName = esCfgName
 	}
-	if config.OutputFile != "" {
-		outputFilePath = config.OutputFile
+	if config.OutputFile == "" {
+		config.OutputFile = outputFilePath
 	}
 	if config.Timeout != nil && *config.Timeout > -1 {
 		maxWaitTimeSeconds = *config.Timeout
@@ -137,7 +137,7 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 	}
 
-	err = Output(config.TmKubeconfigPath, config.S3Endpoint, outputFilePath, tr, metadata)
+	err = Output(config, tr, metadata)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

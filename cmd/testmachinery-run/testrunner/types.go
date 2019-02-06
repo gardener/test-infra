@@ -48,6 +48,7 @@ type TestrunConfig struct {
 	OutputFile           string
 	ESConfigName         string
 	S3Endpoint           string
+	ConcourseOnErrorDir  string
 }
 
 // Metadata is the common metadata of all ouputs and summaries.

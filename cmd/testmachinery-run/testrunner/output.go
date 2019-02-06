@@ -31,12 +31,15 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(tmKubeConfigPath, s3Endpoint, outputFile string, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+	var tmKubeConfigPath = config.TmKubeconfigPath
+	var s3Endpoint = config.S3Endpoint
+	var concourseOnErrorDir = config.ConcourseOnErrorDir
 
 	metadata.TestrunID = tr.Name
 
@@ -55,6 +58,8 @@ func Output(tmKubeConfigPath, s3Endpoint, outputFile string, tr *tmv1beta1.Testr
 		return err
 	}
 
+	generateNotificationConfigForAlerting(tr, concourseOnErrorDir)
+
 	osConfig, err := getOSConfig(tmKubeConfigPath, s3Endpoint)
 	if err != nil {
 		log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
@@ -63,12 +68,12 @@ func Output(tmKubeConfigPath, s3Endpoint, outputFile string, tr *tmv1beta1.Testr
 		SummaryBuffer.Write(exportedDocuments)
 	}
 
-	err = writeToFile(outputFile, SummaryBuffer.Bytes())
+	err = writeToFile(config.OutputFile, SummaryBuffer.Bytes())
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully written output to file %s", outputFile)
+	log.Infof("Successfully written output to file %s", config.OutputFile)
 	return nil
 }
 
@@ -117,6 +122,55 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 		Sources: append([][]byte{encTrSummary}, summaries...),
 	}, nil
 
+}
+
+// Creates a notification config file with email recipients if any test step has failed
+// The config file is then evaluated by Concourse
+func generateNotificationConfigForAlerting(tr *tmv1beta1.Testrun, concourseOnErrorDir string) {
+	var notifyCfgContent = createNotificationString(tr)
+	notifyConfigFilePath := fmt.Sprintf("%s/notify.cfg", concourseOnErrorDir)
+	writeStringToFile(notifyConfigFilePath, notifyCfgContent)
+	log.Infof("Successfully created file %s", notifyConfigFilePath)
+}
+
+func createNotificationString(tr *tmv1beta1.Testrun) string {
+	status := tr.Status
+	hasFailingSteps := false
+	emailBody := "Test Machinery steps have failed in test run '" + tr.Name + "'.\n\nFailed Steps:\n"
+	notifyCfgContent :=
+		"email:\n" +
+			"  subject: 'Test Machinery - some steps failed in test run '" + tr.Name + "'\n" +
+			"  recipients:\n"
+
+	for _, steps := range status.Steps {
+		for _, step := range steps {
+			if step.Phase == argov1.NodeFailed {
+				if !hasFailingSteps {
+					hasFailingSteps = true
+				}
+				emailBody = fmt.Sprintf("%s  - %s\n", emailBody, step.TestDefinition.Name)
+				for _, email := range strings.Split(step.TestDefinition.RecipientsOnFailure, ",") {
+					email = strings.TrimSpace(email)
+					if email != "" {
+						notifyCfgContent = fmt.Sprintf("%s  - %s\n", notifyCfgContent, email)
+					}
+				}
+			}
+		}
+	}
+	notifyCfgContent = fmt.Sprintf("%s  mail_body: >\n%s", notifyCfgContent, emailBody)
+
+	if hasFailingSteps {
+		return notifyCfgContent
+	}
+	return ""
+}
+
+func writeStringToFile(filepath string, content string) {
+	var err = ioutil.WriteFile(filepath, []byte(content), 0644)
+	if err != nil {
+		log.Errorf("Saving file  %s: failed", filepath)
+	}
 }
 
 func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *Metadata) []byte {

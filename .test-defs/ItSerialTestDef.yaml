@@ -16,7 +16,7 @@ kind: TestDefinition
 metadata:
   name: serial-testdef
 spec:
-  owner: OutputQualification-Team
+  owner: dummy@mail.com
 
   description: Serial test step
 
