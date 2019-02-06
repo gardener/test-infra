@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/usr/bin/env python3
-
 import config
 import util
 import yaml
@@ -21,7 +21,7 @@ import json
 import ctx
 import base64
 
-registry_secret_names=['gcr-readonly-sap-se-gcp-scp-k8s']
+registry_secret_names=[]
 
 def get_secret(name: str):
     util.check_type(name, str)

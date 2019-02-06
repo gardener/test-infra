@@ -35,7 +35,7 @@ var basicTestrun = &tmv1beta1.Testrun{
 		TestFlow: [][]tmv1beta1.TestflowStep{
 			[]tmv1beta1.TestflowStep{
 				tmv1beta1.TestflowStep{
-					Name: "IntegrationTestDef",
+					Name: "integration-testdef",
 				},
 			},
 		},

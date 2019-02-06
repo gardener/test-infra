@@ -32,9 +32,10 @@ test-infra:
         image: 'golang:1.11.1'
       test:
         image: 'golang:1.11.1'
-  variants:
+  jobs:
     head-update:
       traits:
+        pull-request: ~
         draft_release: ~
       steps:
         integration:
@@ -55,7 +56,7 @@ test-infra:
 
 test-infra-golang:
   template: 'default'
-  variants:
+  jobs:
     release-image:
       traits:
         version:
@@ -72,7 +73,7 @@ test-infra-golang:
 
 test-infra-prepare:
   template: 'default'
-  variants:
+  jobs:
     release-image:
       traits:
         version:
@@ -89,7 +90,7 @@ test-infra-prepare:
 
 test-infra-base:
   template: 'default'
-  variants:
+  jobs:
     release-image:
       traits:
         version:

@@ -50,12 +50,12 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 // must be lowercase
 func validateName(identifier, name string) error {
 	if strings.Contains(name, ".") {
-		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: name musst not contain '.'", identifier)
+		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: name must not contain '.'", identifier)
 	}
 
-	errMsgs := []string{}
 	// IsDNS1123Subdomain: lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
 	// used for e.g. statefulset names
+	errMsgs := []string{}
 	for _, msg := range apimachineryvalidation.IsDNS1123Subdomain(name) {
 		errMsgs = append(errMsgs, msg)
 	}

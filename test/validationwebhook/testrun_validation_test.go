@@ -59,16 +59,21 @@ var _ = Describe("Testrun validation tests", func() {
 	})
 
 	Context("Metadata", func() {
-		It("should reject when name contains '.'", func() {
+		FIt("should reject when name contains '.'", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Name = "test.dot"
-
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				[]tmv1beta1.TestflowStep{
+					tmv1beta1.TestflowStep{
+						Name: "integration.testdef",
+					},
+				},
+			}
 			_, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
 			Expect(err).To(HaveOccurred())
-			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("name musst not contain '.'"))
+			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("name must not contain '.'"))
 		})
 	})
 
