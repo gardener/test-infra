@@ -25,6 +25,7 @@ for repo in $(cat "$FILEPATH" | jq -c '.[]' ); do
 
     pushd .
     cd $TM_REPO_PATH/$name
+    git fetch origin $revision
     git checkout $revision
     popd
 done
