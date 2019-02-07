@@ -69,7 +69,7 @@ TM_KUBECONFIG=/tm/kubeconfig
 mkdir -p /tm
 /cc/utils/cli.py config attribute --cfg-type kubernetes --cfg-name testmachinery-it --key kubeconfig > $TM_KUBECONFIG
 
-export S3_ENDPOINT="minio.ingress.tm-it.core.shoot.canary.k8s-hana.ondemand.com:80"
+export S3_ENDPOINT="minio.ingress.tm-it.core.shoot.canary.k8s-hana.ondemand.com"
 
 echo "Testmachinery version: $VERSION"
 

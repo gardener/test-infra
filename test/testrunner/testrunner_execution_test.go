@@ -50,6 +50,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		argoClient     *argoclientset.Clientset
 		outputFilePath = "./out-"
 		testrunConfig  testrunner.TestrunConfig
+		s3Endpoint     string
 	)
 
 	BeforeSuite(func() {
@@ -57,6 +58,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		commitSha = os.Getenv("GIT_COMMIT_SHA")
 		tmKubeconfig = os.Getenv("TM_KUBECONFIG_PATH")
 		namespace = os.Getenv("TM_NAMESPACE")
+		s3Endpoint = os.Getenv("S3_ENDPOINT")
 
 		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
 		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
@@ -69,7 +71,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
-
+		utils.WaitForMinioService(clusterClient, s3Endpoint, namespace, maxWaitTime)
 	})
 
 	BeforeEach(func() {
@@ -80,7 +82,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			Timeout:              &timeout,
 			OutputFile:           ".",
 			ESConfigName:         "es-config-name",
-			S3Endpoint:           "S3_ENDPOINT",
+			S3Endpoint:           s3Endpoint,
 			ConcourseOnErrorDir:  ".",
 		}
 	})
