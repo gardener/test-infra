@@ -23,7 +23,7 @@ controller:
 
   steps:
     baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.28.0
-    prepareImage: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:0.28.0
+    prepareImage: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:0.29.0
 
   serviceAccountName: testmachinery-controller
   webhook:
