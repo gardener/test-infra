@@ -180,6 +180,59 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 	})
 
+	Context("config", func() {
+		It("should mount a config as environement variable", func() {
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				[]tmv1beta1.TestflowStep{
+					tmv1beta1.TestflowStep{
+						Name: "check-envvar-testdef",
+					},
+				},
+			}
+			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
+				tmv1beta1.ConfigElement{
+					Type:  tmv1beta1.ConfigTypeEnv,
+					Name:  "TEST_NAME",
+					Value: "test",
+				},
+			}
+
+			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			Expect(err).ToNot(HaveOccurred())
+			if err == nil {
+				defer utils.DeleteTestrun(tmClient, tr)
+			}
+
+		})
+
+		It("should mount a global config as environement variable", func() {
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				[]tmv1beta1.TestflowStep{
+					tmv1beta1.TestflowStep{
+						Name: "check-envvar-testdef",
+					},
+				},
+			}
+			tr.Spec.Config = []tmv1beta1.ConfigElement{
+				tmv1beta1.ConfigElement{
+					Type:  tmv1beta1.ConfigTypeEnv,
+					Name:  "TEST_NAME",
+					Value: "test",
+				},
+			}
+
+			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			Expect(err).ToNot(HaveOccurred())
+			if err == nil {
+				defer utils.DeleteTestrun(tmClient, tr)
+			}
+
+		})
+
+	})
+
 	Context("onExit", func() {
 		It("should run ExitHandlerTestDef when testflow succeeds", func() {
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(namespace, commitSha), tmv1beta1.ConditionTypeSuccess)
