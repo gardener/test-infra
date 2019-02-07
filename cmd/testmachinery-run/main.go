@@ -35,6 +35,10 @@ var (
 	shootName            string
 	landscape            string
 	cloudprovider        string
+	cloudprofile         string
+	secretBinding        string
+	region               string
+	zone                 string
 	k8sVersion           string
 	bom                  string
 	timeout              int64
@@ -108,6 +112,10 @@ func init() {
 
 	flag.StringVar(&landscape, "landscape", "", "Current gardener landscape.")
 	flag.StringVar(&cloudprovider, "cloudprovider", "", "Cloudprovider where the shoot is created.")
+	flag.StringVar(&cloudprofile, "cloudprofile", "", "Cloudprofile of shoot.")
+	flag.StringVar(&secretBinding, "secret-binding", "", "SecretBinding that should be used to create the shoot.")
+	flag.StringVar(&region, "region", "", "Region where the shoot is created.")
+	flag.StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
 	flag.StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
 	flag.StringVar(&bom, "bom", "", "Component versions of the currently deployed landscape.")
 

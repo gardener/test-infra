@@ -35,6 +35,10 @@ type TestrunParameters struct {
 	ShootName     string
 	Landscape     string
 	Cloudprovider string
+	Cloudprofile  string
+	SecretBinding string
+	Region        string
+	Zone          string
 	K8sVersion    string
 	BOM           string
 }
