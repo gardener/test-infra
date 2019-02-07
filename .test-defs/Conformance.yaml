@@ -16,7 +16,8 @@ kind: TestDefinition
 metadata:
   name: conformance
 spec:
-  owner: OutputQualification-Team
+  owner: oleg.loewen@sap.com
+  recipientsOnFailure: oleg.loewen@sap.com
 
   description: Run kubernetes conformance tests.
 

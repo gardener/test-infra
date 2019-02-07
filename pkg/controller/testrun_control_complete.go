@@ -73,8 +73,10 @@ func (r *TestrunReconciler) completeTestrun(ctx context.Context, tr *tmv1beta1.T
 				Duration:          int64(d.Seconds()),
 				ExportArtifactKey: getNodeExportKey(status.Outputs),
 				TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-					Name:     node.TestDefinition.Info.Metadata.Name,
-					Location: *node.TestDefinition.Location.GetLocation(),
+					Name:                node.TestDefinition.Info.Metadata.Name,
+					Location:            *node.TestDefinition.Location.GetLocation(),
+					Owner:               node.TestDefinition.Info.Spec.Owner,
+					RecipientsOnFailure: node.TestDefinition.Info.Spec.RecipientsOnFailure,
 				},
 			})
 		}

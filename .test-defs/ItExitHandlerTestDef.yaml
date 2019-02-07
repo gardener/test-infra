@@ -16,7 +16,7 @@ kind: TestDefinition
 metadata:
   name: exit-handler-testdef
 spec:
-  owner: OutputQualification-Team
+  owner: dummy@mail.com
 
   description: Tests the deployment of a guestbook app with redis.
 

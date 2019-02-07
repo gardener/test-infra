@@ -75,7 +75,7 @@ var _ = Describe("Testflow", func() {
 							FileName: "file.name",
 							Info: &tmv1beta1.TestDefinition{
 								Metadata: tmv1beta1.TestDefMetadata{Name: "testdefname"},
-								Spec:     tmv1beta1.TestDefSpec{Command: []string{"bash"}},
+								Spec:     tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
 							},
 						},
 					}

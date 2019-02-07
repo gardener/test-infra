@@ -43,15 +43,16 @@ var _ = Describe("TestDefinition Validation", func() {
 				},
 				Spec: tmv1beta1.TestDefSpec{
 					Command: []string{"bash"},
+					Owner:   "test@corp.com",
 				},
 			}
 		})
 
-		It("should succed when a name and a command is defined", func() {
+		It("should succeed when a name and a command is defined", func() {
 			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
 		})
 
-		It("should succed when a name contains '-'", func() {
+		It("should succeed when a name contains '-'", func() {
 			testdef.Metadata.Name = "test-name"
 			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
 		})
@@ -73,6 +74,31 @@ var _ = Describe("TestDefinition Validation", func() {
 
 		It("should fail when no command is defined", func() {
 			testdef.Spec.Command = []string{}
+			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
+		})
+
+		It("should fail if no Owner is defined", func() {
+			testdef.Spec.Owner = ""
+			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
+		})
+
+		It("should succeed when valid recipient is defined", func() {
+			testdef.Spec.RecipientsOnFailure = "test@corp.com"
+			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
+		})
+
+		It("should succeed when valid recipient list is defined", func() {
+			testdef.Spec.RecipientsOnFailure = "test@corp.com, test2@corp.com"
+			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
+		})
+
+		It("should fail if any of recipient emails is invalid email", func() {
+			testdef.Spec.RecipientsOnFailure = "test@corp.com, test2corp.com"
+			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
+		})
+
+		It("should fail when the recipient email is not a valid email", func() {
+			testdef.Spec.RecipientsOnFailure = "testcorp.com"
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 	})
