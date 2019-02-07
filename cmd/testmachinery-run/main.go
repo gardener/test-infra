@@ -75,6 +75,10 @@ func main() {
 		ShootName:     shootName,
 		Landscape:     landscape,
 		Cloudprovider: cloudprovider,
+		Cloudprofile:  cloudprofile,
+		SecretBinding: secretBinding,
+		Region:        region,
+		Zone:          zone,
 		K8sVersion:    k8sVersion,
 		BOM:           bom,
 	}
