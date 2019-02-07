@@ -104,6 +104,10 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 			"name":             parameters.ShootName,
 			"projectNamespace": fmt.Sprintf("garden-%s", parameters.ProjectName),
 			"cloudprovider":    parameters.Cloudprovider,
+			"cloudprofile":     parameters.Cloudprofile,
+			"secretBinding":    parameters.SecretBinding,
+			"region":           parameters.Region,
+			"zone":             parameters.Zone,
 			"k8sVersion":       parameters.K8sVersion,
 		},
 		"kubeconfigs": map[string]interface{}{
