@@ -21,7 +21,7 @@ spec:
 
   description: Run kubernetes conformance tests.
 
-  activeDeadlineSeconds: 7200
+  activeDeadlineSeconds: 10800
   labels: ["default"]
 
   command: [bash, -c]
