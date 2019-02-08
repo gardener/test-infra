@@ -16,14 +16,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -104,28 +107,28 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 
 }
 
-func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Testrun, wf *argov1.Workflow) (reconcile.Result, error) {
-	if !tr.Status.StartTime.Equal(&wf.Status.StartedAt) {
-		tr.Status.StartTime = &wf.Status.StartedAt
-	}
-	if tr.Status.Phase == "" {
-		tr.Status.Phase = tmv1beta1.PhaseStatusPending
-	}
-	if wf.Status.Completed() {
-
-		err := r.completeTestrun(ctx, tr, wf)
-		if err != nil {
-			return reconcile.Result{}, nil
-		}
-
-		log.Infof("Testrun %s completed", tr.Name)
-	}
-
-	err := r.Update(ctx, tr)
+func (r *TestrunReconciler) createWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, error) {
+	tr, err := testrun.New(testrunDef)
 	if err != nil {
-		log.Errorf("Error updating Testrun status %s: %s", tr.Name, err.Error())
-		return reconcile.Result{}, err
+		return nil, fmt.Errorf("Error parsing testrun: %s", err.Error())
 	}
 
-	return reconcile.Result{}, nil
+	wf, err := tr.GetWorkflow(getWorkflowName(testrunDef), testrunDef.Namespace, r.getImagePullSecrets(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := controllerutil.SetControllerReference(testrunDef, wf, r.scheme); err != nil {
+		return nil, err
+	}
+
+	wfFinalizers := sets.NewString(wf.Finalizers...)
+	if !wfFinalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
+		wfFinalizers.Insert(tmv1beta1.SchemeGroupVersion.Group)
+		wf.Finalizers = wfFinalizers.UnsortedList()
+	}
+
+	testrunDef.Status.Steps = tr.Testflow.Flow.GetStatus()
+
+	return wf, nil
 }

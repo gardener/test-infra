@@ -113,6 +113,33 @@ func (f *Flow) GetLocalVolumes() []apiv1.Volume {
 	return volumes
 }
 
+// Iterate iterates over the flow's levels and returns their nodes.
+func (f *Flow) Iterate() <-chan []*Node {
+	c := make(chan []*Node)
+	go func() {
+		currentNode := f.TestFlowRoot
+		for len(currentNode.Children) > 0 {
+			c <- currentNode.Children
+			currentNode = currentNode.Children[0]
+		}
+		close(c)
+	}()
+	return c
+}
+
+// GetStatus returns the status of all nodes of the current flow.
+func (f *Flow) GetStatus() [][]*tmv1beta1.TestflowStepStatus {
+	status := [][]*tmv1beta1.TestflowStepStatus{}
+	for level := range f.Iterate() {
+		stepStatus := []*tmv1beta1.TestflowStepStatus{}
+		for _, node := range level {
+			stepStatus = append(stepStatus, node.Status)
+		}
+		status = append(status, stepStatus)
+	}
+	return status
+}
+
 func (f *Flow) addNewNode(lastParallelNodes []*Node, lastSerialNode *Node, step *Step, td *testdefinition.TestDefinition) *Node {
 	node := NewNode(lastParallelNodes, lastSerialNode, f.TestFlowRoot, td, step, f.ID)
 	td.AddConfig(config.New(step.Info.Config))

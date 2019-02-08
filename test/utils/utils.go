@@ -47,17 +47,21 @@ func RunTestrun(tmClient *tmclientset.Clientset, argoClient *argoclientset.Clien
 
 	foundTestrun, err := WatchTestrun(tmClient, tr, namespace, maxWaitTime)
 	if err != nil {
+		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Error watching Testrun: %s\n%s", tr.Name, err.Error())
 	}
 	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
+		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Testrun %s status is empty", tr.Name)
 	}
 	if foundTestrun.Status.Phase != phase {
+		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Testrun %s status should be %s, but is %s", tr.Name, phase, foundTestrun.Status.Phase)
 	}
 
 	wf, err := GetWorkflow(argoClient, foundTestrun)
 	if err != nil {
+		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Cannot get Workflow for Testrun: %s\n%s", tr.Name, err.Error())
 	}
 
@@ -78,7 +82,7 @@ func WatchTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namesp
 	var foundTestrun *tmv1beta1.Testrun
 	var testrunPhase argov1.NodePhase
 	startTime := time.Now()
-	for util.Completed(testrunPhase) {
+	for !util.Completed(testrunPhase) {
 		var err error
 		if util.MaxTimeExceeded(startTime, maxWaitTime) {
 			return nil, fmt.Errorf("Maximum wait time exceeded")
@@ -181,7 +185,7 @@ func HTTPGet(url string) (*http.Response, error) {
 }
 
 // TestflowLen returns the number of all items in 2 dimensional array.
-func TestflowLen(m [][]tmv1beta1.TestflowStepStatus) int {
+func TestflowLen(m [][]*tmv1beta1.TestflowStepStatus) int {
 	length := 0
 	for _, a := range m {
 		length += len(a)

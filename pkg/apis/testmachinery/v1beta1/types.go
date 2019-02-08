@@ -53,8 +53,9 @@ const (
 
 // Testrun statuses
 const (
-	PhaseStatusPending = argov1.NodePending
-	PhaseStatusRunning = argov1.NodeRunning
+	PhaseStatusInit    argov1.NodePhase = "init"
+	PhaseStatusPending                  = argov1.NodePending
+	PhaseStatusRunning                  = argov1.NodeRunning
 )
 
 // +genclient
@@ -106,12 +107,28 @@ type TestrunSpec struct {
 
 // TestrunStatus is the status of the Testrun.
 type TestrunStatus struct {
-	Phase          argov1.NodePhase       `json:"phase,omitempty"`
-	StartTime      *metav1.Time           `json:"startTime,omitempty"`
-	CompletionTime *metav1.Time           `json:"completionTime,omitempty"`
-	Duration       int64                  `json:"duration,omitempty"`
-	Workflow       string                 `json:"workflow,omitempty"`
-	Steps          [][]TestflowStepStatus `json:"steps,omitempty"`
+	// Phase is the summary of all executed steps.
+	Phase argov1.NodePhase `json:"phase,omitempty"`
+
+	// State is a string that represents the actual state and/or process of the testrun.
+	State string `json:"state,omitempty"`
+
+	// StartTime is the time when the argo workflow starts executing the steps.
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime is the time when the argo workflow is completed.
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// Duration represents the overall duration of the argo workflow.
+	// This value is calculated by (CompletionTime - StartTime)
+	Duration int64 `json:"duration,omitempty"`
+
+	// Workflow is the name of the generated argo workflow
+	Workflow string `json:"workflow,omitempty"`
+
+	// Steps is the detailed summary of every step.
+	// It also shows all specific executed tests.
+	Steps [][]*TestflowStepStatus `json:"steps,omitempty"`
 }
 
 // TestflowStepStatus is the status of Testflow step

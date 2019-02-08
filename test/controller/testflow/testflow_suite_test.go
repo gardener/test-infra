@@ -20,11 +20,12 @@ import (
 	"testing"
 	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -80,9 +81,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -104,9 +103,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -134,9 +131,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -160,9 +155,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			for _, node := range wf.Status.Nodes {
 				if strings.HasPrefix(node.TemplateName, "integration-testdef") {
@@ -200,9 +193,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 		})
 
@@ -225,9 +216,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 		})
 
@@ -239,9 +228,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -277,9 +264,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -300,10 +285,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
 			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
 			Expect(err).ToNot(HaveOccurred(), "Testrun: %s", tr.Name)
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {
@@ -325,10 +308,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
 			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
 			Expect(err).ToNot(HaveOccurred())
+			defer utils.DeleteTestrun(tmClient, tr)
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {

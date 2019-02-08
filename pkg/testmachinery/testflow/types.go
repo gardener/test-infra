@@ -57,18 +57,11 @@ type Step struct {
 type Node struct {
 	Parents  []*Node
 	Children []*Node
-	Position FlowPosition
 
 	Task           *argov1.DAGTask
 	TestDefinition *testdefinition.TestDefinition
 	Template       *argov1.Template
+	Status         *tmv1beta1.TestflowStepStatus
 
 	step *tmv1beta1.TestflowStep
-}
-
-// FlowPosition is the position in the execution flow
-type FlowPosition struct {
-	Type   FlowIdentifier
-	Row    int64
-	Column int64
 }

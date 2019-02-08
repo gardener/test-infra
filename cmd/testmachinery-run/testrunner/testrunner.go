@@ -127,7 +127,7 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 	var tr *tmv1beta1.Testrun
 	var testrunPhase argov1.NodePhase
 	startTime := time.Now()
-	for util.Completed(testrunPhase) {
+	for !util.Completed(testrunPhase) {
 		var err error
 
 		if util.MaxTimeExceeded(startTime, maxWaitTimeSeconds) {
