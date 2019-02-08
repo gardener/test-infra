@@ -39,9 +39,6 @@ var (
 )
 
 var _ = Describe("elasticsearch test", func() {
-	BeforeSuite(func() {
-
-	})
 
 	Context("Parse default json format", func() {
 		It("should parse default json and add testmachinery index", func() {

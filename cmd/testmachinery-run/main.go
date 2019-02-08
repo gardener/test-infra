@@ -28,20 +28,20 @@ import (
 )
 
 var (
-	gardenKubeconfigPath string
-	tmKubeconfigPath     string
-	testrunChartPath     string
-	projectName          string
-	shootName            string
-	landscape            string
-	cloudprovider        string
-	cloudprofile         string
-	secretBinding        string
-	region               string
-	zone                 string
-	k8sVersion           string
-	bom                  string
-	timeout              int64
+	gardenKubeconfigPath     string
+	tmKubeconfigPath         string
+	testrunChartPath         string
+	projectName              string
+	shootName                string
+	landscape                string
+	cloudprovider            string
+	cloudprofile             string
+	secretBinding            string
+	region                   string
+	zone                     string
+	k8sVersion               string
+	componenetDescriptorPath string
+	timeout                  int64
 
 	outputFilePath          string
 	elasticSearchConfigName string
@@ -71,16 +71,16 @@ func main() {
 		TestrunName:      testrunName,
 		TestrunChartPath: testrunChartPath,
 
-		ProjectName:   projectName,
-		ShootName:     shootName,
-		Landscape:     landscape,
-		Cloudprovider: cloudprovider,
-		Cloudprofile:  cloudprofile,
-		SecretBinding: secretBinding,
-		Region:        region,
-		Zone:          zone,
-		K8sVersion:    k8sVersion,
-		BOM:           bom,
+		ProjectName:             projectName,
+		ShootName:               shootName,
+		Landscape:               landscape,
+		Cloudprovider:           cloudprovider,
+		Cloudprofile:            cloudprofile,
+		SecretBinding:           secretBinding,
+		Region:                  region,
+		Zone:                    zone,
+		K8sVersion:              k8sVersion,
+		ComponentDescriptorPath: componenetDescriptorPath,
 	}
 
 	testrunner.Run(config, parameters)
@@ -121,7 +121,7 @@ func init() {
 	flag.StringVar(&region, "region", "", "Region where the shoot is created.")
 	flag.StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
 	flag.StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
-	flag.StringVar(&bom, "bom", "", "Component versions of the currently deployed landscape.")
+	flag.StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	flag.StringVar(&outputFilePath, "output-file-path", "", "The filepath where the summary should be written to.")
 	flag.StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")

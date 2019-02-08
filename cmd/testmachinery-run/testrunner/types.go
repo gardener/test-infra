@@ -31,16 +31,16 @@ type TestrunParameters struct {
 	TestrunName      string
 	TestrunChartPath string
 
-	ProjectName   string
-	ShootName     string
-	Landscape     string
-	Cloudprovider string
-	Cloudprofile  string
-	SecretBinding string
-	Region        string
-	Zone          string
-	K8sVersion    string
-	BOM           string
+	ProjectName             string
+	ShootName               string
+	Landscape               string
+	Cloudprovider           string
+	Cloudprofile            string
+	SecretBinding           string
+	Region                  string
+	Zone                    string
+	K8sVersion              string
+	ComponentDescriptorPath string
 }
 
 // TestrunConfig are configuration of the evironment like the testmachinery cluster or S3 store
@@ -71,6 +71,7 @@ type StepExportMetadata struct {
 	Metadata
 	TestDefName string           `json:"testdefinition"`
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
+	StartTime   *metav1.Time     `json:"startTime,omitempty"`
 	Duration    int64            `json:"duration,omitempty"`
 }
 

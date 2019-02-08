@@ -15,11 +15,12 @@
 package testrunner
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
@@ -64,13 +65,16 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		CloudProvider:     parameters.Cloudprovider,
 		KubernetesVersion: parameters.K8sVersion,
 	}
-	if parameters.BOM != "" {
-		var jsonBody interface{}
-		err := json.Unmarshal([]byte(parameters.BOM), &jsonBody)
+	if parameters.ComponentDescriptorPath != "" {
+		data, err := ioutil.ReadFile(parameters.ComponentDescriptorPath)
 		if err != nil {
-			log.Warnf("Cannot decode BOM %s", err.Error())
+			log.Warnf("Cannot read component descriptor file %s: %s", parameters.ComponentDescriptorPath, err.Error())
+		}
+		components, err := componentdescriptor.GetComponents(data)
+		if err != nil {
+			log.Warnf("Cannot decode and parse BOM %s", err.Error())
 		} else {
-			metadata.BOM = jsonBody
+			metadata.BOM = components
 		}
 	}
 
