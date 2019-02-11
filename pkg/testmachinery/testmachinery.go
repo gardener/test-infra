@@ -38,9 +38,10 @@ func Setup() {
 	}
 
 	tmConfig = &TmConfiguration{
-		Namespace:  util.Getenv("TM_NAMESPACE", "default"),
-		Insecure:   false,
-		GitSecrets: gitSecrets.Secrets,
+		Namespace:         util.Getenv("TM_NAMESPACE", "default"),
+		Insecure:          false,
+		CleanWorkflowPods: util.GetenvBool("CLEAN_WORKFLOW_PODS", false),
+		GitSecrets:        gitSecrets.Secrets,
 		ObjectStore: &ObjectStoreConfig{
 			Endpoint:   os.Getenv("S3_ENDPOINT"),
 			AccessKey:  os.Getenv("S3_ACCESS_KEY"),

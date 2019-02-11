@@ -46,10 +46,11 @@ var (
 
 // TmConfiguration is an object containing the actual configuration of the Testmachinery
 type TmConfiguration struct {
-	Namespace   string
-	Insecure    bool
-	GitSecrets  []*GitConfig
-	ObjectStore *ObjectStoreConfig
+	Namespace         string
+	Insecure          bool
+	CleanWorkflowPods bool
+	GitSecrets        []*GitConfig
+	ObjectStore       *ObjectStoreConfig
 }
 
 // ObjectStoreConfig is an object containing the ObjectStore specific configuration
