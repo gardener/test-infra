@@ -26,13 +26,8 @@ import (
 
 // NewNode creates a new TestflowNode for the internal DAG
 func NewNode(parents []*Node, lastSerialNode, rootNode *Node, td *testdefinition.TestDefinition, step *Step, flow FlowIdentifier) *Node {
-	position := FlowPosition{
-		Type:   flow,
-		Row:    int64(step.Row),
-		Column: int64(step.Column),
-	}
-	td.SetPosition(string(flow), position.Row, position.Column)
-	node := &Node{Parents: parents, TestDefinition: td, Position: position, step: step.Info}
+	td.SetPosition(string(flow), step.Row, step.Column)
+	node := &Node{Parents: parents, TestDefinition: td, step: step.Info}
 
 	for _, parent := range parents {
 		parent.AddChild(node)
@@ -40,6 +35,18 @@ func NewNode(parents []*Node, lastSerialNode, rootNode *Node, td *testdefinition
 
 	if lastSerialNode != nil {
 		node.addTask(lastSerialNode, rootNode)
+	}
+
+	node.Status = &tmv1beta1.TestflowStepStatus{
+		Phase: tmv1beta1.PhaseStatusInit,
+		TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
+			Name:                td.Info.Metadata.Name,
+			Owner:               td.Info.Spec.Owner,
+			RecipientsOnFailure: td.Info.Spec.RecipientsOnFailure,
+		},
+	}
+	if td.Location != nil {
+		node.Status.TestDefinition.Location = *td.Location.GetLocation()
 	}
 
 	return node

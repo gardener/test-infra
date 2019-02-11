@@ -35,9 +35,10 @@ var (
 
 // Annotation keys defined on the testdefinition template
 const (
-	AnnotationFlow   = "testmachinery.sapcloud.io/Flow"
-	AnnotationRow    = "testmachinery.sapcloud.io/Row"
-	AnnotationColumn = "testmachinery.sapcloud.io/Column"
+	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
+	AnnotationFlow        = "testmachinery.sapcloud.io/Flow"
+	AnnotationRow         = "testmachinery.sapcloud.io/Row"
+	AnnotationColumn      = "testmachinery.sapcloud.io/Column"
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
@@ -55,11 +56,6 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 		Name: "",
 		ArchiveLocation: &argov1.ArtifactLocation{
 			ArchiveLogs: &archiveLogs,
-		},
-		Metadata: argov1.Metadata{
-			Annotations: map[string]string{
-				"testmachinery.sapcloud.io/TestDefinition": def.Metadata.Name,
-			},
 		},
 		ActiveDeadlineSeconds: &activeDeadlineSeconds,
 		Container: &apiv1.Container{
@@ -131,11 +127,8 @@ func (td *TestDefinition) Copy() *TestDefinition {
 }
 
 // SetPosition sets the unique name of the testdefinition and its execution position.
-func (td *TestDefinition) SetPosition(flow string, row, column int64) error {
-	td.Template.Metadata.Annotations[AnnotationFlow] = flow
-	td.Template.Metadata.Annotations[AnnotationRow] = strconv.FormatInt(row, 10)
-	td.Template.Metadata.Annotations[AnnotationColumn] = strconv.FormatInt(column, 10)
-	return nil
+func (td *TestDefinition) SetPosition(flow string, row, column int) {
+	td.Template.Metadata.Annotations = GetAnnotations(td.Info.Metadata.Name, flow, row, column)
 }
 
 // HasBehavior checks if the testrun has defined a specific behavior like serial or disruptiv.
@@ -222,4 +215,15 @@ func (td *TestDefinition) AddConfig(configs []*config.Element) {
 		}
 
 	}
+}
+
+// GetAnnotations returns Template annotations for a testdefinition
+func GetAnnotations(name, flow string, row, column int) map[string]string {
+	annotations := map[string]string{
+		AnnotationTestDefName: name,
+		AnnotationFlow:        flow,
+		AnnotationRow:         strconv.FormatInt(int64(row), 10),
+		AnnotationColumn:      strconv.FormatInt(int64(column), 10),
+	}
+	return annotations
 }
