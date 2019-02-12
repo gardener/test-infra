@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	"github.com/gardener/test-infra/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -44,7 +45,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 	}
 	if wf.Status.Completed() {
 
-		err := completeTestrun(tr, wf)
+		err := r.completeTestrun(tr, wf)
 		if err != nil {
 			return reconcile.Result{}, nil
 		}
@@ -61,7 +62,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 	return reconcile.Result{}, nil
 }
 
-func completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
+func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
 	log.Info("Collecting node status")
 
 	tr.Status.Phase = wf.Status.Phase
@@ -79,6 +80,10 @@ func completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
 			}
 		}
 	}
+
+	// cleanup pods to remove workload from the api server
+	// logs are still accessible through "archiveLogs" option in argo
+	garbagecollection.CleanWorkflowPods(r.Client, wf)
 
 	return nil
 }
