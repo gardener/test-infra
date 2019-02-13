@@ -17,10 +17,10 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
-	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	"github.com/gardener/test-infra/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -30,7 +30,6 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
 func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Testrun, wf *argov1.Workflow) (reconcile.Result, error) {
@@ -91,11 +90,16 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 	completedSteps := 0
 	numSteps := 0
-	for row, steps := range tr.Status.Steps {
-		for column, stepStatus := range steps {
+	for _, steps := range tr.Status.Steps {
+		for _, stepStatus := range steps {
 			numSteps++
+			if util.Completed(stepStatus.Phase) {
+				completedSteps++
+				continue
+			}
 
-			argoNodeStatus := getArgoNodeStatus(wf, testdefinition.GetAnnotations(stepStatus.TestDefinition.Name, string(testflow.FlowIDTest), row, column))
+			annotations := testdefinition.GetAnnotations(stepStatus.TestDefinition.Name, stepStatus.TestDefinition.Position[testdefinition.AnnotationFlow], stepStatus.TestDefinition.Position[testdefinition.AnnotationPosition])
+			argoNodeStatus := getArgoNodeStatus(wf, annotations)
 			if argoNodeStatus == nil {
 				continue
 			}
@@ -129,7 +133,7 @@ func getArgoNodeStatus(wf *argov1.Workflow, annotations map[string]string) *argo
 // This is archieved by getting the node's corrresponding template and check the templates annotations.
 func nodeIsAtPosition(wf *argov1.Workflow, templateName string, annotations map[string]string) bool {
 	for _, template := range wf.Spec.Templates {
-		if template.Name == templateName && reflect.DeepEqual(template.Metadata.Annotations, annotations) {
+		if template.Name == templateName && util.IsAnnotationSubset(template.Metadata.Annotations, annotations) {
 			return true
 		}
 	}

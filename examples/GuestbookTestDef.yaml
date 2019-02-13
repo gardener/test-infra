@@ -14,16 +14,13 @@
 
 kind: TestDefinition
 metadata:
-  name: owner@company.com
-  recipientsOnFailure: developer1@company.com, developer2@company.com
+  name: guestbook
 spec:
-  owner: OutputQualification-Team
+  owner: owner@company.com
 
   description: Tests the deployment of the guestbook app with redis.
 
   labels: ["default"]
-  
+
   command: [bash, -c]
-  args: ["set -x; scripts/integration-tests/argo/guestbook --shoot-kubeconfig-path $TM_KUBECONFIG_PATH/shoot.config --domain myshoot.proj.shoot.k8s.ondemand.com"]
-  
-  image: eu.gcr.io/gardener-project/cc/landscape-tools:0.187.0
+  args: ["set -x; echo 'local testing ;)'; ls"]

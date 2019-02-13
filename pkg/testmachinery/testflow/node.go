@@ -43,6 +43,7 @@ func NewNode(parents []*Node, lastSerialNode, rootNode *Node, td *testdefinition
 			Name:                td.Info.Metadata.Name,
 			Owner:               td.Info.Spec.Owner,
 			RecipientsOnFailure: td.Info.Spec.RecipientsOnFailure,
+			Position:            td.GetPosition(),
 		},
 	}
 	if td.Location != nil {

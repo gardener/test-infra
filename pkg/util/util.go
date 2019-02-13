@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"time"
@@ -135,6 +136,17 @@ func RandomString(n int) string {
 		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
 	}
 	return string(b)
+}
+
+// IsAnnotationSubset checks if all items in target are deep equal in src with the same key
+func IsAnnotationSubset(src, target map[string]string) bool {
+	for key, value := range target {
+		if !reflect.DeepEqual(value, src[key]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // FormatArtifactName replaces all invalid artifact name characters.

@@ -16,7 +16,6 @@ package testdefinition
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/util"
@@ -37,8 +36,7 @@ var (
 const (
 	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
 	AnnotationFlow        = "testmachinery.sapcloud.io/Flow"
-	AnnotationRow         = "testmachinery.sapcloud.io/Row"
-	AnnotationColumn      = "testmachinery.sapcloud.io/Column"
+	AnnotationPosition    = "testmachinery.sapcloud.io/Position" // position of the source step in teh format row/colum
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
@@ -128,7 +126,15 @@ func (td *TestDefinition) Copy() *TestDefinition {
 
 // SetPosition sets the unique name of the testdefinition and its execution position.
 func (td *TestDefinition) SetPosition(flow string, row, column int) {
-	td.Template.Metadata.Annotations = GetAnnotations(td.Info.Metadata.Name, flow, row, column)
+	td.Template.Metadata.Annotations = GetAnnotations(td.Info.Metadata.Name, flow, fmt.Sprintf("%d/%d", row, column))
+}
+
+// GetPosition returns annotations to identify the source step.
+func (td *TestDefinition) GetPosition() map[string]string {
+	return map[string]string{
+		AnnotationFlow:     td.Template.Metadata.Annotations[AnnotationFlow],
+		AnnotationPosition: td.Template.Metadata.Annotations[AnnotationPosition],
+	}
 }
 
 // HasBehavior checks if the testrun has defined a specific behavior like serial or disruptiv.
@@ -218,12 +224,11 @@ func (td *TestDefinition) AddConfig(configs []*config.Element) {
 }
 
 // GetAnnotations returns Template annotations for a testdefinition
-func GetAnnotations(name, flow string, row, column int) map[string]string {
+func GetAnnotations(name, flow, position string) map[string]string {
 	annotations := map[string]string{
 		AnnotationTestDefName: name,
 		AnnotationFlow:        flow,
-		AnnotationRow:         strconv.FormatInt(int64(row), 10),
-		AnnotationColumn:      strconv.FormatInt(int64(column), 10),
+		AnnotationPosition:    position,
 	}
 	return annotations
 }

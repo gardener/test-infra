@@ -143,10 +143,11 @@ type TestflowStepStatus struct {
 
 // TestflowStepStatusTestDefinition holds information about the used testdefinition and its location.
 type TestflowStepStatusTestDefinition struct {
-	Name                string       `json:"name,omitempty"`
-	Location            TestLocation `json:"location,omitempty"`
-	Owner               string       `json:"owner,omitempty"`
-	RecipientsOnFailure string       `json:"recipientsOnFailure"`
+	Name                string            `json:"name,omitempty"`
+	Location            TestLocation      `json:"location,omitempty"`
+	Owner               string            `json:"owner,omitempty"`
+	RecipientsOnFailure string            `json:"recipientsOnFailure"`
+	Position            map[string]string `json:"position"`
 }
 
 // TestLocation describes a location to search for TestDefinitions.
