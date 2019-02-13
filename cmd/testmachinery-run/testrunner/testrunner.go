@@ -140,7 +140,11 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		}
 		testrunPhase = tr.Status.Phase
 
-		log.Infof("Testrun %s is %s. Waiting ...", parameters.TestrunName, testrunPhase)
+		if tr.Status.State != "" {
+			log.Infof("Testrun %s is %s. State: %s", parameters.TestrunName, testrunPhase, tr.Status.State)
+		} else {
+			log.Infof("Testrun %s is %s. Waiting ...", parameters.TestrunName, testrunPhase)
+		}
 
 		time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 	}
