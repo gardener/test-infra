@@ -43,7 +43,7 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 	if td.Spec.Owner == "" || !isEmailValid(td.Spec.Owner) {
 		return fmt.Errorf("Invalid TestDefinition (%s) Owner: \"%s\": spec.owner : Required value: valid email has to be defined", identifier, td.Spec.Owner)
 	}
-	if td.Spec.RecipientsOnFailure != "" && !isEmailListValid(td.Spec.RecipientsOnFailure) {
+	if len(td.Spec.RecipientsOnFailure) != 0 && !isEmailListValid(td.Spec.RecipientsOnFailure) {
 		return fmt.Errorf("Invalid TestDefinition (%s) ReceipientsOnFailure: \"%s\": spec.notifyOnFailure : Required value: valid email has to be defined", identifier, td.Spec.RecipientsOnFailure)
 	}
 	return nil
@@ -74,9 +74,8 @@ func validateName(identifier, name string) error {
 	return nil
 }
 
-func isEmailListValid(emailList string) bool {
-	for _, email := range strings.Split(emailList, ",") {
-		email = strings.Trim(email, " ")
+func isEmailListValid(emailList []string) bool {
+	for _, email := range emailList {
 		if !isEmailValid(email) {
 			return false
 		}

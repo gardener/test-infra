@@ -146,7 +146,7 @@ type TestflowStepStatusTestDefinition struct {
 	Name                string            `json:"name,omitempty"`
 	Location            TestLocation      `json:"location,omitempty"`
 	Owner               string            `json:"owner,omitempty"`
-	RecipientsOnFailure string            `json:"recipientsOnFailure"`
+	RecipientsOnFailure []string          `json:"recipientsOnFailure"`
 	Position            map[string]string `json:"position"`
 }
 
@@ -218,7 +218,7 @@ type TestDefMetadata struct {
 // TestDefSpec is the actual description of the test.
 type TestDefSpec struct {
 	Owner                 string          `json:"owner" yaml:"owner"`
-	RecipientsOnFailure   string          `json:"recipientsOnFailure" yaml:"recipientsOnFailure"`
+	RecipientsOnFailure   []string        `json:"recipientsOnFailure" yaml:"recipientsOnFailure"`
 	Description           string          `json:"description" yaml:"description"`
 	Labels                []string        `json:"labels" yaml:"labels"`
 	Behavior              []string        `json:"behavior" yaml:"behavior"`

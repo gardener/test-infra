@@ -83,22 +83,22 @@ var _ = Describe("TestDefinition Validation", func() {
 		})
 
 		It("should succeed when valid recipient is defined", func() {
-			testdef.Spec.RecipientsOnFailure = "test@corp.com"
+			testdef.Spec.RecipientsOnFailure = []string{"test@corp.com"}
 			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
 		})
 
 		It("should succeed when valid recipient list is defined", func() {
-			testdef.Spec.RecipientsOnFailure = "test@corp.com, test2@corp.com"
+			testdef.Spec.RecipientsOnFailure = []string{"test@corp.com", "test2@corp.com"}
 			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
 		})
 
 		It("should fail if any of recipient emails is invalid email", func() {
-			testdef.Spec.RecipientsOnFailure = "test@corp.com, test2corp.com"
+			testdef.Spec.RecipientsOnFailure = []string{"test@corp.com", "test2corp.com"}
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 
 		It("should fail when the recipient email is not a valid email", func() {
-			testdef.Spec.RecipientsOnFailure = "testcorp.com"
+			testdef.Spec.RecipientsOnFailure = []string{"testcorp.com"}
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 	})

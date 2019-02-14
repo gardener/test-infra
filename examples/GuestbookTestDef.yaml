@@ -17,6 +17,8 @@ metadata:
   name: guestbook
 spec:
   owner: owner@company.com
+  recipientsOnFailure:
+  - dl@company.com
 
   description: Tests the deployment of the guestbook app with redis.
 

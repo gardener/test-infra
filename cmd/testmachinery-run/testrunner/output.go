@@ -149,8 +149,7 @@ func createNotificationString(tr *tmv1beta1.Testrun) string {
 					hasFailingSteps = true
 				}
 				emailBody = fmt.Sprintf("%s  - %s\n", emailBody, step.TestDefinition.Name)
-				for _, email := range strings.Split(step.TestDefinition.RecipientsOnFailure, ",") {
-					email = strings.TrimSpace(email)
+				for _, email := range step.TestDefinition.RecipientsOnFailure {
 					if email != "" {
 						notifyCfgContent = fmt.Sprintf("%s  - %s\n", notifyCfgContent, email)
 					}
