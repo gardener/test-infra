@@ -17,7 +17,8 @@ metadata:
   name: conformance
 spec:
   owner: oleg.loewen@sap.com
-  recipientsOnFailure: oleg.loewen@sap.com
+  recipientsOnFailure:
+  - oleg.loewen@sap.com
 
   description: Run kubernetes conformance tests.
 

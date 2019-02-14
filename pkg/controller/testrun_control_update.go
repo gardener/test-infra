@@ -104,12 +104,18 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 				continue
 			}
 
-			stepDuration := argoNodeStatus.FinishedAt.Sub(argoNodeStatus.StartedAt.Time)
 			stepStatus.Phase = argoNodeStatus.Phase
-			stepStatus.StartTime = &argoNodeStatus.StartedAt
-			stepStatus.CompletionTime = &argoNodeStatus.FinishedAt
-			stepStatus.Duration = int64(stepDuration.Seconds())
 			stepStatus.ExportArtifactKey = getNodeExportKey(argoNodeStatus.Outputs)
+
+			if !argoNodeStatus.StartedAt.IsZero() {
+				stepStatus.StartTime = &argoNodeStatus.StartedAt
+			}
+			if !argoNodeStatus.FinishedAt.IsZero() {
+				stepDuration := argoNodeStatus.FinishedAt.Sub(argoNodeStatus.StartedAt.Time)
+				stepStatus.CompletionTime = &argoNodeStatus.FinishedAt
+				stepStatus.Duration = int64(stepDuration.Seconds())
+			}
+
 			if util.Completed(stepStatus.Phase) {
 				completedSteps++
 			}
