@@ -31,6 +31,7 @@ var (
 	gardenKubeconfigPath     string
 	tmKubeconfigPath         string
 	testrunChartPath         string
+	testrunNamePrefix        string
 	projectName              string
 	shootName                string
 	landscape                string
@@ -55,7 +56,7 @@ func main() {
 	flag.Parse()
 
 	shootName = fmt.Sprintf("%s-%s-%s", shootName, cloudprovider, util.RandomString(5))
-	testrunName := fmt.Sprintf("demorun-%s", util.RandomString(5))
+	testrunName := fmt.Sprintf("%s%s", testrunNamePrefix, util.RandomString(5))
 
 	config := &testrunner.TestrunConfig{
 		TmKubeconfigPath:     tmKubeconfigPath,
@@ -110,6 +111,7 @@ func init() {
 	flag.StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	flag.Int64Var(&timeout, "timeout", -1, "timout of the testrunner to wait for the complete testrun to finish.")
 	flag.StringVar(&testrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
+	flag.StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
 
 	flag.StringVar(&projectName, "project-name", "", "Gardener project name of the shoot")
 	flag.StringVar(&shootName, "shoot-name", "", "Shoot name which is used to run tests.")
