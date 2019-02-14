@@ -31,7 +31,7 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/minio/minio-go"
+	minio "github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -136,10 +136,10 @@ func generateNotificationConfigForAlerting(tr *tmv1beta1.Testrun, concourseOnErr
 func createNotificationString(tr *tmv1beta1.Testrun) string {
 	status := tr.Status
 	hasFailingSteps := false
-	emailBody := "Test Machinery steps have failed in test run '" + tr.Name + "'.\n\nFailed Steps:\n"
+	emailBody := fmt.Sprintf("Test Machinery steps have failed in test run '%s'.\n\nFailed Steps:\n", tr.Name)
 	notifyCfgContent :=
 		"email:\n" +
-			"  subject: 'Test Machinery - some steps failed in test run '" + tr.Name + "'\n" +
+			"  subject: 'Test Machinery - some steps failed in test run \"" + tr.Name + "\"'\n" +
 			"  recipients:\n"
 
 	for _, steps := range status.Steps {
@@ -158,7 +158,7 @@ func createNotificationString(tr *tmv1beta1.Testrun) string {
 			}
 		}
 	}
-	notifyCfgContent = fmt.Sprintf("%s  mail_body: >\n%s", notifyCfgContent, emailBody)
+	notifyCfgContent = fmt.Sprintf("%s  mail_body: >\n    %s", notifyCfgContent, emailBody)
 
 	if hasFailingSteps {
 		return notifyCfgContent
