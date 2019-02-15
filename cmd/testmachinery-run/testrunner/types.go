@@ -94,3 +94,14 @@ type StepSummary struct {
 	StartTime *metav1.Time     `json:"startTime,omitempty"`
 	Duration  int64            `json:"duration,omitempty"`
 }
+
+// notificationConfig is the configuration that is used by concourse to send notifications.
+type notificationCfg struct {
+	Email email `yaml:"email"`
+}
+
+type email struct {
+	Subject    string   `yaml:"subject"`
+	Recipients []string `yaml:"recipients"`
+	MailBody   string   `yaml:"mail_body"`
+}

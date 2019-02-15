@@ -24,6 +24,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/elasticsearch"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -127,49 +129,49 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 // Creates a notification config file with email recipients if any test step has failed
 // The config file is then evaluated by Concourse
 func generateNotificationConfigForAlerting(tr *tmv1beta1.Testrun, concourseOnErrorDir string) {
-	var notifyCfgContent = createNotificationString(tr)
+	notifyConfig := createNotificationString(tr)
+	if notifyConfig == nil {
+		return
+	}
+
 	notifyConfigFilePath := fmt.Sprintf("%s/notify.cfg", concourseOnErrorDir)
-	writeStringToFile(notifyConfigFilePath, notifyCfgContent)
+	if err := writeToFile(notifyConfigFilePath, notifyConfig); err != nil {
+		log.Warnf("Cannot write file email notification config to %s: %s", notifyConfigFilePath, err.Error())
+		return
+	}
 	log.Infof("Successfully created file %s", notifyConfigFilePath)
 }
 
-func createNotificationString(tr *tmv1beta1.Testrun) string {
+func createNotificationString(tr *tmv1beta1.Testrun) []byte {
 	status := tr.Status
-	hasFailingSteps := false
-	emailBody := fmt.Sprintf("Test Machinery steps have failed in test run '%s'.\n\nFailed Steps:\n", tr.Name)
-	notifyCfgContent :=
-		"email:\n" +
-			"  subject: 'Test Machinery - some steps failed in test run \"" + tr.Name + "\"'\n" +
-			"  recipients:\n"
+
+	cfg := notificationCfg{
+		Email: email{
+			Subject:  fmt.Sprintf("Test Machinery - some steps failed in test run '%s'", tr.Name),
+			MailBody: fmt.Sprintf("Test Machinery steps have failed in test run '%s'.\n\nFailed Steps:\n", tr.Name),
+		},
+	}
 
 	for _, steps := range status.Steps {
 		for _, step := range steps {
 			if step.Phase == argov1.NodeFailed {
-				if !hasFailingSteps {
-					hasFailingSteps = true
-				}
-				emailBody = fmt.Sprintf("%s  - %s\n", emailBody, step.TestDefinition.Name)
+				cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
 				for _, email := range step.TestDefinition.RecipientsOnFailure {
-					if email != "" {
-						notifyCfgContent = fmt.Sprintf("%s  - %s\n", notifyCfgContent, email)
-					}
+					cfg.Email.Recipients = append(cfg.Email.Recipients, email)
 				}
 			}
 		}
 	}
-	notifyCfgContent = fmt.Sprintf("%s  mail_body: >\n    %s", notifyCfgContent, emailBody)
 
-	if hasFailingSteps {
-		return notifyCfgContent
+	if len(cfg.Email.Recipients) != 0 {
+		cfgBytes, err := yaml.Marshal(cfg)
+		if err != nil {
+			log.Warnf("Cannot encode email notification config %s", err.Error())
+			return nil
+		}
+		return cfgBytes
 	}
-	return ""
-}
-
-func writeStringToFile(filepath string, content string) {
-	var err = ioutil.WriteFile(filepath, []byte(content), 0644)
-	if err != nil {
-		log.Errorf("Saving file  %s: failed", filepath)
-	}
+	return nil
 }
 
 func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *Metadata) []byte {
