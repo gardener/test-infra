@@ -113,6 +113,9 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 			"region":           parameters.Region,
 			"zone":             parameters.Zone,
 			"k8sVersion":       parameters.K8sVersion,
+			"machinetype":      parameters.MachineType,
+			"autoscalerMin":    parameters.AutoscalerMin,
+			"autoscalerMax":    parameters.AutoscalerMax,
 		},
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(gardenKubeconfig),

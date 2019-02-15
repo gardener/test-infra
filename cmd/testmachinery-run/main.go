@@ -41,6 +41,9 @@ var (
 	region                   string
 	zone                     string
 	k8sVersion               string
+	machineType              string
+	autoscalerMin            string
+	autoscalerMax            string
 	componenetDescriptorPath string
 	timeout                  int64
 
@@ -55,7 +58,7 @@ func main() {
 
 	flag.Parse()
 
-	shootName = fmt.Sprintf("%s-%s-%s", shootName, cloudprovider, util.RandomString(5))
+	shootName = fmt.Sprintf("%s-%s", shootName, util.RandomString(5))
 	testrunName := fmt.Sprintf("%s%s", testrunNamePrefix, util.RandomString(5))
 
 	config := &testrunner.TestrunConfig{
@@ -81,6 +84,9 @@ func main() {
 		Region:                  region,
 		Zone:                    zone,
 		K8sVersion:              k8sVersion,
+		MachineType:             machineType,
+		AutoscalerMin:           autoscalerMin,
+		AutoscalerMax:           autoscalerMax,
 		ComponentDescriptorPath: componenetDescriptorPath,
 	}
 
@@ -123,6 +129,9 @@ func init() {
 	flag.StringVar(&region, "region", "", "Region where the shoot is created.")
 	flag.StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
 	flag.StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
+	flag.StringVar(&machineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
+	flag.StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
+	flag.StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
 	flag.StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	flag.StringVar(&outputFilePath, "output-file-path", "", "The filepath where the summary should be written to.")
