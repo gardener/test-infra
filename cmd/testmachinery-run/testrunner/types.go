@@ -19,8 +19,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// SummaryType defines the type of a test result or summary
 type SummaryType string
 
+// Summary types can be testrun or teststep
 const (
 	SummaryTypeTestrun  SummaryType = "testrun"
 	SummaryTypeTeststep SummaryType = "teststep"
@@ -40,6 +42,9 @@ type TestrunParameters struct {
 	Region                  string
 	Zone                    string
 	K8sVersion              string
+	MachineType             string
+	AutoscalerMin           string
+	AutoscalerMax           string
 	ComponentDescriptorPath string
 }
 
