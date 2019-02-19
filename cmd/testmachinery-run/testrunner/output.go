@@ -41,7 +41,6 @@ import (
 func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) error {
 	var tmKubeConfigPath = config.TmKubeconfigPath
 	var s3Endpoint = config.S3Endpoint
-	var concourseOnErrorDir = config.ConcourseOnErrorDir
 
 	metadata.TestrunID = tr.Name
 
@@ -59,8 +58,6 @@ func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) er
 	if err != nil {
 		return err
 	}
-
-	generateNotificationConfigForAlerting(tr, concourseOnErrorDir)
 
 	osConfig, err := getOSConfig(tmKubeConfigPath, s3Endpoint)
 	if err != nil {
@@ -126,9 +123,9 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 
 }
 
-// Creates a notification config file with email recipients if any test step has failed
+// GenerateNotificationConfigForAlerting creates a notification config file with email recipients if any test step has failed
 // The config file is then evaluated by Concourse
-func generateNotificationConfigForAlerting(tr *tmv1beta1.Testrun, concourseOnErrorDir string) {
+func GenerateNotificationConfigForAlerting(tr []*tmv1beta1.Testrun, concourseOnErrorDir string) {
 	notifyConfig := createNotificationString(tr)
 	if notifyConfig == nil {
 		return
@@ -142,22 +139,24 @@ func generateNotificationConfigForAlerting(tr *tmv1beta1.Testrun, concourseOnErr
 	log.Infof("Successfully created file %s", notifyConfigFilePath)
 }
 
-func createNotificationString(tr *tmv1beta1.Testrun) []byte {
-	status := tr.Status
+func createNotificationString(testruns []*tmv1beta1.Testrun) []byte {
 
 	cfg := notificationCfg{
 		Email: email{
-			Subject:  fmt.Sprintf("Test Machinery - some steps failed in test run '%s'", tr.Name),
-			MailBody: fmt.Sprintf("Test Machinery steps have failed in test run '%s'.\n\nFailed Steps:\n", tr.Name),
+			Subject:  "Test Machinery - some steps failed",
+			MailBody: "Test Machinery steps have failed.\n\nFailed Steps:\n",
 		},
 	}
 
-	for _, steps := range status.Steps {
-		for _, step := range steps {
-			if step.Phase == argov1.NodeFailed {
-				cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
-				for _, email := range step.TestDefinition.RecipientsOnFailure {
-					cfg.Email.Recipients = append(cfg.Email.Recipients, email)
+	for _, tr := range testruns {
+		cfg.Email.MailBody = fmt.Sprintf("%s  Testrun: %s\n", cfg.Email.MailBody, tr.Name)
+		for _, steps := range tr.Status.Steps {
+			for _, step := range steps {
+				if step.Phase == argov1.NodeFailed {
+					cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
+					for _, email := range step.TestDefinition.RecipientsOnFailure {
+						cfg.Email.Recipients = append(cfg.Email.Recipients, email)
+					}
 				}
 			}
 		}

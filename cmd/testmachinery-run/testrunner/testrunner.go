@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
@@ -31,7 +32,6 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/gardener/gardener/pkg/operation/common"
 	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,7 +102,7 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		log.Fatalf("Cannot create chartrenderer for gardener  %s", err.Error())
 	}
 
-	err = common.ApplyChart(tmClusterClient, tmChartRenderer, parameters.TestrunChartPath, parameters.TestrunName, namespace, map[string]interface{}{
+	chart, err := tmChartRenderer.Render(parameters.TestrunChartPath, parameters.TestrunName, namespace, map[string]interface{}{
 		"testrunName": parameters.TestrunName,
 		"shoot": map[string]interface{}{
 			"name":             parameters.ShootName,
@@ -120,14 +120,74 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(gardenKubeconfig),
 		},
-	}, map[string]interface{}{})
+	})
 	if err != nil {
-		log.Fatalf("Cannot render and apply chart: %s", err.Error())
+		log.Fatalf("Cannot render chart: %s", err.Error())
 	}
 
+	// Try to parse each rendered file into a testrun.
+	// If a filecontent is a testrun then it is deployed into the testmachinery.
+	var wg sync.WaitGroup
+	mutex := &sync.Mutex{}
+	finishedTestruns := []*tmv1beta1.Testrun{}
+	for fileName, fileContent := range chart.Files {
+		tr, err := util.ParseTestrun([]byte(fileContent))
+		if err != nil {
+			log.Warnf("Cannot parse %s: %s", fileName, err.Error())
+		}
+
+		wg.Add(1)
+		go func(tr *tmv1beta1.Testrun) {
+			defer wg.Done()
+			tr, err := runTestrun(tmClient, tr, parameters)
+			if err != nil {
+				log.Error(err.Error())
+			}
+			mutex.Lock()
+			finishedTestruns = append(finishedTestruns, tr)
+			mutex.Unlock()
+		}(&tr)
+	}
+	wg.Wait()
+
+	log.Infof("\nAll testruns completed. \n")
+
+	testrunsFailed := false
+	for _, tr := range finishedTestruns {
+		err = Output(config, tr, metadata)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		err = PersistFile(outputFilePath)
+		if err != nil {
+			log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
+			return
+		}
+
+		if tr.Status.Phase == argov1.NodeSucceeded {
+			log.Infof("The testrun %s finished successfully", tr.Name)
+		} else {
+			testrunsFailed = true
+			log.Errorf("Testrun %s failed with phase %s", tr.Name, tr.Status.Phase)
+		}
+	}
+
+	GenerateNotificationConfigForAlerting(finishedTestruns, config.ConcourseOnErrorDir)
+
+	log.Info("Testrunner finished.")
+	if testrunsFailed {
+		os.Exit(1)
+	}
+}
+
+func runTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, parameters *TestrunParameters) (*tmv1beta1.Testrun, error) {
+	tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot create testrun: %s", err.Error())
+	}
 	log.Infof("Testrun %s deployed", parameters.TestrunName)
 
-	var tr *tmv1beta1.Testrun
 	var testrunPhase argov1.NodePhase
 	startTime := time.Now()
 	for !util.Completed(testrunPhase) {
@@ -137,7 +197,7 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 			log.Fatalf("Maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, parameters.TestrunName)
 		}
 
-		tr, err = tmClient.Testmachinery().Testruns("default").Get(parameters.TestrunName, metav1.GetOptions{})
+		tr, err = tmClient.Testmachinery().Testruns(namespace).Get(parameters.TestrunName, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("Cannot get testrun: %s", err.Error())
 		}
@@ -152,25 +212,5 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 	}
 
-	err = Output(config, tr, metadata)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	if testrunPhase == argov1.NodeSucceeded {
-		log.Info("The testrun finished successfully")
-	} else {
-		log.Errorf("Testrun failed with phase %s", testrunPhase)
-	}
-
-	err = PersistFile(outputFilePath)
-	if err != nil {
-		log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
-		return
-	}
-
-	log.Info("Testrunner finished.")
-	if testrunPhase != argov1.NodeSucceeded {
-		os.Exit(1)
-	}
+	return tr, nil
 }

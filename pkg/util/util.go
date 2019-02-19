@@ -51,13 +51,18 @@ func Completed(phase argov1.NodePhase) bool {
 	return false
 }
 
-// ParseTestrun reads the testrun.yaml file from filePath and parses the yaml.
-func ParseTestrun(filePath string) (tmv1beta1.Testrun, error) {
+// ParseTestrunFromFile reads a testrun.yaml file from filePath and parses the yaml.
+func ParseTestrunFromFile(filePath string) (tmv1beta1.Testrun, error) {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return tmv1beta1.Testrun{}, err
 	}
 
+	return ParseTestrun(data)
+}
+
+// ParseTestrun parses testrun.
+func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
 	jsonBody, err := yaml.ToJSON(data)
 	if err != nil {
 		return tmv1beta1.Testrun{}, err

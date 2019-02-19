@@ -32,7 +32,7 @@ func main() {
 	log.Info("Start Validator")
 	flag.Parse()
 
-	tr, err := util.ParseTestrun(trFilePath)
+	tr, err := util.ParseTestrunFromFile(trFilePath)
 	if err != nil {
 		log.Fatalf("Error parsing testrun: %s", err.Error())
 	}
