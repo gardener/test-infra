@@ -24,8 +24,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/elasticsearch"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,6 +37,9 @@ import (
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
 func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+	if config.OutputFile == "" {
+		return nil
+	}
 	var tmKubeConfigPath = config.TmKubeconfigPath
 	var s3Endpoint = config.S3Endpoint
 
@@ -123,56 +124,6 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 
 }
 
-// GenerateNotificationConfigForAlerting creates a notification config file with email recipients if any test step has failed
-// The config file is then evaluated by Concourse
-func GenerateNotificationConfigForAlerting(tr []*tmv1beta1.Testrun, concourseOnErrorDir string) {
-	notifyConfig := createNotificationString(tr)
-	if notifyConfig == nil {
-		return
-	}
-
-	notifyConfigFilePath := fmt.Sprintf("%s/notify.cfg", concourseOnErrorDir)
-	if err := writeToFile(notifyConfigFilePath, notifyConfig); err != nil {
-		log.Warnf("Cannot write file email notification config to %s: %s", notifyConfigFilePath, err.Error())
-		return
-	}
-	log.Infof("Successfully created file %s", notifyConfigFilePath)
-}
-
-func createNotificationString(testruns []*tmv1beta1.Testrun) []byte {
-
-	cfg := notificationCfg{
-		Email: email{
-			Subject:  "Test Machinery - some steps failed",
-			MailBody: "Test Machinery steps have failed.\n\nFailed Steps:\n",
-		},
-	}
-
-	for _, tr := range testruns {
-		cfg.Email.MailBody = fmt.Sprintf("%s  Testrun: %s\n", cfg.Email.MailBody, tr.Name)
-		for _, steps := range tr.Status.Steps {
-			for _, step := range steps {
-				if step.Phase == argov1.NodeFailed {
-					cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
-					for _, email := range step.TestDefinition.RecipientsOnFailure {
-						cfg.Email.Recipients = append(cfg.Email.Recipients, email)
-					}
-				}
-			}
-		}
-	}
-
-	if len(cfg.Email.Recipients) != 0 {
-		cfgBytes, err := yaml.Marshal(cfg)
-		if err != nil {
-			log.Warnf("Cannot encode email notification config %s", err.Error())
-			return nil
-		}
-		return cfgBytes
-	}
-	return nil
-}
-
 func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *Metadata) []byte {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, false)
@@ -254,7 +205,6 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 		}
 
 		if header.Typeflag == tar.TypeReg && header.Size > 0 {
-			file := []byte{}
 			file, err := ioutil.ReadAll(tarReader)
 			if err != nil {
 				return nil, fmt.Errorf("Cannot read from file %s in tar %s", header.Name, err.Error())

@@ -16,6 +16,7 @@ package testrunner
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,13 +52,26 @@ type TestrunParameters struct {
 // TestrunConfig are configuration of the evironment like the testmachinery cluster or S3 store
 // where the testrunner executes the testrun.
 type TestrunConfig struct {
-	TmKubeconfigPath     string
+	// Path to the kubeconfig where the testmachinery is running.
+	TmKubeconfigPath string
+
+	// Path to the kubeconfig where the gardener is running.
 	GardenKubeconfigPath string
-	Timeout              *int64
-	OutputFile           string
-	ESConfigName         string
-	S3Endpoint           string
-	ConcourseOnErrorDir  string
+
+	// Max wait time for a testrun to finish.
+	Timeout *int64
+
+	// outputFilePath is the path where the testresult is written to.
+	OutputFile string
+
+	// config name of the elastic search to store the test results.
+	ESConfigName string
+
+	// Endpint of the s3 storage of the testmachinery.
+	S3Endpoint string
+
+	// Path to the error directory of concourse to put the notify.cfg in.
+	ConcourseOnErrorDir string
 }
 
 // Metadata is the common metadata of all ouputs and summaries.
@@ -66,9 +80,10 @@ type Metadata struct {
 	Landscape         string `json:"landscape"`
 	CloudProvider     string `json:"cloudprovider"`
 	KubernetesVersion string `json:"kubernetes_version"`
+
 	// BOM describes the current component_descriptor of the direct landscape-setup components.
-	BOM       interface{} `json:"bom"`
-	TestrunID string      `json:"testrun_id"`
+	BOM       []*componentdescriptor.Component `json:"bom"`
+	TestrunID string                           `json:"testrun_id"`
 }
 
 // StepExportMetadata is the metadata of one step of a testrun.

@@ -160,3 +160,11 @@ func FormatArtifactName(name string) string {
 	reg := regexp.MustCompile(`[^[a-zA-Z0-9-]]*`)
 	return reg.ReplaceAllString(name, "-")
 }
+
+func PrettyPrintStruct(obj interface{}) string {
+	str, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		return ""
+	}
+	return string(str)
+}

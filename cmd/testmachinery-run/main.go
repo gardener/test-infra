@@ -59,7 +59,7 @@ func main() {
 	flag.Parse()
 
 	shootName = fmt.Sprintf("%s-%s", shootName, util.RandomString(5))
-	testrunName := fmt.Sprintf("%s%s", testrunNamePrefix, util.RandomString(5))
+	testrunName := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
 
 	config := &testrunner.TestrunConfig{
 		TmKubeconfigPath:     tmKubeconfigPath,
@@ -134,8 +134,8 @@ func init() {
 	flag.StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
 	flag.StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
-	flag.StringVar(&outputFilePath, "output-file-path", "", "The filepath where the summary should be written to.")
-	flag.StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
+	flag.StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
+	flag.StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	flag.StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	flag.StringVar(&concourseOnErrorDir, "concourseOnErrorDir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
