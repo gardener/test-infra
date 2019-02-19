@@ -122,7 +122,7 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		},
 	}, map[string]interface{}{})
 	if err != nil {
-		log.Fatalf("Cannot render chart %s", err.Error())
+		log.Fatalf("Cannot render and apply chart: %s", err.Error())
 	}
 
 	log.Infof("Testrun %s deployed", parameters.TestrunName)
