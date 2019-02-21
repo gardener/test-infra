@@ -41,7 +41,7 @@ var _ = Describe("Testflow", func() {
 
 		It("should fail when labels without matching testdefs are found", func() {
 			tf := &tmv1beta1.TestFlow{
-				[]tmv1beta1.TestflowStep{tmv1beta1.TestflowStep{Label: "noMatchingLabel"}},
+				[]tmv1beta1.TestflowStep{{Label: "noMatchingLabel"}},
 			}
 			locations := &testDefinitionsMock{
 				getTestDefinitions: func(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
@@ -53,7 +53,7 @@ var _ = Describe("Testflow", func() {
 
 		It("should succeed when an empty flow is ingored", func() {
 			tf := &tmv1beta1.TestFlow{
-				[]tmv1beta1.TestflowStep{tmv1beta1.TestflowStep{Label: "noMatchingLabel"}},
+				[]tmv1beta1.TestflowStep{{Label: "noMatchingLabel"}},
 			}
 			locations := &testDefinitionsMock{
 				getTestDefinitions: func(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
@@ -65,12 +65,12 @@ var _ = Describe("Testflow", func() {
 
 		It("should succeed when a testdef can be found", func() {
 			tf := &tmv1beta1.TestFlow{
-				[]tmv1beta1.TestflowStep{tmv1beta1.TestflowStep{Label: "noMatchingLabel"}},
+				[]tmv1beta1.TestflowStep{{Label: "noMatchingLabel"}},
 			}
 			locations := &testDefinitionsMock{
 				getTestDefinitions: func(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
 					testdefs := []*testdefinition.TestDefinition{
-						&testdefinition.TestDefinition{
+						{
 							Location: &locationMock{},
 							FileName: "file.name",
 							Info: &tmv1beta1.TestDefinition{

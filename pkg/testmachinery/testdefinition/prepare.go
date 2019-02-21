@@ -47,15 +47,15 @@ func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) *PrepareD
 			Image:   testmachinery.PREPARE_IMAGE,
 			Command: []string{"/tm/prepare", "/tm/repos.json"},
 			Env: []apiv1.EnvVar{
-				apiv1.EnvVar{
+				{
 					Name:  "TM_KUBECONFIG_PATH",
 					Value: testmachinery.TM_KUBECONFIG_PATH,
 				},
-				apiv1.EnvVar{
+				{
 					Name:  "TM_PHASE",
 					Value: "{{inputs.parameters.phase}}",
 				},
-				apiv1.EnvVar{
+				{
 					Name:  "TM_REPO_PATH",
 					Value: testmachinery.TM_REPO_PATH,
 				},
@@ -63,7 +63,7 @@ func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) *PrepareD
 		},
 		Inputs: argov1.Inputs{
 			Parameters: []argov1.Parameter{
-				argov1.Parameter{Name: "phase"},
+				{Name: "phase"},
 			},
 		},
 	}

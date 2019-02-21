@@ -76,8 +76,8 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should run a TesDef with a evironment variable defined by value", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "ValueConfigTestDef",
 					},
 				},
@@ -93,8 +93,8 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should run a TesDef with a evironment variable defined by a secret", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "SecretConfigTestDef",
 					},
 				},

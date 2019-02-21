@@ -43,11 +43,11 @@ var _ = Describe("componentdescriptor test", func() {
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_2")
 
 		result := []*Component{
-			&Component{
+			{
 				Name:    "repo1",
 				Version: "0.17.0",
 			},
-			&Component{
+			{
 				Name:    "repo2",
 				Version: "1.27.0",
 			},

@@ -62,15 +62,15 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 			Args:       def.Spec.Args,
 			WorkingDir: testmachinery.TM_REPO_PATH,
 			Env: []apiv1.EnvVar{
-				apiv1.EnvVar{
+				{
 					Name:  "TM_KUBECONFIG_PATH",
 					Value: testmachinery.TM_KUBECONFIG_PATH,
 				},
-				apiv1.EnvVar{
+				{
 					Name:  "TM_EXPORT_PATH",
 					Value: testmachinery.TM_EXPORT_PATH,
 				},
-				apiv1.EnvVar{
+				{
 					Name:  "TM_PHASE",
 					Value: "{{inputs.parameters.phase}}",
 				},
@@ -78,10 +78,10 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 		},
 		Inputs: argov1.Inputs{
 			Parameters: []argov1.Parameter{
-				argov1.Parameter{Name: "phase"},
+				{Name: "phase"},
 			},
 			Artifacts: []argov1.Artifact{
-				argov1.Artifact{
+				{
 					Name: "kubeconfigs",
 					Path: testmachinery.TM_KUBECONFIG_PATH,
 				},
@@ -89,7 +89,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 		},
 		Outputs: argov1.Outputs{
 			Artifacts: []argov1.Artifact{
-				argov1.Artifact{
+				{
 					Name: testmachinery.ExportArtifact,
 					Path: testmachinery.TM_EXPORT_PATH,
 				},

@@ -77,7 +77,7 @@ func (n *Node) Name() string {
 func (n *Node) addTask(lastSerialNode, rootNode *Node) {
 
 	artifacts := []argov1.Artifact{
-		argov1.Artifact{
+		{
 			Name: "kubeconfigs",
 			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", lastSerialNode.Task.Name),
 		},

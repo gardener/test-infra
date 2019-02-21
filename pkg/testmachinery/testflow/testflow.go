@@ -52,7 +52,7 @@ func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDe
 // GetTemplates returns all TestDefinitions templates and the DAG of the testrun
 func (tf *Testflow) GetTemplates(name string) ([]argov1.Template, error) {
 	templates := []argov1.Template{
-		argov1.Template{
+		{
 			Name: name,
 			DAG:  tf.Flow.DAG,
 		},

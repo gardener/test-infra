@@ -104,16 +104,16 @@ var _ = Describe("Result collection tests", func() {
 		It("should collect status of multiple workflow nodes", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "integration-testdef",
 					},
-					tmv1beta1.TestflowStep{
+					{
 						Label: "tm-no-testdefs",
 					},
 				},
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "integration-testdef",
 					},
 				},
@@ -140,16 +140,16 @@ var _ = Describe("Result collection tests", func() {
 		It("should collect status of multiple workflow nodes with a failing step", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "integration-testdef",
 					},
-					tmv1beta1.TestflowStep{
+					{
 						Name: "failing-integration-testdef",
 					},
 				},
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "integration-testdef",
 					},
 				},

@@ -96,7 +96,7 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should run a test with TestDefs defined by label and name", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
-				tmv1beta1.TestflowStep{
+				{
 					Label: "tm-integration",
 				},
 			})
@@ -118,13 +118,13 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should execute all tests in right order when no testdefs for a label can be found", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
-				tmv1beta1.TestflowStep{
+				{
 					Name: "integration-testdef",
 				},
-				tmv1beta1.TestflowStep{
+				{
 					Label: "tm-no-testdefs",
 				},
-				tmv1beta1.TestflowStep{
+				{
 					Name: "integration-testdef",
 				},
 			})
@@ -146,8 +146,8 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should execute serial steps after parallel steps", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Label: "tm-integration",
 					},
 				},
@@ -177,14 +177,14 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should mount a config as environement variable", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "check-envvar-testdef",
 					},
 				},
 			}
 			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-				tmv1beta1.ConfigElement{
+				{
 					Type:  tmv1beta1.ConfigTypeEnv,
 					Name:  "TEST_NAME",
 					Value: "test",
@@ -200,14 +200,14 @@ var _ = Describe("Testflow execution tests", func() {
 		It("should mount a global config as environement variable", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "check-envvar-testdef",
 					},
 				},
 			}
 			tr.Spec.Config = []tmv1beta1.ConfigElement{
-				tmv1beta1.ConfigElement{
+				{
 					Type:  tmv1beta1.ConfigTypeEnv,
 					Name:  "TEST_NAME",
 					Value: "test",

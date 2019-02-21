@@ -27,8 +27,8 @@ var _ = Describe("Testmachinery controller update", func() {
 		testrunTmpl = tmv1beta1.Testrun{
 			Status: tmv1beta1.TestrunStatus{
 				Steps: [][]*tmv1beta1.TestflowStepStatus{
-					[]*tmv1beta1.TestflowStepStatus{
-						&tmv1beta1.TestflowStepStatus{
+					{
+						{
 							Phase: tmv1beta1.PhaseStatusInit,
 							TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 								Name: "testdef1",
@@ -45,7 +45,7 @@ var _ = Describe("Testmachinery controller update", func() {
 		workflowTmpl = argov1.Workflow{
 			Spec: argov1.WorkflowSpec{
 				Templates: []argov1.Template{
-					argov1.Template{
+					{
 						Name: "template1",
 						Metadata: argov1.Metadata{
 							Annotations: map[string]string{
@@ -60,7 +60,7 @@ var _ = Describe("Testmachinery controller update", func() {
 			},
 			Status: argov1.WorkflowStatus{
 				Nodes: map[string]argov1.NodeStatus{
-					"node1": argov1.NodeStatus{
+					"node1": {
 						TemplateName: "template1",
 						Phase:        argov1.NodeRunning,
 					},
@@ -75,8 +75,8 @@ var _ = Describe("Testmachinery controller update", func() {
 			wf := workflowTmpl
 			updateStepsStatus(&tr, &wf)
 			Expect(tr.Status.Steps).To(Equal([][]*tmv1beta1.TestflowStepStatus{
-				[]*tmv1beta1.TestflowStepStatus{
-					&tmv1beta1.TestflowStepStatus{
+				{
+					{
 						Phase: argov1.NodeRunning,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef1",
@@ -93,8 +93,8 @@ var _ = Describe("Testmachinery controller update", func() {
 		It("should update the status of multiple steps and templates", func() {
 			tr := testrunTmpl
 			tr.Status.Steps = [][]*tmv1beta1.TestflowStepStatus{
-				[]*tmv1beta1.TestflowStepStatus{
-					&tmv1beta1.TestflowStepStatus{
+				{
+					{
 						Phase: tmv1beta1.PhaseStatusInit,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef1",
@@ -105,8 +105,8 @@ var _ = Describe("Testmachinery controller update", func() {
 						},
 					},
 				},
-				[]*tmv1beta1.TestflowStepStatus{
-					&tmv1beta1.TestflowStepStatus{
+				{
+					{
 						Phase: tmv1beta1.PhaseStatusInit,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef2",
@@ -116,7 +116,7 @@ var _ = Describe("Testmachinery controller update", func() {
 							},
 						},
 					},
-					&tmv1beta1.TestflowStepStatus{
+					{
 						Phase: tmv1beta1.PhaseStatusInit,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef3",
@@ -126,7 +126,7 @@ var _ = Describe("Testmachinery controller update", func() {
 							},
 						},
 					},
-					&tmv1beta1.TestflowStepStatus{
+					{
 						Phase: tmv1beta1.PhaseStatusInit,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef2",
@@ -140,7 +140,7 @@ var _ = Describe("Testmachinery controller update", func() {
 			}
 			wf := workflowTmpl
 			wf.Spec.Templates = []argov1.Template{
-				argov1.Template{
+				{
 					Name: "template1",
 					Metadata: argov1.Metadata{
 						Annotations: map[string]string{
@@ -151,7 +151,7 @@ var _ = Describe("Testmachinery controller update", func() {
 						},
 					},
 				},
-				argov1.Template{
+				{
 					Name: "template2",
 					Metadata: argov1.Metadata{
 						Annotations: map[string]string{
@@ -162,7 +162,7 @@ var _ = Describe("Testmachinery controller update", func() {
 						},
 					},
 				},
-				argov1.Template{
+				{
 					Name: "template3",
 					Metadata: argov1.Metadata{
 						Annotations: map[string]string{
@@ -172,7 +172,7 @@ var _ = Describe("Testmachinery controller update", func() {
 						},
 					},
 				},
-				argov1.Template{
+				{
 					Name: "template4",
 					Metadata: argov1.Metadata{
 						Annotations: map[string]string{
@@ -184,27 +184,27 @@ var _ = Describe("Testmachinery controller update", func() {
 				},
 			}
 			wf.Status.Nodes = map[string]argov1.NodeStatus{
-				"node1": argov1.NodeStatus{
+				"node1": {
 					TemplateName: "template1",
 					Phase:        argov1.NodeSucceeded,
 				},
-				"node2": argov1.NodeStatus{
+				"node2": {
 					TemplateName: "template2",
 					Phase:        argov1.NodeFailed,
 				},
-				"node3": argov1.NodeStatus{
+				"node3": {
 					TemplateName: "template4",
 					Phase:        argov1.NodeSucceeded,
 				},
-				"node4": argov1.NodeStatus{
+				"node4": {
 					TemplateName: "template3",
 					Phase:        argov1.NodeRunning,
 				},
 			}
 			updateStepsStatus(&tr, &wf)
 			Expect(tr.Status.Steps).To(Equal([][]*tmv1beta1.TestflowStepStatus{
-				[]*tmv1beta1.TestflowStepStatus{
-					&tmv1beta1.TestflowStepStatus{
+				{
+					{
 						Phase: argov1.NodeSucceeded,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef1",
@@ -215,8 +215,8 @@ var _ = Describe("Testmachinery controller update", func() {
 						},
 					},
 				},
-				[]*tmv1beta1.TestflowStepStatus{
-					&tmv1beta1.TestflowStepStatus{
+				{
+					{
 						Phase: argov1.NodeFailed,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef2",
@@ -226,7 +226,7 @@ var _ = Describe("Testmachinery controller update", func() {
 							},
 						},
 					},
-					&tmv1beta1.TestflowStepStatus{
+					{
 						Phase: argov1.NodeRunning,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef3",
@@ -236,7 +236,7 @@ var _ = Describe("Testmachinery controller update", func() {
 							},
 						},
 					},
-					&tmv1beta1.TestflowStepStatus{
+					{
 						Phase: argov1.NodeSucceeded,
 						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
 							Name: "testdef2",

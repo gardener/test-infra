@@ -26,15 +26,15 @@ var basicTestrun = &tmv1beta1.Testrun{
 	Spec: tmv1beta1.TestrunSpec{
 		Creator: "tm-integration",
 		TestLocations: []tmv1beta1.TestLocation{
-			tmv1beta1.TestLocation{
+			{
 				Type:     tmv1beta1.LocationTypeGit,
 				Repo:     "https://github.com/gardener/test-infra.git",
 				Revision: "master",
 			},
 		},
 		TestFlow: [][]tmv1beta1.TestflowStep{
-			[]tmv1beta1.TestflowStep{
-				tmv1beta1.TestflowStep{
+			{
+				{
 					Name: "integration-testdef",
 				},
 			},
@@ -54,8 +54,8 @@ func GetBasicTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 func GetFailingTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 	tr := GetBasicTestrun(namespace, commitSha)
 	tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-		[]tmv1beta1.TestflowStep{
-			tmv1beta1.TestflowStep{
+		{
+			{
 				Name: "failing-integration-testdef",
 			},
 		},
@@ -66,8 +66,8 @@ func GetFailingTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 // GetTestrunWithExitHandler returns a working testrun object with an onExit handler with a specific condition.
 func GetTestrunWithExitHandler(tr *tmv1beta1.Testrun, condition tmv1beta1.ConditionType) *tmv1beta1.Testrun {
 	tr.Spec.OnExit = [][]tmv1beta1.TestflowStep{
-		[]tmv1beta1.TestflowStep{
-			tmv1beta1.TestflowStep{
+		{
+			{
 				Name:      "exit-handler-testdef",
 				Condition: condition,
 			},

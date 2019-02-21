@@ -62,8 +62,8 @@ var _ = Describe("Testrun validation tests", func() {
 		It("should reject when name contains '.'", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Name: "integration.testdef",
 					},
 				},
@@ -125,8 +125,8 @@ var _ = Describe("Testrun validation tests", func() {
 
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				[]tmv1beta1.TestflowStep{
-					tmv1beta1.TestflowStep{
+				{
+					{
 						Label: "NoTestDefsFoundLabel",
 					},
 				},

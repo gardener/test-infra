@@ -42,9 +42,9 @@ var _ = Describe("Config", func() {
 					Expect(newElem.Name).ToNot(Equal(""))
 				}
 			},
-			Entry("1 element", []tmv1beta1.ConfigElement{tmv1beta1.ConfigElement{Name: "test1", Value: "", Type: "env"}}),
-			Entry("3 elements", []tmv1beta1.ConfigElement{tmv1beta1.ConfigElement{Name: "test1", Value: "", Type: "env"},
-				tmv1beta1.ConfigElement{Name: "test2", Value: "", Type: "env"}, tmv1beta1.ConfigElement{Name: "test3", Value: "", Type: "env"}}),
+			Entry("1 element", []tmv1beta1.ConfigElement{{Name: "test1", Value: "", Type: "env"}}),
+			Entry("3 elements", []tmv1beta1.ConfigElement{{Name: "test1", Value: "", Type: "env"},
+				{Name: "test2", Value: "", Type: "env"}, {Name: "test3", Value: "", Type: "env"}}),
 			Entry("0 elements", []tmv1beta1.ConfigElement{}),
 		)
 
