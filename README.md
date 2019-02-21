@@ -1,4 +1,5 @@
 # Test Machinery
+[![Go Report Card](https://goreportcard.com/badge/github.com/gardener/test-infra)](https://goreportcard.com/report/github.com/gardener/test-infra)
 
 ### Note, this project is WIP, so expect outdated documentation
 
