@@ -28,7 +28,7 @@ const (
 	SummaryTypeTeststep SummaryType = "teststep"
 )
 
-// TestrunParameters are the paramters which describe the test that is executed by the testrunner.
+// TestrunParameters are the parameters which describe the test that is executed by the testrunner.
 type TestrunParameters struct {
 	TestrunName      string
 	TestrunChartPath string

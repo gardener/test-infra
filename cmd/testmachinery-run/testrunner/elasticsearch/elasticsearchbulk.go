@@ -44,7 +44,7 @@ func (b *Bulk) Marshal() (*bytes.Buffer, error) {
 	return buf, nil
 }
 
-// ParseExportedFiles reads jsondocuments line by line from an expected file where multiple jsons are seperated by newline.
+// ParseExportedFiles reads jsondocuments line by line from an expected file where multiple jsons are separated by newline.
 func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) []byte {
 
 	// first try to parse document as normal json.

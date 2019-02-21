@@ -100,7 +100,7 @@ func WatchTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namesp
 	return foundTestrun, nil
 }
 
-// DeleteTestrun deletes a testrun and expects to be successfull.
+// DeleteTestrun deletes a testrun and expects to be successful.
 func DeleteTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun) {
 	// wf is not deleted if testrun is triggered but deleted before wf can be deployed.
 	// Strange timing in validation test with kubeconfig.
@@ -112,7 +112,7 @@ func DeleteTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun) {
 	}
 }
 
-// WaitForClusterReadiness waits for all testmachinery componenets to be ready.
+// WaitForClusterReadiness waits for all testmachinery components to be ready.
 func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime int64) {
 	startTime := time.Now()
 	for {

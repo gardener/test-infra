@@ -125,7 +125,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			Expect(scanner.Err()).ToNot(HaveOccurred())
 		})
 
-		It("should add exported artifacts to the elasticsearch bulk ouput", func() {
+		It("should add exported artifacts to the elasticsearch bulk output", func() {
 			testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)

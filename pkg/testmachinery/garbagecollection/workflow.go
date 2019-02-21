@@ -13,7 +13,7 @@ import (
 )
 
 // CleanWorkflowPods deletes all pods of a completed workflow.
-// cleanup pods to remove workload from the api server adn etcd.
+// cleanup pods to remove workload from the api server and etcd.
 // logs are still accessible through "archiveLogs" option in argo
 func CleanWorkflowPods(c client.Client, wf *argov1.Workflow) {
 	if testmachinery.GetConfig().CleanWorkflowPods {
@@ -27,11 +27,11 @@ func CleanWorkflowPods(c client.Client, wf *argov1.Workflow) {
 	}
 }
 
-func deletePod(c client.Client, namesapce, name string) error {
+func deletePod(c client.Client, namespace, name string) error {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namesapce,
+			Namespace: namespace,
 		},
 	}
 	return c.Delete(context.TODO(), pod)

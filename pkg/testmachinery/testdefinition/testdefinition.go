@@ -36,7 +36,7 @@ var (
 const (
 	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
 	AnnotationFlow        = "testmachinery.sapcloud.io/Flow"
-	AnnotationPosition    = "testmachinery.sapcloud.io/Position" // position of the source step in teh format row/colum
+	AnnotationPosition    = "testmachinery.sapcloud.io/Position" // position of the source step in the format row/colum
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.

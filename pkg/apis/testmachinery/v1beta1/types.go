@@ -164,14 +164,14 @@ type TestLocation struct {
 	HostPath string `json:"hostPath,omitempty" yaml:"hostPath"`
 }
 
-// TestrunKubeconfigs are paramaters where Shoot, Seed or a Gardener kubeconfig for the Testrun can be specified.
+// TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener kubeconfig for the Testrun can be specified.
 type TestrunKubeconfigs struct {
 	Gardener string `json:"gardener,omitempty" yaml:"gardener"`
 	Seed     string `json:"seed,omitempty" yaml:"seed"`
 	Shoot    string `json:"shoot,omitempty" yaml:"shoot"`
 }
 
-// ConfigElement is a paramter of a certain type which is passed to TestDefinitions.
+// ConfigElement is a parameter of a certain type which is passed to TestDefinitions.
 type ConfigElement struct {
 	// Name of the environment variable. Must be a C_IDENTIFIER.
 	Name string `json:"name" yaml:"name"`
@@ -184,7 +184,7 @@ type ConfigElement struct {
 	ValueFrom *corev1.EnvVarSource `json:"valueFrom,omitempty"`
 }
 
-// TestFlow is a 2 dimensional array of testflowsteps whcih define the execution order of TestDefinitions.
+// TestFlow is a 2 dimensional array of testflowsteps which define the execution order of TestDefinitions.
 type TestFlow [][]TestflowStep
 
 // TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep

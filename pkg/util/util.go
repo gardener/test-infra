@@ -107,7 +107,7 @@ func DownloadFile(client *http.Client, url string) ([]byte, error) {
 	return data, nil
 }
 
-// Getenv returns the string value of the environment varibale with the provided key if the env var exists.
+// Getenv returns the string value of the environment variable with the provided key if the env var exists.
 // Otherwise the default value is returned
 func Getenv(key, defaultValue string) string {
 	if os.Getenv(key) != "" {
@@ -116,7 +116,7 @@ func Getenv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// GetenvBool returns the boolean value of the environment varibale with the provided key if the env var exists and can be parsed.
+// GetenvBool returns the boolean value of the environment variable with the provided key if the env var exists and can be parsed.
 // Otherwise the default value is returned
 func GetenvBool(key string, defaultValue bool) bool {
 	env := os.Getenv(key)

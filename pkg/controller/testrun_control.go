@@ -91,7 +91,7 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 			return reconcile.Result{}, err
 		}
 	} else if err != nil {
-		log.Errorf("Cannnot get workflow %s in namespace %s\n%s", getWorkflowName(tr), tr.Namespace, err.Error())
+		log.Errorf("Cannot get workflow %s in namespace %s: %s", getWorkflowName(tr), tr.Namespace, err.Error())
 		return reconcile.Result{}, err
 	}
 

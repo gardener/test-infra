@@ -119,8 +119,8 @@ var _ = Describe("TestDefinition Validation", func() {
 			location.Type = ""
 			Expect(testdefinition.ValidateLocation("identifier", location)).To(HaveOccurred())
 		})
-		It("should fail when an unkown type is defined", func() {
-			location.Type = "unkownType"
+		It("should fail when an unknown type is defined", func() {
+			location.Type = "unknownType"
 			Expect(testdefinition.ValidateLocation("identifier", location)).To(HaveOccurred())
 		})
 

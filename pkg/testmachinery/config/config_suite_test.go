@@ -59,7 +59,7 @@ var _ = Describe("Config", func() {
 			Expect(config.Validate("identifier", elem)).To(HaveOccurred())
 		})
 
-		It("should fail with unkown config type", func() {
+		It("should fail with unknown config type", func() {
 			elem := tmv1beta1.ConfigElement{
 				Name: "testConfig",
 				Type: "en",
