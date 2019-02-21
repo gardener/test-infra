@@ -15,12 +15,14 @@
 package testflow_test
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -34,6 +36,7 @@ import (
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -51,10 +54,11 @@ func TestValidationWebhook(t *testing.T) {
 var _ = Describe("Testflow execution tests", func() {
 
 	var (
-		commitSha  string
-		namespace  string
-		tmClient   *tmclientset.Clientset
-		argoClient *argoclientset.Clientset
+		commitSha     string
+		namespace     string
+		tmClient      *tmclientset.Clientset
+		argoClient    *argoclientset.Clientset
+		clusterClient kubernetes.Interface
 	)
 
 	BeforeSuite(func() {
@@ -70,7 +74,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 		argoClient = argoclientset.NewForConfigOrDie(tmConfig)
 
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		clusterClient, err = kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
 		Expect(err).ToNot(HaveOccurred())
 		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
 	})
@@ -80,8 +84,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -102,8 +106,8 @@ var _ = Describe("Testflow execution tests", func() {
 			})
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -130,8 +134,8 @@ var _ = Describe("Testflow execution tests", func() {
 			})
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -154,8 +158,8 @@ var _ = Describe("Testflow execution tests", func() {
 			}
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			for _, node := range wf.Status.Nodes {
 				if strings.HasPrefix(node.TemplateName, "integration-testdef") {
@@ -174,52 +178,193 @@ var _ = Describe("Testflow execution tests", func() {
 	})
 
 	Context("config", func() {
-		It("should mount a config as environement variable", func() {
+		Context("type environment variable", func() {
+			It("should mount a config as environment variable", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "check-envvar-testdef",
+						},
+					},
+				}
+				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
+					{
+						Type:  tmv1beta1.ConfigTypeEnv,
+						Name:  "TEST_NAME",
+						Value: "test",
+					},
+				}
+
+				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
+
+			})
+
+			It("should mount a global config as environement variable", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "check-envvar-testdef",
+						},
+					},
+				}
+				tr.Spec.Config = []tmv1beta1.ConfigElement{
+					{
+						Type:  tmv1beta1.ConfigTypeEnv,
+						Name:  "TEST_NAME",
+						Value: "test",
+					},
+				}
+
+				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
+
+			})
+		})
+
+		Context("type file", func() {
+			It("should mount a config with value as file to a specific path", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "check-file-testdef",
+						},
+					},
+				}
+				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
+					{
+						Type:  tmv1beta1.ConfigTypeEnv,
+						Name:  "FILE",
+						Value: "/tmp/test",
+					},
+					{
+						Type:  tmv1beta1.ConfigTypeFile,
+						Name:  "TEST_NAME",
+						Value: "dGVzdAo=", // base64 encoded 'test' string
+						Path:  "/tmp/test",
+					},
+				}
+
+				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				Expect(err).ToNot(HaveOccurred())
+				defer utils.DeleteTestrun(tmClient, tr)
+
+			})
+		})
+
+		It("should mount a config from a secret as file to a specific path", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "test-secret-",
+					Namespace:    namespace,
+				},
+				Type: corev1.SecretTypeOpaque,
+				Data: map[string][]byte{
+					"test": []byte("test"),
+				},
+			}
+			err := clusterClient.Client().Create(ctx, secret)
+			Expect(err).ToNot(HaveOccurred())
+			defer func() {
+				err := clusterClient.Client().Delete(ctx, secret)
+				Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
+			}()
+
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
 					{
-						Name: "check-envvar-testdef",
+						Name: "check-file-testdef",
 					},
 				},
 			}
 			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
 				{
 					Type:  tmv1beta1.ConfigTypeEnv,
-					Name:  "TEST_NAME",
-					Value: "test",
+					Name:  "FILE",
+					Value: "/tmp/test/test.txt",
+				},
+				{
+					Type: tmv1beta1.ConfigTypeFile,
+					Name: "TEST_NAME",
+					Path: "/tmp/test/test.txt",
+					ValueFrom: &tmv1beta1.ConfigSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: "test",
+						},
+					},
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
+			tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 		})
 
-		It("should mount a global config as environement variable", func() {
+		It("should mount a config from a configmap as file to a specific path", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			configmap := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "test-configmap-",
+					Namespace:    namespace,
+				},
+				Data: map[string]string{
+					"test": "test",
+				},
+			}
+			err := clusterClient.Client().Create(ctx, configmap)
+			Expect(err).ToNot(HaveOccurred())
+			defer func() {
+				err := clusterClient.Client().Delete(ctx, configmap)
+				Expect(err).ToNot(HaveOccurred(), "Cannot delete configmap %s", configmap.Name)
+			}()
+
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
 					{
-						Name: "check-envvar-testdef",
+						Name: "check-file-testdef",
 					},
 				},
 			}
-			tr.Spec.Config = []tmv1beta1.ConfigElement{
+			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
 				{
 					Type:  tmv1beta1.ConfigTypeEnv,
-					Name:  "TEST_NAME",
-					Value: "test",
+					Name:  "FILE",
+					Value: "/tmp/test/test.txt",
+				},
+				{
+					Type: tmv1beta1.ConfigTypeFile,
+					Name: "TEST_NAME",
+					Path: "/tmp/test/test.txt",
+					ValueFrom: &tmv1beta1.ConfigSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: configmap.Name,
+							},
+							Key: "test",
+						},
+					},
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
+			tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 		})
-
 	})
 
 	Context("onExit", func() {
@@ -227,8 +372,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(namespace, commitSha), tmv1beta1.ConditionTypeSuccess)
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -244,10 +389,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(namespace, commitSha), tmv1beta1.ConditionTypeError)
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
-				defer utils.DeleteTestrun(tmClient, tr)
-			}
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -263,8 +406,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetTestrunWithExitHandler(resources.GetFailingTestrun(namespace, commitSha), tmv1beta1.ConditionTypeError)
 
 			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
 			for _, node := range wf.Status.Nodes {
@@ -285,8 +428,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
 			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
-			Expect(err).ToNot(HaveOccurred(), "Testrun: %s", tr.Name)
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {
@@ -308,8 +451,8 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
 			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {

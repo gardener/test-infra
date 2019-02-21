@@ -70,5 +70,5 @@ func (tf *Testflow) GetTemplates(name string) ([]argov1.Template, error) {
 
 // GetLocalVolumes returns all volumes of local TestDefLocations
 func (tf *Testflow) GetLocalVolumes() []apiv1.Volume {
-	return tf.Flow.GetLocalVolumes()
+	return tf.Flow.GetVolumes()
 }

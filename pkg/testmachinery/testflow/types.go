@@ -25,7 +25,9 @@ import (
 type FlowIdentifier string
 
 const (
+	// FlowIDTest represents the flow identifier of the main testflow "spec.testflow"
 	FlowIDTest FlowIdentifier = "testflow"
+	// FlowIDExit represents the flow identifier of the onExit testflow "spec.onExit"
 	FlowIDExit FlowIdentifier = "exit"
 )
 
@@ -44,6 +46,7 @@ type Flow struct {
 	testdefinitions map[*testdefinition.TestDefinition]interface{}
 	usedLocations   map[testdefinition.Location]interface{}
 	globalConfig    []*config.Element
+	usedConfig      []*config.Element
 }
 
 // Step is a TestflowStep with its specific Row and Column in the testflow.

@@ -116,6 +116,7 @@ echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 # run integration tests with ginkgo
 TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/validationwebhook
 TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/testflow
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/testdefinition
 TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/garbagecollection
 TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/controller/resultcollection
 TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=3 ./test/testrunner

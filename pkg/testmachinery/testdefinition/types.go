@@ -17,6 +17,7 @@ package testdefinition
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
 )
 
 // TestDefinition represents a TestDefinition which was fetched from locations.
@@ -26,6 +27,7 @@ type TestDefinition struct {
 	Location Location
 	FileName string
 	Template *argov1.Template
+	Config   []*config.Element
 }
 
 // PrepareDefinition is the TestDefinition of the prepare step to initiliaze the setup.

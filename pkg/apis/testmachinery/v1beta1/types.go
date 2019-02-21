@@ -48,7 +48,8 @@ type ConfigType string
 
 // ConfigElement types
 const (
-	ConfigTypeEnv = "env"
+	ConfigTypeEnv  = "env"
+	ConfigTypeFile = "file"
 )
 
 // Testrun statuses
@@ -64,10 +65,10 @@ const (
 // Testrun is the description of the testflow that should be executed.
 // +k8s:openapi-gen=true
 type Testrun struct {
-	metav1.TypeMeta   `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TestrunSpec   `json:"spec" yaml:"spec"`
+	Spec   TestrunSpec   `json:"spec"`
 	Status TestrunStatus `json:"status"`
 }
 
@@ -82,27 +83,27 @@ type TestrunList struct {
 
 // TestrunSpec is the specification of a Testrun.
 type TestrunSpec struct {
-	Creator string `json:"creator,omitempty" yaml:"creator"`
+	Creator string `json:"creator,omitempty"`
 
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// TestLocation define repositories to look for TestDefinitions that then executed in a workkflow as specified in testflow.
-	TestLocations []TestLocation `json:"testLocations,omitempty" yaml:"testLocations"`
+	TestLocations []TestLocation `json:"testLocations,omitempty"`
 
 	// Base64 encoded kubeconfigs that are mounted to every testflow step.
 	// They are available at $TM_KUBECONFIG_PATH/xxx.config, where xxx is either (gardener, seed or shoot).
 	// +optional
-	Kubeconfigs TestrunKubeconfigs `json:"kubeconfigs,omitempty" yaml:"kubeconfigs"`
+	Kubeconfigs TestrunKubeconfigs `json:"kubeconfigs,omitempty"`
 
 	// Global config which is available to all tests in the testflow and onExit flow.
 	// +optional
-	Config []ConfigElement `json:"config,omitempty" yaml:"config"`
+	Config []ConfigElement `json:"config,omitempty"`
 
-	TestFlow TestFlow `json:"testFlow,omitempty" yaml:"testFlow"`
+	TestFlow TestFlow `json:"testFlow,omitempty"`
 
 	// OnExit flow is called when the test is completed.
 	// +optional
-	OnExit TestFlow `json:"onExit,omitempty" yaml:"onExit"`
+	OnExit TestFlow `json:"onExit,omitempty"`
 }
 
 // TestrunStatus is the status of the Testrun.
@@ -152,36 +153,54 @@ type TestflowStepStatusTestDefinition struct {
 
 // TestLocation describes a location to search for TestDefinitions.
 type TestLocation struct {
-	Type LocationType `json:"type" yaml:"type"`
+	Type LocationType `json:"type"`
 	// Only for LocationType git
 	// +optional
-	Repo string `json:"repo,omitempty" yaml:"repo"`
+	Repo string `json:"repo,omitempty"`
 	// +optional
-	Revision string `json:"revision,omitempty" yaml:"revision"`
+	Revision string `json:"revision,omitempty"`
 	// The absolute host on the minikube VM.
 	// Only for local
 	// +optional
-	HostPath string `json:"hostPath,omitempty" yaml:"hostPath"`
+	HostPath string `json:"hostPath,omitempty"`
 }
 
 // TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener kubeconfig for the Testrun can be specified.
 type TestrunKubeconfigs struct {
-	Gardener string `json:"gardener,omitempty" yaml:"gardener"`
-	Seed     string `json:"seed,omitempty" yaml:"seed"`
-	Shoot    string `json:"shoot,omitempty" yaml:"shoot"`
+	Gardener string `json:"gardener,omitempty"`
+	Seed     string `json:"seed,omitempty"`
+	Shoot    string `json:"shoot,omitempty"`
 }
 
 // ConfigElement is a parameter of a certain type which is passed to TestDefinitions.
 type ConfigElement struct {
+	// Type of the config value. For now only environament varibales are supported.
+	Type ConfigType `json:"type"`
+
 	// Name of the environment variable. Must be a C_IDENTIFIER.
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name"`
+
 	// value of the environament variable.
 	// +opional
-	Value string `json:"value" yaml:"value"`
-	// Type of the config value. For now only environament varibales are supported.
-	Type ConfigType `json:"type" yaml:"type"`
+	Value string `json:"value"`
+
+	// Fetches the value from a secret or configmap on the testmachinery cluster.
 	// +optional
-	ValueFrom *corev1.EnvVarSource `json:"valueFrom,omitempty"`
+	ValueFrom *ConfigSource `json:"valueFrom,omitempty"`
+
+	// Only for type=file. Path where the file should be mounted.
+	// +optional
+	Path string `json:"path"`
+}
+
+// ConfigSource represents a source for the value of a config element.
+type ConfigSource struct {
+	// Selects a key of a ConfigMap.
+	// +optional
+	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a secret in the pod's namespace
+	// +optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // TestFlow is a 2 dimensional array of testflowsteps which define the execution order of TestDefinitions.
@@ -190,41 +209,42 @@ type TestFlow [][]TestflowStep
 // TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep
 // TestDefinitions can be either defined by a Name or a Label.
 type TestflowStep struct {
-	Name      string          `json:"name,omitempty" yaml:"name"`
-	Label     string          `json:"label,omitempty" yaml:"label"`
-	Condition ConditionType   `json:"condition,omitempty" yaml:"condition"`
-	Config    []ConfigElement `json:"config,omitempty" yaml:"config"`
+	Name      string          `json:"name,omitempty"`
+	Label     string          `json:"label,omitempty"`
+	Condition ConditionType   `json:"condition,omitempty"`
+	Config    []ConfigElement `json:"config,omitempty"`
 }
 
 ////////////////////////////////////////////////////
 //                TESTDEFINITION                  //
 ////////////////////////////////////////////////////
 
+// TestDefinitionName is the kind identifier of a testdefinition.
 const TestDefinitionName = "TestDefinition"
 
 // TestDefinition describes the execution of a test.
 type TestDefinition struct {
-	Kind     string          `json:"kind" yaml:"kind"`
-	Metadata TestDefMetadata `json:"metadata,omitempty" yaml:"metadata"`
+	Kind     string          `json:"kind"`
+	Metadata TestDefMetadata `json:"metadata,omitempty"`
 
-	Spec TestDefSpec `json:"spec" yaml:"spec"`
+	Spec TestDefSpec `json:"spec"`
 }
 
 // TestDefMetadata holds the metadata of a testrun.
 type TestDefMetadata struct {
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name"`
 }
 
 // TestDefSpec is the actual description of the test.
 type TestDefSpec struct {
-	Owner                 string          `json:"owner" yaml:"owner"`
-	RecipientsOnFailure   []string        `json:"recipientsOnFailure" yaml:"recipientsOnFailure"`
-	Description           string          `json:"description" yaml:"description"`
-	Labels                []string        `json:"labels" yaml:"labels"`
-	Behavior              []string        `json:"behavior" yaml:"behavior"`
-	ActiveDeadlineSeconds *int64          `json:"activeDeadlineSeconds" yaml:"activeDeadlineSeconds"`
-	Command               []string        `json:"command" yaml:"command"`
-	Args                  []string        `json:"args" yaml:"args"`
-	Image                 string          `json:"image" yaml:"image"`
-	Config                []ConfigElement `json:"config,omitempty" yaml:"config"`
+	Owner                 string          `json:"owner"`
+	RecipientsOnFailure   []string        `json:"recipientsOnFailure"`
+	Description           string          `json:"description"`
+	Labels                []string        `json:"labels"`
+	Behavior              []string        `json:"behavior"`
+	ActiveDeadlineSeconds *int64          `json:"activeDeadlineSeconds"`
+	Command               []string        `json:"command"`
+	Args                  []string        `json:"args"`
+	Image                 string          `json:"image"`
+	Config                []ConfigElement `json:"config,omitempty"`
 }

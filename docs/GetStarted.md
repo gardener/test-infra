@@ -5,9 +5,11 @@
     - [Input Contract](#input-contract)
     - [Export Contract](#export-contract)
     - [Images](#images)
-      - [Base image (eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.28.0)](#base-image-eugcriogardener-projectgardenertestmachinerybase-step0280)
-      - [Golang image (eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.28.0)](#golang-image-eugcriogardener-projectgardenertestmachinerygolang0280)
   - [Create a Testrun](#create-a-testrun)
+  - [Configuration](#configuration)
+    - [Types](#types)
+    - [Sources](#sources)
+    - [Location](#location)
 
 ## Create a Test
 
@@ -48,6 +50,7 @@ spec:
   # optional; Configuration of a TestDefinition.
   # Environment Variables can be configured per TestDefinition
   # by specifying the varibale's name and a value, secret or configmap.
+  # Files can be mounted into the test by specifying a base64 encoded value, secret or configmap.
   config:
   - type: env
     name: TESTENV1
@@ -58,6 +61,17 @@ spec:
       secretKeyRef:
         name: secretName
         key: secretKey
+  - type: file
+    name: file1 # name for description
+    path: /tmp/tm/file1.txt
+    value: "aGVsbG8gd29ybGQK" # base64 encoded file content: "hello world"
+  - type: file
+    name: file2
+    path: /tmp/tm/file2.txt
+    valueFrom:
+      configMapKeyRef:
+        name: configmapName
+        key: configmapKey
 ```
 > Note that the working directory is set to the root of your repository.
 
@@ -107,7 +121,7 @@ The TestMachinery automatically uploads these documents to an index named like t
 
 The Testmachinery provides some images to run your Integration Tests (Dockerfiles can be found in hack/images).
 
-#### Base image (eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.28.0)
+#### Base image (eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0) <!-- omit in toc -->
 - Kubectl
 - Helm
 - coreutils
@@ -115,7 +129,7 @@ The Testmachinery provides some images to run your Integration Tests (Dockerfile
 - [cc-utils](https://github.com/gardener/cc-utils) at `/cc/utils` and cli.py added to $PATH
 - SAP Root CA
 
-#### Golang image (eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.28.0)
+#### Golang image (eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.32.0) <!-- omit in toc -->
 - FROM base image
 - Golang v1.11.5
 - ginkgo test suite at $GOPATH/src/github.com/onsi/ginkgo
@@ -178,3 +192,91 @@ spec:
   - - name: DeleteShoot
       condition: error|success|always # optional; default is always;
 ```
+
+## Configuration
+
+Test can be configured by passing environment variables to the test or mounting files.
+The testmachinery offers 2 types of configuration (Environment Variable and File) and 3 value sources (raw value, secret, configmap).
+
+### Types
+Test configuration can be of type "env" and of type "file".
+
+"env" configuration is available as environment variable with the specified `name` to the test.
+  ```yaml
+  config:
+  - type: env
+    name: ENV_NAME
+  ```
+
+"file" configration is available as mounted file at the specified `path`.
+  ```yaml
+  config:
+  - type: file
+    name: file # only for description; no effect on the file itself.
+    path: /file/path
+  ```
+
+### Sources
+The value of a configuration type can be defined by 3 different sources
+
+1. *Value*:<br> The value is directly defined in the yaml. :warning: Vale has to be base64 encoded for config type "file"
+  ```yaml
+  config:
+  - type: env | file
+    name: config
+    value: "Env content" # or base64 encoded content for files
+  ```
+2. *Secret*:<br> Value from a secret that is available on the cluster.
+  ```yaml
+  config:
+  - type: env | file
+    name: config
+    valueFrom:
+      configMapKeyRef:
+        name: configmapName
+        key: configmapKey
+  ```
+3. *ConfigMap*: <br> Value from a configmap that is available on the cluster
+  ```yaml
+  config:
+  - type: env | file
+    name: config
+    valueFrom:
+      configMapKeyRef:
+        name: configmapName
+        key: configmapKey
+  ```
+
+### Location
+This configuration can be defined in 3 possible section:
+
+1. *TestDefinition:* <br>Configurations are testdefinition scoped which means that all configuration is only available for these testdefinitions.
+  ```yaml
+  kind: TestDefinition
+  metadata:
+    name: TestDefName
+  spec:
+    config: # Specify configuration here
+  ```
+2. *Testrun Step:*<br> Configuration will be available to all tests defined in the specific step.
+  ```yaml
+  apiVersion: testmachinery.sapcloud.io/v1beta1
+  kind: Testrun
+  metadata:
+    generateName: integration-
+    namespace: default
+  spec:
+    testFlow:
+     - - label: default
+         config: # Specify configuration here
+  ```
+3. *Testrun Global:*<br> Configuration will be available to all tests.
+  ```yaml
+  apiVersion: testmachinery.sapcloud.io/v1beta1
+  kind: Testrun
+  metadata:
+    generateName: integration-
+    namespace: default
+  spec:
+    config: # Specify configuration here
+  ```

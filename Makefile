@@ -100,8 +100,8 @@ install-controller-local:
 run-it-tests:
 	@TM_NAMESPACE=${NS} TM_KUBECONFIG_PATH=${KUBECONFIG} ginkgo ./test/...
 
-.PHONY: generate
-generate:
+.PHONY: code-gen
+code-gen:
 	@./hack/generate-code
 
 .PHONY: validate

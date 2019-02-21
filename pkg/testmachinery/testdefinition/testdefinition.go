@@ -15,7 +15,9 @@
 package testdefinition
 
 import (
+	"encoding/base64"
 	"fmt"
+	"path"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/util"
@@ -25,6 +27,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	log "github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var (
@@ -106,8 +109,9 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 		Location: loc,
 		FileName: fileName,
 		Template: template,
+		Config:   config.New(def.Spec.Config),
 	}
-	td.AddConfig(config.New(def.Spec.Config))
+	td.AddConfig(td.Config)
 
 	return td
 }
@@ -121,6 +125,7 @@ func (td *TestDefinition) Copy() *TestDefinition {
 		Location: td.Location,
 		FileName: td.FileName,
 		Template: template,
+		Config:   td.Config,
 	}
 }
 
@@ -178,10 +183,11 @@ func (td *TestDefinition) AddInputParameter(name, value string) {
 }
 
 // AddVolumeMount adds a mount to the container of the TestDefinitions's template.
-func (td *TestDefinition) AddVolumeMount(name, path string) {
+func (td *TestDefinition) AddVolumeMount(name, path string, readOnly bool) {
 	td.Template.Container.VolumeMounts = append(td.Template.Container.VolumeMounts, apiv1.VolumeMount{
 		Name:      name,
 		MountPath: path,
+		ReadOnly:  readOnly,
 	})
 }
 
@@ -197,7 +203,6 @@ func (td *TestDefinition) AddSerialStdOutput() {
 // AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.
 func (td *TestDefinition) AddConfig(configs []*config.Element) {
 	for _, config := range configs {
-		// TODO: add support for files and configmaps
 		switch config.Info.Type {
 		case tmv1beta1.ConfigTypeEnv:
 			if config.Info.Value != "" {
@@ -207,16 +212,37 @@ func (td *TestDefinition) AddConfig(configs []*config.Element) {
 			} else {
 				// add as input parameter to see parameters in argo ui
 				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, "from secret or configmap"))
-				td.AddEnvVars(apiv1.EnvVar{Name: config.Info.Name, ValueFrom: config.Info.ValueFrom})
+				td.AddEnvVars(apiv1.EnvVar{
+					Name: config.Info.Name,
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: config.Info.ValueFrom.ConfigMapKeyRef,
+						SecretKeyRef:    config.Info.ValueFrom.SecretKeyRef,
+					},
+				})
 			}
-		case "mount":
-			// not yet implemented
+		case tmv1beta1.ConfigTypeFile:
 			// https://github.com/argoproj/argo/blob/master/examples/secrets.yaml
 			if config.Info.Value != "" {
+				data, err := base64.StdEncoding.DecodeString(config.Info.Value)
+				if err != nil {
+					log.Warnf("Cannot decode value of %s: %s", config.Info.Name, err.Error())
+					continue
+				}
+
 				// add as input parameter to see parameters in argo ui
 				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, config.Info.Value))
-			} else {
+				td.AddInputArtifacts(argov1.Artifact{
+					Name: config.Name(),
+					Path: config.Info.Path,
+					ArtifactLocation: argov1.ArtifactLocation{
+						Raw: &argov1.RawArtifact{
+							Data: string(data),
+						},
+					},
+				})
+			} else if config.Info.ValueFrom != nil {
 				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, "from secret or configmap"))
+				td.AddVolumeMount(config.Name(), path.Dir(config.Info.Path), true)
 			}
 		}
 

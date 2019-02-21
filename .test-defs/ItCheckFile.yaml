@@ -14,21 +14,10 @@
 
 kind: TestDefinition
 metadata:
-  name: secret-config-testdef
+  name: check-file-testdef
 spec:
-  owner: dummy@mail.com
-
-  description: Tests mounting of configurations from secrets.
-
-  config:
-  - name: TEST_NAME
-    type: env
-    valueFrom:
-      secretKeyRef:
-        name: test-secret
-        key: test
-
-  labels: ["tm-integration-secret"]
+  owner: dummy@example.com
+  description: Tests mounting of file configuration.
 
   command: [bash, -c]
-  args: ["./test/controller/testdefinition/scripts/check-env"]
+  args: ["./test/controller/testdefinition/scripts/check-file"]
