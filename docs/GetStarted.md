@@ -21,11 +21,12 @@ A TestDefinition consists of a name and a description of how the test should be 
 Therefore, a basic test consists of a command which will be executed inside the specified container image.
 
 ```yaml
+kind: TestDefinition
 metadata:
   name: TestDefName
 spec:
-  owner: gardener@team.de # test owner and contact person in case of a test failure 
-  recipientsOnFailure: developer1@team.de, developer2@team.de # optional, list of emails to be notified if a step fails 
+  owner: gardener@team.de # test owner and contact person in case of a test failure
+  recipientsOnFailure: developer1@team.de, developer2@team.de # optional, list of emails to be notified if a step fails
   description: test # optional; description of the test.
 
   activeDeadlineSeconds: 600 # optional; maximum seconds to wait for the test to finish.
