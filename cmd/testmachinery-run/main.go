@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner"
 
 	"github.com/gardener/test-infra/pkg/util"
 

@@ -24,7 +24,7 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

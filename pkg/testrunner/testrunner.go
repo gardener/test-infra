@@ -21,7 +21,7 @@ import (
 
 	"github.com/gardener/gardener/pkg/chartrenderer"
 
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"

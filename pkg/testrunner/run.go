@@ -9,9 +9,9 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

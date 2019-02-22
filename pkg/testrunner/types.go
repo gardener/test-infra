@@ -16,7 +16,7 @@ package testrunner
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/componentdescriptor"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -24,8 +24,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/gardener/test-infra/cmd/testmachinery-run/testrunner/elasticsearch"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
