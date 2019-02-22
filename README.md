@@ -4,13 +4,14 @@
 ### Note, this project is WIP, so expect outdated documentation
 
 - [Test Machinery](#test-machinery)
-  - [Note, this project is WIP, so expect outdated documentation](#note-this-project-is-wip-so-expect-outdated-documentation)
+    - [Note, this project is WIP, so expect outdated documentation](#note-this-project-is-wip-so-expect-outdated-documentation)
   - [Usage](#usage)
     - [Write your own tests (integrate into the testmachinery)](#write-your-own-tests-integrate-into-the-testmachinery)
     - [TestMachinery Deployment](#testmachinery-deployment)
     - [Developing tests locally](#developing-tests-locally)
     - [Use private images](#use-private-images)
     - [Use with GitHub Authentication](#use-with-github-authentication)
+    - [Testrunner](#testrunner)
   - [Local TestMachinery development](#local-testmachinery-development)
 
 ![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/test_machinary_overview.png)
@@ -100,6 +101,9 @@ secrets:
 3. Deploy the secret into the same namespace as the controller.
 
 Another GitHub instance can be added editing the exiting secret and change the base64 encoded data.
+
+### Testrunner
+See testrunner [docs](docs/Testrunner.md)
 
 ## Local TestMachinery development
 
