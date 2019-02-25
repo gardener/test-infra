@@ -118,7 +118,7 @@
   version = "v2.8.1"
 
 [[projects]]
-  digest = "1:178483024b74b0ee874ee424b1b33042a60ab69069413ae260d472dd1ead925b"
+  digest = "1:cd416c63f1c2d80ce6ba41ede17f2d4c61c4f98257db342066a8e92c99d03471"
   name = "github.com/gardener/gardener"
   packages = [
     "pkg/apis/core",
@@ -132,13 +132,11 @@
     "pkg/client/garden/clientset/versioned",
     "pkg/client/garden/clientset/versioned/scheme",
     "pkg/client/garden/clientset/versioned/typed/garden/v1beta1",
-    "pkg/client/garden/listers/garden/v1beta1",
     "pkg/client/kubernetes",
     "pkg/client/machine/clientset/versioned",
     "pkg/client/machine/clientset/versioned/scheme",
     "pkg/client/machine/clientset/versioned/typed/machine/v1alpha1",
     "pkg/logger",
-    "pkg/operation/common",
     "pkg/utils",
     "pkg/utils/kubernetes",
     "pkg/utils/kubernetes/health",
@@ -386,6 +384,14 @@
   version = "v0.3.6"
 
 [[projects]]
+  digest = "1:406338ad39ab2e37b7f4452906442a3dbf0eb3379dd1f06aafb5c07e769a5fbb"
+  name = "github.com/inconshreveable/mousetrap"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+  version = "v1.0"
+
+[[projects]]
   digest = "1:da62aa6632d04e080b8a8b85a59ed9ed1550842a0099a55f3ae3a20d02a3745a"
   name = "github.com/joho/godotenv"
   packages = ["."]
@@ -617,6 +623,14 @@
   pruneopts = "NUT"
   revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
   version = "v1.3.0"
+
+[[projects]]
+  digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
+  name = "github.com/spf13/cobra"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -1152,12 +1166,15 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Masterminds/semver",
     "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1",
     "github.com/argoproj/argo/pkg/client/clientset/versioned",
+    "github.com/davecgh/go-spew/spew",
+    "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
     "github.com/gardener/gardener/pkg/client/kubernetes",
-    "github.com/gardener/gardener/pkg/operation/common",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
+    "github.com/ghodss/yaml",
     "github.com/google/go-github/github",
     "github.com/joho/godotenv",
     "github.com/minio/minio-go",
@@ -1165,6 +1182,7 @@
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
     "github.com/sirupsen/logrus",
+    "github.com/spf13/cobra",
     "gopkg.in/yaml.v2",
     "k8s.io/api/admission/v1beta1",
     "k8s.io/api/admissionregistration/v1beta1",
