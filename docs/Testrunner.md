@@ -76,7 +76,7 @@ components:
 The Testrunner integrates the helm templating engine and uses that to simplify the specification of different testruns with different purposes.
 It it also supported to have multiple testruns in one helm chart which all can be handled by the testrunner.
 
-The helm charts need to have a specific format to be properly handled
+The helm charts need to have a specific format to be properly handled.
 
 :information_source: The `generateName` attribute is automatically set by the Test Machinery using the commandline provided prefix.
 
