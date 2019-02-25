@@ -35,7 +35,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 | gardener-kubeconfig-path | | Path to a kubeconfig where a gardener is running. The kubeconfig will be base64 encoded and passed to the testrun. | x |
 | shoot-name | | Name of the shoot which is created for testing. | x |
 | project-name | | Gardener project name where the shoot should be deployed. | x |
-| cloudprovider | | Cloudprovider of the shoot. Can be `aws`, `azure`, `gcp`, `alicloud` | x |
+| cloudprovider | | Cloudprovider of the shoot. Can be `aws`, `azure`, `gcp`, `openstack`, `alicloud` | x |
 | cloudprofile | | Cloudprofile that should be used to create the shoot. | x |
 | secret-binding | | Gardener secret that should be used to create the shoot. <br>:warning: This needs to point to a valid secret for the cloudprofile. | x |
 | region | | Region of the shoot | x |
