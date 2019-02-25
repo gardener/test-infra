@@ -19,7 +19,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 | flag | default | description | required
 | ---- | ---- | ---- | --- |
 | tm-kubeconfig-path | | Path to the kubeconfig of the cluster running the Test Machinery | x |
-| testruns-chart-path | | Path to the Testrun helm template taht should be deployed. (Additional information about the parameters can be found [here](#helm-template)) | x |
+| testruns-chart-path | | Path to the Testrun helm template that should be deployed. (Additional information about the parameters can be found [here](#helm-template)) | x |
 | testrun-prefix | | Prefix of the deployed testrun. This prefix is ues for the `metadata.generateName` of testruns in the helm template. | x |
 | timeout | 3600 | Max seconds to wait for all testruns to finish. | |
 | output-file-path | "./testout" | The filepath where the test summary and results should be written to. | |
