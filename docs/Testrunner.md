@@ -21,7 +21,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 | tm-kubeconfig-path | | Path to the kubeconfig of the cluster running the Test Machinery | x |
 | testruns-chart-path | | Path to the Testrun helm template that should be deployed. (Additional information about the parameters can be found [here](#helm-template)) | x |
 | testrun-prefix | | Prefix of the deployed testrun. This prefix is ues for the `metadata.generateName` of testruns in the helm template. | x |
-| timeout | 3600 | Max seconds to wait for all testruns to finish. | |
+| timeout | 3600 | Max seconds to wait for all Testruns to finish. | |
 | output-file-path | "./testout" | The filepath where the test summary and results should be written to. | |
 | s3-endpoint | EnvVar ("S3_ENDPOINT") | Accessible S3 endpoint of the s3 storage used by argo. This parameter is needed when tests export test results and the testrunner needs to fetch them and add them to the summary. | |
 | es-config-name | | Elasticsearch server config name that is used with the cc-utils cli | |
