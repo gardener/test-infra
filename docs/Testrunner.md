@@ -1,6 +1,6 @@
 # Testrunner
 
-Testrunner is a additional component of the Test Machinery that abstracts templating, deploying, and watching of Testruns and provide additonal functionality like storing test results or notifying test-owners.
+Testrunner is an additional component of the Test Machinery that abstracts templating, deploying and watching of Testruns and provide additional functionality like storing test results or notifying test-owners.
 
 The runner is intended to run in a CI/CD pipeline as it depends on the gardener [cc-utils](https://github.com/gardener/cc-utils) library to store test results in a elastic search database.
 
