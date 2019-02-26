@@ -37,7 +37,7 @@ ENTRYPOINT ["/testmachinery-controller"]
 ############# tm-run #############
 FROM eu.gcr.io/gardener-project/cc/job-image:1.101.0 AS tm-run
 
-COPY --from=builder /go/bin/testmachinery-run /testrunner
+COPY --from=builder /go/bin/testrunner /testrunner
 COPY ./.env /
 
 WORKDIR /

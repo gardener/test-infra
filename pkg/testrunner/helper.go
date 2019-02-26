@@ -51,6 +51,7 @@ func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider str
 }
 
 func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider string) ([]string, error) {
+
 	switch gardenv1beta1.CloudProvider(cloudprovider) {
 	case gardenv1beta1.CloudProviderAWS:
 		return profile.Spec.AWS.Constraints.Kubernetes.Versions, nil
@@ -59,9 +60,9 @@ func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider
 	case gardenv1beta1.CloudProviderAzure:
 		return profile.Spec.Azure.Constraints.Kubernetes.Versions, nil
 	case gardenv1beta1.CloudProviderOpenStack:
-		return profile.Spec.AWS.Constraints.Kubernetes.Versions, nil
+		return profile.Spec.OpenStack.Constraints.Kubernetes.Versions, nil
 	case gardenv1beta1.CloudProviderAlicloud:
-		return profile.Spec.AWS.Constraints.Kubernetes.Versions, nil
+		return profile.Spec.Alicloud.Constraints.Kubernetes.Versions, nil
 	default:
 		return nil, fmt.Errorf("Unsupported cloudprovider %s", cloudprovider)
 	}

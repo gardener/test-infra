@@ -88,7 +88,7 @@ func renderChart(config *TestrunConfig, parameters *TestrunParameters) (*chartre
 
 	return tmChartRenderer.Render(parameters.TestrunChartPath, parameters.TestrunName, namespace, map[string]interface{}{
 		"shoot": map[string]interface{}{
-			"name":             parameters.ShootName,
+			"name":             fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
 			"projectNamespace": fmt.Sprintf("garden-%s", parameters.ProjectName),
 			"cloudprovider":    parameters.Cloudprovider,
 			"cloudprofile":     parameters.Cloudprofile,

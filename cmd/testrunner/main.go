@@ -19,7 +19,6 @@ import (
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
@@ -58,7 +57,6 @@ var rootCmd = &cobra.Command{
 
 		cmd.DebugFlags()
 
-		shootName = fmt.Sprintf("%s-%s", shootName, util.RandomString(5))
 		testrunName := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
 
 		config := &testrunner.TestrunConfig{
