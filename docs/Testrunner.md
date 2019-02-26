@@ -2,7 +2,7 @@
 
 Testrunner is an additional component of the Test Machinery that abstracts templating, deploying and watching of Testruns and provide additional functionality like storing test results or notifying test-owners.
 
-The runner is intended to run in a CI/CD pipeline as it depends on the gardener [cc-utils](https://github.com/gardener/cc-utils) library to store test results in a elastic search database.
+The runner is intended to run in a CI/CD pipeline as it depends on the gardener [cc-utils](https://github.com/gardener/cc-utils) library to store test results in an elasticsearch database.
 
 ## Usage
 
@@ -20,7 +20,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 | ---- | ---- | ---- | --- |
 | tm-kubeconfig-path | | Path to the kubeconfig of the cluster running the Test Machinery | x |
 | testruns-chart-path | | Path to the Testrun helm template that should be deployed. (Additional information about the parameters can be found [here](#helm-template)) | x |
-| testrun-prefix | | Prefix of the deployed testrun. This prefix is ues for the `metadata.generateName` of testruns in the helm template. | x |
+| testrun-prefix | | Prefix of the deployed Testrun. This prefix is used for the `metadata.generateName` of Testruns in the helm template. | x |
 | timeout | 3600 | Max seconds to wait for all Testruns to finish. | |
 | output-file-path | "./testout" | The filepath where the test summary and results should be written to. | |
 | s3-endpoint | EnvVar ("S3_ENDPOINT") | Accessible S3 endpoint of the s3 storage used by argo. This parameter is needed when tests export test results and the testrunner needs to fetch them and add them to the summary. | |
@@ -32,7 +32,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 
 | flag | default | description | required
 | ---- | ---- | ---- | --- |
-| gardener-kubeconfig-path | | Path to a kubeconfig where a gardener is running. The kubeconfig will be base64 encoded and passed to the testrun. | x |
+| gardener-kubeconfig-path | | Path to a kubeconfig where a gardener is running. The kubeconfig will be base64 encoded and passed to the Testrun. | x |
 | shoot-name | | Name of the shoot which is created for testing. | x |
 | project-name | | Gardener project name where the shoot should be deployed. | x |
 | cloudprovider | | Cloudprovider of the shoot. Can be `aws`, `azure`, `gcp`, `openstack`, `alicloud` | x |
@@ -73,7 +73,7 @@ components:
 
 ## Helm Template
 
-The Testrunner integrates the helm templating engine and uses that to simplify the specification of different testruns with different purposes.
+The Testrunner integrates the helm templating engine and uses it to simplify the specification of different Testruns with different purposes.
 It it also supported to have multiple testruns in one helm chart which all can be handled by the testrunner.
 
 The helm charts need to have a specific format to be properly handled.
