@@ -77,13 +77,12 @@ var _ = Describe("Testrunner execution tests", func() {
 	BeforeEach(func() {
 		var timeout int64 = -1
 		testrunConfig = testrunner.TestrunConfig{
-			TmKubeconfigPath:     tmKubeconfig,
-			GardenKubeconfigPath: "",
-			Timeout:              &timeout,
-			OutputFile:           ".",
-			ESConfigName:         "es-config-name",
-			S3Endpoint:           s3Endpoint,
-			ConcourseOnErrorDir:  ".",
+			TmKubeconfigPath:    tmKubeconfig,
+			Timeout:             &timeout,
+			OutputFile:          ".",
+			ESConfigName:        "es-config-name",
+			S3Endpoint:          s3Endpoint,
+			ConcourseOnErrorDir: ".",
 		}
 	})
 

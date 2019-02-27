@@ -31,8 +31,10 @@ const (
 
 // TestrunParameters are the parameters which describe the test that is executed by the testrunner.
 type TestrunParameters struct {
-	TestrunName      string
-	TestrunChartPath string
+	// Path to the kubeconfig where the gardener is running.
+	GardenKubeconfigPath string
+	TestrunName          string
+	TestrunChartPath     string
 
 	ProjectName             string
 	ShootName               string
@@ -54,9 +56,6 @@ type TestrunParameters struct {
 type TestrunConfig struct {
 	// Path to the kubeconfig where the testmachinery is running.
 	TmKubeconfigPath string
-
-	// Path to the kubeconfig where the gardener is running.
-	GardenKubeconfigPath string
 
 	// Max wait time for a testrun to finish.
 	Timeout *int64

@@ -81,14 +81,14 @@ func renderChart(config *TestrunConfig, parameters *TestrunParameters) (*chartre
 		return nil, fmt.Errorf("Cannot create chartrenderer for gardener  %s", err.Error())
 	}
 
-	gardenKubeconfig, err := ioutil.ReadFile(config.GardenKubeconfigPath)
+	gardenKubeconfig, err := ioutil.ReadFile(parameters.GardenKubeconfigPath)
 	if err != nil {
-		log.Fatalf("Cannot read gardener kubeconfig %s, Error: %s", config.GardenKubeconfigPath, err.Error())
+		log.Fatalf("Cannot read gardener kubeconfig %s, Error: %s", parameters.GardenKubeconfigPath, err.Error())
 	}
 
 	return tmChartRenderer.Render(parameters.TestrunChartPath, parameters.TestrunName, namespace, map[string]interface{}{
 		"shoot": map[string]interface{}{
-			"name":             parameters.ShootName,
+			"name":             fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
 			"projectNamespace": fmt.Sprintf("garden-%s", parameters.ProjectName),
 			"cloudprovider":    parameters.Cloudprovider,
 			"cloudprofile":     parameters.Cloudprofile,

@@ -50,6 +50,15 @@ func Run(config *TestrunConfig, parameters *TestrunParameters) {
 		maxWaitTimeSeconds = *config.Timeout
 	}
 
+	// if the kubernetes version is not set, get the latest version defined by the cloudprofile
+	if parameters.K8sVersion == "" {
+		var err error
+		parameters.K8sVersion, err = getLatestK8sVersion(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
+		if err != nil {
+			log.Fatalf("Kubernetes is not defined nor can it be read from the cloudprofile: %s", err.Error())
+		}
+	}
+
 	metadata := &Metadata{
 		Landscape:         parameters.Landscape,
 		CloudProvider:     parameters.Cloudprovider,
