@@ -14,44 +14,132 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-own_dir="/src/test/k8s-e2e"
+if [[ -n $RUN_ON_TM && $RUN_ON_TM = false ]]; then
+    own_dir="$(dirname "$0")"
+else
+    own_dir="/src/test/k8s-e2e"
+fi
 
+readonly es_index="e2e_testcase"
+readonly DESCRIPTIONS_DIR="${own_dir}/descriptions"
 readonly SHOOT_KUBECONFIG="$TM_KUBECONFIG_PATH/shoot.config"
 readonly K8S_SRC_PATH="/k8s_src"
 export K8S_ROOT="$GOPATH/src/k8s.io"
 
 readonly TRUE=0
 readonly FALSE=1
+readonly NA=2
 
 readonly log_dir="${own_dir}/../artifacts"
 readonly json_dir="$TM_EXPORT_PATH"
 readonly junit_file="$log_dir/junit_01.xml"
 readonly e2e_log="${log_dir}/e2e.log"
 
-TESTDESCRIPTION_PATH="$own_dir/descriptions/$TESTDESCRIPTION_NAME"
-echo "runnning e2e tests"
+set +u
+if [ -z "$SERIAL_TESTS_ONLY" ]; then
+	SERIAL_TESTS_ONLY=$NA
+elif [[ $SERIAL_TESTS_ONLY = false ]]; then
+	SERIAL_TESTS_ONLY=$FALSE
+elif [[ $SERIAL_TESTS_ONLY = true ]]; then
+	SERIAL_TESTS_ONLY=$TRUE
+fi
+set -u
+
+set +u
+# shellcheck source=/dev/null
+source "$LANDSCAPE_REPO_PATH/.activate"
+# shellcheck source=/dev/null
+source "$LANDSCAPE_SCRIPTS_HOME/common"
+set -u
+
+publish_test_results=$FALSE
+all_e2e_desc_file_created=$FALSE
+conformance_test=$FALSE
+run_all_failing_tests=$FALSE
+all_tests_desc_path=$DESCRIPTIONS_DIR/generated_e2e_all.desc
+skip_tests_desc_path="${DESCRIPTIONS_DIR}/skip.desc"
+generated_discard_tests_desc_path=$DESCRIPTIONS_DIR/generated_tests_to_discard.desc
+generated_run_desc_path=$DESCRIPTIONS_DIR/generated_test_to_run.desc
+test_desc_path="${DESCRIPTIONS_DIR}/${TESTDESCRIPTION_NAME}"
+if [[ "$TESTDESCRIPTION_NAME" == "conformance.desc" ]]; then
+	conformance_test=$TRUE
+	echo -e "$(info INFO:) runnning Conformance e2e tests"
+fi
+if [[ "$TESTDESCRIPTION_NAME" =~ ^[[:digit:]]\.[[:digit:]]{1,2}$ ]]; then
+	publish_test_results=$TRUE
+	# use conformance description file, in case restults shall be published to testgrid
+	test_desc_path="${DESCRIPTIONS_DIR}/conformance.desc"
+	echo -e "$(info INFO:) runnning e2e publish process"
+elif [[ "$TESTDESCRIPTION_NAME" = "allFailing" ]]; then
+	run_all_failing_tests=$TRUE
+	rm -f "$generated_discard_tests_desc_path"
+	test_desc_path="${DESCRIPTIONS_DIR}/conformance.desc"
+	echo -e "$(info INFO:) runnning ALL FAILING e2e tests"
+else
+	echo -e "$(info INFO:) runnning e2e tests"
+fi
+
 
 # Max. time to wait for creation/deletion of shoot
-MAX_RETRY_TIME=$((60 * 60))     # 60min
 MAX_KUBETEST_RETRY_TIME=$((1 * 60)) # 1min
 
 ## init directories
 mkdir -p $K8S_SRC_PATH
-mkdir -p $K8S_ROOT
+mkdir -p "$K8S_ROOT"
 
 rm -Rf "${json_dir:?}" # clean up if data has been created in previous run
 mkdir -p "$json_dir"
 rm -Rf "${log_dir:?}" # clean up if data has been created in previous run
 mkdir -p "$log_dir"
+rm -f "${all_tests_desc_path}"
+rm -f "${generated_run_desc_path}"
 
+
+# reads the skip desc file and escapes and concatenates it's lines
+function get_skip_test_names() {
+	if [ ! -f "${skip_tests_desc_path}" ]; then
+		echo -e "$(error ERROR:) file ${skip_tests_desc_path} does not exist."
+		success="$FALSE"
+		return $success
+	fi
+
+	local first=y
+	skip_concatenated=""
+	while read -r e2e_test; do
+		if [ -z "${first}" ]; then
+        	skip_concatenated=$skip_concatenated"|"
+        else
+        	first=
+        fi
+		if [[ ! $e2e_test == *[!\ ]* ]]; then
+			echo -e "$(warning WARNING:) ${skip_tests_desc_path} contains empty lines"
+			continue
+		fi
+		e2e_test_escaped=$(escape_test_name "${e2e_test}")
+		skip_concatenated=$skip_concatenated$e2e_test_escaped
+	done <<<"$(cat "${skip_tests_desc_path}")"
+	echo -n "${skip_concatenated}"
+}
+
+
+function escape_test_name() {
+	# replace all spaces (use //) by \s
+	printf -v e2e_test "%q" "$1" #escape special characters
+	e2e_test="${e2e_test//\\ /\\s}"     #escpae blanks with \s
+	echo "$e2e_test"
+}
 
 
 # Build and run the K8s e2e test suite
 # -----------------------------------------------------------------------------
 function build_k8s() {
-	# Install additional python packages
-	pip3 install xmltodict
 
+    if [[ -d "$K8S_ROOT/test-infra/kubetest" ]]; then
+        echo "e2e has already been built. Skipping build_k8s step."
+        return 0
+    fi
+
+	# Install additional python packages
 	pushd "$K8S_SRC_PATH"
 
 	echo "download k8s v$K8S_VERSION"
@@ -78,6 +166,99 @@ function build_k8s() {
 
 	popd > /dev/null
 	popd > /dev/null
+
+	pushd "$K8S_ROOT/kubernetes"
+	echo -e "$(info INFO:) Get kubetest"
+	go get -u k8s.io/test-infra/kubetest
+}
+
+
+function generate_description_file() {
+	# If e2e.log and junit_01.xml shall be published, the ginkgo.focus must be \[Conformance\]
+	if [[ "$publish_test_results" -eq "$TRUE" ]]; then
+		generated_run_desc_path=$test_desc_path
+		return 0
+	fi
+
+	echo -e "$(info INFO:) Start generating $generated_run_desc_path"
+
+	if [[ "$run_all_failing_tests" -eq "$TRUE" ]]; then
+
+		# Remove tests from successful.desc
+		grep -Fxvf "$DESCRIPTIONS_DIR"/successful.desc "$all_tests_desc_path" > "$DESCRIPTIONS_DIR"/tmp
+
+		# remove gke only tests
+		grep -Fxvf "$DESCRIPTIONS_DIR"/gke_tests.desc "$DESCRIPTIONS_DIR"/tmp > "$generated_run_desc_path"
+		rm -f "$DESCRIPTIONS_DIR"/tmp
+
+		# remove conformance tests
+		sed -i '/\[Conformance\]/d' "$generated_run_desc_path"
+	else
+		while read -r e2e_test; do
+			cat $all_tests_desc_path | grep "$(escape_test_name "${e2e_test}")" >> "$generated_run_desc_path"
+		done <<<"$(cat "${test_desc_path}")"
+	fi
+
+	if [[ $SERIAL_TESTS_ONLY -eq $TRUE ]]; then
+		sed -i '/\[Serial\]/!d' "$generated_run_desc_path"
+	elif [[ $SERIAL_TESTS_ONLY -eq $FALSE ]]; then
+		sed -i '/\[Serial\]/d' "$generated_run_desc_path"
+	fi
+
+	# remove duplicates
+	sort -u -o "$generated_run_desc_path" "$generated_run_desc_path"
+
+	# remove empty lines
+	sed -i '/^[[:space:]]*$/d;s/[[:space:]]*$//' "$generated_run_desc_path" "$generated_run_desc_path"
+
+	echo -e "$(info INFO:) Successfully generaterad $generated_run_desc_path"
+}
+
+
+function create_all_e2e_tests_description_file() {
+	if [[ "$all_e2e_desc_file_created" -eq "$FALSE" ]]; then
+
+		kubetest --provider skeleton --deployment local --test --check-version-skew false \
+				--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=true" --dump="$log_dir" > /dev/null
+
+		all_e2e_desc_file_created=$TRUE
+		if [ ! -f "${junit_file}" ]; then
+			echo -e "$(error ERROR:) kubetest dryrun didn't create ${junit_file}."
+			success="$FALSE"
+			return $success
+		fi
+        # get all non skipped test names and write to file
+		echo 'cat //testsuite/testcase[not(skipped)]/@name' | xmllint --shell "$junit_file" |  grep -vE '^(/ > ?)?( +-+)?$' | cut -f 2 -d "=" | tr -d \" > "$all_tests_desc_path"
+		rm "$junit_file"
+
+        # remove duplicates
+		sort -u -o "$all_tests_desc_path" "$all_tests_desc_path"
+		echo -e "$(info INFO:) Generated $all_tests_desc_path"
+	fi
+
+}
+
+
+function isKubeAPIReachable() {
+	local max_kubectl_test_time=180 # 3mins
+	echo -e "$(info INFO:) test max. ${max_kubectl_test_time} seconds if kube-apiserver is available"
+	retry_stop=$(($(date +%s) + $max_kubectl_test_time))
+	success="$FALSE"
+	while [[ $(date +%s) -lt $retry_stop ]]; do
+		if [ "$(kubectl get nodes)" ]; then
+			success="$TRUE"
+			echo -e "$(info INFO:) kube-apiserver is reachable"
+			break
+		else
+			echo -e "$(warning WARNING:) kube-apiserver not reachable. Try again in 15s"
+			sleep 15
+		fi
+	done
+
+	if [ "$success" -eq "$FALSE" ]; then
+		echo -e "$(error ERROR:) kube-apiserver not reachable the last ${max_kubectl_test_time}."
+		return "$success"
+	fi
 }
 
 # Runs the e2e tests
@@ -85,30 +266,35 @@ function build_k8s() {
 function run_e2e_tests_kubetest() {
 	local success="$FALSE"
 
+	flake_attempts="2"
+	if [[ $run_all_failing_tests -eq "$TRUE" ]]; then
+		flake_attempts="1"
+	fi
+
 	if ! [ -f "$SHOOT_KUBECONFIG" ]; then
 		echo "$SHOOT_KUBECONFIG does not exist"
 		success="$FALSE"
 		return $success
 	fi
 
-	export KUBECONFIG="$SHOOT_KUBECONFIG"
-	export KUBERNETES_CONFORMANCE_TEST=y
-	export GINKGO_NO_COLOR=y
-	K8S_VERSION="$(kubectl version -ojson | jq '.serverVersion.gitVersion' | sed 's/v//g' | sed 's/"//g')"
+    if [ -z "$K8S_VERSION" ]; then
+        echo -e "$(info INFO:) K8S_VERSION environment variable was not set, therefore getting k8s version from kubectl version .serverVersion.gitVersion"
+	    K8S_VERSION="$(kubectl version -ojson | jq '.serverVersion.gitVersion' | sed 's/v//g' | sed 's/"//g')"
+    fi
 
-	build_k8s
-	pushd "$K8S_ROOT/kubernetes"
-	echo "Get kubetest"
-	go get -u k8s.io/test-infra/kubetest
-
-	success="$TRUE"
-
-	echo "using test description ${TESTDESCRIPTION_PATH}"
-	if [ ! -f "${TESTDESCRIPTION_PATH}" ]; then
-		echo "file ${TESTDESCRIPTION_PATH} does not exist."
+	if ! build_k8s; then
+		echo -e "$(error ERROR:) build_k8s step failed."
 		success="$FALSE"
 		return $success
 	fi
+	pushd "$K8S_ROOT/kubernetes"
+
+	export KUBECONFIG="$SHOOT_KUBECONFIG"
+	export KUBERNETES_CONFORMANCE_TEST=y
+	export GINKGO_NO_COLOR=y
+
+	success="$TRUE"
+
 
 	# prepare test summary variables
 	executed_testcases=0
@@ -118,97 +304,65 @@ function run_e2e_tests_kubetest() {
 	test_execution_timestamp=$(date +"%Y/%m/%d %T")
 	testsuite_successful="true"
 
+	ginkgo_skip="$(get_skip_test_names)"
+	create_all_e2e_tests_description_file
+	generate_description_file
+	echo -e "$(info INFO:) using test description ${test_desc_path}"
+	if [ ! -f "${test_desc_path}" ]; then
+		echo -e "$(error ERROR:) file ${test_desc_path} does not exist."
+		success="$FALSE"
+		return $success
+	fi
+
+	isKubeAPIReachable
 	local counter=0
-	while read -r e2e_test; do
+	while read -ru 3 e2e_test; do
 
 		echo ""
-		if [[ ! $e2e_test == *[!\ ]* ]]; then
-			echo "${TESTDESCRIPTION_PATH} contains empty lines"
-			continue
-		fi
-
-		echo "run test \"$e2e_test\""
-
-		# replace all spaces (use //) by \s
-		printf -v e2e_test "%q" "$e2e_test" #escape special characters
-		e2e_test="${e2e_test//\\ /\\s}"     #escpae blanks with \s
+		echo -e "$(info INFO:) run e2e test \"$e2e_test\""
+		e2e_test=$(escape_test_name "${e2e_test}")
 
 		# run kubetest
-		local retry_stop=$(($(date +%s) + $MAX_KUBETEST_RETRY_TIME))
-
 		# kubetest returns a non-zero value in case any test fails
 		# Unclear how to checkwhile read e2e_test ; do if the kubetest call failed
-		local max_kubectl_test_time=180 # 3mins
-		echo "test max. ${max_kubectl_test_time} seconds if kube-apiserver is available"
-		retry_stop=$(($(date +%s) + $max_kubectl_test_time))
-		success="$FALSE"
-		while [[ $(date +%s) -lt $retry_stop ]]; do
-
-			if [ "$(kubectl get nodes)" ]; then
-				echo "kube-apiserver is reachable"
-				success="$TRUE"
-				break
-			else
-				echo "kube-apiserver not reachable. Try again in 15s"
-				sleep 15
-			fi
-		done
-
-		if [ "$success" -eq "$FALSE" ]; then
-			echo "kube-apiserver not reachable the last ${max_kubectl_test_time}."
-			return "$success"
-		fi
-
-		rm -Rf "${log_dir:?}" # clean up if data has been created in previous run, this is neccessary for summary calculation
-		mkdir -p "$log_dir"
-
-		kubetest --provider local --deployment local --test --check-version-skew false \
-			--test_args="--ginkgo.skip=Alpha|Experimental|Disruptive|Flaky --ginkgo.dryRun=false --ginkgo.flakeAttempts=2 --ginkgo.focus=${e2e_test}" --dump="$log_dir" > "$e2e_log"
-
+		kubetest --provider skeleton --deployment local --test --check-version-skew false \
+			--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=false --ginkgo.flakeAttempts=$flake_attempts --ginkgo.focus=$e2e_test" --dump="$log_dir" &> "$e2e_log".tmp
 		local res=$?
-
-		if [ ! -f "$log_dir/junit_01.xml" ] ; then
-			echo "$log_dir/junit_01.xml does not exist"
-			success="$FALSE"
-			return $success
-		fi
-
-		if [ ! -f "$e2e_log" ] ; then
-			echo "$e2e_log does not exist"
-			success="$FALSE"
-			return $success
-		fi
+		cat "$e2e_log".tmp >> "$e2e_log"
 
 		if [ $res -ne 0 ] ; then
-			echo "one or more Conformance tests failed"
-			# Print e2e_log to stdout
-			cat "$e2e_log"
-			echo ""
+			warning "FAILED"
 			success="$FALSE"
+		else
+			ok "SUCCESS"
 		fi
 
 		# Analyse junit_01.xml
 		if [ -f "$junit_file" ]; then
 			gather_test_summary_data_for_elastic_search
 			# Convert junit_01.xml to json
-			echo "$PWD"
-			if ! python3 "${own_dir}"/convtojson.py -d "$json_dir" --index "e2e_testcase" -c "$CLOUDPROVIDER" -i "$junit_file" -t "$test_execution_timestamp"; then
-				echo "XML to Json conversion failed."
-			fi
+			if ! python3 "${own_dir}"/convtojson.py -t "$json_dir" -i "$es_index" -f "$junit_file" -d "$TESTDESCRIPTION_NAME"; then
+				warning "WARNING: XML to Json conversion failed. Probably kubetest failed executing the e2e test. Executed command: python3 ${own_dir}/convtojson.py -d $json_dir --index e2e_testcase -c $CLOUDPROVIDER -i $junit_file -t $test_execution_timestamp"
+            fi
 		else
-			echo "${log_dir}/junit_01.xml not created for test search string \"${e2e_test}\"!"
-			success="$FALSE"
+		    echo -e "$(warning WARNING:) ${junit_file} not created for test search string \"${e2e_test}\"! e2e.log output:"
+			sed -n '1h;1!H;${;g;s/.*\(------------------------------.*------------------------------\).*/\1/p;}' "$e2e_log".tmp
 			continue
 		fi
 		counter=$((counter + 1))
 
-	done <<<"$(cat "${TESTDESCRIPTION_PATH}")"
+	done 3<<<"$(cat "${generated_run_desc_path}")"
 
 	push_test_summary_to_elastic_search
 
+	if [[ "$publish_test_results" -eq "$TRUE" ]]; then
+		pushResutlsToGCS
+	fi
 	if [ $counter -eq 0 ]; then
-		echo "No test has been executed."
+		echo -e "$(info INFO:) No test has been executed."
 		success="$FALSE"
+	elif [[ $testsuite_successful = "true" ]]; then
+		success="$TRUE"
 	fi
 
 	return "$success"
@@ -219,12 +373,14 @@ function gather_test_summary_data_for_elastic_search() {
 		declare -a array
 		mapfile -t array <<<"$(echo "$junit_summary" | grep -oE "[0-9.]+")"
 		if [ ${array[0]} -eq 0 ]; then
-			echo "test with search string \"${e2e_test}\" was not found/executed"
+			warning "WARNING: test with search string \"${e2e_test}\" was not found/executed. e2e.log output:"
+			sed -n '1h;1!H;${;g;s/.*\(------------------------------.*------------------------------\).*/\1/p;}' "$e2e_log".tmp
 		fi
 		executed_testcases=$(echo "$executed_testcases + ${array[0]}" | bc)
 		failed_testcases=$(echo "$failed_testcases + ${array[1]}" | bc)
 		successful_testcases=$(echo "$successful_testcases + ${array[0]} - ${array[1]}" | bc)
 		test_duration=$(echo "$test_duration + ${array[2]}" | bc)
+		test_duration=${test_duration%.*}
 		if [ "$failed_testcases" -eq "0" ]; then
 			testsuite_successful="true"
 		else
@@ -232,9 +388,68 @@ function gather_test_summary_data_for_elastic_search() {
 		fi
 		echo "Test status: executed_testcases: $executed_testcases, successful_testcases: $successful_testcases, failed_tests: $failed_testcases, test_duration: $test_duration,  testsuite_successful: $testsuite_successful"
 	else
-		echo "Couldn't read junit file."
+		echo -e "$(warning WARNING:) Couldn't read junit file."
 	fi
 }
+
+
+function pushResutlsToGCS() {
+	# Push result to GCS (Google Cloud Storage)
+
+	local google_bucket_secrets_file="gardener-logs-conformance-tests.json"
+
+	# Download Google SDK
+	google_sdk="google-cloud-sdk-226.0.0-linux-x86_64.tar.gz"
+	google_sdk_url="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/$google_sdk"
+	wget --quiet "$google_sdk_url"
+
+	if [ $? -ne 0 ] ; then
+		echo "ERROR: Google SDK $google_sdk_url could not be downloaded."
+		success="$FALSE"
+		return $success
+	fi
+
+	tar xf "$google_sdk"
+	export PATH=$PWD/google-cloud-sdk/bin:$PATH
+
+	# Currently in $LANDSCAPE_REPO_PATH
+	echo "INFO: current work directory $PWD"
+
+	pushd "$GARDENER_REPO_PATH" > /dev/null
+	commit_id="$(git log --format="%H" -n 1)"
+	popd > /dev/null
+
+	# Get credentials from secret server
+	credentials_type="$(cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
+	cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
+
+	# Get upload tool
+	git clone --quiet https://github.com/kubernetes/test-infra
+
+	# Upload results
+	# - Use GCE instead of GCP, since Google uses it on https://k8s-testgrid.appspot.com/conformance-gce
+	# - v${K8S_RELEASE%*\.[0-9]*} cuts off patch release and returns v1.10, v1.11
+	if [ "$CLOUDPROVIDER" = "gcp" ]; then
+		CLOUDPROVIDER_PUBLIC="gce"
+	elif [[ "$CLOUDPROVIDER" = os-* ]]; then
+		CLOUDPROVIDER_PUBLIC="os"
+	else
+		CLOUDPROVIDER_PUBLIC=${CLOUDPROVIDER}
+	fi
+		upload_res="$(python2 ./test-infra/testgrid/conformance/upload_e2e.py --junit="$log_dir/junit_01.xml" --log="$e2e_log" --bucket=gs://k8s-conformance-gardener/ci-gardener-e2e-conformance-"${CLOUDPROVIDER_PUBLIC}"-v"${K8S_RELEASE%*\.[0-9]*}" --metadata='{"commit-id":"'$commit_id'","shoot-k8s-release":"'$K8S_RELEASE'"}' --key-file=$google_bucket_secrets_file)"
+
+	if [ $? -ne 0 ] ; then
+		echo "ERROR: Upload of test results failed with the following  message:"
+		# Multiline output with CR
+		echo "${upload_res%x}"
+		success="$FALSE"
+	fi
+
+	popd > /dev/null
+
+	return "$success"
+}
+
 
 function push_test_summary_to_elastic_search() {
 	json_index=$(
@@ -260,8 +475,9 @@ EOF
 }
 EOF
 	)
-	echo "test summary ${json_payload}"
-	echo "Test status: executed_testcases: $executed_testcases, successful_testcases: $successful_testcases, failed_tests: $failed_testcases, test_duration: $test_duration,  testsuite_successful: $testsuite_successful"
+    echo " "
+	echo "test summary payload: ${json_payload}"
+	echo -e "$(info INFO:) Test status: executed_testcases: $(info "$executed_testcases"), successful_testcases: $(ok "$successful_testcases"), failed_tests: $(error "$failed_testcases"), test_duration: $(info "$test_duration"),  testsuite_successful: $testsuite_successful"
 	echo "${json_index}" >> $json_dir/test_summary.json
 	echo "${json_payload}" >> $json_dir/test_summary.json
 }
