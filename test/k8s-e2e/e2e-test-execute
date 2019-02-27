@@ -17,6 +17,8 @@
 set +u
 if [[ -n $RUN_ON_TM && $RUN_ON_TM = false ]]; then
     own_dir="$(dirname "$0")"
+    # shellcheck source=/dev/null
+    source "$LANDSCAPE_REPO_PATH/.activate"
 else
     own_dir="/src/test/k8s-e2e"
 fi
@@ -49,9 +51,7 @@ set -u
 
 set +u
 # shellcheck source=/dev/null
-source "$LANDSCAPE_REPO_PATH/.activate"
-# shellcheck source=/dev/null
-source "$LANDSCAPE_SCRIPTS_HOME/common"
+source "$own_dir/colors"
 set -u
 
 publish_test_results=$FALSE
