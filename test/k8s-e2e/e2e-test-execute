@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set +u
 if [[ -n $RUN_ON_TM && $RUN_ON_TM = false ]]; then
     own_dir="$(dirname "$0")"
 else
     own_dir="/src/test/k8s-e2e"
 fi
+set -u
 
 readonly es_index="e2e_testcase"
 readonly DESCRIPTIONS_DIR="${own_dir}/descriptions"
@@ -342,7 +344,7 @@ function run_e2e_tests_kubetest() {
 			gather_test_summary_data_for_elastic_search
 			# Convert junit_01.xml to json
 			if ! python3 "${own_dir}"/convtojson.py -t "$json_dir" -i "$es_index" -f "$junit_file" -d "$TESTDESCRIPTION_NAME"; then
-				warning "WARNING: XML to Json conversion failed. Probably kubetest failed executing the e2e test. Executed command: python3 ${own_dir}/convtojson.py -d $json_dir --index e2e_testcase -c $CLOUDPROVIDER -i $junit_file -t $test_execution_timestamp"
+				warning "WARNING: XML to Json conversion failed. Probably kubetest failed executing the e2e test."
             fi
 		else
 		    echo -e "$(warning WARNING:) ${junit_file} not created for test search string \"${e2e_test}\"! e2e.log output:"
