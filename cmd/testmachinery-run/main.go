@@ -137,6 +137,7 @@ func init() {
 	flag.StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
 	flag.StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	flag.StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
+	// TODO: refactor: apply code style: concourse-on-error-dir
 	flag.StringVar(&concourseOnErrorDir, "concourseOnErrorDir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 }
