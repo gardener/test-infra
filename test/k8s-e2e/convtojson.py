@@ -21,11 +21,12 @@ import uuid
 import re
 
 
-def convert_junit_01_xml_to_json(filename, index, targetdir, cloudprovider, execution_timestamp):
+def convert_junit_01_xml_to_json(
+        inputfile, index, targetdir, descfile):
 
     try:
-        with open(filename) as f:
-            doc = xmltodict.parse(f.read(), attr_prefix='', cdata_key='text',
+        with open(inputfile) as inputfile_reader:
+            doc = xmltodict.parse(inputfile_reader.read(), attr_prefix='', cdata_key='text',
                                   dict_constructor=dict)
 
         for testcase in doc['testsuite']['testcase']:
@@ -42,10 +43,7 @@ def convert_junit_01_xml_to_json(filename, index, targetdir, cloudprovider, exec
                     c += 1
 
                 # Create target json structure
-                res = {
-                    'date': execution_timestamp,
-                    'cloud_provider': cloudprovider
-                }
+                res = {}
                 if 'failure' in testcase:
                     res['status'] = 'failure'
                 else:
@@ -53,10 +51,11 @@ def convert_junit_01_xml_to_json(filename, index, targetdir, cloudprovider, exec
 
                 for key, value in testcase.items():
                     res[key] = value
-                matchObj = re.match(r'\[(.*?)\].*?\[(.*)\]', res['name'], re.M|re.I)
-                res['category'] = matchObj.group(2).replace('] [', ', ')
-                res['sig'] = matchObj.group(1)
+                res['name'] = res['name'].strip()
+                matchObj = re.match(r'\[(.*?)\].*', res['name'], re.M | re.I)
+                res['sig'] = matchObj.group(1).strip()
                 res['duration'] = float(res['time'])
+                res['test_desc_file'] = descfile
                 del res['time']
 
                 # Write json file
@@ -72,7 +71,7 @@ def convert_junit_01_xml_to_json(filename, index, targetdir, cloudprovider, exec
     return 0
 
 
-HELPMESSAGE = 'convtojson.py -i|--inputfile <xml inputfile> --index <elastic search index> -c|--cloudprovider -d|--targetdir <directory for json files> -t|--timestamp'
+HELPMESSAGE = 'convtojson.py -f|--inputfile <xml inputfile> -i|--index <elastic search index> -t|--targetdir <directory for json files> -d|--descfile <test description file>'
 
 
 def help(msg=HELPMESSAGE):
@@ -82,12 +81,12 @@ def help(msg=HELPMESSAGE):
 if __name__ == "__main__":
     filename = ''
     index = ''
-    cloudprovider = ''
     targetdir = ''
+    descfile = ''
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:c:d:t:",
-                                   ["inputfile=", "index=", "cloudprovider=", "targetdir=", "timestamp="])
+        opts, args = getopt.getopt(sys.argv[1:], "hf:i:t:d:",
+                                   ["inputfile=", "index=", "targetdir=", "descfile="])
     except getopt.GetoptError:
         help()
         sys.exit(2)
@@ -95,30 +94,28 @@ if __name__ == "__main__":
         if opt == '-h':
             help()
             sys.exit()
-        elif opt in ("-i", "--inputfile"):
-            filename = arg
-        elif opt in ("--index"):
+        elif opt in ("-f", "--inputfile"):
+            inputfile = arg
+        elif opt in ("-i", "--index"):
             index = arg
-        elif opt in ("-c", "--cloudprovider"):
-            cloudprovider = arg
-        elif opt in ("-d", "--targetdir"):
+        elif opt in ("-t", "--targetdir"):
             targetdir = arg
-        elif opt in ("-t", "--timestamp"):
-            execution_timestamp = arg
+        elif opt in ("-d", "--descfile"):
+            descfile = arg
 
-    if filename == '' or cloudprovider == '' or targetdir == '':
+    if inputfile == '' or targetdir == '':
         help()
         sys.exit(1)
 
-    if not os.path.isfile(filename):
-        help('ERROR (convtojson.py): file "{}" does not exist'.format(filename))
+    if not os.path.isfile(inputfile):
+        help('ERROR (convtojson.py): file "{}" does not exist'.format(inputfile))
         sys.exit(1)
 
     if not os.path.isdir(targetdir):
         help('ERROR (convtojson.py): directory "{}" does not exist'.format(targetdir))
         sys.exit(1)
 
-    if convert_junit_01_xml_to_json(filename, index, targetdir, cloudprovider, execution_timestamp) is None:
+    if convert_junit_01_xml_to_json(inputfile, index, targetdir, descfile) is None:
         sys.exit(1)
     else:
         sys.exit(0)
