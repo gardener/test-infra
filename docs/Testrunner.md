@@ -44,6 +44,7 @@ or using the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachin
 | machinetype | | Machinetype of the first worker pool. |  |
 | autoscaler-min | | Minimum number of worker nodes of the first worker pool. | |
 | autoscaler-max | | Maximum number of worker nodes of the first worker pool. | |
+| floating-pool-name | | Floating pool name of the created cluster. Needed for Openstack. | Only required for Openstack clusters|
 | component-descriptor-path | | Path to a component descriptor. The component descriptor will be automatically parsed and all github modules will be added to the testrun's `testLocations`. For further information see [here](#component-descriptor). | |
 | landscape | | Semantic metadata information about the current landscape that is tested. | |
 

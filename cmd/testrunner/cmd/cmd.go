@@ -12,14 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-	"github.com/gardener/test-infra/cmd/testrunner/cmd"
-	log "github.com/sirupsen/logrus"
+	"log"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	log.Info("Start testmachinery testrunner")
-	cmd.Execute()
+var rootCmd = &cobra.Command{
+	Use:   "testrunner",
+	Short: "Testrunner for Test Machinery",
+}
+
+// Execute executes the testrunner cli commands
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatalln(err.Error())
+	}
 }
