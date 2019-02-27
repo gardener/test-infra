@@ -48,6 +48,7 @@ type TestrunParameters struct {
 	MachineType             string
 	AutoscalerMin           string
 	AutoscalerMax           string
+	FloatingPoolName        string
 	ComponentDescriptorPath string
 }
 
