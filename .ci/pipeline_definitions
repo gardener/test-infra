@@ -75,7 +75,7 @@ test-infra:
     #####################
     #       Images      #
     #####################
-    golang-image:
+    tm-golang-image:
       repo:
         trigger: false
       traits:
@@ -90,7 +90,7 @@ test-infra:
               dockerfile: 'Dockerfile'
               dir: 'hack/images/golang'
               tag_as_latest: true
-    prepare-image:
+    tm-prepare-image:
       repo:
         trigger: false
       traits:
@@ -105,7 +105,7 @@ test-infra:
               dockerfile: 'Dockerfile'
               dir: 'hack/images/prepare'
               tag_as_latest: true
-    base-image:
+    tm-base-image:
       repo:
         trigger: false
       traits:
