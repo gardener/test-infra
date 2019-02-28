@@ -32,8 +32,12 @@ RUN  \
     bc \
     linux-headers \
     libxml2-utils \
-    xmltodict \
   && pip3 install --upgrade pip \
+  && pip3 install \
+    mako \
+    semver \
+    xmljson \
+    xmltodict \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \

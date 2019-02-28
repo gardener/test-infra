@@ -73,7 +73,7 @@ test-infra:
           - release
 
     #####################
-    #       Images      #
+    #      Images       #
     #####################
     tm-golang-image:
       repo:
@@ -84,7 +84,7 @@ test-infra:
           inject_effective_version: true
         publish:
           dockerimages:
-            main:
+            tm-golang-image:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/golang
               dockerfile: 'Dockerfile'
@@ -99,7 +99,7 @@ test-infra:
           inject_effective_version: true
         publish:
           dockerimages:
-            tm-golang:
+            tm-prepare-image:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step
               dockerfile: 'Dockerfile'
@@ -114,7 +114,7 @@ test-infra:
           inject_effective_version: true
         publish:
           dockerimages:
-            main:
+            tm-base-image:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
               dockerfile: 'Dockerfile'
