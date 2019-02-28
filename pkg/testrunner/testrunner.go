@@ -138,6 +138,7 @@ func runChart(tmClient *tmclientset.Clientset, chart *chartrenderer.RenderedChar
 			tr, err := runTestrun(tmClient, tr, parameters)
 			if err != nil {
 				log.Error(err.Error())
+				tr.Status.Phase = argov1.NodeFailed
 			}
 			mutex.Lock()
 			finishedTestruns = append(finishedTestruns, tr)

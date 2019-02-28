@@ -29,6 +29,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, componenets []*componentdescriptor.Component) {
@@ -55,14 +56,9 @@ func runTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, paramete
 	log.Infof("Testrun %s deployed", tr.Name)
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
-	startTime := time.Now()
-	for !util.Completed(testrunPhase) {
-		var err error
-
-		if util.MaxTimeExceeded(startTime, maxWaitTimeSeconds) {
-			log.Fatalf("Maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, parameters.TestrunName)
-		}
-
+	interval := time.Duration(pollIntervalSeconds) * time.Second
+	timeout := time.Duration(maxWaitTimeSeconds) * time.Second
+	err = wait.PollImmediate(interval, timeout, func() (bool, error) {
 		tr, err = tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("Cannot get testrun: %s", err.Error())
@@ -76,8 +72,10 @@ func runTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, paramete
 		} else {
 			log.Infof("Testrun %s is in %s phase. Waiting ...", tr.Name, testrunPhase)
 		}
-
-		time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
+		return util.Completed(testrunPhase), nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, parameters.TestrunName)
 	}
 
 	return tr, nil
