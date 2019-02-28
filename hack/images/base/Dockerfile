@@ -21,6 +21,7 @@ RUN  \
     libffi-dev \
     openssh \
     openssl-dev \
+    python2 \
     python3 \
     python3-dev \
     vim \
@@ -30,6 +31,7 @@ RUN  \
     rsync \
     bc \
     linux-headers \
+    libxml2-utils \
   && pip3 install --upgrade pip \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
