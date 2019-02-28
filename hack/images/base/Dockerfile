@@ -32,6 +32,7 @@ RUN  \
     bc \
     linux-headers \
     libxml2-utils \
+    xmltodict \
   && pip3 install --upgrade pip \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
