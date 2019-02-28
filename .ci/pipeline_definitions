@@ -13,19 +13,20 @@ test-infra:
           on_error:
             triggering_policy: 'only_first'
     ti_docker_images: &ti_docker_images
-      dockerimages:
-          tm-controller:
-            registry: 'gcr-readwrite'
-            image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
-            dockerfile: 'Dockerfile'
-            target_name: tm-controller
-            tag_as_latest: true
-          tm-run:
-            registry: 'gcr-readwrite'
-            image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run
-            dockerfile: 'Dockerfile'
-            target_name: tm-run
-            tag_as_latest: true
+      publish:
+        dockerimages:
+            tm-controller:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
+              dockerfile: 'Dockerfile'
+              target_name: tm-controller
+              tag_as_latest: true
+            tm-run:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run
+              dockerfile: 'Dockerfile'
+              target_name: tm-run
+              tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:
         image: 'golang:1.11.1'
