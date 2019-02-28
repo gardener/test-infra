@@ -1,8 +1,7 @@
 test-infra:
   template: 'default'
-  base_definition:
-    repo: ~
-    traits:
+  inherit:
+    ti_default_traits: &ti_default_traits
       scheduling:
         suppress_parallel_execution: true
       version:
@@ -13,8 +12,8 @@ test-infra:
         default:
           on_error:
             triggering_policy: 'only_first'
-      publish:
-        dockerimages:
+    ti_docker_images: &ti_docker_images
+      dockerimages:
           tm-controller:
             registry: 'gcr-readwrite'
             image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
@@ -27,24 +26,31 @@ test-infra:
             dockerfile: 'Dockerfile'
             target_name: tm-run
             tag_as_latest: true
-    steps:
+    ti_test_steps: &ti_test_steps
       check:
         image: 'golang:1.11.1'
       test:
         image: 'golang:1.11.1'
+
   jobs:
     head-update:
       traits:
+        <<: *ti_default_traits
+        <<: *ti_docker_images
         draft_release: ~
       steps:
+        <<: *ti_test_steps
         integration:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
           depends:
           - publish
     pull-request:
       traits:
+        <<: *ti_default_traits
+        <<: *ti_docker_images
         pull-request: ~
       steps:
+        <<: *ti_test_steps
         integration:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
           depends:
@@ -55,16 +61,37 @@ test-infra:
           preprocess: 'finalize'
         release:
           nextversion: 'bump_minor'
+        scheduling:
+          suppress_parallel_execution: true
+        <<: *ti_docker_images
       steps:
+        <<: *ti_test_steps
         deploy:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
           depends:
           - release
 
-test-infra-golang:
-  template: 'default'
-  jobs:
-    release-image:
+    #####################
+    #       Images      #
+    #####################
+    golang-image:
+      repo:
+        trigger: false
+      traits:
+        version:
+          preprocess: 'finalize'
+          inject_effective_version: true
+        publish:
+          dockerimages:
+            main:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/golang
+              dockerfile: 'Dockerfile'
+              dir: 'hack/images/golang'
+              tag_as_latest: true
+    prepare-image:
+      repo:
+        trigger: false
       traits:
         version:
           preprocess: 'finalize'
@@ -73,39 +100,20 @@ test-infra-golang:
           dockerimages:
             tm-golang:
               registry: 'gcr-readwrite'
-              image: eu.gcr.io/gardener-project/gardener/testmachinery/golang
-              dockerfile: 'Dockerfile'
-              dir: 'hack/images/golang'
-              tag_as_latest: true
-
-test-infra-prepare:
-  template: 'default'
-  jobs:
-    release-image:
-      traits:
-        version:
-          preprocess: 'finalize'
-          inject_effective_version: true
-        publish:
-          dockerimages:
-            tm-prepare:
-              registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step
               dockerfile: 'Dockerfile'
               dir: 'hack/images/prepare'
               tag_as_latest: true
-
-test-infra-base:
-  template: 'default'
-  jobs:
-    release-image:
+    base-image:
+      repo:
+        trigger: false
       traits:
         version:
           preprocess: 'finalize'
           inject_effective_version: true
         publish:
           dockerimages:
-            tm-base:
+            main:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
               dockerfile: 'Dockerfile'
