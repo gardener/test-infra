@@ -15,9 +15,11 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
@@ -30,7 +32,7 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
@@ -50,19 +52,36 @@ func RunTestrun(tmClient *tmclientset.Clientset, argoClient *argoclientset.Clien
 		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Error watching Testrun: %s\n%s", tr.Name, err.Error())
 	}
-	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
-		DeleteTestrun(tmClient, tr)
-		return nil, nil, fmt.Errorf("Testrun %s status is empty", tr.Name)
-	}
-	if foundTestrun.Status.Phase != phase {
-		DeleteTestrun(tmClient, tr)
-		return nil, nil, fmt.Errorf("Testrun %s status should be %s, but is %s", tr.Name, phase, foundTestrun.Status.Phase)
-	}
 
 	wf, err := GetWorkflow(argoClient, foundTestrun)
 	if err != nil {
 		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Cannot get Workflow for Testrun: %s\n%s", tr.Name, err.Error())
+	}
+
+	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
+		DeleteTestrun(tmClient, tr)
+		return nil, nil, fmt.Errorf("Testrun %s status is empty", tr.Name)
+	}
+	if foundTestrun.Status.Phase != phase {
+		// get additional errors message
+		errMsgs := []string{}
+		for _, node := range wf.Status.Nodes {
+			if node.Message != "" {
+				errMsgs = append(errMsgs, fmt.Sprintf("%s: %s", node.TemplateName, node.Message))
+			}
+		}
+
+		errMsg := fmt.Sprintf("Testrun %s status should be %s, but is %s", tr.Name, phase, foundTestrun.Status.Phase)
+		if wf.Status.Message != "" {
+			errMsg = fmt.Sprintf("%s. Workflow Message: %s", errMsg, wf.Status.Message)
+		}
+		if len(errMsgs) != 0 {
+			errMsg = fmt.Sprintf("%s.\nAdditional Errors: %s", errMsg, strings.Join(errMsgs, "; "))
+		}
+
+		DeleteTestrun(tmClient, tr)
+		return nil, nil, errors.New(errMsg)
 	}
 
 	return foundTestrun, wf, nil
@@ -107,7 +126,7 @@ func DeleteTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun) {
 	// needs further investigation
 	time.Sleep(3 * time.Second)
 	err := tmClient.Testmachinery().Testruns(tr.Namespace).Delete(tr.Name, &metav1.DeleteOptions{})
-	if !errors.IsNotFound(err) {
+	if !apierrors.IsNotFound(err) {
 		Expect(err).To(BeNil(), "Error deleting Testrun: %s", tr.Name)
 	}
 }

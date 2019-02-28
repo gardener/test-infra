@@ -72,6 +72,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:7cb4fdca4c251b3ef8027c90ea35f70c7b661a593b9eeae34753c65499098bb1"
+  name = "github.com/cpuguy83/go-md2man"
+  packages = ["md2man"]
+  pruneopts = "NUT"
+  revision = "20f5889cbdc3c73dbd2862796665e7c465ade7d1"
+  version = "v1.0.8"
+
+[[projects]]
   digest = "1:8449bb0c1da0fd7ec4706afb5ae46ad0ad658fd87f17a7eb067c5a307ffe3818"
   name = "github.com/cyphar/filepath-securejoin"
   packages = ["."]
@@ -617,6 +625,14 @@
   revision = "bf6a532e95b1f7a62adf0ab5050a5bb2237ad2f4"
 
 [[projects]]
+  digest = "1:d9afa09f6a45f68ec50047f8187c9d273b1fbf507858a104064bb6d9eb2e2795"
+  name = "github.com/russross/blackfriday"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "05f3235734ad95d0016f6a23902f06461fcf567a"
+  version = "v1.5.2"
+
+[[projects]]
   digest = "1:e256b859ab89f005f2f639f5ed9807d0873d9135e27c6382f419b840ff9abe71"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -625,9 +641,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
+  digest = "1:f3cd75f81ee2b143bd354d906370261e94fc58e66dd5d632e1d6cde828338741"
   name = "github.com/spf13/cobra"
-  packages = ["."]
+  packages = [
+    ".",
+    "doc",
+  ]
   pruneopts = "NUT"
   revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
   version = "v0.0.3"
@@ -1162,6 +1181,14 @@
   revision = "f6f0bc9611363b43664d08fb097ab13243ef621d"
   version = "v0.1.9"
 
+[[projects]]
+  digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
+  name = "sigs.k8s.io/yaml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
+  version = "v1.1.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -1169,12 +1196,11 @@
     "github.com/Masterminds/semver",
     "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1",
     "github.com/argoproj/argo/pkg/client/clientset/versioned",
-    "github.com/davecgh/go-spew/spew",
     "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
     "github.com/gardener/gardener/pkg/client/kubernetes",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
-    "github.com/ghodss/yaml",
+    "github.com/go-openapi/spec",
     "github.com/google/go-github/github",
     "github.com/joho/godotenv",
     "github.com/minio/minio-go",
@@ -1183,6 +1209,7 @@
     "github.com/onsi/gomega",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
+    "github.com/spf13/cobra/doc",
     "gopkg.in/yaml.v2",
     "k8s.io/api/admission/v1beta1",
     "k8s.io/api/admissionregistration/v1beta1",
@@ -1197,7 +1224,7 @@
     "k8s.io/apimachinery/pkg/util/runtime",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
-    "k8s.io/apimachinery/pkg/util/yaml",
+    "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
@@ -1213,6 +1240,7 @@
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/kube-openapi/cmd/openapi-gen",
+    "k8s.io/kube-openapi/pkg/common",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
@@ -1225,6 +1253,7 @@
     "sigs.k8s.io/controller-runtime/pkg/source",
     "sigs.k8s.io/controller-runtime/pkg/webhook/admission",
     "sigs.k8s.io/controller-runtime/pkg/webhook/admission/types",
+    "sigs.k8s.io/yaml",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

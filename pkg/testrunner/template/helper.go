@@ -1,4 +1,4 @@
-package testrunner
+package template
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -65,5 +67,18 @@ func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider
 		return profile.Spec.Alicloud.Constraints.Kubernetes.Versions, nil
 	default:
 		return nil, fmt.Errorf("Unsupported cloudprovider %s", cloudprovider)
+	}
+}
+
+func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, componenets []*componentdescriptor.Component) {
+	if tr == nil || componenets == nil {
+		return
+	}
+	for _, component := range componenets {
+		tr.Spec.TestLocations = append(tr.Spec.TestLocations, tmv1beta1.TestLocation{
+			Type:     tmv1beta1.LocationTypeGit,
+			Repo:     fmt.Sprintf("https://%s", component.Name),
+			Revision: component.Version,
+		})
 	}
 }

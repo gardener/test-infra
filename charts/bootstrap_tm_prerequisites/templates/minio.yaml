@@ -54,9 +54,8 @@ spec:
           claimName: minio-pv-claim
       containers:
       - name: minio
-        # Pulls the default Minio image from Docker Hub
         image: minio/minio
-        args: 
+        args:
         - server
         - /storage
         env:
@@ -67,6 +66,11 @@ spec:
           value: "{{.Values.objectStorage.secret.secretKey}}"
         ports:
         - containerPort: 9000
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            memory: 150Mi
         # Mount the volume into the pod
         volumeMounts:
         - name: storage # must match the volume name, above
@@ -96,7 +100,7 @@ spec:
 ---
 apiVersion: v1
 kind: Secret
-metadata: 
+metadata:
     name: {{.Values.objectStorage.secret.name}}
     namespace: {{.Release.Namespace}}
 data:
