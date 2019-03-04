@@ -21,11 +21,12 @@ for repo in $(cat "$FILEPATH" | jq -c '.[]' ); do
     name=$( echo $repo | jq -r '.name')
 
     echo "Clone repo $url with revision $revision to $TM_REPO_PATH/$name \n"
-    git -c http.sslVerify=false clone -v $url $TM_REPO_PATH/$name;
+    git clone -v $url $TM_REPO_PATH/$name;
 
     pushd .
     cd $TM_REPO_PATH/$name
     git fetch origin $revision
     git checkout $revision
+    rm -rf .git
     popd
 done
