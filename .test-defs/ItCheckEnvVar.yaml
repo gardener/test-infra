@@ -20,4 +20,4 @@ spec:
   description: Tests mounting of configurations from secrets.
 
   command: [bash, -c]
-  args: ["./test/controller/testdefinition/scripts/check"]
+  args: ["./test/controller/testdefinition/scripts/check-env"]

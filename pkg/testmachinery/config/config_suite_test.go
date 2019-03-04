@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestConfig(t *testing.T) {
@@ -59,6 +60,39 @@ var _ = Describe("Config", func() {
 			Expect(config.Validate("identifier", elem)).To(HaveOccurred())
 		})
 
+		It("should fail with no value or valueFrom defined", func() {
+			elem := tmv1beta1.ConfigElement{
+				Name: "testConfig",
+				Type: "env",
+			}
+			Expect(config.Validate("identifier", elem)).To(HaveOccurred())
+		})
+
+		It("should fail when valueFrom is defined but no config or secret ref is provided", func() {
+			elem := tmv1beta1.ConfigElement{
+				Name:      "testConfig",
+				Type:      "env",
+				ValueFrom: &tmv1beta1.ConfigSource{},
+			}
+			Expect(config.Validate("identifier", elem)).To(HaveOccurred())
+		})
+
+		It("should succeed when valueFrom is defined and a config ref is provided", func() {
+			elem := tmv1beta1.ConfigElement{
+				Name: "testConfig",
+				Type: "env",
+				ValueFrom: &tmv1beta1.ConfigSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						Key: "test",
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "name",
+						},
+					},
+				},
+			}
+			Expect(config.Validate("identifier", elem)).ToNot(HaveOccurred())
+		})
+
 		It("should fail with unknown config type", func() {
 			elem := tmv1beta1.ConfigElement{
 				Name: "testConfig",
@@ -69,8 +103,9 @@ var _ = Describe("Config", func() {
 
 		It("should succeed with known config type", func() {
 			elem := tmv1beta1.ConfigElement{
-				Name: "testConfig",
-				Type: "env",
+				Name:  "testConfig",
+				Type:  "env",
+				Value: "this is a value",
 			}
 			Expect(config.Validate("identifier", elem)).ToNot(HaveOccurred())
 		})

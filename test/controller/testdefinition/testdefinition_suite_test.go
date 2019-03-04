@@ -73,47 +73,71 @@ var _ = Describe("Testflow execution tests", func() {
 	})
 
 	Context("config", func() {
-		It("should run a TesDef with a evironment variable defined by value", func() {
-			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				{
+		Context("type environment variable", func() {
+			It("should run a TesDef with a environment variable defined by value", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
-						Name: "ValueConfigTestDef",
+						{
+							Name: "value-config-testdef",
+						},
 					},
-				},
-			}
+				}
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
+				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
-			}
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should run a TesDef with a evironment variable defined by a secret", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "secret-config-testdef",
+						},
+					},
+				}
+
+				_, err := clusterClient.CreateSecret(namespace, "test-secret", corev1.SecretTypeOpaque, map[string][]byte{
+					"test": []byte("test"),
+				}, false)
+				Expect(err).ToNot(HaveOccurred())
+				defer func() {
+					err := clusterClient.DeleteSecret(namespace, "test-secret")
+					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
+				}()
+
+				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
-		It("should run a TesDef with a evironment variable defined by a secret", func() {
-			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				{
+		Context("type file", func() {
+			It("should run a TesDef with a file defined by a secret", func() {
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
-						Name: "SecretConfigTestDef",
+						{
+							Name: "secret-config-file-testdef",
+						},
 					},
-				},
-			}
+				}
 
-			_, err := clusterClient.CreateSecret(namespace, "test-secret", corev1.SecretTypeOpaque, map[string][]byte{
-				"test": []byte("test"),
-			}, false)
-			Expect(err).ToNot(HaveOccurred())
-			defer func() {
-				err := clusterClient.DeleteSecret(namespace, "test-secret")
-				Expect(err).ToNot(HaveOccurred(), "Cannot delete secrett")
-			}()
+				_, err := clusterClient.CreateSecret(namespace, "test-secret-file", corev1.SecretTypeOpaque, map[string][]byte{
+					"test": []byte("test"),
+				}, false)
+				Expect(err).ToNot(HaveOccurred())
+				defer func() {
+					err := clusterClient.DeleteSecret(namespace, "test-secret-file")
+					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
+				}()
 
-			tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
-			if err == nil {
+				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
-			}
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
 	})

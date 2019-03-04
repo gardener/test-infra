@@ -19,7 +19,7 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // NewFlow takes a testflow and the global config, and generates the DAG.
@@ -100,13 +100,24 @@ func (f *Flow) GetTemplates() ([]argov1.Template, error) {
 	return templates, nil
 }
 
-// GetLocalVolumes returns all volumes of local TestDefLocations
-func (f *Flow) GetLocalVolumes() []apiv1.Volume {
-	var volumes []apiv1.Volume
+// GetVolumes returns all volumes of local TestDefLocations and
+// used configuration with a reference to a secret or configuration.
+func (f *Flow) GetVolumes() []corev1.Volume {
+	var volumes []corev1.Volume
 	for loc := range f.usedLocations {
 		if loc.Type() == tmv1beta1.LocationTypeLocal {
 			local := loc.(*testdefinition.LocalLocation)
 			volumes = append(volumes, local.GetVolume())
+		}
+	}
+	for _, cfg := range f.usedConfig {
+		if volume, err := cfg.Volume(); err == nil {
+			volumes = append(volumes, *volume)
+		}
+	}
+	for _, cfg := range f.globalConfig {
+		if volume, err := cfg.Volume(); err == nil {
+			volumes = append(volumes, *volume)
 		}
 	}
 
@@ -142,14 +153,21 @@ func (f *Flow) GetStatus() [][]*tmv1beta1.TestflowStepStatus {
 
 func (f *Flow) addNewNode(lastParallelNodes []*Node, lastSerialNode *Node, step *Step, td *testdefinition.TestDefinition) *Node {
 	node := NewNode(lastParallelNodes, lastSerialNode, f.TestFlowRoot, td, step, f.ID)
-	td.AddConfig(config.New(step.Info.Config))
-	td.AddConfig(f.globalConfig)
+	f.addConfigToTestDefinition(step, td)
 	f.addTask(*node.Task)
 
 	f.testdefinitions[td] = nil
 	f.usedLocations[td.Location] = nil
 
 	return node
+}
+
+func (f *Flow) addConfigToTestDefinition(step *Step, td *testdefinition.TestDefinition) {
+	cfg := config.New(step.Info.Config)
+	td.AddConfig(cfg)
+	td.AddConfig(f.globalConfig)
+	f.usedConfig = append(f.usedConfig, cfg...)
+	f.usedConfig = append(f.usedConfig, td.Config...)
 }
 
 func (f *Flow) addTask(task argov1.DAGTask) {

@@ -29,6 +29,17 @@ $(dirname $0)/../vendor/k8s.io/code-generator/generate-internal-groups.sh \
   testmachinery:v1beta1 \
   -h $(dirname $0)/boilerplate.go.txt
 
+go install ./$(dirname "${0}")/../vendor/k8s.io/kube-openapi/cmd/openapi-gen
+
+echo "Generating openapi definitions"
+${GOPATH}/bin/openapi-gen "$@" \
+  --v 1 \
+  --logtostderr \
+  --input-dirs=$PROJECT_ROOT/pkg/apis/testmachinery/v1beta1 \
+  --report-filename=./$(dirname "${0}")/../pkg/openapi/api_violations.report \
+  --output-package=$PROJECT_ROOT/pkg/openapi \
+  -h $(dirname $0)/boilerplate.go.txt
+
 # echo "Generating groups for $PROJECT_ROOT"
 # $(dirname $0)/../vendor/k8s.io/code-generator/generate-groups.sh \
 #   all \

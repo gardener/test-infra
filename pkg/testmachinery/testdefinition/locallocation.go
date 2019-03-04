@@ -52,7 +52,7 @@ func (l *LocalLocation) SetTestDefs(testDefMap map[string]*TestDefinition) error
 		return err
 	}
 	for _, def := range testDefs {
-		def.AddVolumeMount(l.Name(), testmachinery.TM_REPO_PATH)
+		def.AddVolumeMount(l.Name(), testmachinery.TM_REPO_PATH, false)
 		testDefMap[def.Info.Metadata.Name] = def
 	}
 	return nil
