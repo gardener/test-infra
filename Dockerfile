@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install \
   ./cmd/...
 
 ############# tm-controller #############
-FROM alpine:3.8 AS tm-controller
+FROM alpine:3.9 AS tm-controller
 
 RUN apk add --update bash curl
 
@@ -35,10 +35,9 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-run #############
-FROM eu.gcr.io/gardener-project/cc/job-image:1.101.0 AS tm-run
+FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0 AS tm-run
 
 COPY --from=builder /go/bin/testrunner /testrunner
-COPY ./.env /
 
 WORKDIR /
 
