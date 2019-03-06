@@ -57,6 +57,8 @@ const (
 	PhaseStatusInit    argov1.NodePhase = "init"
 	PhaseStatusPending                  = argov1.NodePending
 	PhaseStatusRunning                  = argov1.NodeRunning
+	PhaseStatusSuccess                  = argov1.NodeSucceeded
+	PhaseStatusFailed                   = argov1.NodeFailed
 )
 
 // +genclient

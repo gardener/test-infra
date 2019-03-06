@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testrunner
+package result
 
 import (
 	"archive/tar"
@@ -36,11 +36,10 @@ import (
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+func Output(config *Config, tmKubeconfigPath, namespace string, tr *tmv1beta1.Testrun, metadata *Metadata) error {
 	if config.OutputFile == "" {
 		return nil
 	}
-	var tmKubeConfigPath = config.TmKubeconfigPath
 	var s3Endpoint = config.S3Endpoint
 
 	metadata.TestrunID = tr.Name
@@ -60,7 +59,7 @@ func Output(config *TestrunConfig, tr *tmv1beta1.Testrun, metadata *Metadata) er
 		return err
 	}
 
-	osConfig, err := getOSConfig(tmKubeConfigPath, s3Endpoint)
+	osConfig, err := getOSConfig(tmKubeconfigPath, s3Endpoint, namespace)
 	if err != nil {
 		log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
 	} else {
@@ -227,7 +226,7 @@ func writeToFile(fielPath string, data []byte) error {
 	return nil
 }
 
-func getOSConfig(tmKubeconfigPath, minioEndpoint string) (*testmachinery.ObjectStoreConfig, error) {
+func getOSConfig(tmKubeconfigPath, minioEndpoint, namespace string) (*testmachinery.ObjectStoreConfig, error) {
 	clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfigPath, nil, client.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create client for %s: %s", tmKubeconfigPath, err.Error())

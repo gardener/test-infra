@@ -16,10 +16,8 @@ package main
 
 import (
 	"github.com/gardener/test-infra/cmd/testrunner/cmd"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	log.Info("Start testmachinery testrunner")
 	cmd.Execute()
 }

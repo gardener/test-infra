@@ -12,16 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testflow_test
+package template
 
-import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+// TestrunParameters are the parameters which describe the test that is executed by the testrunner.
+type TestrunParameters struct {
+	// Path to the kubeconfig where the gardener is running.
+	GardenKubeconfigPath string
+	Namespace            string
+	TestrunChartPath     string
 
-	"testing"
-)
-
-func TestValidationWebhook(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrunner Integration Test Suite")
+	ProjectName             string
+	ShootName               string
+	Landscape               string
+	Cloudprovider           string
+	Cloudprofile            string
+	SecretBinding           string
+	Region                  string
+	Zone                    string
+	K8sVersion              string
+	MachineType             string
+	AutoscalerMin           string
+	AutoscalerMax           string
+	FloatingPoolName        string
+	ComponentDescriptorPath string
 }

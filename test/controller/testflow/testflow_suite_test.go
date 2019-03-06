@@ -222,7 +222,6 @@ var _ = Describe("Testflow execution tests", func() {
 				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
-
 			})
 		})
 
@@ -251,120 +250,120 @@ var _ = Describe("Testflow execution tests", func() {
 				}
 
 				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-				Expect(err).ToNot(HaveOccurred())
 				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should mount a config from a secret as file to a specific path", func() {
+				ctx := context.Background()
+				defer ctx.Done()
+				secret := &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "test-secret-",
+						Namespace:    namespace,
+					},
+					Type: corev1.SecretTypeOpaque,
+					Data: map[string][]byte{
+						"test": []byte("test"),
+					},
+				}
+				err := clusterClient.Client().Create(ctx, secret)
+				Expect(err).ToNot(HaveOccurred())
+				defer func() {
+					err := clusterClient.Client().Delete(ctx, secret)
+					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
+				}()
+
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "check-file-testdef",
+						},
+					},
+				}
+				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
+					{
+						Type:  tmv1beta1.ConfigTypeEnv,
+						Name:  "FILE",
+						Value: "/tmp/test/test.txt",
+					},
+					{
+						Type: tmv1beta1.ConfigTypeFile,
+						Name: "TEST_NAME",
+						Path: "/tmp/test/test.txt",
+						ValueFrom: &tmv1beta1.ConfigSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: secret.Name,
+								},
+								Key: "test",
+							},
+						},
+					},
+				}
+
+				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
+
+			})
+
+			It("should mount a config from a configmap as file to a specific path", func() {
+				ctx := context.Background()
+				defer ctx.Done()
+				configmap := &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "test-configmap-",
+						Namespace:    namespace,
+					},
+					Data: map[string]string{
+						"test": "test",
+					},
+				}
+				err := clusterClient.Client().Create(ctx, configmap)
+				Expect(err).ToNot(HaveOccurred())
+				defer func() {
+					err := clusterClient.Client().Delete(ctx, configmap)
+					Expect(err).ToNot(HaveOccurred(), "Cannot delete configmap %s", configmap.Name)
+				}()
+
+				tr := resources.GetBasicTestrun(namespace, commitSha)
+				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+					{
+						{
+							Name: "check-file-testdef",
+						},
+					},
+				}
+				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
+					{
+						Type:  tmv1beta1.ConfigTypeEnv,
+						Name:  "FILE",
+						Value: "/tmp/test/test.txt",
+					},
+					{
+						Type: tmv1beta1.ConfigTypeFile,
+						Name: "TEST_NAME",
+						Path: "/tmp/test/test.txt",
+						ValueFrom: &tmv1beta1.ConfigSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: configmap.Name,
+								},
+								Key: "test",
+							},
+						},
+					},
+				}
+
+				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				defer utils.DeleteTestrun(tmClient, tr)
+				Expect(err).ToNot(HaveOccurred())
 
 			})
 		})
 
-		It("should mount a config from a secret as file to a specific path", func() {
-			ctx := context.Background()
-			defer ctx.Done()
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "test-secret-",
-					Namespace:    namespace,
-				},
-				Type: corev1.SecretTypeOpaque,
-				Data: map[string][]byte{
-					"test": []byte("test"),
-				},
-			}
-			err := clusterClient.Client().Create(ctx, secret)
-			Expect(err).ToNot(HaveOccurred())
-			defer func() {
-				err := clusterClient.Client().Delete(ctx, secret)
-				Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
-			}()
-
-			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				{
-					{
-						Name: "check-file-testdef",
-					},
-				},
-			}
-			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-				{
-					Type:  tmv1beta1.ConfigTypeEnv,
-					Name:  "FILE",
-					Value: "/tmp/test/test.txt",
-				},
-				{
-					Type: tmv1beta1.ConfigTypeFile,
-					Name: "TEST_NAME",
-					Path: "/tmp/test/test.txt",
-					ValueFrom: &tmv1beta1.ConfigSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: secret.Name,
-							},
-							Key: "test",
-						},
-					},
-				},
-			}
-
-			tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
-			Expect(err).ToNot(HaveOccurred())
-
-		})
-
-		It("should mount a config from a configmap as file to a specific path", func() {
-			ctx := context.Background()
-			defer ctx.Done()
-			configmap := &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "test-configmap-",
-					Namespace:    namespace,
-				},
-				Data: map[string]string{
-					"test": "test",
-				},
-			}
-			err := clusterClient.Client().Create(ctx, configmap)
-			Expect(err).ToNot(HaveOccurred())
-			defer func() {
-				err := clusterClient.Client().Delete(ctx, configmap)
-				Expect(err).ToNot(HaveOccurred(), "Cannot delete configmap %s", configmap.Name)
-			}()
-
-			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				{
-					{
-						Name: "check-file-testdef",
-					},
-				},
-			}
-			tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-				{
-					Type:  tmv1beta1.ConfigTypeEnv,
-					Name:  "FILE",
-					Value: "/tmp/test/test.txt",
-				},
-				{
-					Type: tmv1beta1.ConfigTypeFile,
-					Name: "TEST_NAME",
-					Path: "/tmp/test/test.txt",
-					ValueFrom: &tmv1beta1.ConfigSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: configmap.Name,
-							},
-							Key: "test",
-						},
-					},
-				},
-			}
-
-			tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
-			Expect(err).ToNot(HaveOccurred())
-
-		})
 	})
 
 	Context("onExit", func() {

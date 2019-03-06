@@ -28,7 +28,7 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	yaml "k8s.io/apimachinery/pkg/util/yaml"
+	yaml "sigs.k8s.io/yaml"
 )
 
 func init() {
@@ -63,7 +63,7 @@ func ParseTestrunFromFile(filePath string) (tmv1beta1.Testrun, error) {
 
 // ParseTestrun parses testrun.
 func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
-	jsonBody, err := yaml.ToJSON(data)
+	jsonBody, err := yaml.YAMLToJSON(data)
 	if err != nil {
 		return tmv1beta1.Testrun{}, err
 	}
@@ -78,7 +78,7 @@ func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
 
 // ParseTestDef parses a file into a TestDefinition.
 func ParseTestDef(data []byte) (tmv1beta1.TestDefinition, error) {
-	jsonBody, err := yaml.ToJSON(data)
+	jsonBody, err := yaml.YAMLToJSON(data)
 	if err != nil {
 		return tmv1beta1.TestDefinition{}, err
 	}
@@ -161,8 +161,9 @@ func FormatArtifactName(name string) string {
 	return reg.ReplaceAllString(name, "-")
 }
 
+// PrettyPrintStruct returns an obj as pretty printed yaml.
 func PrettyPrintStruct(obj interface{}) string {
-	str, err := json.MarshalIndent(obj, "", "  ")
+	str, err := yaml.Marshal(obj)
 	if err != nil {
 		return ""
 	}

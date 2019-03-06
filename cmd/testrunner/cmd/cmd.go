@@ -15,8 +15,13 @@
 package cmd
 
 import (
-	"log"
+	"os"
 
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtemplate"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtestrun"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -30,4 +35,18 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalln(err.Error())
 	}
+}
+
+func init() {
+	formatter := &log.TextFormatter{
+		FullTimestamp: true,
+	}
+	log.SetFormatter(formatter)
+	log.SetOutput(os.Stderr)
+
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Set debug mode for additional output")
+
+	runtemplate.AddCommand(rootCmd)
+	runtestrun.AddCommand(rootCmd)
+	docs.AddCommand(rootCmd)
 }
