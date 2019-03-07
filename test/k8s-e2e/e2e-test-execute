@@ -125,10 +125,10 @@ function get_skip_test_names() {
 
 
 function escape_test_name() {
-	# replace all spaces (use //) by \s
-	printf -v e2e_test "%q" "$1" #escape special characters
-	e2e_test="${e2e_test//\\ /\\s}"     #escpae blanks with \s
-	echo "$e2e_test"
+    # replace all spaces (use //) by \s
+    printf -v escaped_string "%q" "$1" #escape special characters
+    escaped_string="${escaped_string//\\ /\\s}"     #escpae blanks with \s
+    echo $escaped_string
 }
 
 
@@ -316,7 +316,9 @@ function run_e2e_tests_kubetest() {
 		return $success
 	fi
 
-	isKubeAPIReachable
+	if ! isKubeAPIReachable; then
+		return "$FALSE"
+	fi
 	local counter=0
 	while read -ru 3 e2e_test; do
 
@@ -328,7 +330,7 @@ function run_e2e_tests_kubetest() {
 		# kubetest returns a non-zero value in case any test fails
 		# Unclear how to checkwhile read e2e_test ; do if the kubetest call failed
 		kubetest --provider skeleton --deployment local --test --check-version-skew false \
-			--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=false --ginkgo.flakeAttempts=$flake_attempts --ginkgo.focus=$e2e_test" --dump="$log_dir" &> "$e2e_log".tmp
+			--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=false --ginkgo.flakeAttempts=$flake_attempts --ginkgo.focus=$e2e_test" --dump="$log_dir" > "$e2e_log".tmp  2> /dev/null
 		local res=$?
 		cat "$e2e_log".tmp >> "$e2e_log"
 
@@ -355,10 +357,13 @@ function run_e2e_tests_kubetest() {
 
 	done 3<<<"$(cat "${generated_run_desc_path}")"
 
-	push_test_summary_to_elastic_search
+	save_test_results_summary_as_file
 
 	if [[ "$publish_test_results" -eq "$TRUE" ]]; then
-		pushResutlsToGCS
+		if ! pushResultsToGCS; then
+			success="$FALSE"
+			return "$success"
+		fi
 	fi
 	if [ $counter -eq 0 ]; then
 		echo -e "$(info INFO:) No test has been executed."
@@ -395,9 +400,8 @@ function gather_test_summary_data_for_elastic_search() {
 }
 
 
-function pushResutlsToGCS() {
+function pushResultsToGCS() {
 	# Push result to GCS (Google Cloud Storage)
-
 	local google_bucket_secrets_file="gardener-logs-conformance-tests.json"
 
 	# Download Google SDK
@@ -414,13 +418,6 @@ function pushResutlsToGCS() {
 	tar xf "$google_sdk"
 	export PATH=$PWD/google-cloud-sdk/bin:$PATH
 
-	# Currently in $LANDSCAPE_REPO_PATH
-	echo "INFO: current work directory $PWD"
-
-	pushd "$GARDENER_REPO_PATH" > /dev/null
-	commit_id="$(git log --format="%H" -n 1)"
-	popd > /dev/null
-
 	# Get credentials from secret server
 	credentials_type="$(cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
 	cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
@@ -430,7 +427,6 @@ function pushResutlsToGCS() {
 
 	# Upload results
 	# - Use GCE instead of GCP, since Google uses it on https://k8s-testgrid.appspot.com/conformance-gce
-	# - v${K8S_RELEASE%*\.[0-9]*} cuts off patch release and returns v1.10, v1.11
 	if [ "$CLOUDPROVIDER" = "gcp" ]; then
 		CLOUDPROVIDER_PUBLIC="gce"
 	elif [[ "$CLOUDPROVIDER" = os-* ]]; then
@@ -438,7 +434,8 @@ function pushResutlsToGCS() {
 	else
 		CLOUDPROVIDER_PUBLIC=${CLOUDPROVIDER}
 	fi
-		upload_res="$(python2 ./test-infra/testgrid/conformance/upload_e2e.py --junit="$log_dir/junit_01.xml" --log="$e2e_log" --bucket=gs://k8s-conformance-gardener/ci-gardener-e2e-conformance-"${CLOUDPROVIDER_PUBLIC}"-v"${K8S_RELEASE%*\.[0-9]*}" --metadata='{"commit-id":"'$commit_id'","shoot-k8s-release":"'$K8S_RELEASE'"}' --key-file=$google_bucket_secrets_file)"
+
+	upload_res="$(python2 ./test-infra/testgrid/conformance/upload_e2e.py --junit="$log_dir/junit_01.xml" --log="$e2e_log" --bucket=gs://k8s-conformance-gardener/ci-gardener-e2e-conformance-"${CLOUDPROVIDER_PUBLIC}"-v"${K8S_VERSION%*\.[0-9]*}" --metadata='{"commit-id":"'$GARDENER_COMMIT_ID'","shoot-k8s-release":"'$K8S_VERSION'"}' --key-file=$google_bucket_secrets_file)"
 
 	if [ $? -ne 0 ] ; then
 		echo "ERROR: Upload of test results failed with the following  message:"
@@ -453,7 +450,7 @@ function pushResutlsToGCS() {
 }
 
 
-function push_test_summary_to_elastic_search() {
+function save_test_results_summary_as_file() {
 	json_index=$(
 		tr -d "\n" <<EOF
 {
@@ -473,7 +470,7 @@ EOF
   "failed_testcases": $failed_testcases,
   "duration": $test_duration,
   "successful": "$testsuite_successful",
-  "date": "$test_execution_timestamp"
+  "test_desc_file": "$TESTDESCRIPTION_NAME"
 }
 EOF
 	)

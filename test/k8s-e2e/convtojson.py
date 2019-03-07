@@ -54,7 +54,7 @@ def convert_junit_01_xml_to_json(
                 res['name'] = res['name'].strip()
                 matchObj = re.match(r'\[(.*?)\].*', res['name'], re.M | re.I)
                 res['sig'] = matchObj.group(1).strip()
-                res['duration'] = float(res['time'])
+                res['duration'] = int(float(res['time']))
                 res['test_desc_file'] = descfile
                 del res['time']
 

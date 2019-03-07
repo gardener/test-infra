@@ -139,3 +139,4 @@
 [sig-scheduling] Multi-AZ Cluster Volumes [sig-storage] should schedule pods in the same zones as statically provisioned PVs
 [sig-scheduling] Multi-AZ Clusters should spread the pods of a replication controller across zones
 [sig-scheduling] Multi-AZ Clusters should spread the pods of a service across zones
+[sig-apps] stateful Upgrade [Feature:StatefulUpgrade] [k8s.io] stateful upgrade should maintain a functioning cluster
