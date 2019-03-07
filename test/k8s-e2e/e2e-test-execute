@@ -67,7 +67,7 @@ if [[ "$TESTDESCRIPTION_NAME" == "conformance.desc" ]]; then
 	conformance_test=$TRUE
 	echo -e "$(info INFO:) runnning Conformance e2e tests"
 fi
-if [[ "$TESTDESCRIPTION_NAME" =~ ^[[:digit:]]\.[[:digit:]]{1,2}$ ]]; then
+if [ "$PUBLISH_TO_TESTGRID" = "true" ]; then
 	publish_test_results=$TRUE
 	# use conformance description file, in case restults shall be published to testgrid
 	test_desc_path="${DESCRIPTIONS_DIR}/conformance.desc"
