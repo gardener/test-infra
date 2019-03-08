@@ -17,7 +17,7 @@ testrunner run-testrun [flags]
   -h, --help                        help for run-testrun
       --interval int                Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
       --name-prefix string          Name prefix of the testrun (default "testrunner-")
-  -n, --namespace string            Namesapce where the testrun should be deployed. (default "default")
+  -n, --namespace string            Namespace where the testrun should be deployed. (default "default")
       --timeout int                 Timout in seconds of the testrunner to wait for the complete testrun to finish. (default 3600)
       --tm-kubeconfig-path string   Path to the testmachinery cluster kubeconfig
 ```

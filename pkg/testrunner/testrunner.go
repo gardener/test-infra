@@ -43,7 +43,10 @@ func Run(config *Config, testruns []*tmv1beta1.Testrun, testrunNamePrefix string
 	if err != nil {
 		return nil, fmt.Errorf("Cannot build kubernetes client from %s: %s", config.TmKubeconfigPath, err.Error())
 	}
-	tmClient := tmclientset.NewForConfigOrDie(tmConfig)
+	tmClient, err := tmclientset.NewForConfig(tmConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	finishedTestruns := runChart(tmClient, testruns, config.Namespace, testrunNamePrefix)
 

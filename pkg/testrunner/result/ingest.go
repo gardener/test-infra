@@ -15,10 +15,14 @@
 package result
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -38,5 +42,28 @@ func IngestFile(file, esCfgName string) error {
 		return err
 	}
 	log.Info("File successfully ingested to elasticsearch.")
+	return nil
+}
+
+// MarkTestrunsAsIngested sets the ingest status of testruns to true
+func MarkTestrunsAsIngested(tmKubeconfigPath string, testruns []*tmv1beta1.Testrun) error {
+	tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+	}
+	tmClient, err := tmclientset.NewForConfig(tmConfig)
+	if err != nil {
+		return fmt.Errorf("Canno build testmachinery kubernetes client: %s", err.Error())
+	}
+	for _, tr := range testruns {
+		tr.Status.Ingested = true
+		_, err := tmClient.Testmachinery().Testruns(tr.Namespace).UpdateStatus(tr)
+		if err != nil {
+			log.Errorf("Cannot update status off testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
+			continue
+		}
+		log.Debugf("Successfully updated status of testrun %s in namespace %s", tr.Name, tr.Namespace)
+	}
+
 	return nil
 }

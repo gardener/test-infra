@@ -132,6 +132,9 @@ type TestrunStatus struct {
 	// Steps is the detailed summary of every step.
 	// It also shows all specific executed tests.
 	Steps [][]*TestflowStepStatus `json:"steps,omitempty"`
+
+	// Ingested states whether the result of a testrun is already ingested into a persistant storage (db).
+	Ingested bool `json:"ingested"`
 }
 
 // TestflowStepStatus is the status of Testflow step
