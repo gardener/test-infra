@@ -13,6 +13,7 @@ testrunner run-template [flags]
 ### Options
 
 ```
+      --all-k8s-versions                   Run the testrun with all available versions specified by the cloudprovider.
       --autoscaler-max string              Max number of worker nodes.
       --autoscaler-min string              Min number of worker nodes.
       --cloudprofile string                Cloudprofile of shoot.

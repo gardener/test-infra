@@ -15,23 +15,47 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider string) (string, error) {
+// getK8sVersions returns all K8s version that should be rendered by the chart
+func getK8sVersions(parameters *TestrunParameters) ([]string, error) {
+	if !parameters.MakeVersionMatrix && parameters.K8sVersion != "" {
+		return []string{parameters.K8sVersion}, nil
+	}
+	// if the kubernetes version is not set, get the latest version defined by the cloudprofile
+	if !parameters.MakeVersionMatrix && parameters.K8sVersion == "" {
+		version, err := getLatestK8sVersion(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
+		if err != nil {
+			return nil, fmt.Errorf("'k8s-version' is not defined nor can it be read from the cloudprofile: %s", err.Error())
+		}
+		return []string{version}, nil
+	}
+	if parameters.MakeVersionMatrix {
+		return getK8sVersionsFromCloudprofile(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
+	}
+
+	return nil, fmt.Errorf("No K8s version can be specified")
+}
+
+func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider string) ([]string, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 	k8sGardenClient, err := kubernetes.NewClientFromFile(gardenerKubeconfigPath, nil, client.Options{
 		Scheme: kubernetes.GardenScheme,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	profile := &gardenv1beta1.CloudProfile{}
 	err = k8sGardenClient.Client().Get(ctx, types.NamespacedName{Name: cloudprofile}, profile)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	rawVersions, err := getCloudproviderVersions(profile, cloudprovider)
+	return getCloudproviderVersions(profile, cloudprovider)
+}
+
+func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider string) (string, error) {
+	rawVersions, err := getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider)
 	if err != nil {
 		return "", err
 	}

@@ -45,6 +45,7 @@ testrunner run|run-tmpl [flags]
 | testrun-prefix | | Prefix of the deployed Testrun. This prefix is used for the `metadata.generateName` of Testruns in the helm template. | x |
 | namespace | default | Namespace where the testrun is deployed. |  |
 | timeout | 3600 | Max seconds to wait for all Testruns to finish. | |
+| version-matrix | false | Run the testrun with all available versions of the specified cloudprovider. :warning: The `k8s-version` is ingored if this parameter is set to true.| |
 | output-file-path | "./testout" | The filepath where the test summary and results should be written to. | |
 | s3-endpoint | EnvVar ("S3_ENDPOINT") | Accessible S3 endpoint of the s3 storage used by argo. This parameter is needed when tests export test results and the testrunner needs to fetch them and add them to the summary. | |
 | es-config-name | | Elasticsearch server config name that is used with the cc-utils cli | |
