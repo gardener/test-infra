@@ -10,7 +10,9 @@ Testrunner is an additional component of the Test Machinery that abstracts templ
     - [Component Descriptor](#component-descriptor)
     - [Helm Template Format](#helm-template-format)
 
-![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/testrunner_overview.png)
+<p align="center">
+  <img alt= "testrunner overview" src="https://github.com/gardener/test-infra/raw/master/docs/testrunner_overview.png">
+</p>
 
 ## Usage
 
