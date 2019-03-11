@@ -35,6 +35,11 @@ func Collect(config *Config, tmKubeconfigPath, namespace string, testruns []*tmv
 		err = IngestFile(config.OutputFile, config.ESConfigName)
 		if err != nil {
 			log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
+		} else {
+			err := MarkTestrunsAsIngested(tmKubeconfigPath, testruns)
+			if err != nil {
+				log.Warn(err.Error())
+			}
 		}
 
 		if tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {

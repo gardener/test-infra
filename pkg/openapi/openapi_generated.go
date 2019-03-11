@@ -775,7 +775,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 							},
 						},
 					},
+					"ingested": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ingested states whether the result of a testrun is already ingested into a persistant storage (db).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"ingested"},
 			},
 		},
 		Dependencies: []string{
