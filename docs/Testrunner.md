@@ -10,6 +10,8 @@ Testrunner is an additional component of the Test Machinery that abstracts templ
     - [Component Descriptor](#component-descriptor)
     - [Helm Template Format](#helm-template-format)
 
+![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/testrunner_overview.png)
+
 ## Usage
 
 The testrunner is a basic go commandline tool that can be run by either calling it directly via
