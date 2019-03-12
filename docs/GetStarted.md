@@ -97,25 +97,25 @@ tm_meta.testrun_id: ID of the overall testrun.
 
 TestDefinition can additionally place json files in `TM_EXPORT_PATH` to have them picked up by the TestMachinery and forwarded into elasticsearch.
 
-Such additional data (written by a single test) has to be in one the 3 formats below.
-The TestMachinery automatically uploads these documents to an index named like the TestDefinition. A TestDefinition called `CreateShoot` will be uploaded to the index `createshoot`.
+Such additional data (written by a single test) has to be in one of the 3 formats below. The TestMachinery automatically derives which of the 3 formats is used.
+It then automatically uploads these documents to an index named like the TestDefinition. A TestDefinition called `CreateShoot` will be uploaded to the index `createshoot`.
 
-- Valid JSON document
-- Newline-delimited JSON (multiple json documents in one file, separated by newlines)
-  ```
-    { "key": "value" }
-    { "key2": true }
-  ```
-- ElasticSearch bulk format with a specific index (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html)
-  - The documents are then uploaded to the specified index prefixed by `tm-`.
-  ```
-    { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
-    { "key": "value" }
-    { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
-    { "key2": true }
-    { "index": { "_index": "mySecondSpecificIndex", "_type": "_doc" } }
-    { "key3": 5 }
-  ```
+1. Valid JSON document
+2. Newline-delimited JSON (multiple json documents in one file, separated by newlines)
+    ```
+      { "key": "value" }
+      { "key2": true }
+    ```
+3. ElasticSearch bulk format with a specific index (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html).
+    The documents are then uploaded to the specified index prefixed by `tm-`.
+    ```
+      { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
+      { "key": "value" }
+      { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
+      { "key2": true }
+      { "index": { "_index": "mySecondSpecificIndex", "_type": "_doc" } }
+      { "key3": 5 }
+    ```
 
 ### Images
 
