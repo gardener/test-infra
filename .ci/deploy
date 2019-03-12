@@ -51,7 +51,7 @@ fi
 # Download Testmachinery Kubeconfig
 TM_KUBECONFIG=/tm/kubeconfig
 mkdir -p /tm
-/cc/utils/cli.py config attribute --cfg-type kubernetes --cfg-name testmachinery-public --key kubeconfig > $TM_KUBECONFIG
+/cc/utils/cli.py config attribute --cfg-type kubernetes --cfg-name testmachinery --key kubeconfig > $TM_KUBECONFIG
 
 
 
