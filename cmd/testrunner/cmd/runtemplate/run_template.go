@@ -28,17 +28,19 @@ import (
 )
 
 var (
-	tmKubeconfigPath        string
-	namespace               string
+	tmKubeconfigPath string
+	namespace        string
+	timeout          int64
+	interval         int64
+
 	outputFilePath          string
 	elasticSearchConfigName string
 	s3Endpoint              string
 	concourseOnErrorDir     string
-	timeout                 int64
-	interval                int64
 
 	testrunChartPath         string
 	gardenKubeconfigPath     string
+	allK8sVersions           bool
 	testrunNamePrefix        string
 	projectName              string
 	shootName                string
@@ -102,6 +104,7 @@ var runCmd = &cobra.Command{
 		parameters := &testrunnerTemplate.TestrunParameters{
 			GardenKubeconfigPath: gardenKubeconfigPath,
 			TestrunChartPath:     testrunChartPath,
+			MakeVersionMatrix:    allK8sVersions,
 
 			ProjectName:             projectName,
 			ShootName:               shootName,
@@ -149,24 +152,25 @@ func init() {
 	runCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	runCmd.MarkFlagRequired("tm-kubeconfig-path")
 	runCmd.MarkFlagFilename("tm-kubeconfig-path")
-	runCmd.Flags().StringVar(&testrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
-	runCmd.MarkFlagRequired("testruns-chart-path")
-	runCmd.MarkFlagFilename("testruns-chart-path")
 	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
 	runCmd.MarkFlagRequired("testrun-prefix")
 	runCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
-
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+
 	runCmd.Flags().StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	runCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// parameter flags
+	runCmd.Flags().StringVar(&testrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
+	runCmd.MarkFlagRequired("testruns-chart-path")
+	runCmd.MarkFlagFilename("testruns-chart-path")
 	runCmd.Flags().StringVar(&gardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
 	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
 	runCmd.MarkFlagFilename("gardener-kubeconfig-path")
+	runCmd.Flags().BoolVar(&allK8sVersions, "all-k8s-versions", false, "Run the testrun with all available versions specified by the cloudprovider.")
 	runCmd.Flags().StringVar(&projectName, "project-name", "", "Gardener project name of the shoot")
 	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
 	runCmd.Flags().StringVar(&shootName, "shoot-name", "", "Shoot name which is used to run tests.")

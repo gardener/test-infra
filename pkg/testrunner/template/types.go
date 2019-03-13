@@ -20,6 +20,8 @@ type TestrunParameters struct {
 	GardenKubeconfigPath string
 	Namespace            string
 	TestrunChartPath     string
+	// Ignore K8sVersion and generate a testrun for every valid version that is defined in the cloudprofile
+	MakeVersionMatrix bool
 
 	ProjectName             string
 	ShootName               string
