@@ -19,13 +19,13 @@ test-infra:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
               dockerfile: 'Dockerfile'
-              target_name: tm-controller
+              target: tm-controller
               tag_as_latest: true
             tm-run:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run
               dockerfile: 'Dockerfile'
-              target_name: tm-run
+              target: tm-run
               tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:
