@@ -32,7 +32,7 @@ func NewObjectStore() (*ObjectStore, error) {
 
 	cfg := testmachinery.GetConfig().ObjectStore
 
-	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, false)
+	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
 		return nil, err
 	}

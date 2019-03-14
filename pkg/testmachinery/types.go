@@ -56,6 +56,7 @@ type TmConfiguration struct {
 // ObjectStoreConfig is an object containing the ObjectStore specific configuration
 type ObjectStoreConfig struct {
 	Endpoint   string
+	SSL        bool
 	AccessKey  string
 	SecretKey  string
 	BucketName string

@@ -37,6 +37,7 @@ spec:
       containers:
       - name: testmachinery-controller
         image: "{{ .Values.controller.image }}:{{ .Values.controller.tag }}"
+        imagePullPolicy: Always
 {{ if .Values.local.enabled }}
         command: ["/testmachinery-controller", "-insecure=true"]
 {{end}}

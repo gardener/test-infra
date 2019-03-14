@@ -22,14 +22,17 @@ import (
 
 // Config represents the configuration for collecting and storing results from a testrun.
 type Config struct {
-	// outputFilePath is the path where the testresult is written to.
+	// OutputFilePath is the path where the testresult is written to.
 	OutputFile string
 
-	// config name of the elastic search to store the test results.
+	// Config name of the elasticsearch instance to store the test results.
 	ESConfigName string
 
-	// Endpint of the s3 storage of the testmachinery.
+	// Endpoint of the s3 storage of the testmachinery.
 	S3Endpoint string
+
+	// S3SSL indicates whether the S3 instance is SSL secured or not.
+	S3SSL bool
 
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
