@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
@@ -26,7 +27,7 @@ import (
 )
 
 // Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
-func Render(tmKubeconfigPath string, parameters *TestrunParameters, metadata *result.Metadata) ([]*tmv1beta1.Testrun, error) {
+func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *result.Metadata) ([]*tmv1beta1.Testrun, error) {
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -35,17 +36,16 @@ func Render(tmKubeconfigPath string, parameters *TestrunParameters, metadata *re
 	if parameters.ComponentDescriptorPath != "" {
 		data, err := ioutil.ReadFile(parameters.ComponentDescriptorPath)
 		if err != nil {
-			log.Warnf("Cannot read component descriptor file %s: %s", parameters.ComponentDescriptorPath, err.Error())
+			return nil, fmt.Errorf("Cannot read component descriptor file %s: %s", parameters.ComponentDescriptorPath, err.Error())
 		}
 		components, err := componentdescriptor.GetComponents(data)
 		if err != nil {
-			log.Warnf("Cannot decode and parse BOM %s", err.Error())
-		} else {
-			metadata.BOM = components
+			return nil, fmt.Errorf("Cannot decode and parse BOM %s", err.Error())
 		}
+		metadata.BOM = components
 	}
 
-	files, err := RenderChart(tmKubeconfigPath, parameters, versions)
+	files, err := RenderChart(tmClient, parameters, versions)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func Render(tmKubeconfigPath string, parameters *TestrunParameters, metadata *re
 			log.Warnf("Cannot parse rendered file: %s", err.Error())
 		}
 
-		// Add current dependency repositories to the testrun location.
+		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
 		addBOMLocationsToTestrun(&tr, metadata.BOM)
 

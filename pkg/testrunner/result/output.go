@@ -18,6 +18,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,10 +34,11 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	minio "github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(config *Config, tmKubeconfigPath, namespace string, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *Metadata) error {
 	if config.OutputFile == "" {
 		return nil
 	}
@@ -58,7 +60,7 @@ func Output(config *Config, tmKubeconfigPath, namespace string, tr *tmv1beta1.Te
 		return err
 	}
 
-	osConfig, err := getOSConfig(tmKubeconfigPath, namespace, config.S3Endpoint, config.S3SSL)
+	osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
 	if err != nil {
 		log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
 	} else {
@@ -225,16 +227,17 @@ func writeToFile(fielPath string, data []byte) error {
 	return nil
 }
 
-func getOSConfig(tmKubeconfigPath, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {
-	clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfigPath, nil, client.Options{})
-	if err != nil {
-		return nil, fmt.Errorf("Cannot create client for %s: %s", tmKubeconfigPath, err.Error())
-	}
-	minioConfig, err := clusterClient.GetConfigMap(namespace, "tm-config")
+func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {
+	ctx := context.Background()
+	defer ctx.Done()
+
+	minioConfig := &corev1.ConfigMap{}
+	err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: "tm-config"}, minioConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot get ConfigMap 'tm-config': %s", err.Error())
 	}
-	minioSecrets, err := clusterClient.GetSecret(namespace, minioConfig.Data["objectstore.secretName"])
+	minioSecrets := &corev1.Secret{}
+	err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: minioConfig.Data["objectstore.secretName"]}, minioSecrets)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot get Secret '%s': %s", minioConfig.Data["objectstore.secretName"], err.Error())
 	}

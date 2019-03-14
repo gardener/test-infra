@@ -14,6 +14,14 @@
 
 package testmachinery
 
+import (
+	argoscheme "github.com/argoproj/argo/pkg/client/clientset/versioned/scheme"
+	tmscheme "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned/scheme"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	corescheme "k8s.io/client-go/kubernetes/scheme"
+)
+
 const (
 	// TM_KUBECONFIG_PATH is the path where kubeconfigs are mounted to tests.
 	TM_KUBECONFIG_PATH = "/tmp/env/kubeconfig"
@@ -81,4 +89,17 @@ type TechnicalUser struct {
 	Username  string `yaml:"username"`
 	Password  string `yaml:"password"`
 	AuthToken string `yaml:"authToken"`
+}
+
+// TestMachineryScheme is the scheme used in the testmachinery and testrunner.
+var TestMachineryScheme = runtime.NewScheme()
+
+func init() {
+	testmachinerySchemeBuilder := runtime.NewSchemeBuilder(
+		corescheme.AddToScheme,
+		tmscheme.AddToScheme,
+		argoscheme.AddToScheme,
+	)
+
+	utilruntime.Must(testmachinerySchemeBuilder.AddToScheme(TestMachineryScheme))
 }

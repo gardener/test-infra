@@ -2686,6 +2686,7 @@ func autoConvert_v1beta1_GCPNetworks_To_garden_GCPNetworks(in *GCPNetworks, out 
 	}
 	out.VPC = (*garden.GCPVPC)(unsafe.Pointer(in.VPC))
 	out.Workers = *(*[]garden.CIDR)(unsafe.Pointer(&in.Workers))
+	out.Internal = (*garden.CIDR)(unsafe.Pointer(in.Internal))
 	return nil
 }
 
@@ -2699,6 +2700,7 @@ func autoConvert_garden_GCPNetworks_To_v1beta1_GCPNetworks(in *garden.GCPNetwork
 		return err
 	}
 	out.VPC = (*GCPVPC)(unsafe.Pointer(in.VPC))
+	out.Internal = (*CIDR)(unsafe.Pointer(in.Internal))
 	out.Workers = *(*[]CIDR)(unsafe.Pointer(&in.Workers))
 	return nil
 }
@@ -3090,6 +3092,7 @@ func autoConvert_v1beta1_KubeProxyConfig_To_garden_KubeProxyConfig(in *KubeProxy
 	if err := Convert_v1beta1_KubernetesConfig_To_garden_KubernetesConfig(&in.KubernetesConfig, &out.KubernetesConfig, s); err != nil {
 		return err
 	}
+	out.Mode = (*garden.ProxyMode)(unsafe.Pointer(in.Mode))
 	return nil
 }
 
@@ -3102,6 +3105,7 @@ func autoConvert_garden_KubeProxyConfig_To_v1beta1_KubeProxyConfig(in *garden.Ku
 	if err := Convert_garden_KubernetesConfig_To_v1beta1_KubernetesConfig(&in.KubernetesConfig, &out.KubernetesConfig, s); err != nil {
 		return err
 	}
+	out.Mode = (*ProxyMode)(unsafe.Pointer(in.Mode))
 	return nil
 }
 

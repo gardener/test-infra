@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -67,7 +66,7 @@ func NewApplierForConfig(config *rest.Config) (*Applier, error) {
 	return NewApplierInternal(config, cachedDiscoveryClient)
 }
 
-func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstructured) error {
+func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstructured, options ApplierOptions) error {
 	if desired.GetNamespace() == "" {
 		desired.SetNamespace(metav1.NamespaceDefault)
 	}
@@ -95,50 +94,59 @@ func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstruc
 		return err
 	}
 
-	if err := c.mergeObjects(desired, current); err != nil {
+	if err := c.mergeObjects(desired, current, options.MergeFuncs); err != nil {
 		return err
 	}
 
 	return c.client.Update(ctx, desired)
 }
 
-func (c *Applier) mergeObjects(newObj *unstructured.Unstructured, oldObj *unstructured.Unstructured) error {
+// DefaultApplierOptions contains options for common k8s objects, e.g. Service, ServiceAccount.
+var DefaultApplierOptions = ApplierOptions{
+	MergeFuncs: map[Kind]MergeFunc{
+		"Service": func(newObj, oldObj *unstructured.Unstructured) {
+			// We do not want to overwrite a Service's `.spec.clusterIP' or '.spec.ports[*].nodePort' values.
+			oldPorts := oldObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
+			newPorts := newObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
+			ports := []map[string]interface{}{}
+
+			// Check whether ports of the newObj have also been present previously. If yes, take the nodePort
+			// of the existing object.
+			for _, newPort := range newPorts {
+				np := newPort.(map[string]interface{})
+
+				for _, oldPort := range oldPorts {
+					op := oldPort.(map[string]interface{})
+					// np["port"] is of type float64 (due to Helm Tiller rendering) while op["port"] is of type int64.
+					// Equality can only be checked via their string representations.
+					if fmt.Sprintf("%v", np["port"]) == fmt.Sprintf("%v", op["port"]) {
+						if nodePort, ok := op["nodePort"]; ok {
+							np["nodePort"] = nodePort
+						}
+					}
+				}
+				ports = append(ports, np)
+			}
+
+			newObj.Object["spec"].(map[string]interface{})["clusterIP"] = oldObj.Object["spec"].(map[string]interface{})["clusterIP"]
+			newObj.Object["spec"].(map[string]interface{})["ports"] = ports
+		},
+		"ServiceAccount": func(newObj, oldObj *unstructured.Unstructured) {
+			// We do not want to overwrite a ServiceAccount's `.secrets[]` list or `.imagePullSecrets[]`.
+			newObj.Object["secrets"] = oldObj.Object["secrets"]
+			newObj.Object["imagePullSecrets"] = oldObj.Object["imagePullSecrets"]
+		},
+	},
+}
+
+func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeFuncs map[Kind]MergeFunc) error {
 	newObj.SetResourceVersion(oldObj.GetResourceVersion())
 
 	// We do not want to overwrite the Finalizers.
 	newObj.Object["metadata"].(map[string]interface{})["finalizers"] = oldObj.Object["metadata"].(map[string]interface{})["finalizers"]
 
-	switch newObj.GetKind() {
-	case "Service":
-		// We do not want to overwrite a Service's `.spec.clusterIP' or '.spec.ports[*].nodePort' values.
-		oldPorts := oldObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
-		newPorts := newObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
-		ports := []map[string]interface{}{}
-
-		// Check whether ports of the newObj have also been present previously. If yes, take the nodePort
-		// of the existing object.
-		for _, newPort := range newPorts {
-			np := newPort.(map[string]interface{})
-
-			for _, oldPort := range oldPorts {
-				op := oldPort.(map[string]interface{})
-				// np["port"] is of type float64 (due to Helm Tiller rendering) while op["port"] is of type int64.
-				// Equality can only be checked via their string representations.
-				if fmt.Sprintf("%v", np["port"]) == fmt.Sprintf("%v", op["port"]) {
-					if nodePort, ok := op["nodePort"]; ok {
-						np["nodePort"] = nodePort
-					}
-				}
-			}
-			ports = append(ports, np)
-		}
-
-		newObj.Object["spec"].(map[string]interface{})["clusterIP"] = oldObj.Object["spec"].(map[string]interface{})["clusterIP"]
-		newObj.Object["spec"].(map[string]interface{})["ports"] = ports
-	case "ServiceAccount":
-		// We do not want to overwrite a ServiceAccount's `.secrets[]` list or `.imagePullSecrets[]`.
-		newObj.Object["secrets"] = oldObj.Object["secrets"]
-		newObj.Object["imagePullSecrets"] = oldObj.Object["imagePullSecrets"]
+	if merge, ok := mergeFuncs[Kind(newObj.GetKind())]; ok {
+		merge(newObj, oldObj)
 	}
 
 	return nil
@@ -147,28 +155,74 @@ func (c *Applier) mergeObjects(newObj *unstructured.Unstructured, oldObj *unstru
 // ApplyManifest is a function which does the same like `kubectl apply -f <file>`. It takes a bunch of manifests <m>,
 // all concatenated in a byte slice, and sends them one after the other to the API server. If a resource
 // already exists at the API server, it will update it. It returns an error as soon as the first error occurs.
-func (c *Applier) ApplyManifest(ctx context.Context, m []byte) error {
+func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, options ApplierOptions) error {
+	for obj, err := r.Read(); err == nil; obj, err = r.Read() {
+		if obj == nil {
+			continue
+		}
+		if err := c.applyObject(ctx, obj, options); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnstructuredReader an interface that all manifest readers should implement
+type UnstructuredReader interface {
+	Read() (*unstructured.Unstructured, error)
+}
+
+// NewManifestReader initializes a reader for yaml manifests
+func NewManifestReader(manifest []byte) UnstructuredReader {
+	return &manifestReader{
+		decoder: yaml.NewYAMLOrJSONDecoder(bytes.NewReader(manifest), 1024),
+	}
+}
+
+// manifestReader is an unstructured reader that contains a JSONDecoder
+type manifestReader struct {
+	decoder *yaml.YAMLOrJSONDecoder
+}
+
+// Read decodes yaml data into an unstructured object
+func (m *manifestReader) Read() (*unstructured.Unstructured, error) {
 	var (
-		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(m), 1024)
-		data    map[string]interface{}
-		err     error
+		data map[string]interface{}
+		err  error
 	)
 
-	for err = decoder.Decode(&data); err == nil; err = decoder.Decode(&data) {
+	// loop for skipping empty yaml objects
+	for err = m.decoder.Decode(&data); err == nil; err = m.decoder.Decode(&data) {
 		if data == nil {
 			continue
 		}
-
-		obj := &unstructured.Unstructured{Object: data}
-		data = nil
-
-		if err := c.applyObject(ctx, obj); err != nil {
-			return err
-		}
-		obj = nil
+		return &unstructured.Unstructured{Object: data}, nil
 	}
-	if err != io.EOF {
-		return err
+	return nil, err
+}
+
+// NewNamespaceSettingReader initializes a reader for yaml manifests with support for setting the namespace
+func NewNamespaceSettingReader(mReader UnstructuredReader, namespace string) UnstructuredReader {
+	return &namespaceSettingReader{
+		reader:    mReader,
+		namespace: namespace,
 	}
-	return nil
+}
+
+// namespaceSettingReader is an unstructured reader that contains a JSONDecoder and a manifest reader (or other reader types)
+type namespaceSettingReader struct {
+	reader    UnstructuredReader
+	namespace string
+}
+
+// Read decodes yaml data into an unstructured object
+func (n *namespaceSettingReader) Read() (*unstructured.Unstructured, error) {
+	readObj, err := n.reader.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	readObj.SetNamespace(n.namespace)
+
+	return readObj, nil
 }

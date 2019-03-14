@@ -18,6 +18,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
@@ -87,12 +91,19 @@ var runCmd = &cobra.Command{
 			log.Debugf("Error loading .env file: %s", err.Error())
 		}
 
+		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
+		if err != nil {
+			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+		}
+
 		testrunName := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
 		config := &testrunner.Config{
-			TmKubeconfigPath: tmKubeconfigPath,
-			Namespace:        namespace,
-			Timeout:          timeout,
-			Interval:         interval,
+			TmClient:  tmClient,
+			Namespace: namespace,
+			Timeout:   timeout,
+			Interval:  interval,
 		}
 
 		rsConfig := &result.Config{
@@ -129,13 +140,13 @@ var runCmd = &cobra.Command{
 			CloudProvider:     parameters.Cloudprovider,
 			KubernetesVersion: parameters.K8sVersion,
 		}
-		testruns, err := testrunnerTemplate.Render(config.TmKubeconfigPath, parameters, metadata)
+		testruns, err := testrunnerTemplate.Render(tmClient, parameters, metadata)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		finishedTestruns, err := testrunner.Run(config, testruns, testrunName)
-		failed, err := result.Collect(rsConfig, config.TmKubeconfigPath, config.Namespace, finishedTestruns, metadata)
+		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, finishedTestruns, metadata)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -15,12 +15,15 @@
 package utils
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 
@@ -33,34 +36,29 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	. "github.com/onsi/gomega"
 )
 
 // RunTestrun executes a testrun on a cluster and returns the corresponding executed testrun and workflow.
-func RunTestrun(tmClient *tmclientset.Clientset, argoClient *argoclientset.Clientset, tr *tmv1beta1.Testrun, phase argov1.NodePhase, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
-	tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
+// Note: Deletion of the workflow on error should be handled by the calling test.
+func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	foundTestrun, err := WatchTestrun(tmClient, tr, namespace, maxWaitTime)
+	foundTestrun, err := WatchTestrun(ctx, tmClient, tr, namespace, maxWaitTime)
 	if err != nil {
-		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Error watching Testrun: %s\n%s", tr.Name, err.Error())
 	}
 
-	wf, err := GetWorkflow(argoClient, foundTestrun)
+	wf, err := GetWorkflow(ctx, tmClient, foundTestrun)
 	if err != nil {
-		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Cannot get Workflow for Testrun: %s\n%s", tr.Name, err.Error())
 	}
 
 	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
-		DeleteTestrun(tmClient, tr)
 		return nil, nil, fmt.Errorf("Testrun %s status is empty", tr.Name)
 	}
 	if foundTestrun.Status.Phase != phase {
@@ -80,7 +78,6 @@ func RunTestrun(tmClient *tmclientset.Clientset, argoClient *argoclientset.Clien
 			errMsg = fmt.Sprintf("%s.\nAdditional Errors: %s", errMsg, strings.Join(errMsgs, "; "))
 		}
 
-		DeleteTestrun(tmClient, tr)
 		return nil, nil, errors.New(errMsg)
 	}
 
@@ -88,8 +85,9 @@ func RunTestrun(tmClient *tmclientset.Clientset, argoClient *argoclientset.Clien
 }
 
 // GetWorkflow returns the argo workflow of a testrun.
-func GetWorkflow(argoClient *argoclientset.Clientset, tr *tmv1beta1.Testrun) (*argov1.Workflow, error) {
-	wf, err := argoClient.Argoproj().Workflows(tr.Namespace).Get(tr.Status.Workflow, metav1.GetOptions{})
+func GetWorkflow(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (*argov1.Workflow, error) {
+	wf := &argov1.Workflow{}
+	err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Status.Workflow}, wf)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +95,8 @@ func GetWorkflow(argoClient *argoclientset.Clientset, tr *tmv1beta1.Testrun) (*a
 }
 
 // WatchTestrun watches a testrun to finish and returns the newest testrun object.
-func WatchTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, error) {
-	var foundTestrun *tmv1beta1.Testrun
+func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, error) {
+	foundTestrun := &tmv1beta1.Testrun{}
 	var testrunPhase argov1.NodePhase
 	startTime := time.Now()
 	for !util.Completed(testrunPhase) {
@@ -107,7 +105,7 @@ func WatchTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namesp
 			return nil, fmt.Errorf("Maximum wait time exceeded")
 		}
 
-		foundTestrun, err = tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{})
+		err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, foundTestrun)
 		if err != nil {
 			return nil, err
 		}
@@ -120,12 +118,12 @@ func WatchTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namesp
 }
 
 // DeleteTestrun deletes a testrun and expects to be successful.
-func DeleteTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun) {
+func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 	// wf is not deleted if testrun is triggered but deleted before wf can be deployed.
 	// Strange timing in validation test with kubeconfig.
 	// needs further investigation
 	time.Sleep(3 * time.Second)
-	err := tmClient.Testmachinery().Testruns(tr.Namespace).Delete(tr.Name, &metav1.DeleteOptions{})
+	err := tmClient.Client().Delete(context.TODO(), tr)
 	if !apierrors.IsNotFound(err) {
 		Expect(err).To(BeNil(), "Error deleting Testrun: %s", tr.Name)
 	}

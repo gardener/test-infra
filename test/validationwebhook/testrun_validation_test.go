@@ -15,21 +15,21 @@
 package validationwebhook_test
 
 import (
+	"context"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	"github.com/gardener/test-infra/test/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gardener/test-infra/test/resources"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var _ = Describe("Testrun validation tests", func() {
@@ -37,7 +37,7 @@ var _ = Describe("Testrun validation tests", func() {
 	var (
 		commitSha   string
 		namespace   string
-		tmClient    *tmclientset.Clientset
+		tmClient    kubernetes.Interface
 		maxWaitTime int64 = 300
 	)
 
@@ -47,19 +47,18 @@ var _ = Describe("Testrun validation tests", func() {
 		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
 		namespace = os.Getenv("TM_NAMESPACE")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
 
 	})
 
 	Context("Metadata", func() {
 		It("should reject when name contains '.'", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
@@ -68,7 +67,7 @@ var _ = Describe("Testrun validation tests", func() {
 					},
 				},
 			}
-			_, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -79,11 +78,12 @@ var _ = Describe("Testrun validation tests", func() {
 
 	Context("TestLocations", func() {
 		It("should reject when no locations are defined", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
 
-			_, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -92,13 +92,14 @@ var _ = Describe("Testrun validation tests", func() {
 		})
 
 		It("should reject when a local location is defined", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestLocations = append(tr.Spec.TestLocations, tmv1beta1.TestLocation{
 				Type: tmv1beta1.LocationTypeLocal,
 			})
 
-			tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -109,11 +110,12 @@ var _ = Describe("Testrun validation tests", func() {
 
 	Context("Testflow", func() {
 		It("should reject when no locations can be found", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{}
 
-			tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -122,7 +124,8 @@ var _ = Describe("Testrun validation tests", func() {
 		})
 
 		It("should reject when a no locations for only one label in the testrun can be found", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
@@ -132,7 +135,7 @@ var _ = Describe("Testrun validation tests", func() {
 				},
 			}
 
-			tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -143,11 +146,12 @@ var _ = Describe("Testrun validation tests", func() {
 
 	Context("Kubeconfigs", func() {
 		It("should reject when a invalid kubeconfig is provided", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.Kubeconfigs.Gardener = "dGVzdGluZwo="
 
-			tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
@@ -158,15 +162,16 @@ var _ = Describe("Testrun validation tests", func() {
 
 	Context("OnExit", func() {
 		It("should accept when no steps are defined", func() {
-
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(tmClient, tr)
 
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{})
+			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

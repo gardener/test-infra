@@ -8,19 +8,14 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
-func RenderChart(tmKubeconfigPath string, parameters *TestrunParameters, versions []string) ([]string, error) {
+func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, versions []string) ([]string, error) {
 	log.Debugf("Parameters: %+v", util.PrettyPrintStruct(parameters))
 	log.Debugf("Render chart from %s", parameters.TestrunChartPath)
 
-	tmClusterClient, err := kubernetes.NewClientFromFile(tmKubeconfigPath, nil, client.Options{})
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create k8s client from kubeconfig filepath %s: %v", tmKubeconfigPath, err)
-	}
-	tmChartRenderer, err := chartrenderer.New(tmClusterClient)
+	tmChartRenderer, err := chartrenderer.New(tmClient.Kubernetes())
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create chartrenderer for gardener: %s", err.Error())
 	}

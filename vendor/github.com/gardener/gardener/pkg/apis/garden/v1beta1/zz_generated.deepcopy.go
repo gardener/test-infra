@@ -1316,6 +1316,11 @@ func (in *GCPNetworks) DeepCopyInto(out *GCPNetworks) {
 		*out = make([]CIDR, len(*in))
 		copy(*out, *in)
 	}
+	if in.Internal != nil {
+		in, out := &in.Internal, &out.Internal
+		*out = new(CIDR)
+		**out = **in
+	}
 	return
 }
 
@@ -1698,6 +1703,11 @@ func (in *KubeLego) DeepCopy() *KubeLego {
 func (in *KubeProxyConfig) DeepCopyInto(out *KubeProxyConfig) {
 	*out = *in
 	in.KubernetesConfig.DeepCopyInto(&out.KubernetesConfig)
+	if in.Mode != nil {
+		in, out := &in.Mode, &out.Mode
+		*out = new(ProxyMode)
+		**out = **in
+	}
 	return
 }
 
