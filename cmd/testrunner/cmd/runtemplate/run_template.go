@@ -36,6 +36,7 @@ var (
 	outputFilePath          string
 	elasticSearchConfigName string
 	s3Endpoint              string
+	s3SSL                   bool
 	concourseOnErrorDir     string
 
 	testrunChartPath         string
@@ -98,6 +99,7 @@ var runCmd = &cobra.Command{
 			OutputFile:          outputFilePath,
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
+			S3SSL:               s3SSL,
 			ConcourseOnErrorDir: concourseOnErrorDir,
 		}
 
@@ -161,6 +163,7 @@ func init() {
 	runCmd.Flags().StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	runCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
+	runCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// parameter flags

@@ -40,7 +40,6 @@ func Output(config *Config, tmKubeconfigPath, namespace string, tr *tmv1beta1.Te
 	if config.OutputFile == "" {
 		return nil
 	}
-	var s3Endpoint = config.S3Endpoint
 
 	metadata.TestrunID = tr.Name
 
@@ -59,7 +58,7 @@ func Output(config *Config, tmKubeconfigPath, namespace string, tr *tmv1beta1.Te
 		return err
 	}
 
-	osConfig, err := getOSConfig(tmKubeconfigPath, s3Endpoint, namespace)
+	osConfig, err := getOSConfig(tmKubeconfigPath, namespace, config.S3Endpoint, config.S3SSL)
 	if err != nil {
 		log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
 	} else {
@@ -125,7 +124,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 
 func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *Metadata) []byte {
 
-	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, false)
+	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
 		log.Errorf("Error creating minio client %s: %s", cfg.Endpoint, err.Error())
 		return nil
@@ -226,7 +225,7 @@ func writeToFile(fielPath string, data []byte) error {
 	return nil
 }
 
-func getOSConfig(tmKubeconfigPath, minioEndpoint, namespace string) (*testmachinery.ObjectStoreConfig, error) {
+func getOSConfig(tmKubeconfigPath, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {
 	clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfigPath, nil, client.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create client for %s: %s", tmKubeconfigPath, err.Error())
@@ -242,6 +241,7 @@ func getOSConfig(tmKubeconfigPath, minioEndpoint, namespace string) (*testmachin
 
 	return &testmachinery.ObjectStoreConfig{
 		Endpoint:   minioEndpoint,
+		SSL:        ssl,
 		AccessKey:  string(minioSecrets.Data["accessKey"]),
 		SecretKey:  string(minioSecrets.Data["secretKey"]),
 		BucketName: minioConfig.Data["objectstore.bucketName"],
