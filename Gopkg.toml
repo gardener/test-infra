@@ -12,29 +12,25 @@ required = [
   name = "github.com/gardener/gardener"
   version = "^0.19.0"
 
-[[override]]
-  name = "github.com/gardener/machine-controller-manager"
-  version = "0.12.0"
-
-[[override]]
+[[constraint]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "0.1.9"
+  version = "0.1.10"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.12.1"
+  version = "kubernetes-1.13.1"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.12.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.12.1"
+  version = "kubernetes-1.13.4"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
@@ -42,11 +38,15 @@ required = [
 
 [[constraint]]
   name = "github.com/argoproj/argo"
-  branch = "master"
+  revision = "4bfbb20bc23f8bf4611a6314fb80f8138b17b9b9"
 
 [[override]]
   name = "gopkg.in/fsnotify.v1"
   source = "gopkg.in/fsnotify/fsnotify.v1"
+
+[[override]]
+  name = "github.com/prometheus/client_golang"
+  version = "^0.9.0"
 
 
 # Dependencies for testing purposes only

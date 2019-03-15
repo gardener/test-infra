@@ -40,10 +40,11 @@ func NewNode(parents []*Node, lastSerialNode, rootNode *Node, td *testdefinition
 	node.Status = &tmv1beta1.TestflowStepStatus{
 		Phase: tmv1beta1.PhaseStatusInit,
 		TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-			Name:                td.Info.Metadata.Name,
-			Owner:               td.Info.Spec.Owner,
-			RecipientsOnFailure: td.Info.Spec.RecipientsOnFailure,
-			Position:            td.GetPosition(),
+			Name:                  td.Info.Metadata.Name,
+			Owner:                 td.Info.Spec.Owner,
+			RecipientsOnFailure:   td.Info.Spec.RecipientsOnFailure,
+			ActiveDeadlineSeconds: td.Info.Spec.ActiveDeadlineSeconds,
+			Position:              td.GetPosition(),
 		},
 	}
 	if td.Location != nil {

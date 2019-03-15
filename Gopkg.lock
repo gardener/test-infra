@@ -50,8 +50,15 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:577c9bf2fb56715edb7230e63620e9e04d776406aa7e455b5e0d957d3f5e7ca0"
+  digest = "1:680b63a131506e668818d630d3ca36123ff290afa0afc9f4be21940adca3f27d"
+  name = "github.com/appscode/jsonpatch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
+  version = "1.0.0"
+
+[[projects]]
+  digest = "1:bb4155147a8620d6ed0ea43c30c461a6bb84e75abe8306a24786ff4a23d5923a"
   name = "github.com/argoproj/argo"
   packages = [
     "pkg/apis/workflow",
@@ -61,7 +68,7 @@
     "pkg/client/clientset/versioned/typed/workflow/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "2b2651b0a7f5d6873c8470fad137d42f9b7d7240"
+  revision = "4bfbb20bc23f8bf4611a6314fb80f8138b17b9b9"
 
 [[projects]]
   branch = "master"
@@ -126,6 +133,14 @@
   version = "v2.8.1"
 
 [[projects]]
+  digest = "1:32598368f409bbee79deb9d43569fcd92b9fb27f39155f5e166b3371217f051f"
+  name = "github.com/evanphx/json-patch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "72bf35d0ff611848c1dc9df0f976c81192392fa5"
+  version = "v4.1.0"
+
+[[projects]]
   digest = "1:23ae19f1ae067e50086d1c224fb8cb78e46ff60ef3d2d82c194a61d1a4b7d508"
   name = "github.com/gardener/gardener"
   packages = [
@@ -157,23 +172,23 @@
   version = "0.19.0"
 
 [[projects]]
-  digest = "1:45ef8724981e1412df2734c5af2c75775e94d8efa5289ff24c06010476380b35"
+  digest = "1:b678acaf8766b6df36723a4adefc3302191a34c22b7a38b0abaf5f6d3dd24090"
   name = "github.com/gardener/machine-controller-manager"
   packages = [
     "pkg/apis/machine",
     "pkg/apis/machine/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "ef3cacda79492fd298ee85446077c1a2497ba407"
-  version = "0.12.0"
+  revision = "36a42c48af0a883b9fe86b04143d14881b485116"
+  version = "0.14.0"
 
 [[projects]]
-  digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
+  branch = "master"
+  digest = "1:ad9b5a446234ad6466c494d8e4e1e7372c8222ad7668f2808a4e21b96c661c58"
   name = "github.com/ghodss/yaml"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
-  version = "v1.0.0"
+  revision = "25d852aebe32c875e9c044af3eef9c7dc6bc777f"
 
 [[projects]]
   digest = "1:5e92676b56ce4c69edf9ee1f6343c56f637e30af11b9d8b5edd1b6530f3fbc3d"
@@ -258,14 +273,6 @@
   pruneopts = "NUT"
   revision = "4cbf7e384e768b4e01799441fdf2a706a5635ae7"
   version = "v1.2.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:e2b86e41f3d669fc36b50d31d32d22c8ac656c75aa5ea89717ce7177e134ff2a"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   branch = "master"
@@ -437,14 +444,6 @@
   ]
   pruneopts = "NUT"
   revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
-
-[[projects]]
-  branch = "master"
-  digest = "1:0e9bfc47ab9941ecc3344e580baca5deb4091177e84dd9773b48b38ec26b93d5"
-  name = "github.com/mattbaird/jsonpatch"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "81af80346b1a01caae0cbc27fd3c1ba5b11e189f"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
@@ -644,15 +643,14 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:f3cd75f81ee2b143bd354d906370261e94fc58e66dd5d632e1d6cde828338741"
+  digest = "1:cd88dadf97a54847f66532e5ddbaf645b1336ebb043d7f7e2229fc47148d3dff"
   name = "github.com/spf13/cobra"
   packages = [
     ".",
     "doc",
   ]
   pruneopts = "NUT"
-  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
-  version = "v0.0.3"
+  revision = "fe5e611709b0c57fa4a89136deaa8e1d4004d053"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -853,7 +851,7 @@
   version = "v2.2.2"
 
 [[projects]]
-  digest = "1:94301b30a06d7f1dd97a8148c1a2f92e969763f3da75f067ff1cb77e259e3ba5"
+  digest = "1:0ae5137dc94a40cd72fe4fcdf9db0c119d2d63df04af5958cfd514a2a21b3988"
   name = "k8s.io/api"
   packages = [
     "admission/v1beta1",
@@ -862,6 +860,7 @@
     "apps/v1",
     "apps/v1beta1",
     "apps/v1beta2",
+    "auditregistration/v1alpha1",
     "authentication/v1",
     "authentication/v1beta1",
     "authorization/v1",
@@ -890,8 +889,8 @@
     "storage/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "357ec6384fa7e10d6ea160d2299a98ddfdc3ab3c"
-  version = "kubernetes-1.12.1"
+  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
+  version = "kubernetes-1.13.1"
 
 [[projects]]
   branch = "master"
@@ -908,7 +907,7 @@
   revision = "cf30b7cf64c2979f27127ba17706f30a3489337c"
 
 [[projects]]
-  digest = "1:177a717548eae47d6c848b4c3f09e4017ade53059d25fe27be0613ffc80bd9e9"
+  digest = "1:aa66bc4f8ae1c08aa9925e76e2c3aba520a0e1aed43213c7361aabf4fcd43ce7"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -962,11 +961,11 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "NUT"
-  revision = "6dd46049f39503a1fc8d65de4bd566829e95faff"
-  version = "kubernetes-1.12.1"
+  revision = "86fb29eff6288413d76bd8506874fddd9fccdff0"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
-  digest = "1:f77fd462adf1e74eba8f6b0e57473be4bf56076fbd487754dfbef7a64aba179c"
+  digest = "1:be211b573b59f0c05d5f4c3cb4384ce977882338b36ed9277c8f5d4ee9eaf867"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -980,6 +979,7 @@
     "kubernetes/typed/apps/v1",
     "kubernetes/typed/apps/v1beta1",
     "kubernetes/typed/apps/v1beta2",
+    "kubernetes/typed/auditregistration/v1alpha1",
     "kubernetes/typed/authentication/v1",
     "kubernetes/typed/authentication/v1beta1",
     "kubernetes/typed/authorization/v1",
@@ -1042,11 +1042,11 @@
     "util/workqueue",
   ]
   pruneopts = "NUT"
-  revision = "cb4883f3dea0a8d72fc4af710798a980992a773d"
-  version = "kubernetes-1.12.1"
+  revision = "b40b2a5939e43f7ffe0028ad67586b7ce50bb675"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
-  digest = "1:4e2addcdbe0330f43800c1fcb905fc7a21b86415dfcca619e5c606c87257af1b"
+  digest = "1:dc1ae99dcab96913d81ae970b1f7a7411a54199b14bfb17a7e86f9a56979c720"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen",
@@ -1073,8 +1073,8 @@
     "pkg/util",
   ]
   pruneopts = "T"
-  revision = "3dcf91f64f638563e5106f21f50c31fa361c918d"
-  version = "kubernetes-1.12.1"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   branch = "master"
@@ -1151,7 +1151,7 @@
   revision = "ced9eb3070a5f1c548ef46e8dfe2a97c208d9f03"
 
 [[projects]]
-  digest = "1:4eeb6a84a46b5e806fc33f5b3a28b556b8b4a80b31b36235744ff1f4489be34d"
+  digest = "1:bc1c2405837d0462732c3ba381869240a3e323cac1305d00a67c5997a6465517"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -1183,8 +1183,8 @@
     "pkg/webhook/types",
   ]
   pruneopts = "NUT"
-  revision = "f6f0bc9611363b43664d08fb097ab13243ef621d"
-  version = "v0.1.9"
+  revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
+  version = "v0.1.10"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"

@@ -259,6 +259,11 @@ func (in *TestflowStepStatusTestDefinition) DeepCopyInto(out *TestflowStepStatus
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ActiveDeadlineSeconds != nil {
+		in, out := &in.ActiveDeadlineSeconds, &out.ActiveDeadlineSeconds
+		*out = new(int64)
+		**out = **in
+	}
 	if in.Position != nil {
 		in, out := &in.Position, &out.Position
 		*out = make(map[string]string, len(*in))
