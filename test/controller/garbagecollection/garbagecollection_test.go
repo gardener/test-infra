@@ -15,10 +15,13 @@
 package garbagecollection_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,14 +32,9 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -48,8 +46,7 @@ var _ = Describe("Garbage collection tests", func() {
 	var (
 		commitSha   string
 		namespace   string
-		tmClient    *tmclientset.Clientset
-		argoClient  *argoclientset.Clientset
+		tmClient    kubernetes.Interface
 		minioClient *minio.Client
 		minioBucket string
 	)
@@ -61,18 +58,13 @@ var _ = Describe("Garbage collection tests", func() {
 		namespace = os.Getenv("TM_NAMESPACE")
 		minioEndpoint := os.Getenv("S3_ENDPOINT")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		argoClient = argoclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
-		osConfig := utils.WaitForMinioService(clusterClient, minioEndpoint, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		osConfig := utils.WaitForMinioService(tmClient, minioEndpoint, namespace, maxWaitTime)
 
 		minioBucket = osConfig.BucketName
 		minioClient, err = minio.New(osConfig.Endpoint, osConfig.AccessKey, osConfig.SecretKey, false)
@@ -80,9 +72,11 @@ var _ = Describe("Garbage collection tests", func() {
 	})
 
 	It("should cleanup all artifacts when a TestDef is deleted", func() {
+		ctx := context.Background()
+		defer ctx.Done()
 		tr := resources.GetBasicTestrun(namespace, commitSha)
 
-		tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		Expect(err).ToNot(HaveOccurred())
 		utils.DeleteTestrun(tmClient, tr)
 
@@ -90,7 +84,7 @@ var _ = Describe("Garbage collection tests", func() {
 		for {
 			Expect(util.MaxTimeExceeded(startTime, maxWaitTime)).To(BeFalse(), "Max Wait time exceeded.")
 
-			if _, err := tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{}); err != nil {
+			if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr); err != nil {
 				Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun: %s", tr.Name)
 				break
 			}

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
 package kubernetes
 
 import (
-	"bytes"
 	"context"
 
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
+	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
+	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
 	gardenclientset "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
 	gardenscheme "github.com/gardener/gardener/pkg/client/garden/clientset/versioned/scheme"
 	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
@@ -34,6 +35,7 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/discovery"
@@ -117,14 +119,15 @@ func init() {
 	gardenSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
 		gardenscheme.AddToScheme,
+		gardencorescheme.AddToScheme,
 	)
 
 	utilruntime.Must(gardenSchemeBuilder.AddToScheme(GardenScheme))
 
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
-		gardenscheme.AddToScheme,
 		machinescheme.AddToScheme,
+		gardenextensionsscheme.AddToScheme,
 	)
 
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
@@ -173,10 +176,21 @@ type Applier struct {
 	discovery discovery.CachedDiscoveryInterface
 }
 
+// Kind is a type alias for a k8s Kind of ObjectKind.
+type Kind string
+
+// MergeFunc determines how oldOj is merged into new oldObj.
+type MergeFunc func(newObj, oldObj *unstructured.Unstructured)
+
+// ApplierOptions contains options used by the Applier.
+type ApplierOptions struct {
+	MergeFuncs map[Kind]MergeFunc
+}
+
 // ApplierInterface is an interface which describes declarative operations to apply multiple
 // Kubernetes objects.
 type ApplierInterface interface {
-	ApplyManifest(ctx context.Context, data []byte) error
+	ApplyManifest(ctx context.Context, unstructured UnstructuredReader, options ApplierOptions) error
 }
 
 // Interface is used to wrap the interactions with a Kubernetes cluster
@@ -196,11 +210,6 @@ type Interface interface {
 	Machine() machineclientset.Interface
 	APIExtension() apiextensionsclientset.Interface
 	APIRegistration() apiregistrationclientset.Interface
-
-	// Deprecated: Use `Client()` and utils instead.
-	SetGarden(gardenclientset.Interface)
-	// Deprecated: Use `Client()` and utils instead.
-	SetGardenCore(gardencoreclientset.Interface)
 
 	// Cleanup
 	// Deprecated: Use `RESTMapper()` and utils instead.
@@ -262,8 +271,6 @@ type Interface interface {
 	// Deprecated: Use `Client()` and utils instead.
 	PatchDeployment(string, string, []byte) (*appsv1.Deployment, error)
 	// Deprecated: Use `Client()` and utils instead.
-	ScaleDeployment(string, string, int32) (*appsv1.Deployment, error)
-	// Deprecated: Use `Client()` and utils instead.
 	DeleteDeployment(string, string) error
 
 	// StatefulSets
@@ -289,9 +296,9 @@ type Interface interface {
 	GetPod(string, string) (*corev1.Pod, error)
 	// Deprecated: Use `Client()` and utils instead.
 	ListPods(string, metav1.ListOptions) (*corev1.PodList, error)
+
 	// Deprecated: Use `Client()` and utils instead.
-	GetPodLogs(string, string, *corev1.PodLogOptions) (*bytes.Buffer, error)
-	// Deprecated: Use `Client()` and utils instead.
+	ForwardPodPort(string, string, int, int) (chan struct{}, error)
 	CheckForwardPodPort(string, string, int, int) (bool, error)
 	// Deprecated: Use `Client()` and utils instead.
 	DeletePod(string, string) error

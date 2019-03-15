@@ -17,6 +17,7 @@ package result
 import (
 	"fmt"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
@@ -24,10 +25,10 @@ import (
 
 // Collect collects results of all testruns and write them to a file.
 // It returns wheter there are failed testruns or not.
-func Collect(config *Config, tmKubeconfigPath, namespace string, testruns []*tmv1beta1.Testrun, metadata *Metadata) (bool, error) {
+func Collect(config *Config, tmClient kubernetes.Interface, namespace string, testruns []*tmv1beta1.Testrun, metadata *Metadata) (bool, error) {
 	testrunsFailed := false
 	for _, tr := range testruns {
-		err := Output(config, tmKubeconfigPath, namespace, tr, metadata)
+		err := Output(config, tmClient, namespace, tr, metadata)
 		if err != nil {
 			return false, err
 		}
@@ -36,7 +37,7 @@ func Collect(config *Config, tmKubeconfigPath, namespace string, testruns []*tmv
 		if err != nil {
 			log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
 		} else {
-			err := MarkTestrunsAsIngested(tmKubeconfigPath, testruns)
+			err := MarkTestrunsAsIngested(tmClient, testruns)
 			if err != nil {
 				log.Warn(err.Error())
 			}

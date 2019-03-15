@@ -15,23 +15,21 @@
 package resultcollection_test
 
 import (
+	"context"
 	"os"
 	"time"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -41,10 +39,9 @@ var (
 var _ = Describe("Result collection tests", func() {
 
 	var (
-		commitSha  string
-		namespace  string
-		tmClient   *tmclientset.Clientset
-		argoClient *argoclientset.Clientset
+		commitSha string
+		namespace string
+		tmClient  kubernetes.Interface
 	)
 
 	BeforeSuite(func() {
@@ -53,30 +50,27 @@ var _ = Describe("Result collection tests", func() {
 		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
 		namespace = os.Getenv("TM_NAMESPACE")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		argoClient = argoclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
 
 	})
 
 	Context("step status", func() {
 		It("should update status immediately with all steps of the generated testflow", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
 
 			time.Sleep(5 * time.Second)
-			tr, err = tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{})
+			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
@@ -86,9 +80,11 @@ var _ = Describe("Result collection tests", func() {
 		})
 
 		It("should collect status of all workflow nodes", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
 
@@ -102,6 +98,8 @@ var _ = Describe("Result collection tests", func() {
 		})
 
 		It("should collect status of multiple workflow nodes", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
@@ -119,7 +117,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
 
@@ -138,6 +136,8 @@ var _ = Describe("Result collection tests", func() {
 		})
 
 		It("should collect status of multiple workflow nodes with a failing step", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
@@ -155,7 +155,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
 			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
 

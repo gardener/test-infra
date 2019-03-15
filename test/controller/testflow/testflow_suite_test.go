@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gardener/test-infra/pkg/testmachinery"
+
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,9 +31,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
@@ -39,7 +39,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -54,11 +53,9 @@ func TestValidationWebhook(t *testing.T) {
 var _ = Describe("Testflow execution tests", func() {
 
 	var (
-		commitSha     string
-		namespace     string
-		tmClient      *tmclientset.Clientset
-		argoClient    *argoclientset.Clientset
-		clusterClient kubernetes.Interface
+		commitSha string
+		namespace string
+		tmClient  kubernetes.Interface
 	)
 
 	BeforeSuite(func() {
@@ -67,23 +64,20 @@ var _ = Describe("Testflow execution tests", func() {
 		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
 		namespace = os.Getenv("TM_NAMESPACE")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		argoClient = argoclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err = kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
 	})
 
 	Context("testflow", func() {
 		It("should run a test with TestDefs defined by name", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -98,6 +92,8 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 
 		It("should run a test with TestDefs defined by label and name", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
 				{
@@ -105,7 +101,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			})
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -120,6 +116,8 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 
 		It("should execute all tests in right order when no testdefs for a label can be found", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
 				{
@@ -133,7 +131,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			})
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -148,6 +146,8 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 
 		It("should execute serial steps after parallel steps", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 				{
@@ -157,7 +157,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -180,6 +180,8 @@ var _ = Describe("Testflow execution tests", func() {
 	Context("config", func() {
 		Context("type environment variable", func() {
 			It("should mount a config as environment variable", func() {
+				ctx := context.Background()
+				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
@@ -196,13 +198,15 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
 
 			})
 
 			It("should mount a global config as environement variable", func() {
+				ctx := context.Background()
+				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
@@ -219,7 +223,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -227,6 +231,8 @@ var _ = Describe("Testflow execution tests", func() {
 
 		Context("type file", func() {
 			It("should mount a config with value as file to a specific path", func() {
+				ctx := context.Background()
+				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
@@ -249,7 +255,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -267,10 +273,10 @@ var _ = Describe("Testflow execution tests", func() {
 						"test": []byte("test"),
 					},
 				}
-				err := clusterClient.Client().Create(ctx, secret)
+				err := tmClient.Client().Create(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := clusterClient.Client().Delete(ctx, secret)
+					err := tmClient.Client().Delete(ctx, secret)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 
@@ -303,7 +309,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				tr, _, err = utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -321,10 +327,10 @@ var _ = Describe("Testflow execution tests", func() {
 						"test": "test",
 					},
 				}
-				err := clusterClient.Client().Create(ctx, configmap)
+				err := tmClient.Client().Create(ctx, configmap)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := clusterClient.Client().Delete(ctx, configmap)
+					err := tmClient.Client().Delete(ctx, configmap)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete configmap %s", configmap.Name)
 				}()
 
@@ -357,7 +363,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err = utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+				tr, _, err = utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 				defer utils.DeleteTestrun(tmClient, tr)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -368,9 +374,11 @@ var _ = Describe("Testflow execution tests", func() {
 
 	Context("onExit", func() {
 		It("should run ExitHandlerTestDef when testflow succeeds", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(namespace, commitSha), tmv1beta1.ConditionTypeSuccess)
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -385,9 +393,11 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 
 		It("should not run exit-handler-testdef when testflow succeeds", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(namespace, commitSha), tmv1beta1.ConditionTypeError)
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -402,9 +412,11 @@ var _ = Describe("Testflow execution tests", func() {
 		})
 
 		It("should run exit-handler-testdef when testflow fails", func() {
+			ctx := context.Background()
+			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetFailingTestrun(namespace, commitSha), tmv1beta1.ConditionTypeError)
 
-			tr, wf, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -421,47 +433,53 @@ var _ = Describe("Testflow execution tests", func() {
 
 	Context("TTL", func() {
 		It("should delete the testrun after ttl has finished", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+
 			var ttl int32 = 90
 			var maxWaitTime int64 = 600
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
-			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {
-				_, err := tmClient.Testmachinery().Testruns(tr.Namespace).Get(tr.Name, metav1.GetOptions{})
+				err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 				if errors.IsNotFound(err) {
 					return
 				}
 				time.Sleep(5 * time.Second)
 			}
 
-			_, err = tmClient.Testmachinery().Testruns(tr.Namespace).Get(tr.Name, metav1.GetOptions{})
+			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 			Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun %s was not deleted in %d seconds", tr.Name, maxWaitTime)
 		})
 
 		It("should delete the testrun after workflow has finished", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+
 			var ttl int32 = 1
 			var maxWaitTime int64 = 600
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
-			tr, err := tmClient.Testmachinery().Testruns(tr.Namespace).Create(tr)
+			err := tmClient.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, maxWaitTime) {
-				_, err := tmClient.Testmachinery().Testruns(tr.Namespace).Get(tr.Name, metav1.GetOptions{})
+				err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 				if errors.IsNotFound(err) {
 					return
 				}
 				time.Sleep(5 * time.Second)
 			}
-			_, err = tmClient.Testmachinery().Testruns(tr.Namespace).Get(tr.Name, metav1.GetOptions{})
+			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 			Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun %s was not deleted in %d seconds", tr.Name, maxWaitTime)
 		})
 	})

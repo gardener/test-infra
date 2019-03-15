@@ -200,7 +200,7 @@ type GCPMachineImage struct {
 	// Name is the name of the image.
 	Name MachineImageName
 	// Image is the technical name of the image. It contains the image name and the Google Cloud project.
-	// Example: projects/coreos-cloud/global/images/coreos-stable-1576-5-0-v20180105
+	// Example: projects/<name>/global/images/version23
 	Image string
 }
 
@@ -381,7 +381,11 @@ type MachineImageName string
 
 const (
 	// MachineImageCoreOS is a constant for the CoreOS machine image.
-	MachineImageCoreOS MachineImageName = "CoreOS"
+	MachineImageCoreOS MachineImageName = "coreos"
+	// MachineImageCoreOSAlicloud is a constant for the CoreOS machine image used by Alicloud.
+	// The Alicloud CoreOS image is modified (e.g., it does not support cloud-config, and is therefore
+	// treated like another OS).
+	MachineImageCoreOSAlicloud MachineImageName = "coreos-alicloud"
 )
 
 ////////////////////////////////////////////////////
@@ -940,6 +944,8 @@ type GCPNetworks struct {
 	// VPC indicates whether to use an existing VPC or create a new one.
 	// +optional
 	VPC *GCPVPC
+	// Internal is a private subnet (used for internal load balancers).
+	Internal *CIDR
 	// Workers is a list of CIDRs of worker subnets (private) to create (used for the VMs).
 	Workers []CIDR
 }
@@ -1371,7 +1377,27 @@ type KubeSchedulerConfig struct {
 // KubeProxyConfig contains configuration settings for the kube-proxy.
 type KubeProxyConfig struct {
 	KubernetesConfig
+	// Mode specifies which proxy mode to use.
+	// defaults to IPTables.
+	Mode *ProxyMode
 }
+
+// ProxyMode available in Linux platform: 'userspace' (older, going to be EOL), 'iptables'
+// (newer, faster), 'ipvs'(newest, better in performance and scalability).
+//
+// As of now only 'iptables' and 'ipvs' is supported by Gardener.
+//
+// In Linux platform, if the iptables proxy is selected, regardless of how, but the system's kernel or iptables versions are
+// insufficient, this always falls back to the userspace proxy. IPVS mode will be enabled when proxy mode is set to 'ipvs',
+// and the fall back path is firstly iptables and then userspace.
+type ProxyMode string
+
+const (
+	// ProxyModeIPTables uses iptables as proxy implementation.
+	ProxyModeIPTables ProxyMode = "IPTables"
+	// ProxyModeIPVS uses ipvs as proxy implementation.
+	ProxyModeIPVS ProxyMode = "IPVS"
+)
 
 // KubeletConfig contains configuration settings for the kubelet.
 type KubeletConfig struct {

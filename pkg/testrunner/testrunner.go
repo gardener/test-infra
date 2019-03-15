@@ -16,15 +16,13 @@ package testrunner
 
 import (
 	"errors"
-	"fmt"
 	"sync"
+
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
 
-	"k8s.io/client-go/tools/clientcmd"
-
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,16 +37,7 @@ func Run(config *Config, testruns []*tmv1beta1.Testrun, testrunNamePrefix string
 	maxWaitTimeSeconds = config.Timeout
 	pollIntervalSeconds = config.Interval
 
-	tmConfig, err := clientcmd.BuildConfigFromFlags("", config.TmKubeconfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot build kubernetes client from %s: %s", config.TmKubeconfigPath, err.Error())
-	}
-	tmClient, err := tmclientset.NewForConfig(tmConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	finishedTestruns := runChart(tmClient, testruns, config.Namespace, testrunNamePrefix)
+	finishedTestruns := runChart(config.TmClient, testruns, config.Namespace, testrunNamePrefix)
 
 	if len(finishedTestruns) == 0 {
 		return nil, errors.New("No testruns finished")
@@ -59,7 +48,7 @@ func Run(config *Config, testruns []*tmv1beta1.Testrun, testrunNamePrefix string
 
 // runChart tries to parse each rendered file of a chart into a testrun.
 // If a filecontent is a testrun then it is deployed into the testmachinery.
-func runChart(tmClient *tmclientset.Clientset, testruns []*tmv1beta1.Testrun, namespace, testrunNamePrefix string) []*tmv1beta1.Testrun {
+func runChart(tmClient kubernetes.Interface, testruns []*tmv1beta1.Testrun, namespace, testrunNamePrefix string) []*tmv1beta1.Testrun {
 	var wg sync.WaitGroup
 	mutex := &sync.Mutex{}
 	finishedTestruns := []*tmv1beta1.Testrun{}

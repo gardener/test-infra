@@ -14,11 +14,13 @@
 
 package testrunner
 
+import "github.com/gardener/gardener/pkg/client/kubernetes"
+
 // Config are configuration of the evironment like the testmachinery cluster or S3 store
 // where the testrunner executes the testrun.
 type Config struct {
-	// Path to the kubeconfig where the testmachinery is running.
-	TmKubeconfigPath string
+	// Kubernetes client for the testmachinery k8s cluster
+	TmClient kubernetes.Interface
 
 	// Namespace where the testrun is deployed.
 	Namespace string

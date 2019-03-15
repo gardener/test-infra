@@ -30,6 +30,7 @@ func SetDefaults_Shoot(obj *Shoot) {
 		cloud              = obj.Spec.Cloud
 		defaultPodCIDR     = DefaultPodNetworkCIDR
 		defaultServiceCIDR = DefaultServiceNetworkCIDR
+		defaultProxyMode   = ProxyModeIPTables
 	)
 
 	if cloud.AWS != nil {
@@ -74,10 +75,12 @@ func SetDefaults_Shoot(obj *Shoot) {
 
 	if cloud.Alicloud != nil {
 		if cloud.Alicloud.Networks.Pods == nil {
-			obj.Spec.Cloud.Alicloud.Networks.Pods = &defaultPodCIDR
+			podCIDR := CIDR("100.64.0.0/11")
+			obj.Spec.Cloud.Alicloud.Networks.Pods = &podCIDR
 		}
 		if cloud.Alicloud.Networks.Services == nil {
-			obj.Spec.Cloud.Alicloud.Networks.Services = &defaultServiceCIDR
+			svcCIDR := CIDR("100.104.0.0/13")
+			obj.Spec.Cloud.Alicloud.Networks.Services = &svcCIDR
 		}
 		if cloud.Alicloud.Networks.Nodes == nil {
 			if cloud.Alicloud.Networks.VPC.CIDR != nil {
@@ -115,6 +118,12 @@ func SetDefaults_Shoot(obj *Shoot) {
 	trueVar := true
 	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil {
 		obj.Spec.Kubernetes.AllowPrivilegedContainers = &trueVar
+	}
+
+	if obj.Spec.Kubernetes.KubeProxy != nil {
+		if obj.Spec.Kubernetes.KubeProxy.Mode == nil {
+			obj.Spec.Kubernetes.KubeProxy.Mode = &defaultProxyMode
+		}
 	}
 
 	if obj.Spec.Maintenance == nil {

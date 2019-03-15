@@ -15,23 +15,28 @@
 package testrunner
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func runTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
+func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
+	ctx := context.Background()
+	defer ctx.Done()
 	// TODO: Remove legacy name attribute. Instead enforce usage of generateName.
 	tr.Name = ""
 	tr.GenerateName = name
 	tr.Namespace = namespace
-	tr, err := tmClient.Testmachinery().Testruns(namespace).Create(tr)
+	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create testrun: %s", err.Error())
 	}
@@ -41,7 +46,7 @@ func runTestrun(tmClient *tmclientset.Clientset, tr *tmv1beta1.Testrun, namespac
 	interval := time.Duration(pollIntervalSeconds) * time.Second
 	timeout := time.Duration(maxWaitTimeSeconds) * time.Second
 	err = wait.PollImmediate(interval, timeout, func() (bool, error) {
-		tr, err = tmClient.Testmachinery().Testruns(namespace).Get(tr.Name, metav1.GetOptions{})
+		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
 		if err != nil {
 			log.Errorf("Cannot get testrun: %s", err.Error())
 		}

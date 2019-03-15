@@ -17,6 +17,10 @@ package runtestrun
 import (
 	"fmt"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/joho/godotenv"
 
@@ -64,11 +68,18 @@ var runTestrunCmd = &cobra.Command{
 			log.Debugf("Error loading .env file: %s", err.Error())
 		}
 
+		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
+		if err != nil {
+			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+		}
+
 		config := &testrunner.Config{
-			TmKubeconfigPath: tmKubeconfigPath,
-			Namespace:        namespace,
-			Timeout:          timeout,
-			Interval:         interval,
+			TmClient:  tmClient,
+			Namespace: namespace,
+			Timeout:   timeout,
+			Interval:  interval,
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)

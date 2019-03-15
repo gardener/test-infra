@@ -18,7 +18,8 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/client-go/tools/clientcmd"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -27,7 +28,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
 )
@@ -47,7 +47,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		commitSha     string
 		namespace     string
 		tmKubeconfig  string
-		tmClient      *tmclientset.Clientset
+		tmClient      kubernetes.Interface
 		testrunConfig testrunner.Config
 		s3Endpoint    string
 	)
@@ -59,24 +59,21 @@ var _ = Describe("Testrunner execution tests", func() {
 		namespace = os.Getenv("TM_NAMESPACE")
 		s3Endpoint = os.Getenv("S3_ENDPOINT")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
-		utils.WaitForMinioService(clusterClient, s3Endpoint, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
 	})
 
 	BeforeEach(func() {
 		testrunConfig = testrunner.Config{
-			TmKubeconfigPath: tmKubeconfig,
-			Namespace:        namespace,
-			Timeout:          maxWaitTime,
-			Interval:         5,
+			TmClient:  tmClient,
+			Namespace: namespace,
+			Timeout:   maxWaitTime,
+			Interval:  5,
 		}
 	})
 

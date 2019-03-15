@@ -15,11 +15,14 @@
 package testrunner_output_test
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"bufio"
+	"context"
 	"encoding/json"
 	"os"
 	"testing"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner/result"
 
 	"github.com/gardener/test-infra/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,12 +32,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
-	tmclientset "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
-
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -52,8 +51,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		commitSha      string
 		namespace      string
 		tmKubeconfig   string
-		tmClient       *tmclientset.Clientset
-		argoClient     *argoclientset.Clientset
+		tmClient       kubernetes.Interface
 		outputFilePath = "./out-"
 		testrunConfig  result.Config
 		s3Endpoint     string
@@ -66,18 +64,13 @@ var _ = Describe("Testrunner execution tests", func() {
 		namespace = os.Getenv("TM_NAMESPACE")
 		s3Endpoint = os.Getenv("S3_ENDPOINT")
 
-		tmConfig, err := clientcmd.BuildConfigFromFlags("", tmKubeconfig)
-		Expect(err).ToNot(HaveOccurred(), "couldn't create k8s client from kubeconfig filepath %s", tmKubeconfig)
-
-		tmClient = tmclientset.NewForConfigOrDie(tmConfig)
-
-		argoClient = argoclientset.NewForConfigOrDie(tmConfig)
-
-		clusterClient, err := kubernetes.NewClientFromFile(tmKubeconfig, nil, client.Options{})
+		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
+			Scheme: testmachinery.TestMachineryScheme,
+		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(clusterClient, namespace, maxWaitTime)
-		utils.WaitForMinioService(clusterClient, s3Endpoint, namespace, maxWaitTime)
+		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
 	})
 
 	BeforeEach(func() {
@@ -90,15 +83,17 @@ var _ = Describe("Testrunner execution tests", func() {
 	})
 
 	It("should output a summary of the testrun as elasticsearch bulk request", func() {
+		ctx := context.Background()
+		defer ctx.Done()
 		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
-		tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		Expect(err).ToNot(HaveOccurred())
 		if err == nil {
 			defer utils.DeleteTestrun(tmClient, tr)
 		}
 
-		err = result.Output(&testrunConfig, tmKubeconfig, namespace, tr, &result.Metadata{})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)
@@ -127,15 +122,17 @@ var _ = Describe("Testrunner execution tests", func() {
 	})
 
 	It("should add exported artifacts to the elasticsearch bulk output", func() {
+		ctx := context.Background()
+		defer ctx.Done()
 		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
-		tr, _, err := utils.RunTestrun(tmClient, argoClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		Expect(err).ToNot(HaveOccurred())
 		if err == nil {
 			defer utils.DeleteTestrun(tmClient, tr)
 		}
 
-		err = result.Output(&testrunConfig, tmKubeconfig, namespace, tr, &result.Metadata{})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)
