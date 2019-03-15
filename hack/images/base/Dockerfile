@@ -38,6 +38,8 @@ RUN  \
     semver \
     xmljson \
     xmltodict \
+  && git clone https://github.com/gardener/cc-utils /cc/utils \
+  && pip3 install -r /cc/utils/requirements.txt \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
