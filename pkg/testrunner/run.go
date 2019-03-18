@@ -46,10 +46,13 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 	interval := time.Duration(pollIntervalSeconds) * time.Second
 	timeout := time.Duration(maxWaitTimeSeconds) * time.Second
 	err = wait.PollImmediate(interval, timeout, func() (bool, error) {
-		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
+		testrun := &tmv1beta1.Testrun{}
+		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, testrun)
 		if err != nil {
 			log.Errorf("Cannot get testrun: %s", err.Error())
+			return false, nil
 		}
+		tr = testrun
 
 		if tr.Status.State != "" {
 			testrunPhase = tr.Status.Phase

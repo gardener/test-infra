@@ -61,6 +61,9 @@ func runChart(tmClient kubernetes.Interface, testruns []*tmv1beta1.Testrun, name
 			tr, err := runTestrun(tmClient, tr, namespace, testrunNamePrefix)
 			if err != nil {
 				log.Error(err.Error())
+				if tr == nil {
+					return
+				}
 				tr.Status.Phase = tmv1beta1.PhaseStatusFailed
 			}
 			mutex.Lock()
