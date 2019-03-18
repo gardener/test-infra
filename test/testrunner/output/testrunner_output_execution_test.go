@@ -88,10 +88,8 @@ var _ = Describe("Testrunner execution tests", func() {
 		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
 		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
-		if err == nil {
-			defer utils.DeleteTestrun(tmClient, tr)
-		}
 
 		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
 		Expect(err).ToNot(HaveOccurred())
@@ -114,7 +112,9 @@ var _ = Describe("Testrunner execution tests", func() {
 			// every data document should have of a testrun metadata information
 			if line%2 == 0 {
 				Expect(jsonBody["index"]).To(BeNil())
-				Expect(jsonBody["testrun_id"] != nil || jsonBody["tm_meta"] != nil).To(BeTrue())
+				Expect(jsonBody["tm"]).ToNot(BeEmpty())
+				Expect(jsonBody["tm"].(map[string]interface{})["testrun_id"]).ToNot(BeEmpty())
+
 			}
 			line++
 		}
@@ -127,10 +127,8 @@ var _ = Describe("Testrunner execution tests", func() {
 		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
 		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
-		if err == nil {
-			defer utils.DeleteTestrun(tmClient, tr)
-		}
 
 		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
 		Expect(err).ToNot(HaveOccurred())
@@ -150,8 +148,8 @@ var _ = Describe("Testrunner execution tests", func() {
 		}
 		Expect(scanner.Err()).ToNot(HaveOccurred())
 
-		Expect(jsonBody["tm_meta"]).ToNot(BeNil())
-		Expect(jsonBody["tm_meta"].(map[string]interface{})["testrun_id"]).To(Equal(tr.Name))
+		Expect(jsonBody["tm"]).ToNot(BeNil())
+		Expect(jsonBody["tm"].(map[string]interface{})["testrun_id"]).To(Equal(tr.Name))
 
 		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
 	})

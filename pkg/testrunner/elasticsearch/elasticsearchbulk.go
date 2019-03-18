@@ -51,7 +51,7 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) []byte {
 	var jsonBody map[string]interface{}
 	err := json.Unmarshal(docs, &jsonBody)
 	if err == nil {
-		jsonBody["tm_meta"] = stepMeta
+		jsonBody["tm"] = stepMeta
 		patchedDoc, err := json.Marshal(jsonBody)
 		if err != nil {
 			log.Warnf("Cannot mashal exported json with metadata from %s", name)
@@ -99,7 +99,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 			continue
 		}
 
-		jsonBody["tm_meta"] = stepMeta
+		jsonBody["tm"] = stepMeta
 		patchedDoc, err := json.Marshal(jsonBody)
 		if err != nil {
 			log.Errorf("Cannot mashal artifact %s", err.Error())

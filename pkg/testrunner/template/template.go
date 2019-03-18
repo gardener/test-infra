@@ -40,9 +40,9 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 		}
 		components, err := componentdescriptor.GetComponents(data)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot decode and parse BOM %s", err.Error())
+			return nil, fmt.Errorf("Cannot decode and parse the component descriptor: %s", err.Error())
 		}
-		metadata.BOM = components
+		metadata.ComponentDescriptor = components
 	}
 
 	files, err := RenderChart(tmClient, parameters, versions)
@@ -60,7 +60,7 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
-		addBOMLocationsToTestrun(&tr, metadata.BOM)
+		addBOMLocationsToTestrun(&tr, metadata.ComponentDescriptor)
 
 		testruns = append(testruns, &tr)
 	}

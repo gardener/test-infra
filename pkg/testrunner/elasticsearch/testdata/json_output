@@ -1,2 +1,2 @@
 {"index":{"_index":"TestDef","_type":"_doc"}}
-{"tm_meta":{"tm_id":"testId"},"test":"json"}
+{"tm":{"tm_id":"testId"},"test":"json"}

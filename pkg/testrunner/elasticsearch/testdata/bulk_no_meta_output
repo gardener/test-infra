@@ -1,4 +1,4 @@
 {"index":{"_index":"TestDef","_type":"_doc"}}
-{"tm_meta":{"tm_id":"testId"},"test": "bulk_no_1"}
+{"tm":{"tm_id":"testId"},"test": "bulk_no_1"}
 {"index":{"_index":"TestDef","_type":"_doc"}}
-{"tm_meta":{"tm_id":"testId"},"test": 2}
+{"tm":{"tm_id":"testId"},"test": 2}
