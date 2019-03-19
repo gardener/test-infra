@@ -47,8 +47,12 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 
 	metadata.TestrunID = tr.Name
 
-	if _, err := url.ParseRequestURI(config.ArgoUIEndpoint); err != nil {
-		metadata.ArgoUIExternalURL = path.Join(config.ArgoUIEndpoint, "workflows", namespace, tr.Name)
+	if config.ArgoUIEndpoint != "" {
+		if _, err := url.ParseRequestURI(config.ArgoUIEndpoint); err == nil {
+			metadata.ArgoUIExternalURL = path.Join(config.ArgoUIEndpoint, "workflows", namespace, tr.Name)
+		} else {
+			log.Debugf("Cannot parse Url %s: %s", config.ArgoUIEndpoint, err.Error())
+		}
 	}
 
 	trSummary, err := getTestrunSummary(tr, metadata)

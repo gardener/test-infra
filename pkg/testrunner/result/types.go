@@ -67,7 +67,7 @@ type Metadata struct {
 	// Link to the workflow in the argo ui
 	// Only set if an ingress with the name "argo-ui" for the argoui is set.
 	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
-	ArgoUIExternalURL string `json:"argo_external_url"`
+	ArgoUIExternalURL string `json:"argo_url"`
 }
 
 // StepExportMetadata is the metadata of one step of a testrun.
