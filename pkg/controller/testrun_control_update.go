@@ -17,6 +17,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
@@ -30,7 +32,13 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// ErrDeadlineExceeded indicates the operation exceeded its deadline for execution
+// TODO: This needs to stay in sync with https://github.com/kubernetes/kubernetes/blob/7f23a743e8c23ac6489340bbb34fa6f1d392db9d/pkg/kubelet/active_deadline.go
+// Needs to maintained on our own for now until message is exposed.
+var ErrDeadlineExceeded = "Pod was active on the node longer than the specified deadline"
 
 func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Testrun, wf *argov1.Workflow) (reconcile.Result, error) {
 	if !tr.Status.StartTime.Equal(&wf.Status.StartedAt) {
@@ -101,6 +109,18 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 			annotations := testdefinition.GetAnnotations(stepStatus.TestDefinition.Name, stepStatus.TestDefinition.Position[testdefinition.AnnotationFlow], stepStatus.TestDefinition.Position[testdefinition.AnnotationPosition])
 			argoNodeStatus := getArgoNodeStatus(wf, annotations)
 			if argoNodeStatus == nil {
+				continue
+			}
+
+			if strings.Contains(argoNodeStatus.Message, ErrDeadlineExceeded) {
+				testDurationMs := time.Duration(*stepStatus.TestDefinition.ActiveDeadlineSeconds) * time.Second
+				completionTime := metav1.NewTime(stepStatus.StartTime.Add(testDurationMs))
+
+				stepStatus.Phase = tmv1beta1.PhaseStatusTimeout
+				stepStatus.Duration = *stepStatus.TestDefinition.ActiveDeadlineSeconds
+				stepStatus.CompletionTime = &completionTime
+
+				completedSteps++
 				continue
 			}
 

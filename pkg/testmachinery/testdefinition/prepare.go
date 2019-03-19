@@ -42,7 +42,7 @@ func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) *PrepareD
 				"testmachinery.sapcloud.io/TestDefinition": "Prepare",
 			},
 		},
-		ActiveDeadlineSeconds: &activeDeadlineSeconds,
+		ActiveDeadlineSeconds: &defaultActiveDeadlineSeconds,
 		Container: &apiv1.Container{
 			Image:   testmachinery.PREPARE_IMAGE,
 			Command: []string{"/tm/prepare", "/tm/repos.json"},

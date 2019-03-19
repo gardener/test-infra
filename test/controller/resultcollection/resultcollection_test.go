@@ -66,8 +66,8 @@ var _ = Describe("Result collection tests", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
 			err := tmClient.Client().Create(ctx, tr)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			time.Sleep(5 * time.Second)
 			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
@@ -85,15 +85,15 @@ var _ = Describe("Result collection tests", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
 			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
 
 			status := tr.Status.Steps[0][0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(argov1.NodeSucceeded))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 
 		})
 
@@ -118,20 +118,20 @@ var _ = Describe("Result collection tests", func() {
 			}
 
 			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(2), "Should be 2 step's statuses.")
 
 			status := tr.Status.Steps[0][0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(argov1.NodeSucceeded))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 
 			status = tr.Status.Steps[1][0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(argov1.NodeSucceeded))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 
 		})
 
@@ -156,8 +156,8 @@ var _ = Describe("Result collection tests", func() {
 			}
 
 			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
-			Expect(err).ToNot(HaveOccurred())
 			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(3), "Should be 3 step's statuses.")
 
@@ -168,12 +168,36 @@ var _ = Describe("Result collection tests", func() {
 			status = tr.Status.Steps[0][1]
 			Expect(status.TestDefinition.Name).To(Equal("failing-integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(argov1.NodeFailed))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
 
 			status = tr.Status.Steps[1][0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).To(BeZero())
-			Expect(status.Phase).To(Equal(argov1.NodeSkipped))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
+		})
+
+		It("should mark timouted step with own timeout phase", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				{
+					{
+						Name: "timeout-integration-testdef",
+					},
+				},
+			}
+
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
+
+			status := tr.Status.Steps[0][0]
+			Expect(status.TestDefinition.Name).To(Equal("timeout-integration-testdef"))
+			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusTimeout))
+
 		})
 	})
 })

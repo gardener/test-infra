@@ -45,7 +45,7 @@ func MaxTimeExceeded(startTime time.Time, maxWaitTime int64) bool {
 
 // Completed checks if the testrun is in a completed phase
 func Completed(phase argov1.NodePhase) bool {
-	if phase == argov1.NodeSucceeded || phase == argov1.NodeFailed || phase == argov1.NodeError || phase == argov1.NodeSkipped {
+	if phase == tmv1beta1.PhaseStatusSuccess || phase == tmv1beta1.PhaseStatusFailed || phase == tmv1beta1.PhaseStatusError || phase == tmv1beta1.PhaseStatusSkipped || phase == tmv1beta1.PhaseStatusTimeout {
 		return true
 	}
 	return false

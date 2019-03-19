@@ -464,6 +464,12 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatusTestDefinition(ref 
 							},
 						},
 					},
+					"activeDeadlineSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"position": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -478,7 +484,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatusTestDefinition(ref 
 						},
 					},
 				},
-				Required: []string{"recipientsOnFailure", "position"},
+				Required: []string{"recipientsOnFailure", "activeDeadlineSeconds", "position"},
 			},
 		},
 		Dependencies: []string{

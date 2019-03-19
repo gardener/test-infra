@@ -31,8 +31,8 @@ import (
 )
 
 var (
-	activeDeadlineSeconds int64 = 600
-	archiveLogs                 = true
+	defaultActiveDeadlineSeconds int64 = 600
+	archiveLogs                        = true
 )
 
 // Annotation keys defined on the testdefinition template
@@ -52,13 +52,16 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 	if def.Spec.Image == "" {
 		def.Spec.Image = testmachinery.BASE_IMAGE
 	}
+	if def.Spec.ActiveDeadlineSeconds == nil {
+		def.Spec.ActiveDeadlineSeconds = &defaultActiveDeadlineSeconds
+	}
 
 	template := &argov1.Template{
 		Name: "",
 		ArchiveLocation: &argov1.ArtifactLocation{
 			ArchiveLogs: &archiveLogs,
 		},
-		ActiveDeadlineSeconds: &activeDeadlineSeconds,
+		ActiveDeadlineSeconds: def.Spec.ActiveDeadlineSeconds,
 		Container: &apiv1.Container{
 			Image:      def.Spec.Image,
 			Command:    def.Spec.Command,
@@ -98,10 +101,6 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 				},
 			},
 		},
-	}
-
-	if def.Spec.ActiveDeadlineSeconds != nil {
-		template.ActiveDeadlineSeconds = def.Spec.ActiveDeadlineSeconds
 	}
 
 	td := &TestDefinition{

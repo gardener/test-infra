@@ -54,11 +54,14 @@ const (
 
 // Testrun statuses
 const (
-	PhaseStatusInit    argov1.NodePhase = "init"
+	PhaseStatusInit    argov1.NodePhase = "Init"
 	PhaseStatusPending                  = argov1.NodePending
 	PhaseStatusRunning                  = argov1.NodeRunning
 	PhaseStatusSuccess                  = argov1.NodeSucceeded
+	PhaseStatusSkipped                  = argov1.NodeSkipped
 	PhaseStatusFailed                   = argov1.NodeFailed
+	PhaseStatusError                    = argov1.NodeError
+	PhaseStatusTimeout argov1.NodePhase = "Timeout"
 )
 
 // +genclient
@@ -149,11 +152,12 @@ type TestflowStepStatus struct {
 
 // TestflowStepStatusTestDefinition holds information about the used testdefinition and its location.
 type TestflowStepStatusTestDefinition struct {
-	Name                string            `json:"name,omitempty"`
-	Location            TestLocation      `json:"location,omitempty"`
-	Owner               string            `json:"owner,omitempty"`
-	RecipientsOnFailure []string          `json:"recipientsOnFailure"`
-	Position            map[string]string `json:"position"`
+	Name                  string            `json:"name,omitempty"`
+	Location              TestLocation      `json:"location,omitempty"`
+	Owner                 string            `json:"owner,omitempty"`
+	RecipientsOnFailure   []string          `json:"recipientsOnFailure"`
+	ActiveDeadlineSeconds *int64            `json:"activeDeadlineSeconds"`
+	Position              map[string]string `json:"position"`
 }
 
 // TestLocation describes a location to search for TestDefinitions.
