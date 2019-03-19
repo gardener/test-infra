@@ -34,6 +34,9 @@ type Config struct {
 	// S3SSL indicates whether the S3 instance is SSL secured or not.
 	S3SSL bool
 
+	// Endpoint of the argo ui of the testmachinery.
+	ArgoUIEndpoint string
+
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
 }
@@ -57,7 +60,14 @@ type Metadata struct {
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
 	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
 	ComponentDescriptor []*componentdescriptor.Component `json:"bom"`
-	TestrunID           string                           `json:"testrun_id"`
+
+	// Name of the testrun crd object.
+	TestrunID string `json:"testrun_id"`
+
+	// Link to the workflow in the argo ui
+	// Only set if an ingress with the name "argo-ui" for the argoui is set.
+	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
+	ArgoUIExternalURL string `json:"argo_url"`
 }
 
 // StepExportMetadata is the metadata of one step of a testrun.

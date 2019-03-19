@@ -53,6 +53,7 @@ testrunner run|run-tmpl [flags]
 | output-file-path | "./testout" | The filepath where the test summary and results should be written to. | |
 | s3-endpoint | EnvVar ("S3_ENDPOINT") | Accessible S3 endpoint of the s3 storage used by argo. This parameter is needed when tests export test results and the testrunner needs to fetch them and add them to the summary. | |
 | s3-ssl | false | Enables ssl support for the corresponding s3 storage. | |
+| argoui-endpoint | | Endpoint of the ArgoUI watching the Testmachinery cluster. | |
 | es-config-name | | Elasticsearch server config name that is used with the cc-utils cli | |
 | concourse-onError-dir | EnvVar ("ON_ERROR_DIR") | Directory where the `notify.cfg` should be written to. | |
 
