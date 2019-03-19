@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -44,6 +46,10 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	}
 
 	metadata.TestrunID = tr.Name
+
+	if _, err := url.ParseRequestURI(config.ArgoUIEndpoint); err != nil {
+		metadata.ArgoUIExternalURL = path.Join(config.ArgoUIEndpoint, "workflows", namespace, tr.Name)
+	}
 
 	trSummary, err := getTestrunSummary(tr, metadata)
 	if err != nil {

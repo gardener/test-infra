@@ -14,6 +14,7 @@ testrunner run-template [flags]
 
 ```
       --all-k8s-versions                   Run the testrun with all available versions specified by the cloudprovider.
+      --argoui-endpoint string             ArgoUI endpoint of the testmachinery cluster.
       --autoscaler-max string              Max number of worker nodes.
       --autoscaler-min string              Min number of worker nodes.
       --cloudprofile string                Cloudprofile of shoot.
