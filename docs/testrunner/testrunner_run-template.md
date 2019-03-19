@@ -33,6 +33,7 @@ testrunner run-template [flags]
       --project-name string                Gardener project name of the shoot
       --region string                      Region where the shoot is created.
       --s3-endpoint string                 S3 endpoint of the testmachinery cluster.
+      --s3-ssl                             S3 has SSL enabled.
       --secret-binding string              SecretBinding that should be used to create the shoot.
       --shoot-name string                  Shoot name which is used to run tests.
       --testrun-prefix string              Testrun name prefix which is used to generate a unique testrun name. (default "default-")

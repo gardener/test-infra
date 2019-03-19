@@ -52,11 +52,12 @@ type Metadata struct {
 	// Landscape describes the current dev,staging,canary,office or live.
 	Landscape         string `json:"landscape"`
 	CloudProvider     string `json:"cloudprovider"`
-	KubernetesVersion string `json:"kubernetes_version"`
+	KubernetesVersion string `json:"k8s_version"`
 
-	// BOM describes the current component_descriptor of the direct landscape-setup components.
-	BOM       []*componentdescriptor.Component `json:"bom"`
-	TestrunID string                           `json:"testrun_id"`
+	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
+	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
+	ComponentDescriptor []*componentdescriptor.Component `json:"bom"`
+	TestrunID           string                           `json:"testrun_id"`
 }
 
 // StepExportMetadata is the metadata of one step of a testrun.
@@ -70,7 +71,7 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata  *Metadata        `json:"tm_meta"`
+	Metadata  *Metadata        `json:"tm"`
 	Type      SummaryType      `json:"type"`
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
 	StartTime *metav1.Time     `json:"startTime,omitempty"`
@@ -80,7 +81,7 @@ type TestrunSummary struct {
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata  *Metadata        `json:"tm_meta"`
+	Metadata  *Metadata        `json:"tm"`
 	Type      SummaryType      `json:"type"`
 	Name      string           `json:"name,omitempty"`
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
