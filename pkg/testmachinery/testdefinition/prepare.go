@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -167,7 +168,12 @@ func (p *PrepareDefinition) addNetrcFile() error {
 	netrc := ""
 
 	for _, secret := range testmachinery.GetConfig().GitSecrets {
-		netrc = netrc + fmt.Sprintf("machine %s\nlogin %s\npassword %s\n\n", secret.HttpUrl, secret.TechnicalUser.Username, secret.TechnicalUser.AuthToken)
+		u, err := url.Parse(secret.HttpUrl)
+		if err != nil {
+			log.Debugf("%s is not a valid URL: %s", secret.HttpUrl, err.Error())
+			continue
+		}
+		netrc = netrc + fmt.Sprintf("machine %s\nlogin %s\npassword %s\n\n", u.Hostname(), secret.TechnicalUser.Username, secret.TechnicalUser.AuthToken)
 	}
 
 	p.TestDefinition.AddInputArtifacts(argov1.Artifact{
