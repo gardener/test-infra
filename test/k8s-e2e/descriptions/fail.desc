@@ -1,1 +1,2 @@
-should enforce the restricted extensions.PodSecurityPolicy
+[k8s.io] [sig-node] RuntimeClass [Feature:RuntimeClass] should reject a Pod requesting a deleted RuntimeClass
+[sig-cluster-lifecycle] gpu Upgrade [Feature:GPUUpgrade] master upgrade should NOT disrupt gpu pod [Feature:GPUMasterUpgrade]

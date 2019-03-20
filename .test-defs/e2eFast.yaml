@@ -14,23 +14,25 @@
 
 kind: TestDefinition
 metadata:
-  name: conformance-serial
+  name: e2e-fast
 spec:
   owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com
   recipientsOnFailure:
   - DL_5C5BE3E2970B9F404D0E2F50@sap.com
 
-  description: Run kubernetes conformance tests.
+  description: Run fast kubernetes e2e tests.
 
   activeDeadlineSeconds: 10800
   labels: ["default"]
-  behavior: ["serial"]
 
   config:
   - type: env
-    name: SERIAL_TESTS_ONLY
-    value: "0" # 0 = true
+    name: CONFORMANCE_SKIP
+    value: 'Serial\|Slow'
+  - type: env
+    name: GINKGO_PARALLEL
+    value: "true"
 
   command: [bash, -c]
-  args: ["TESTDESCRIPTION_NAME=conformance.desc ./test/k8s-e2e/e2e-test-execute"]
+  args: ["TESTDESCRIPTION_NAME=e2e_base_fast.desc ./test/k8s-e2e/e2e-test-execute"]
   image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
