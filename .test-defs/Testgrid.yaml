@@ -30,5 +30,5 @@ spec:
       value: "true"
 
   command: [bash, -c]
-  args: ["./test/k8s-e2e/e2e-test-execute"]
+  args: ["TESTDESCRIPTION_NAME=conformance.desc ./test/k8s-e2e/e2e-test-execute"]
   image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
