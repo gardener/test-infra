@@ -182,10 +182,11 @@ func (td *TestDefinition) AddInputParameter(name, value string) {
 }
 
 // AddVolumeMount adds a mount to the container of the TestDefinitions's template.
-func (td *TestDefinition) AddVolumeMount(name, path string, readOnly bool) {
+func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bool) {
 	td.Template.Container.VolumeMounts = append(td.Template.Container.VolumeMounts, apiv1.VolumeMount{
 		Name:      name,
 		MountPath: path,
+		SubPath:   subpath,
 		ReadOnly:  readOnly,
 	})
 }
@@ -241,7 +242,7 @@ func (td *TestDefinition) AddConfig(configs []*config.Element) {
 				})
 			} else if config.Info.ValueFrom != nil {
 				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, "from secret or configmap"))
-				td.AddVolumeMount(config.Name(), path.Dir(config.Info.Path), true)
+				td.AddVolumeMount(config.Name(), config.Info.Path, path.Base(config.Info.Path), true)
 			}
 		}
 
