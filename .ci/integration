@@ -44,7 +44,7 @@ if [[ "${SOURCE_PATH}" != *"src/github.com/gardener/test-infra" ]]; then
 fi
 
 # Install Kubectl
-curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 mv ./kubectl /usr/local/bin/kubectl
 
@@ -52,7 +52,7 @@ mv ./kubectl /usr/local/bin/kubectl
 if ! which helm 1>/dev/null; then
   echo -n "Installing helm... "
   install_helm_path="./get_helm.sh"
-  curl https://raw.githubusercontent.com/helm/helm/v2.9.1/scripts/get > "${install_helm_path}"
+  curl https://raw.githubusercontent.com/helm/helm/v2.13.0/scripts/get > "${install_helm_path}"
   chmod 700 "${install_helm_path}"
   bash "${install_helm_path}"
   rm ./"${install_helm_path}"
