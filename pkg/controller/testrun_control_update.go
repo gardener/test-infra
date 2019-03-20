@@ -70,7 +70,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 }
 
 func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
-	log.Info("Collecting node status")
+	log.Infof("Collecting node status of Testrun %s in Namespace %s", tr.Name, tr.Namespace)
 
 	tr.Status.Phase = wf.Status.Phase
 	tr.Status.CompletionTime = &wf.Status.FinishedAt
