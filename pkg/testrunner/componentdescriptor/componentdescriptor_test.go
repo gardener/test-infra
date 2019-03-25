@@ -57,6 +57,6 @@ var _ = Describe("componentdescriptor test", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(len(dependencies)).To(Equal(2), "There should be 2 dependencies")
-		Expect(reflect.DeepEqual(dependencies, result)).To(BeTrue())
+		Expect(reflect.DeepEqual(dependencies, ComponentList(result))).To(BeTrue())
 	})
 })

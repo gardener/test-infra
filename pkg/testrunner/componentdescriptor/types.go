@@ -19,6 +19,13 @@ type Component struct {
 	Version string `yaml:"version"`
 }
 
+// ComponentList is a set of multiple components.
+type ComponentList []*Component
+
+// ComponentJSON is the object that is written to the elastic search metadata.
+type ComponentJSON struct {
+	Version string `json:"version"`
+}
 type components struct {
 	components   []*Component
 	componentSet map[Component]bool

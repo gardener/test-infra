@@ -47,6 +47,8 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 		return nil
 	}
 
+	metadata.Testrun.StartTime = tr.Status.StartTime
+
 	if config.ArgoUIEndpoint != "" && tr.Status.Workflow != "" {
 		if u, err := url.ParseRequestURI(config.ArgoUIEndpoint); err == nil {
 			u.Path = path.Join(u.Path, "workflows", namespace, tr.Status.Workflow)

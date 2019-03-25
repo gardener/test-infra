@@ -66,7 +66,7 @@ func runChart(tmClient kubernetes.Interface, runs RunList, namespace, testrunNam
 				tr.Status.Phase = tmv1beta1.PhaseStatusFailed
 			}
 			r.Testrun = tr
-			r.Metadata.TestrunID = tr.Name
+			r.Metadata.Testrun.ID = tr.Name
 			mutex.Lock()
 			finishedTestruns = append(finishedTestruns, r)
 			mutex.Unlock()

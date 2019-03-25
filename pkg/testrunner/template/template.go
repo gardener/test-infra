@@ -28,6 +28,8 @@ import (
 
 // Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
+	var componentDescriptor componentdescriptor.ComponentList
+
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -38,11 +40,11 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 		if err != nil {
 			return nil, fmt.Errorf("Cannot read component descriptor file %s: %s", parameters.ComponentDescriptorPath, err.Error())
 		}
-		components, err := componentdescriptor.GetComponents(data)
+		componentDescriptor, err = componentdescriptor.GetComponents(data)
 		if err != nil {
 			return nil, fmt.Errorf("Cannot decode and parse the component descriptor: %s", err.Error())
 		}
-		metadata.ComponentDescriptor = components
+		metadata.ComponentDescriptor = componentDescriptor.JSON()
 	}
 
 	files, err := RenderChart(tmClient, parameters, versions)
@@ -63,7 +65,7 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
-		addBOMLocationsToTestrun(&tr, metadata.ComponentDescriptor)
+		addBOMLocationsToTestrun(&tr, componentDescriptor)
 
 		testruns = append(testruns, &testrunner.Run{
 			Testrun:  &tr,
