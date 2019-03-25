@@ -31,13 +31,13 @@ var (
 	pollIntervalSeconds int64 = 60
 )
 
-// Run renders a testrun, deploys it to a testmachinery cluster and waits for the testruns results
-func Run(config *Config, testruns []*tmv1beta1.Testrun, testrunNamePrefix string) ([]*tmv1beta1.Testrun, error) {
+// ExecuteTestrun deploys it to a testmachinery cluster and waits for the testruns results
+func ExecuteTestrun(config *Config, runs RunList, testrunNamePrefix string) (RunList, error) {
 	log.Debugf("Config: %+v", util.PrettyPrintStruct(config))
 	maxWaitTimeSeconds = config.Timeout
 	pollIntervalSeconds = config.Interval
 
-	finishedTestruns := runChart(config.TmClient, testruns, config.Namespace, testrunNamePrefix)
+	finishedTestruns := runChart(config.TmClient, runs, config.Namespace, testrunNamePrefix)
 
 	if len(finishedTestruns) == 0 {
 		return nil, errors.New("No testruns finished")
@@ -46,19 +46,18 @@ func Run(config *Config, testruns []*tmv1beta1.Testrun, testrunNamePrefix string
 	return finishedTestruns, nil
 }
 
-// runChart tries to parse each rendered file of a chart into a testrun.
-// If a filecontent is a testrun then it is deployed into the testmachinery.
-func runChart(tmClient kubernetes.Interface, testruns []*tmv1beta1.Testrun, namespace, testrunNamePrefix string) []*tmv1beta1.Testrun {
+// runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
+func runChart(tmClient kubernetes.Interface, runs RunList, namespace, testrunNamePrefix string) RunList {
 	var wg sync.WaitGroup
 	mutex := &sync.Mutex{}
-	finishedTestruns := []*tmv1beta1.Testrun{}
-	for _, tr := range testruns {
-		testrun := *tr
+	finishedTestruns := RunList{}
+	for _, r := range runs {
+		run := *r
 
 		wg.Add(1)
-		go func(tr *tmv1beta1.Testrun) {
+		go func(r *Run) {
 			defer wg.Done()
-			tr, err := runTestrun(tmClient, tr, namespace, testrunNamePrefix)
+			tr, err := runTestrun(tmClient, r.Testrun, namespace, testrunNamePrefix)
 			if err != nil {
 				log.Error(err.Error())
 				if tr == nil {
@@ -66,10 +65,12 @@ func runChart(tmClient kubernetes.Interface, testruns []*tmv1beta1.Testrun, name
 				}
 				tr.Status.Phase = tmv1beta1.PhaseStatusFailed
 			}
+			r.Testrun = tr
+			r.Metadata.TestrunID = tr.Name
 			mutex.Lock()
-			finishedTestruns = append(finishedTestruns, tr)
+			finishedTestruns = append(finishedTestruns, r)
 			mutex.Unlock()
-		}(&testrun)
+		}(&run)
 	}
 	wg.Wait()
 	log.Infof("All testruns completed.")

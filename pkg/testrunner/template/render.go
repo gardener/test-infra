@@ -11,7 +11,7 @@ import (
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
-func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, versions []string) ([]string, error) {
+func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, versions []string) ([]*TestrunFile, error) {
 	log.Debugf("Parameters: %+v", util.PrettyPrintStruct(parameters))
 	log.Debugf("Render chart from %s", parameters.TestrunChartPath)
 
@@ -25,7 +25,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 		return nil, fmt.Errorf("Cannot read gardener kubeconfig %s, Error: %s", parameters.GardenKubeconfigPath, err.Error())
 	}
 
-	renderedFiles := []string{}
+	renderedFiles := []*TestrunFile{}
 	for _, version := range versions {
 		files, err := renderSingleChart(tmChartRenderer, parameters, gardenKubeconfig, version)
 		if err != nil {
@@ -36,7 +36,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 	return renderedFiles, nil
 }
 
-func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *TestrunParameters, gardenKubeconfig []byte, version string) ([]string, error) {
+func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *TestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":             fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
@@ -61,9 +61,14 @@ func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *Testrun
 		return nil, err
 	}
 
-	files := []string{}
+	files := []*TestrunFile{}
 	for _, file := range chart.Files {
-		files = append(files, file)
+		files = append(files, &TestrunFile{
+			File: file,
+			Metadata: TestrunFileMetadata{
+				KubernetesVersion: version,
+			},
+		})
 	}
 
 	return files, nil

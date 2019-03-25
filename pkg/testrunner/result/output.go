@@ -27,6 +27,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/gardener/test-infra/pkg/testrunner"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,12 +42,10 @@ import (
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *Metadata) error {
+func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
 	if config.OutputFile == "" {
 		return nil
 	}
-
-	metadata.TestrunID = tr.Name
 
 	if config.ArgoUIEndpoint != "" && tr.Status.Workflow != "" {
 		if u, err := url.ParseRequestURI(config.ArgoUIEndpoint); err == nil {
@@ -88,7 +88,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	return nil
 }
 
-func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearch.Bulk, error) {
+func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*elasticsearch.Bulk, error) {
 
 	status := tr.Status
 	testsRun := 0
@@ -96,9 +96,9 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 
 	for _, steps := range status.Steps {
 		for _, step := range steps {
-			summary := StepSummary{
+			summary := testrunner.StepSummary{
 				Metadata:  metadata,
-				Type:      SummaryTypeTeststep,
+				Type:      testrunner.SummaryTypeTeststep,
 				Name:      step.TestDefinition.Name,
 				Phase:     step.Phase,
 				StartTime: step.StartTime,
@@ -115,9 +115,9 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 		}
 	}
 
-	trSummary := TestrunSummary{
+	trSummary := testrunner.TestrunSummary{
 		Metadata:  metadata,
-		Type:      SummaryTypeTestrun,
+		Type:      testrunner.SummaryTypeTestrun,
 		Phase:     status.Phase,
 		StartTime: status.StartTime,
 		Duration:  status.Duration,
@@ -135,7 +135,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *Metadata) (*elasticsearc
 
 }
 
-func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *Metadata) []byte {
+func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) []byte {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
@@ -157,7 +157,7 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 	for _, steps := range status.Steps {
 		for _, step := range steps {
 			if step.Phase != argov1.NodeSkipped {
-				stepMeta := &StepExportMetadata{
+				stepMeta := &testrunner.StepExportMetadata{
 					Metadata:    *metadata,
 					TestDefName: step.TestDefinition.Name,
 					Phase:       step.Phase,

@@ -17,6 +17,8 @@ package result
 import (
 	"fmt"
 
+	"github.com/gardener/test-infra/pkg/testrunner"
+
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
@@ -25,10 +27,10 @@ import (
 
 // Collect collects results of all testruns and write them to a file.
 // It returns wheter there are failed testruns or not.
-func Collect(config *Config, tmClient kubernetes.Interface, namespace string, testruns []*tmv1beta1.Testrun, metadata *Metadata) (bool, error) {
+func Collect(config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
 	testrunsFailed := false
-	for _, tr := range testruns {
-		err := Output(config, tmClient, namespace, tr, metadata)
+	for _, run := range runs {
+		err := Output(config, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			return false, err
 		}
@@ -37,19 +39,19 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, te
 		if err != nil {
 			log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
 		} else {
-			err := MarkTestrunsAsIngested(tmClient, testruns)
+			err := MarkTestrunsAsIngested(tmClient, run.Testrun)
 			if err != nil {
 				log.Warn(err.Error())
 			}
 		}
 
-		if tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-			log.Infof("Testrun %s finished successfully", tr.Name)
+		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+			log.Infof("Testrun %s finished successfully", run.Testrun.Name)
 		} else {
 			testrunsFailed = true
-			log.Errorf("Testrun %s failed with phase %s", tr.Name, tr.Status.Phase)
+			log.Errorf("Testrun %s failed with phase %s", run.Testrun.Name, run.Testrun.Status.Phase)
 		}
-		fmt.Print(util.PrettyPrintStruct(tr.Status))
+		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
 	}
 
 	return testrunsFailed, nil

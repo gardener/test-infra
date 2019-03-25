@@ -80,25 +80,41 @@ var _ = Describe("Testrunner execution tests", func() {
 	Context("testrun", func() {
 		It("should run a single testrun", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			finishedTr, err := testrunner.Run(&testrunConfig, []*tmv1beta1.Testrun{tr}, "test-")
-			defer utils.DeleteTestrun(tmClient, finishedTr[0])
+			run := []*testrunner.Run{
+				{
+					Testrun:  tr,
+					Metadata: &testrunner.Metadata{},
+				},
+			}
+			finishedTr, err := testrunner.ExecuteTestrun(&testrunConfig, run, "test-")
+			defer utils.DeleteTestrun(tmClient, finishedTr[0].Testrun)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(finishedTr)).To(Equal(1))
-			Expect(finishedTr[0].Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(finishedTr[0].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 		})
 
 		It("should run 2 testruns", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr2 := resources.GetBasicTestrun(namespace, commitSha)
-			finishedTr, err := testrunner.Run(&testrunConfig, []*tmv1beta1.Testrun{tr, tr2}, "test-")
-			defer utils.DeleteTestrun(tmClient, finishedTr[0])
-			defer utils.DeleteTestrun(tmClient, finishedTr[1])
+			run := []*testrunner.Run{
+				{
+					Testrun:  tr,
+					Metadata: &testrunner.Metadata{},
+				},
+				{
+					Testrun:  tr2,
+					Metadata: &testrunner.Metadata{},
+				},
+			}
+			finishedTr, err := testrunner.ExecuteTestrun(&testrunConfig, run, "test-")
+			defer utils.DeleteTestrun(tmClient, finishedTr[0].Testrun)
+			defer utils.DeleteTestrun(tmClient, finishedTr[1].Testrun)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(finishedTr)).To(Equal(2))
-			Expect(finishedTr[0].Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
-			Expect(finishedTr[1].Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(finishedTr[0].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(finishedTr[1].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 		})
 
 	})

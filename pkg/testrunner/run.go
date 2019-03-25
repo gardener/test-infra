@@ -29,6 +29,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+// GetTestruns returns all testruns of a RunList as testrun array
+func (r RunList) GetTestruns() []*tmv1beta1.Testrun {
+	testruns := []*tmv1beta1.Testrun{}
+	for _, run := range r {
+		testruns = append(testruns, run.Testrun)
+	}
+	return testruns
+}
+
 func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
 	ctx := context.Background()
 	defer ctx.Done()

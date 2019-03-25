@@ -87,18 +87,24 @@ var runTestrunCmd = &cobra.Command{
 			log.Fatalf("Testrunner execution disrupted: %s", err.Error())
 		}
 
-		finishedTestruns, err := testrunner.Run(config, []*tmv1beta1.Testrun{&tr}, testrunNamePrefix)
+		run := []*testrunner.Run{
+			{
+				Testrun: &tr,
+			},
+		}
+
+		finishedRuns, err := testrunner.ExecuteTestrun(config, run, testrunNamePrefix)
 		if err != nil {
 			log.Fatalf("Testrunner execution disrupted: %s", err.Error())
 		}
 
-		if finishedTestruns[0].Status.Phase == tmv1beta1.PhaseStatusSuccess {
+		if finishedRuns[0].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			log.Info("Testrunner successfully finished.")
 		} else {
-			log.Errorf("Testrunner finished with phase %s", finishedTestruns[0].Status.Phase)
+			log.Errorf("Testrunner finished with phase %s", finishedRuns[0].Testrun.Status.Phase)
 		}
 
-		fmt.Print(util.PrettyPrintStruct(finishedTestruns[0].Status))
+		fmt.Print(util.PrettyPrintStruct(finishedRuns[0].Testrun.Status))
 	},
 }
 
