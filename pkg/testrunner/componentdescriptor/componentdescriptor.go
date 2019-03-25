@@ -18,7 +18,7 @@ import (
 )
 
 // GetComponents returns a list of all git/component dependencies.
-func GetComponents(content []byte) ([]*Component, error) {
+func GetComponents(content []byte) (ComponentList, error) {
 
 	components := components{
 		components:   make([]*Component, 0, 0),
@@ -35,6 +35,23 @@ func GetComponents(content []byte) ([]*Component, error) {
 	}
 
 	return components.components, nil
+}
+
+// JSON returns the json output for a list of components
+// The list is converted into the format:
+// {
+//	"component_name": {
+//	 	"version": "0.0.0"
+//	}
+// }
+func (c ComponentList) JSON() map[string]ComponentJSON {
+	components := make(map[string]ComponentJSON)
+	for _, component := range c {
+		components[component.Name] = ComponentJSON{
+			Version: component.Version,
+		}
+	}
+	return components
 }
 
 func (c *components) add(newComponents []Component) {

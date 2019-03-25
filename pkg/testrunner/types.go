@@ -18,7 +18,6 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -66,10 +65,10 @@ type Metadata struct {
 
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
 	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
-	ComponentDescriptor []*componentdescriptor.Component `json:"bom"`
+	ComponentDescriptor interface{} `json:"bom"`
 
 	// Name of the testrun crd object.
-	TestrunID string `json:"testrun_id"`
+	Testrun TestrunMetadata `json:"tr"`
 
 	// Link to the workflow in the argo ui
 	// Only set if an ingress with the name "argo-ui" for the argoui is set.
@@ -77,10 +76,19 @@ type Metadata struct {
 	ArgoUIExternalURL string `json:"argo_url"`
 }
 
+// TestrunMetadata represents the metadata of a testrun
+type TestrunMetadata struct {
+	// Name of the testrun crd object.
+	ID string `json:"id"`
+
+	// Startime of the testrun.
+	StartTime *metav1.Time `json:"startTime"`
+}
+
 // StepExportMetadata is the metadata of one step of a testrun.
 type StepExportMetadata struct {
 	Metadata
-	TestDefName string           `json:"testdefinition"`
+	TestDefName string           `json:"testdefinition,omitempty"`
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
 	StartTime   *metav1.Time     `json:"startTime,omitempty"`
 	Duration    int64            `json:"duration,omitempty"`
@@ -88,8 +96,8 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata  *Metadata        `json:"tm"`
-	Type      SummaryType      `json:"type"`
+	Metadata  *Metadata        `json:"tm,omitempty"`
+	Type      SummaryType      `json:"type,omitempty"`
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
 	StartTime *metav1.Time     `json:"startTime,omitempty"`
 	Duration  int64            `json:"duration,omitempty"`
@@ -98,8 +106,8 @@ type TestrunSummary struct {
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata  *Metadata        `json:"tm"`
-	Type      SummaryType      `json:"type"`
+	Metadata  *Metadata        `json:"tm,omitempty"`
+	Type      SummaryType      `json:"type,omitempty"`
 	Name      string           `json:"name,omitempty"`
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
 	StartTime *metav1.Time     `json:"startTime,omitempty"`

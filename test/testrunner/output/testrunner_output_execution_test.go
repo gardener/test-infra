@@ -93,7 +93,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{TestrunID: tr.Name})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)
@@ -115,7 +115,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			if line%2 == 0 {
 				Expect(jsonBody["index"]).To(BeNil())
 				Expect(jsonBody["tm"]).ToNot(BeEmpty())
-				Expect(jsonBody["tm"].(map[string]interface{})["testrun_id"]).ToNot(BeEmpty())
+				Expect(jsonBody["tm"].(map[string]interface{})["tr"]).ToNot(BeEmpty())
 
 			}
 			line++
@@ -132,7 +132,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{TestrunID: tr.Name})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)
@@ -151,7 +151,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(scanner.Err()).ToNot(HaveOccurred())
 
 		Expect(jsonBody["tm"]).ToNot(BeNil())
-		Expect(jsonBody["tm"].(map[string]interface{})["testrun_id"]).To(Equal(tr.Name))
+		Expect(jsonBody["tm"].(map[string]interface{})["tr"].(map[string]interface{})["id"]).To(Equal(tr.Name))
 
 		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
 	})
