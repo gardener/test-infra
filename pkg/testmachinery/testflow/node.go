@@ -82,6 +82,10 @@ func (n *Node) addTask(lastSerialNode, rootNode *Node) {
 			Name: "kubeconfigs",
 			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", lastSerialNode.Task.Name),
 		},
+		{
+			Name: "sharedFolder",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", lastSerialNode.Task.Name),
+		},
 	}
 
 	if n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {

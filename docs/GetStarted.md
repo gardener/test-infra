@@ -4,6 +4,7 @@
   - [Create a Test](#create-a-test)
     - [Input Contract](#input-contract)
     - [Export Contract](#export-contract)
+    - [Shared Folder](#shared-folder)
     - [Images](#images)
   - [Create a Testrun](#create-a-testrun)
   - [Configuration](#configuration)
@@ -116,6 +117,10 @@ It then automatically uploads these documents to an index named like the TestDef
       { "index": { "_index": "mySecondSpecificIndex", "_type": "_doc" } }
       { "key3": 5 }
     ```
+
+### Shared Folder
+
+Data that is stored in `TM_SHARED_PATH` location, can be accessed from within any testflow step of a the workflow. This is essential if e.g. a test flow step needs to evaluate the output of the previously finished test flow step. This folder is also available as an artifact in the Argo UI.
 
 ### Images
 

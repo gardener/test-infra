@@ -24,7 +24,10 @@ import (
 
 const (
 	// TM_KUBECONFIG_PATH is the path where kubeconfigs are mounted to tests.
-	TM_KUBECONFIG_PATH = "/tmp/env/kubeconfig"
+	TM_KUBECONFIG_PATH = "/tmp/tm/kubeconfig"
+
+	// TM_SHARED_PATH is the path to a shared folder, where content is shared among the workflow steps
+	TM_SHARED_PATH = "/tmp/tm/shared"
 
 	// TM_REPO_PATH is the path where the repo/location is mounted to the tests.
 	TM_REPO_PATH = "/src"
