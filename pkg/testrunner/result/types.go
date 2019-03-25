@@ -14,12 +14,6 @@
 
 package result
 
-import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
 // Config represents the configuration for collecting and storing results from a testrun.
 type Config struct {
 	// OutputFilePath is the path where the testresult is written to.
@@ -39,64 +33,6 @@ type Config struct {
 
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
-}
-
-// SummaryType defines the type of a test result or summary
-type SummaryType string
-
-// Summary types can be testrun or teststep
-const (
-	SummaryTypeTestrun  SummaryType = "testrun"
-	SummaryTypeTeststep SummaryType = "teststep"
-)
-
-// Metadata is the common metadata of all ouputs and summaries.
-type Metadata struct {
-	// Landscape describes the current dev,staging,canary,office or live.
-	Landscape         string `json:"landscape"`
-	CloudProvider     string `json:"cloudprovider"`
-	KubernetesVersion string `json:"k8s_version"`
-
-	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
-	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
-	ComponentDescriptor []*componentdescriptor.Component `json:"bom"`
-
-	// Name of the testrun crd object.
-	TestrunID string `json:"testrun_id"`
-
-	// Link to the workflow in the argo ui
-	// Only set if an ingress with the name "argo-ui" for the argoui is set.
-	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
-	ArgoUIExternalURL string `json:"argo_url"`
-}
-
-// StepExportMetadata is the metadata of one step of a testrun.
-type StepExportMetadata struct {
-	Metadata
-	TestDefName string           `json:"testdefinition"`
-	Phase       argov1.NodePhase `json:"phase,omitempty"`
-	StartTime   *metav1.Time     `json:"startTime,omitempty"`
-	Duration    int64            `json:"duration,omitempty"`
-}
-
-// TestrunSummary is the result of the overall testrun.
-type TestrunSummary struct {
-	Metadata  *Metadata        `json:"tm"`
-	Type      SummaryType      `json:"type"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
-	TestsRun  int              `json:"testsRun,omitempty"`
-}
-
-// StepSummary is the result of a specific step.
-type StepSummary struct {
-	Metadata  *Metadata        `json:"tm"`
-	Type      SummaryType      `json:"type"`
-	Name      string           `json:"name,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
 }
 
 // notificationConfig is the configuration that is used by concourse to send notifications.

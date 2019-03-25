@@ -16,6 +16,7 @@ package result
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -46,18 +47,16 @@ func IngestFile(file, esCfgName string) error {
 }
 
 // MarkTestrunsAsIngested sets the ingest status of testruns to true
-func MarkTestrunsAsIngested(tmClient kubernetes.Interface, testruns []*tmv1beta1.Testrun) error {
+func MarkTestrunsAsIngested(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) error {
 	ctx := context.Background()
 	defer ctx.Done()
-	for _, tr := range testruns {
-		tr.Status.Ingested = true
-		err := tmClient.Client().Update(ctx, tr)
-		if err != nil {
-			log.Errorf("Cannot update status off testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
-			continue
-		}
-		log.Debugf("Successfully updated status of testrun %s in namespace %s", tr.Name, tr.Namespace)
+
+	tr.Status.Ingested = true
+	err := tmClient.Client().Update(ctx, tr)
+	if err != nil {
+		return fmt.Errorf("Cannot update status off testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
 	}
+	log.Debugf("Successfully updated status of testrun %s in namespace %s", tr.Name, tr.Namespace)
 
 	return nil
 }

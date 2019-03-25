@@ -38,3 +38,14 @@ type TestrunParameters struct {
 	FloatingPoolName        string
 	ComponentDescriptorPath string
 }
+
+// TestrunFile is the internal representation of a rendered testrun chart with metadata information
+type TestrunFile struct {
+	File     string
+	Metadata TestrunFileMetadata
+}
+
+// TestrunFileMetadata represents the metadata of a rendered testrun.
+type TestrunFileMetadata struct {
+	KubernetesVersion string
+}

@@ -18,16 +18,16 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/gardener/test-infra/pkg/testrunner"
+
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 )
 
 // Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
-func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *result.Metadata) ([]*tmv1beta1.Testrun, error) {
+func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -51,18 +51,24 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 	}
 
 	// parse the rendered testruns and add locations from BOM of a bom was provided.
-	testruns := []*tmv1beta1.Testrun{}
-	for _, fileContent := range files {
-		tr, err := util.ParseTestrun([]byte(fileContent))
+	testruns := []*testrunner.Run{}
+	for _, file := range files {
+		tr, err := util.ParseTestrun([]byte(file.File))
 		if err != nil {
 			log.Warnf("Cannot parse rendered file: %s", err.Error())
 		}
+
+		testrunMetadata := *metadata
+		testrunMetadata.KubernetesVersion = file.Metadata.KubernetesVersion
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
 		addBOMLocationsToTestrun(&tr, metadata.ComponentDescriptor)
 
-		testruns = append(testruns, &tr)
+		testruns = append(testruns, &testrunner.Run{
+			Testrun:  &tr,
+			Metadata: &testrunMetadata,
+		})
 	}
 
 	if len(testruns) == 0 {

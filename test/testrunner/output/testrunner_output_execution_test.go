@@ -21,6 +21,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gardener/test-infra/pkg/testrunner"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 
@@ -91,7 +93,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{TestrunID: tr.Name})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)
@@ -130,7 +132,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &result.Metadata{})
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{TestrunID: tr.Name})
 		Expect(err).ToNot(HaveOccurred())
 
 		file, err := os.Open(testrunConfig.OutputFile)

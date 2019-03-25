@@ -137,23 +137,23 @@ var runCmd = &cobra.Command{
 			ComponentDescriptorPath: componenetDescriptorPath,
 		}
 
-		metadata := &result.Metadata{
+		metadata := &testrunner.Metadata{
 			Landscape:         parameters.Landscape,
 			CloudProvider:     parameters.Cloudprovider,
 			KubernetesVersion: parameters.K8sVersion,
 		}
-		testruns, err := testrunnerTemplate.Render(tmClient, parameters, metadata)
+		runs, err := testrunnerTemplate.Render(tmClient, parameters, metadata)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		finishedTestruns, err := testrunner.Run(config, testruns, testrunName)
-		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, finishedTestruns, metadata)
+		finishedRuns, err := testrunner.ExecuteTestrun(config, runs, testrunName)
+		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, finishedRuns)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		result.GenerateNotificationConfigForAlerting(finishedTestruns, rsConfig.ConcourseOnErrorDir)
+		result.GenerateNotificationConfigForAlerting(finishedRuns.GetTestruns(), rsConfig.ConcourseOnErrorDir)
 
 		log.Info("Testrunner finished.")
 		if failed {
