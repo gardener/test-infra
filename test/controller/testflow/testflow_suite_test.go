@@ -16,6 +16,7 @@ package testflow_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -174,6 +175,52 @@ var _ = Describe("Testflow execution tests", func() {
 
 			Expect(len(tr.Status.Steps[1])).To(Equal(1))
 			Expect(tr.Status.Steps[1][0].TestDefinition.Name).To(Equal("serial-testdef"))
+		})
+	})
+
+	Context("File created in shared folder", func() {
+		sharedFilePath := fmt.Sprintf("%s/%s", testmachinery.TM_SHARED_PATH, "test")
+		It("should be visible from withing another step", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				// create file in shared folder
+				{
+					{
+						Name: "check-file-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: sharedFilePath,
+							},
+							{
+								Type:  tmv1beta1.ConfigTypeFile,
+								Name:  "TEST_NAME",
+								Value: "dGVzdAo=", // base64 encoded 'test' string
+								Path:  sharedFilePath,
+							},
+						},
+					},
+				},
+				// check in a another step if file exists in shared folder
+				{
+					{
+						Name: "check-file-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: sharedFilePath,
+							},
+						},
+					},
+				},
+			}
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 

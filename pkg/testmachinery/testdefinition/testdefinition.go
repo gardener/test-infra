@@ -91,6 +91,10 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 					Name: "kubeconfigs",
 					Path: testmachinery.TM_KUBECONFIG_PATH,
 				},
+				{
+					Name: "sharedFolder",
+					Path: testmachinery.TM_SHARED_PATH,
+				},
 			},
 		},
 		Outputs: argov1.Outputs{
@@ -198,6 +202,11 @@ func (td *TestDefinition) AddSerialStdOutput() {
 		Path: testmachinery.TM_KUBECONFIG_PATH,
 	}
 	td.AddOutputArtifacts(kubeconfigArtifact)
+	sharedFolderArtifact := argov1.Artifact{
+		Name: "sharedFolder",
+		Path: testmachinery.TM_SHARED_PATH,
+	}
+	td.AddOutputArtifacts(sharedFolderArtifact)
 }
 
 // AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.
