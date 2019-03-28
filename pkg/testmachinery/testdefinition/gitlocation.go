@@ -109,6 +109,7 @@ func (l *GitLocation) getTestDefs() ([]*TestDefinition, error) {
 
 	for _, file := range directoryContent {
 		if *file.Type == githubContentTypeFile {
+			log.Debugf("Found file %s in Path: %s", *file.Name, *file.Path)
 			data, err := util.DownloadFile(l.getHTTPClient(), file.GetDownloadURL())
 			if err != nil {
 				return nil, err
@@ -118,8 +119,11 @@ func (l *GitLocation) getTestDefs() ([]*TestDefinition, error) {
 				if def.Kind == tmv1beta1.TestDefinitionName {
 					if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
 						definitions = append(definitions, New(&def, l, file.GetName()))
+						log.Debugf("Found Testdefinition %s", def.Metadata.Name)
 					}
 				}
+			} else {
+				log.Debugf("Ignoring file %s : %s", *file.Name, err.Error())
 			}
 		}
 	}
