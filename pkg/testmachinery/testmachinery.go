@@ -27,7 +27,7 @@ var tmConfig *TmConfiguration
 
 // Setup fetches all configuration values and creates the TmConfiguration.
 func Setup() {
-
+	TESTDEF_PATH = util.Getenv("TESTDEF_PATH", ".test-defs")
 	PREPARE_IMAGE = util.Getenv("PREPARE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:latest")
 	BASE_IMAGE = util.Getenv("BASE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.28.0")
 
