@@ -19,9 +19,9 @@ import (
 	"sync"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/util"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/util"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -60,13 +60,14 @@ func runChart(tmClient kubernetes.Interface, runs RunList, namespace, testrunNam
 			tr, err := runTestrun(tmClient, r.Testrun, namespace, testrunNamePrefix)
 			if err != nil {
 				log.Error(err.Error())
-				if tr == nil {
-					return
+				if tr != nil {
+					r.Testrun = tr
 				}
-				tr.Status.Phase = tmv1beta1.PhaseStatusFailed
+				r.Testrun.Status.Phase = tmv1beta1.PhaseStatusError
+			} else {
+				r.Testrun = tr
+				r.Metadata.Testrun.ID = tr.Name
 			}
-			r.Testrun = tr
-			r.Metadata.Testrun.ID = tr.Name
 			mutex.Lock()
 			finishedTestruns = append(finishedTestruns, r)
 			mutex.Unlock()
