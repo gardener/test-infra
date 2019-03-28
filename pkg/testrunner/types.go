@@ -92,6 +92,7 @@ type StepExportMetadata struct {
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
 	StartTime   *metav1.Time     `json:"startTime,omitempty"`
 	Duration    int64            `json:"duration,omitempty"`
+	PodName     string           `json:"podName"`
 }
 
 // TestrunSummary is the result of the overall testrun.

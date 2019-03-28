@@ -165,6 +165,7 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 					Phase:       step.Phase,
 					StartTime:   step.StartTime,
 					Duration:    step.Duration,
+					PodName:     step.PodName,
 				}
 				reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 				if err != nil {

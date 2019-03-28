@@ -148,6 +148,7 @@ type TestflowStepStatus struct {
 	CompletionTime    *metav1.Time                     `json:"completionTime,omitempty"`
 	Duration          int64                            `json:"duration,omitempty"`
 	ExportArtifactKey string                           `json:"exportArtifactKey"`
+	PodName           string                           `json:"podName"`
 }
 
 // TestflowStepStatusTestDefinition holds information about the used testdefinition and its location.
@@ -183,14 +184,14 @@ type TestrunKubeconfigs struct {
 
 // ConfigElement is a parameter of a certain type which is passed to TestDefinitions.
 type ConfigElement struct {
-	// Type of the config value. For now only environament varibales are supported.
+	// Type of the config value. For now only environment variables are supported.
 	Type ConfigType `json:"type"`
 
 	// Name of the environment variable. Must be a C_IDENTIFIER.
 	Name string `json:"name"`
 
-	// value of the environament variable.
-	// +opional
+	// value of the environment variable.
+	// +optional
 	Value string `json:"value"`
 
 	// Fetches the value from a secret or configmap on the testmachinery cluster.
@@ -212,7 +213,7 @@ type ConfigSource struct {
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
-// TestFlow is a 2 dimensional array of testflowsteps which define the execution order of TestDefinitions.
+// TestFlow is a 2 dimensional array of testflow-steps which define the execution order of TestDefinitions.
 type TestFlow [][]TestflowStep
 
 // TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep

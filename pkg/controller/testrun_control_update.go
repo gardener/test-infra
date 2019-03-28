@@ -113,12 +113,13 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 			}
 
 			if strings.Contains(argoNodeStatus.Message, ErrDeadlineExceeded) {
-				testDurationMs := time.Duration(*stepStatus.TestDefinition.ActiveDeadlineSeconds) * time.Second
-				completionTime := metav1.NewTime(stepStatus.StartTime.Add(testDurationMs))
+				testDuration := time.Duration(*stepStatus.TestDefinition.ActiveDeadlineSeconds) * time.Second
+				completionTime := metav1.NewTime(stepStatus.StartTime.Add(testDuration))
 
 				stepStatus.Phase = tmv1beta1.PhaseStatusTimeout
 				stepStatus.Duration = *stepStatus.TestDefinition.ActiveDeadlineSeconds
 				stepStatus.CompletionTime = &completionTime
+				stepStatus.PodName = argoNodeStatus.ID
 
 				completedSteps++
 				continue
@@ -126,6 +127,7 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 
 			stepStatus.Phase = argoNodeStatus.Phase
 			stepStatus.ExportArtifactKey = getNodeExportKey(argoNodeStatus.Outputs)
+			stepStatus.PodName = argoNodeStatus.ID
 
 			if !argoNodeStatus.StartedAt.IsZero() {
 				stepStatus.StartTime = &argoNodeStatus.StartedAt

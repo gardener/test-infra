@@ -54,7 +54,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of the config value. For now only environament varibales are supported.",
+							Description: "Type of the config value. For now only environment variables are supported.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -68,7 +68,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "value of the environament variable.",
+							Description: "value of the environment variable.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -87,7 +87,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"type", "name", "value"},
+				Required: []string{"type", "name"},
 			},
 		},
 		Dependencies: []string{
@@ -418,8 +418,14 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatus(ref common.Referen
 							Format: "",
 						},
 					},
+					"podName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"exportArtifactKey"},
+				Required: []string{"exportArtifactKey", "podName"},
 			},
 		},
 		Dependencies: []string{
