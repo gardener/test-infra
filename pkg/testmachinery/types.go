@@ -29,9 +29,6 @@ const (
 	// TM_REPO_PATH is the path where the repo/location is mounted to the tests.
 	TM_REPO_PATH = "/src"
 
-	// TESTDEF_PATH is the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm)
-	TESTDEF_PATH = ".test-defs"
-
 	// PHASE_RUNNING is the name of the running phase.
 	PHASE_RUNNING = "Running"
 
@@ -45,6 +42,9 @@ const (
 )
 
 var (
+	// TESTDEF_PATH is the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm)
+	TESTDEF_PATH string
+
 	// PREPARE_IMAGE is image of the prepare step.
 	PREPARE_IMAGE string
 
