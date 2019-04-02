@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
 	"os"
 
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
@@ -48,5 +49,6 @@ func init() {
 
 	runtemplate.AddCommand(rootCmd)
 	runtestrun.AddCommand(rootCmd)
+	collect.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 }
