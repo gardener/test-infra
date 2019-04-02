@@ -57,7 +57,6 @@
 [sig-cluster-lifecycle] [Feature:BootstrapTokens] should not delete the token secret when the secret is not expired
 [sig-cluster-lifecycle] Ports Security Check [Feature:KubeletSecurity] should not be able to proxy to cadvisor port 4194 using proxy subresource
 [sig-cluster-lifecycle] Ports Security Check [Feature:KubeletSecurity] should not be able to proxy to the readonly kubelet port 10255 using proxy subresource
-[sig-network] Networking should provide Internet connection for containers [Feature:Networking-IPv4]
 [sig-scheduling] ResourceQuota [Feature:PodPriority] should verify ResourceQuota's multiple priority class scope (quota set to pod count: 2) against 2 pods with same priority classes.
 [sig-scheduling] ResourceQuota [Feature:PodPriority] should verify ResourceQuota's priority class scope (cpu, memory quota set) against a pod with same priority class.
 [sig-scheduling] ResourceQuota [Feature:PodPriority] should verify ResourceQuota's priority class scope (quota set to pod count: 1) against 2 pods with different priority class.
