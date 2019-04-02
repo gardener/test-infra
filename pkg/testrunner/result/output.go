@@ -19,24 +19,24 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"path"
 	"strings"
-
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"text/template"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
+	"github.com/gardener/test-infra/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -51,7 +51,15 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 			u.Path = path.Join(u.Path, "workflows", namespace, tr.Status.Workflow)
 			metadata.ArgoUIExternalURL = u.String()
 		} else {
-			log.Debugf("Cannot parse Url %s: %s", config.ArgoUIEndpoint, err.Error())
+			log.Debugf("Cannot parse argo Url %s: %s", config.ArgoUIEndpoint, err.Error())
+		}
+	}
+
+	if config.KibanaEndpoint != "" && tr.Status.Workflow != "" {
+		if u, err := url.ParseRequestURI(config.KibanaEndpoint); err == nil {
+			metadata.KibanaExternalURL = buildKibanaWorkflowURL(u.String(), namespace, tr.Status.Workflow)
+		} else {
+			log.Debugf("Cannot parse kibana Url %s: %s", config.KibanaEndpoint, err.Error())
 		}
 	}
 
@@ -110,7 +118,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*e
 				StartTime: step.StartTime,
 				Duration:  step.Duration,
 			}
-			encSummary, err := json.Marshal(summary)
+			encSummary, err := util.MarshalNoHTMLEscape(summary)
 			if err != nil {
 				return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
 			}
@@ -130,7 +138,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*e
 		TestsRun:  testsRun,
 	}
 
-	encTrSummary, err := json.Marshal(trSummary)
+	encTrSummary, err := util.MarshalNoHTMLEscape(trSummary)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk: %s", err.Error())
 	}
@@ -267,4 +275,24 @@ func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string,
 		SecretKey:  string(minioSecrets.Data["secretKey"]),
 		BucketName: minioConfig.Data["objectstore.bucketName"],
 	}, nil
+}
+
+// buildKibanaWorkflowURL construct a valid kibana url from the given endpoint and workflow
+// typical endpoint: https://kibana.ingress.<my-cluster-domain>
+// typical kibana url: https://kibana.ingress.<my-cluster-domain>/app/kibana#/...
+func buildKibanaWorkflowURL(endpointPath string, namespace string, workflow string) string {
+	const indexPatternID = "d1134060-5189-11e9-b7dc-3fcc67c9fd25"
+	const pathTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-24h,mode:quick,to:now))&_a=(columns:!(namespace,pod,container,stream,log,severity,annotations.workflows_argoproj_io%2Fnode-name),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:labels.workflows_argoproj_io%2Fworkflow.keyword,negate:!f,params:(query:{{.WorkflowID}},type:phrase),type:phrase,value:{{.WorkflowID}}),query:(match:(labels.workflows_argoproj_io%2Fworkflow.keyword:(query:{{.WorkflowID}},type:phrase))))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
+	filters := kibanaFilter{indexPatternID, workflow, ""}
+	tmpl, err := template.New("kibanaLink").Parse(pathTemplate)
+	if err != nil {
+		log.Errorf("cannot create kibana template url from template '%s': %s", pathTemplate, err.Error())
+	}
+	builder := strings.Builder{}
+	builder.WriteString(endpointPath)
+	err = tmpl.Execute(&builder, filters)
+	if err != nil {
+		log.Errorf("cannot template kibana url with ns '%s' and workflow '%s': %s", namespace, workflow, err.Error())
+	}
+	return builder.String()
 }

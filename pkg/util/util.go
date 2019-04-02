@@ -15,6 +15,7 @@
 package util
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -168,4 +169,17 @@ func PrettyPrintStruct(obj interface{}) string {
 		return ""
 	}
 	return string(str)
+}
+
+// MarshalNoHTMLEscape is nearly same as json.Marshal but does NOT HTLM-escape <, > or &
+// However it does add a newline char at the end (as done by json.Encoder.Encode)
+func MarshalNoHTMLEscape(v interface{}) ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+	enc := json.NewEncoder(buffer)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }

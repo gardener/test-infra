@@ -42,6 +42,7 @@ var (
 	s3Endpoint              string
 	s3SSL                   bool
 	argouiEndpoint          string
+	kibanaEndpoint          string
 	concourseOnErrorDir     string
 
 	testrunChartPath         string
@@ -113,6 +114,7 @@ var runCmd = &cobra.Command{
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
 			ArgoUIEndpoint:      argouiEndpoint,
+			KibanaEndpoint:      kibanaEndpoint,
 			ConcourseOnErrorDir: concourseOnErrorDir,
 		}
 
@@ -184,6 +186,7 @@ func init() {
 	runCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&argouiEndpoint, "argoui-endpoint", "", "ArgoUI endpoint of the testmachinery cluster.")
+	runCmd.Flags().StringVar(&kibanaEndpoint, "kibana-logging-endpoint", "", "Kibana endpoint used for logging of the testmachinery cluster.")
 	runCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// parameter flags

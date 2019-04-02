@@ -56,7 +56,7 @@ const (
 	SummaryTypeTeststep SummaryType = "teststep"
 )
 
-// Metadata is the common metadata of all ouputs and summaries.
+// Metadata is the common metadata of all outputs and summaries.
 type Metadata struct {
 	// Landscape describes the current dev,staging,canary,office or live.
 	Landscape         string `json:"landscape"`
@@ -71,9 +71,12 @@ type Metadata struct {
 	Testrun TestrunMetadata `json:"tr"`
 
 	// Link to the workflow in the argo ui
-	// Only set if an ingress with the name "argo-ui" for the argoui is set.
 	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
-	ArgoUIExternalURL string `json:"argo_url"`
+	ArgoUIExternalURL string `json:"argo_url,omitempty"`
+
+	// Link to the logs in kibana
+	// Kibana URL is in format: https://kibana-endpoint.com/app/kibana#/discover/<very_complex_IDs_and_stuff>
+	KibanaExternalURL string `json:"kibana_url,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
