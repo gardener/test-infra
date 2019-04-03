@@ -1,4 +1,4 @@
-FROM golang:1.12.0 AS ginkgo
+FROM golang:1.12.1 AS ginkgo
 
 RUN go get -u github.com/onsi/ginkgo/ginkgo
 

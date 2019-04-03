@@ -1,16 +1,15 @@
-FROM golang:1.12-alpine3.9
+FROM golang:1-alpine3.9
 
 ENV HELM_TILLER_VERSION=v2.13.0
-ENV KUBECTL_VERSION=v1.13.4
+ENV KUBECTL_VERSION=v1.14.0
 
 RUN  \
-  echo '@edge http://nl.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories \
-  && apk update \
+  apk update \
   && apk add \
     apache2-utils \
     coreutils \
     bash \
-    binutils@edge \
+    binutils \
     build-base \
     curl \
     file \
