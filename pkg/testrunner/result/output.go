@@ -43,9 +43,6 @@ import (
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
 func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
-	if config.OutputFile == "" {
-		return nil
-	}
 
 	metadata.Testrun.StartTime = tr.Status.StartTime
 
@@ -73,14 +70,21 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 		return err
 	}
 
-	osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
-	if err != nil {
-		log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
-	} else {
-		exportedDocuments := getExportedDocuments(osConfig, tr.Status, metadata)
-		SummaryBuffer.Write(exportedDocuments)
+	if config.S3Endpoint != "" {
+		osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
+		if err != nil {
+			log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
+		} else {
+			exportedDocuments := getExportedDocuments(osConfig, tr.Status, metadata)
+			SummaryBuffer.Write(exportedDocuments)
+		}
 	}
 
+	// Print out the summary if no outputfile is specified
+	if config.OutputFile == "" {
+		log.Info(string(SummaryBuffer.Bytes()))
+		return nil
+	}
 	err = writeToFile(config.OutputFile, SummaryBuffer.Bytes())
 	if err != nil {
 		return err
@@ -128,7 +132,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*e
 
 	encTrSummary, err := json.Marshal(trSummary)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
+		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk: %s", err.Error())
 	}
 
 	return &elasticsearch.Bulk{

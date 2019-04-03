@@ -111,8 +111,12 @@ var runTestrunCmd = &cobra.Command{
 func init() {
 	// configuration flags
 	runTestrunCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
-	runTestrunCmd.MarkFlagRequired("tm-kubeconfig-path")
-	runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path")
+	if err := runTestrunCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
+	if err := runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runTestrunCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
@@ -120,8 +124,12 @@ func init() {
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")
-	runTestrunCmd.MarkFlagRequired("gardener-kubeconfig-path")
-	runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path")
+	if err := runTestrunCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
+	if err := runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runTestrunCmd.Flags().StringVar(&testrunNamePrefix, "name-prefix", "testrunner-", "Name prefix of the testrun")
 
 }

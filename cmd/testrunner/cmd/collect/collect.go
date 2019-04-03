@@ -113,8 +113,8 @@ func init() {
 	collectCmd.MarkFlagRequired("testruns-chart-path")
 
 	// parameter flags
-	collectCmd.Flags().StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
-	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
+	collectCmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "The filepath where the summary should be written to.")
+	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&argouiEndpoint, "argoui-endpoint", "", "ArgoUI endpoint of the testmachinery cluster.")
