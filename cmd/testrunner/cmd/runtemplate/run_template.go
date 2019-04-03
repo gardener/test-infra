@@ -165,10 +165,16 @@ var runCmd = &cobra.Command{
 func init() {
 	// configuration flags
 	runCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
-	runCmd.MarkFlagRequired("tm-kubeconfig-path")
-	runCmd.MarkFlagFilename("tm-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
+	if err := runCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
-	runCmd.MarkFlagRequired("testrun-prefix")
+	if err := runCmd.MarkFlagRequired("testrun-prefix"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
@@ -182,26 +188,48 @@ func init() {
 
 	// parameter flags
 	runCmd.Flags().StringVar(&testrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
-	runCmd.MarkFlagRequired("testruns-chart-path")
-	runCmd.MarkFlagFilename("testruns-chart-path")
+	if err := runCmd.MarkFlagRequired("testruns-chart-path"); err != nil {
+		log.Debug(err.Error())
+	}
+	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&gardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
-	runCmd.MarkFlagFilename("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
+	if err := runCmd.MarkFlagFilename("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().BoolVar(&allK8sVersions, "all-k8s-versions", false, "Run the testrun with all available versions specified by the cloudprovider.")
 	runCmd.Flags().StringVar(&projectName, "project-name", "", "Gardener project name of the shoot")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&shootName, "shoot-name", "", "Shoot name which is used to run tests.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&cloudprovider, "cloudprovider", "", "Cloudprovider where the shoot is created.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&cloudprofile, "cloudprofile", "", "Cloudprofile of shoot.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&secretBinding, "secret-binding", "", "SecretBinding that should be used to create the shoot.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&region, "region", "", "Region where the shoot is created.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
-	runCmd.MarkFlagRequired("gardener-kubeconfig-path")
+	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+		log.Debug(err.Error())
+	}
 
 	runCmd.Flags().StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
 	runCmd.Flags().StringVar(&machineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
