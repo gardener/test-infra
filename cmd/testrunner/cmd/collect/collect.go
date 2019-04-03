@@ -92,7 +92,7 @@ var collectCmd = &cobra.Command{
 
 		run := &testrunner.Run{
 			Testrun:  tr,
-			Metadata: &testrunner.Metadata{},
+			Metadata: testrunner.MetadataFromTestrun(tr),
 		}
 
 		_, err = result.Collect(collectConfig, tmClient, namespace, []*testrunner.Run{run})
