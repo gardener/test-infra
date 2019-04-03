@@ -27,6 +27,7 @@ import (
 )
 
 // Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
+// Adds the compont descriptor to metadata.
 func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 	var componentDescriptor componentdescriptor.ComponentList
 
@@ -66,6 +67,9 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
 		addBOMLocationsToTestrun(&tr, componentDescriptor)
+
+		// Add runtime annotations to the testrun
+		addAnnotationsToTestrun(&tr, metadata.Annotations())
 
 		testruns = append(testruns, &testrunner.Run{
 			Testrun:  &tr,

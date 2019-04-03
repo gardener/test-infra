@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils"
 	"sort"
 
 	"github.com/Masterminds/semver"
@@ -105,4 +106,11 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, componenets []*componentdes
 			Revision: component.Version,
 		})
 	}
+}
+
+func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
+	if tr == nil {
+		return
+	}
+	tr.Annotations = utils.MergeStringMaps(tr.Annotations, annotations)
 }
