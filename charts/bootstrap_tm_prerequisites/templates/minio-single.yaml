@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+{{ if not .Values.objectStorage.distributed.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -31,19 +31,21 @@ spec:
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
   #storageClassName:
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   # This name uniquely identifies the Deployment
   name: minio-deployment
   namespace: {{.Release.Namespace}}
 spec:
+  selector:
+    matchLabels:
+      app: minio
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        # Label is used as selector in the service.
         app: minio
     spec:
       # Refer to the PVC created earlier
@@ -61,9 +63,15 @@ spec:
         env:
         # Minio access key and secret key
         - name: MINIO_ACCESS_KEY
-          value: "{{.Values.objectStorage.secret.accessKey}}"
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.objectStorage.secret.name}}
+              key: accessKey
         - name: MINIO_SECRET_KEY
-          value: "{{.Values.objectStorage.secret.secretKey}}"
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.objectStorage.secret.name}}
+              key: secretKey
         ports:
         - containerPort: 9000
         resources:
@@ -83,26 +91,4 @@ spec:
         volumeMounts:
         - name: storage # must match the volume name, above
           mountPath: "/storage"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: "{{.Values.objectStorage.serviceEndpoint}}"
-  namespace: {{.Release.Namespace}}
-spec:
-  type: {{.Values.objectStorage.serviceType}}
-  ports:
-    - port: {{.Values.objectStorage.port}}
-      targetPort: 9000
-      protocol: TCP
-  selector:
-    app: minio
----
-apiVersion: v1
-kind: Secret
-metadata:
-    name: {{.Values.objectStorage.secret.name}}
-    namespace: {{.Release.Namespace}}
-data:
-    accessKey: {{.Values.objectStorage.secret.accessKey | b64enc}}
-    secretKey: {{.Values.objectStorage.secret.secretKey | b64enc}}
+{{ end }}
