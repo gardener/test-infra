@@ -25,8 +25,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Collect collects results of all testruns and write them to a file.
-// It returns wheter there are failed testruns or not.
+// Collect collects results of all testruns and writes them to a file.
+// It returns whether there are failed testruns or not.
 func Collect(config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
 	testrunsFailed := false
 	for _, run := range runs {

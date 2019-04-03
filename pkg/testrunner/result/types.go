@@ -31,6 +31,9 @@ type Config struct {
 	// Endpoint of the argo ui of the testmachinery.
 	ArgoUIEndpoint string
 
+	// Endpoint of kibana for the logs of the testmachinery.
+	KibanaEndpoint string
+
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
 }
@@ -44,4 +47,10 @@ type email struct {
 	Subject    string   `yaml:"subject"`
 	Recipients []string `yaml:"recipients"`
 	MailBody   string   `yaml:"mail_body"`
+}
+
+type kibanaFilter struct {
+	IndexPatternID string
+	WorkflowID     string
+	PodID          string
 }

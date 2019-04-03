@@ -90,6 +90,7 @@ var runTestrunCmd = &cobra.Command{
 		run := []*testrunner.Run{
 			{
 				Testrun: &tr,
+				Metadata: &testrunner.Metadata{},
 			},
 		}
 

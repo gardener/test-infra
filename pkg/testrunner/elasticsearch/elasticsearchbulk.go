@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,7 +28,7 @@ var newLine = []byte("\n")
 
 // Marshal creates a elastic search bulk json of its metadata and sources.
 func (b *Bulk) Marshal() (*bytes.Buffer, error) {
-	meta, err := json.Marshal(b.Metadata)
+	meta, err := util.MarshalNoHTMLEscape(b.Metadata)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
 	}
@@ -36,9 +37,7 @@ func (b *Bulk) Marshal() (*bytes.Buffer, error) {
 
 	for _, source := range b.Sources {
 		buf.Write(meta)
-		buf.Write(newLine)
 		buf.Write(source)
-		buf.Write(newLine)
 	}
 
 	return buf, nil
@@ -89,7 +88,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
 		if err != nil {
-			log.Errorf("Cannot unmashal document %s", err.Error())
+			log.Errorf("Cannot unmarshal document %s", err.Error())
 			continue
 		}
 
@@ -100,9 +99,9 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 		}
 
 		jsonBody["tm"] = stepMeta
-		patchedDoc, err := json.Marshal(jsonBody)
+		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
 		if err != nil {
-			log.Errorf("Cannot mashal artifact %s", err.Error())
+			log.Errorf("Cannot marshal artifact %s", err.Error())
 			continue
 		}
 
@@ -121,7 +120,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 
 		buf, err := bulk.Marshal()
 		if err != nil {
-			log.Debugf("Cannot unmashal %s", err.Error())
+			log.Debugf("Cannot unmarshal %s", err.Error())
 			meta = nil
 			continue
 		}
