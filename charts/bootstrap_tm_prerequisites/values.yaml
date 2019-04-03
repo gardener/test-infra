@@ -20,15 +20,21 @@ argoui:
   serviceType: ClusterIP
 
 objectStorage:
+  distributed:
+    enabled: false # true will deploys a statefulset instead of a deployment
+    replicas: 4 # have to be even and min 4 -> https://docs.minio.io/docs/minio-erasure-code-quickstart-guide
   bucketName: "tm-bucket"
   serviceEndpoint: "minio-service"
   serviceType: ClusterIP
   port: 9000
-  storage: 10Gi
+  storage: 10Gi # when distributed there will be a volume for every replica
   secret:
     name: "minio-secret"
     accessKey: "hvLsnYycFGw"
     secretKey: "lzzlRK1Q7LE"
+  ingress:
+    enabled: false
+    domain: ""
 
 secrets:
   github: "" # base64 encoded secrets
