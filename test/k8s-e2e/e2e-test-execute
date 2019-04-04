@@ -531,8 +531,8 @@ function pushResultsToGCS() {
 	export PATH=$PWD/google-cloud-sdk/bin:$PATH
 
 	# Get credentials from secret server
-	credentials_type="$(/cc/utils/cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
-	/cc/utils/cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
+	credentials_type="$(cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
+	cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
 
 	# Get upload tool
 	git clone --quiet https://github.com/kubernetes/test-infra
