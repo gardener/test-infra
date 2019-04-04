@@ -53,8 +53,7 @@ objectStorage:
     name: "minio-secret"
 
 cleanup:
-  enabled: true
-  days: 7
+  enabled: false
 
 local:
   enabled: false

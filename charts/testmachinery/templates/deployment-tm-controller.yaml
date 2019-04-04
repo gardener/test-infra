@@ -44,6 +44,8 @@ spec:
         env:
         - name: TM_NAMESPACE
           value: {{ .Release.Namespace }}
+        - name: CLEAN_WORKFLOW_PODS
+          value: "{{ .Values.cleanup.enabled }}"
         - name: WEBHOOK_HTTP_BINDADDRESS
           value: "0.0.0.0"
         - name: WEBHOOK_HTTPS_BINDADDRESS
