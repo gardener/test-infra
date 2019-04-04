@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 {{ if .Values.objectStorage.distributed.enabled }}
+{{- $namespace := .Release.Namespace -}}
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: StatefulSet
 metadata:
@@ -47,7 +48,7 @@ spec:
         args:
           - server
           {{- range $i, $v := until ( int .Values.objectStorage.distributed.replicas ) }}
-          - http://minio-{{$i}}.minio.{{.Release.Namespace}}.svc.cluster.local/data
+          - http://minio-{{$i}}.minio.{{$namespace}}.svc.cluster.local/data
           {{- end }}
         ports:
         - containerPort: 9000
