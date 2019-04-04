@@ -27,7 +27,7 @@ import (
 )
 
 // Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
-// Adds the compont descriptor to metadata.
+// Adds the component descriptor to metadata.
 func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 	var componentDescriptor componentdescriptor.ComponentList
 
