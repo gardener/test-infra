@@ -74,7 +74,7 @@ prerequisites_chart="$(helm template --namespace ${NAMESPACE} -f $pull_secrets_v
   --set "secrets.github=${github_config},objectStorage.storage=100Gi" \
   $SOURCE_PATH/charts/bootstrap_tm_prerequisites)"
 controller_chart="$(helm template --namespace ${NAMESPACE} \
-  --set "controller.tag=${VERSION},controller.tls.caBundle=${ca_bundle},controller.tls.crt=${crt},controller.tls.key=${key}" $SOURCE_PATH/charts/testmachinery)"
+  --set "controller.tag=${VERSION},controller.tls.caBundle=${ca_bundle},controller.tls.crt=${crt},controller.tls.key=${key},cleanup.enabled=true" $SOURCE_PATH/charts/testmachinery)"
 
 ################################
 # clean previous installation  #
