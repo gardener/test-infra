@@ -74,7 +74,6 @@
 [sig-storage] CSI Volumes CSI attach test using HostPath driver [Feature:CSIDriverRegistry] volume with no CSI driver needs VolumeAttachment
 [sig-storage] Downward API volume should provide podname as non-root with fsgroup [NodeFeature:FSGroup]
 [sig-storage] Downward API volume should provide podname as non-root with fsgroup and defaultMode [NodeFeature:FSGroup]
-[sig-storage] Dynamic Provisioning [k8s.io] GlusterDynamicProvisioner should create and delete persistent volumes [fast]
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] files with FSGroup ownership should support (root,0644,tmpfs)
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] new files should be created with FSGroup ownership when container is non-root
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] new files should be created with FSGroup ownership when container is root

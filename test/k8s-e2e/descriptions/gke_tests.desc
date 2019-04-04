@@ -217,3 +217,4 @@
 [sig-storage] Detaching volumes should not work when mount is in progress
 [sig-storage] Volume FStype [Feature:vsphere] verify fstype - ext3 formatted volume
 [sig-storage] Volume limits should verify that all nodes have volume limits
+[sig-storage] Dynamic Provisioning [k8s.io] GlusterDynamicProvisioner should create and delete persistent volumes [fast]
