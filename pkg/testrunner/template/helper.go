@@ -99,13 +99,16 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, componenets []*componentdes
 	if tr == nil || componenets == nil {
 		return
 	}
+
+	bomLocations := make([]tmv1beta1.TestLocation, 0)
 	for _, component := range componenets {
-		tr.Spec.TestLocations = append(tr.Spec.TestLocations, tmv1beta1.TestLocation{
+		bomLocations = append(bomLocations, tmv1beta1.TestLocation{
 			Type:     tmv1beta1.LocationTypeGit,
 			Repo:     fmt.Sprintf("https://%s", component.Name),
 			Revision: component.Version,
 		})
 	}
+	tr.Spec.TestLocations = append(bomLocations, tr.Spec.TestLocations...)
 }
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
