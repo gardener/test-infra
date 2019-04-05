@@ -17,8 +17,11 @@ package elasticsearch
 // Bulk is the internal representation of a elastic search bulk request.
 type Bulk struct {
 	Metadata interface{} `json:",inline"`
-	Sources  [][]byte    `json:",inline"`
+	Source   []byte      `json:",inline"`
 }
+
+// BulkList is a list of bulks
+type BulkList []*Bulk
 
 // ESMetadata is the metadata of a bulk document.
 type ESMetadata struct {

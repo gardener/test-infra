@@ -24,27 +24,61 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var newLine = []byte("\n")
+//var newLine = []byte("\n")
 
-// Marshal creates a elastic search bulk json of its metadata and sources.
-func (b *Bulk) Marshal() (*bytes.Buffer, error) {
+// 50 mb
+const maxBufferSize = 50 * 1024 * 1024
+
+// Marshal creates a elastic search bulk json of its metadata and sources; and returns a list of bulk files with a max size of 4mb
+func (b *Bulk) Marshal() ([]byte, error) {
 	meta, err := util.MarshalNoHTMLEscape(b.Metadata)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
 	}
 
 	buf := bytes.NewBuffer([]byte{})
+	buf.Write(meta)
+	buf.Write(b.Source)
 
-	for _, source := range b.Sources {
-		buf.Write(meta)
-		buf.Write(source)
+	return buf.Bytes(), nil
+}
+
+// NewList creates an list of Bulks with the same metadata
+func NewList(meta interface{}, sources [][]byte) BulkList {
+	bulks := make([]*Bulk, 0)
+	for _, source := range sources {
+		bulks = append(bulks, &Bulk{
+			Metadata: meta,
+			Source:   source,
+		})
 	}
 
-	return buf, nil
+	return bulks
+}
+
+func (l BulkList) Marshal() ([][]byte, error) {
+	content := [][]byte{}
+
+	buffer := bytes.NewBuffer([]byte{})
+	for _, bulk := range l {
+		data, err := bulk.Marshal()
+		if err != nil {
+			return nil, err
+		}
+
+		if (buffer.Len() + len(data)) >= maxBufferSize {
+			content = append(content, buffer.Bytes())
+			buffer = bytes.NewBuffer([]byte{})
+		}
+		buffer.Write(data)
+	}
+	content = append(content, buffer.Bytes())
+
+	return content, nil
 }
 
 // ParseExportedFiles reads jsondocuments line by line from an expected file where multiple jsons are separated by newline.
-func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) []byte {
+func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) BulkList {
 
 	// first try to parse document as normal json.
 	var jsonBody map[string]interface{}
@@ -53,11 +87,11 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) []byte {
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := json.Marshal(jsonBody)
 		if err != nil {
-			log.Warnf("Cannot mashal exported json with metadata from %s", name)
-			return []byte{}
+			log.Warnf("Cannot marshal exported json with metadata from %s", name)
+			return make(BulkList, 0)
 		}
-		bulk := Bulk{
-			Sources: [][]byte{patchedDoc},
+		bulk := &Bulk{
+			Source: patchedDoc,
 			Metadata: ESMetadata{
 				Index: ESIndex{
 					Index: name,
@@ -65,21 +99,15 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) []byte {
 				},
 			},
 		}
-
-		docBuf, err := bulk.Marshal()
-		if err != nil {
-			log.Warnf("Cannot use exported json from %s", name)
-			return []byte{}
-		}
-		return docBuf.Bytes()
+		return []*Bulk{bulk}
 	}
 
 	// if the document is not in json format try to parse it as bulk format
 	return parseExportedBulkFormat(name, stepMeta, docs)
 }
 
-func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []byte {
-	bulks := bytes.NewBuffer([]byte{})
+func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) BulkList {
+	bulks := make(BulkList, 0)
 	var meta map[string]interface{}
 
 	scanner := bufio.NewScanner(bytes.NewReader(docs))
@@ -105,8 +133,8 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 			continue
 		}
 
-		bulk := Bulk{
-			Sources:  [][]byte{patchedDoc},
+		bulk := &Bulk{
+			Source:   patchedDoc,
 			Metadata: meta,
 		}
 		if meta == nil {
@@ -118,18 +146,12 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) []b
 			}
 		}
 
-		buf, err := bulk.Marshal()
-		if err != nil {
-			log.Debugf("Cannot unmarshal %s", err.Error())
-			meta = nil
-			continue
-		}
-		bulks.Write(buf.Bytes())
+		bulks = append(bulks, bulk)
 		meta = nil
 	}
 	if err := scanner.Err(); err != nil {
 		log.Warnf("Error reading json: %s", err.Error())
 	}
 
-	return bulks.Bytes()
+	return bulks
 }

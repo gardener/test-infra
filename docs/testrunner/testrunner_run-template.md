@@ -27,10 +27,11 @@ testrunner run-template [flags]
   -h, --help                               help for run-template
       --interval int                       Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
       --k8s-version string                 Kubernetes version of the shoot.
+      --kibana-logging-endpoint string     Kibana endpoint used for logging of the testmachinery cluster.
       --landscape string                   Current gardener landscape.
       --machinetype string                 Machinetype of the shoot's worker nodes.
   -n, --namespace string                   Namesapce where the testrun should be deployed. (default "default")
-      --output-file-path string            The filepath where the summary should be written to. (default "./testout")
+      --output-dir-path string             The filepath where the summary should be written to. (default "./testout")
       --project-name string                Gardener project name of the shoot
       --region string                      Region where the shoot is created.
       --s3-endpoint string                 S3 endpoint of the testmachinery cluster.

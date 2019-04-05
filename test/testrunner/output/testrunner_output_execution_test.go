@@ -18,7 +18,9 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -50,13 +52,13 @@ func TestValidationWebhook(t *testing.T) {
 var _ = Describe("Testrunner execution tests", func() {
 
 	var (
-		commitSha      string
-		namespace      string
-		tmKubeconfig   string
-		tmClient       kubernetes.Interface
-		outputFilePath = "./out-"
-		testrunConfig  result.Config
-		s3Endpoint     string
+		commitSha     string
+		namespace     string
+		tmKubeconfig  string
+		tmClient      kubernetes.Interface
+		outputDirPath = "./out-"
+		testrunConfig result.Config
+		s3Endpoint    string
 	)
 
 	BeforeSuite(func() {
@@ -77,7 +79,7 @@ var _ = Describe("Testrunner execution tests", func() {
 
 	BeforeEach(func() {
 		testrunConfig = result.Config{
-			OutputFile:          ".",
+			OutputDir:           ".",
 			ESConfigName:        "es-config-name",
 			S3Endpoint:          s3Endpoint,
 			ConcourseOnErrorDir: ".",
@@ -87,7 +89,7 @@ var _ = Describe("Testrunner execution tests", func() {
 	It("should output a summary of the testrun as elasticsearch bulk request", func() {
 		ctx := context.Background()
 		defer ctx.Done()
-		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
+		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
 		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		defer utils.DeleteTestrun(tmClient, tr)
@@ -96,9 +98,17 @@ var _ = Describe("Testrunner execution tests", func() {
 		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
-		file, err := os.Open(testrunConfig.OutputFile)
+		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(len(files)).To(Equal(1), "Expected 1 file output")
+
+		file, err := os.Open(filepath.Join(testrunConfig.OutputDir, files[0].Name()))
 		Expect(err).ToNot(HaveOccurred())
 		defer file.Close()
+		defer func() {
+			err := os.RemoveAll(testrunConfig.OutputDir)
+			Expect(err).ToNot(HaveOccurred())
+		}()
 
 		scanner := bufio.NewScanner(file)
 		line := 1
@@ -126,7 +136,7 @@ var _ = Describe("Testrunner execution tests", func() {
 	It("should add exported artifacts to the elasticsearch bulk output", func() {
 		ctx := context.Background()
 		defer ctx.Done()
-		testrunConfig.OutputFile = outputFilePath + util.RandomString(3)
+		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
 		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		defer utils.DeleteTestrun(tmClient, tr)
@@ -135,9 +145,17 @@ var _ = Describe("Testrunner execution tests", func() {
 		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
-		file, err := os.Open(testrunConfig.OutputFile)
+		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(len(files)).To(Equal(1), "Expected 1 file output")
+
+		file, err := os.Open(filepath.Join(testrunConfig.OutputDir, files[0].Name()))
 		Expect(err).ToNot(HaveOccurred())
 		defer file.Close()
+		defer func() {
+			err := os.RemoveAll(testrunConfig.OutputDir)
+			Expect(err).ToNot(HaveOccurred())
+		}()
 
 		documents := []map[string]interface{}{}
 		scanner := bufio.NewScanner(file)

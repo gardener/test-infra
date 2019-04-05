@@ -67,7 +67,7 @@ var collectCmd = &cobra.Command{
 		log.Info("Start testmachinery testrunner")
 
 		collectConfig := &result.Config{
-			OutputFile:          outputFilePath,
+			OutputDir:           outputFilePath,
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
