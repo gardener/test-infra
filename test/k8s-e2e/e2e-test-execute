@@ -514,7 +514,7 @@ function gather_test_summary_data_for_elastic_search() {
 
 function pushResultsToGCS() {
 	# Push result to GCS (Google Cloud Storage)
-	local google_bucket_secrets_file="gardener-logs-conformance-tests.json"
+	local google_bucket_secrets_file="/tmp/secrets/gardener-logs-conformance-tests.json"
 
 	# Download Google SDK
 	google_sdk="google-cloud-sdk-231.0.0-linux-x86_64.tar.gz"
@@ -531,8 +531,8 @@ function pushResultsToGCS() {
 	export PATH=$PWD/google-cloud-sdk/bin:$PATH
 
 	# Get credentials from secret server
-	credentials_type="$(cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
-	cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
+#	credentials_type="$(cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key google_storage.credentials)"
+#	cli.py config attribute --cfg-type gcloud_account --cfg-name e2e_tests --key credentials.$credentials_type.auth_secret > "$google_bucket_secrets_file"
 
 	# Get upload tool
 	git clone --quiet https://github.com/kubernetes/test-infra

@@ -25,9 +25,16 @@ spec:
   activeDeadlineSeconds: 10800
 
   config:
-    - type: env
-      name: PUBLISH_TO_TESTGRID
-      value: "true"
+  - type: env
+    name: PUBLISH_TO_TESTGRID
+    value: "true"
+  - type: env
+    name: GCLOUD_ACCOUNT_SECRET
+    path: /tmp/secrets/gardener-logs-conformance-tests.json
+    valueFrom:
+      secretKeyRef:
+        name: testgrid-gcs-secret
+        key: gcloud.json
 
   command: [bash, -c]
   args: ["TESTDESCRIPTION_NAME=conformance.desc ./test/k8s-e2e/e2e-test-execute"]
