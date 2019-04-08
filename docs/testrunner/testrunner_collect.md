@@ -19,7 +19,7 @@ testrunner collect [flags]
   -h, --help                             help for collect
       --kibana-logging-endpoint string   Kibana endpoint used for logging of the testmachinery cluster.
   -n, --namespace string                 Namespace where the testrun should be deployed. (default "default")
-  -o, --output-file-path string          The filepath where the summary should be written to.
+      --output-dir-path string           The filepath where the summary should be written to.
       --s3-endpoint string               S3 endpoint of the testmachinery cluster.
       --s3-ssl                           S3 has SSL enabled.
       --tm-kubeconfig-path string        Path to the testmachinery cluster kubeconfig

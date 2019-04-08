@@ -51,15 +51,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 		}
 	}
 
-	if config.KibanaEndpoint != "" && tr.Status.Workflow != "" {
-		if u, err := url.ParseRequestURI(config.KibanaEndpoint); err == nil {
-			metadata.KibanaExternalURL = buildKibanaWorkflowURL(u.String(), namespace, tr.Status.Workflow)
-		} else {
-			log.Debugf("Cannot parse kibana Url %s: %s", config.KibanaEndpoint, err.Error())
-		}
-	}
-
-	trSummary, err := getTestrunSummary(tr, metadata)
+	trSummary, err := getTestrunSummary(tr, metadata, config)
 	if err != nil {
 		return err
 	}
@@ -89,8 +81,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 
 	// Print out the summary if no outputfile is specified
 	if config.OutputDir == "" {
-		// TODO: change to more readable output
-		log.Info(summary)
+		log.Infof("Collected summary:\n%s", summary)
 		return nil
 	}
 	err = writeBulks(config.OutputDir, summary)
@@ -102,8 +93,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	return nil
 }
 
-func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) ([][]byte, error) {
-
+func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config) ([][]byte, error) {
 	status := tr.Status
 	testsRun := 0
 	summaries := [][]byte{}
@@ -111,13 +101,15 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) ([]
 	for _, steps := range status.Steps {
 		for _, step := range steps {
 			summary := testrunner.StepSummary{
-				Metadata:  metadata,
-				Type:      testrunner.SummaryTypeTeststep,
-				Name:      step.TestDefinition.Name,
-				Phase:     step.Phase,
-				StartTime: step.StartTime,
-				Duration:  step.Duration,
+				Metadata:          metadata,
+				Type:              testrunner.SummaryTypeTeststep,
+				Name:              step.TestDefinition.Name,
+				Phase:             step.Phase,
+				StartTime:         step.StartTime,
+				Duration:          step.Duration,
+				KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, step.TestDefinition.Name),
 			}
+
 			encSummary, err := util.MarshalNoHTMLEscape(summary)
 			if err != nil {
 				return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
@@ -130,12 +122,13 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) ([]
 	}
 
 	trSummary := testrunner.TestrunSummary{
-		Metadata:  metadata,
-		Type:      testrunner.SummaryTypeTestrun,
-		Phase:     status.Phase,
-		StartTime: status.StartTime,
-		Duration:  status.Duration,
-		TestsRun:  testsRun,
+		Metadata:          metadata,
+		Type:              testrunner.SummaryTypeTestrun,
+		Phase:             status.Phase,
+		StartTime:         status.StartTime,
+		Duration:          status.Duration,
+		TestsRun:          testsRun,
+		KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, ""),
 	}
 
 	encTrSummary, err := util.MarshalNoHTMLEscape(trSummary)
@@ -240,22 +233,35 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 	return files, nil
 }
 
-// buildKibanaWorkflowURL construct a valid kibana url from the given endpoint and workflow
+// buildKibanaLogURL construct a valid kibana url with predefined filters for the given endpoint, workflow and an optional testStepName
 // typical endpoint: https://kibana.ingress.<my-cluster-domain>
 // typical kibana url: https://kibana.ingress.<my-cluster-domain>/app/kibana#/...
-func buildKibanaWorkflowURL(endpointPath string, namespace string, workflow string) string {
-	const indexPatternID = "d1134060-5189-11e9-b7dc-3fcc67c9fd25"
-	const pathTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-7d,mode:quick,to:now))&_a=(columns:!(namespace,pod,container,stream,log,severity,annotations.workflows_argoproj_io%2Fnode-name),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:container,negate:!f,params:(query:main,type:phrase),type:phrase,value:main),query:(match:(container:(query:main,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:labels.workflows_argoproj_io%2Fworkflow.keyword,negate:!f,params:(query:{{.WorkflowID}},type:phrase),type:phrase,value:{{.WorkflowID}}),query:(match:(labels.workflows_argoproj_io%2Fworkflow.keyword:(query:{{.WorkflowID}},type:phrase))))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
-	filters := kibanaFilter{indexPatternID, workflow, ""}
-	tmpl, err := template.New("kibanaLink").Parse(pathTemplate)
-	if err != nil {
-		log.Errorf("cannot create kibana template url from template '%s': %s", pathTemplate, err.Error())
+func buildKibanaLogURL(endpoint, workflow, testStepName string) string {
+	if endpoint == "" || workflow == "" {
+		return ""
 	}
+
+	const indexPatternID = "d1134060-5189-11e9-b7dc-3fcc67c9fd25"
+	const workflowTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-7d,mode:quick,to:now))&_a=(columns:!(workflow,testdef,stream,log,severity,cont),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:namespace.keyword,negate:!f,params:(query:default,type:phrase),type:phrase,value:default),query:(match:(namespace.keyword:(query:default,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:container.keyword,negate:!f,params:(query:main,type:phrase),type:phrase,value:main),query:(match:(container.keyword:(query:main,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:workflow,index:{{.IndexPatternID}},key:workflow,negate:!f,params:(value:{{.WorkflowID}}),type:phrase,value:{{.WorkflowID}}),script:(script:(lang:painless,params:(value:{{.WorkflowID}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'labels.workflows_argoproj_io%2Fworkflow.keyword!'].value%20},%20params.value);')))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
+	const testStepTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-7d,mode:quick,to:now))&_a=(columns:!(workflow,testdef,stream,log,severity,cont),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:namespace.keyword,negate:!f,params:(query:default,type:phrase),type:phrase,value:default),query:(match:(namespace.keyword:(query:default,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:container.keyword,negate:!f,params:(query:main,type:phrase),type:phrase,value:main),query:(match:(container.keyword:(query:main,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:workflow,index:{{.IndexPatternID}},key:workflow,negate:!f,params:(value:{{.WorkflowID}}),type:phrase,value:{{.WorkflowID}}),script:(script:(lang:painless,params:(value:{{.WorkflowID}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'labels.workflows_argoproj_io%2Fworkflow.keyword!'].value%20},%20params.value);'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:testdef,index:{{.IndexPatternID}},key:testdef,negate:!f,params:(value:{{.TestDefName}}),type:phrase,value:{{.TestDefName}}),script:(script:(lang:painless,params:(value:{{.TestDefName}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'annotations.testmachinery_sapcloud_io%2FTestDefinition.keyword!'].value%20},%20params.value);')))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
+
+	var tmpl *template.Template
+	var err error
+	if testStepName == "" {
+		tmpl, err = template.New("kibanaLink").Parse(workflowTemplate)
+	} else {
+		tmpl, err = template.New("kibanaLink").Parse(testStepTemplate)
+	}
+	if err != nil {
+		log.Errorf("cannot create kibana template url: %s", err.Error())
+	}
+
 	builder := strings.Builder{}
-	builder.WriteString(endpointPath)
+	builder.WriteString(endpoint)
+	filters := kibanaFilter{indexPatternID, workflow, testStepName}
 	err = tmpl.Execute(&builder, filters)
 	if err != nil {
-		log.Errorf("cannot template kibana url with ns '%s' and workflow '%s': %s", namespace, workflow, err.Error())
+		log.Errorf("cannot template kibana url for workflow '%s' and testStepName '%s': %s", workflow, testStepName, err.Error())
 	}
 	return builder.String()
 }

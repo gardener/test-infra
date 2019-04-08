@@ -38,7 +38,7 @@ var (
 
 	testrunName string
 
-	outputFilePath          string
+	outputDirPath           string
 	elasticSearchConfigName string
 	s3Endpoint              string
 	s3SSL                   bool
@@ -67,7 +67,7 @@ var collectCmd = &cobra.Command{
 		log.Info("Start testmachinery testrunner")
 
 		collectConfig := &result.Config{
-			OutputDir:           outputFilePath,
+			OutputDir:           outputDirPath,
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
@@ -115,7 +115,7 @@ func init() {
 	collectCmd.MarkFlagRequired("testruns-chart-path")
 
 	// parameter flags
-	collectCmd.Flags().StringVarP(&outputFilePath, "output-file-path", "o", "", "The filepath where the summary should be written to.")
+	collectCmd.Flags().StringVar(&outputDirPath, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
