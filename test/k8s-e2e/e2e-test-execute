@@ -548,7 +548,7 @@ function pushResultsToGCS() {
 	fi
 
 	echo -e "$(info INFO:) Uploading test result files to google cloud storage"
-	upload_res="$(python2 ./test-infra/testgrid/conformance/upload_e2e.py --junit="$log_dir/junit_01.xml" --log="$e2e_log" --bucket=gs://k8s-conformance-gardener/ci-gardener-e2e-conformance-"${CLOUDPROVIDER_PUBLIC}"-v"${K8S_VERSION%*\.[0-9]*}" --metadata='{"commit-id":"'$GARDENER_COMMIT_ID'","shoot-k8s-release":"'$K8S_VERSION'"}' --key-file=$google_bucket_secrets_file)"
+	upload_res="$(python2 ./test-infra/testgrid/conformance/upload_e2e.py --junit="$log_dir/junit_01.xml" --log="$e2e_log" --bucket=gs://k8s-conformance-gardener/ci-gardener-e2e-conformance-"${CLOUDPROVIDER_PUBLIC}"-v"${K8S_VERSION%*\.[0-9]*}" --metadata='{"commit-id":"93b715ee5b3e6eca8c2b46a7431b4cb3bbc75980","shoot-k8s-release":"'$K8S_VERSION'"}' --key-file=$google_bucket_secrets_file)"
 
 	if [ $? -ne 0 ] ; then
 		echo "ERROR: Upload of test results failed with the following  message:"
