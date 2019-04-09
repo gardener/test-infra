@@ -19,6 +19,7 @@ RUN  \
     libc-dev \
     libffi-dev \
     openssh \
+    openssl \
     openssl-dev \
     python2 \
     python3 \
