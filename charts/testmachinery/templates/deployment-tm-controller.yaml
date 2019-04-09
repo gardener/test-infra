@@ -62,6 +62,10 @@ spec:
           value: "{{ .Values.controller.steps.baseImage }}"
         - name: PREPARE_IMAGE
           value: "{{ .Values.controller.steps.prepareImage }}"
+        {{- if .Values.controller.testDefPath }}
+        - name: TESTDEF_PATH
+          value: "{{ .Values.controller.testDefPath }}"
+        {{- end }}
         - name: S3_ENDPOINT
           valueFrom:
             configMapKeyRef:
