@@ -28,7 +28,7 @@ spec:
   - type: env
     name: PUBLISH_TO_TESTGRID
     value: "true"
-  - type: env
+  - type: file
     name: GCLOUD_ACCOUNT_SECRET
     path: /tmp/secrets/gardener-logs-conformance-tests.json
     valueFrom:
