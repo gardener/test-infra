@@ -20,6 +20,7 @@ controller:
   image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
   tag: latest
   imagePullSecretName: ""
+  testDefPath: ""
 
   steps:
     baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0
