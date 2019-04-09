@@ -37,7 +37,7 @@ var (
 	timeout          int64
 	interval         int64
 
-	outputFilePath          string
+	outputDirPath           string
 	elasticSearchConfigName string
 	s3Endpoint              string
 	s3SSL                   bool
@@ -109,7 +109,7 @@ var runCmd = &cobra.Command{
 		}
 
 		rsConfig := &result.Config{
-			OutputFile:          outputFilePath,
+			OutputDir:           outputDirPath,
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
@@ -181,7 +181,7 @@ func init() {
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
 
-	runCmd.Flags().StringVar(&outputFilePath, "output-file-path", "./testout", "The filepath where the summary should be written to.")
+	runCmd.Flags().StringVar(&outputDirPath, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	runCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")

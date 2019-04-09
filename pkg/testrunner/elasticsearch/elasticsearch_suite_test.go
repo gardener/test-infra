@@ -48,9 +48,11 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/json_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/json_output")
 
-			bulk := ParseExportedFiles("TestDef", tmMeta, input)
+			bulks := ParseExportedFiles("TestDef", tmMeta, input)
+			bulkFile, err := bulks.Marshal()
+			Expect(err).ToNot(HaveOccurred())
 
-			ok, err := areEqualDocments(bulk, output)
+			ok, err := areEqualDocuments(bulkFile[0], output)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ok).To(BeTrue())
 		})
@@ -64,11 +66,13 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/bulk_with_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta_output")
 
-			bulk := ParseExportedFiles("TestDef", tmMeta, input)
-
-			ok, err := areEqualDocments(bulk, output)
+			bulks := ParseExportedFiles("TestDef", tmMeta, input)
+			bulkFile, err := bulks.Marshal()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ok).To(BeTrue(), "Generated bulk document does not equal output document: %s", string(bulk))
+
+			ok, err := areEqualDocuments(bulkFile[0], output)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ok).To(BeTrue(), "Generated bulk document does not equal output document: %s", string(bulkFile[0]))
 		})
 
 		It("should parse bulk with index and add an testmachinery index", func() {
@@ -78,16 +82,18 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/bulk_no_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_no_meta_output")
 
-			bulk := ParseExportedFiles("TestDef", tmMeta, input)
-
-			ok, err := areEqualDocments(bulk, output)
+			bulks := ParseExportedFiles("TestDef", tmMeta, input)
+			bulkFile, err := bulks.Marshal()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ok).To(BeTrue(), "Generated bulk document does not equal output document: %s", string(bulk))
+
+			ok, err := areEqualDocuments(bulkFile[0], output)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ok).To(BeTrue(), "Generated bulk document does not equal output document: %s", string(bulkFile[0]))
 		})
 	})
 })
 
-func areEqualDocments(input, output []byte) (bool, error) {
+func areEqualDocuments(input, output []byte) (bool, error) {
 
 	inputScanner := bufio.NewScanner(bytes.NewReader(input))
 	outputScanner := bufio.NewScanner(bytes.NewReader(output))

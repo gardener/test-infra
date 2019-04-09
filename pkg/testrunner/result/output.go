@@ -16,9 +16,7 @@ package result
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -31,14 +29,12 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
@@ -67,42 +63,46 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	if err != nil {
 		return err
 	}
-	trSummary.Metadata = elasticsearch.ESMetadata{
+
+	summaryMetadata := elasticsearch.ESMetadata{
 		Index: elasticsearch.ESIndex{
 			Index: "testmachinery",
 			Type:  "_doc",
 		},
 	}
-	SummaryBuffer, err := trSummary.Marshal()
-	if err != nil {
-		return err
-	}
+	summaryBulk := elasticsearch.NewList(summaryMetadata, trSummary)
 
 	if config.S3Endpoint != "" {
 		osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
 		if err != nil {
 			log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
 		} else {
-			exportedDocuments := getExportedDocuments(osConfig, tr.Status, metadata)
-			SummaryBuffer.Write(exportedDocuments)
+			exportedDocumentsBulk := getExportedDocuments(osConfig, tr.Status, metadata)
+			summaryBulk = append(summaryBulk, exportedDocumentsBulk...)
 		}
 	}
 
-	// Print out the summary if no outputfile is specified
-	if config.OutputFile == "" {
-		log.Info(string(SummaryBuffer.Bytes()))
-		return nil
-	}
-	err = writeToFile(config.OutputFile, SummaryBuffer.Bytes())
+	summary, err := summaryBulk.Marshal()
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully written output to file %s", config.OutputFile)
+	// Print out the summary if no outputfile is specified
+	if config.OutputDir == "" {
+		// TODO: change to more readable output
+		log.Info(summary)
+		return nil
+	}
+	err = writeBulks(config.OutputDir, summary)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfully written output to file %s", config.OutputDir)
 	return nil
 }
 
-func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*elasticsearch.Bulk, error) {
+func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) ([][]byte, error) {
 
 	status := tr.Status
 	testsRun := 0
@@ -143,13 +143,10 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) (*e
 		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk: %s", err.Error())
 	}
 
-	return &elasticsearch.Bulk{
-		Sources: append([][]byte{encTrSummary}, summaries...),
-	}, nil
-
+	return append([][]byte{encTrSummary}, summaries...), nil
 }
 
-func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) []byte {
+func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
@@ -167,7 +164,7 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 		return nil
 	}
 
-	documents := bytes.NewBuffer([]byte{})
+	bulks := make(elasticsearch.BulkList, 0)
 	for _, steps := range status.Steps {
 		for _, step := range steps {
 			if step.Phase != argov1.NodeSkipped {
@@ -181,14 +178,14 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 				}
 				reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 				if err != nil {
-					log.Errorf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+					log.Warnf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
 					continue
 				}
 				defer reader.Close()
 
 				info, err := reader.Stat()
 				if err != nil {
-					log.Errorf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+					log.Warnf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
 					continue
 				}
 
@@ -196,19 +193,19 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 
 					files, err := getFilesFromTar(reader)
 					if err != nil {
-						log.Errorf("Cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
+						log.Warnf("Cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
 						continue
 					}
 
 					for _, doc := range files {
-						documents.Write(elasticsearch.ParseExportedFiles(strings.ToLower(step.TestDefinition.Name), stepMeta, doc))
+						bulks = append(bulks, elasticsearch.ParseExportedFiles(strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
 					}
 				}
 
 			}
 		}
 	}
-	return documents.Bytes()
+	return bulks
 }
 
 func getFilesFromTar(r io.Reader) ([][]byte, error) {
@@ -241,40 +238,6 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 	}
 
 	return files, nil
-}
-
-func writeToFile(fielPath string, data []byte) error {
-
-	err := ioutil.WriteFile(fielPath, data, 0644)
-	if err != nil {
-		return fmt.Errorf("Cannot write to %s", err.Error())
-	}
-
-	return nil
-}
-
-func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {
-	ctx := context.Background()
-	defer ctx.Done()
-
-	minioConfig := &corev1.ConfigMap{}
-	err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: "tm-config"}, minioConfig)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot get ConfigMap 'tm-config': %s", err.Error())
-	}
-	minioSecrets := &corev1.Secret{}
-	err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: minioConfig.Data["objectstore.secretName"]}, minioSecrets)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot get Secret '%s': %s", minioConfig.Data["objectstore.secretName"], err.Error())
-	}
-
-	return &testmachinery.ObjectStoreConfig{
-		Endpoint:   minioEndpoint,
-		SSL:        ssl,
-		AccessKey:  string(minioSecrets.Data["accessKey"]),
-		SecretKey:  string(minioSecrets.Data["secretKey"]),
-		BucketName: minioConfig.Data["objectstore.bucketName"],
-	}, nil
 }
 
 // buildKibanaWorkflowURL construct a valid kibana url from the given endpoint and workflow

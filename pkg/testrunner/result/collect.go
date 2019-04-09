@@ -35,9 +35,9 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 			return false, err
 		}
 
-		err = IngestFile(config.OutputFile, config.ESConfigName)
+		err = IngestDir(config.OutputDir, config.ESConfigName)
 		if err != nil {
-			log.Errorf("Cannot persist file %s: %s", config.OutputFile, err.Error())
+			log.Errorf("Cannot persist file %s: %s", config.OutputDir, err.Error())
 		} else {
 			err := MarkTestrunsAsIngested(tmClient, run.Testrun)
 			if err != nil {

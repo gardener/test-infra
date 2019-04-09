@@ -16,8 +16,8 @@ package result
 
 // Config represents the configuration for collecting and storing results from a testrun.
 type Config struct {
-	// OutputFilePath is the path where the testresult is written to.
-	OutputFile string
+	// OutputDir is the path where the testresults are written to.
+	OutputDir string
 
 	// Config name of the elasticsearch instance to store the test results.
 	ESConfigName string
