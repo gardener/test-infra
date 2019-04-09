@@ -29,7 +29,7 @@ import (
 // 50 mb
 const maxBufferSize = 50 * 1024 * 1024
 
-// Marshal creates a elastic search bulk json of its metadata and sources; and returns a list of bulk files with a max size of 4mb
+// Marshal creates an elastic search bulk json of its metadata and sources and returns a list of bulk files with a max size of 50mb
 func (b *Bulk) Marshal() ([]byte, error) {
 	meta, err := util.MarshalNoHTMLEscape(b.Metadata)
 	if err != nil {
@@ -43,7 +43,7 @@ func (b *Bulk) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// NewList creates an list of Bulks with the same metadata
+// NewList creates a list of Bulks with the same metadata
 func NewList(meta interface{}, sources [][]byte) BulkList {
 	bulks := make([]*Bulk, 0)
 	for _, source := range sources {
