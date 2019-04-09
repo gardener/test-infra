@@ -171,14 +171,14 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 				}
 				reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 				if err != nil {
-					log.Warnf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+					log.Warnf("cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
 					continue
 				}
 				defer reader.Close()
 
 				info, err := reader.Stat()
 				if err != nil {
-					log.Warnf("Cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+					log.Warnf("cannot get exported artifact %s: %s", step.ExportArtifactKey, err.Error())
 					continue
 				}
 
@@ -186,7 +186,7 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 
 					files, err := getFilesFromTar(reader)
 					if err != nil {
-						log.Warnf("Cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
+						log.Warnf("cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
 						continue
 					}
 
