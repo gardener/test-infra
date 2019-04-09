@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/gardener/test-infra/pkg/version"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/controller"
@@ -33,7 +34,6 @@ import (
 )
 
 var (
-	trFilePath string
 	masterURL  string
 	kubeconfig string
 	local      bool
@@ -41,7 +41,7 @@ var (
 
 func main() {
 
-	log.Info("Start Test Machinery")
+	log.Infof("Start Test Machinery with Version %s", version.Get().String())
 	flag.Parse()
 
 	if testmachinery.IsRunInsecure() {
