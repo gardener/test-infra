@@ -52,5 +52,5 @@ type email struct {
 type kibanaFilter struct {
 	IndexPatternID string
 	WorkflowID     string
-	PodID          string
+	TestDefName    string
 }

@@ -35,7 +35,7 @@ const (
 func IngestDir(path string, esCfgName string) error {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		return fmt.Errorf("Cannot read directory %s: %s", path, err.Error())
+		return fmt.Errorf("cannot read directory '%s'd: %s", path, err.Error())
 	}
 	for _, file := range files {
 		if !file.IsDir() {

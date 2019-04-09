@@ -73,10 +73,6 @@ type Metadata struct {
 	// Link to the workflow in the argo ui
 	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
 	ArgoUIExternalURL string `json:"argo_url,omitempty"`
-
-	// Link to the logs in kibana
-	// Kibana URL is in format: https://kibana-endpoint.com/app/kibana#/discover/<very_complex_IDs_and_stuff>
-	KibanaExternalURL string `json:"kibana_url,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
@@ -100,20 +96,22 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata  *Metadata        `json:"tm,omitempty"`
-	Type      SummaryType      `json:"type,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
-	TestsRun  int              `json:"testsRun,omitempty"`
+	Metadata          *Metadata        `json:"tm,omitempty"`
+	Type              SummaryType      `json:"type,omitempty"`
+	Phase             argov1.NodePhase `json:"phase,omitempty"`
+	StartTime         *metav1.Time     `json:"startTime,omitempty"`
+	Duration          int64            `json:"duration,omitempty"`
+	TestsRun          int              `json:"testsRun,omitempty"`
+	KibanaExternalURL string           `json:"kibana_url,omitempty"`
 }
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata  *Metadata        `json:"tm,omitempty"`
-	Type      SummaryType      `json:"type,omitempty"`
-	Name      string           `json:"name,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
+	Metadata          *Metadata        `json:"tm,omitempty"`
+	Type              SummaryType      `json:"type,omitempty"`
+	Name              string           `json:"name,omitempty"`
+	Phase             argov1.NodePhase `json:"phase,omitempty"`
+	StartTime         *metav1.Time     `json:"startTime,omitempty"`
+	Duration          int64            `json:"duration,omitempty"`
+	KibanaExternalURL string           `json:"kibana_url,omitempty"`
 }
