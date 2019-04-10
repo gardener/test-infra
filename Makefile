@@ -26,6 +26,7 @@ PREPARESTEP_IMAGE := $(REGISTRY)/testmachinery-prepare
 NS ?= default
 KUBECONFIG ?= "~/.kube/config"
 TESTRUN ?= "examples/int-testrun.yaml"
+LD_FLAGS := $(shell ./hack/get-build-ld-flags)
 
 
 ################################
@@ -112,6 +113,12 @@ validate:
 ##################################
 # Binary build and docker image  #
 ##################################
+
+.PHONY: testrunner
+testrunner:
+	@go install -v \
+		-ldflags "$(LD_FLAGS)" \
+		./cmd/testrunner
 
 .PHONY: docker-images
 docker-images: docker-image-prepare docker-image-base docker-image-golang docker-image-run docker-image-controller

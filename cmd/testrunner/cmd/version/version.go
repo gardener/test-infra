@@ -12,39 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package versioncmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gardener/test-infra/pkg/version"
-	"net/http"
-	"sync"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"log"
 )
 
-var (
-	mutex   sync.Mutex
-	healthy = false
-)
-
-func UpdateHealth(isHealthy bool) {
-	mutex.Lock()
-	healthy = isHealthy
-	mutex.Unlock()
+// AddCommand adds run-testrun to a command.
+func AddCommand(cmd *cobra.Command) {
+	cmd.AddCommand(versionCmd)
 }
 
-func healthz(w http.ResponseWriter, r *http.Request) {
-	mutex.Lock()
-	isHealthy := healthy
-	mutex.Unlock()
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Get testrunner version",
+	Run: func(cmd *cobra.Command, args []string) {
 
-	if isHealthy {
-		_, err := w.Write([]byte(version.Get().String()))
+		v, err := json.Marshal(version.Get())
 		if err != nil {
-			log.Debug(err.Error())
-			w.WriteHeader(http.StatusOK)
+			log.Fatal(err.Error())
 		}
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+		fmt.Print(string(v))
+	},
 }

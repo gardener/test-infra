@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
 	"os"
 
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
@@ -49,6 +50,7 @@ func init() {
 
 	runtemplate.AddCommand(rootCmd)
 	runtestrun.AddCommand(rootCmd)
-	collect.AddCommand(rootCmd)
+	collectcmd.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
+	versioncmd.AddCommand(rootCmd)
 }
