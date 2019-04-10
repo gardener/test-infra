@@ -22,7 +22,7 @@ spec:
 
   description: Run kubernetes e2e test with tags Slow and Serial.
 
-  activeDeadlineSeconds: 10800
+  activeDeadlineSeconds: 28800
   labels: ["slow"]
   behavior: ["serial"]
 
