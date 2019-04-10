@@ -23,7 +23,7 @@ data:
             s3:
                 bucket: {{.Values.objectStorage.bucketName}}
                 keyPrefix: testmachinery
-                endpoint: {{.Values.objectStorage.serviceEndpoint}}.{{.Release.Namespace}}:{{.Values.objectStorage.port}}        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
+                endpoint: {{.Values.objectStorage.serviceEndpoint}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.objectStorage.port}}        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
                 insecure: true                  #omit for S3/GCS. Needed when minio runs without TLS
                 accessKeySecret:                #omit if accessing via AWS IAM
                     name: {{.Values.objectStorage.secret.name}}
