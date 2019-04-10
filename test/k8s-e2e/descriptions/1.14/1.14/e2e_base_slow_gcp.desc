@@ -1,0 +1,3 @@
+[sig-network] Services should have session affinity work for LoadBalancer service with ESIPP on [Slow] [DisabledForLargeClusters]
+[sig-network] Services should have session affinity work for LoadBalancer service with ESIPP off [Slow] [DisabledForLargeClusters]
+[sig-network] Services should be able to switch session affinity for LoadBalancer service with ESIPP off [Slow] [DisabledForLargeClusters]
