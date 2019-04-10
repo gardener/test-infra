@@ -15,10 +15,10 @@
 package elasticsearch
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"github.com/gardener/test-infra/pkg/util"
 
 	log "github.com/sirupsen/logrus"
@@ -110,13 +110,11 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 	bulks := make(BulkList, 0)
 	var meta map[string]interface{}
 
-	scanner := bufio.NewScanner(bytes.NewReader(docs))
-	for scanner.Scan() {
-		doc := scanner.Bytes()
+	for doc := range util.ReadLines(docs) {
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
 		if err != nil {
-			log.Errorf("Cannot unmarshal document %s", err.Error())
+			log.Errorf("cannot unmarshal document %s", err.Error())
 			continue
 		}
 
@@ -129,7 +127,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
 		if err != nil {
-			log.Errorf("Cannot marshal artifact %s", err.Error())
+			log.Errorf("cannot marshal artifact %s", err.Error())
 			continue
 		}
 
@@ -148,9 +146,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 
 		bulks = append(bulks, bulk)
 		meta = nil
-	}
-	if err := scanner.Err(); err != nil {
-		log.Warnf("Error reading json: %s", err.Error())
+		doc = make([]byte, 0)
 	}
 
 	return bulks

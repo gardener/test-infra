@@ -27,7 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestConfig(t *testing.T) {
+func TestES(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "ElasticsearchExport Suite")
 }
@@ -89,6 +89,17 @@ var _ = Describe("elasticsearch test", func() {
 			ok, err := areEqualDocuments(bulkFile[0], output)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ok).To(BeTrue(), "Generated bulk document does not equal output document: %s", string(bulkFile[0]))
+		})
+
+		It("should parse a large bulk file", func() {
+			input, err := ioutil.ReadFile("./testdata/large_bulk")
+			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta")
+
+			bulks := ParseExportedFiles("TestDef", tmMeta, input)
+			Expect(len(bulks) != 0).To(BeTrue(), "Expect bulks to not be emtpy")
+
+			_, err = bulks[0].Marshal()
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })
