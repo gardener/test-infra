@@ -19,7 +19,7 @@ metadata:
     namespace: {{.Release.Namespace}}
 data:
     objectstore.bucketName: "{{ .Values.objectStorage.bucketName }}"
-    objectstore.url: "{{ .Values.objectStorage.serviceEndpoint }}:{{ .Values.objectStorage.port }}"
+    objectstore.url: "{{ .Values.objectStorage.serviceEndpoint }}.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.port }}"
     objectstore.serviceEndpoint: "{{ .Values.objectStorage.serviceEndpoint }}"
     objectstore.port: "{{ .Values.objectStorage.port }}"
     objectstore.secretName: "{{ .Values.objectStorage.secret.name }}"
