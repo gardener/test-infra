@@ -68,4 +68,5 @@ RUN  \
       /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
   && update-ca-certificates
 
-ENV PATH=$PATH:/cc/utils
+ENV PATH /cc/utils/:/cc/utils/bin:$PATH
+ENV PYTHONPATH /cc/utils
