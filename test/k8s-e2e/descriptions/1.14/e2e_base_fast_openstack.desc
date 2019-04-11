@@ -20,3 +20,6 @@
 [sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Pre-provisioned PV (default fs)] volumes should be mountable
 [sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Pre-provisioned PV (filesystem volmode)] volumeMode should create sc, pod, pv, and pvc, read/write to the pv, and delete all created resources
 [sig-network] Networking should provide Internet connection for containers [Feature:Networking-IPv4]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should adopt matching orphans and release non-matching pods
+[sig-storage] PVC Protection Verify that PVC in active use by a pod is not removed immediately
+[sig-storage] PVC Protection Verify that scheduling of a pod that uses PVC that is being deleted fails and the pod becomes Unschedulable

@@ -16,7 +16,6 @@
 [k8s.io] Sysctls [NodeFeature:Sysctls] should support unsafe sysctls which are actually whitelisted
 [sig-api-machinery] Initializers [Feature:Initializers] should be invisible to controllers by default
 [sig-api-machinery] Initializers [Feature:Initializers] will be set to nil if a patch removes the last pending initializer
-[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should adopt matching orphans and release non-matching pods
 [sig-auth] [Feature:NodeAuthorizer] A node shouldn't be able to create another node
 [sig-auth] [Feature:NodeAuthorizer] A node shouldn't be able to delete another node
 [sig-auth] [Feature:NodeAuthorizer] Getting a non-existent configmap should exit with the Forbidden error, not a NotFound error
@@ -254,8 +253,6 @@
 [sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : projected
 [sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : secret
 [sig-storage] PV Protection Verify that PV bound to a PVC is not removed immediately
-[sig-storage] PVC Protection Verify that PVC in active use by a pod is not removed immediately
-[sig-storage] PVC Protection Verify that scheduling of a pod that uses PVC that is being deleted fails and the pod becomes Unschedulable
 [sig-storage] PersistentVolumes NFS when invoking the Recycle reclaim policy should test that a PV becomes Available and is clean after the PVC is deleted.
 [sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PV and a pre-bound PVC: test write access
 [sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PVC and a pre-bound PV: test write access
