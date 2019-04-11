@@ -176,6 +176,23 @@ var _ = Describe("Testflow execution tests", func() {
 			Expect(len(tr.Status.Steps[1])).To(Equal(1))
 			Expect(tr.Status.Steps[1][0].TestDefinition.Name).To(Equal("serial-testdef"))
 		})
+
+		It("should execute one serial step successfully", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				{
+					{
+						Name: "serial-testdef",
+					},
+				},
+			}
+
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
 
 	Context("File created in shared folder", func() {
