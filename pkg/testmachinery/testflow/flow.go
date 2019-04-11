@@ -66,7 +66,9 @@ func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testd
 			}
 		}
 
-		if isSerialStep(steps) {
+		// we need to check if the node is defined because a single "behavior: serial" step
+		// which skip the node creation in the normal flow will be created in further special serial steps creation..
+		if isSerialStep(steps) && node != nil {
 			node.TestDefinition.AddSerialStdOutput()
 			lastSerialNode = node
 		}

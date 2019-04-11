@@ -200,7 +200,7 @@ type ConfigElement struct {
 
 	// Only for type=file. Path where the file should be mounted.
 	// +optional
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 }
 
 // ConfigSource represents a source for the value of a config element.
