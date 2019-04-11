@@ -23,6 +23,7 @@ spec:
   description: Run kubernetes conformance tests and push result files (e2e.log and junit_01.xml) to testgrid repository.
 
   activeDeadlineSeconds: 10800
+  behavior: ["serial"]
 
   config:
   - type: env
