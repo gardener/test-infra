@@ -22,6 +22,7 @@ limitations under the License.
 package openapi
 
 import (
+	strconf "github.com/gardener/test-infra/pkg/util/strconf"
 	spec "github.com/go-openapi/spec"
 	common "k8s.io/kube-openapi/pkg/common"
 )
@@ -29,7 +30,6 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement":                    schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigSource":                     schema_pkg_apis_testmachinery_v1beta1_ConfigSource(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":                  schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":                      schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition":                   schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref),
@@ -42,6 +42,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunList":                      schema_pkg_apis_testmachinery_v1beta1_TestrunList(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunSpec":                      schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus":                    schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref),
+		"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource":                                   schema_test_infra_pkg_util_strconf_ConfigSource(ref),
+		"github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig":                                 schema_test_infra_pkg_util_strconf_StringOrConfig(ref),
 	}
 }
 
@@ -76,7 +78,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 					"valueFrom": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Fetches the value from a secret or configmap on the testmachinery cluster.",
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigSource"),
+							Ref:         ref("github.com/gardener/test-infra/pkg/util/strconf.ConfigSource"),
 						},
 					},
 					"path": {
@@ -91,34 +93,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigSource"},
-	}
-}
-
-func schema_pkg_apis_testmachinery_v1beta1_ConfigSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "ConfigSource represents a source for the value of a config element.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"configMapKeyRef": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Selects a key of a ConfigMap.",
-							Ref:         ref("k8s.io/api/core/v1.ConfigMapKeySelector"),
-						},
-					},
-					"secretKeyRef": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Selects a key of a secret in the pod's namespace",
-							Ref:         ref("k8s.io/api/core/v1.SecretKeySelector"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/api/core/v1.ConfigMapKeySelector", "k8s.io/api/core/v1.SecretKeySelector"},
+			"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource"},
 	}
 }
 
@@ -547,31 +522,29 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunKubeconfigs(ref common.Referen
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener kubeconfig for the Testrun can be specified.",
+				Description: "TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"gardener": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref("github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"),
 						},
 					},
 					"seed": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref("github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"),
 						},
 					},
 					"shoot": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref("github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"),
 						},
 					},
 				},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"},
 	}
 }
 
@@ -800,5 +773,44 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_test_infra_pkg_util_strconf_ConfigSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigSource represents a source for the value of a config element.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"configMapKeyRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Selects a key of a ConfigMap.",
+							Ref:         ref("k8s.io/api/core/v1.ConfigMapKeySelector"),
+						},
+					},
+					"secretKeyRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Selects a key of a secret in the pod's namespace",
+							Ref:         ref("k8s.io/api/core/v1.SecretKeySelector"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.ConfigMapKeySelector", "k8s.io/api/core/v1.SecretKeySelector"},
+	}
+}
+
+func schema_test_infra_pkg_util_strconf_StringOrConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StringOrConfig represents a type that could be from a string or a configuration",
+				Type:        strconf.StringOrConfig{}.OpenAPISchemaType(),
+				Format:      strconf.StringOrConfig{}.OpenAPISchemaFormat(),
+			},
+		},
 	}
 }

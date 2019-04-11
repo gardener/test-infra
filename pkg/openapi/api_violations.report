@@ -1,1 +1,4 @@
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestflowStepStatus,TestDefinition
+API rule violation: names_match,github.com/gardener/test-infra/pkg/util/strconf,StringOrConfig,ConfigVal
+API rule violation: names_match,github.com/gardener/test-infra/pkg/util/strconf,StringOrConfig,StrVal
+API rule violation: names_match,github.com/gardener/test-infra/pkg/util/strconf,StringOrConfig,Type

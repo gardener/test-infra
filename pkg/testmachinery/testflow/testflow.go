@@ -30,7 +30,9 @@ func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDe
 
 	rootNode := NewNode(nil, nil, nil, prepare.TestDefinition, &Step{nil, -1, -1}, flowID)
 	rootNode.Task = argo.CreateTask(rootNode.TestDefinition.Template.Name, rootNode.TestDefinition.Template.Name, testmachinery.PHASE_RUNNING, rootNode.GetParentNames(), nil)
-	rootNode.TestDefinition.AddConfig(globalConfig)
+	if err := rootNode.TestDefinition.AddConfig(globalConfig); err != nil {
+		return nil, err
+	}
 
 	flow, err := NewFlow(flowID, rootNode, tf, tl, globalConfig)
 	if err != nil {

@@ -46,7 +46,6 @@ type Flow struct {
 	testdefinitions map[*testdefinition.TestDefinition]interface{}
 	usedLocations   map[testdefinition.Location]interface{}
 	globalConfig    []*config.Element
-	usedConfig      []*config.Element
 }
 
 // Step is a TestflowStep with its specific Row and Column in the testflow.

@@ -33,7 +33,7 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Required value: name has to be defined", identifier)
 	}
 
-	if err := validateName(identifier, td.Metadata.Name); err != nil {
+	if err := ValidateName(identifier, td.Metadata.Name); err != nil {
 		return err
 	}
 
@@ -49,13 +49,13 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 	return nil
 }
 
-// validates the TestDefinition name. Therefore Kubernetes naming conventions and elasticsearch naming is considered.
+// ValidateName validates the TestDefinition name. Therefore Kubernetes naming conventions and elasticsearch naming is considered.
 // es conform:
 // must not contain the #, \, /, *, ?, ", <, >, |, ,
 // must not start with _, - or +
 // must no be . or ..
 // must be lowercase
-func validateName(identifier, name string) error {
+func ValidateName(identifier, name string) error {
 	if strings.Contains(name, ".") {
 		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: name must not contain '.'", identifier)
 	}

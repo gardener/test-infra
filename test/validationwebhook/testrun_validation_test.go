@@ -16,6 +16,7 @@ package validationwebhook_test
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -149,7 +150,7 @@ var _ = Describe("Testrun validation tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.Kubeconfigs.Gardener = "dGVzdGluZwo="
+			tr.Spec.Kubeconfigs.Gardener = strconf.FromString("dGVzdGluZwo=")
 
 			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {

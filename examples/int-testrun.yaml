@@ -25,15 +25,18 @@ spec:
   testLocations:
   - type: git
     repo: https://github.com/gardener/gardener.git
-    revision: create-shoot
+    revision: master
   - type: git
     repo: https://github.com/gardener/test-infra.git
     revision: master
 
   kubeconfigs:
     gardener: #base64 heredoc kubeconfig
-    seed: 
-    shoot: 
+    seed:
+      secretKeyRef:
+        name: mysecret
+        key: kubeconfig
+    shoot:
 
 
   # Global config available to every test task in all phases (testFlow and onExit)
@@ -44,20 +47,18 @@ spec:
 
   # the execution flow:
   testFlow:
-    # - - name: GuestbookTestDef #CreateShootTestDef
-    #     config:
-    #     - name: CREATE_SHOOT_CLOUDPROVIDER
-    #       value: aws
-    #       type: env
-    #     - name: CREATE_SHOOT_VERSION
-    #       value: 1.11.3
-    #       type: env
-    - - name: MetadataTestDef
-    #   - name:GuestbookTestDef
-    - - label: default
-    # - - name: DeleteShootTestDef
+  - - name: create-shoot
+      config:
+      - name: CREATE_SHOOT_CLOUDPROVIDER
+        value: aws
+        type: env
+      - name: CREATE_SHOOT_VERSION
+        value: 1.14.0
+        type: env
+  - - name: shootapp-test
+  - - label: default
+  - - name: delete-shoot
 
   onExit:
-    - - name: DeleteShootTestDef
+    - - name: delete-shoot
         condition: error
-  

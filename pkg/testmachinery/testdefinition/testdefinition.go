@@ -43,10 +43,10 @@ const (
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
-func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefinition {
+func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDefinition, error) {
 
 	if err := Validate(fmt.Sprintf("Location: \"%s\"; File: \"%s\"", loc.Name(), fileName), def); err != nil {
-		log.Warn(err)
+		return nil, err
 	}
 
 	if def.Spec.Image == "" {
@@ -114,9 +114,11 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) *TestDefi
 		Template: template,
 		Config:   config.New(def.Spec.Config),
 	}
-	td.AddConfig(td.Config)
+	if err := td.AddConfig(td.Config); err != nil {
+		return nil, err
+	}
 
-	return td
+	return td, nil
 }
 
 // Copy returns a deep copy of the TestDefinition.
@@ -129,6 +131,7 @@ func (td *TestDefinition) Copy() *TestDefinition {
 		FileName: td.FileName,
 		Template: template,
 		Config:   td.Config,
+		Volumes:  td.Volumes,
 	}
 }
 
@@ -210,52 +213,63 @@ func (td *TestDefinition) AddSerialStdOutput() {
 }
 
 // AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.
-func (td *TestDefinition) AddConfig(configs []*config.Element) {
-	for _, config := range configs {
-		switch config.Info.Type {
+func (td *TestDefinition) AddConfig(configs []*config.Element) error {
+	for _, cfg := range configs {
+		switch cfg.Info.Type {
 		case tmv1beta1.ConfigTypeEnv:
-			if config.Info.Value != "" {
+			if cfg.Info.Value != "" {
 				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, config.Info.Value))
-				td.AddEnvVars(apiv1.EnvVar{Name: config.Info.Name, Value: config.Info.Value})
+				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, cfg.Info.Value))
+				td.AddEnvVars(apiv1.EnvVar{Name: cfg.Info.Name, Value: cfg.Info.Value})
 			} else {
 				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, "from secret or configmap"))
+				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, "from secret or configmap"))
 				td.AddEnvVars(apiv1.EnvVar{
-					Name: config.Info.Name,
+					Name: cfg.Info.Name,
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: config.Info.ValueFrom.ConfigMapKeyRef,
-						SecretKeyRef:    config.Info.ValueFrom.SecretKeyRef,
+						ConfigMapKeyRef: cfg.Info.ValueFrom.ConfigMapKeyRef,
+						SecretKeyRef:    cfg.Info.ValueFrom.SecretKeyRef,
 					},
 				})
 			}
 		case tmv1beta1.ConfigTypeFile:
 			// https://github.com/argoproj/argo/blob/master/examples/secrets.yaml
-			if config.Info.Value != "" {
-				data, err := base64.StdEncoding.DecodeString(config.Info.Value)
+			if cfg.Info.Value != "" {
+				data, err := base64.StdEncoding.DecodeString(cfg.Info.Value)
 				if err != nil {
-					log.Warnf("Cannot decode value of %s: %s", config.Info.Name, err.Error())
+					log.Warnf("Cannot decode value of %s: %s", cfg.Info.Name, err.Error())
 					continue
 				}
 
 				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, config.Info.Value))
+				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, cfg.Info.Value))
 				td.AddInputArtifacts(argov1.Artifact{
-					Name: config.Name(),
-					Path: config.Info.Path,
+					Name: cfg.Name(),
+					Path: cfg.Info.Path,
 					ArtifactLocation: argov1.ArtifactLocation{
 						Raw: &argov1.RawArtifact{
 							Data: string(data),
 						},
 					},
 				})
-			} else if config.Info.ValueFrom != nil {
-				td.AddInputParameter(config.Name(), fmt.Sprintf("%s: %s", config.Info.Name, "from secret or configmap"))
-				td.AddVolumeMount(config.Name(), config.Info.Path, path.Base(config.Info.Path), true)
+			} else if cfg.Info.ValueFrom != nil {
+				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, "from secret or configmap"))
+				td.AddVolumeMount(cfg.Name(), cfg.Info.Path, path.Base(cfg.Info.Path), true)
+				return td.AddVolumeFromConfig(cfg)
 			}
 		}
-
 	}
+
+	return nil
+}
+
+func (td *TestDefinition) AddVolumeFromConfig(cfg *config.Element) error {
+	vol, err := cfg.Volume()
+	if err != nil {
+		return err
+	}
+	td.Volumes = append(td.Volumes, *vol)
+	return nil
 }
 
 // GetAnnotations returns Template annotations for a testdefinition

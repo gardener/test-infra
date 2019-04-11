@@ -43,6 +43,7 @@ func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testd
 		currentNodes := []*Node{}
 		serialTestdefs := map[*testdefinition.TestDefinition]*Step{}
 		var node *Node
+		var err error
 
 		for column, item := range steps {
 			s := item
@@ -61,7 +62,10 @@ func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testd
 					serialTestdefs[td] = &step
 					continue
 				}
-				node = flow.addNewNode(lastParallelNodes, lastSerialNode, &step, td)
+				node, err = flow.addNewNode(lastParallelNodes, lastSerialNode, &step, td)
+				if err != nil {
+					return nil, err
+				}
 				currentNodes = append(currentNodes, node)
 			}
 		}
@@ -78,7 +82,10 @@ func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testd
 		}
 
 		for serialTestDef, step := range serialTestdefs {
-			node = flow.addNewNode(lastParallelNodes, lastSerialNode, step, serialTestDef)
+			node, err = flow.addNewNode(lastParallelNodes, lastSerialNode, step, serialTestDef)
+			if err != nil {
+				return nil, err
+			}
 			node.TestDefinition.AddSerialStdOutput()
 
 			currentNodes = []*Node{node}
@@ -110,14 +117,23 @@ func (f *Flow) GetVolumes() []corev1.Volume {
 			volumes = append(volumes, local.GetVolume())
 		}
 	}
-	for _, cfg := range f.usedConfig {
-		if volume, err := cfg.Volume(); err == nil {
-			volumes = append(volumes, *volume)
+
+	volumeSet := make(map[string]bool)
+
+	for _, vol := range f.TestFlowRoot.TestDefinition.Volumes {
+		if _, ok := volumeSet[vol.Name]; !ok {
+			volumes = append(volumes, vol)
+			volumeSet[vol.Name] = true
 		}
 	}
-	for _, cfg := range f.globalConfig {
-		if volume, err := cfg.Volume(); err == nil {
-			volumes = append(volumes, *volume)
+	for nodes := range f.Iterate() {
+		for _, node := range nodes {
+			for _, vol := range node.TestDefinition.Volumes {
+				if _, ok := volumeSet[vol.Name]; !ok {
+					volumes = append(volumes, vol)
+					volumeSet[vol.Name] = true
+				}
+			}
 		}
 	}
 
@@ -151,23 +167,30 @@ func (f *Flow) GetStatus() [][]*tmv1beta1.TestflowStepStatus {
 	return status
 }
 
-func (f *Flow) addNewNode(lastParallelNodes []*Node, lastSerialNode *Node, step *Step, td *testdefinition.TestDefinition) *Node {
+func (f *Flow) addNewNode(lastParallelNodes []*Node, lastSerialNode *Node, step *Step, td *testdefinition.TestDefinition) (*Node, error) {
 	node := NewNode(lastParallelNodes, lastSerialNode, f.TestFlowRoot, td, step, f.ID)
-	f.addConfigToTestDefinition(step, td)
+	if err := f.addConfigToTestDefinition(step, td); err != nil {
+		return nil, err
+	}
 	f.addTask(*node.Task)
 
 	f.testdefinitions[td] = nil
 	f.usedLocations[td.Location] = nil
 
-	return node
+	return node, nil
 }
 
-func (f *Flow) addConfigToTestDefinition(step *Step, td *testdefinition.TestDefinition) {
+func (f *Flow) addConfigToTestDefinition(step *Step, td *testdefinition.TestDefinition) error {
 	cfg := config.New(step.Info.Config)
-	td.AddConfig(cfg)
-	td.AddConfig(f.globalConfig)
-	f.usedConfig = append(f.usedConfig, cfg...)
-	f.usedConfig = append(f.usedConfig, td.Config...)
+	if err := td.AddConfig(cfg); err != nil {
+		return err
+	}
+	if err := td.AddConfig(f.globalConfig); err != nil {
+		return err
+	}
+	//f.usedConfig = append(f.usedConfig, cfg...)
+	//f.usedConfig = append(f.usedConfig, td.Config...)
+	return nil
 }
 
 func (f *Flow) addTask(task argov1.DAGTask) {
@@ -176,5 +199,5 @@ func (f *Flow) addTask(task argov1.DAGTask) {
 
 func isSerialStep(steps []tmv1beta1.TestflowStep) bool {
 	// TODO: refactor for better check of testStep type
-	return (len(steps) == 1 && steps[0].Name != "")
+	return len(steps) == 1 && steps[0].Name != ""
 }

@@ -14,10 +14,10 @@
 
 kind: TestDefinition
 metadata:
-  name: check-envvar-testdef
+  name: check-file-content-testdef
 spec:
-  owner: dummy@mail.com
-  description: Tests mounting of configurations from secrets.
+  owner: dummy@example.com
+  description: Tests mounting of file configuration.
 
   command: [bash, -c]
-  args: ["./test/.test-defs/scripts/check-env"]
+  args: ["./test/.test-defs/scripts/check-file-content"]

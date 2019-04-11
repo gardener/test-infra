@@ -33,12 +33,16 @@ import (
 )
 
 // NewTestrunWebhook creates a new validation webhook for tesetruns with a controller-runtime decoder
-func NewTestrunWebhook(decoder types.Decoder) *TestrunWebhook {
+func NewTestrunWebhook(decoder types.Decoder) (*TestrunWebhook, error) {
 	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	admissionregistrationv1beta1.AddToScheme(scheme)
+	if err := corev1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+	if err := admissionregistrationv1beta1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
 
-	return &TestrunWebhook{decoder, serializer.NewCodecFactory(scheme)}
+	return &TestrunWebhook{decoder, serializer.NewCodecFactory(scheme)}, nil
 }
 
 // Validate handles a admission webhook request for testruns.
@@ -47,12 +51,13 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	const wantedContentType = "application/json"
 
 	receivedReview := v1beta1.AdmissionReview{}
-	deserializer := wh.codecs.UniversalDeserializer()
+	deserializer := wh.codecs.UniversalDecoder()
 	var body []byte
 
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
 			body = data
+			fmt.Print(string(body))
 		}
 	}
 

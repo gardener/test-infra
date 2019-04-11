@@ -17,6 +17,7 @@ package testflow_test
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"os"
 	"strings"
 	"testing"
@@ -46,18 +47,18 @@ var (
 	maxWaitTime int64 = 300
 )
 
-func TestValidationWebhook(t *testing.T) {
+var (
+	commitSha string
+	namespace string
+	tmClient  kubernetes.Interface
+)
+
+func TestTestflowWebhook(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Testrun testflow Integration Test Suite")
 }
 
 var _ = Describe("Testflow execution tests", func() {
-
-	var (
-		commitSha string
-		namespace string
-		tmClient  kubernetes.Interface
-	)
 
 	BeforeSuite(func() {
 		var err error
@@ -188,7 +189,7 @@ var _ = Describe("Testflow execution tests", func() {
 				// create file in shared folder
 				{
 					{
-						Name: "check-file-testdef",
+						Name: "check-file-content-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
@@ -207,7 +208,7 @@ var _ = Describe("Testflow execution tests", func() {
 				// check in a another step if file exists in shared folder
 				{
 					{
-						Name: "check-file-testdef",
+						Name: "check-file-content-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
@@ -284,7 +285,7 @@ var _ = Describe("Testflow execution tests", func() {
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
 						{
-							Name: "check-file-testdef",
+							Name: "check-file-content-testdef",
 						},
 					},
 				}
@@ -331,7 +332,7 @@ var _ = Describe("Testflow execution tests", func() {
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
 						{
-							Name: "check-file-testdef",
+							Name: "check-file-content-testdef",
 						},
 					},
 				}
@@ -345,7 +346,7 @@ var _ = Describe("Testflow execution tests", func() {
 						Type: tmv1beta1.ConfigTypeFile,
 						Name: "TEST_NAME",
 						Path: "/tmp/test/test.txt",
-						ValueFrom: &tmv1beta1.ConfigSource{
+						ValueFrom: &strconf.ConfigSource{
 							SecretKeyRef: &corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: secret.Name,
@@ -385,7 +386,7 @@ var _ = Describe("Testflow execution tests", func() {
 				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
 					{
 						{
-							Name: "check-file-testdef",
+							Name: "check-file-content-testdef",
 						},
 					},
 				}
@@ -399,7 +400,7 @@ var _ = Describe("Testflow execution tests", func() {
 						Type: tmv1beta1.ConfigTypeFile,
 						Name: "TEST_NAME",
 						Path: "/tmp/test/test.txt",
-						ValueFrom: &tmv1beta1.ConfigSource{
+						ValueFrom: &strconf.ConfigSource{
 							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: configmap.Name,

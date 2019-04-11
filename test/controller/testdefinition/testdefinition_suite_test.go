@@ -27,6 +27,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/test/resources"
@@ -42,7 +43,7 @@ func TestValidationWebhook(t *testing.T) {
 	RunSpecs(t, "Testrun testdefinition Integration Test Suite")
 }
 
-var _ = Describe("Testflow execution tests", func() {
+var _ = Describe("Testrun tests", func() {
 
 	var (
 		commitSha string
@@ -83,7 +84,7 @@ var _ = Describe("Testflow execution tests", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should run a TesDef with a evironment variable defined by a secret", func() {
+			It("should run a TesDef with a environment variable defined by a secret", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
@@ -95,12 +96,20 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				_, err := tmClient.CreateSecret(namespace, "test-secret", corev1.SecretTypeOpaque, map[string][]byte{
-					"test": []byte("test"),
-				}, false)
+				secret := &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: namespace,
+					},
+					Type: corev1.SecretTypeOpaque,
+					Data: map[string][]byte{
+						"test": []byte("test"),
+					},
+				}
+				err := tmClient.Client().Create(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := tmClient.DeleteSecret(namespace, "test-secret")
+					err := tmClient.Client().Delete(ctx, secret)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 
@@ -123,12 +132,20 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				_, err := tmClient.CreateSecret(namespace, "test-secret-file", corev1.SecretTypeOpaque, map[string][]byte{
-					"test": []byte("test"),
-				}, false)
+				secret := &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret-file",
+						Namespace: namespace,
+					},
+					Type: corev1.SecretTypeOpaque,
+					Data: map[string][]byte{
+						"test": []byte("test"),
+					},
+				}
+				err := tmClient.Client().Create(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := tmClient.DeleteSecret(namespace, "test-secret-file")
+					err := tmClient.Client().Delete(ctx, secret)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 

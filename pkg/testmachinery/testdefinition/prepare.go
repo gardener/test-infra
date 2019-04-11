@@ -18,7 +18,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"net/url"
+	"path"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -30,7 +33,7 @@ import (
 
 // NewPrepare creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
-func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) *PrepareDefinition {
+func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) (*PrepareDefinition, error) {
 	td := &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
 			Name: name,
@@ -70,11 +73,15 @@ func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) *PrepareD
 	}
 	prepare := &PrepareDefinition{&TestDefinition{Info: td, Template: template}, []*PrepareRepository{}}
 
-	prepare.addNetrcFile()
-	prepare.addKubeconfigs(kubeconfigs)
+	if err := prepare.addNetrcFile(); err != nil {
+		return nil, err
+	}
+	if err := prepare.addKubeconfigs(kubeconfigs); err != nil {
+		return nil, err
+	}
 	prepare.TestDefinition.AddSerialStdOutput()
 
-	return prepare
+	return prepare, nil
 }
 
 // AddLocation adds a tesdeflocation to the cloned repos and output artifacts.
@@ -111,60 +118,51 @@ func (p *PrepareDefinition) AddRepositoriesAsArtifacts() error {
 
 // addKubeconfig adds all defined kubeconfigs as files to the prepare pod
 func (p *PrepareDefinition) addKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
+	if kubeconfigs.Gardener != nil {
+		return p.addKubeconfig("shoot", kubeconfigs.Shoot)
+	}
+	if kubeconfigs.Seed != nil {
+		return p.addKubeconfig("seed", kubeconfigs.Shoot)
+	}
+	if kubeconfigs.Shoot != nil {
+		return p.addKubeconfig("shoot", kubeconfigs.Shoot)
+	}
+	return nil
+}
 
-	if kubeconfigs.Gardener != "" {
-		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfigs.Gardener)
-		if err != nil {
-			log.Error("Cannot parse gardener config")
-			return err
-		}
-		p.TestDefinition.AddInputArtifacts(argov1.Artifact{
-			Name: "gardener",
-			Path: fmt.Sprintf("%s/gardener.config", testmachinery.TM_KUBECONFIG_PATH),
-			ArtifactLocation: argov1.ArtifactLocation{
-				Raw: &argov1.RawArtifact{
-					Data: string(kubeconfig),
-				},
-			},
-		})
-	}
-	if kubeconfigs.Seed != "" {
-		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfigs.Seed)
-		if err != nil {
-			log.Error("Cannot parse seed config")
-			return err
-		}
-		p.TestDefinition.AddInputArtifacts(argov1.Artifact{
-			Name: "seed",
-			Path: fmt.Sprintf("%s/seed.config", testmachinery.TM_KUBECONFIG_PATH),
-			ArtifactLocation: argov1.ArtifactLocation{
-				Raw: &argov1.RawArtifact{
-					Data: string(kubeconfig),
-				},
-			},
-		})
-	}
-	if kubeconfigs.Shoot != "" {
-		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfigs.Shoot)
+func (p *PrepareDefinition) addKubeconfig(name string, kubeconfig *strconf.StringOrConfig) error {
+	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
+	if kubeconfig.Type == strconf.String {
+		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
 		if err != nil {
 			log.Error("Cannot parse shoot config")
 			return err
 		}
 		p.TestDefinition.AddInputArtifacts(argov1.Artifact{
-			Name: "shoot",
-			Path: fmt.Sprintf("%s/shoot.config", testmachinery.TM_KUBECONFIG_PATH),
+			Name: name,
+			Path: kubeconfigPath,
 			ArtifactLocation: argov1.ArtifactLocation{
 				Raw: &argov1.RawArtifact{
 					Data: string(kubeconfig),
 				},
 			},
 		})
+		return nil
 	}
-	return nil
+	if kubeconfig.Type == strconf.Config {
+		cfg := config.NewElement(&tmv1beta1.ConfigElement{
+			Type:      tmv1beta1.ConfigTypeFile,
+			Name:      name,
+			Path:      kubeconfigPath,
+			ValueFrom: kubeconfig.Config(),
+		})
+		p.TestDefinition.AddVolumeMount(cfg.Name(), kubeconfigPath, path.Base(kubeconfigPath), true)
+		return p.TestDefinition.AddVolumeFromConfig(cfg)
+	}
+	return fmt.Errorf("Undefined StringSecType %s", string(kubeconfig.Type))
 }
 
 func (p *PrepareDefinition) addNetrcFile() error {
-
 	netrc := ""
 
 	for _, secret := range testmachinery.GetConfig().GitSecrets {

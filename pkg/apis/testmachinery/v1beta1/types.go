@@ -16,7 +16,7 @@ package v1beta1
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -175,11 +175,11 @@ type TestLocation struct {
 	HostPath string `json:"hostPath,omitempty"`
 }
 
-// TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener kubeconfig for the Testrun can be specified.
+// TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.
 type TestrunKubeconfigs struct {
-	Gardener string `json:"gardener,omitempty"`
-	Seed     string `json:"seed,omitempty"`
-	Shoot    string `json:"shoot,omitempty"`
+	Gardener *strconf.StringOrConfig `json:"gardener,omitempty"`
+	Seed     *strconf.StringOrConfig `json:"seed,omitempty"`
+	Shoot    *strconf.StringOrConfig `json:"shoot,omitempty"`
 }
 
 // ConfigElement is a parameter of a certain type which is passed to TestDefinitions.
@@ -196,21 +196,11 @@ type ConfigElement struct {
 
 	// Fetches the value from a secret or configmap on the testmachinery cluster.
 	// +optional
-	ValueFrom *ConfigSource `json:"valueFrom,omitempty"`
+	ValueFrom *strconf.ConfigSource `json:"valueFrom,omitempty"`
 
 	// Only for type=file. Path where the file should be mounted.
 	// +optional
 	Path string `json:"path"`
-}
-
-// ConfigSource represents a source for the value of a config element.
-type ConfigSource struct {
-	// Selects a key of a ConfigMap.
-	// +optional
-	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a secret in the pod's namespace
-	// +optional
-	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // TestFlow is a 2 dimensional array of testflow-steps which define the execution order of TestDefinitions.
