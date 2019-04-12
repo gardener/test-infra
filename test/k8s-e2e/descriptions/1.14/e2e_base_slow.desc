@@ -1,6 +1,5 @@
 [Conformance]
 [k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] experimental resource usage tracking [Feature:ExperimentalResourceUsageTracking] resource tracking for 100 pods per node
-[k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 0 pods per node
 [k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 100 pods per node
 [k8s.io] EquivalenceCache [Serial] validates GeneralPredicates is properly invalidated when a pod is scheduled [Slow]
 [k8s.io] EquivalenceCache [Serial] validates pod affinity works properly when new replica pod is scheduled
