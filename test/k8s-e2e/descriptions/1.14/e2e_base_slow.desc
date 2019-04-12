@@ -66,7 +66,6 @@
 [sig-storage] Secrets Should fail non-optional pod creation due to the key in the secret object does not exist [Slow]
 [sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications with PVCs
-[sig-network] ClusterDns [Feature:Example] should create pod that uses dns
 [sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should implement legacy replacement when the update strategy is OnDelete
 [sig-autoscaling] [HPA] Horizontal pod autoscaling (scale resource: CPU) [sig-autoscaling] ReplicationController light Should scale from 2 pods to 1 pod
 [sig-apps] StatefulSet [k8s.io] Deploy clustered applications [Feature:StatefulSet] [Slow] should creating a working CockroachDB cluster
