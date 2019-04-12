@@ -2,3 +2,4 @@
 [sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should adopt matching orphans and release non-matching pods
 [sig-storage] PVC Protection Verify that PVC in active use by a pod is not removed immediately
 [sig-storage] PVC Protection Verify that scheduling of a pod that uses PVC that is being deleted fails and the pod becomes Unschedulable
+[k8s.io] Pods should support pod readiness gates [NodeFeature:PodReadinessGate]

@@ -1,1 +1,2 @@
 [sig-network] Networking should provide Internet connection for containers [Feature:Networking-IPv4]
+[k8s.io] Pods should support pod readiness gates [NodeFeature:PodReadinessGate]
