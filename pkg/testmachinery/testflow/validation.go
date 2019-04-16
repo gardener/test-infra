@@ -37,6 +37,12 @@ func Validate(identifier string, tf *tmv1beta1.TestFlow, tl testdefinition.TestD
 				return fmt.Errorf("%s: Required value: name or label have to be specified", identifier)
 			}
 
+			if step.Name != "" {
+				if err := testdefinition.ValidateName(identifier, step.Name); err != nil {
+					return err
+				}
+			}
+
 			if step.Condition != tmv1beta1.ConditionTypeAlways &&
 				step.Condition != tmv1beta1.ConditionTypeSuccess &&
 				step.Condition != tmv1beta1.ConditionTypeError &&

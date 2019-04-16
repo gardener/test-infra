@@ -118,8 +118,13 @@ func (l *GitLocation) getTestDefs() ([]*TestDefinition, error) {
 			if err == nil {
 				if def.Kind == tmv1beta1.TestDefinitionName {
 					if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-						definitions = append(definitions, New(&def, l, file.GetName()))
-						log.Debugf("Found Testdefinition %s", def.Metadata.Name)
+						definition, err := New(&def, l, file.GetName())
+						if err != nil {
+							log.Debugf("cannot build testdefinition for %s: %s", *file.Name, err.Error())
+							continue
+						}
+						definitions = append(definitions, definition)
+						log.Debugf("found Testdefinition %s", def.Metadata.Name)
 					}
 				}
 			} else {
@@ -184,8 +189,11 @@ func (l *GitLocation) getGitHubAPI() string {
 
 func getGitConfig(gitURL *url.URL) *testmachinery.GitConfig {
 	httpURL := fmt.Sprintf("%s://%s", gitURL.Scheme, gitURL.Host)
+	if testmachinery.GetConfig() == nil {
+		return nil
+	}
 	for _, secret := range testmachinery.GetConfig().GitSecrets {
-		if secret.HttpUrl == httpURL {
+		if secret != nil && secret.HttpUrl == httpURL {
 			return secret
 		}
 	}

@@ -15,6 +15,7 @@
 package config_test
 
 import (
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"testing"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -36,9 +37,9 @@ var _ = Describe("Config", func() {
 
 		DescribeTable("create config elements",
 			func(configs []tmv1beta1.ConfigElement) {
-				new := config.New(configs)
-				Expect(len(configs)).To(Equal(len(new)))
-				for i, newElem := range new {
+				newConfigs := config.New(configs)
+				Expect(len(configs)).To(Equal(len(newConfigs)))
+				for i, newElem := range newConfigs {
 					Expect(*newElem.Info).To(Equal(configs[i]))
 					Expect(newElem.Name).ToNot(Equal(""))
 				}
@@ -72,7 +73,7 @@ var _ = Describe("Config", func() {
 			elem := tmv1beta1.ConfigElement{
 				Name:      "testConfig",
 				Type:      "env",
-				ValueFrom: &tmv1beta1.ConfigSource{},
+				ValueFrom: &strconf.ConfigSource{},
 			}
 			Expect(config.Validate("identifier", elem)).To(HaveOccurred())
 		})
@@ -81,7 +82,7 @@ var _ = Describe("Config", func() {
 			elem := tmv1beta1.ConfigElement{
 				Name: "testConfig",
 				Type: "env",
-				ValueFrom: &tmv1beta1.ConfigSource{
+				ValueFrom: &strconf.ConfigSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						Key: "test",
 						LocalObjectReference: corev1.LocalObjectReference{

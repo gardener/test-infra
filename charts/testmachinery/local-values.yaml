@@ -15,6 +15,7 @@
 
 controller:
   tag: latest
+  pullPolicy: Never
   serviceAccountName: testmachinery-controller
   tls:
     crt: |

@@ -23,8 +23,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// newElement creates a new config element object.
-func newElement(config *tmv1beta1.ConfigElement) *Element {
+// NewElement creates a new config element object.
+func NewElement(config *tmv1beta1.ConfigElement) *Element {
 	name := fmt.Sprintf("%s-%s", config.Type, util.RandomString(3))
 	return &Element{config, name}
 }
@@ -34,7 +34,7 @@ func New(configs []tmv1beta1.ConfigElement) []*Element {
 	var newConfigs []*Element
 	for _, config := range configs {
 		c := config
-		newConfigs = append(newConfigs, newElement(&c))
+		newConfigs = append(newConfigs, NewElement(&c))
 	}
 	return newConfigs
 }

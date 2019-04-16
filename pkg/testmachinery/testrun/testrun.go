@@ -35,13 +35,19 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig := config.New(tr.Spec.Config)
 
 	// create initial prepare step
-	prepare := testdefinition.NewPrepare("Prepare", tr.Spec.Kubeconfigs)
+	prepare, err := testdefinition.NewPrepare("Prepare", tr.Spec.Kubeconfigs)
+	if err != nil {
+		return nil, err
+	}
 	tf, err := testflow.New(testflow.FlowIDTest, &tr.Spec.TestFlow, testDefinitions, globalConfig, prepare)
 	if err != nil {
 		return nil, err
 	}
 
-	onExitPrepare := testdefinition.NewPrepare("PostPrepare", tr.Spec.Kubeconfigs)
+	onExitPrepare, err := testdefinition.NewPrepare("PostPrepare", tr.Spec.Kubeconfigs)
+	if err != nil {
+		return nil, err
+	}
 	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, testDefinitions, globalConfig, onExitPrepare)
 	if err != nil {
 		return nil, err
@@ -59,10 +65,13 @@ func (tr *Testrun) GetWorkflow(name, namespace string, pullImageSecretNames []st
 	if err != nil {
 		return nil, err
 	}
-
 	onExitTemplates, err := tr.OnExitTestflow.GetTemplates(onExitName)
 	if err != nil {
 		return nil, err
 	}
-	return argo.CreateWorkflow(name, namespace, testrunName, onExitName, append(templates, onExitTemplates...), tr.Testflow.GetLocalVolumes(), tr.Info.Spec.TTLSecondsAfterFinished, pullImageSecretNames)
+
+	volumes := tr.Testflow.GetLocalVolumes()
+	onExitVolumes := tr.OnExitTestflow.GetLocalVolumes()
+
+	return argo.CreateWorkflow(name, namespace, testrunName, onExitName, append(templates, onExitTemplates...), append(volumes, onExitVolumes...), tr.Info.Spec.TTLSecondsAfterFinished, pullImageSecretNames)
 }

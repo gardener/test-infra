@@ -90,7 +90,12 @@ func (l *LocalLocation) readTestDefs() ([]*TestDefinition, error) {
 			def, err := util.ParseTestDef(data)
 			if err == nil {
 				if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-					definitions = append(definitions, New(&def, l, file.Name()))
+					definition, err := New(&def, l, file.Name())
+					if err != nil {
+						log.Debugf("cannot build testdefinition %s: %s", file.Name(), err.Error())
+						continue
+					}
+					definitions = append(definitions, definition)
 				}
 			}
 		}

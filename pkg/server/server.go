@@ -52,7 +52,10 @@ func Serve(ctx context.Context, mgr manager.Manager) {
 		}
 	}()
 
-	trWebhook := webhooks.NewTestrunWebhook(mgr.GetAdmissionDecoder())
+	trWebhook, err := webhooks.NewTestrunWebhook(mgr.GetAdmissionDecoder())
+	if err != nil {
+		log.Fatalf("cannot create testrun webhook: %s", err.Error())
+	}
 
 	serverMuxHTTPS.HandleFunc("/webhooks/validate-testrun", trWebhook.Validate)
 

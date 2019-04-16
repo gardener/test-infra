@@ -17,6 +17,7 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"strings"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -36,24 +37,8 @@ func Validate(identifier string, config tmv1beta1.ConfigElement) error {
 
 	// if a valuefrom is defined then a configmap or a secret reference should be defined
 	if config.ValueFrom != nil {
-		if config.ValueFrom.ConfigMapKeyRef == nil && config.ValueFrom.SecretKeyRef == nil {
-			return fmt.Errorf("%s.valueFrom.(configMapKeyRef or secretMapKeyRef): Required configMapKeyRef or secretMapKeyRef: Either a configmap ref or a secretmap ref have to be defined", identifier)
-		}
-		if config.ValueFrom.ConfigMapKeyRef != nil {
-			if config.ValueFrom.ConfigMapKeyRef.Key == "" {
-				return fmt.Errorf("%s.valueFrom.configMapKeyRef.key: Required value", identifier)
-			}
-			if config.ValueFrom.ConfigMapKeyRef.Name == "" {
-				return fmt.Errorf("%s.valueFrom.configMapKeyRef.name: Required value", identifier)
-			}
-		}
-		if config.ValueFrom.SecretKeyRef != nil {
-			if config.ValueFrom.SecretKeyRef.Key == "" {
-				return fmt.Errorf("%s.valueFrom.secretKeyRef.key: Required value", identifier)
-			}
-			if config.ValueFrom.SecretKeyRef.Name == "" {
-				return fmt.Errorf("%s.valueFrom.secretKeyRef.name: Required value", identifier)
-			}
+		if err := strconf.Validate(fmt.Sprintf("%s.valueFrom", identifier), config.ValueFrom); err != nil {
+			return err
 		}
 	}
 

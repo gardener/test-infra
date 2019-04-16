@@ -17,6 +17,7 @@ package testrun
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"reflect"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,7 +42,7 @@ func Validate(tr *tmv1beta1.Testrun) error {
 	k := reflect.ValueOf(tr.Spec.Kubeconfigs)
 	typeOfK := k.Type()
 	for i := 0; i < k.NumField(); i++ {
-		if err := validateKubeconfig(fmt.Sprintf("spec.kubeconfig.%s", typeOfK.Field(i).Name), k.Field(i).String()); err != nil {
+		if err := validateKubeconfig(fmt.Sprintf("spec.strconf.%s", typeOfK.Field(i).Name), k.Field(i).Interface().(*strconf.StringOrConfig)); err != nil {
 			return err
 		}
 	}
@@ -51,26 +52,36 @@ func Validate(tr *tmv1beta1.Testrun) error {
 		return err
 	}
 
-	if err := testflow.Validate(fmt.Sprintf("spec.testFlow"), &tr.Spec.TestFlow, testDefinitions, false); err != nil {
+	if err := testflow.Validate("spec.testFlow", &tr.Spec.TestFlow, testDefinitions, false); err != nil {
 		return err
 	}
 
-	if err := testflow.Validate(fmt.Sprintf("spec.onExit"), &tr.Spec.OnExit, testDefinitions, true); err != nil {
+	if err := testflow.Validate("spec.onExit", &tr.Spec.OnExit, testDefinitions, true); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateKubeconfig(identifier, data string) error {
-	kubeconfig, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		return fmt.Errorf("%s: Cannot decode: %s", identifier, err.Error())
+func validateKubeconfig(identifier string, kubeconfig *strconf.StringOrConfig) error {
+	if kubeconfig == nil {
+		return nil
+	}
+	if kubeconfig.Type == strconf.String {
+		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
+		if err != nil {
+			return fmt.Errorf("%s: Cannot decode: %s", identifier, err.Error())
+		}
+
+		_, err = clientcmd.Load(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("%s: Cannot build config: %s", identifier, err.Error())
+		}
+		return nil
+	}
+	if kubeconfig.Type == strconf.Config {
+		return strconf.Validate(identifier, kubeconfig.Config())
 	}
 
-	_, err = clientcmd.Load(kubeconfig)
-	if err != nil {
-		return fmt.Errorf("%s: Cannot build config: %s", identifier, err.Error())
-	}
-	return nil
+	return fmt.Errorf("%s: Undefined StringSecType %s", identifier, string(kubeconfig.Type))
 }
