@@ -25,7 +25,6 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	log "github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -217,47 +216,60 @@ func (td *TestDefinition) AddConfig(configs []*config.Element) error {
 	for _, cfg := range configs {
 		switch cfg.Info.Type {
 		case tmv1beta1.ConfigTypeEnv:
-			if cfg.Info.Value != "" {
-				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, cfg.Info.Value))
-				td.AddEnvVars(apiv1.EnvVar{Name: cfg.Info.Name, Value: cfg.Info.Value})
-			} else {
-				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, "from secret or configmap"))
-				td.AddEnvVars(apiv1.EnvVar{
-					Name: cfg.Info.Name,
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: cfg.Info.ValueFrom.ConfigMapKeyRef,
-						SecretKeyRef:    cfg.Info.ValueFrom.SecretKeyRef,
-					},
-				})
+			if err := td.addConfigAsEnv(cfg); err != nil {
+				return err
 			}
 		case tmv1beta1.ConfigTypeFile:
-			// https://github.com/argoproj/argo/blob/master/examples/secrets.yaml
-			if cfg.Info.Value != "" {
-				data, err := base64.StdEncoding.DecodeString(cfg.Info.Value)
-				if err != nil {
-					log.Warnf("Cannot decode value of %s: %s", cfg.Info.Name, err.Error())
-					continue
-				}
-
-				// add as input parameter to see parameters in argo ui
-				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, cfg.Info.Value))
-				td.AddInputArtifacts(argov1.Artifact{
-					Name: cfg.Name(),
-					Path: cfg.Info.Path,
-					ArtifactLocation: argov1.ArtifactLocation{
-						Raw: &argov1.RawArtifact{
-							Data: string(data),
-						},
-					},
-				})
-			} else if cfg.Info.ValueFrom != nil {
-				td.AddInputParameter(cfg.Name(), fmt.Sprintf("%s: %s", cfg.Info.Name, "from secret or configmap"))
-				td.AddVolumeMount(cfg.Name(), cfg.Info.Path, path.Base(cfg.Info.Path), true)
-				return td.AddVolumeFromConfig(cfg)
+			if err := td.addConfigAsFile(cfg); err != nil {
+				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (td *TestDefinition) addConfigAsEnv(element *config.Element) error {
+	if element.Info.Value != "" {
+		// add as input parameter to see parameters in argo ui
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Value))
+		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Value})
+	} else {
+		// add as input parameter to see parameters in argo ui
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, "from secret or configmap"))
+		td.AddEnvVars(apiv1.EnvVar{
+			Name: element.Info.Name,
+			ValueFrom: &corev1.EnvVarSource{
+				ConfigMapKeyRef: element.Info.ValueFrom.ConfigMapKeyRef,
+				SecretKeyRef:    element.Info.ValueFrom.SecretKeyRef,
+			},
+		})
+	}
+	return nil
+}
+
+func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
+	if element.Info.Value != "" {
+		data, err := base64.StdEncoding.DecodeString(element.Info.Value)
+		if err != nil {
+			return fmt.Errorf("cannot decode value of %s: %s", element.Info.Name, err.Error())
+		}
+
+		// add as input parameter to see parameters in argo ui
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Value))
+		td.AddInputArtifacts(argov1.Artifact{
+			Name: element.Name(),
+			Path: element.Info.Path,
+			ArtifactLocation: argov1.ArtifactLocation{
+				Raw: &argov1.RawArtifact{
+					Data: string(data),
+				},
+			},
+		})
+	} else if element.Info.ValueFrom != nil {
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, "from secret or configmap"))
+		td.AddVolumeMount(element.Name(), element.Info.Path, path.Base(element.Info.Path), true)
+		return td.AddVolumeFromConfig(element)
 	}
 
 	return nil

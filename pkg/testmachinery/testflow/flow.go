@@ -188,8 +188,6 @@ func (f *Flow) addConfigToTestDefinition(step *Step, td *testdefinition.TestDefi
 	if err := td.AddConfig(f.globalConfig); err != nil {
 		return err
 	}
-	//f.usedConfig = append(f.usedConfig, cfg...)
-	//f.usedConfig = append(f.usedConfig, td.Config...)
 	return nil
 }
 
