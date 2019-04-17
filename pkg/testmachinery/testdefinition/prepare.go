@@ -119,12 +119,12 @@ func (p *PrepareDefinition) AddRepositoriesAsArtifacts() error {
 // addKubeconfig adds all defined kubeconfigs as files to the prepare pod
 func (p *PrepareDefinition) addKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
 	if kubeconfigs.Gardener != nil {
-		if err := p.addKubeconfig("shoot", kubeconfigs.Shoot); err != nil {
+		if err := p.addKubeconfig("gardener", kubeconfigs.Gardener); err != nil {
 			return err
 		}
 	}
 	if kubeconfigs.Seed != nil {
-		if err := p.addKubeconfig("seed", kubeconfigs.Shoot); err != nil {
+		if err := p.addKubeconfig("seed", kubeconfigs.Seed); err != nil {
 			return err
 		}
 	}
