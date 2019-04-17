@@ -16,7 +16,6 @@
 [k8s.io] Sysctls [NodeFeature:Sysctls] should support unsafe sysctls which are actually whitelisted
 [sig-api-machinery] Initializers [Feature:Initializers] should be invisible to controllers by default
 [sig-api-machinery] Initializers [Feature:Initializers] will be set to nil if a patch removes the last pending initializer
-[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should adopt matching orphans and release non-matching pods
 [sig-auth] [Feature:NodeAuthorizer] A node shouldn't be able to create another node
 [sig-auth] [Feature:NodeAuthorizer] A node shouldn't be able to delete another node
 [sig-auth] [Feature:NodeAuthorizer] Getting a non-existent configmap should exit with the Forbidden error, not a NotFound error
@@ -69,7 +68,6 @@
 [sig-storage] ConfigMap should be consumable from pods in volume with mappings as non-root with FSGroup [NodeFeature:FSGroup]
 [sig-storage] Downward API volume should provide podname as non-root with fsgroup [NodeFeature:FSGroup]
 [sig-storage] Downward API volume should provide podname as non-root with fsgroup and defaultMode [NodeFeature:FSGroup]
-[sig-storage] Dynamic Provisioning [k8s.io] GlusterDynamicProvisioner should create and delete persistent volumes [fast]
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] files with FSGroup ownership should support (root,0644,tmpfs)
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] new files should be created with FSGroup ownership when container is non-root
 [sig-storage] EmptyDir volumes when FSGroup is specified [NodeFeature:FSGroup] new files should be created with FSGroup ownership when container is root
@@ -256,8 +254,6 @@
 [sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : projected
 [sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : secret
 [sig-storage] PV Protection Verify that PV bound to a PVC is not removed immediately
-[sig-storage] PVC Protection Verify that PVC in active use by a pod is not removed immediately
-[sig-storage] PVC Protection Verify that scheduling of a pod that uses PVC that is being deleted fails and the pod becomes Unschedulable
 [sig-storage] PersistentVolumes NFS when invoking the Recycle reclaim policy should test that a PV becomes Available and is clean after the PVC is deleted.
 [sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PV and a pre-bound PVC: test write access
 [sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PVC and a pre-bound PV: test write access
@@ -292,7 +288,6 @@
 [sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Inline-volume (default fs)] subPath should support readOnly directory specified in the volumeMount
 [sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Inline-volume (default fs)] subPath should support readOnly file specified in the volumeMount
 [sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Inline-volume (default fs)] volumes should be mountable
-[k8s.io] Pods should support pod readiness gates [NodeFeature:PodReadinessGate]
 [k8s.io] Security Context When creating a pod with readOnlyRootFilesystem should run the container with readonly rootfs when readOnlyRootFilesystem=true [NodeConformance]
 [k8s.io] Security Context When creating a pod with readOnlyRootFilesystem should run the container with writable rootfs when readOnlyRootFilesystem=false [NodeConformance]
 [k8s.io] Security Context when creating containers with AllowPrivilegeEscalation should allow privilege escalation when not explicitly set and uid != 0 [NodeConformance]
