@@ -55,3 +55,6 @@
 [sig-storage] In-tree Volumes [Driver: iscsi][Feature:Volumes] [Testpattern: Inline-volume (default fs)] subPath should be able to unmount after the subpath directory is deleted
 [sig-scheduling] ResourceQuota [Feature:Initializers] should create a ResourceQuota and capture the life of an uninitialized pod.
 [sig-network] [Feature:PerformanceDNS][Serial] Should answer DNS query for maximum number of services per cluster
+[Driver: iscsi]
+[Driver: rbd]
+[Driver: nfs]
