@@ -114,6 +114,21 @@
   revision = "6480d4af844c189cf5dd913db24ddd339d3a4f85"
 
 [[projects]]
+  digest = "1:e54c39e0efe496d1092cf08eaf5109758af22e68d26732683009704db1d0afbe"
+  name = "github.com/dsnet/compress"
+  packages = [
+    ".",
+    "bzip2",
+    "bzip2/internal/sais",
+    "internal",
+    "internal/errors",
+    "internal/prefix",
+  ]
+  pruneopts = "NUT"
+  revision = "da652975a8eea9fa0735aba8056747a751db0bd3"
+  version = "v0.0.1"
+
+[[projects]]
   digest = "1:b7ffca49e9cfd3dfb04a8e0a59347708c6f78f68476a32c5e0a0edca5d1b258c"
   name = "github.com/dustin/go-humanize"
   packages = ["."]
@@ -141,7 +156,7 @@
   version = "v4.1.0"
 
 [[projects]]
-  digest = "1:23ae19f1ae067e50086d1c224fb8cb78e46ff60ef3d2d82c194a61d1a4b7d508"
+  digest = "1:f4b1c16e287df6b9f3f3b729328defcf891f16baa66e3947573cc7da825c3d12"
   name = "github.com/gardener/gardener"
   packages = [
     "pkg/apis/core",
@@ -150,6 +165,7 @@
     "pkg/apis/extensions/v1alpha1",
     "pkg/apis/garden",
     "pkg/apis/garden/v1beta1",
+    "pkg/apis/garden/v1beta1/helper",
     "pkg/chartrenderer",
     "pkg/client/core/clientset/versioned",
     "pkg/client/core/clientset/versioned/scheme",
@@ -158,14 +174,21 @@
     "pkg/client/garden/clientset/versioned",
     "pkg/client/garden/clientset/versioned/scheme",
     "pkg/client/garden/clientset/versioned/typed/garden/v1beta1",
+    "pkg/client/garden/informers/externalversions/garden/v1beta1",
+    "pkg/client/garden/informers/externalversions/internalinterfaces",
+    "pkg/client/garden/listers/garden/v1beta1",
     "pkg/client/kubernetes",
     "pkg/client/machine/clientset/versioned",
     "pkg/client/machine/clientset/versioned/scheme",
     "pkg/client/machine/clientset/versioned/typed/machine/v1alpha1",
     "pkg/logger",
+    "pkg/operation/common",
+    "pkg/operation/shoot",
     "pkg/utils",
     "pkg/utils/kubernetes",
     "pkg/utils/kubernetes/health",
+    "test/integration/framework",
+    "test/integration/shoots",
   ]
   pruneopts = "NUT"
   revision = "4fdf8d7bad282404d6b158e56778027b1723a1b1"
@@ -295,6 +318,14 @@
   pruneopts = "NUT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:7f114b78210bf5b75f307fc97cff293633c835bab1e0ea8a744a44b39c042dfe"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "2a8bb927dd31d8daada140a5d09578521ce5c36a"
+  version = "v0.0.1"
 
 [[projects]]
   branch = "master"
@@ -454,6 +485,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:2f3f339e83dac7b41821f00b1d87ae5a725b56798f68f0196404b48b9133e3e6"
+  name = "github.com/mholt/archiver"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d572b2e8b82726cee9476d1b9d63a7fe9b601ff1"
+  version = "v3.1.1"
+
+[[projects]]
   digest = "1:ba69b8ccc110f032a0a92edd99b99d920b504f8e2a05d505c35b0de1e52f50e8"
   name = "github.com/miekg/dns"
   packages = ["."]
@@ -499,6 +538,14 @@
   pruneopts = "NUT"
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  digest = "1:2aad42cee2de3346961cb38e77eada96150d266b9a5e289f5f8c05696b22f875"
+  name = "github.com/nwaples/rardecode"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "cc3e4b2381762c56dbcdf9f93be03349a1dc1c14"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:10621c39d6d019314d0ef4d28de9a9f6a065449398f06f73ac3c6a5ae0b6f44e"
@@ -572,6 +619,17 @@
   pruneopts = "NUT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:81fa7999ed0cfd4c84e089e01d306cba7634095fd0fafc5011afa56c2ca2a4fe"
+  name = "github.com/pierrec/lz4"
+  packages = [
+    ".",
+    "internal/xxh32",
+  ]
+  pruneopts = "NUT"
+  revision = "9419d2361c8ae111073ffe3337ecc364fb590921"
+  version = "v2.1.2"
 
 [[projects]]
   digest = "1:14715f705ff5dfe0ffd6571d7d201dd8e921030f8070321a79380d8ca4ec1a24"
@@ -661,6 +719,27 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:5f252b001e9573efb54ffae53b96bb5bfa4963afec4f35d607121ebb4a4dff81"
+  name = "github.com/ulikunitz/xz"
+  packages = [
+    ".",
+    "internal/hash",
+    "internal/xlog",
+    "lzma",
+  ]
+  pruneopts = "NUT"
+  revision = "6f934d456d51e742b4eeab20d925a827ef22320a"
+  version = "v0.5.6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:159b0dc5c65f4e957a1ad3c848effb2bcb6199271683f702852bacf261ebd5e2"
+  name = "github.com/xi2/xz"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "48954b6210f8d154cb5f8484d3a3e1f83489309e"
+
+[[projects]]
   digest = "1:22f696cee54865fb8e9ff91df7b633f6b8f22037a8015253c6b6a71ca82219c7"
   name = "go.uber.org/atomic"
   packages = ["."]
@@ -693,13 +772,21 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:27055d5865183304dcee52a6716daa9341979402bc43a455f8c68ad8b140d6f4"
+  digest = "1:72ee8480ccc172207a4137843e171d930bf7f451472f3da79e75be4865e01fbf"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
     "blake2b",
+    "cast5",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/clearsign",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
     "pbkdf2",
     "scrypt",
     "ssh/terminal",
@@ -1094,16 +1181,26 @@
   revision = "f8a0810f38afb8478882b3835a615aebfda39afa"
 
 [[projects]]
-  digest = "1:c149e87a29715cf18298350e33202d1754c5ecf1e7649642ed7e940835a81ff0"
+  digest = "1:63030f6d6587ab552da835c52ca4cb55b2c4081319833d175eddf24a6aaa7fc1"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
+    "pkg/downloader",
     "pkg/engine",
+    "pkg/getter",
+    "pkg/helm/environment",
+    "pkg/helm/helmpath",
     "pkg/ignore",
+    "pkg/plugin",
     "pkg/proto/hapi/chart",
     "pkg/proto/hapi/version",
+    "pkg/provenance",
+    "pkg/repo",
+    "pkg/resolver",
     "pkg/sympath",
     "pkg/timeconv",
+    "pkg/tlsutil",
+    "pkg/urlutil",
     "pkg/version",
   ]
   pruneopts = "NUT"
@@ -1205,7 +1302,12 @@
     "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
     "github.com/gardener/gardener/pkg/client/kubernetes",
+    "github.com/gardener/gardener/pkg/client/machine/clientset/versioned/typed/machine/v1alpha1",
+    "github.com/gardener/gardener/pkg/logger",
+    "github.com/gardener/gardener/pkg/utils",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
+    "github.com/gardener/gardener/test/integration/framework",
+    "github.com/gardener/gardener/test/integration/shoots",
     "github.com/go-openapi/spec",
     "github.com/google/go-github/github",
     "github.com/joho/godotenv",
@@ -1231,6 +1333,7 @@
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/version",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
