@@ -56,10 +56,11 @@ spec:
           claimName: minio-pv-claim
       containers:
       - name: minio
-        image: minio/minio
+        image: minio/minio:{{ .Values.objectStorage.tag }}
         args:
         - server
         - /storage
+        - --json
         env:
         # Minio access key and secret key
         - name: MINIO_ACCESS_KEY
@@ -74,6 +75,24 @@ spec:
               key: secretKey
         ports:
         - containerPort: 9000
+        # Readiness probe detects situations when MinIO server instance
+        # is not ready to accept traffic. Kubernetes doesn't forward
+        # traffic to the pod while readiness checks fail.
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+        # Liveness probe detects situations where MinIO server instance
+        # is not working properly and needs restart. Kubernetes automatically
+        # restarts the pods if liveness checks fail.
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
         resources:
           limits:
             memory: 256Mi

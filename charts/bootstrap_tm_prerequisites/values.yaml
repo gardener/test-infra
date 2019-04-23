@@ -20,8 +20,9 @@ argoui:
   serviceType: ClusterIP
 
 objectStorage:
+  tag: "latest"
   distributed:
-    enabled: false # true will deploys a statefulset instead of a deployment
+    enabled: false # true will deploy a statefulset instead of a deployment
     replicas: 4 # have to be even and min 4 -> https://docs.minio.io/docs/minio-erasure-code-quickstart-guide
   bucketName: "tm-bucket"
   serviceEndpoint: "minio-service"
