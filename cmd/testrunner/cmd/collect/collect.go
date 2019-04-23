@@ -107,15 +107,21 @@ var collectCmd = &cobra.Command{
 func init() {
 	// configuration flags
 	collectCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
-	collectCmd.MarkFlagRequired("tm-kubeconfig-path")
-	collectCmd.MarkFlagFilename("tm-kubeconfig-path")
+	if err := collectCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
+		log.Warn(err)
+	}
+	if err := collectCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
+		log.Warn(err)
+	}
 	collectCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	collectCmd.Flags().StringVarP(&testrunName, "tr-name", "t", "", "Name of the testrun to collect results.")
-	collectCmd.MarkFlagRequired("testruns-chart-path")
+	if err := collectCmd.MarkFlagRequired("testruns-chart-path"); err != nil {
+		log.Warn(err)
+	}
 
 	// parameter flags
-	collectCmd.Flags().StringVar(&outputDirPath, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
+	collectCmd.Flags().StringVarP(&outputDirPath, "output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
 	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")

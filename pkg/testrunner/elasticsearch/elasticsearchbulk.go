@@ -85,7 +85,7 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) BulkList
 	err := json.Unmarshal(docs, &jsonBody)
 	if err == nil {
 		jsonBody["tm"] = stepMeta
-		patchedDoc, err := json.Marshal(jsonBody)
+		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody)
 		if err != nil {
 			log.Warnf("Cannot marshal exported json with metadata from %s", name)
 			return make(BulkList, 0)
