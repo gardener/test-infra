@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 	"sync"
 	"text/template"
 	"time"
@@ -33,8 +34,9 @@ import (
 )
 
 var (
-	InitializationTimeout = 1800 * time.Second
-	DiskAttachTestTimeout = 1800 * time.Second
+	InitializationTimeout = 30 * time.Minute
+	CleanupTimeout        = 30 * time.Minute
+	DiskAttachTestTimeout = 90 * time.Minute
 
 	StatefulSetNum = 10
 
@@ -42,6 +44,8 @@ var (
 	shootName      = flag.String("shootName", "", "the name of the shoot we want to test")
 	shootNamespace = flag.String("shootNamespace", "", "the namespace name that the shoot resides in")
 	outputDirPath  = flag.String("output-dir-path", "", "Path to the directory where the results should be written to.")
+
+	volumesNum = flag.String("volumes-num", "", "Number of parallel volumes")
 )
 
 func validateFlags() {
@@ -51,6 +55,12 @@ func validateFlags() {
 
 	if !FileExists(*kubeconfig) {
 		Fail("kubeconfig path does not exist")
+	}
+
+	if volumesNum != nil && *volumesNum != "" {
+		var err error
+		StatefulSetNum, err = strconv.Atoi(*volumesNum)
+		Expect(err).ToNot(HaveOccurred())
 	}
 }
 
@@ -124,7 +134,7 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 			Expect(err).NotTo(HaveOccurred())
 		}
 
-	}, InitializationTimeout)
+	}, CleanupTimeout)
 
 	CIt("should deploy multiple statefulsets and evict pods to another node", func(ctx context.Context) {
 		ctx = context.WithValue(ctx, "name", "vm attach test")
@@ -155,7 +165,7 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 			err = shootTestOperations.ShootClient.Applier().ApplyManifest(ctx, manifestReader, kubernetes.DefaultApplierOptions)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = shootTestOperations.WaitUntilStatefulSetIsRunning(ctx, tplParams.Name, tplParams.Namespace, shootTestOperations.ShootClient)
+			err = WaitUntilStatefulSetIsHealthy(ctx, shootTestOperations, tplParams.Name, tplParams.Namespace, shootTestOperations.ShootClient)
 			Expect(err).NotTo(HaveOccurred())
 		})
 		Expect(err).NotTo(HaveOccurred())
@@ -172,12 +182,12 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 			Expect(err).NotTo(HaveOccurred())
 			startTime := time.Now()
 
-			err = shootTestOperations.WaitUntilStatefulSetIsRunning(ctx, Name(i), namespace, shootTestOperations.ShootClient)
+			err = WaitUntilStatefulSetIsHealthy(ctx, shootTestOperations, Name(i), namespace, shootTestOperations.ShootClient)
 			Expect(err).NotTo(HaveOccurred())
 
 			completionTime := time.Now().Sub(startTime)
 			mutex.Lock()
-			results = append(results, &Result{Name: Name(i), CompletionTime: completionTime.Nanoseconds(), duration: completionTime})
+			results = append(results, &Result{Name: Name(i), VolumesNum: StatefulSetNum, Duration: completionTime.Nanoseconds(), duration: completionTime})
 			mutex.Unlock()
 			shootTestOperations.Logger.Infof("Total time to drain pods for sts %s: %s", Name(i), completionTime.String())
 		})
@@ -198,6 +208,7 @@ func runParallelNTimes(n int, f func(i int)) error {
 	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go func(i int) {
+			defer GinkgoRecover()
 			defer wg.Done()
 			f(i)
 		}(i)
@@ -238,17 +249,37 @@ func setNodesToOne(ctx context.Context, operation *GardenerTestOperation) error 
 
 // WaitUntilStatefulSetIsUnhealthy waits until the stateful set with <statefulSetName> is not running
 func WaitUntilStatefulSetIsUnhealthy(ctx context.Context, operation *GardenerTestOperation, statefulSetName, statefulSetNamespace string, c kubernetes.Interface) error {
-	return wait.PollImmediateUntil(5*time.Second, func() (bool, error) {
+	return WaitUntilStatefulSetHasHealthState(ctx, operation, statefulSetName, statefulSetNamespace, c, false)
+}
+
+// WaitUntilStatefulSetIsHealthy waits until the stateful set with <statefulSetName> is running
+func WaitUntilStatefulSetIsHealthy(ctx context.Context, operation *GardenerTestOperation, statefulSetName, statefulSetNamespace string, c kubernetes.Interface) error {
+	return WaitUntilStatefulSetHasHealthState(ctx, operation, statefulSetName, statefulSetNamespace, c, true)
+}
+
+// WaitUntilStatefulSetHasHealthState waits until the stateful set with <statefulSetName> is in the specified health state
+func WaitUntilStatefulSetHasHealthState(ctx context.Context, operation *GardenerTestOperation, statefulSetName, statefulSetNamespace string, c kubernetes.Interface, healthy bool) error {
+	return wait.PollImmediateUntil(2*time.Second, func() (bool, error) {
 		statefulSet := &appsv1.StatefulSet{}
 		if err := c.Client().Get(ctx, client.ObjectKey{Namespace: statefulSetNamespace, Name: statefulSetName}, statefulSet); err != nil {
-			return false, err
-		}
-
-		if err := health.CheckStatefulSet(statefulSet); err == nil {
-			operation.Logger.Infof("Waiting for %s to be unhealthy!!", statefulSetName)
+			operation.Logger.Errorf("cannot get statefulset %s in namespace %s: %s", statefulSetName, statefulSetNamespace, err.Error())
 			return false, nil
 		}
-		operation.Logger.Infof("%s is now unhealthy!!", statefulSetName)
+
+		if healthy {
+			if err := health.CheckStatefulSet(statefulSet); err != nil {
+				operation.Logger.Infof("waiting for %s to be healthy!!", statefulSetName)
+				return false, nil
+			}
+			operation.Logger.Infof("%s is now unhealthy!!", statefulSetName)
+		} else {
+			if err := health.CheckStatefulSet(statefulSet); err == nil {
+				operation.Logger.Infof("waiting for %s to be unhealthy!!", statefulSetName)
+				return false, nil
+			}
+			operation.Logger.Infof("%s is now healthy!!", statefulSetName)
+		}
+
 		return true, nil
 
 	}, ctx.Done())

@@ -3,9 +3,9 @@ metadata:
   name: disk-attach-perf-test
 spec:
   owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com # OutputQualification DL
-  description: Tests the attach and detachment of 10 disks from one node to another.
+  description: Tests the attach and detachment of n disks from one node to another.
 
-  activeDeadlineSeconds: 1800
+  activeDeadlineSeconds: 3600
   behavior: ["serial"]
 
   command: [bash, -c]
@@ -13,9 +13,10 @@ spec:
     - >-
       /tm/setup github.com/gardener test-infra &&
       go test $GOPATH/src/github.com/gardener/test-infra/test/k8s-tests/perf-disk-attach
-      --v -ginkgo.v -ginkgo.progress -ginkgo.noColor
+      --v -ginkgo.v -ginkgo.progress -ginkgo.noColor --test.timeout 0
       -kubeconfig=$TM_KUBECONFIG_PATH/gardener.config
       -shootName=$SHOOT_NAME
       -shootNamespace=$PROJECT_NAMESPACE
+      -volumes-num=$VOLUMES_NUM
       -output-dir-path=$TM_EXPORT_PATH
   image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.28.0
