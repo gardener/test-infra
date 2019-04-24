@@ -114,7 +114,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
 		if err != nil {
-			log.Errorf("cannot unmarshal document %s", err.Error())
+			log.Debugf("cannot unmarshal document %s", err.Error())
 			continue
 		}
 
@@ -127,7 +127,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
 		if err != nil {
-			log.Errorf("cannot marshal artifact %s", err.Error())
+			log.Debugf("cannot marshal artifact %s", err.Error())
 			continue
 		}
 
