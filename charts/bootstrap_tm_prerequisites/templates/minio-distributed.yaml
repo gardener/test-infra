@@ -84,6 +84,17 @@ spec:
         requests:
           storage: "{{.Values.objectStorage.storage}}"
 ---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: minio
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: minio
+---
 apiVersion: v1
 kind: Service
 metadata:
