@@ -108,16 +108,16 @@ func init() {
 	// configuration flags
 	collectCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	if err := collectCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
-		log.Warn(err)
+		log.Debug(err)
 	}
 	if err := collectCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		log.Warn(err)
+		log.Debug(err)
 	}
 	collectCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	collectCmd.Flags().StringVarP(&testrunName, "tr-name", "t", "", "Name of the testrun to collect results.")
-	if err := collectCmd.MarkFlagRequired("testruns-chart-path"); err != nil {
-		log.Warn(err)
+	if err := collectCmd.MarkFlagRequired("tr-name"); err != nil {
+		log.Debug(err)
 	}
 
 	// parameter flags
