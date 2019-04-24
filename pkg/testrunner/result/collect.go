@@ -16,6 +16,7 @@ package result
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 
@@ -37,12 +38,17 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 
 		err = IngestDir(config.OutputDir, config.ESConfigName)
 		if err != nil {
-			log.Errorf("Cannot persist file %s: %s", config.OutputDir, err.Error())
+			log.Errorf("cannot persist file %s: %s", config.OutputDir, err.Error())
 		} else {
 			err := MarkTestrunsAsIngested(tmClient, run.Testrun)
 			if err != nil {
 				log.Warn(err.Error())
 			}
+		}
+
+		// clean folder
+		if err := os.RemoveAll(config.OutputDir); err != nil {
+			log.Debugf("unable to remove dir %s: %s", config.OutputDir, err.Error())
 		}
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
