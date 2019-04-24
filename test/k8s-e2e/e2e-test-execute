@@ -318,7 +318,7 @@ function generate_description_file() {
 function create_all_e2e_tests_description_file() {
 	if [ "$all_e2e_desc_file_created" = "false" ]; then
 		kubetest --provider skeleton --deployment local --test --check-version-skew false \
-				--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=true" --dump="$log_dir" > /dev/null
+				--test_args="--ginkgo.skip=$ginkgo_skip --allowed-not-ready-nodes=2  --ginkgo.dryRun=true" --dump="$log_dir" > /dev/null
 
 		all_e2e_desc_file_created=true
 		if [ ! -f "${junit_file}" ]; then
@@ -449,7 +449,7 @@ function run_e2e_tests_kubetest() {
 		# kubetest returns a non-zero value in case any test fails
 		# Unclear how to checkwhile read e2e_test ; do if the kubetest call failed
 		kubetest --provider skeleton --deployment local --test --check-version-skew false $run_parallel \
-			--test_args="--ginkgo.skip=$ginkgo_skip --ginkgo.dryRun=false --ginkgo.flakeAttempts=$flake_attempts --ginkgo.focus=$e2e_test" \
+			--test_args="--ginkgo.skip=$ginkgo_skip --allowed-not-ready-nodes=2 --ginkgo.dryRun=false --ginkgo.flakeAttempts=$flake_attempts --ginkgo.focus=$e2e_test" \
 			--dump="$log_dir" > "$e2e_log".tmp  2> /dev/null
 		local res=$?
 		cat "$e2e_log".tmp >> "$e2e_log"
