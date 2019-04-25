@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/version"
 	"os"
 
@@ -99,6 +100,8 @@ func init() {
 		log.SetLevel(log.DebugLevel)
 		log.Warn("Set debug log level")
 	}
+
+	log.Infof("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
 
 	// Set commandline flags
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
