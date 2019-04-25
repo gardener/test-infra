@@ -72,6 +72,10 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 					Value: testmachinery.TM_KUBECONFIG_PATH,
 				},
 				{
+					Name:  "TM_SHARED_PATH",
+					Value: testmachinery.TM_SHARED_PATH,
+				},
+				{
 					Name:  "TM_EXPORT_PATH",
 					Value: testmachinery.TM_EXPORT_PATH,
 				},
@@ -200,13 +204,15 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 // AddSerialStdOutput adds the Kubeconfig output to the TestDefinitions's template.
 func (td *TestDefinition) AddSerialStdOutput() {
 	kubeconfigArtifact := argov1.Artifact{
-		Name: "kubeconfigs",
-		Path: testmachinery.TM_KUBECONFIG_PATH,
+		Name:       "kubeconfigs",
+		GlobalName: "kubeconfigs",
+		Path:       testmachinery.TM_KUBECONFIG_PATH,
 	}
 	td.AddOutputArtifacts(kubeconfigArtifact)
 	sharedFolderArtifact := argov1.Artifact{
-		Name: "sharedFolder",
-		Path: testmachinery.TM_SHARED_PATH,
+		Name:       "sharedFolder",
+		GlobalName: "sharedFolder",
+		Path:       testmachinery.TM_SHARED_PATH,
 	}
 	td.AddOutputArtifacts(sharedFolderArtifact)
 }

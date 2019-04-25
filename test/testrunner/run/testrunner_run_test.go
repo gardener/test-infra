@@ -64,7 +64,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
 		utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
 	})
 

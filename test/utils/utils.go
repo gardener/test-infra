@@ -18,6 +18,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"reflect"
 	"strings"
@@ -130,16 +133,19 @@ func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 }
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
-func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime int64) {
-	startTime := time.Now()
-	for {
-		Expect(util.MaxTimeExceeded(startTime, maxWaitTime)).To(BeFalse(), "Max Wait time for cluster readiness exceeded.")
-		if deploymentIsReady(clusterClient, namespace, "testmachinery-controller") &&
-			deploymentIsReady(clusterClient, namespace, "workflow-controller") &&
-			deploymentIsReady(clusterClient, namespace, "minio-deployment") {
-			break
+func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime int64) error {
+	return wait.PollImmediate(5*time.Second, time.Duration(maxWaitTime)*time.Second, func () (bool, error) {
+		var (
+			tmControllerStatus = deploymentIsReady(clusterClient, namespace, "testmachinery-controller")
+			wfControllerStatus = deploymentIsReady(clusterClient, namespace, "workflow-controller")
+			minioDeploymentStatus = deploymentIsReady(clusterClient, namespace, "minio-deployment")
+		)
+		if tmControllerStatus && wfControllerStatus && minioDeploymentStatus {
+			return true, nil
 		}
-	}
+		log.Infof("waiting for cluster TestMachinery-Controller: %t, Workflow-Controller: %t, Minio: %t readiness...", tmControllerStatus, wfControllerStatus, minioDeploymentStatus)
+		return false, nil
+	})
 }
 
 // WaitForMinioService waits for the minio service to get an external IP and return the minio config.
@@ -171,8 +177,10 @@ func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, name
 }
 
 func deploymentIsReady(clusterClient kubernetes.Interface, namespace, name string) bool {
-	deployment, err := clusterClient.GetDeployment(namespace, name)
+	deployment := &v1.Deployment{}
+	err := clusterClient.Client().Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	if err != nil {
+		log.Debug(err.Error())
 		return false
 	}
 	err = health.CheckDeployment(deployment)

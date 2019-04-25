@@ -69,13 +69,13 @@ func CreateTask(taskName, templateName, phaseRunning string, dependencies []stri
 		Template:     templateName,
 		Dependencies: dependencies,
 		Arguments: argov1.Arguments{
+			Artifacts: artifacts,
 			Parameters: []argov1.Parameter{
 				{
 					Name:  "phase",
 					Value: &phaseRunning,
 				},
 			},
-			Artifacts: artifacts,
 		},
 	}
 }

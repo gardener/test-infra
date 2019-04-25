@@ -27,8 +27,14 @@ import (
 
 // New takes a testflow definition, test definitions and the global config, and creates a new tesrun representation
 func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDefinitions, globalConfig []*config.Element, prepare *testdefinition.PrepareDefinition) (*Testflow, error) {
-
-	rootNode := NewNode(nil, nil, nil, prepare.TestDefinition, &Step{nil, -1, -1}, flowID)
+	rootPrepare, err := testdefinition.NewPrepare("Empty")
+	if err != nil {
+		return nil, err
+	}
+	if prepare != nil {
+		rootPrepare = prepare
+	}
+	rootNode := NewNode(nil, nil, nil, rootPrepare.TestDefinition, &Step{nil, -1, -1}, flowID)
 	rootNode.Task = argo.CreateTask(rootNode.TestDefinition.Template.Name, rootNode.TestDefinition.Template.Name, testmachinery.PHASE_RUNNING, rootNode.GetParentNames(), nil)
 	if err := rootNode.TestDefinition.AddConfig(globalConfig); err != nil {
 		return nil, err
@@ -40,12 +46,14 @@ func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDe
 	}
 
 	// add used locations to prepare step
-	for loc := range flow.usedLocations {
-		prepare.AddLocation(loc)
-	}
-	err = prepare.AddRepositoriesAsArtifacts()
-	if err != nil {
-		return nil, err
+	if prepare != nil {
+		for loc := range flow.usedLocations {
+			prepare.AddLocation(loc)
+		}
+		err = prepare.AddRepositoriesAsArtifacts()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Testflow{tf, flow}, nil

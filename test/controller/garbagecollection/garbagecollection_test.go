@@ -63,7 +63,7 @@ var _ = Describe("Garbage collection tests", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
 		osConfig := utils.WaitForMinioService(tmClient, minioEndpoint, namespace, maxWaitTime)
 
 		minioBucket = osConfig.BucketName

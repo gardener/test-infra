@@ -33,7 +33,7 @@ import (
 
 // NewPrepare creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
-func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) (*PrepareDefinition, error) {
+func NewPrepare(name string) (*PrepareDefinition, error) {
 	td := &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
 			Name: name,
@@ -76,9 +76,6 @@ func NewPrepare(name string, kubeconfigs tmv1beta1.TestrunKubeconfigs) (*Prepare
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
 	}
-	if err := prepare.addKubeconfigs(kubeconfigs); err != nil {
-		return nil, err
-	}
 	prepare.TestDefinition.AddSerialStdOutput()
 
 	return prepare, nil
@@ -91,8 +88,9 @@ func (p *PrepareDefinition) AddLocation(loc Location) {
 		p.repositories = append(p.repositories, &PrepareRepository{Name: loc.Name(), URL: gitLoc.info.Repo, Revision: gitLoc.info.Revision})
 
 		p.TestDefinition.AddOutputArtifacts(argov1.Artifact{
-			Name: loc.Name(),
-			Path: fmt.Sprintf("%s/%s", testmachinery.TM_REPO_PATH, loc.Name()),
+			Name:       loc.Name(),
+			GlobalName: loc.Name(),
+			Path:       fmt.Sprintf("%s/%s", testmachinery.TM_REPO_PATH, loc.Name()),
 		})
 	}
 }
@@ -116,8 +114,8 @@ func (p *PrepareDefinition) AddRepositoriesAsArtifacts() error {
 	return nil
 }
 
-// addKubeconfig adds all defined kubeconfigs as files to the prepare pod
-func (p *PrepareDefinition) addKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
+// AddKubeconfig adds all defined kubeconfigs as files to the prepare pod
+func (p *PrepareDefinition) AddKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
 	if kubeconfigs.Gardener != nil {
 		if err := p.addKubeconfig("gardener", kubeconfigs.Gardener); err != nil {
 			return err
