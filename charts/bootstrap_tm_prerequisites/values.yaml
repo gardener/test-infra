@@ -42,3 +42,7 @@ secrets:
   pullSecrets: []
   # - name: myDockerPullSecretName
   #   dockerconfigjson: base64 encoded dockerconfigjson
+
+reserveExcessCapacity:
+  enabled: false
+  replicas: 5 # each replica reserves 1 CPU and 1GB memory
