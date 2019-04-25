@@ -29,6 +29,7 @@ testrunner run-template [flags]
       --k8s-version string                 Kubernetes version of the shoot.
       --kibana-logging-endpoint string     Kibana endpoint used for logging of the testmachinery cluster.
       --landscape string                   Current gardener landscape.
+      --loadbalancer-provider string       LoadBalancer Provider like haproxy. Only applicable for Openstack.
       --machinetype string                 Machinetype of the shoot's worker nodes.
   -n, --namespace string                   Namesapce where the testrun should be deployed. (default "default")
       --output-dir-path string             The filepath where the summary should be written to. (default "./testout")
