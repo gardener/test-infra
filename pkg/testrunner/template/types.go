@@ -36,6 +36,7 @@ type TestrunParameters struct {
 	AutoscalerMin           string
 	AutoscalerMax           string
 	FloatingPoolName        string
+	LoadBalancerProvider    string
 	ComponentDescriptorPath string
 }
 
