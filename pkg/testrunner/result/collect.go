@@ -16,14 +16,12 @@ package result
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/gardener/test-infra/pkg/testrunner"
-
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
+	"path/filepath"
 )
 
 // Collect collects results of all testruns and writes them to a file.
@@ -31,24 +29,23 @@ import (
 func Collect(config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
 	testrunsFailed := false
 	for _, run := range runs {
-		err := Output(config, tmClient, namespace, run.Testrun, run.Metadata)
+		cfg := *config
+		cfg.OutputDir = filepath.Join(config.OutputDir, util.RandomString(3))
+		err := Output(&cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			return false, err
 		}
 
-		err = IngestDir(config.OutputDir, config.ESConfigName)
-		if err != nil {
-			log.Errorf("cannot persist file %s: %s", config.OutputDir, err.Error())
-		} else {
-			err := MarkTestrunsAsIngested(tmClient, run.Testrun)
+		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
+			err = IngestDir(cfg.OutputDir, cfg.ESConfigName)
 			if err != nil {
-				log.Warn(err.Error())
+				log.Errorf("cannot persist file %s: %s", cfg.OutputDir, err.Error())
+			} else {
+				err := MarkTestrunsAsIngested(tmClient, run.Testrun)
+				if err != nil {
+					log.Warn(err.Error())
+				}
 			}
-		}
-
-		// clean folder
-		if err := os.RemoveAll(config.OutputDir); err != nil {
-			log.Debugf("unable to remove dir %s: %s", config.OutputDir, err.Error())
 		}
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
