@@ -36,7 +36,7 @@ func writeToFile(filePath string, data []byte) error {
 	log.Debugf("write to file %s", filePath)
 	err := ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
-		return fmt.Errorf("cannot write to %s", err.Error())
+		return fmt.Errorf("cannot write to '%s': %s", filePath, err.Error())
 	}
 
 	return nil
