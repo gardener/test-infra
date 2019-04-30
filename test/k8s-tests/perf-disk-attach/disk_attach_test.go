@@ -141,7 +141,13 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 
 		machineList, err := shootTestOperations.SeedClient.Machine().MachineV1alpha1().Machines(shootTestOperations.ShootSeedNamespace()).List(metav1.ListOptions{})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(len(machineList.Items)).To(Equal(1))
+		Expect(len(machineList.Items)).To(Equal(2))
+
+		node1Name := machineList.Items[0].Status.Node
+		// disable node 1 to schedule all statefulsets on node 2
+		err = setNodeUnschedulable(ctx, shootTestOperations, node1Name, true)
+		Expect(err).ToNot(HaveOccurred())
+
 
 		shootAppTestLogger.Debugf("Found machine %s", machineList.Items[0].Name)
 
@@ -170,8 +176,13 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		// trigger eviction of pods by deleting the machine
-		err = shootTestOperations.SeedClient.Machine().MachineV1alpha1().Machines(shootTestOperations.ShootSeedNamespace()).Delete(machineList.Items[0].Name, &metav1.DeleteOptions{})
+
+		// re-enable node 1
+		err = setNodeUnschedulable(ctx, shootTestOperations, node1Name, false)
+		Expect(err).ToNot(HaveOccurred())
+
+		// trigger eviction of pods by deleting the machine of node 2 where are nodes are scheduled
+		err = shootTestOperations.SeedClient.Machine().MachineV1alpha1().Machines(shootTestOperations.ShootSeedNamespace()).Delete(machineList.Items[1].Name, &metav1.DeleteOptions{})
 		Expect(err).ToNot(HaveOccurred())
 
 		results := make([]*Result, 0)
@@ -247,6 +258,27 @@ func setNodesToOne(ctx context.Context, operation *GardenerTestOperation) error 
 	return operation.ShootClient.Client().Update(ctx, operation.Shoot)
 }
 
+func setNodeUnschedulable(ctx context.Context, operation *GardenerTestOperation, name string, unschedulable bool) error {
+	node := &corev1.Node{}
+	err := operation.ShootClient.Client().Get(ctx, client.ObjectKey{Name: name}, node)
+	if err != nil {
+		return err
+	}
+
+	node.Spec.Unschedulable = unschedulable
+	err = operation.ShootClient.Client().Update(ctx, node)
+	if err != nil {
+		return err
+	}
+
+	if unschedulable {
+		operation.Logger.Infof("Set node %s unschedulable", name)
+	} else {
+		operation.Logger.Infof("Set node %s schedulable", name)
+	}
+	return nil
+}
+
 // WaitUntilStatefulSetIsUnhealthy waits until the stateful set with <statefulSetName> is not running
 func WaitUntilStatefulSetIsUnhealthy(ctx context.Context, operation *GardenerTestOperation, statefulSetName, statefulSetNamespace string, c kubernetes.Interface) error {
 	return WaitUntilStatefulSetHasHealthState(ctx, operation, statefulSetName, statefulSetNamespace, c, false)
@@ -266,6 +298,12 @@ func WaitUntilStatefulSetHasHealthState(ctx context.Context, operation *Gardener
 			return false, nil
 		}
 
+		pod := &corev1.Pod{}
+		if err := operation.ShootClient.Client().Get(ctx, client.ObjectKey{Namespace: statefulSetNamespace, Name: fmt.Sprintf("%s-0", statefulSetName)}, pod); err != nil {
+			operation.Logger.Debug(err.Error())
+		}
+		operation.Logger.Infof("Statefulset %s is on node %s", statefulSetName, pod.Spec.NodeName)
+
 		if healthy {
 			if err := health.CheckStatefulSet(statefulSet); err != nil {
 				operation.Logger.Infof("waiting for %s to be healthy!!", statefulSetName)
@@ -281,6 +319,5 @@ func WaitUntilStatefulSetHasHealthState(ctx context.Context, operation *Gardener
 		}
 
 		return true, nil
-
 	}, ctx.Done())
 }
