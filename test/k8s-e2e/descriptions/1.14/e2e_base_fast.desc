@@ -1,6 +1,5 @@
 [Conformance]
 [k8s.io] [Feature:Example] [k8s.io] Downward API should create a pod that prints his name and namespace
-[k8s.io] [Feature:Example] [k8s.io] Liveness liveness pods should be automatically restarted
 [k8s.io] [sig-node] kubelet [k8s.io] [sig-node] Clean up pods on node kubelet should be able to delete 10 pods per node in 1m0s.
 [k8s.io] [sig-node] Security Context [Feature:SecurityContext] should support pod.Spec.SecurityContext.SupplementalGroups
 [k8s.io] [sig-node] Security Context [Feature:SecurityContext] should support seccomp alpha runtime/default annotation [Feature:Seccomp]
@@ -176,11 +175,7 @@
 [sig-api-machinery] Servers with support for Table transformation should return generic metadata details across all namespaces for nodes
 [sig-api-machinery] Servers with support for Table transformation should return pod details
 [sig-api-machinery] Watchers should receive events on concurrent watches in same order
-[sig-apps] CronJob should delete successful finished jobs with limit of one successful job
-[sig-apps] CronJob should not emit unexpected warnings
 [sig-apps] CronJob should remove from active list jobs that have been deleted
-[sig-apps] CronJob should replace jobs when ReplaceConcurrent
-[sig-apps] CronJob should schedule multiple jobs concurrently
 [sig-apps] Deployment deployment reaping should cascade to its replica sets and pods
 [sig-apps] Deployment deployment should support rollback
 [sig-apps] Deployment iterative rollouts should eventually progress
@@ -216,7 +211,6 @@
 [sig-network] DNS should support configurable pod resolv.conf
 [sig-network] NetworkPolicy NetworkPolicy between server and client should allow ingress access on one named port [Feature:NetworkPolicy]
 [sig-network] NetworkPolicy NetworkPolicy between server and client should enforce multiple, stacked policies with overlapping podSelectors [Feature:NetworkPolicy]
-[sig-network] NetworkPolicy NetworkPolicy between server and client should enforce policy based on NamespaceSelector [Feature:NetworkPolicy]
 [sig-network] NetworkPolicy NetworkPolicy between server and client should enforce policy based on PodSelector [Feature:NetworkPolicy]
 [sig-network] NetworkPolicy NetworkPolicy between server and client should enforce policy based on Ports [Feature:NetworkPolicy]
 [sig-network] NetworkPolicy NetworkPolicy between server and client should support a 'default-deny' policy [Feature:NetworkPolicy]
@@ -233,7 +227,6 @@
 [sig-network] Services should create endpoints for unready pods
 [sig-network] Services should have session affinity work for NodePort service
 [sig-network] Services should have session affinity work for service with type clusterIP
-[sig-network] Services should preserve source pod IP for traffic thru service cluster IP
 [sig-network] Services should prevent NodePort collisions
 [sig-network] Services should release NodePorts on delete
 [sig-network] Services should use same NodePort with same port but different protocols

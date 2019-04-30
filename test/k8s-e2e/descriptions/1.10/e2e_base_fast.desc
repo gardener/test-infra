@@ -122,21 +122,13 @@
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link] Two pods mounting a local volume one after the other should be able to write from pod1 and read from pod2
-[sig-storage] PersistentVolumes-local  [Volume type: dir] One pod requesting one prebound PVC should be able to mount volume and read from pod1
-[sig-storage] PersistentVolumes-local  [Volume type: dir] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: dir] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: dir] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-storage] PersistentVolumes-local  [Volume type: dir] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: dir] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: dir] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
-[sig-storage] PersistentVolumes-local  [Volume type: dir] Two pods mounting a local volume one after the other should be able to write from pod1 and read from pod2
-[sig-storage] PersistentVolumes-local  [Volume type: tmpfs] One pod requesting one prebound PVC should be able to mount volume and read from pod1
-[sig-storage] PersistentVolumes-local  [Volume type: tmpfs] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
-[sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Two pods mounting a local volume one after the other should be able to write from pod1 and read from pod2
 [sig-storage] PersistentVolumes-local [Volume type: blockfswithformat] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
 [sig-storage] PersistentVolumes-local [Volume type: dir] One pod requesting one prebound PVC should be able to mount volume and read from pod1
 [sig-storage] Projected configMap should be consumable from pods in volume as non-root with defaultMode and fsGroup set [NodeFeature:FSGroup]
@@ -265,8 +257,6 @@
 [sig-storage] PersistentVolumes NFS with Single PV - PVC pairs should create a non-pre-bound PV and PVC: test write access
 [sig-storage] PersistentVolumes NFS with multiple PVs and PVCs all in same ns should create 2 PVs and 4 PVCs: test write access
 [sig-storage] PersistentVolumes NFS with multiple PVs and PVCs all in same ns should create 3 PVs and 3 PVCs: test write access
-[sig-storage] PersistentVolumes-local  Pod with node different from PV's NodeAffinity should fail scheduling due to different NodeAffinity
-[sig-storage] PersistentVolumes-local  Pod with node different from PV's NodeAffinity should fail scheduling due to different NodeSelector
 [sig-storage] Volumes ConfigMap should be mountable
 [sig-storage] CSI Volumes [Driver: csi-hostpath-v0] [Testpattern: Dynamic PV (default fs)] provisioning should provision storage with defaults
 [sig-storage] CSI Volumes [Driver: csi-hostpath-v0] [Testpattern: Dynamic PV (default fs)] subPath should be able to unmount after the subpath directory is deleted

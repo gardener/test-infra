@@ -122,3 +122,18 @@
 [sig-storage] CSI Volumes [Driver: csi-hostpath-v0] [Testpattern: Dynamic PV (default fs)] volumes should be mountable
 [sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)] volumeMode should fail in binding dynamic provisioned PV to PVC
 [sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (filesystem volmode)] volumeMode should create sc, pod, pv, and pvc, read/write to the pv, and delete all created resources
+[sig-apps] CronJob should schedule multiple jobs concurrently
+[sig-apps] CronJob should replace jobs when ReplaceConcurrent
+[sig-apps] CronJob should not emit unexpected warnings
+[k8s.io] [Feature:Example] [k8s.io] Liveness liveness pods should be automatically restarted
+[sig-apps] CronJob should delete successful finished jobs with limit of one successful job
+[sig-network] Services should preserve source pod IP for traffic thru service cluster IP
+[sig-network] NetworkPolicy NetworkPolicy between server and client should enforce policy based on NamespaceSelector [Feature:NetworkPolicy]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Scaling should happen in predictable order and halt if any stateful pod is unhealthy [Conformance]
+[k8s.io] Probing container should *not* be restarted with a /healthz http liveness probe [NodeConformance] [Conformance]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Burst scaling should run to completion even with unhealthy pods [Conformance]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications [Conformance]
+[k8s.io] Probing container should have monotonically increasing restart count [NodeConformance] [Conformance]
+[k8s.io] Probing container should *not* be restarted with a /healthz http liveness probe [Conformance]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform canary updates and phased rolling updates of template modifications [Conformance]
+[sig-cli] Kubectl client [k8s.io] Guestbook application should create and stop a working application  [Conformance]
