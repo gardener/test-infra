@@ -28,7 +28,7 @@ spec:
   config:
   - type: env
     name: CONFORMANCE_SKIP
-    value: 'Serial\|Slow'
+    value: 'Serial\|Slow\|\[k8s.io\]\sProbing\scontainer\sshould\sbe\srestarted\swith\sa\s\/healthz\shttp\sliveness\sprobe\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sProbing\scontainer\sshould\s\*not\*\sbe\srestarted\swith\sa\s\/healthz\shttp\sliveness\sprobe\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sProbing\scontainer\sshould\shave\smonotonically\sincreasing\srestart\scount\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sBurst\sscaling\sshould\srun\sto\scompletion\seven\swith\sunhealthy\spods\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sScaling\sshould\shappen\sin\spredictable\sorder\sand\shalt\sif\sany\sstateful\spod\sis\sunhealthy\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sshould\sperform\scanary\supdates\sand\sphased\srolling\supdates\sof\stemplate\smodifications\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sshould\sperform\srolling\supdates\sand\sroll\sbacks\sof\stemplate\smodifications\s\[Conformance\]\|\[k8s.io\]\sGuestbook\sapplication\sshould\screate\sand\sstop\sa\sworking\sapplication\s\s\[Conformance\]'
   - type: env
     name: GINKGO_PARALLEL
     value: "true"
