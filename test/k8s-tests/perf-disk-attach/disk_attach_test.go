@@ -96,6 +96,10 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 		//Expect(err).NotTo(HaveOccurred())
 
 		statefulsetTpl = template.Must(template.ParseFiles(filepath.Join(templateDir, statefulsetTplName)))
+
+		err = WaitUntilAllMachinesAreHealthy(ctx, shootTestOperations)
+		Expect(err).ToNot(HaveOccurred())
+
 	}, InitializationTimeout)
 
 	CAfterSuite(func(ctx context.Context) {
@@ -148,7 +152,6 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 		err = setNodeUnschedulable(ctx, shootTestOperations, node1Name, true)
 		Expect(err).ToNot(HaveOccurred())
 
-
 		shootAppTestLogger.Debugf("Found machine %s", machineList.Items[0].Name)
 
 		err = runParallelNTimes(StatefulSetNum, func(i int) {
@@ -175,7 +178,6 @@ var _ = Describe("Shoot vm disk attach testing", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 		Expect(err).NotTo(HaveOccurred())
-
 
 		// re-enable node 1
 		err = setNodeUnschedulable(ctx, shootTestOperations, node1Name, false)
@@ -318,6 +320,28 @@ func WaitUntilStatefulSetHasHealthState(ctx context.Context, operation *Gardener
 			operation.Logger.Infof("%s is now healthy!!", statefulSetName)
 		}
 
+		return true, nil
+	}, ctx.Done())
+}
+
+func WaitUntilAllMachinesAreHealthy(ctx context.Context, operation *GardenerTestOperation) error {
+	machineDeployments, err := operation.SeedClient.Machine().MachineV1alpha1().MachineDeployments(operation.ShootSeedNamespace()).List(metav1.ListOptions{})
+	Expect(err).ToNot(HaveOccurred())
+	Expect(len(machineDeployments.Items)).To(Equal(1))
+	machineDeployment := &machineDeployments.Items[0]
+	return wait.PollImmediateUntil(10*time.Second, func() (bool, error) {
+
+		machineDeployment, err := operation.SeedClient.Machine().MachineV1alpha1().MachineDeployments(operation.ShootSeedNamespace()).Get(machineDeployment.Name, metav1.GetOptions{})
+		if err != nil {
+			operation.Logger.Error(err.Error())
+			return false, nil
+		}
+
+		if err := health.CheckMachineDeployment(machineDeployment); err != nil {
+			operation.Logger.Infof("waiting for Machine Deployment %s to be healthy!!", machineDeployment.Name)
+			return false, nil
+		}
+		operation.Logger.Infof("Machine Deployment %s is now healthy!!", machineDeployment.Name)
 		return true, nil
 	}, ctx.Done())
 }
