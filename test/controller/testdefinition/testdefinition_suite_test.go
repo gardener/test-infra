@@ -61,8 +61,7 @@ var _ = Describe("Testrun tests", func() {
 			Scheme: testmachinery.TestMachineryScheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
-		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
-
+		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
 	})
 
 	Context("config", func() {

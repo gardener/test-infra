@@ -70,7 +70,7 @@ var _ = Describe("Testflow execution tests", func() {
 			Scheme: testmachinery.TestMachineryScheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
-		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
+		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
 	})
 
 	Context("testflow", func() {

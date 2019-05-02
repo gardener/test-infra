@@ -55,8 +55,7 @@ var _ = Describe("Result collection tests", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)
-
+		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
 	})
 
 	Context("step status", func() {
