@@ -6,6 +6,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/util"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,7 +18,7 @@ import (
 func writeBulks(path string, bufs [][]byte) error {
 	// check if directory exists and create of not
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.Mkdir(path, os.ModePerm)
+		err := os.MkdirAll(path, os.ModePerm)
 		if err != nil {
 			return err
 		}
@@ -31,11 +32,11 @@ func writeBulks(path string, bufs [][]byte) error {
 	return nil
 }
 
-func writeToFile(fielPath string, data []byte) error {
-
-	err := ioutil.WriteFile(fielPath, data, 0644)
+func writeToFile(filePath string, data []byte) error {
+	log.Debugf("write to file %s", filePath)
+	err := ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
-		return fmt.Errorf("Cannot write to %s", err.Error())
+		return fmt.Errorf("cannot write to '%s': %s", filePath, err.Error())
 	}
 
 	return nil
@@ -48,12 +49,12 @@ func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string,
 	minioConfig := &corev1.ConfigMap{}
 	err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: "tm-config"}, minioConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get ConfigMap 'tm-config': %s", err.Error())
+		return nil, fmt.Errorf("cannot get ConfigMap 'tm-config': %s", err.Error())
 	}
 	minioSecrets := &corev1.Secret{}
 	err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: minioConfig.Data["objectstore.secretName"]}, minioSecrets)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get Secret '%s': %s", minioConfig.Data["objectstore.secretName"], err.Error())
+		return nil, fmt.Errorf("cannot get Secret '%s': %s", minioConfig.Data["objectstore.secretName"], err.Error())
 	}
 
 	return &testmachinery.ObjectStoreConfig{

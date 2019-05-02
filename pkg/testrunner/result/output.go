@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -84,12 +85,17 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 		log.Infof("Collected summary:\n%s", summary)
 		return nil
 	}
-	err = writeBulks(config.OutputDir, summary)
+
+	outputDirPath, err := filepath.Abs(config.OutputDir)
+	if err != nil {
+		return err
+	}
+	err = writeBulks(outputDirPath, summary)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully written output to file %s", config.OutputDir)
+	log.Infof("Successfully written output to dir %s", outputDirPath)
 	return nil
 }
 
