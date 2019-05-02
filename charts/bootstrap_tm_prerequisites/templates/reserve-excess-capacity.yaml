@@ -13,7 +13,7 @@
 # limitations under the License.
 {{- if .Values.reserveExcessCapacity.enabled }}
 ---
-apiVersion: scheduling.k8s.io/v1
+apiVersion: scheduling.k8s.io/v1beta1
 kind: PriorityClass
 metadata:
   name: tm-reserve-excess-capacity
