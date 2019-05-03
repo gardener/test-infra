@@ -62,6 +62,7 @@ var (
 	autoscalerMin            string
 	autoscalerMax            string
 	floatingPoolName         string
+	loadbalancerProvider     string
 	componenetDescriptorPath string
 )
 
@@ -136,6 +137,7 @@ var runCmd = &cobra.Command{
 			AutoscalerMin:           autoscalerMin,
 			AutoscalerMax:           autoscalerMax,
 			FloatingPoolName:        floatingPoolName,
+			LoadBalancerProvider:    loadbalancerProvider,
 			ComponentDescriptorPath: componenetDescriptorPath,
 		}
 
@@ -239,6 +241,7 @@ func init() {
 	runCmd.Flags().StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
 	runCmd.Flags().StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
 	runCmd.Flags().StringVar(&floatingPoolName, "floating-pool-name", "", "Floating pool name where the cluster is created. Only needed for Openstack.")
+	runCmd.Flags().StringVar(&loadbalancerProvider, "loadbalancer-provider", "", "LoadBalancer Provider like haproxy. Only applicable for Openstack.")
 	runCmd.Flags().StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
 }
