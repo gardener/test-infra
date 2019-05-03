@@ -27,7 +27,7 @@ import (
 
 // New takes a testflow definition, test definitions and the global config, and creates a new tesrun representation
 func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDefinitions, globalConfig []*config.Element, prepare *testdefinition.PrepareDefinition) (*Testflow, error) {
-	rootPrepare, err := testdefinition.NewPrepare("Empty")
+	rootPrepare, err := testdefinition.NewPrepare("Empty", false)
 	if err != nil {
 		return nil, err
 	}

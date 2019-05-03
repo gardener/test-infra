@@ -35,7 +35,7 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig := config.New(tr.Spec.Config)
 
 	// create initial prepare step
-	prepare, err := testdefinition.NewPrepare("Prepare")
+	prepare, err := testdefinition.NewPrepare("Prepare", true)
 	if err != nil {
 		return nil, err
 	}

@@ -134,10 +134,10 @@ func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
 func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime int64) error {
-	return wait.PollImmediate(5*time.Second, time.Duration(maxWaitTime)*time.Second, func () (bool, error) {
+	return wait.PollImmediate(5*time.Second, time.Duration(maxWaitTime)*time.Second, func() (bool, error) {
 		var (
-			tmControllerStatus = deploymentIsReady(clusterClient, namespace, "testmachinery-controller")
-			wfControllerStatus = deploymentIsReady(clusterClient, namespace, "workflow-controller")
+			tmControllerStatus    = deploymentIsReady(clusterClient, namespace, "testmachinery-controller")
+			wfControllerStatus    = deploymentIsReady(clusterClient, namespace, "workflow-controller")
 			minioDeploymentStatus = deploymentIsReady(clusterClient, namespace, "minio-deployment")
 		)
 		if tmControllerStatus && wfControllerStatus && minioDeploymentStatus {

@@ -33,7 +33,7 @@ import (
 
 // NewPrepare creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
-func NewPrepare(name string) (*PrepareDefinition, error) {
+func NewPrepare(name string, addOutput bool) (*PrepareDefinition, error) {
 	td := &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
 			Name: name,
@@ -76,7 +76,9 @@ func NewPrepare(name string) (*PrepareDefinition, error) {
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
 	}
-	prepare.TestDefinition.AddSerialStdOutput()
+	if addOutput {
+		prepare.TestDefinition.AddSerialStdOutput()
+	}
 
 	return prepare, nil
 }
