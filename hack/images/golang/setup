@@ -15,7 +15,9 @@
 # limitations under the License.
 set -e
 
-echo 'Starting TestMachinery Setup'
+echo "Starting TestMachinery Setup"
+echo "Contents of '${TM_KUBECONFIG_PATH}':"
+ls -al ${TM_KUBECONFIG_PATH}
 
 REPO_PATH=$1
 REPO=$2
