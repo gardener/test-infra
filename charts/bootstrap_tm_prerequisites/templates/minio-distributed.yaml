@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-{{ if .Values.objectStorage.distributed.enabled }}
+{{ if and .Values.objectStorage.minio.enabled .Values.objectStorage.minio.distributed.enabled }}
 {{- $namespace := .Release.Namespace -}}
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: StatefulSet
@@ -56,7 +56,7 @@ spec:
             secretKeyRef:
               name: {{.Values.objectStorage.secret.name}}
               key: secretKey
-        image: minio/minio:{{ .Values.objectStorage.tag }}
+        image: minio/minio:{{ .Values.objectStorage.minio.tag }}
         args:
           - server
           - --json
@@ -94,7 +94,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: "{{.Values.objectStorage.storage}}"
+          storage: "{{.Values.objectStorage.minio.storage}}"
 ---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
