@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-{{ if not .Values.objectStorage.distributed.enabled }}
+{{ if and .Values.objectStorage.minio.enabled (not .Values.objectStorage.minio.distributed.enabled) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -27,7 +27,7 @@ spec:
   resources:
     # This is the request for storage. Should be available in the cluster.
     requests:
-      storage: "{{.Values.objectStorage.storage}}"
+      storage: "{{.Values.objectStorage.minio.storage}}"
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
   #storageClassName:
 ---
@@ -56,7 +56,7 @@ spec:
           claimName: minio-pv-claim
       containers:
       - name: minio
-        image: minio/minio:{{ .Values.objectStorage.tag }}
+        image: minio/minio:{{ .Values.objectStorage.minio.tag }}
         args:
         - server
         - /storage

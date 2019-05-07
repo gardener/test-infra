@@ -47,6 +47,7 @@ func Setup() {
 			AccessKey:  os.Getenv("S3_ACCESS_KEY"),
 			SecretKey:  os.Getenv("S3_SECRET_KEY"),
 			BucketName: os.Getenv("S3_BUCKET_NAME"),
+			SSL:        util.GetenvBool("S3_SSL", false),
 		},
 	}
 

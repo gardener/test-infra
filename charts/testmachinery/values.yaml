@@ -52,7 +52,7 @@ config:
 
 objectStorage:
   secret:
-    name: "minio-secret"
+    name: "s3-secret"
 
 cleanup:
   enabled: false

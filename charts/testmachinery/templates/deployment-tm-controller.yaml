@@ -86,6 +86,11 @@ spec:
             configMapKeyRef:
               name: {{.Values.config.name}}
               key: objectstore.bucketName
+        - name: S3_SSL
+          valueFrom:
+            configMapKeyRef:
+              name: {{.Values.config.name}}
+              key: objectstore.ssl
         - name: GIT_SECRETS
           valueFrom:
             secretKeyRef:

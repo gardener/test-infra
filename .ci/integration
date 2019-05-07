@@ -87,9 +87,10 @@ pull_secrets_value_file_path="$SOURCE_PATH/.ci/pull_secrets.yaml"
 $SOURCE_PATH/.ci/scripts/pull_secrets.py > $pull_secrets_value_file_path
 
 prerequisites_chart="$(helm template --namespace ${NAMESPACE} -f $pull_secrets_value_file_path \
-  --set "secrets.github=${github_config},objectStorage.tag=RELEASE.2019-04-18T21-44-59Z" $SOURCE_PATH/charts/bootstrap_tm_prerequisites)"
+  --set "secrets.github=${github_config},objectStorage.minio.tag=RELEASE.2019-04-18T21-44-59Z" $SOURCE_PATH/charts/bootstrap_tm_prerequisites)"
 controller_chart="$(helm template --namespace ${NAMESPACE} \
   --set "controller.tag=${VERSION},controller.tls.caBundle=${ca_bundle},controller.tls.crt=${crt},controller.tls.key=${key},controller.testDefPath=test/.test-defs" $SOURCE_PATH/charts/testmachinery)"
+
 
 ################################
 # clean previous installation  #
