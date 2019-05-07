@@ -16,8 +16,9 @@
 set -e
 
 echo "Starting TestMachinery Setup"
-echo "Contents of '${TM_KUBECONFIG_PATH}':"
-ls -al ${TM_KUBECONFIG_PATH}
+BASEPATH=$(realpath ${TM_KUBECONFIG_PATH}/..)
+echo "Contents of '${BASEPATH}':"
+ls -alR ${BASEPATH}
 
 REPO_PATH=$1
 REPO=$2
