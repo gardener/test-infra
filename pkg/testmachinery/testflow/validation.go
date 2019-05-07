@@ -16,6 +16,7 @@ package testflow
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
@@ -23,7 +24,7 @@ import (
 )
 
 // Validate validates a testrun and all its subcomponenets.
-func Validate(identifier string, tf *tmv1beta1.TestFlow, tl testdefinition.TestDefinitions, ignoreEmptyFlow bool) error {
+func Validate(identifier string, tf *tmv1beta1.TestFlow, locs locations.Locations, ignoreEmptyFlow bool) error {
 
 	usedTestdefinitions := 0
 
@@ -56,7 +57,7 @@ func Validate(identifier string, tf *tmv1beta1.TestFlow, tl testdefinition.TestD
 				}
 			}
 
-			testdefinitions, err := tl.GetTestDefinitions(&step)
+			testdefinitions, err := locs.GetTestDefinitions(&step)
 			if err != nil {
 				return err
 			}

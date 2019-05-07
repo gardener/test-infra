@@ -12,33 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition
+package locations
 
 import (
 	"errors"
 	"fmt"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	log "github.com/sirupsen/logrus"
 )
 
-// NewTestDefinitions takes the parsed CRD Locations and fetches all TestDefintions from all locations.
-func NewTestDefinitions(testLocations []tmv1beta1.TestLocation) (TestDefinitions, error) {
-	testDefs := map[string]*TestDefinition{}
+// NewTestLocation takes the parsed CRD Locations and fetches all TestDefintions from all locations.
+func NewTestLocation(testLocations []tmv1beta1.TestLocation) (Locations, error) {
+	testDefs := map[string]*testdefinition.TestDefinition{}
 
 	if len(testLocations) == 0 {
-		return nil, errors.New("No TestDefinition locations defined")
+		return nil, errors.New("no TestDefinition locations defined")
 	}
 
 	for i, testLocation := range testLocations {
 		t := testLocation
 
-		if err := ValidateLocation(fmt.Sprintf("spec.testDefLocations.[%d]", i), &t); err != nil {
+		if err := ValidateTestLocation(fmt.Sprintf("spec.testDefLocations.[%d]", i), t); err != nil {
 			return nil, err
 		}
 
 		if testLocation.Type == tmv1beta1.LocationTypeGit {
-			loc, err := NewGitLocation(&t)
+			loc, err := location.NewGitLocation(&t)
 			if err != nil {
 				log.Warn(err.Error())
 				continue
@@ -50,28 +51,28 @@ func NewTestDefinitions(testLocations []tmv1beta1.TestLocation) (TestDefinitions
 			}
 		}
 		if testLocation.Type == tmv1beta1.LocationTypeLocal {
-			loc := NewLocalLocation(&t)
+			loc := location.NewLocalLocation(&t)
 			err := loc.SetTestDefs(testDefs)
 			if err != nil {
 				log.Error(err.Error())
 			}
 		}
 	}
-	return &testDefinitions{testLocations, testDefs}, nil
+	return &testLocation{testLocations, testDefs}, nil
 }
 
 // GetTestDefinitions returns all TestDefinitions of a TestflowStep with their location.GetTestDefinitions
 // It errors if a TestDefinition cannot be found.
-func (l *testDefinitions) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*TestDefinition, error) {
+func (l *testLocation) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
 	if step.Name != "" {
 		if l.TestDefinitions[step.Name] == nil {
 			return nil, fmt.Errorf("TestDefinition %s cannot be found", step.Name)
 		}
 		td := l.TestDefinitions[step.Name].Copy()
-		return []*TestDefinition{td}, nil
+		return []*testdefinition.TestDefinition{td}, nil
 	}
 	if step.Label != "" {
-		defs := []*TestDefinition{}
+		defs := []*testdefinition.TestDefinition{}
 		for _, td := range l.TestDefinitions {
 			if td.HasLabel(step.Label) {
 				newTd := td.Copy()
@@ -81,5 +82,5 @@ func (l *testDefinitions) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*T
 		return defs, nil
 	}
 
-	return nil, fmt.Errorf("Unknown testrun step")
+	return nil, fmt.Errorf("unknown testrun step")
 }

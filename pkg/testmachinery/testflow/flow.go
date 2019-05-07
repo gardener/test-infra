@@ -18,13 +18,15 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // NewFlow takes a testflow and the global config, and generates the DAG.
 // It generates an internal DAG representation and creates the corresponding argo DAG and templates.
-func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testdefinition.TestDefinitions, globalConfig []*config.Element) (*Flow, error) {
+func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, locations locations.Locations, globalConfig []*config.Element) (*Flow, error) {
 
 	flow := &Flow{
 		ID:              flowID,
@@ -52,7 +54,7 @@ func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, tl testd
 				Row:    row,
 				Column: column,
 			}
-			testdefinitions, err := tl.GetTestDefinitions(step.Info)
+			testdefinitions, err := locations.GetTestDefinitions(step.Info)
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +117,7 @@ func (f *Flow) GetVolumes() []corev1.Volume {
 	var volumes []corev1.Volume
 	for loc := range f.usedLocations {
 		if loc.Type() == tmv1beta1.LocationTypeLocal {
-			local := loc.(*testdefinition.LocalLocation)
+			local := loc.(*location.LocalLocation)
 			volumes = append(volumes, local.GetVolume())
 		}
 	}

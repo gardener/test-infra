@@ -30,9 +30,12 @@ import (
 // New creates a new Testmachinery controller for handling testruns and argo workflows.
 func New(mgr manager.Manager) (*TestmachineryController, error) {
 
-	tmv1beta1.AddToScheme(mgr.GetScheme())
-	argov1.AddToScheme(mgr.GetScheme())
-
+	if err := tmv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+		return nil, err
+	}
+	if err := argov1.AddToScheme(mgr.GetScheme()); err != nil {
+		return nil, err
+	}
 	reconciler := &TestrunReconciler{mgr.GetClient(), mgr.GetScheme()}
 	c, err := controller.New("testmachinery-controller", mgr, controller.Options{Reconciler: reconciler})
 	if err != nil {

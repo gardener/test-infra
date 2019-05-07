@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	defaultActiveDeadlineSeconds int64 = 600
+	DefaultActiveDeadlineSeconds int64 = 600
 	archiveLogs                        = true
 )
 
@@ -52,7 +52,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		def.Spec.Image = testmachinery.BASE_IMAGE
 	}
 	if def.Spec.ActiveDeadlineSeconds == nil {
-		def.Spec.ActiveDeadlineSeconds = &defaultActiveDeadlineSeconds
+		def.Spec.ActiveDeadlineSeconds = &DefaultActiveDeadlineSeconds
 	}
 
 	template := &argov1.Template{

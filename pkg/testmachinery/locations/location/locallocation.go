@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition
+package location
 
 import (
 	"encoding/base32"
@@ -20,6 +20,8 @@ import (
 	"hash/fnv"
 	"io/ioutil"
 	"strings"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -37,7 +39,7 @@ type LocalLocation struct {
 }
 
 // NewLocalLocation creates a TestDefLocation of type git.
-func NewLocalLocation(testDefLocation *tmv1beta1.TestLocation) Location {
+func NewLocalLocation(testDefLocation *tmv1beta1.TestLocation) testdefinition.Location {
 
 	hash := fnv.New32().Sum([]byte(testDefLocation.HostPath))
 	b32 := base32.StdEncoding.EncodeToString(hash)
@@ -46,7 +48,7 @@ func NewLocalLocation(testDefLocation *tmv1beta1.TestLocation) Location {
 }
 
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
-func (l *LocalLocation) SetTestDefs(testDefMap map[string]*TestDefinition) error {
+func (l *LocalLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDefinition) error {
 	testDefs, err := l.readTestDefs()
 	if err != nil {
 		return err
@@ -73,8 +75,8 @@ func (l *LocalLocation) Type() tmv1beta1.LocationType {
 	return tmv1beta1.LocationTypeLocal
 }
 
-func (l *LocalLocation) readTestDefs() ([]*TestDefinition, error) {
-	definitions := []*TestDefinition{}
+func (l *LocalLocation) readTestDefs() ([]*testdefinition.TestDefinition, error) {
+	definitions := []*testdefinition.TestDefinition{}
 	files, err := ioutil.ReadDir(l.testdefPath)
 	if err != nil {
 		return nil, err
@@ -90,7 +92,7 @@ func (l *LocalLocation) readTestDefs() ([]*TestDefinition, error) {
 			def, err := util.ParseTestDef(data)
 			if err == nil {
 				if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-					definition, err := New(&def, l, file.Name())
+					definition, err := testdefinition.New(&def, l, file.Name())
 					if err != nil {
 						log.Debugf("cannot build testdefinition %s: %s", file.Name(), err.Error())
 						continue

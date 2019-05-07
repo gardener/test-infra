@@ -17,6 +17,7 @@ package testrun
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"reflect"
 
@@ -24,12 +25,16 @@ import (
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 )
 
 // Validate validates a testrun.
 func Validate(tr *tmv1beta1.Testrun) error {
+
+	// validate locations
+	if err := locations.ValidateLocations("spec", tr.Spec); err != nil {
+		return err
+	}
 
 	// validate global config
 	for i, elem := range tr.Spec.Config {
@@ -47,16 +52,16 @@ func Validate(tr *tmv1beta1.Testrun) error {
 		}
 	}
 
-	testDefinitions, err := testdefinition.NewTestDefinitions(tr.Spec.TestLocations)
+	locs, err := locations.NewLocations(tr.Spec)
 	if err != nil {
 		return err
 	}
 
-	if err := testflow.Validate("spec.testFlow", &tr.Spec.TestFlow, testDefinitions, false); err != nil {
+	if err := testflow.Validate("spec.testFlow", &tr.Spec.TestFlow, locs, false); err != nil {
 		return err
 	}
 
-	if err := testflow.Validate("spec.onExit", &tr.Spec.OnExit, testDefinitions, true); err != nil {
+	if err := testflow.Validate("spec.onExit", &tr.Spec.OnExit, locs, true); err != nil {
 		return err
 	}
 

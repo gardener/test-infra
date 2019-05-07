@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition
+package prepare
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/util/strconf"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"net/url"
 	"path"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -31,9 +34,9 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 )
 
-// NewPrepare creates the TM prepare step
+// New creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
-func NewPrepare(name string, addOutput bool) (*PrepareDefinition, error) {
+func New(name string, addOutput bool) (*Definition, error) {
 	td := &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
 			Name: name,
@@ -46,7 +49,7 @@ func NewPrepare(name string, addOutput bool) (*PrepareDefinition, error) {
 				"testmachinery.sapcloud.io/TestDefinition": "Prepare",
 			},
 		},
-		ActiveDeadlineSeconds: &defaultActiveDeadlineSeconds,
+		ActiveDeadlineSeconds: &testdefinition.DefaultActiveDeadlineSeconds,
 		Container: &apiv1.Container{
 			Image:   testmachinery.PREPARE_IMAGE,
 			Command: []string{"/tm/prepare", "/tm/repos.json"},
@@ -71,7 +74,7 @@ func NewPrepare(name string, addOutput bool) (*PrepareDefinition, error) {
 			},
 		},
 	}
-	prepare := &PrepareDefinition{&TestDefinition{Info: td, Template: template}, []*PrepareRepository{}}
+	prepare := &Definition{&testdefinition.TestDefinition{Info: td, Template: template}, []*Repository{}}
 
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
@@ -83,11 +86,11 @@ func NewPrepare(name string, addOutput bool) (*PrepareDefinition, error) {
 	return prepare, nil
 }
 
-// AddLocation adds a tesdeflocation to the cloned repos and output artifacts.
-func (p *PrepareDefinition) AddLocation(loc Location) {
+// AddLocation adds a tesdef-location to the cloned repos and output artifacts.
+func (p *Definition) AddLocation(loc testdefinition.Location) {
 	if loc.Type() == tmv1beta1.LocationTypeGit {
-		gitLoc := loc.(*GitLocation)
-		p.repositories = append(p.repositories, &PrepareRepository{Name: loc.Name(), URL: gitLoc.info.Repo, Revision: gitLoc.info.Revision})
+		gitLoc := loc.(*location.GitLocation)
+		p.repositories = append(p.repositories, &Repository{Name: loc.Name(), URL: gitLoc.Info.Repo, Revision: gitLoc.Info.Revision})
 
 		p.TestDefinition.AddOutputArtifacts(argov1.Artifact{
 			Name:       loc.Name(),
@@ -98,7 +101,7 @@ func (p *PrepareDefinition) AddLocation(loc Location) {
 }
 
 // AddRepositoriesAsArtifacts adds all git repositories to be cloned as json array to the prepare step.
-func (p *PrepareDefinition) AddRepositoriesAsArtifacts() error {
+func (p *Definition) AddRepositoriesAsArtifacts() error {
 	repoJSON, err := json.Marshal(p.repositories)
 	if err != nil {
 		return fmt.Errorf("Cannot add repositories to prepare step: %s", err.Error())
@@ -117,7 +120,7 @@ func (p *PrepareDefinition) AddRepositoriesAsArtifacts() error {
 }
 
 // AddKubeconfig adds all defined kubeconfigs as files to the prepare pod
-func (p *PrepareDefinition) AddKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
+func (p *Definition) AddKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
 	if kubeconfigs.Gardener != nil {
 		if err := p.addKubeconfig("gardener", kubeconfigs.Gardener); err != nil {
 			return err
@@ -136,7 +139,7 @@ func (p *PrepareDefinition) AddKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconf
 	return nil
 }
 
-func (p *PrepareDefinition) addKubeconfig(name string, kubeconfig *strconf.StringOrConfig) error {
+func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConfig) error {
 	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
 	if kubeconfig.Type == strconf.String {
 		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
@@ -168,7 +171,7 @@ func (p *PrepareDefinition) addKubeconfig(name string, kubeconfig *strconf.Strin
 	return fmt.Errorf("Undefined StringSecType %s", string(kubeconfig.Type))
 }
 
-func (p *PrepareDefinition) addNetrcFile() error {
+func (p *Definition) addNetrcFile() error {
 	netrc := ""
 
 	for _, secret := range testmachinery.GetConfig().GitSecrets {

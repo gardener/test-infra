@@ -25,11 +25,17 @@ var basicTestrun = &tmv1beta1.Testrun{
 	},
 	Spec: tmv1beta1.TestrunSpec{
 		Creator: "tm-integration",
-		TestLocations: []tmv1beta1.TestLocation{
+		LocationSets: []tmv1beta1.LocationSet{
 			{
-				Type:     tmv1beta1.LocationTypeGit,
-				Repo:     "https://github.com/gardener/test-infra.git",
-				Revision: "master",
+				Name:    "default",
+				Default: true,
+				Locations: []tmv1beta1.TestLocation{
+					{
+						Type:     tmv1beta1.LocationTypeGit,
+						Repo:     "https://github.com/gardener/test-infra.git",
+						Revision: "master",
+					},
+				},
 			},
 		},
 		TestFlow: [][]tmv1beta1.TestflowStep{
@@ -46,7 +52,7 @@ var basicTestrun = &tmv1beta1.Testrun{
 func GetBasicTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 	tr := basicTestrun.DeepCopy()
 	tr.Namespace = namespace
-	tr.Spec.TestLocations[0].Revision = commitSha
+	tr.Spec.LocationSets[0].Locations[0].Revision = commitSha
 	return tr
 }
 

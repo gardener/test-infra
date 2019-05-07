@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition
+package location
 
 import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"net/http"
 	"net/url"
 	"strings"
@@ -36,7 +37,7 @@ var githubContentTypeFile = "file"
 
 // GitLocation represents the testDefLocation of type "git".
 type GitLocation struct {
-	info *tmv1beta1.TestLocation
+	Info *tmv1beta1.TestLocation
 
 	config    *testmachinery.GitConfig
 	repoOwner string
@@ -45,7 +46,7 @@ type GitLocation struct {
 }
 
 // NewGitLocation creates a TestDefLocation of type git.
-func NewGitLocation(testDefLocation *tmv1beta1.TestLocation) (Location, error) {
+func NewGitLocation(testDefLocation *tmv1beta1.TestLocation) (testdefinition.Location, error) {
 	repoURL, err := url.Parse(testDefLocation.Repo)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot parse url %s", testDefLocation.Repo)
@@ -57,7 +58,7 @@ func NewGitLocation(testDefLocation *tmv1beta1.TestLocation) (Location, error) {
 }
 
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
-func (l *GitLocation) SetTestDefs(testDefMap map[string]*TestDefinition) error {
+func (l *GitLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDefinition) error {
 	testDefs, err := l.getTestDefs()
 	if err != nil {
 		return err
@@ -77,12 +78,12 @@ func (l *GitLocation) SetTestDefs(testDefMap map[string]*TestDefinition) error {
 
 // GetLocation returns the git location object.
 func (l *GitLocation) GetLocation() *tmv1beta1.TestLocation {
-	return l.info
+	return l.Info
 }
 
 // Name returns the unique name of the git location consiting of the repositorie's owner, name and revision.
 func (l *GitLocation) Name() string {
-	name := fmt.Sprintf("%s-%s-%s", l.repoOwner, l.repoName, l.info.Revision)
+	name := fmt.Sprintf("%s-%s-%s", l.repoOwner, l.repoName, l.Info.Revision)
 	return util.FormatArtifactName(name)
 }
 
@@ -91,20 +92,20 @@ func (l *GitLocation) Type() tmv1beta1.LocationType {
 	return tmv1beta1.LocationTypeGit
 }
 
-func (l *GitLocation) getTestDefs() ([]*TestDefinition, error) {
-	var definitions []*TestDefinition
+func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
+	var definitions []*testdefinition.TestDefinition
 
 	client, err := l.getGitHubClient()
 	if err != nil {
 		log.Debug(err.Error())
-		return nil, fmt.Errorf("No testdefinitions found in %s", l.info.Repo)
+		return nil, fmt.Errorf("No testdefinitions found in %s", l.Info.Repo)
 	}
 
 	_, directoryContent, _, err := client.Repositories.GetContents(context.Background(), l.repoOwner, l.repoName,
-		testmachinery.TESTDEF_PATH, &github.RepositoryContentGetOptions{Ref: l.info.Revision})
+		testmachinery.TESTDEF_PATH, &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
 		log.Debug(err.Error())
-		return nil, fmt.Errorf("No testdefinitions found in %s", l.info.Repo)
+		return nil, fmt.Errorf("No testdefinitions found in %s", l.Info.Repo)
 	}
 
 	for _, file := range directoryContent {
@@ -118,7 +119,7 @@ func (l *GitLocation) getTestDefs() ([]*TestDefinition, error) {
 			if err == nil {
 				if def.Kind == tmv1beta1.TestDefinitionName {
 					if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-						definition, err := New(&def, l, file.GetName())
+						definition, err := testdefinition.New(&def, l, file.GetName())
 						if err != nil {
 							log.Debugf("cannot build testdefinition for %s: %s", *file.Name, err.Error())
 							continue

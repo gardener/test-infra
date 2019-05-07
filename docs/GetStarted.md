@@ -6,7 +6,8 @@
     - [Export Contract](#export-contract)
     - [Shared Folder](#shared-folder)
     - [Images](#images)
-  - [Create a Testrun](#create-a-testrun)
+  - [Testrun](#create-a-testrun)
+    - [Locations](#locations)
   - [Configuration](#configuration)
     - [Types](#types)
     - [Sources](#sources)
@@ -157,10 +158,21 @@ spec:
   ttlSecondsAfterFinished: # optional; define when the Testrun should cleanup itself.
 
   # TestLocations define where to search for TestDefinitions.
+  # Note: it is only possible to describe testLocations or locationSets.
   testLocations:
   - type: git
     repo: https://github.com/gardener/test-infra.git
     revision: master
+    
+  # TestLocationSets defines multiple TestLocations which can be referenced for steps
+  locationSets:
+  - name: other
+    # optional; defines the default location set which is used if no specific location is defined for a step.
+    default: true 
+    locations:
+    - type: git
+        repo: https://github.com/gardener/test-infra.git
+        revision: 0.20.0
 
   # Specific kubeconfigs can be defined for the garden, seed or shoot cluster.
   # These kubeconfigs are available in "TM_KUBECONFIG_PATH/xxx.config" inside every TestDefinition container.
@@ -186,17 +198,85 @@ spec:
   # are executed in which specified order.
   # If a label is specified then all TestDefinitions labeled with the specific key are executed.
   testFlow:
-  - - name: CreateShoot
+  - - name: create-shoot
   - - label: default
-  - - name: DeleteShoot
+  - - name: e2e-test
+      location: other # ref to the locationset that should be used.
+  - - name: delete-shoot
 
   # OnExit specifies the same execution flow as the testFlow.
   # This flow is run after the testFlow and every step can specify the condition
   # under which it should run depending on the outcome of the testFlow.
   onExit:
-  - - name: DeleteShoot
+  - - name: delete-shoot
       condition: error|success|always # optional; default is always;
 ```
+
+ ### Locations
+ Locations are references to a local directory or a github repository where the TestDefinition reside.
+ These 2 localtion types are used by the testmachinery to search for all TestDefinitions.
+ 
+ Git Location:
+ ```yaml
+type: git
+repo: https://github.com/gardener/test-infra.git # http link to the repository
+revision: master # tag, commit or branch
+ ```
+  Local Location (only for local development):
+  ```yaml
+ type: local
+ hostPath: /tmp/tm # hostpath to a directory containing TestDefinition
+  ```
+ 
+ Multiple of these locations can be defined in the testrun in 2 different ways:
+ 
+ #### TestLocations (Deprecated)
+ :warning: Deprecated old way to define locations
+ ```yaml
+ apiVersion: testmachinery.sapcloud.io/v1beta1
+ kind: Testrun
+ metadata:
+   generateName: integration-
+   namespace: default
+ spec: 
+   # TestLocations define where to search for TestDefinitions.
+   # Note: it is only possible to describe testLocations or locationSets.
+   testLocations:
+   - type: git
+     repo: https://github.com/gardener/test-infra.git
+     revision: master
+   - type: git
+     repo: https://github.com/gardener/gardener.git
+     revision: 0.20.0
+```
+ #### LocationSets
+ Location sets define multiple sets of TestLocations with a unique name.
+ These sets can be referenced with their unique name in the testflow steps which enables the following feature in the testmachinery:
+ - Use multiple versions of the same TestDefinition in one Testrun
+ - Restrict TestDefinition of steps with labels
+  ```yaml
+  apiVersion: testmachinery.sapcloud.io/v1beta1
+  kind: Testrun
+  metadata:
+    generateName: integration-
+    namespace: default
+  spec: 
+    locationSets:
+    - name: first
+      default: true 
+      locations:
+      - type: git
+        repo: https://github.com/gardener/gardener.git
+        revision: 0.21.0
+    - name: second
+      locations:
+      - type: git
+        repo: https://github.com/gardener/gardener.git
+        revision: 0.20.0
+      - type: git
+        repo: https://github.com/gardener/test-infra.git
+        revision: 0.4.0
+ ```
 
 ## Configuration
 
@@ -285,3 +365,4 @@ This configuration can be defined in 3 possible section:
   spec:
     config: # Specify configuration here
   ```
+

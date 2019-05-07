@@ -15,12 +15,9 @@
 package testdefinition
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
@@ -86,30 +83,4 @@ func isEmailListValid(emailList []string) bool {
 func isEmailValid(email string) bool {
 	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	return re.MatchString(email)
-}
-
-// ValidateLocation validates a TestDefinition Location of a testrun
-func ValidateLocation(identifier string, l *tmv1beta1.TestLocation) error {
-	if l.Type == tmv1beta1.LocationTypeGit {
-		if l.Repo == "" {
-			return fmt.Errorf("%s.repo: Required value: repo has to be defined for git TestDefinition locations", identifier)
-		}
-		if l.Revision == "" {
-			return fmt.Errorf("%s.revision: Required value: revision has to be defined for git TestDefinition locations", identifier)
-		}
-		return nil
-	}
-	if l.Type == tmv1beta1.LocationTypeLocal {
-		if !testmachinery.IsRunInsecure() {
-			return errors.New("Local testDefinition locations are only available in insecure mode")
-		}
-		if l.HostPath == "" {
-			return fmt.Errorf("%s.hostPath: Required value: hostPath has to be defined for local TestDefinition locations", identifier)
-		}
-		return nil
-	}
-	if l.Type == "" {
-		return fmt.Errorf("%s.type: Required value: type has to be defined for spec.testDefLocations", identifier)
-	}
-	return fmt.Errorf("%s.type: Unknown TestDefinition location type %s", identifier, l.Type)
 }
