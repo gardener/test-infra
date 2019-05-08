@@ -19,13 +19,7 @@ metadata:
     namespace: {{.Release.Namespace}}
 data:
     objectstore.bucketName: "{{ .Values.objectStorage.bucketName }}"
-    {{- if .Values.objectStorage.minio.enabled }}
-    objectstore.url: "{{ .Values.objectStorage.serviceEndpoint }}.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.port }}"
-    {{- else }}
-    objectstore.url: "{{ .Values.objectStorage.serviceEndpoint }}:{{ .Values.objectStorage.port }}"
-    {{- end }}
-    objectstore.serviceEndpoint: "{{ .Values.objectStorage.serviceEndpoint }}"
-    objectstore.port: "{{ .Values.objectStorage.port }}"
+    objectstore.endpoint: "{{ tpl .Values.objectStorage.endpoint . }}"
     objectstore.ssl: "{{ .Values.objectStorage.ssl }}"
     objectstore.secretName: "{{ .Values.objectStorage.secret.name }}"
 {{ if .Values.secrets.github }}

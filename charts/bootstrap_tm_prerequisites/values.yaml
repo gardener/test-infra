@@ -27,15 +27,13 @@ objectStorage:
       enabled: false # true will deploy a statefulset instead of a deployment
       replicas: 4 # have to be even and min 4 -> https://docs.minio.io/docs/minio-erasure-code-quickstart-guide
     storage: 10Gi # when distributed there will be a volume for every replica
-    ingress:
-      enabled: false
-      domain: ""
+    service:
+      type: ClusterIP
+      port: 9000
 
   bucketName: "tm-bucket"
   keyPrefix: "testmachinery"
-  serviceEndpoint: "minio-service"
-  serviceType: ClusterIP
-  port: 9000
+  endpoint: "minio-service.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.minio.service.port }}" # use  #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
   ssl: false
 
   secret:

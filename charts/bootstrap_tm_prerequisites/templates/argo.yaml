@@ -23,11 +23,7 @@ data:
             s3:
                 bucket: {{.Values.objectStorage.bucketName}}
                 keyPrefix: {{ .Values.objectStorage.keyPrefix }}
-                {{- if .Values.objectStorage.minio.enabled }}
-                endpoint: "{{ .Values.objectStorage.serviceEndpoint }}.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.port }}"
-                {{- else }}
-                endpoint: "{{ .Values.objectStorage.serviceEndpoint }}:{{ .Values.objectStorage.port }}"
-                {{- end }}        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
+                endpoint: "{{ tpl .Values.objectStorage.endpoint . }}"        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
                 insecure: {{ not .Values.objectStorage.ssl }}                  #omit for S3/GCS. Needed when minio runs without TLS
                 accessKeySecret:                #omit if accessing via AWS IAM
                     name: {{.Values.objectStorage.secret.name}}
