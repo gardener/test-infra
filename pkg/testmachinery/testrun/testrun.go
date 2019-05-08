@@ -36,26 +36,26 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig := config.New(tr.Spec.Config)
 
 	// create initial prepare step
-	prepareDef, err := prepare.New("Prepare", true)
+	prepareDef, err := prepare.New("Prepare", false)
 	if err != nil {
 		return nil, err
 	}
 	if err := prepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
 		return nil, err
 	}
-	tf, err := testflow.New(testflow.FlowIDTest, &tr.Spec.TestFlow, locs, globalConfig, prepareDef)
+	tf, err := testflow.New(testflow.FlowIDTest, tr.Spec.TestFlow, locs, globalConfig, prepareDef)
 	if err != nil {
 		return nil, err
 	}
 
-	postPrepareDef, err := prepare.New("PostPrepare", true)
+	postPrepareDef, err := prepare.New("PostPrepare", false)
 	if err != nil {
 		return nil, err
 	}
 	if err := postPrepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
 		return nil, err
 	}
-	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, locs, globalConfig, postPrepareDef)
+	onExitFlow, err := testflow.New(testflow.FlowIDExit, tr.Spec.OnExit, locs, globalConfig, postPrepareDef)
 	if err != nil {
 		return nil, err
 	}

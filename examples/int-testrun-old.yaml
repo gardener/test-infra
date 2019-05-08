@@ -23,12 +23,19 @@ spec:
 
   # defines where to look for TestDefs
   testLocations:
-  - type: local
-    hostPath: /tmp/tm # local disk path musst be mounted to minikube volume at "/tmp/tm"
+  - type: git
+    repo: https://github.com/gardener/gardener.git
+    revision: master
+  - type: git
+    repo: https://github.com/gardener/test-infra.git
+    revision: master
 
   kubeconfigs:
     gardener: #base64 heredoc kubeconfig
     seed:
+      secretKeyRef:
+        name: mysecret
+        key: kubeconfig
     shoot:
 
 
@@ -40,14 +47,18 @@ spec:
 
   # the execution flow:
   testFlow:
-  - name: demo-step
-    definition:
-      name: demo
-  - name: label-step
-    dependsOn: [ demo-step ]
-    definition:
-      label: default
+  - - name: create-shoot
+      config:
+      - name: CREATE_SHOOT_CLOUDPROVIDER
+        value: aws
+        type: env
+      - name: CREATE_SHOOT_VERSION
+        value: 1.14.0
+        type: env
+  - - name: shootapp-test
+  - - label: default
+  - - name: delete-shoot
 
-#  onExit:
-#    - - name: DeleteShootTestDef
-#        condition: error
+  onExit:
+    - - name: delete-shoot
+        condition: error

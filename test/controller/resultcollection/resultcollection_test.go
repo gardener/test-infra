@@ -72,8 +72,8 @@ var _ = Describe("Result collection tests", func() {
 			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
-			status := tr.Status.Steps[0][0]
+			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
+			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusInit), "Tests should be initially in 'init' phase")
 		})
@@ -87,9 +87,9 @@ var _ = Describe("Result collection tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
+			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
 
-			status := tr.Status.Steps[0][0]
+			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
@@ -100,17 +100,23 @@ var _ = Describe("Result collection tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "A",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
-					{
+				},
+				{
+					Name: "B",
+					Definition: tmv1beta1.StepDefinition{
 						Label: "tm-no-testdefs",
 					},
 				},
 				{
-					{
+					Name:      "C",
+					DependsOn: []string{"A", "B"},
+					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
 				},
@@ -120,14 +126,14 @@ var _ = Describe("Result collection tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(2), "Should be 2 step's statuses.")
+			Expect(tr.Status.Steps).To(HaveLen(2), "Should be 2 step's statuses.")
 
-			status := tr.Status.Steps[0][0]
+			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
 
-			status = tr.Status.Steps[1][0]
+			status = tr.Status.Steps[1]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
@@ -138,17 +144,23 @@ var _ = Describe("Result collection tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "A",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
-					{
+				},
+				{
+					Name: "B",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "failing-integration-testdef",
 					},
 				},
 				{
-					{
+					Name:      "C",
+					DependsOn: []string{"A", "B"},
+					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
 				},
@@ -158,18 +170,18 @@ var _ = Describe("Result collection tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(3), "Should be 3 step's statuses.")
+			Expect(tr.Status.Steps).To(HaveLen(3), "Should be 3 step's statuses.")
 
-			status := tr.Status.Steps[0][0]
+			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
 
-			status = tr.Status.Steps[0][1]
+			status = tr.Status.Steps[1]
 			Expect(status.TestDefinition.Name).To(Equal("failing-integration-testdef"))
 			Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
 
-			status = tr.Status.Steps[1][0]
+			status = tr.Status.Steps[2]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).To(BeZero())
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
@@ -179,9 +191,10 @@ var _ = Describe("Result collection tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "timeout-integration-testdef",
 					},
 				},
@@ -191,9 +204,9 @@ var _ = Describe("Result collection tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(utils.TestflowLen(tr.Status.Steps)).To(Equal(1), "Should be one steps status")
+			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
 
-			status := tr.Status.Steps[0][0]
+			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("timeout-integration-testdef"))
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusTimeout))
 

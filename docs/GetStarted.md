@@ -279,6 +279,37 @@ revision: master # tag, commit or branch
         revision: 0.4.0
  ```
 
+### Flow
+```yaml
+apiVersion: testmachinery.sapcloud.io/v1beta1
+kind: Testrun
+metadata:
+  generateName: integration-
+  namespace: default`
+  
+  flow:
+  - name: create-shoot
+    definition:
+      name: create-shoot
+  - name: test1
+    definition:
+      label: default
+      config: ...
+      location: ...
+    dependsOn: [ create-shoot ]
+    artifactsFrom: create-shoot # optional, default get from last "serial" step
+  - name: test2
+    definition:
+      name: default
+    dependsOn: [ create-shoot ]
+    artifactsFrom: # automatically resolved to create-shoot
+  - name: delete-shoot
+    definition:
+      name: delete-shoot
+    dependsOn: [ test1, test2 ]
+    artifactsFrom: # automatically resolved to create-shoot
+```
+
 ## Configuration
 
 Test can be configured by passing environment variables to the test or mounting files.

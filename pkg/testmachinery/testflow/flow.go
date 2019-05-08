@@ -20,83 +20,42 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // NewFlow takes a testflow and the global config, and generates the DAG.
 // It generates an internal DAG representation and creates the corresponding argo DAG and templates.
-func NewFlow(flowID FlowIdentifier, root *Node, tf *tmv1beta1.TestFlow, locations locations.Locations, globalConfig []*config.Element) (*Flow, error) {
+func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc locations.Locations, globalConfig []*config.Element) (*Flow, error) {
+
+	steps, testdefinitions, usedLocations, err := preprocessTestflow(flowID, root, tf, loc, globalConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	flow := &Flow{
 		ID:              flowID,
-		DAG:             &argov1.DAGTemplate{},
-		TestFlowRoot:    root,
+		Root:            root,
 		globalConfig:    globalConfig,
-		testdefinitions: map[*testdefinition.TestDefinition]interface{}{},
-		usedLocations:   map[testdefinition.Location]interface{}{},
+		testdefinitions: testdefinitions,
+		usedLocations:   usedLocations,
 	}
-	flow.addTask(*root.Task)
 	flow.testdefinitions[root.TestDefinition] = nil
 
-	lastSerialNode := root
-	lastParallelNodes := []*Node{root}
-	for row, steps := range *tf {
-		currentNodes := []*Node{}
-		serialTestdefs := map[*testdefinition.TestDefinition]*Step{}
-		var node *Node
-		var err error
+	// Go through all steps and create the initial DAG
+	CreateInitialDAG(steps, root)
 
-		for column, item := range steps {
-			s := item
-			step := Step{
-				Info:   &s,
-				Row:    row,
-				Column: column,
-			}
-			testdefinitions, err := locations.GetTestDefinitions(step.Info)
-			if err != nil {
-				return nil, err
-			}
+	// apply serial steps
+	ReorderChildrenOfNodes(node.List{root})
 
-			for _, td := range testdefinitions {
-				if td.HasBehavior("serial") {
-					serialTestdefs[td] = &step
-					continue
-				}
-				node, err = flow.addNewNode(lastParallelNodes, lastSerialNode, &step, td)
-				if err != nil {
-					return nil, err
-				}
-				currentNodes = append(currentNodes, node)
-			}
-		}
-
-		// we need to check if the node is defined because a single "behavior: serial" step
-		// which skip the node creation in the normal flow will be created in further special serial steps creation..
-		if isSerialStep(steps) && node != nil {
-			node.TestDefinition.AddSerialStdOutput()
-			lastSerialNode = node
-		}
-
-		// when a label is specified and no corresponding testdefs can be found 'current nodes' are empty.
-		// Therefore, lastParallelNodes should point to the nodes before.
-		if len(currentNodes) > 0 {
-			lastParallelNodes = currentNodes
-		}
-
-		for serialTestDef, step := range serialTestdefs {
-			node, err = flow.addNewNode(lastParallelNodes, lastSerialNode, step, serialTestDef)
-			if err != nil {
-				return nil, err
-			}
-			node.TestDefinition.AddSerialStdOutput()
-
-			currentNodes = []*Node{node}
-			lastParallelNodes = currentNodes
-			lastSerialNode = node
-		}
+	// Determine kubeconfigs namespaces
+	// which means to determine what kubeconfig artifact should be mounted to a specific node
+	if err := ApplyOutputNamespaces(steps); err != nil {
+		return nil, err
 	}
+
+	// Determine real serial steps
+	SetSerialNodes(root)
 
 	return flow, nil
 }
@@ -124,19 +83,17 @@ func (f *Flow) GetVolumes() []corev1.Volume {
 
 	volumeSet := make(map[string]bool)
 
-	for _, vol := range f.TestFlowRoot.TestDefinition.Volumes {
+	for _, vol := range f.Root.TestDefinition.Volumes {
 		if _, ok := volumeSet[vol.Name]; !ok {
 			volumes = append(volumes, vol)
 			volumeSet[vol.Name] = true
 		}
 	}
-	for nodes := range f.Iterate() {
-		for _, node := range nodes {
-			for _, vol := range node.TestDefinition.Volumes {
-				if _, ok := volumeSet[vol.Name]; !ok {
-					volumes = append(volumes, vol)
-					volumeSet[vol.Name] = true
-				}
+	for n := range f.Iterate() {
+		for _, vol := range n.TestDefinition.Volumes {
+			if _, ok := volumeSet[vol.Name]; !ok {
+				volumes = append(volumes, vol)
+				volumeSet[vol.Name] = true
 			}
 		}
 	}
@@ -144,62 +101,39 @@ func (f *Flow) GetVolumes() []corev1.Volume {
 	return volumes
 }
 
-// Iterate iterates over the flow's levels and returns their nodes.
-func (f *Flow) Iterate() <-chan []*Node {
-	c := make(chan []*Node)
+// Iterate iterates over the flow and returns their nodes.
+func (f *Flow) Iterate() <-chan *node.Node {
+	c := make(chan *node.Node)
 	go func() {
-		currentNode := f.TestFlowRoot
-		for len(currentNode.Children) > 0 {
-			c <- currentNode.Children
-			currentNode = currentNode.Children[0]
+		c <- f.Root
+		children := f.Root.Children
+		for len(children) != 0 {
+			for _, n := range children {
+				c <- n
+			}
+			children = children.GetChildren()
 		}
 		close(c)
 	}()
 	return c
 }
 
+func (f *Flow) GetDAGTemplate() *argov1.DAGTemplate {
+	dag := &argov1.DAGTemplate{}
+
+	for n := range f.Iterate() {
+		dag.Tasks = append(dag.Tasks, n.Task())
+	}
+
+	return dag
+}
+
 // GetStatus returns the status of all nodes of the current flow.
-func (f *Flow) GetStatus() [][]*tmv1beta1.TestflowStepStatus {
-	status := [][]*tmv1beta1.TestflowStepStatus{}
-	for level := range f.Iterate() {
-		stepStatus := []*tmv1beta1.TestflowStepStatus{}
-		for _, node := range level {
-			stepStatus = append(stepStatus, node.Status)
-		}
-		status = append(status, stepStatus)
+func (f *Flow) GetStatus() []*tmv1beta1.StepStatus {
+	status := make([]*tmv1beta1.StepStatus, 0)
+	for n := range f.Iterate() {
+		status = append(status, n.Status)
 	}
-	return status
-}
-
-func (f *Flow) addNewNode(lastParallelNodes []*Node, lastSerialNode *Node, step *Step, td *testdefinition.TestDefinition) (*Node, error) {
-	node := NewNode(lastParallelNodes, lastSerialNode, f.TestFlowRoot, td, step, f.ID)
-	if err := f.addConfigToTestDefinition(step, td); err != nil {
-		return nil, err
-	}
-	f.addTask(*node.Task)
-
-	f.testdefinitions[td] = nil
-	f.usedLocations[td.Location] = nil
-
-	return node, nil
-}
-
-func (f *Flow) addConfigToTestDefinition(step *Step, td *testdefinition.TestDefinition) error {
-	cfg := config.New(step.Info.Config)
-	if err := td.AddConfig(cfg); err != nil {
-		return err
-	}
-	if err := td.AddConfig(f.globalConfig); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (f *Flow) addTask(task argov1.DAGTask) {
-	f.DAG.Tasks = append(f.DAG.Tasks, task)
-}
-
-func isSerialStep(steps []tmv1beta1.TestflowStep) bool {
-	// TODO: refactor for better check of testStep type
-	return len(steps) == 1 && steps[0].Name != ""
+	// remove root element from status as this is the tm prepare step
+	return status[1:]
 }

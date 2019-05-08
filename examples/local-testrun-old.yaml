@@ -40,14 +40,10 @@ spec:
 
   # the execution flow:
   testFlow:
-  - name: demo-step
-    definition:
-      name: demo
-  - name: label-step
-    dependsOn: [ demo-step ]
-    definition:
-      label: default
+    - - name: GuestbookTestDef
+    - - label: default
+      # - name: sadf # should throw error and abort execution
 
-#  onExit:
-#    - - name: DeleteShootTestDef
-#        condition: error
+  onExit:
+    - - name: DeleteShootTestDef
+        condition: error

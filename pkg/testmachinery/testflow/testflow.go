@@ -15,11 +15,10 @@
 package testflow
 
 import (
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -27,7 +26,7 @@ import (
 )
 
 // New takes a testflow definition, test definitions and the global config, and creates a new tesrun representation
-func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, locs locations.Locations, globalConfig []*config.Element, prepareDef *prepare.Definition) (*Testflow, error) {
+func New(flowID FlowIdentifier, tf tmv1beta1.TestFlow, locs locations.Locations, globalConfig []*config.Element, prepareDef *prepare.Definition) (*Testflow, error) {
 	rootPrepare, err := prepare.New("Empty", false)
 	if err != nil {
 		return nil, err
@@ -35,8 +34,7 @@ func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, locs locations.Locations
 	if prepareDef != nil {
 		rootPrepare = prepareDef
 	}
-	rootNode := NewNode(nil, nil, nil, rootPrepare.TestDefinition, &Step{nil, -1, -1}, flowID)
-	rootNode.Task = argo.CreateTask(rootNode.TestDefinition.Template.Name, rootNode.TestDefinition.Template.Name, testmachinery.PHASE_RUNNING, false, rootNode.GetParentNames(), nil)
+	rootNode := node.NewNode(rootPrepare.TestDefinition, prepare.GetPrepareStep(), string(flowID))
 	if err := rootNode.TestDefinition.AddConfig(globalConfig); err != nil {
 		return nil, err
 	}
@@ -65,7 +63,7 @@ func (tf *Testflow) GetTemplates(name string) ([]argov1.Template, error) {
 	templates := []argov1.Template{
 		{
 			Name: name,
-			DAG:  tf.Flow.DAG,
+			DAG:  tf.Flow.GetDAGTemplate(),
 		},
 	}
 

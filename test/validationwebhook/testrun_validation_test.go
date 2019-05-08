@@ -60,13 +60,15 @@ var _ = Describe("Testrun validation tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "integration.testdef",
 					},
 				},
 			}
+
 			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
@@ -116,7 +118,7 @@ var _ = Describe("Testrun validation tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{}
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{}
 
 			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
@@ -130,10 +132,11 @@ var _ = Describe("Testrun validation tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
-						Label: "NoTestDefsFoundLabel",
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "NoTestDefsFoundLabel",
 					},
 				},
 			}

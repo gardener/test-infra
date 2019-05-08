@@ -47,18 +47,18 @@ spec:
 
   # the execution flow:
   testFlow:
-  - - name: create-shoot
-      config:
-      - name: CREATE_SHOOT_CLOUDPROVIDER
-        value: aws
-        type: env
-      - name: CREATE_SHOOT_VERSION
-        value: 1.14.0
-        type: env
-  - - name: shootapp-test
-  - - label: default
-  - - name: delete-shoot
+    - name: create-step
+      definition:
+        name: create-shoot
+    - name: delete-step
+      dependsOn: [ create-step ]
+      definition:
+        name: delete-shoot
+#    - name: label-step
+#      dependsOn: [ demo-step ]
+#      definition:
+#        label: default
 
-  onExit:
-    - - name: delete-shoot
-        condition: error
+#  onExit:
+#    - - name: delete-shoot
+#        condition: error

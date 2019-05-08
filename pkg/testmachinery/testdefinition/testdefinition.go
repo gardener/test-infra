@@ -141,17 +141,11 @@ func (td *TestDefinition) Copy() *TestDefinition {
 	}
 }
 
-// SetPosition sets the unique name of the testdefinition and its execution position.
-func (td *TestDefinition) SetPosition(flow string, row, column int) {
-	td.Template.Metadata.Annotations = GetAnnotations(td.Info.Metadata.Name, flow, fmt.Sprintf("%d/%d", row, column))
+func (td *TestDefinition) SetName(name string) {
+	td.Template.Name = name
 }
-
-// GetPosition returns annotations to identify the source step.
-func (td *TestDefinition) GetPosition() map[string]string {
-	return map[string]string{
-		AnnotationFlow:     td.Template.Metadata.Annotations[AnnotationFlow],
-		AnnotationPosition: td.Template.Metadata.Annotations[AnnotationPosition],
-	}
+func (td *TestDefinition) GetName() string {
+	return td.Template.Name
 }
 
 // HasBehavior checks if the testrun has defined a specific behavior like serial or disruptiv.
@@ -205,20 +199,24 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 }
 
 // AddSerialStdOutput adds the Kubeconfig output to the TestDefinitions's template.
-func (td *TestDefinition) AddSerialStdOutput() {
+func (td *TestDefinition) AddSerialStdOutput(global bool) {
 	kubeconfigArtifact := argov1.Artifact{
-		Name:       "kubeconfigs",
-		GlobalName: "kubeconfigs",
-		Path:       testmachinery.TM_KUBECONFIG_PATH,
-		Optional:   true,
+		Name:     "kubeconfigs",
+		Path:     testmachinery.TM_KUBECONFIG_PATH,
+		Optional: true,
 	}
-	td.AddOutputArtifacts(kubeconfigArtifact)
 	sharedFolderArtifact := argov1.Artifact{
-		Name:       "sharedFolder",
-		GlobalName: "sharedFolder",
-		Path:       testmachinery.TM_SHARED_PATH,
-		Optional:   true,
+		Name:     "sharedFolder",
+		Path:     testmachinery.TM_SHARED_PATH,
+		Optional: true,
 	}
+
+	if global {
+		kubeconfigArtifact.GlobalName = kubeconfigArtifact.Name
+		sharedFolderArtifact.GlobalName = sharedFolderArtifact.Name
+	}
+
+	td.AddOutputArtifacts(kubeconfigArtifact)
 	td.AddOutputArtifacts(sharedFolderArtifact)
 }
 

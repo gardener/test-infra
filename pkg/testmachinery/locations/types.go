@@ -7,7 +7,7 @@ import (
 
 // Locations is an interface which provides functions for receiving TestDefinitions that are fetched from testDefLocations.
 type Locations interface {
-	GetTestDefinitions(*tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error)
+	GetTestDefinitions(definition tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error)
 }
 
 type Sets struct {

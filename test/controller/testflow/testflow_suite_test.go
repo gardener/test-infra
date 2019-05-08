@@ -97,8 +97,9 @@ var _ = Describe("Testflow execution tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
-				{
+			tr.Spec.TestFlow = append(tr.Spec.TestFlow, &tmv1beta1.DAGStep{
+				Name: "integration-testdef",
+				Definition: tmv1beta1.StepDefinition{
 					Label: "tm-integration",
 				},
 			})
@@ -121,17 +122,28 @@ var _ = Describe("Testflow execution tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = append(tr.Spec.TestFlow, []tmv1beta1.TestflowStep{
-				{
-					Name: "integration-testdef",
+			tr.Spec.TestFlow = append(tr.Spec.TestFlow,
+				&tmv1beta1.DAGStep{
+					Name:      "B",
+					DependsOn: []string{"A"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "integration-testdef",
+					},
 				},
-				{
-					Label: "tm-no-testdefs",
+				&tmv1beta1.DAGStep{
+					Name:      "C",
+					DependsOn: []string{"A"},
+					Definition: tmv1beta1.StepDefinition{
+						Label: "tm-no-testdefs",
+					},
 				},
-				{
-					Name: "integration-testdef",
-				},
-			})
+				&tmv1beta1.DAGStep{
+					Name:      "D",
+					DependsOn: []string{"A"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "integration-testdef",
+					},
+				})
 
 			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
@@ -151,9 +163,10 @@ var _ = Describe("Testflow execution tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Label: "tm-integration",
 					},
 				},
@@ -174,17 +187,16 @@ var _ = Describe("Testflow execution tests", func() {
 				}
 			}
 
-			Expect(len(tr.Status.Steps[1])).To(Equal(1))
-			Expect(tr.Status.Steps[1][0].TestDefinition.Name).To(Equal("serial-testdef"))
 		})
 
 		It("should execute one serial step successfully", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "serial-testdef",
 					},
 				},
@@ -202,10 +214,10 @@ var _ = Describe("Testflow execution tests", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
-				// create file in shared folder
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "create-artifact",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-content-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{
@@ -222,9 +234,10 @@ var _ = Describe("Testflow execution tests", func() {
 						},
 					},
 				},
-				// check in a another step if file exists in shared folder
 				{
-					{
+					Name:      "check-artifact",
+					DependsOn: []string{"create-artifact"},
+					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-content-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{
@@ -236,6 +249,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				},
 			}
+
 			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
@@ -248,18 +262,19 @@ var _ = Describe("Testflow execution tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "check-envvar-testdef",
+							Config: []tmv1beta1.ConfigElement{
+								{
+									Type:  tmv1beta1.ConfigTypeEnv,
+									Name:  "TEST_NAME",
+									Value: "test",
+								},
+							},
 						},
-					},
-				}
-				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-					{
-						Type:  tmv1beta1.ConfigTypeEnv,
-						Name:  "TEST_NAME",
-						Value: "test",
 					},
 				}
 
@@ -273,9 +288,10 @@ var _ = Describe("Testflow execution tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "check-envvar-testdef",
 						},
 					},
@@ -299,24 +315,25 @@ var _ = Describe("Testflow execution tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
+							Config: []tmv1beta1.ConfigElement{
+								{
+									Type:  tmv1beta1.ConfigTypeEnv,
+									Name:  "FILE",
+									Value: "/tmp/test",
+								},
+								{
+									Type:  tmv1beta1.ConfigTypeFile,
+									Name:  "TEST_NAME",
+									Value: "dGVzdAo=", // base64 encoded 'test' string
+									Path:  "/tmp/test",
+								},
+							},
 						},
-					},
-				}
-				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-					{
-						Type:  tmv1beta1.ConfigTypeEnv,
-						Name:  "FILE",
-						Value: "/tmp/test",
-					},
-					{
-						Type:  tmv1beta1.ConfigTypeFile,
-						Name:  "TEST_NAME",
-						Value: "dGVzdAo=", // base64 encoded 'test' string
-						Path:  "/tmp/test",
 					},
 				}
 
@@ -346,29 +363,30 @@ var _ = Describe("Testflow execution tests", func() {
 				}()
 
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
-						},
-					},
-				}
-				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-					{
-						Type:  tmv1beta1.ConfigTypeEnv,
-						Name:  "FILE",
-						Value: "/tmp/test/test.txt",
-					},
-					{
-						Type: tmv1beta1.ConfigTypeFile,
-						Name: "TEST_NAME",
-						Path: "/tmp/test/test.txt",
-						ValueFrom: &strconf.ConfigSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: secret.Name,
+							Config: []tmv1beta1.ConfigElement{
+								{
+									Type:  tmv1beta1.ConfigTypeEnv,
+									Name:  "FILE",
+									Value: "/tmp/test/test.txt",
 								},
-								Key: "test",
+								{
+									Type: tmv1beta1.ConfigTypeFile,
+									Name: "TEST_NAME",
+									Path: "/tmp/test/test.txt",
+									ValueFrom: &strconf.ConfigSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secret.Name,
+											},
+											Key: "test",
+										},
+									},
+								},
 							},
 						},
 					},
@@ -400,29 +418,30 @@ var _ = Describe("Testflow execution tests", func() {
 				}()
 
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
-						},
-					},
-				}
-				tr.Spec.TestFlow[0][0].Config = []tmv1beta1.ConfigElement{
-					{
-						Type:  tmv1beta1.ConfigTypeEnv,
-						Name:  "FILE",
-						Value: "/tmp/test/test.txt",
-					},
-					{
-						Type: tmv1beta1.ConfigTypeFile,
-						Name: "TEST_NAME",
-						Path: "/tmp/test/test.txt",
-						ValueFrom: &strconf.ConfigSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: configmap.Name,
+							Config: []tmv1beta1.ConfigElement{
+								{
+									Type:  tmv1beta1.ConfigTypeEnv,
+									Name:  "FILE",
+									Value: "/tmp/test/test.txt",
 								},
-								Key: "test",
+								{
+									Type: tmv1beta1.ConfigTypeFile,
+									Name: "TEST_NAME",
+									Path: "/tmp/test/test.txt",
+									ValueFrom: &strconf.ConfigSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: configmap.Name,
+											},
+											Key: "test",
+										},
+									},
+								},
 							},
 						},
 					},

@@ -49,7 +49,7 @@ func NewSetLocations(sets []tmv1beta1.LocationSet) (Locations, error) {
 	return locSets, nil
 }
 
-func (s *Sets) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
+func (s *Sets) GetTestDefinitions(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
 	if step.LocationSet == nil {
 		return s.Default.TestLocation.GetTestDefinitions(step)
 	}
