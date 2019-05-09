@@ -81,7 +81,6 @@
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] One pod requesting one prebound PVC should be able to mount volume and read from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithformat] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
@@ -89,7 +88,6 @@
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] One pod requesting one prebound PVC should be able to mount volume and read from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: blockfswithoutformat] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
@@ -97,7 +95,6 @@
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] One pod requesting one prebound PVC should be able to mount volume and read from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: dir-bindmounted] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
@@ -105,7 +102,6 @@
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] One pod requesting one prebound PVC should be able to mount volume and read from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] One pod requesting one prebound PVC should be able to mount volume and write from pod1
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously
-[sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] Set fsGroup for local volume should set fsGroup for one pod
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] Set fsGroup for local volume should set same fsGroup for two pods simultaneously
 [sig-storage] PersistentVolumes-local  [Volume type: dir-link-bindmounted] Two pods mounting a local volume at the same time should be able to write from pod1 and read from pod2
