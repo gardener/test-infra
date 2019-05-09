@@ -682,7 +682,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 					},
 					"locationSets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Location define location profiles with repositories to look for TestDefinitions.",
+							Description: "LocationSet define location profiles with repositories to look for TestDefinitions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

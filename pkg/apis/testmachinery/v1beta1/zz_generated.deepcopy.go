@@ -207,8 +207,8 @@ func (in *TestflowStep) DeepCopyInto(out *TestflowStep) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Location != nil {
-		in, out := &in.Location, &out.Location
+	if in.LocationSet != nil {
+		in, out := &in.LocationSet, &out.LocationSet
 		*out = new(string)
 		**out = **in
 	}

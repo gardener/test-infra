@@ -50,13 +50,13 @@ func NewSetLocations(sets []tmv1beta1.LocationSet) (Locations, error) {
 }
 
 func (s *Sets) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
-	if step.Location == nil {
+	if step.LocationSet == nil {
 		return s.Default.TestLocation.GetTestDefinitions(step)
 	}
 
-	if _, ok := s.Sets[*step.Location]; !ok {
-		return nil, fmt.Errorf("Location %s is not defined in spec.locationSets", *step.Location)
+	if _, ok := s.Sets[*step.LocationSet]; !ok {
+		return nil, fmt.Errorf("LocationSet %s is not defined in spec.locationSets", *step.LocationSet)
 	}
 
-	return s.Sets[*step.Location].TestLocation.GetTestDefinitions(step)
+	return s.Sets[*step.LocationSet].TestLocation.GetTestDefinitions(step)
 }

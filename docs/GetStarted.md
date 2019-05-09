@@ -201,7 +201,7 @@ spec:
   - - name: create-shoot
   - - label: default
   - - name: e2e-test
-      location: other # ref to the locationset that should be used.
+      locationSet: other # ref to the locationset that should be used.
   - - name: delete-shoot
 
   # OnExit specifies the same execution flow as the testFlow.

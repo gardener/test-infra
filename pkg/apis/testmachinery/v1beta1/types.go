@@ -240,7 +240,7 @@ type TestflowStep struct {
 	// Name of the configset to look for testDefinitions.
 	// If this is empty the default location set is used
 	// +optional
-	Location *string `json:"location,omitempty"`
+	LocationSet *string `json:"locationSet,omitempty"`
 }
 
 ////////////////////////////////////////////////////

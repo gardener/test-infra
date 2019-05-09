@@ -47,7 +47,7 @@ func ValidateTestLocations(identifier string, l []tmv1beta1.TestLocation) error 
 	return nil
 }
 
-// ValidateTestLocation validates a TestDefinition Location of a testrun
+// ValidateTestLocation validates a TestDefinition LocationSet of a testrun
 func ValidateTestLocation(identifier string, l tmv1beta1.TestLocation) error {
 	if l.Type == tmv1beta1.LocationTypeGit {
 		if l.Repo == "" {
