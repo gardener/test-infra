@@ -164,15 +164,15 @@ spec:
     repo: https://github.com/gardener/test-infra.git
     revision: master
     
-  # TestLocationSets defines multiple TestLocations which can be referenced for steps
+  # LocationSets defines multiple TestLocations which can be referenced from steps
   locationSets:
   - name: other
     # optional; defines the default location set which is used if no specific location is defined for a step.
     default: true 
     locations:
     - type: git
-        repo: https://github.com/gardener/test-infra.git
-        revision: 0.20.0
+      repo: https://github.com/gardener/test-infra.git
+      revision: 0.20.0
 
   # Specific kubeconfigs can be defined for the garden, seed or shoot cluster.
   # These kubeconfigs are available in "TM_KUBECONFIG_PATH/xxx.config" inside every TestDefinition container.
@@ -214,7 +214,7 @@ spec:
 
  ### Locations
  Locations are references to a local directory or a github repository where the TestDefinition reside.
- These 2 localtion types are used by the testmachinery to search for all TestDefinitions.
+ These 2 location types are used by the TestMachinery to search for all TestDefinitions.
  
  Git Location:
  ```yaml
@@ -251,7 +251,7 @@ revision: master # tag, commit or branch
 ```
  #### LocationSets
  Location sets define multiple sets of TestLocations with a unique name.
- These sets can be referenced with their unique name in the testflow steps which enables the following feature in the testmachinery:
+ These sets can be referenced with their unique name in the testflow steps which enables the following feature in the TestMachinery:
  - Use multiple versions of the same TestDefinition in one Testrun
  - Restrict TestDefinition of steps with labels
   ```yaml

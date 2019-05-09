@@ -86,7 +86,7 @@ func New(name string, addOutput bool) (*Definition, error) {
 	return prepare, nil
 }
 
-// AddLocation adds a tesdef-location to the cloned repos and output artifacts.
+// AddLocation adds a testdef-location to the cloned repos and output artifacts.
 func (p *Definition) AddLocation(loc testdefinition.Location) {
 	if loc.Type() == tmv1beta1.LocationTypeGit {
 		gitLoc := loc.(*location.GitLocation)

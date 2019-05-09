@@ -5,7 +5,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
-// Locations is a interface which provides function for receiving TestDefinitions that are fetched from testDefLocations.
+// Locations is an interface which provides functions for receiving TestDefinitions that are fetched from testDefLocations.
 type Locations interface {
 	GetTestDefinitions(*tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error)
 }

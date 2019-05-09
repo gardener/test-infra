@@ -92,11 +92,11 @@ type TestrunSpec struct {
 
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
-	// TestLocation define repositories to look for TestDefinitions that then executed in a workflow as specified in testflow.
+	// TestLocation define repositories to look for TestDefinitions that are then executed in a workflow as specified in testflow.
 	// +optional
 	TestLocations []TestLocation `json:"testLocations,omitempty"`
 
-	// Location define location profiles with repositories to look for TestDefinitions.
+	// LocationSet define location profiles with repositories to look for TestDefinitions.
 	// +optional
 	LocationSets []LocationSet `json:"locationSets,omitempty"`
 
@@ -180,7 +180,7 @@ type TestLocation struct {
 	HostPath string `json:"hostPath,omitempty"`
 }
 
-// LocationSet defines a set of locations with a specific name and
+// LocationSet defines a set of locations with a specific name and a flag marking the set as the default set.
 type LocationSet struct {
 	// Unique name of the set.
 	Name string `json:"name,omitemtpy"`
