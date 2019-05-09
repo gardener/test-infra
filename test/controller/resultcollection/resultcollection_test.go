@@ -166,7 +166,7 @@ var _ = Describe("Result collection tests", func() {
 
 			status = tr.Status.Steps[0][1]
 			Expect(status.TestDefinition.Name).To(Equal("failing-integration-testdef"))
-			Expect(status.ExportArtifactKey).ToNot(BeZero())
+			Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
 
 			status = tr.Status.Steps[1][0]

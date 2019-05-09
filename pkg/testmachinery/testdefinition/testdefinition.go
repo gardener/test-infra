@@ -91,20 +91,23 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 			},
 			Artifacts: []argov1.Artifact{
 				{
-					Name: "kubeconfigs",
-					Path: testmachinery.TM_KUBECONFIG_PATH,
+					Name:     "kubeconfigs",
+					Path:     testmachinery.TM_KUBECONFIG_PATH,
+					Optional: true,
 				},
 				{
-					Name: "sharedFolder",
-					Path: testmachinery.TM_SHARED_PATH,
+					Name:     "sharedFolder",
+					Path:     testmachinery.TM_SHARED_PATH,
+					Optional: true,
 				},
 			},
 		},
 		Outputs: argov1.Outputs{
 			Artifacts: []argov1.Artifact{
 				{
-					Name: testmachinery.ExportArtifact,
-					Path: testmachinery.TM_EXPORT_PATH,
+					Name:     testmachinery.ExportArtifact,
+					Path:     testmachinery.TM_EXPORT_PATH,
+					Optional: true,
 				},
 			},
 		},
@@ -207,12 +210,14 @@ func (td *TestDefinition) AddSerialStdOutput() {
 		Name:       "kubeconfigs",
 		GlobalName: "kubeconfigs",
 		Path:       testmachinery.TM_KUBECONFIG_PATH,
+		Optional:   true,
 	}
 	td.AddOutputArtifacts(kubeconfigArtifact)
 	sharedFolderArtifact := argov1.Artifact{
 		Name:       "sharedFolder",
 		GlobalName: "sharedFolder",
 		Path:       testmachinery.TM_SHARED_PATH,
+		Optional:   true,
 	}
 	td.AddOutputArtifacts(sharedFolderArtifact)
 }

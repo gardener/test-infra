@@ -38,7 +38,7 @@ required = [
 
 [[constraint]]
   name = "github.com/argoproj/argo"
-  revision = "4bfbb20bc23f8bf4611a6314fb80f8138b17b9b9"
+  revision = "v2.3.0-rc3"
 
 [[override]]
   name = "gopkg.in/fsnotify.v1"

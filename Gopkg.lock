@@ -58,7 +58,7 @@
   version = "1.0.0"
 
 [[projects]]
-  digest = "1:bb4155147a8620d6ed0ea43c30c461a6bb84e75abe8306a24786ff4a23d5923a"
+  digest = "1:9335b3d9bc7fcbaac3c03b18633ef6c8d92b74c9eb7986bb4ce999b49991c169"
   name = "github.com/argoproj/argo"
   packages = [
     "pkg/apis/workflow",
@@ -68,7 +68,7 @@
     "pkg/client/clientset/versioned/typed/workflow/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "4bfbb20bc23f8bf4611a6314fb80f8138b17b9b9"
+  revision = "v2.3.0-rc3"
 
 [[projects]]
   branch = "master"
@@ -1205,6 +1205,7 @@
     "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
     "github.com/gardener/gardener/pkg/client/kubernetes",
+    "github.com/gardener/gardener/pkg/utils",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
     "github.com/go-openapi/spec",
     "github.com/google/go-github/github",
@@ -1219,6 +1220,7 @@
     "gopkg.in/yaml.v2",
     "k8s.io/api/admission/v1beta1",
     "k8s.io/api/admissionregistration/v1beta1",
+    "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
@@ -1231,6 +1233,7 @@
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/version",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
