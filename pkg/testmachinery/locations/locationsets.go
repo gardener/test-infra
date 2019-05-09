@@ -14,7 +14,7 @@ func NewLocations(spec tmv1beta1.TestrunSpec) (Locations, error) {
 	}
 
 	if len(spec.TestLocations) > 0 {
-		return NewTestLocation(spec.TestLocations)
+		return NewTestLocations(spec.TestLocations)
 	}
 
 	return nil, errors.New("no location for TestDefinitions defined")
@@ -26,7 +26,7 @@ func NewSetLocations(sets []tmv1beta1.LocationSet) (Locations, error) {
 	}
 	var firstSet *Set
 	for _, set := range sets {
-		testlocation, err := NewTestLocation(set.Locations)
+		testlocation, err := NewTestLocations(set.Locations)
 		if err != nil {
 			return nil, err
 		}

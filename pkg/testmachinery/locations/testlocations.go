@@ -23,8 +23,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// NewTestLocation takes the parsed CRD Locations and fetches all TestDefintions from all locations.
-func NewTestLocation(testLocations []tmv1beta1.TestLocation) (Locations, error) {
+// NewTestLocations takes the parsed CRD Locations and fetches all TestDefintions from all locations.
+func NewTestLocations(testLocations []tmv1beta1.TestLocation) (Locations, error) {
 	testDefs := map[string]*testdefinition.TestDefinition{}
 
 	if len(testLocations) == 0 {
