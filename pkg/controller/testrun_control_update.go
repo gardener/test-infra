@@ -173,7 +173,7 @@ func getNodeExportKey(outputs *argov1.Outputs) string {
 		return ""
 	}
 	for _, artifact := range outputs.Artifacts {
-		if artifact.Name == testmachinery.ExportArtifact {
+		if artifact.Name == testmachinery.ExportArtifact && artifact.ArtifactLocation.S3 != nil {
 			return artifact.ArtifactLocation.S3.Key
 		}
 	}
