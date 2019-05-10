@@ -45,7 +45,7 @@ spec:
     selector:
         app: argo-ui
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argo-ui
@@ -76,11 +76,13 @@ spec:
         name: argo-ui
       serviceAccountName: argo-ui
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: workflow-controller
   namespace: {{.Release.Namespace}}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 spec:
   selector:
     matchLabels:
