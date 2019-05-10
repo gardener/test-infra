@@ -62,6 +62,12 @@ test-infra:
           preprocess: 'finalize'
         release:
           nextversion: 'bump_minor'
+        slack:
+          default_channel: 'internal_scp_workspace'
+          channel_cfgs:
+            internal_scp_workspace:
+              channel_name: 'k8s-oq'
+              slack_cfg_name: 'scp_workspace'
         scheduling:
           suppress_parallel_execution: true
         <<: *ti_docker_images
