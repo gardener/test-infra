@@ -229,6 +229,9 @@ type TestflowStep struct {
 	Name  string `json:"name,omitempty"`
 	Label string `json:"label,omitempty"`
 
+	// Continue the execution of the workflow even when the step errors or fails.
+	ContinueOnError bool `json:"continueOnError,omitempty"`
+
 	// Condition when the step should be executed.
 	// Only used if the step is in the onExit testflow.
 	// +optional

@@ -371,6 +371,12 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStep(ref common.ReferenceCall
 							Format: "",
 						},
 					},
+					"continueOnError": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"condition": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Condition when the step should be executed. Only used if the step is in the onExit testflow.",

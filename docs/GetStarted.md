@@ -200,6 +200,7 @@ spec:
   testFlow:
   - - name: create-shoot
   - - label: default
+      continueOnError: true # optional; default: false -> continues the workflow even if the step fails.
   - - name: e2e-test
       locationSet: other # ref to the locationset that should be used.
   - - name: delete-shoot
