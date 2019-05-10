@@ -57,7 +57,6 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
 			body = data
-			fmt.Print(string(body))
 		}
 	}
 
