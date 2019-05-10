@@ -92,8 +92,13 @@ type TestrunSpec struct {
 
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
-	// TestLocation define repositories to look for TestDefinitions that then executed in a workkflow as specified in testflow.
+	// TestLocation define repositories to look for TestDefinitions that are then executed in a workflow as specified in testflow.
+	// +optional
 	TestLocations []TestLocation `json:"testLocations,omitempty"`
+
+	// LocationSet define location profiles with repositories to look for TestDefinitions.
+	// +optional
+	LocationSets []LocationSet `json:"locationSets,omitempty"`
 
 	// Base64 encoded kubeconfigs that are mounted to every testflow step.
 	// They are available at $TM_KUBECONFIG_PATH/xxx.config, where xxx is either (gardener, seed or shoot).
@@ -175,6 +180,18 @@ type TestLocation struct {
 	HostPath string `json:"hostPath,omitempty"`
 }
 
+// LocationSet defines a set of locations with a specific name and a flag marking the set as the default set.
+type LocationSet struct {
+	// Unique name of the set.
+	Name string `json:"name,omitemtpy"`
+	// default defines this location set as the default location set to search for TestDefinitions.
+	// Only one default location per Testrun is possible.
+	// +optional
+	Default bool `json:"default,omitemtpy"`
+	// Locations defines all Locations corresponding to the set.
+	Locations []TestLocation `json:"locations,omitemtpy"`
+}
+
 // TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.
 type TestrunKubeconfigs struct {
 	Gardener *strconf.StringOrConfig `json:"gardener,omitempty"`
@@ -209,10 +226,21 @@ type TestFlow [][]TestflowStep
 // TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep
 // TestDefinitions can be either defined by a Name or a Label.
 type TestflowStep struct {
-	Name      string          `json:"name,omitempty"`
-	Label     string          `json:"label,omitempty"`
-	Condition ConditionType   `json:"condition,omitempty"`
-	Config    []ConfigElement `json:"config,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Label string `json:"label,omitempty"`
+
+	// Condition when the step should be executed.
+	// Only used if the step is in the onExit testflow.
+	// +optional
+	Condition ConditionType `json:"condition,omitempty"`
+
+	// Step specific configuration.
+	Config []ConfigElement `json:"config,omitempty"`
+
+	// Name of the configset to look for testDefinitions.
+	// If this is empty the default location set is used
+	// +optional
+	LocationSet *string `json:"locationSet,omitempty"`
 }
 
 ////////////////////////////////////////////////////

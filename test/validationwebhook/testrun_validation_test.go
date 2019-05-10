@@ -82,19 +82,22 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
+			tr.Spec.LocationSets = nil
 
 			err := tmClient.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(tmClient, tr)
 			}
 			Expect(err).To(HaveOccurred())
-			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("No TestDefinition locations defined"))
+			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("no location for TestDefinitions defined"))
 		})
 
 		It("should reject when a local location is defined", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.LocationSets = nil
+			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
 			tr.Spec.TestLocations = append(tr.Spec.TestLocations, tmv1beta1.TestLocation{
 				Type: tmv1beta1.LocationTypeLocal,
 			})

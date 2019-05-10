@@ -19,7 +19,8 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
+	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 )
 
@@ -27,7 +28,7 @@ import (
 // It fetches testruns from specified testdeflocations and generates a testflow object.
 func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 
-	testDefinitions, err := testdefinition.NewTestDefinitions(tr.Spec.TestLocations)
+	locs, err := locations.NewLocations(tr.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -35,19 +36,19 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig := config.New(tr.Spec.Config)
 
 	// create initial prepare step
-	prepare, err := testdefinition.NewPrepare("Prepare", true)
+	prepareDef, err := prepare.New("Prepare", true)
 	if err != nil {
 		return nil, err
 	}
-	if err := prepare.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
+	if err := prepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
 		return nil, err
 	}
-	tf, err := testflow.New(testflow.FlowIDTest, &tr.Spec.TestFlow, testDefinitions, globalConfig, prepare)
+	tf, err := testflow.New(testflow.FlowIDTest, &tr.Spec.TestFlow, locs, globalConfig, prepareDef)
 	if err != nil {
 		return nil, err
 	}
 
-	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, testDefinitions, globalConfig, nil)
+	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, locs, globalConfig, nil)
 	if err != nil {
 		return nil, err
 	}

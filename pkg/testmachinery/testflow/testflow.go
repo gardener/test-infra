@@ -18,21 +18,22 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
+	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	apiv1 "k8s.io/api/core/v1"
 )
 
 // New takes a testflow definition, test definitions and the global config, and creates a new tesrun representation
-func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDefinitions, globalConfig []*config.Element, prepare *testdefinition.PrepareDefinition) (*Testflow, error) {
-	rootPrepare, err := testdefinition.NewPrepare("Empty", false)
+func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, locs locations.Locations, globalConfig []*config.Element, prepareDef *prepare.Definition) (*Testflow, error) {
+	rootPrepare, err := prepare.New("Empty", false)
 	if err != nil {
 		return nil, err
 	}
-	if prepare != nil {
-		rootPrepare = prepare
+	if prepareDef != nil {
+		rootPrepare = prepareDef
 	}
 	rootNode := NewNode(nil, nil, nil, rootPrepare.TestDefinition, &Step{nil, -1, -1}, flowID)
 	rootNode.Task = argo.CreateTask(rootNode.TestDefinition.Template.Name, rootNode.TestDefinition.Template.Name, testmachinery.PHASE_RUNNING, rootNode.GetParentNames(), nil)
@@ -40,17 +41,17 @@ func New(flowID FlowIdentifier, tf *tmv1beta1.TestFlow, tl testdefinition.TestDe
 		return nil, err
 	}
 
-	flow, err := NewFlow(flowID, rootNode, tf, tl, globalConfig)
+	flow, err := NewFlow(flowID, rootNode, tf, locs, globalConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	// add used locations to prepare step
-	if prepare != nil {
+	if prepareDef != nil {
 		for loc := range flow.usedLocations {
-			prepare.AddLocation(loc)
+			prepareDef.AddLocation(loc)
 		}
-		err = prepare.AddRepositoriesAsArtifacts()
+		err = prepareDef.AddRepositoriesAsArtifacts()
 		if err != nil {
 			return nil, err
 		}

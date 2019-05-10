@@ -30,6 +30,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement":                    schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet":                      schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":                  schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":                      schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition":                   schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref),
@@ -94,6 +95,49 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LocationSet defines a set of locations with a specific name and",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique name of the set.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"default": {
+						SchemaProps: spec.SchemaProps{
+							Description: "default defines this location set as the default location set to search for TestDefinitions. Only one default location per Testrun is possible.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"locations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Locations defines all Locations corresponding to the set.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"name", "locations"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
 	}
 }
 
@@ -329,13 +373,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStep(ref common.ReferenceCall
 					},
 					"condition": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Condition when the step should be executed. Only used if the step is in the onExit testflow.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Step specific configuration.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -343,6 +389,13 @@ func schema_pkg_apis_testmachinery_v1beta1_TestflowStep(ref common.ReferenceCall
 									},
 								},
 							},
+						},
+					},
+					"location": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the configset to look for testDefinitions. If this is empty the default location set is used",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -616,12 +669,25 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 					},
 					"testLocations": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TestLocation define repositories to look for TestDefinitions that then executed in a workkflow as specified in testflow.",
+							Description: "TestLocation define repositories to look for TestDefinitions that then executed in a workflow as specified in testflow.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+									},
+								},
+							},
+						},
+					},
+					"locationSets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LocationSet define location profiles with repositories to look for TestDefinitions.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet"),
 									},
 								},
 							},
@@ -689,7 +755,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs"},
 	}
 }
 
