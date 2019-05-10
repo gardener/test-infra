@@ -17,6 +17,8 @@ kind: Deployment
 metadata:
   name: testmachinery-controller
   namespace: {{ .Release.Namespace }}
+  annotations:
+    checksum/tls-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
   labels:
     app: tm-controller
 spec:
