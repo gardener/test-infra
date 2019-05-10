@@ -129,6 +129,6 @@ TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_
 # clean installation  #
 #######################
 # wait for controller to clean up all testruns.
-# sleep 30
-# echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
-# echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
+sleep 30
+echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
+echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
