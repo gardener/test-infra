@@ -53,8 +53,13 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 				if artifact.S3 != nil {
 					err := os.DeleteObject(artifact.S3.Key)
 					if err != nil {
-						log.Errorf("Cannot delete object %s from object storage\n%s", artifact.S3.Key, err.Error())
-						return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
+						log.Errorf("Cannot delete object %s from object storage: %s", artifact.S3.Key, err.Error())
+
+						// do not retry deletion if the key does not not exist in s3 anymore
+						// maybe use const from aws lib -> need to change to aws lib
+						if err.Error() != "The specified key does not exist." {
+							return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
+						}
 					}
 					log.Debugf("Deleted object %s from object store", artifact.S3.Key)
 				}
