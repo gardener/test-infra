@@ -13,7 +13,7 @@
 # limitations under the License.
 
 argo:
-  tag: v2.3.0-rc3
+  tag: v2.3.0
 
 configmap:
   name: tm-config
