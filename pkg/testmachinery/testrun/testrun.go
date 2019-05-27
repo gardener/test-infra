@@ -48,7 +48,11 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 		return nil, err
 	}
 
-	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, locs, globalConfig, nil)
+	postPrepareDef, err := prepare.New("PostPrepare", true)
+	if err != nil {
+		return nil, err
+	}
+	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, locs, globalConfig, postPrepareDef)
 	if err != nil {
 		return nil, err
 	}
