@@ -68,7 +68,7 @@
     "pkg/client/clientset/versioned/typed/workflow/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "v2.3.0-rc3"
+  revision = "v2.3.0"
 
 [[projects]]
   branch = "master"

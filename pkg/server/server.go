@@ -47,7 +47,7 @@ func Serve(ctx context.Context, mgr manager.Manager) {
 
 	go func() {
 		log.Infof("Starting HTTP server on %s", listenAddressHTTP)
-		if err := serverHTTP.ListenAndServe(); err != nil &&  err != http.ErrServerClosed {
+		if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Errorf("Could not start HTTP server: %s", err.Error())
 		}
 	}()

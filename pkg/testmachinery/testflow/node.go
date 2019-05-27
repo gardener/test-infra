@@ -34,7 +34,7 @@ func NewNode(parents []*Node, lastSerialNode, rootNode *Node, td *testdefinition
 	}
 
 	if lastSerialNode != nil {
-		node.addTask(step.Info.ContinueOnError)
+		node.addTask(lastSerialNode, step.Info.ContinueOnError)
 	}
 
 	node.Status = &tmv1beta1.TestflowStepStatus{
@@ -75,11 +75,11 @@ func (n *Node) Name() string {
 
 // addTask adds an argo task to the node.AddTask
 // Standard artifacts like kubeconfigs and the cloned repository are added as well as a execution condition if specified.
-func (n *Node) addTask(continueOnError bool) {
+func (n *Node) addTask(lastSerialNode *Node, continueOnError bool) {
 	artifacts := []argov1.Artifact{
 		{
 			Name: "kubeconfigs",
-			From: "{{workflow.outputs.artifacts.kubeconfigs}}",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", lastSerialNode.Task.Name),
 		},
 		{
 			Name: "sharedFolder",
