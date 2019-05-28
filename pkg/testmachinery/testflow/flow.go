@@ -132,7 +132,7 @@ func (f *Flow) GetDAGTemplate() *argov1.DAGTemplate {
 func (f *Flow) GetStatus() []*tmv1beta1.StepStatus {
 	status := make([]*tmv1beta1.StepStatus, 0)
 	for n := range f.Iterate() {
-		status = append(status, n.Status)
+		status = append(status, n.Status())
 	}
 	// remove root element from status as this is the tm prepare step
 	return status[1:]

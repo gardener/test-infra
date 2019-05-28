@@ -10,7 +10,6 @@ type List []*Node
 
 // Node is an object that represents a node of the internal DAG representation
 type Node struct {
-	ID       string
 	Parents  List
 	Children List
 
@@ -23,7 +22,8 @@ type Node struct {
 
 	TestDefinition *testdefinition.TestDefinition
 	Template       *argov1.Template
-	Status         *tmv1beta1.StepStatus
+	status         *tmv1beta1.StepStatus
 
 	step *tmv1beta1.DAGStep
+	flow string
 }

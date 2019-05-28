@@ -3,8 +3,6 @@ package controller
 import (
 	"testing"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
@@ -32,10 +30,6 @@ var _ = Describe("Testmachinery controller update", func() {
 						Phase: tmv1beta1.PhaseStatusInit,
 						TestDefinition: tmv1beta1.StepStatusTestDefinition{
 							Name: "testdef1",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "0/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
 						},
 					},
 				},
@@ -71,10 +65,6 @@ var _ = Describe("Testmachinery controller update", func() {
 					Phase: argov1.NodeRunning,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef1",
-						Position: map[string]string{
-							testdefinition.AnnotationPosition: "0/0",
-							testdefinition.AnnotationFlow:     "flow",
-						},
 					},
 				},
 			}))

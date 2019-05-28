@@ -34,6 +34,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet":              schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition":           schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus":               schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition":       schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition": schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":          schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":              schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
@@ -260,6 +261,11 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 							Format: "",
 						},
 					},
+					"position": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition"),
+						},
+					},
 					"testdefinition": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition"),
@@ -300,11 +306,49 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"exportArtifactKey", "podName"},
+				Required: []string{"position", "exportArtifactKey", "podName"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dependsOn": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"flow": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"step": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{},
 	}
 }
 
@@ -351,21 +395,8 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 							Format: "int64",
 						},
 					},
-					"position": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
 				},
-				Required: []string{"recipientsOnFailure", "activeDeadlineSeconds", "position"},
+				Required: []string{"recipientsOnFailure", "activeDeadlineSeconds"},
 			},
 		},
 		Dependencies: []string{

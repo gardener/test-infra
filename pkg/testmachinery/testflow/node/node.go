@@ -16,13 +16,12 @@ package node
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/locations"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
@@ -52,27 +51,7 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	// create hash or unique name for testdefinition + step + flow
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
-	node := &Node{TestDefinition: td, step: step}
-
-	node.Status = &tmv1beta1.StepStatus{
-		Name:  name,
-		Phase: tmv1beta1.PhaseStatusInit,
-		TestDefinition: tmv1beta1.StepStatusTestDefinition{
-			Name:                  td.Info.Metadata.Name,
-			Owner:                 td.Info.Spec.Owner,
-			RecipientsOnFailure:   td.Info.Spec.RecipientsOnFailure,
-			ActiveDeadlineSeconds: td.Info.Spec.ActiveDeadlineSeconds,
-			Position: map[string]string{
-				"flow": flow,
-			},
-		},
-	}
-	if step != nil {
-		node.Status.TestDefinition.Position["step"] = step.Name
-	}
-	if td.Location != nil {
-		node.Status.TestDefinition.Location = *td.Location.GetLocation()
-	}
+	node := &Node{TestDefinition: td, step: step, flow: flow}
 
 	return node
 }
@@ -162,6 +141,32 @@ func (n *Node) Task() argov1.DAGTask {
 	}
 
 	return task
+}
+
+func (n *Node) Status() *tmv1beta1.StepStatus {
+	td := n.TestDefinition
+	status := &tmv1beta1.StepStatus{
+		Name: n.Name(),
+		Position: tmv1beta1.StepStatusPosition{
+			DependsOn: n.ParentNames(),
+			Flow:      n.flow,
+		},
+		Phase: tmv1beta1.PhaseStatusInit,
+		TestDefinition: tmv1beta1.StepStatusTestDefinition{
+			Name:                  td.Info.Metadata.Name,
+			Owner:                 td.Info.Spec.Owner,
+			RecipientsOnFailure:   td.Info.Spec.RecipientsOnFailure,
+			ActiveDeadlineSeconds: td.Info.Spec.ActiveDeadlineSeconds,
+		},
+	}
+	if n.step != nil {
+		status.Position.Step = n.step.Name
+	}
+	if td.Location != nil {
+		status.TestDefinition.Location = *td.Location.GetLocation()
+	}
+
+	return status
 }
 
 func (n *Node) SetOutput() {
