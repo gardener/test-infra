@@ -52,6 +52,9 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := postPrepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
+		return nil, err
+	}
 	onExitFlow, err := testflow.New(testflow.FlowIDExit, &tr.Spec.OnExit, locs, globalConfig, postPrepareDef)
 	if err != nil {
 		return nil, err
