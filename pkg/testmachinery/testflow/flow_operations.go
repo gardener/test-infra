@@ -73,7 +73,7 @@ func reorderChildrenOfNode(root *node.Node) node.List {
 	allChildren := root.Children.GetChildren()
 
 	// directly return if there is only one node in the pool
-	if len(root.Children) == 0 {
+	if len(root.Children) == 1 {
 		return allChildren
 	}
 

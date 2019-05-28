@@ -176,6 +176,19 @@ var _ = Describe("flow operations", func() {
 			Expect(D.Parents[0]).To(Equal(Bs))
 
 		})
+
+		It("should not reorder a DAG with 1 serial step", func() {
+			A := testNode(nil, &defaultTestDef)
+			Bs := testNode(node.List{A}, &serialTestDef)
+
+			Expect(testflow.ReorderChildrenOfNodes(node.List{A})).To(BeNil())
+
+			Expect(A.Children).To(HaveLen(1))
+			Expect(A.Children[0]).To(Equal(Bs))
+
+			Expect(Bs.Children).To(HaveLen(0))
+
+		})
 	})
 
 	Context("Apply namespaces", func() {
