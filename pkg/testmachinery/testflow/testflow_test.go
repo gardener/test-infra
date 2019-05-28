@@ -100,7 +100,7 @@ var _ = Describe("Testflow", func() {
 				{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
-						Name: "noMatchingLabel",
+						Label: "noMatchingLabel",
 					},
 				},
 			}
@@ -117,7 +117,7 @@ var _ = Describe("Testflow", func() {
 				{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
-						Name: "noMatchingLabel",
+						Label: "noMatchingLabel",
 					},
 				},
 			}

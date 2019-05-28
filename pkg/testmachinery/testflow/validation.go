@@ -27,6 +27,11 @@ func ValidateDefinition(identifier string, definition tmv1beta1.StepDefinition) 
 	if definition.Label == "" && definition.Name == "" {
 		return fmt.Errorf("%s: Required value: name or label have to be specified", identifier)
 	}
+	if definition.Name != "" {
+		if err := testdefinition.ValidateName(identifier, definition.Name); err != nil {
+			return err
+		}
+	}
 
 	if definition.Condition != tmv1beta1.ConditionTypeAlways &&
 		definition.Condition != tmv1beta1.ConditionTypeSuccess &&

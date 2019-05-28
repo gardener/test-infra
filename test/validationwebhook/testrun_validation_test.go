@@ -136,7 +136,7 @@ var _ = Describe("Testrun validation tests", func() {
 				{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
-						Name: "NoTestDefsFoundLabel",
+						Label: "NoTestDefsFoundLabel",
 					},
 				},
 			}
