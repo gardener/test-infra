@@ -36,7 +36,6 @@
 [sig-cli] Kubectl client [k8s.io] Simple pod should support exec
 [sig-cli] Kubectl client [k8s.io] Simple pod should support exec through an HTTP proxy
 [sig-cli] Kubectl client [k8s.io] Simple pod should support exec through kubectl proxy
-[sig-cli] Kubectl client [k8s.io] Simple pod should support inline execution and attach
 [sig-cli] Kubectl client [k8s.io] Simple pod should support port-forward
 [sig-cli] Kubectl Port forwarding [k8s.io] With a server listening on 0.0.0.0 [k8s.io] that expects a client request should support a client that connects, sends DATA, and disconnects
 [sig-cli] Kubectl Port forwarding [k8s.io] With a server listening on 0.0.0.0 [k8s.io] that expects a client request should support a client that connects, sends NO DATA, and disconnects

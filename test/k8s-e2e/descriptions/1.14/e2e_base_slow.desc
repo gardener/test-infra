@@ -39,8 +39,6 @@
 [sig-scheduling] SchedulerPreemption [Serial] validates basic preemption works
 [sig-scheduling] SchedulerPreemption [Serial] validates lower priority pod preemption by critical pod
 [sig-scheduling] SchedulerPreemption [Serial] validates pod anti-affinity works in preemption
-[sig-scheduling] SchedulerPriorities [Serial] Pod should avoid nodes that have avoidPod annotation
-[sig-scheduling] SchedulerPriorities [Serial] Pod should be preferably scheduled to nodes pod can tolerate
 [sig-storage] ConfigMap Should fail non-optional pod creation due to configMap object does not exist [Slow]
 [sig-storage] ConfigMap Should fail non-optional pod creation due to the key in the configMap object does not exist [Slow]
 [sig-storage] Dynamic Provisioning DynamicProvisioner [Slow] should provision storage with different parameters
@@ -64,10 +62,8 @@
 [sig-storage] Secrets Should fail non-optional pod creation due to secret object does not exist [Slow]
 [sig-storage] Secrets Should fail non-optional pod creation due to the key in the secret object does not exist [Slow]
 [sig-storage] PersistentVolumes-local  [Volume type: tmpfs] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted
-[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications with PVCs
 [sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should implement legacy replacement when the update strategy is OnDelete
 [sig-autoscaling] [HPA] Horizontal pod autoscaling (scale resource: CPU) [sig-autoscaling] ReplicationController light Should scale from 2 pods to 1 pod
-[sig-apps] StatefulSet [k8s.io] Deploy clustered applications [Feature:StatefulSet] [Slow] should creating a working CockroachDB cluster
 [k8s.io] Pods should have their auto-restart back-off timer reset on image update [Slow][NodeConformance]
 [sig-api-machinery] Servers with support for API chunking should support continue listing from the last key if the original version has been compacted away, though the list is inconsistent
 [k8s.io] Pods should cap back-off at MaxContainerBackOff [Slow][NodeConformance]
@@ -112,10 +108,7 @@
 [sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Inline-volume (default fs)] subPath should support restarting containers using file as subpath [Slow]
 [sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Inline-volume (default fs)] volumeIO should write files of various sizes, verify size, validate content [Slow]
 [sig-storage] CSI Volumes [Driver: csi-hostpath-v0] [Testpattern: Dynamic PV (block volmode)] volumeMode should fail in binding dynamic provisioned PV to PVC
-[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should not deadlock when a pod's predecessor fails
-[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should provide basic identity
 [sig-autoscaling] [HPA] Horizontal pod autoscaling (scale resource: CPU) [sig-autoscaling] ReplicationController light Should scale from 1 pod to 2 pods
-[sig-scheduling] SchedulerPriorities [Serial] Pod should be scheduled to node that don't match the PodAntiAffinity terms
 [sig-storage] CSI Volumes CSI attach test using HostPath driver [Feature:CSIDriverRegistry] volume with no CSI driver needs VolumeAttachment
 [sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (default fs)] volumes should be mountable
 [sig-network] DNS should provide DNS for ExternalName services
