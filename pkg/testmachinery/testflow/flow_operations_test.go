@@ -20,9 +20,9 @@ func TestConfig(t *testing.T) {
 var _ = Describe("flow operations", func() {
 	Context("create initial dag", func() {
 		It("should set the root node as parent of all steps with no dependencies", func() {
-			rootNode := testNode(nil, &defaultTestDef)
-			A := testNode(nil, &defaultTestDef)
-			B := testNode(nil, &defaultTestDef)
+			rootNode := testNode("root", nil, &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			B := testNode("B", nil, &defaultTestDef)
 			steps := map[string]*testflow.Step{
 				"A": {
 					Info:  testDAGStep([]string{}),
@@ -43,9 +43,9 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should set dependent nodes as parents", func() {
-			rootNode := testNode(nil, &defaultTestDef)
-			A := testNode(nil, &defaultTestDef)
-			B := testNode(nil, &defaultTestDef)
+			rootNode := testNode("root", nil, &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			B := testNode("B", nil, &defaultTestDef)
 			steps := map[string]*testflow.Step{
 				"A": {
 					Info:  testDAGStep([]string{}),
@@ -66,11 +66,11 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should set multiple dependent nodes as parents", func() {
-			rootNode := testNode(nil, &defaultTestDef)
-			A := testNode(nil, &defaultTestDef)
-			B := testNode(nil, &defaultTestDef)
-			C := testNode(nil, &defaultTestDef)
-			D := testNode(nil, &defaultTestDef)
+			rootNode := testNode("A", nil, &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			B := testNode("B", nil, &defaultTestDef)
+			C := testNode("C", nil, &defaultTestDef)
+			D := testNode("D", nil, &defaultTestDef)
 			steps := map[string]*testflow.Step{
 				"A": {
 					Info:  testDAGStep([]string{}),
@@ -110,10 +110,10 @@ var _ = Describe("flow operations", func() {
 
 	Context("serial steps", func() {
 		It("should reorder a DAG with 1 parallel and 1 serial step", func() {
-			A := testNode(nil, &defaultTestDef)
-			Bs := testNode(node.NewSet(A), &serialTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(Bs, C), &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(Bs, C), &defaultTestDef)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -131,12 +131,12 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should reorder a DAG with 2 parallel and 2 serial step", func() {
-			A := testNode(nil, &defaultTestDef)
-			Bs := testNode(node.NewSet(A), &serialTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(A), &defaultTestDef)
-			Es := testNode(node.NewSet(A), &serialTestDef)
-			F := testNode(node.NewSet(Bs, C, D, Es), &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(A), &defaultTestDef)
+			Es := testNode("Es", node.NewSet(A), &serialTestDef)
+			F := testNode("F", node.NewSet(Bs, C, D, Es), &defaultTestDef)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -152,17 +152,17 @@ var _ = Describe("flow operations", func() {
 			Expect(Bs.Children).To(HaveLen(1))
 			Expect(Bs.Children).To(Or(HaveKey(Es), HaveKey(F)))
 			Expect(Es.Children).To(HaveLen(1))
-			Expect(Es.Children).To(Or(HaveKey(Es), HaveKey(F)))
+			Expect(Es.Children).To(Or(HaveKey(Bs), HaveKey(F)))
 
 			Expect(F.Parents).To(HaveLen(1))
-			Expect(F.Parents).To(HaveKey(Es))
+			Expect(F.Parents).To(Or(HaveKey(Bs), HaveKey(Es)))
 		})
 
 		It("should change a reordered DAG", func() {
-			A := testNode(nil, &defaultTestDef)
-			Bs := testNode(node.NewSet(A), &serialTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(Bs, C), &defaultTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(Bs, C), &defaultTestDef)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
@@ -182,8 +182,8 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should not reorder a DAG with 1 serial step", func() {
-			A := testNode(nil, &defaultTestDef)
-			Bs := testNode(node.NewSet(A), &serialTestDef)
+			A := testNode("A", nil, &defaultTestDef)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -197,11 +197,11 @@ var _ = Describe("flow operations", func() {
 
 	Context("Apply namespaces", func() {
 		It("should set the last serial parent as artifact source", func() {
-			rootNode := testNode(node.NewSet(), &defaultTestDef)
-			A := testNode(node.NewSet(rootNode), &defaultTestDef)
-			B := testNode(node.NewSet(A), &defaultTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(B, C), &defaultTestDef)
+			rootNode := testNode("root", node.NewSet(), &defaultTestDef)
+			A := testNode("A", node.NewSet(rootNode), &defaultTestDef)
+			B := testNode("B", node.NewSet(A), &defaultTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(B, C), &defaultTestDef)
 			steps := map[string]*testflow.Step{
 				"A": {
 					Info:  testDAGStep([]string{}),
@@ -234,10 +234,10 @@ var _ = Describe("flow operations", func() {
 
 	Context("serial nodes", func() {
 		It("should mark real serial nodes as serial", func() {
-			A := testNode(node.NewSet(), &defaultTestDef)
-			B := testNode(node.NewSet(A), &defaultTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(B, C), &defaultTestDef)
+			A := testNode("A", node.NewSet(), &defaultTestDef)
+			B := testNode("B", node.NewSet(A), &defaultTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(B, C), &defaultTestDef)
 
 			testflow.SetSerialNodes(A)
 
@@ -248,17 +248,17 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should mark real serial nodes as serial in a huge DAG", func() {
-			A := testNode(node.NewSet(), &defaultTestDef)
-			B := testNode(node.NewSet(A), &defaultTestDef)
-			C := testNode(node.NewSet(A), &defaultTestDef)
-			D := testNode(node.NewSet(B), &defaultTestDef)
-			E := testNode(node.NewSet(C), &defaultTestDef)
-			F := testNode(node.NewSet(C), &defaultTestDef)
-			G := testNode(node.NewSet(D, E, F), &defaultTestDef)
-			H := testNode(node.NewSet(G), &defaultTestDef)
-			I := testNode(node.NewSet(G), &defaultTestDef)
-			J := testNode(node.NewSet(H, I), &defaultTestDef)
-			K := testNode(node.NewSet(J), &defaultTestDef)
+			A := testNode("A", node.NewSet(), &defaultTestDef)
+			B := testNode("B", node.NewSet(A), &defaultTestDef)
+			C := testNode("C", node.NewSet(A), &defaultTestDef)
+			D := testNode("D", node.NewSet(B), &defaultTestDef)
+			E := testNode("E", node.NewSet(C), &defaultTestDef)
+			F := testNode("F", node.NewSet(C), &defaultTestDef)
+			G := testNode("D", node.NewSet(D, E, F), &defaultTestDef)
+			H := testNode("H", node.NewSet(G), &defaultTestDef)
+			I := testNode("I", node.NewSet(G), &defaultTestDef)
+			J := testNode("J", node.NewSet(H, I), &defaultTestDef)
+			K := testNode("K", node.NewSet(J), &defaultTestDef)
 
 			testflow.SetSerialNodes(A)
 
@@ -277,7 +277,7 @@ var _ = Describe("flow operations", func() {
 	})
 })
 
-func testNode(parents node.Set, td *testdefinition.TestDefinition) *node.Node {
+func testNode(name string, parents node.Set, td *testdefinition.TestDefinition) *node.Node {
 	if parents == nil {
 		parents = node.NewSet()
 	}
@@ -290,6 +290,8 @@ func testNode(parents node.Set, td *testdefinition.TestDefinition) *node.Node {
 	for parent := range parents {
 		parent.AddChildren(n)
 	}
+
+	td.SetName(name)
 
 	return n
 }
