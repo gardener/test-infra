@@ -52,11 +52,11 @@ required = [
 # Dependencies for testing purposes only
 [[constraint]]
   name = "github.com/onsi/gomega"
-  version = "~1.3.0"
+  version = "1.5.0"
 
 [[constraint]]
   name = "github.com/onsi/ginkgo"
-  version = "~1.4.0"
+  version = "1.4.0"
 
 [prune]
   unused-packages = true

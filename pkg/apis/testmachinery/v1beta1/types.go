@@ -110,7 +110,7 @@ type TestrunSpec struct {
 	// +optional
 	Config []ConfigElement `json:"config,omitempty"`
 
-	TestFlow TestFlow `json:"testFlow,omitempty"`
+	TestFlow TestFlow `json:"testflow,omitempty"`
 
 	// OnExit flow is called when the test is completed.
 	// +optional

@@ -22,7 +22,7 @@ func preprocessTestflow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.Tes
 			return nil, nil, nil, err
 		}
 
-		for _, n := range nodes {
+		for n := range nodes {
 			testdefinitions[n.TestDefinition] = nil
 			usedLocations[n.TestDefinition.Location] = nil
 		}
@@ -40,7 +40,7 @@ func CreateInitialDAG(steps map[string]*Step, root *node.Node) {
 		if step.Info.DependsOn == nil || len(step.Info.DependsOn) == 0 {
 			// add the root node as parent
 			step.Nodes.AddParents(root)
-			root.AddChildren(step.Nodes...)
+			root.AddChildren(step.Nodes.List()...)
 			continue
 		}
 
@@ -48,18 +48,19 @@ func CreateInitialDAG(steps map[string]*Step, root *node.Node) {
 		for _, dependentStepName := range step.Info.DependsOn {
 			dependentStep := steps[dependentStepName]
 
-			step.Nodes.AddParents(dependentStep.Nodes...)
-			dependentStep.Nodes.AddChildren(step.Nodes...)
+			step.Nodes.AddParents(dependentStep.Nodes.List()...)
+			dependentStep.Nodes.AddChildren(step.Nodes.List()...)
 		}
 	}
 }
 
 // ReorderChildrenOfNodes recursively reorders all children of a nodelist so that serial steps run in serial after parallel nodes.
 // Returns nil if successful.
-func ReorderChildrenOfNodes(list node.List) node.List {
-	children := node.List{}
-	for _, item := range list {
-		children = append(children, reorderChildrenOfNode(item)...)
+func ReorderChildrenOfNodes(list node.Set) node.Set {
+	children := make(node.Set, 0)
+	for item := range list {
+		// use k8s sets
+		children.Add(reorderChildrenOfNode(item).List()...)
 	}
 	if len(children) == 0 {
 		return nil
@@ -69,41 +70,42 @@ func ReorderChildrenOfNodes(list node.List) node.List {
 
 // reorderSerialNodes reorders all children of a node so that serial steps run in serial after parallel nodes.
 // The functions returns the new Children
-func reorderChildrenOfNode(root *node.Node) node.List {
-	allChildren := root.Children.GetChildren()
+func reorderChildrenOfNode(root *node.Node) node.Set {
+	grandChildren := root.Children.GetChildren()
 
 	// directly return if there is only one node in the pool
 	if len(root.Children) == 1 {
-		return allChildren
+		// todo: write test for special case
+		return root.Children
 	}
 
-	serialNodes := node.List{}
-	parallelNodes := node.List{}
-	for _, item := range root.Children {
+	serialNodes := make(node.Set, 0)
+	parallelNodes := make(node.Set, 0)
+	for item := range root.Children {
 		if item.TestDefinition.HasBehavior("serial") {
-			serialNodes = append(serialNodes, item)
+			serialNodes.Add(item)
 		} else {
-			parallelNodes = append(parallelNodes, item)
+			parallelNodes.Add(item)
 		}
 	}
 
 	// directly return if there are no serial steps
 	if len(serialNodes) == 0 {
-		return allChildren
+		return root.Children
 	}
 
 	root.ClearChildren()
-	root.AddChildren(parallelNodes...)
+	root.AddChildren(parallelNodes.List()...)
 
-	for i, serialNode := range serialNodes {
+	for i, serialNode := range serialNodes.List() {
 		if i == 0 {
 			parallelNodes.ClearChildren()
 			parallelNodes.AddChildren(serialNode)
 
 			serialNode.ClearParents()
-			serialNode.AddParents(parallelNodes...)
+			serialNode.AddParents(parallelNodes.List()...)
 		} else {
-			prevNode := serialNodes[i-1]
+			prevNode := serialNodes.List()[i-1]
 
 			prevNode.ClearChildren()
 			prevNode.AddChildren(serialNode)
@@ -114,21 +116,21 @@ func reorderChildrenOfNode(root *node.Node) node.List {
 
 		if i == len(serialNodes)-1 {
 			serialNode.ClearChildren()
-			serialNode.AddChildren(allChildren...)
+			serialNode.AddChildren(grandChildren.List()...)
 
-			allChildren.ClearParents()
-			allChildren.AddParents(serialNode)
+			grandChildren.ClearParents()
+			grandChildren.AddParents(serialNode)
 		}
 	}
 
-	return allChildren
+	return grandChildren
 }
 
-// ApplyOutputNamespaces defines the artifact namesapces for outputs.
+// ApplyOutputScope defines the artifact scopes for outputs.
 // This is done by getting the last serial step and setting is as the current nodes artifact source.
-func ApplyOutputNamespaces(steps map[string]*Step) error {
+func ApplyOutputScope(steps map[string]*Step) error {
 	for _, step := range steps {
-		for _, n := range step.Nodes {
+		for n := range step.Nodes {
 			parents := n.Parents
 			for len(parents) != 1 {
 				parents = parents.GetParents()
@@ -136,9 +138,10 @@ func ApplyOutputNamespaces(steps map[string]*Step) error {
 					return fmt.Errorf("no serial parent node can be found for step %s in node %s", n.Name(), step.Info.Name)
 				}
 			}
-			serialNode := parents[0]
-			serialNode.SetOutput()
-			n.SetInputSource(serialNode)
+			// rename
+			outputSourceNode := parents.List()[0]
+			outputSourceNode.SetOutput()
+			n.SetInputSource(outputSourceNode)
 		}
 	}
 
@@ -153,7 +156,7 @@ func SetSerialNodes(root *node.Node) {
 		children = children.GetChildren()
 		// node is a real serial step if all children of the root node point to one child.
 		if len(children) == 1 {
-			children[0].SetSerial()
+			children.List()[0].SetSerial()
 		}
 	}
 }

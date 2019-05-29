@@ -26,13 +26,13 @@ import (
 )
 
 // CreateNodesFromStep creates new nodes from a step and adds default configuration
-func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globalConfig []*config.Element, flowID string) ([]*Node, error) {
+func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globalConfig []*config.Element, flowID string) (Set, error) {
 	testdefinitions, err := loc.GetTestDefinitions(step.Definition)
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := make([]*Node, 0)
+	nodes := make(Set, 0)
 	for _, td := range testdefinitions {
 		node := NewNode(td, step, flowID)
 		if err := td.AddConfig(config.New(step.Definition.Config)); err != nil {
@@ -41,7 +41,7 @@ func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globa
 		if err := td.AddConfig(globalConfig); err != nil {
 			return nil, err
 		}
-		nodes = append(nodes, node)
+		nodes.Add(node)
 	}
 	return nodes, nil
 }
@@ -51,53 +51,51 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	// create hash or unique name for testdefinition + step + flow
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
-	node := &Node{TestDefinition: td, step: step, flow: flow}
+	node := &Node{
+		TestDefinition: td,
+		step:           step,
+		flow:           flow,
+		Parents:        NewSet(),
+		Children:       NewSet(),
+	}
 
 	return node
 }
 
 // AddChildren adds Nodes as children
 func (n *Node) AddChildren(children ...*Node) {
-	n.Children = append(n.Children, children...)
+	n.Children.Add(children...)
 }
 
 // ClearParent removes a parent node from the current node
 func (n *Node) RemoveChild(child *Node) {
-	for i, val := range n.Children {
-		if val == child {
-			n.Children = append(n.Children[:i], n.Children[i+1:]...)
-		}
-	}
+	n.Children.Remove(child)
 }
 
 // ClearChildren removes all children form the current node
 func (n *Node) ClearChildren() {
-	n.Children = make(List, 0)
+	n.Children = make(Set, 0)
 }
 
 // AddParents adds Nodes as parents
 func (n *Node) AddParents(parents ...*Node) {
-	n.Parents = append(n.Parents, parents...)
+	n.Parents.Add(parents...)
 }
 
 // ClearParent removes a parent node from the current node
 func (n *Node) RemoveParent(parent *Node) {
-	for i, val := range n.Parents {
-		if val == parent {
-			n.Parents = append(n.Parents[:i], n.Parents[i+1:]...)
-		}
-	}
+	n.Parents.Remove(parent)
 }
 
 // ClearParents removes all parents from the current node
 func (n *Node) ClearParents() {
-	n.Parents = make(List, 0)
+	n.Parents = make(Set, 0)
 }
 
 // ParentNames returns the names of a parent nodes
 func (n *Node) ParentNames() []string {
 	names := make([]string, 0)
-	for _, parent := range n.Parents {
+	for parent := range n.Parents {
 		names = append(names, parent.Name())
 	}
 	return names

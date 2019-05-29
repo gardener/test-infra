@@ -158,6 +158,7 @@ spec:
   ttlSecondsAfterFinished: # optional; define when the Testrun should cleanup itself.
 
   # TestLocations define where to search for TestDefinitions.
+  # Deprecated
   # Note: it is only possible to describe testLocations or locationSets.
   testLocations:
   - type: git
@@ -179,9 +180,9 @@ spec:
   # Serial steps can also generate new or update current kubeconfigs in this path.
   # Usefull for testing a TestDefinition with a specific shoot.
   kubeconfigs:
-    gardener: # base64 encoded gardener cluster kubeconfig
-    seed: # base64 encoded seed cluster kubeconfig
-    shoot: # base64 encoded shoot cluster kubeconfig
+    gardener: # base64 encoded gardener cluster kubeconfig or ref to secret
+    seed: # base64 encoded seed cluster kubeconfig or ref to secret
+    shoot: # base64 encoded shoot cluster kubeconfig or ref to secret
 
 
   # Global config available to every test task in all phases (testFlow and onExit)
@@ -197,13 +198,17 @@ spec:
   # It defines which TestDefinition (that can be found in the TestLocations)
   # are executed in which specified order.
   # If a label is specified then all TestDefinitions labeled with the specific key are executed.
-  testFlow:
-  - - name: create-shoot
-  - - label: default
-      continueOnError: true # optional; default: false -> continues the workflow even if the step fails.
-  - - name: e2e-test
-      locationSet: other # ref to the locationset that should be used.
-  - - name: delete-shoot
+  testflow:
+    - name: create-shoot
+      definition:
+        name: create-shoot
+    - name: test1
+      definition:
+        label: default
+        config: ...
+        location: ...
+      dependsOn: [ create-shoot ]
+      artifactsFrom: create-shoot # optional, default get from last "serial" step
 
   # OnExit specifies the same execution flow as the testFlow.
   # This flow is run after the testFlow and every step can specify the condition
@@ -280,6 +285,12 @@ revision: master # tag, commit or branch
  ```
 
 ### Flow
+A testflow can be specified for the the real tests `spec.testflow` or exit handlers `.spec.onExit`.
+The exit handler flow is called when the testflow finished (success or unsuccessful).
+
+A flow is a DAG (Directed Asycyclic graph) that can be described by using the `dependsOn` to set a dependency to another step.
+The `dependsOn` attribute is a list of step names :warning: do not use `definition.name`.
+
 ```yaml
 apiVersion: testmachinery.sapcloud.io/v1beta1
 kind: Testrun
@@ -287,7 +298,7 @@ metadata:
   generateName: integration-
   namespace: default`
   
-  flow:
+  testflow:
   - name: create-shoot
     definition:
       name: create-shoot

@@ -50,5 +50,5 @@ type Flow struct {
 // Step is a StepDefinition with its specific Row and Column in the testflow.
 type Step struct {
 	Info  *tmv1beta1.DAGStep
-	Nodes node.List
+	Nodes node.Set
 }

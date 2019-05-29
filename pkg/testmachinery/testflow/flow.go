@@ -46,11 +46,11 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 	CreateInitialDAG(steps, root)
 
 	// apply serial steps
-	ReorderChildrenOfNodes(node.List{root})
+	ReorderChildrenOfNodes(node.NewSet(root))
 
 	// Determine kubeconfigs namespaces
 	// which means to determine what kubeconfig artifact should be mounted to a specific node
-	if err := ApplyOutputNamespaces(steps); err != nil {
+	if err := ApplyOutputScope(steps); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +108,7 @@ func (f *Flow) Iterate() <-chan *node.Node {
 		c <- f.Root
 		children := f.Root.Children
 		for len(children) != 0 {
-			for _, n := range children {
+			for n := range children {
 				c <- n
 			}
 			children = children.GetChildren()

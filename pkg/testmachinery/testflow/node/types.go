@@ -6,12 +6,13 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
-type List []*Node
+type Set map[*Node]empty
+type empty struct{}
 
 // Node is an object that represents a node of the internal DAG representation
 type Node struct {
-	Parents  List
-	Children List
+	Parents  Set
+	Children Set
 
 	hasOutput   bool
 	inputSource *Node
@@ -22,8 +23,8 @@ type Node struct {
 
 	TestDefinition *testdefinition.TestDefinition
 	Template       *argov1.Template
-	status         *tmv1beta1.StepStatus
 
+	// metadata
 	step *tmv1beta1.DAGStep
 	flow string
 }
