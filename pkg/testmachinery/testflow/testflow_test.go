@@ -95,7 +95,7 @@ var _ = Describe("Testflow", func() {
 			Expect(testflow.Validate("identifier", tf, locations, false)).To(HaveOccurred())
 		})
 
-		It("should succeed when an empty flow is ingored", func() {
+		It("should succeed when an empty flow is ignored", func() {
 			tf := tmv1beta1.TestFlow{
 				{
 					Name: "int-test",

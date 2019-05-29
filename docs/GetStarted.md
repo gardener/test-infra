@@ -395,7 +395,9 @@ This configuration can be defined in 3 possible section:
     namespace: default
   spec:
     testFlow:
-     - - label: default
+     - name: step
+       definition:
+         label: default
          config: # Specify configuration here
   ```
 3. *Testrun Global:*<br> Configuration will be available to all tests.

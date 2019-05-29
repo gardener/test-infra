@@ -22,13 +22,17 @@ spec:
   creator: pipeline-xyz # for diagnostic purposes, could contain the concourse job url as well
 
   # defines where to look for TestDefs
-  testLocations:
-  - type: git
-    repo: https://github.com/gardener/gardener.git
-    revision: master
-  - type: git
-    repo: https://github.com/gardener/test-infra.git
-    revision: master
+  locationSets:
+  - name: github-locations
+    # optional; defines the default location set which is used if no specific location is defined for a step.
+    default: true
+    locations:
+      - type: git
+        repo: https://github.com/gardener/gardener.git
+        revision: master
+      - type: git
+        repo: https://github.com/gardener/test-infra.git
+        revision: master
 
   kubeconfigs:
     gardener: #base64 heredoc kubeconfig
@@ -46,7 +50,7 @@ spec:
       type: env
 
   # the execution flow:
-  testFlow:
+  testflow:
     - name: create-step
       definition:
         name: create-shoot
