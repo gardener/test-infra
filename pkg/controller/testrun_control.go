@@ -128,7 +128,7 @@ func (r *TestrunReconciler) createWorkflow(ctx context.Context, testrunDef *tmv1
 		wf.Finalizers = wfFinalizers.UnsortedList()
 	}
 
-	testrunDef.Status.Steps = tr.Testflow.Flow.GetStatus()
+	testrunDef.Status.Steps = tr.Testflow.Flow.GetStatuses()
 
 	return wf, nil
 }

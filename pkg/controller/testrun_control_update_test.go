@@ -58,7 +58,7 @@ var _ = Describe("Testmachinery controller update", func() {
 		It("should update the status of 1 step and 1 template", func() {
 			tr := testrunTmpl
 			wf := workflowTmpl
-			updateStepsStatus(&tr, &wf)
+			updateStepsStatuses(&tr, &wf)
 			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
 					Name:  "template1",
@@ -122,7 +122,7 @@ var _ = Describe("Testmachinery controller update", func() {
 					Phase:        argov1.NodeRunning,
 				},
 			}
-			updateStepsStatus(&tr, &wf)
+			updateStepsStatuses(&tr, &wf)
 			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
 					Name:  "template1",

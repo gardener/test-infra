@@ -45,7 +45,7 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 	// Go through all steps and create the initial DAG
 	CreateInitialDAG(steps, root)
 
-	// apply serial steps
+	// Reorder the dag so that tests with serial behavior run in serial within their sub DAG.
 	ReorderChildrenOfNodes(node.NewSet(root))
 
 	// Determine kubeconfigs namespaces
@@ -128,8 +128,8 @@ func (f *Flow) GetDAGTemplate() *argov1.DAGTemplate {
 	return dag
 }
 
-// GetStatus returns the status of all nodes of the current flow.
-func (f *Flow) GetStatus() []*tmv1beta1.StepStatus {
+// GetStatuses returns the status of all nodes of the current flow.
+func (f *Flow) GetStatuses() []*tmv1beta1.StepStatus {
 	status := make([]*tmv1beta1.StepStatus, 0)
 	for n := range f.Iterate() {
 		status = append(status, n.Status())

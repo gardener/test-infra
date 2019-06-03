@@ -68,7 +68,8 @@ var _ = Describe("Result collection tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			time.Sleep(5 * time.Second)
+			// todo: add polling instead of timeouts
+			time.Sleep(10 * time.Second)
 			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -172,22 +173,26 @@ var _ = Describe("Result collection tests", func() {
 
 			Expect(tr.Status.Steps).To(HaveLen(3), "Should be 3 step's statuses.")
 
-			status := tr.Status.Steps[0]
-			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
-			Expect(status.ExportArtifactKey).ToNot(BeZero())
+			for i := 0; i < 2; i++ {
+				status := tr.Status.Steps[i]
+				Expect(status.TestDefinition.Name).To(Or(Equal("integration-testdef"), Equal("failing-integration-testdef")))
 
-			status = tr.Status.Steps[1]
-			Expect(status.TestDefinition.Name).To(Equal("failing-integration-testdef"))
-			Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
+				if status.TestDefinition.Name == "failing-integration-testdef" {
+					Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
+					Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
+				} else if status.TestDefinition.Name == "integration-testdef" {
+					Expect(status.ExportArtifactKey).ToNot(BeZero())
+				}
+			}
 
-			status = tr.Status.Steps[2]
+
+			status := tr.Status.Steps[2]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).To(BeZero())
 			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
 		})
 
-		It("should mark timouted step with own timeout phase", func() {
+		It("should mark timeouted step with own timeout phase", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)

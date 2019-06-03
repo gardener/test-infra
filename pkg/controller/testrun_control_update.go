@@ -46,7 +46,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 		tr.Status.Phase = tmv1beta1.PhaseStatusPending
 	}
 	if !wf.Status.Completed() {
-		updateStepsStatus(tr, wf)
+		updateStepsStatuses(tr, wf)
 	}
 	if wf.Status.Completed() {
 
@@ -75,7 +75,7 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 	trDuration := tr.Status.CompletionTime.Sub(tr.Status.StartTime.Time)
 	tr.Status.Duration = int64(trDuration.Seconds())
 
-	updateStepsStatus(tr, wf)
+	updateStepsStatuses(tr, wf)
 
 	// Set all init steps to skipped if testrun is completed.
 	for _, step := range tr.Status.Steps {
@@ -91,7 +91,7 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 	return nil
 }
 
-func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
+func updateStepsStatuses(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 	completedSteps := 0
 	numSteps := len(tr.Status.Steps)
 
@@ -101,6 +101,7 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 			continue
 		}
 		argoNodeStatus := getNodeStatusByName(wf, step.Name)
+		// continue with the next status if no corresponding argo status can be found yet.
 		if argoNodeStatus == nil {
 			continue
 		}
@@ -140,34 +141,13 @@ func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 }
 
 func getNodeStatusByName(wf *argov1.Workflow, templateName string) *argov1.NodeStatus {
-	for _, node := range wf.Status.Nodes {
-		if node.TemplateName == templateName {
-			return &node
+	for _, nodeStatus := range wf.Status.Nodes {
+		if nodeStatus.TemplateName == templateName {
+			return &nodeStatus
 		}
 	}
 
 	return nil
-}
-
-func getArgoNodeStatus(wf *argov1.Workflow, annotations map[string]string) *argov1.NodeStatus {
-	for _, node := range wf.Status.Nodes {
-		if nodeIsAtPosition(wf, node.TemplateName, annotations) {
-			return &node
-		}
-	}
-
-	return nil
-}
-
-// nodeIsAtPosition checks if the wf node status is at the at the current position(raw, column)
-// This is archieved by getting the node's corrresponding template and check the templates annotations.
-func nodeIsAtPosition(wf *argov1.Workflow, templateName string, annotations map[string]string) bool {
-	for _, template := range wf.Spec.Templates {
-		if template.Name == templateName && util.IsAnnotationSubset(template.Metadata.Annotations, annotations) {
-			return true
-		}
-	}
-	return false
 }
 
 func getNodeExportKey(outputs *argov1.Outputs) string {

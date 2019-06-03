@@ -55,4 +55,4 @@ spec:
   onExit:
   - name: exit
     definition:
-      name: exit-hander
+      name: exit-handler

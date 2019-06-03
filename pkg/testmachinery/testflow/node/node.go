@@ -169,8 +169,8 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 	return status
 }
 
-// SetOutput adds std output to the test and marks the node as node with output.
-func (n *Node) SetOutput() {
+// EnableOutput adds std output to the test and marks the node as node with output.
+func (n *Node) EnableOutput() {
 	if !n.hasOutput {
 		n.TestDefinition.AddStdOutput(false)
 		n.hasOutput = true

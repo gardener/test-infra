@@ -71,22 +71,35 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 			return err
 		}
 
-		testdefinitions, err := locs.GetTestDefinitions(step.Definition)
+		testDefinitions, err := locs.GetTestDefinitions(step.Definition)
 		if err != nil {
 			return err
 		}
 
-		for _, td := range testdefinitions {
+		for _, td := range testDefinitions {
 			if err := testdefinition.Validate(fmt.Sprintf("%s; Location: \"%s\"; File: \"%s\"", identifier, td.Location.Name(), td.FileName), td.Info); err != nil {
 				return err
 			}
 		}
 
 		usedStepNames[step.Name] = true
-		usedTestdefinitions += len(testdefinitions)
+		usedTestdefinitions += len(testDefinitions)
 	}
 
 	// check if dependent steps exist
+	if err := checkIfDependentStepsExist(identifier, tf, usedStepNames); err != nil {
+		return err
+	}
+
+	// check if there are any testruns to execute. Fail if there are none.
+	if !ignoreEmptyFlow && usedTestdefinitions == 0 {
+		return fmt.Errorf("%s: No testdefinitions found", identifier)
+	}
+
+	return nil
+}
+
+func checkIfDependentStepsExist(identifier string, tf tmv1beta1.TestFlow, usedStepNames map[string]bool) error {
 	for i, step := range tf {
 		identifier := fmt.Sprintf("%s.[%d]", identifier, i)
 		if step.DependsOn != nil && len(step.DependsOn) != 0 {
@@ -97,11 +110,5 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 			}
 		}
 	}
-
-	// check if there are any testruns to execute. Fail if there are none.
-	if !ignoreEmptyFlow && usedTestdefinitions == 0 {
-		return fmt.Errorf("%s: No testdefinitions found", identifier)
-	}
-
 	return nil
 }

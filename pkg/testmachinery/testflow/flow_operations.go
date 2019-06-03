@@ -45,12 +45,16 @@ func CreateInitialDAG(steps map[string]*Step, root *node.Node) {
 		}
 
 		// go through the list of dependent steps and add them as parent
-		for _, dependentStepName := range step.Info.DependsOn {
-			dependentStep := steps[dependentStepName]
+		addDependentStepsAsParent(steps, step)
+	}
+}
 
-			step.Nodes.AddParents(dependentStep.Nodes.List()...)
-			dependentStep.Nodes.AddChildren(step.Nodes.List()...)
-		}
+func addDependentStepsAsParent(steps map[string]*Step, step *Step) {
+	for _, dependentStepName := range step.Info.DependsOn {
+		dependentStep := steps[dependentStepName]
+
+		step.Nodes.AddParents(dependentStep.Nodes.List()...)
+		dependentStep.Nodes.AddChildren(step.Nodes.List()...)
 	}
 }
 
@@ -140,7 +144,7 @@ func ApplyOutputScope(steps map[string]*Step) error {
 			}
 			// rename
 			outputSourceNode := parents.List()[0]
-			outputSourceNode.SetOutput()
+			outputSourceNode.EnableOutput()
 			n.SetInputSource(outputSourceNode)
 		}
 	}
