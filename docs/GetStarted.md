@@ -297,7 +297,8 @@ kind: Testrun
 metadata:
   generateName: integration-
   namespace: default`
-  
+
+spec:
   testflow:
   - name: create-shoot
     definition:
