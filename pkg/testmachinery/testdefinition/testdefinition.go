@@ -198,8 +198,8 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 	})
 }
 
-// AddSerialStdOutput adds the Kubeconfig output to the TestDefinitions's template.
-func (td *TestDefinition) AddSerialStdOutput(global bool) {
+// AddStdOutput adds the Kubeconfig output to the TestDefinitions's template.
+func (td *TestDefinition) AddStdOutput(global bool) {
 	kubeconfigArtifact := argov1.Artifact{
 		Name:     "kubeconfigs",
 		Path:     testmachinery.TM_KUBECONFIG_PATH,

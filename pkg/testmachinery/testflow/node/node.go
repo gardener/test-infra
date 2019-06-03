@@ -67,22 +67,22 @@ func (n *Node) AddChildren(children ...*Node) {
 	n.Children.Add(children...)
 }
 
-// ClearParent removes a parent node from the current node
+// ClearParent removes a node from the current node's children
 func (n *Node) RemoveChild(child *Node) {
 	n.Children.Remove(child)
 }
 
-// ClearChildren removes all children form the current node
+// ClearChildren removes all children from the current node
 func (n *Node) ClearChildren() {
 	n.Children = make(Set, 0)
 }
 
-// AddParents adds Nodes as parents
+// AddParents adds nodes as parents.
 func (n *Node) AddParents(parents ...*Node) {
 	n.Parents.Add(parents...)
 }
 
-// ClearParent removes a parent node from the current node
+// ClearParent removes a node from the current node's parents
 func (n *Node) RemoveParent(parent *Node) {
 	n.Parents.Remove(parent)
 }
@@ -92,7 +92,7 @@ func (n *Node) ClearParents() {
 	n.Parents = make(Set, 0)
 }
 
-// ParentNames returns the names of a parent nodes
+// ParentNames returns the names of all parent nodes
 func (n *Node) ParentNames() []string {
 	names := make([]string, 0)
 	for parent := range n.Parents {
@@ -106,6 +106,7 @@ func (n *Node) Name() string {
 	return n.TestDefinition.Template.Name
 }
 
+// Task returns the argo task definition for the node.
 func (n *Node) Task() argov1.DAGTask {
 	artifacts := make([]argov1.Artifact, 0)
 	// should only be nil if the node is the root node
@@ -141,6 +142,7 @@ func (n *Node) Task() argov1.DAGTask {
 	return task
 }
 
+// Status returns the status for the test step based in the node.
 func (n *Node) Status() *tmv1beta1.StepStatus {
 	td := n.TestDefinition
 	status := &tmv1beta1.StepStatus{
@@ -167,60 +169,33 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 	return status
 }
 
+// SetOutput adds std output to the test and marks the node as node with output.
 func (n *Node) SetOutput() {
 	if !n.hasOutput {
-		n.TestDefinition.AddSerialStdOutput(false)
+		n.TestDefinition.AddStdOutput(false)
 		n.hasOutput = true
 	}
 }
 
+// SetInputSource sets the input source node for artifacts that are mounted to the test.
 func (n *Node) SetInputSource(node *Node) {
 	n.inputSource = node
 }
 
+// GetInputSource returns the input source node.
 func (n *Node) GetInputSource() *Node {
 	return n.inputSource
 }
 
+// SetSerial adds global std output to the test and marks the node as serial.
 func (n *Node) SetSerial() {
 	if !n.isSerial {
-		n.TestDefinition.AddSerialStdOutput(true)
+		n.TestDefinition.AddStdOutput(true)
 		n.isSerial = true
 	}
 }
 
+// IsSerial returns true if the node is serial.
 func (n *Node) IsSerial() bool {
 	return n.isSerial
-}
-
-// addTask adds an argo task to the node.AddTask
-// Standard artifacts like kubeconfigs and the cloned repository are added as well as a execution condition if specified.
-func (n *Node) addTaskOld(lastSerialNode *Node, continueOnError bool) {
-
-	artifacts := []argov1.Artifact{
-		{
-			Name: "kubeconfigs",
-			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", lastSerialNode.Template.Name), // todo(schrodit): refactor use task
-		},
-		{
-			Name: "sharedFolder",
-			From: "{{workflow.outputs.artifacts.sharedFolder}}",
-		},
-	}
-
-	if n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
-		artifacts = append(artifacts, argov1.Artifact{
-			Name: "repo",
-			From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", n.TestDefinition.Location.Name()),
-		})
-	}
-	task := argo.CreateTask(n.TestDefinition.Template.Name, n.TestDefinition.Template.Name, testmachinery.PHASE_RUNNING, continueOnError, n.ParentNames(), artifacts)
-
-	switch n.step.Definition.Condition {
-	case tmv1beta1.ConditionTypeSuccess:
-		task.When = fmt.Sprintf("{{workflow.status}} == Succeeded")
-	case tmv1beta1.ConditionTypeError:
-		task.When = fmt.Sprintf("{{workflow.status}} != Succeeded")
-	}
-
 }

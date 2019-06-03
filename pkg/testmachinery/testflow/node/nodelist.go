@@ -2,6 +2,7 @@ package node
 
 import "sort"
 
+// NewSet creates a new set of nodes
 func NewSet(nodes ...*Node) Set {
 	set := make(Set, 0)
 	set.Add(nodes...)
@@ -22,11 +23,14 @@ func (s Set) Remove(nodes ...*Node) {
 	}
 }
 
+// AddParents adds nodes as parents.
 func (s Set) AddParents(parents ...*Node) {
 	for node := range s {
 		node.AddParents(parents...)
 	}
 }
+
+// RemoveParents removes nodes from parents.
 func (s Set) RemoveParents(parents ...*Node) {
 	for n := range s {
 		for parent := range n.Parents {
@@ -34,17 +38,22 @@ func (s Set) RemoveParents(parents ...*Node) {
 		}
 	}
 }
+
+// Clear Parents removes all parents.
 func (s Set) ClearParents() {
 	for node := range s {
 		node.ClearParents()
 	}
 }
 
+// AddChildren adds nodes as children.
 func (s Set) AddChildren(children ...*Node) {
 	for node := range s {
 		node.AddChildren(children...)
 	}
 }
+
+// RemoveChildren removes nodes from children
 func (s Set) RemoveChildren(children ...*Node) {
 	for n := range s {
 		for child := range n.Children {
@@ -52,6 +61,8 @@ func (s Set) RemoveChildren(children ...*Node) {
 		}
 	}
 }
+
+// ClearChildren removes all children.
 func (s Set) ClearChildren() {
 	for node := range s {
 		node.ClearChildren()
