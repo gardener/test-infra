@@ -89,7 +89,7 @@ func exposeGardenerVersionToParameters(componentDescriptor componentdescriptor.C
 	for _, component := range componentDescriptor {
 		if component.Name == "github.com/gardener/gardener.version" {
 			parameters.GardenerVersion = component.Version
-			break
+			return
 		}
 	}
 }
