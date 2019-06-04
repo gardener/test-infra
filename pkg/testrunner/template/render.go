@@ -51,7 +51,9 @@ func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *Testrun
 			"autoscalerMax":        parameters.AutoscalerMax,
 			"floatingPoolName":     parameters.FloatingPoolName,
 			"loadbalancerProvider": parameters.LoadBalancerProvider,
-			"gardenerVersion":      parameters.GardenerVersion,
+			"gardener": map[string]interface{}{
+				"version": parameters.GardenerVersion,
+			},
 		},
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(gardenKubeconfig),
