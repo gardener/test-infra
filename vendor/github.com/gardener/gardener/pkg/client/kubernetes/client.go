@@ -24,7 +24,6 @@ import (
 	gardenclientset "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
 	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
 	"github.com/gardener/gardener/pkg/utils"
-
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
@@ -32,6 +31,32 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	apiserviceclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
+
+// KubeConfig is the key to the kubeconfig
+const KubeConfig = "kubeconfig"
+
+// NewRuntimeClientFromSecret creates a new controller runtime Client struct for a given secret.
+func NewRuntimeClientFromSecret(secret *corev1.Secret, opts client.Options) (client.Client, error) {
+	if kubeconfig, ok := secret.Data[KubeConfig]; ok {
+		return NewRuntimeClientFromBytes(kubeconfig, opts)
+	}
+	return nil, errors.New("no valid kubeconfig found")
+
+}
+
+// NewRuntimeClientFromBytes creates a new controller runtime Client struct for a given kubeconfig byte slice.
+func NewRuntimeClientFromBytes(kubeconfig []byte, opts client.Options) (client.Client, error) {
+	config, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	return NewRuntimeClientForConfig(config, opts)
+}
+
+// NewRuntimeClientForConfig returns a new controller runtime client from a config.
+func NewRuntimeClientForConfig(config *rest.Config, opts client.Options) (client.Client, error) {
+	return client.New(config, opts)
+}
 
 // NewClientFromFile creates a new Client struct for a given kubeconfig. The kubeconfig will be
 // read from the filesystem at location <kubeconfigPath>. If given, <masterURL> overrides the
@@ -71,7 +96,7 @@ func NewClientFromSecret(k8sClient Interface, namespace, secretName string, opts
 // NewClientFromSecretObject creates a new Client struct for a given Kubernetes Secret object. The Secret must
 // contain a field "kubeconfig" which will be used.
 func NewClientFromSecretObject(secret *corev1.Secret, opts client.Options) (Interface, error) {
-	if kubeconfig, ok := secret.Data["kubeconfig"]; ok {
+	if kubeconfig, ok := secret.Data[KubeConfig]; ok {
 		return NewClientFromBytes(kubeconfig, opts)
 	}
 	return nil, errors.New("the secret does not contain a field with name 'kubeconfig'")
@@ -82,6 +107,7 @@ var supportedKubernetesVersions = []string{
 	"1.11",
 	"1.12",
 	"1.13",
+	"1.14",
 }
 
 func checkIfSupportedKubernetesVersion(gitVersion string) error {
@@ -155,23 +181,6 @@ func NewForConfig(config *rest.Config, options client.Options) (Interface, error
 		machine:         machine,
 		apiregistration: apiRegistration,
 		apiextension:    apiExtension,
-
-		resourceAPIGroups: map[string][]string{
-			CronJobs:                  {"apis", "batch", "v1beta1"},
-			CustomResourceDefinitions: {"apis", "apiextensions.k8s.io", "v1beta1"},
-			DaemonSets:                {"apis", "apps", "v1"},
-			Deployments:               {"apis", "apps", "v1"},
-			Ingresses:                 {"apis", "extensions", "v1beta1"},
-			Jobs:                      {"apis", "batch", "v1"},
-			Namespaces:                {"api", "v1"},
-			PersistentVolumeClaims:    {"api", "v1"},
-			PersistentVolumes:         {"api", "v1"},
-			Pods:                      {"api", "v1"},
-			ReplicaSets:               {"apis", "apps", "v1"},
-			ReplicationControllers:    {"api", "v1"},
-			Services:                  {"api", "v1"},
-			StatefulSets:              {"apis", "apps", "v1"},
-		},
 	}
 
 	serverVersion, err := clientSet.kubernetes.Discovery().ServerVersion()

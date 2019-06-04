@@ -52,7 +52,7 @@ func Serve(ctx context.Context, mgr manager.Manager) {
 		}
 	}()
 
-	trWebhook, err := webhooks.NewTestrunWebhook(mgr.GetAdmissionDecoder())
+	trWebhook, err := webhooks.NewTestrunWebhook()
 	if err != nil {
 		log.Fatalf("cannot create testrun webhook: %s", err.Error())
 	}
