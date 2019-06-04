@@ -104,26 +104,24 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, con
 	testsRun := 0
 	summaries := [][]byte{}
 
-	for _, steps := range status.Steps {
-		for _, step := range steps {
-			summary := testrunner.StepSummary{
-				Metadata:          metadata,
-				Type:              testrunner.SummaryTypeTeststep,
-				Name:              step.TestDefinition.Name,
-				Phase:             step.Phase,
-				StartTime:         step.StartTime,
-				Duration:          step.Duration,
-				KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, step.TestDefinition.Name),
-			}
+	for _, step := range status.Steps {
+		summary := testrunner.StepSummary{
+			Metadata:          metadata,
+			Type:              testrunner.SummaryTypeTeststep,
+			Name:              step.TestDefinition.Name,
+			Phase:             step.Phase,
+			StartTime:         step.StartTime,
+			Duration:          step.Duration,
+			KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, step.TestDefinition.Name),
+		}
 
-			encSummary, err := util.MarshalNoHTMLEscape(summary)
-			if err != nil {
-				return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
-			}
-			summaries = append(summaries, encSummary)
-			if step.Phase != argov1.NodeSkipped {
-				testsRun++
-			}
+		encSummary, err := util.MarshalNoHTMLEscape(summary)
+		if err != nil {
+			return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
+		}
+		summaries = append(summaries, encSummary)
+		if step.Phase != argov1.NodeSkipped {
+			testsRun++
 		}
 	}
 
@@ -164,44 +162,42 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 	}
 
 	bulks := make(elasticsearch.BulkList, 0)
-	for _, steps := range status.Steps {
-		for _, step := range steps {
-			if step.Phase != argov1.NodeSkipped {
-				stepMeta := &testrunner.StepExportMetadata{
-					Metadata:    *metadata,
-					TestDefName: step.TestDefinition.Name,
-					Phase:       step.Phase,
-					StartTime:   step.StartTime,
-					Duration:    step.Duration,
-					PodName:     step.PodName,
-				}
-				reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
-				if err != nil {
-					log.Warnf("cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
-					continue
-				}
-				defer reader.Close()
-
-				info, err := reader.Stat()
-				if err != nil {
-					log.Warnf("cannot get exported artifact %s: %s", step.ExportArtifactKey, err.Error())
-					continue
-				}
-
-				if info.Size > 20 {
-
-					files, err := getFilesFromTar(reader)
-					if err != nil {
-						log.Warnf("cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
-						continue
-					}
-
-					for _, doc := range files {
-						bulks = append(bulks, elasticsearch.ParseExportedFiles(strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
-					}
-				}
-
+	for _, step := range status.Steps {
+		if step.Phase != argov1.NodeSkipped {
+			stepMeta := &testrunner.StepExportMetadata{
+				Metadata:    *metadata,
+				TestDefName: step.TestDefinition.Name,
+				Phase:       step.Phase,
+				StartTime:   step.StartTime,
+				Duration:    step.Duration,
+				PodName:     step.PodName,
 			}
+			reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
+			if err != nil {
+				log.Warnf("cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+				continue
+			}
+			defer reader.Close()
+
+			info, err := reader.Stat()
+			if err != nil {
+				log.Warnf("cannot get exported artifact %s: %s", step.ExportArtifactKey, err.Error())
+				continue
+			}
+
+			if info.Size > 20 {
+
+				files, err := getFilesFromTar(reader)
+				if err != nil {
+					log.Warnf("cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
+					continue
+				}
+
+				for _, doc := range files {
+					bulks = append(bulks, elasticsearch.ParseExportedFiles(strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
+				}
+			}
+
 		}
 	}
 	return bulks

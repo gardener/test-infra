@@ -38,9 +38,10 @@ var basicTestrun = &tmv1beta1.Testrun{
 				},
 			},
 		},
-		TestFlow: [][]tmv1beta1.TestflowStep{
+		TestFlow: tmv1beta1.TestFlow{
 			{
-				{
+				Name: "A",
+				Definition: tmv1beta1.StepDefinition{
 					Name: "integration-testdef",
 				},
 			},
@@ -59,9 +60,10 @@ func GetBasicTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 // GetFailingTestrun returns a testrun with a failing test.
 func GetFailingTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 	tr := GetBasicTestrun(namespace, commitSha)
-	tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+	tr.Spec.TestFlow = tmv1beta1.TestFlow{
 		{
-			{
+			Name: "failing",
+			Definition: tmv1beta1.StepDefinition{
 				Name: "failing-integration-testdef",
 			},
 		},
@@ -71,9 +73,10 @@ func GetFailingTestrun(namespace, commitSha string) *tmv1beta1.Testrun {
 
 // GetTestrunWithExitHandler returns a working testrun object with an onExit handler with a specific condition.
 func GetTestrunWithExitHandler(tr *tmv1beta1.Testrun, condition tmv1beta1.ConditionType) *tmv1beta1.Testrun {
-	tr.Spec.OnExit = [][]tmv1beta1.TestflowStep{
+	tr.Spec.OnExit = tmv1beta1.TestFlow{
 		{
-			{
+			Name: "failing",
+			Definition: tmv1beta1.StepDefinition{
 				Name:      "exit-handler-testdef",
 				Condition: condition,
 			},

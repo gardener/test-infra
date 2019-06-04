@@ -70,9 +70,10 @@ var _ = Describe("Testrun tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "value-config-testdef",
 						},
 					},
@@ -87,9 +88,10 @@ var _ = Describe("Testrun tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "secret-config-testdef",
 						},
 					},
@@ -123,9 +125,10 @@ var _ = Describe("Testrun tests", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)
-				tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+				tr.Spec.TestFlow = tmv1beta1.TestFlow{
 					{
-						{
+						Name: "int-test",
+						Definition: tmv1beta1.StepDefinition{
 							Name: "secret-config-file-testdef",
 						},
 					},

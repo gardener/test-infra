@@ -57,11 +57,11 @@ func Validate(tr *tmv1beta1.Testrun) error {
 		return err
 	}
 
-	if err := testflow.Validate("spec.testFlow", &tr.Spec.TestFlow, locs, false); err != nil {
+	if err := testflow.Validate("spec.testflow", tr.Spec.TestFlow, locs, false); err != nil {
 		return err
 	}
 
-	if err := testflow.Validate("spec.onExit", &tr.Spec.OnExit, locs, true); err != nil {
+	if err := testflow.Validate("spec.onExit", tr.Spec.OnExit, locs, true); err != nil {
 		return err
 	}
 

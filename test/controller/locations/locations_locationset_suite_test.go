@@ -170,7 +170,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 					},
 				},
 			}
-			tr.Spec.TestFlow[0][0].LocationSet = &setName
+			tr.Spec.TestFlow[0].Definition.LocationSet = &setName
 
 			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 			defer utils.DeleteTestrun(tmClient, tr)

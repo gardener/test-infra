@@ -80,7 +80,7 @@ func New(name string, addOutput bool) (*Definition, error) {
 		return nil, err
 	}
 	if addOutput {
-		prepare.TestDefinition.AddSerialStdOutput()
+		prepare.TestDefinition.AddStdOutput(false)
 	}
 
 	return prepare, nil

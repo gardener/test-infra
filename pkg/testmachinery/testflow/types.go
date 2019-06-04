@@ -15,10 +15,10 @@
 package testflow
 
 import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 )
 
 // FlowIdentifier is the flow identifier
@@ -33,37 +33,22 @@ const (
 
 // Testflow is an object containing informations about the testflow of a testrun
 type Testflow struct {
-	Info *tmv1beta1.TestFlow
+	Info tmv1beta1.TestFlow
 	Flow *Flow
 }
 
 // Flow represents the internal DAG.
 type Flow struct {
-	ID           FlowIdentifier
-	DAG          *argov1.DAGTemplate
-	TestFlowRoot *Node
+	ID   FlowIdentifier
+	Root *node.Node
 
 	testdefinitions map[*testdefinition.TestDefinition]interface{}
 	usedLocations   map[testdefinition.Location]interface{}
 	globalConfig    []*config.Element
 }
 
-// Step is a TestflowStep with its specific Row and Column in the testflow.
+// Step is a StepDefinition with its specific Row and Column in the testflow.
 type Step struct {
-	Info   *tmv1beta1.TestflowStep
-	Row    int
-	Column int
-}
-
-// Node is an object that represents a node of the internal DAG representation
-type Node struct {
-	Parents  []*Node
-	Children []*Node
-
-	Task           *argov1.DAGTask
-	TestDefinition *testdefinition.TestDefinition
-	Template       *argov1.Template
-	Status         *tmv1beta1.TestflowStepStatus
-
-	step *tmv1beta1.TestflowStep
+	Info  *tmv1beta1.DAGStep
+	Nodes node.Set
 }

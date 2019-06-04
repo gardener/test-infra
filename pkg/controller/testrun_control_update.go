@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-
 	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
 	"github.com/gardener/test-infra/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -48,7 +46,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 		tr.Status.Phase = tmv1beta1.PhaseStatusPending
 	}
 	if !wf.Status.Completed() {
-		updateStepsStatus(tr, wf)
+		updateStepsStatuses(tr, wf)
 	}
 	if wf.Status.Completed() {
 
@@ -77,14 +75,12 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 	trDuration := tr.Status.CompletionTime.Sub(tr.Status.StartTime.Time)
 	tr.Status.Duration = int64(trDuration.Seconds())
 
-	updateStepsStatus(tr, wf)
+	updateStepsStatuses(tr, wf)
 
 	// Set all init steps to skipped if testrun is completed.
-	for _, steps := range tr.Status.Steps {
-		for _, stepStatus := range steps {
-			if stepStatus.Phase == tmv1beta1.PhaseStatusInit {
-				stepStatus.Phase = argov1.NodeSkipped
-			}
+	for _, step := range tr.Status.Steps {
+		if step.Phase == tmv1beta1.PhaseStatusInit {
+			step.Phase = argov1.NodeSkipped
 		}
 	}
 
@@ -95,77 +91,63 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 	return nil
 }
 
-func updateStepsStatus(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
+func updateStepsStatuses(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 	completedSteps := 0
-	numSteps := 0
-	for _, steps := range tr.Status.Steps {
-		for _, stepStatus := range steps {
-			numSteps++
-			if util.Completed(stepStatus.Phase) {
-				completedSteps++
-				continue
-			}
+	numSteps := len(tr.Status.Steps)
 
-			annotations := testdefinition.GetAnnotations(stepStatus.TestDefinition.Name, stepStatus.TestDefinition.Position[testdefinition.AnnotationFlow], stepStatus.TestDefinition.Position[testdefinition.AnnotationPosition])
-			argoNodeStatus := getArgoNodeStatus(wf, annotations)
-			if argoNodeStatus == nil {
-				continue
-			}
+	for _, step := range tr.Status.Steps {
+		if util.Completed(step.Phase) {
+			completedSteps++
+			continue
+		}
+		argoNodeStatus := getNodeStatusByName(wf, step.Name)
+		// continue with the next status if no corresponding argo status can be found yet.
+		if argoNodeStatus == nil {
+			continue
+		}
 
-			if strings.Contains(argoNodeStatus.Message, ErrDeadlineExceeded) {
-				testDuration := time.Duration(*stepStatus.TestDefinition.ActiveDeadlineSeconds) * time.Second
-				completionTime := metav1.NewTime(stepStatus.StartTime.Add(testDuration))
+		if strings.Contains(argoNodeStatus.Message, ErrDeadlineExceeded) {
+			testDuration := time.Duration(*step.TestDefinition.ActiveDeadlineSeconds) * time.Second
+			completionTime := metav1.NewTime(step.StartTime.Add(testDuration))
 
-				stepStatus.Phase = tmv1beta1.PhaseStatusTimeout
-				stepStatus.Duration = *stepStatus.TestDefinition.ActiveDeadlineSeconds
-				stepStatus.CompletionTime = &completionTime
-				stepStatus.PodName = argoNodeStatus.ID
+			step.Phase = tmv1beta1.PhaseStatusTimeout
+			step.Duration = *step.TestDefinition.ActiveDeadlineSeconds
+			step.CompletionTime = &completionTime
+			step.PodName = argoNodeStatus.ID
 
-				completedSteps++
-				continue
-			}
+			completedSteps++
+			continue
+		}
 
-			stepStatus.Phase = argoNodeStatus.Phase
-			stepStatus.ExportArtifactKey = getNodeExportKey(argoNodeStatus.Outputs)
-			stepStatus.PodName = argoNodeStatus.ID
+		step.Phase = argoNodeStatus.Phase
+		step.ExportArtifactKey = getNodeExportKey(argoNodeStatus.Outputs)
+		step.PodName = argoNodeStatus.ID
 
-			if !argoNodeStatus.StartedAt.IsZero() {
-				stepStatus.StartTime = &argoNodeStatus.StartedAt
-			}
-			if !argoNodeStatus.FinishedAt.IsZero() {
-				stepDuration := argoNodeStatus.FinishedAt.Sub(argoNodeStatus.StartedAt.Time)
-				stepStatus.CompletionTime = &argoNodeStatus.FinishedAt
-				stepStatus.Duration = int64(stepDuration.Seconds())
-			}
+		if !argoNodeStatus.StartedAt.IsZero() {
+			step.StartTime = &argoNodeStatus.StartedAt
+		}
+		if !argoNodeStatus.FinishedAt.IsZero() {
+			stepDuration := argoNodeStatus.FinishedAt.Sub(argoNodeStatus.StartedAt.Time)
+			step.CompletionTime = &argoNodeStatus.FinishedAt
+			step.Duration = int64(stepDuration.Seconds())
+		}
 
-			if util.Completed(stepStatus.Phase) {
-				completedSteps++
-			}
+		if util.Completed(step.Phase) {
+			completedSteps++
 		}
 	}
 
 	tr.Status.State = fmt.Sprintf("Testmachinery executed %d/%d Steps", completedSteps, numSteps)
 }
 
-func getArgoNodeStatus(wf *argov1.Workflow, annotations map[string]string) *argov1.NodeStatus {
-	for _, node := range wf.Status.Nodes {
-		if nodeIsAtPosition(wf, node.TemplateName, annotations) {
-			return &node
+func getNodeStatusByName(wf *argov1.Workflow, templateName string) *argov1.NodeStatus {
+	for _, nodeStatus := range wf.Status.Nodes {
+		if nodeStatus.TemplateName == templateName {
+			return &nodeStatus
 		}
 	}
 
 	return nil
-}
-
-// nodeIsAtPosition checks if the wf node status is at the at the current position(raw, column)
-// This is archieved by getting the node's corrresponding template and check the templates annotations.
-func nodeIsAtPosition(wf *argov1.Workflow, templateName string, annotations map[string]string) bool {
-	for _, template := range wf.Spec.Templates {
-		if template.Name == templateName && util.IsAnnotationSubset(template.Metadata.Annotations, annotations) {
-			return true
-		}
-	}
-	return false
 }
 
 func getNodeExportKey(outputs *argov1.Outputs) string {

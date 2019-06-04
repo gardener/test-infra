@@ -3,8 +3,6 @@ package controller
 import (
 	"testing"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
@@ -26,17 +24,12 @@ var _ = Describe("Testmachinery controller update", func() {
 	BeforeSuite(func() {
 		testrunTmpl = tmv1beta1.Testrun{
 			Status: tmv1beta1.TestrunStatus{
-				Steps: [][]*tmv1beta1.TestflowStepStatus{
+				Steps: []*tmv1beta1.StepStatus{
 					{
-						{
-							Phase: tmv1beta1.PhaseStatusInit,
-							TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-								Name: "testdef1",
-								Position: map[string]string{
-									testdefinition.AnnotationPosition: "0/0",
-									testdefinition.AnnotationFlow:     "flow",
-								},
-							},
+						Name:  "template1",
+						Phase: tmv1beta1.PhaseStatusInit,
+						TestDefinition: tmv1beta1.StepStatusTestDefinition{
+							Name: "testdef1",
 						},
 					},
 				},
@@ -47,14 +40,6 @@ var _ = Describe("Testmachinery controller update", func() {
 				Templates: []argov1.Template{
 					{
 						Name: "template1",
-						Metadata: argov1.Metadata{
-							Annotations: map[string]string{
-								testdefinition.AnnotationPosition:    "0/0",
-								testdefinition.AnnotationFlow:        "flow",
-								testdefinition.AnnotationTestDefName: "testdef1",
-								"testannotation":                     "anything",
-							},
-						},
 					},
 				},
 			},
@@ -73,18 +58,13 @@ var _ = Describe("Testmachinery controller update", func() {
 		It("should update the status of 1 step and 1 template", func() {
 			tr := testrunTmpl
 			wf := workflowTmpl
-			updateStepsStatus(&tr, &wf)
-			Expect(tr.Status.Steps).To(Equal([][]*tmv1beta1.TestflowStepStatus{
+			updateStepsStatuses(&tr, &wf)
+			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
-					{
-						Phase: argov1.NodeRunning,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef1",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "0/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+					Name:  "template1",
+					Phase: argov1.NodeRunning,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef1",
 					},
 				},
 			}))
@@ -92,97 +72,38 @@ var _ = Describe("Testmachinery controller update", func() {
 
 		It("should update the status of multiple steps and templates", func() {
 			tr := testrunTmpl
-			tr.Status.Steps = [][]*tmv1beta1.TestflowStepStatus{
+			tr.Status.Steps = []*tmv1beta1.StepStatus{
 				{
-					{
-						Phase: tmv1beta1.PhaseStatusInit,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef1",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "0/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+					Name:  "template1",
+					Phase: tmv1beta1.PhaseStatusInit,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef1",
 					},
 				},
 				{
-					{
-						Phase: tmv1beta1.PhaseStatusInit,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef2",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+					Name:  "template2",
+					Phase: tmv1beta1.PhaseStatusInit,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef2",
 					},
-					{
-						Phase: tmv1beta1.PhaseStatusInit,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef3",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/1",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+				},
+				{
+					Name:  "template3",
+					Phase: tmv1beta1.PhaseStatusInit,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef3",
 					},
-					{
-						Phase: tmv1beta1.PhaseStatusInit,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef2",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/1",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+				},
+				{
+					Name:  "template4",
+					Phase: tmv1beta1.PhaseStatusInit,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef2",
 					},
 				},
 			}
 			wf := workflowTmpl
-			wf.Spec.Templates = []argov1.Template{
-				{
-					Name: "template1",
-					Metadata: argov1.Metadata{
-						Annotations: map[string]string{
-							testdefinition.AnnotationPosition:    "0/0",
-							testdefinition.AnnotationFlow:        "flow",
-							testdefinition.AnnotationTestDefName: "testdef1",
-							"testannotation":                     "anything",
-						},
-					},
-				},
-				{
-					Name: "template2",
-					Metadata: argov1.Metadata{
-						Annotations: map[string]string{
-							testdefinition.AnnotationPosition:    "1/0",
-							testdefinition.AnnotationFlow:        "flow",
-							testdefinition.AnnotationTestDefName: "testdef2",
-							"testannotation":                     "anythingElse",
-						},
-					},
-				},
-				{
-					Name: "template3",
-					Metadata: argov1.Metadata{
-						Annotations: map[string]string{
-							testdefinition.AnnotationPosition:    "1/1",
-							testdefinition.AnnotationFlow:        "flow",
-							testdefinition.AnnotationTestDefName: "testdef3",
-						},
-					},
-				},
-				{
-					Name: "template4",
-					Metadata: argov1.Metadata{
-						Annotations: map[string]string{
-							testdefinition.AnnotationPosition:    "1/1",
-							testdefinition.AnnotationFlow:        "flow",
-							testdefinition.AnnotationTestDefName: "testdef2",
-						},
-					},
-				},
-			}
+
 			wf.Status.Nodes = map[string]argov1.NodeStatus{
 				"node1": {
 					TemplateName: "template1",
@@ -201,50 +122,34 @@ var _ = Describe("Testmachinery controller update", func() {
 					Phase:        argov1.NodeRunning,
 				},
 			}
-			updateStepsStatus(&tr, &wf)
-			Expect(tr.Status.Steps).To(Equal([][]*tmv1beta1.TestflowStepStatus{
+			updateStepsStatuses(&tr, &wf)
+			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
-					{
-						Phase: argov1.NodeSucceeded,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef1",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "0/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+					Name:  "template1",
+					Phase: argov1.NodeSucceeded,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef1",
 					},
 				},
 				{
-					{
-						Phase: argov1.NodeFailed,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef2",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/0",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+					Name:  "template2",
+					Phase: argov1.NodeFailed,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef2",
 					},
-					{
-						Phase: argov1.NodeRunning,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef3",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/1",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+				},
+				{
+					Name:  "template3",
+					Phase: argov1.NodeRunning,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef3",
 					},
-					{
-						Phase: argov1.NodeSucceeded,
-						TestDefinition: tmv1beta1.TestflowStepStatusTestDefinition{
-							Name: "testdef2",
-							Position: map[string]string{
-								testdefinition.AnnotationPosition: "1/1",
-								testdefinition.AnnotationFlow:     "flow",
-							},
-						},
+				},
+				{
+					Name:  "template4",
+					Phase: argov1.NodeSucceeded,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef2",
 					},
 				},
 			}))

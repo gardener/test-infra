@@ -93,6 +93,7 @@ type TestrunSpec struct {
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// TestLocation define repositories to look for TestDefinitions that are then executed in a workflow as specified in testflow.
+	// DEPRECATED: This field will be removed in a future version.
 	// +optional
 	TestLocations []TestLocation `json:"testLocations,omitempty"`
 
@@ -109,7 +110,7 @@ type TestrunSpec struct {
 	// +optional
 	Config []ConfigElement `json:"config,omitempty"`
 
-	TestFlow TestFlow `json:"testFlow,omitempty"`
+	TestFlow TestFlow `json:"testflow,omitempty"`
 
 	// OnExit flow is called when the test is completed.
 	// +optional
@@ -139,31 +140,38 @@ type TestrunStatus struct {
 
 	// Steps is the detailed summary of every step.
 	// It also shows all specific executed tests.
-	Steps [][]*TestflowStepStatus `json:"steps,omitempty"`
+	Steps []*StepStatus `json:"steps,omitempty"`
 
 	// Ingested states whether the result of a testrun is already ingested into a persistant storage (db).
 	Ingested bool `json:"ingested"`
 }
 
-// TestflowStepStatus is the status of Testflow step
-type TestflowStepStatus struct {
-	TestDefinition    TestflowStepStatusTestDefinition `json:"testdefinition,omitempty"`
-	Phase             argov1.NodePhase                 `json:"phase,omitempty"`
-	StartTime         *metav1.Time                     `json:"startTime,omitempty"`
-	CompletionTime    *metav1.Time                     `json:"completionTime,omitempty"`
-	Duration          int64                            `json:"duration,omitempty"`
-	ExportArtifactKey string                           `json:"exportArtifactKey"`
-	PodName           string                           `json:"podName"`
+// StepStatus is the status of Testflow step
+type StepStatus struct {
+	Name              string                   `json:"name,omitempty"`
+	Position          StepStatusPosition       `json:"position"`
+	TestDefinition    StepStatusTestDefinition `json:"testdefinition,omitempty"`
+	Phase             argov1.NodePhase         `json:"phase,omitempty"`
+	StartTime         *metav1.Time             `json:"startTime,omitempty"`
+	CompletionTime    *metav1.Time             `json:"completionTime,omitempty"`
+	Duration          int64                    `json:"duration,omitempty"`
+	ExportArtifactKey string                   `json:"exportArtifactKey"`
+	PodName           string                   `json:"podName"`
 }
 
-// TestflowStepStatusTestDefinition holds information about the used testdefinition and its location.
-type TestflowStepStatusTestDefinition struct {
-	Name                  string            `json:"name,omitempty"`
-	Location              TestLocation      `json:"location,omitempty"`
-	Owner                 string            `json:"owner,omitempty"`
-	RecipientsOnFailure   []string          `json:"recipientsOnFailure"`
-	ActiveDeadlineSeconds *int64            `json:"activeDeadlineSeconds"`
-	Position              map[string]string `json:"position"`
+// StepStatusTestDefinition holds information about the used testdefinition and its location.
+type StepStatusTestDefinition struct {
+	Name                  string       `json:"name,omitempty"`
+	Location              TestLocation `json:"location,omitempty"`
+	Owner                 string       `json:"owner,omitempty"`
+	RecipientsOnFailure   []string     `json:"recipientsOnFailure"`
+	ActiveDeadlineSeconds *int64       `json:"activeDeadlineSeconds"`
+}
+
+type StepStatusPosition struct {
+	DependsOn []string `json:"dependsOn,omitempty"`
+	Flow      string   `json:"flow,omitempty"`
+	Step      string   `json:"step,omitempty"`
 }
 
 // TestLocation describes a location to search for TestDefinitions.
@@ -221,11 +229,17 @@ type ConfigElement struct {
 }
 
 // TestFlow is a 2 dimensional array of testflow-steps which define the execution order of TestDefinitions.
-type TestFlow [][]TestflowStep
+type TestFlow []*DAGStep
 
-// TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep
-// TestDefinitions can be either defined by a Name or a Label.
-type TestflowStep struct {
+type DAGStep struct {
+	Name          string         `json:"name,omitempty"`
+	Definition    StepDefinition `json:"definition,omitempty"`
+	DependsOn     []string       `json:"dependsOn,omitempty"`
+	ArtifactsFrom string         `json:"artifactsFrom,omitempty"`
+}
+
+// StepDefinition is a reference to one or more TestDefinitions to execute in a series of steps.StepDefinition
+type StepDefinition struct {
 	Name  string `json:"name,omitempty"`
 	Label string `json:"label,omitempty"`
 

@@ -53,13 +53,11 @@ func createNotificationString(testruns []*tmv1beta1.Testrun) []byte {
 
 	for _, tr := range testruns {
 		cfg.Email.MailBody = fmt.Sprintf("%s  Testrun: %s\n", cfg.Email.MailBody, tr.Name)
-		for _, steps := range tr.Status.Steps {
-			for _, step := range steps {
-				if step.Phase == argov1.NodeFailed {
-					cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
-					for _, email := range step.TestDefinition.RecipientsOnFailure {
-						cfg.Email.Recipients = append(cfg.Email.Recipients, email)
-					}
+		for _, step := range tr.Status.Steps {
+			if step.Phase == argov1.NodeFailed {
+				cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
+				for _, email := range step.TestDefinition.RecipientsOnFailure {
+					cfg.Email.Recipients = append(cfg.Email.Recipients, email)
 				}
 			}
 		}

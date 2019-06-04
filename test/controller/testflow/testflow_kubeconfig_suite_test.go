@@ -48,9 +48,10 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromString(base64.StdEncoding.EncodeToString(file))
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{
@@ -105,9 +106,10 @@ var _ = Describe("Testflow execution tests", func() {
 					Key: "kubeconfig",
 				},
 			})
-			tr.Spec.TestFlow = [][]tmv1beta1.TestflowStep{
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
-					{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-testdef",
 						Config: []tmv1beta1.ConfigElement{
 							{

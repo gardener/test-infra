@@ -210,7 +210,7 @@ func HTTPGet(url string) (*http.Response, error) {
 }
 
 // TestflowLen returns the number of all items in 2 dimensional array.
-func TestflowLen(m [][]*tmv1beta1.TestflowStepStatus) int {
+func TestflowLen(m [][]*tmv1beta1.StepStatus) int {
 	length := 0
 	for _, a := range m {
 		length += len(a)

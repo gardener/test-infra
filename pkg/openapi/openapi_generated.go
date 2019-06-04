@@ -29,22 +29,24 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement":                    schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet":                      schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":                  schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":                      schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition":                   schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation":                     schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep":                     schema_pkg_apis_testmachinery_v1beta1_TestflowStep(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatus":               schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatus(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatusTestDefinition": schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatusTestDefinition(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Testrun":                          schema_pkg_apis_testmachinery_v1beta1_Testrun(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs":               schema_pkg_apis_testmachinery_v1beta1_TestrunKubeconfigs(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunList":                      schema_pkg_apis_testmachinery_v1beta1_TestrunList(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunSpec":                      schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus":                    schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref),
-		"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource":                                   schema_test_infra_pkg_util_strconf_ConfigSource(ref),
-		"github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig":                                 schema_test_infra_pkg_util_strconf_StringOrConfig(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement":            schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.DAGStep":                  schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet":              schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition":           schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus":               schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition":       schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition": schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":          schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":              schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition":           schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation":             schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Testrun":                  schema_pkg_apis_testmachinery_v1beta1_Testrun(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs":       schema_pkg_apis_testmachinery_v1beta1_TestrunKubeconfigs(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunList":              schema_pkg_apis_testmachinery_v1beta1_TestrunList(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunSpec":              schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus":            schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref),
+		"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource":                           schema_test_infra_pkg_util_strconf_ConfigSource(ref),
+		"github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig":                         schema_test_infra_pkg_util_strconf_StringOrConfig(ref),
 	}
 }
 
@@ -98,11 +100,55 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 	}
 }
 
+func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"definition": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"),
+						},
+					},
+					"dependsOn": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"artifactsFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"},
+	}
+}
+
 func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "LocationSet defines a set of locations with a specific name and",
+				Description: "LocationSet defines a set of locations with a specific name and a flag marking the set as the default set.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
@@ -134,6 +180,223 @@ func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallb
 					},
 				},
 				Required: []string{"name", "locations"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StepDefinition is a reference to one or more TestDefinitions to execute in a series of steps.StepDefinition",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"label": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"continueOnError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Continue the execution of the workflow even when the step errors or fails.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"condition": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Condition when the step should be executed. Only used if the step is in the onExit testflow.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Step specific configuration.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
+									},
+								},
+							},
+						},
+					},
+					"locationSet": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the configset to look for testDefinitions. If this is empty the default location set is used",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StepStatus is the status of Testflow step",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"position": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition"),
+						},
+					},
+					"testdefinition": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition"),
+						},
+					},
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"startTime": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"completionTime": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"duration": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"exportArtifactKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"podName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"position", "exportArtifactKey", "podName"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dependsOn": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"flow": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"step": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StepStatusTestDefinition holds information about the used testdefinition and its location.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"location": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+						},
+					},
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"recipientsOnFailure": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"activeDeadlineSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+				Required: []string{"recipientsOnFailure", "activeDeadlineSeconds"},
 			},
 		},
 		Dependencies: []string{
@@ -352,186 +615,6 @@ func schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_testmachinery_v1beta1_TestflowStep(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TestflowStep is a reference to one or more TestDefinitions to execute in a series of steps.TestflowStep TestDefinitions can be either defined by a Name or a Label.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"label": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"continueOnError": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"condition": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Condition when the step should be executed. Only used if the step is in the onExit testflow.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"config": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Step specific configuration.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
-									},
-								},
-							},
-						},
-					},
-					"location": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name of the configset to look for testDefinitions. If this is empty the default location set is used",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"},
-	}
-}
-
-func schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TestflowStepStatus is the status of Testflow step",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"testdefinition": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatusTestDefinition"),
-						},
-					},
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"startTime": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-					"completionTime": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-					"duration": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"exportArtifactKey": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"podName": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"exportArtifactKey", "podName"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatusTestDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
-	}
-}
-
-func schema_pkg_apis_testmachinery_v1beta1_TestflowStepStatusTestDefinition(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TestflowStepStatusTestDefinition holds information about the used testdefinition and its location.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"location": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
-						},
-					},
-					"owner": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"recipientsOnFailure": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"activeDeadlineSeconds": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"position": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"recipientsOnFailure", "activeDeadlineSeconds", "position"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
-	}
-}
-
 func schema_pkg_apis_testmachinery_v1beta1_Testrun(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -675,7 +758,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 					},
 					"testLocations": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TestLocation define repositories to look for TestDefinitions that then executed in a workflow as specified in testflow.",
+							Description: "TestLocation define repositories to look for TestDefinitions that are then executed in a workflow as specified in testflow. DEPRECATED: This field will be removed in a future version.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -724,14 +807,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep"),
-												},
-											},
-										},
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.DAGStep"),
 									},
 								},
 							},
@@ -744,14 +820,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep"),
-												},
-											},
-										},
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.DAGStep"),
 									},
 								},
 							},
@@ -761,7 +830,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStep", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.DAGStep", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs"},
 	}
 }
 
@@ -819,14 +888,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatus"),
-												},
-											},
-										},
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus"),
 									},
 								},
 							},
@@ -844,7 +906,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestflowStepStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 

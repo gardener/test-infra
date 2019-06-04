@@ -61,9 +61,9 @@ func NewTestLocations(testLocations []tmv1beta1.TestLocation) (Locations, error)
 	return &testLocation{testLocations, testDefs}, nil
 }
 
-// GetTestDefinitions returns all TestDefinitions of a TestflowStep with their location.GetTestDefinitions
+// GetTestDefinitions returns all TestDefinitions of a StepDefinition with their location.GetTestDefinitions
 // It errors if a TestDefinition cannot be found.
-func (l *testLocation) GetTestDefinitions(step *tmv1beta1.TestflowStep) ([]*testdefinition.TestDefinition, error) {
+func (l *testLocation) GetTestDefinitions(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
 	if step.Name != "" {
 		if l.TestDefinitions[step.Name] == nil {
 			return nil, fmt.Errorf("TestDefinition %s cannot be found", step.Name)
