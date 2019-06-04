@@ -17,6 +17,7 @@ package kubernetes
 import (
 	"context"
 
+	dnsscheme "github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme"
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
 	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
@@ -25,27 +26,24 @@ import (
 	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
 	machinescheme "github.com/gardener/gardener/pkg/client/machine/clientset/versioned/scheme"
 
-	"github.com/sirupsen/logrus"
-
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextensionsscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/discovery"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	apiserviceclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-
+	apiregistrationscheme "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -100,6 +98,14 @@ var (
 	SeedScheme = runtime.NewScheme()
 	// ShootScheme is the scheme used in the Shoot cluster.
 	ShootScheme = runtime.NewScheme()
+	// PlantScheme is the scheme used in the Plant cluster
+	PlantScheme = runtime.NewScheme()
+
+	// DefaultDeleteOptionFuncs use foreground propagation policy and grace period of 60 seconds.
+	DefaultDeleteOptionFuncs = []client.DeleteOptionFunc{
+		client.PropagationPolicy(metav1.DeletePropagationForeground),
+		client.GracePeriodSeconds(60),
+	}
 
 	propagationPolicy    = metav1.DeletePropagationForeground
 	gracePeriodSeconds   = int64(60)
@@ -121,22 +127,29 @@ func init() {
 		gardenscheme.AddToScheme,
 		gardencorescheme.AddToScheme,
 	)
-
 	utilruntime.Must(gardenSchemeBuilder.AddToScheme(GardenScheme))
 
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
 		machinescheme.AddToScheme,
+		dnsscheme.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
 	)
-
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 
 	shootSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
+		apiextensionsscheme.AddToScheme,
+		apiregistrationscheme.AddToScheme,
 	)
-
 	utilruntime.Must(shootSchemeBuilder.AddToScheme(ShootScheme))
+
+	plantSchemeBuilder := runtime.NewSchemeBuilder(
+		corescheme.AddToScheme,
+		gardencorescheme.AddToScheme,
+	)
+	utilruntime.Must(plantSchemeBuilder.AddToScheme(PlantScheme))
+
 }
 
 // Clientset is a struct containing the configuration for the respective Kubernetes
@@ -160,12 +173,9 @@ type Clientset struct {
 	gardenCore      gardencoreclientset.Interface
 	machine         machineclientset.Interface
 	apiextension    apiextensionsclientset.Interface
-	apiregistration apiserviceclientset.Interface
+	apiregistration apiregistrationclientset.Interface
 
-	// Deprecated: Use `restMapper`, `kubernetes.Discovery()` or custom resource API group retriever
-	// via RESTMapper APIs instead.
-	resourceAPIGroups map[string][]string
-	version           string
+	version string
 }
 
 // Applier is a default implementation of the ApplyInterface. It applies objects with
@@ -176,15 +186,12 @@ type Applier struct {
 	discovery discovery.CachedDiscoveryInterface
 }
 
-// Kind is a type alias for a k8s Kind of ObjectKind.
-type Kind string
-
 // MergeFunc determines how oldOj is merged into new oldObj.
 type MergeFunc func(newObj, oldObj *unstructured.Unstructured)
 
 // ApplierOptions contains options used by the Applier.
 type ApplierOptions struct {
-	MergeFuncs map[Kind]MergeFunc
+	MergeFuncs map[schema.GroupKind]MergeFunc
 }
 
 // ApplierInterface is an interface which describes declarative operations to apply multiple
@@ -210,16 +217,6 @@ type Interface interface {
 	Machine() machineclientset.Interface
 	APIExtension() apiextensionsclientset.Interface
 	APIRegistration() apiregistrationclientset.Interface
-
-	// Cleanup
-	// Deprecated: Use `RESTMapper()` and utils instead.
-	GetResourceAPIGroups() map[string][]string
-	// Deprecated: Use `Client()` and utils instead.
-	CleanupResources(map[string]map[string]bool, map[string][]string) error
-	// Deprecated: Use `Client()` and utils instead.
-	CleanupAPIGroupResources(map[string]map[string]bool, string, []string) error
-	// Deprecated: Use `Client()` and utils instead.
-	CheckResourceCleanup(*logrus.Entry, map[string]map[string]bool, string, []string) (bool, error)
 
 	// Namespaces
 	// Deprecated: Use `Client()` and utils instead.
@@ -318,21 +315,6 @@ type Interface interface {
 	DeleteClusterRoleBinding(name string) error
 	// Deprecated: Use `Client()` and utils instead.
 	DeleteRoleBinding(namespace, name string) error
-
-	// CustomResourceDefinitions
-	// Deprecated: Use `Client()` and utils instead.
-	ListCRDs(metav1.ListOptions) (*apiextensionsv1beta1.CustomResourceDefinitionList, error)
-	// Deprecated: Use `Client()` and utils instead.
-	DeleteCRDForcefully(name string) error
-
-	// APIServices
-	// Deprecated: Use `Client()` and utils instead.
-	ListAPIServices(metav1.ListOptions) (*apiregistrationv1beta1.APIServiceList, error)
-	// Deprecated: Use `Client()` and utils instead.
-	DeleteAPIService(name string) error
-	// Deprecated: Use `Client()` and utils instead.
-	DeleteAPIServiceForcefully(name string) error
-	// Deprecated: Use `Client()` and utils instead.
 
 	// ServiceAccounts
 	// Deprecated: Use `Client()` and utils instead.

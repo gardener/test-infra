@@ -185,7 +185,6 @@ var _ = Describe("Result collection tests", func() {
 				}
 			}
 
-
 			status := tr.Status.Steps[2]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).To(BeZero())

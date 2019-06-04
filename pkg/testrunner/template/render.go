@@ -15,7 +15,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 	log.Debugf("Parameters: %+v", util.PrettyPrintStruct(parameters))
 	log.Debugf("Render chart from %s", parameters.TestrunChartPath)
 
-	tmChartRenderer, err := chartrenderer.New(tmClient.Kubernetes())
+	tmChartRenderer, err := chartrenderer.NewForConfig(tmClient.RESTConfig())
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create chartrenderer for gardener: %s", err.Error())
 	}
@@ -36,7 +36,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 	return renderedFiles, nil
 }
 
-func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *TestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
+func renderSingleChart(renderer chartrenderer.Interface, parameters *TestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":                 fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
@@ -63,7 +63,7 @@ func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *Testrun
 	}
 
 	files := []*TestrunFile{}
-	for _, file := range chart.Files {
+	for _, file := range chart.Files() {
 		files = append(files, &TestrunFile{
 			File: file,
 			Metadata: TestrunFileMetadata{

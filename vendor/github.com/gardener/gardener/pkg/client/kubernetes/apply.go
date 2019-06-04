@@ -18,18 +18,23 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/discovery"
+	memcache "k8s.io/client-go/discovery/cached/memory"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
+
+	corev1 "k8s.io/api/core/v1"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func newControllerClient(config *rest.Config, options client.Options) (client.Client, error) {
@@ -42,8 +47,8 @@ var NewControllerClient = newControllerClient
 // NewApplierInternal constructs a new Applier from the given config and DiscoveryInterface.
 // This method should only be used for testing.
 // TODO(AC): Once https://github.com/kubernetes/kubernetes/issues/68865 is resolved,
-// this should be adapted to use the updated RESTMapper and not do the invalidation / checks
-// on its own (depending on whether the controller-runtime/client might even automatically
+// this should be adapted to use the updated RESTMapper (https://github.com/kubernetes/kubernetes/issues/75383)
+// and not do the invalidation / checks on its own (depending on whether the controller-runtime/client might even automatically
 // use this updated mapper then).
 func NewApplierInternal(config *rest.Config, discoveryClient discovery.CachedDiscoveryInterface) (*Applier, error) {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
@@ -62,7 +67,7 @@ func NewApplierForConfig(config *rest.Config) (*Applier, error) {
 		return nil, err
 	}
 
-	cachedDiscoveryClient := cached.NewMemCacheClient(discoveryClient)
+	cachedDiscoveryClient := memcache.NewMemCacheClient(discoveryClient)
 	return NewApplierInternal(config, cachedDiscoveryClient)
 }
 
@@ -74,10 +79,6 @@ func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstruc
 	key, err := client.ObjectKeyFromObject(desired)
 	if err != nil {
 		return err
-	}
-
-	if !c.discovery.Fresh() {
-		c.discovery.Invalidate()
 	}
 
 	current := &unstructured.Unstructured{}
@@ -103,8 +104,8 @@ func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstruc
 
 // DefaultApplierOptions contains options for common k8s objects, e.g. Service, ServiceAccount.
 var DefaultApplierOptions = ApplierOptions{
-	MergeFuncs: map[Kind]MergeFunc{
-		"Service": func(newObj, oldObj *unstructured.Unstructured) {
+	MergeFuncs: map[schema.GroupKind]MergeFunc{
+		corev1.SchemeGroupVersion.WithKind("Service").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
 			// We do not want to overwrite a Service's `.spec.clusterIP' or '.spec.ports[*].nodePort' values.
 			oldPorts := oldObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
 			newPorts := newObj.Object["spec"].(map[string]interface{})["ports"].([]interface{})
@@ -131,7 +132,7 @@ var DefaultApplierOptions = ApplierOptions{
 			newObj.Object["spec"].(map[string]interface{})["clusterIP"] = oldObj.Object["spec"].(map[string]interface{})["clusterIP"]
 			newObj.Object["spec"].(map[string]interface{})["ports"] = ports
 		},
-		"ServiceAccount": func(newObj, oldObj *unstructured.Unstructured) {
+		corev1.SchemeGroupVersion.WithKind("ServiceAccount").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
 			// We do not want to overwrite a ServiceAccount's `.secrets[]` list or `.imagePullSecrets[]`.
 			newObj.Object["secrets"] = oldObj.Object["secrets"]
 			newObj.Object["imagePullSecrets"] = oldObj.Object["imagePullSecrets"]
@@ -139,13 +140,13 @@ var DefaultApplierOptions = ApplierOptions{
 	},
 }
 
-func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeFuncs map[Kind]MergeFunc) error {
+func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeFuncs map[schema.GroupKind]MergeFunc) error {
 	newObj.SetResourceVersion(oldObj.GetResourceVersion())
 
 	// We do not want to overwrite the Finalizers.
 	newObj.Object["metadata"].(map[string]interface{})["finalizers"] = oldObj.Object["metadata"].(map[string]interface{})["finalizers"]
 
-	if merge, ok := mergeFuncs[Kind(newObj.GetKind())]; ok {
+	if merge, ok := mergeFuncs[newObj.GroupVersionKind().GroupKind()]; ok {
 		merge(newObj, oldObj)
 	}
 
@@ -156,15 +157,22 @@ func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeF
 // all concatenated in a byte slice, and sends them one after the other to the API server. If a resource
 // already exists at the API server, it will update it. It returns an error as soon as the first error occurs.
 func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, options ApplierOptions) error {
-	for obj, err := r.Read(); err == nil; obj, err = r.Read() {
+	for {
+		obj, err := r.Read()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
 		if obj == nil {
 			continue
 		}
+
 		if err := c.applyObject(ctx, obj, options); err != nil {
 			return err
 		}
 	}
-	return nil
 }
 
 // UnstructuredReader an interface that all manifest readers should implement
@@ -175,30 +183,36 @@ type UnstructuredReader interface {
 // NewManifestReader initializes a reader for yaml manifests
 func NewManifestReader(manifest []byte) UnstructuredReader {
 	return &manifestReader{
-		decoder: yaml.NewYAMLOrJSONDecoder(bytes.NewReader(manifest), 1024),
+		decoder:  yaml.NewYAMLOrJSONDecoder(bytes.NewReader(manifest), 1024),
+		manifest: manifest,
 	}
 }
 
 // manifestReader is an unstructured reader that contains a JSONDecoder
 type manifestReader struct {
-	decoder *yaml.YAMLOrJSONDecoder
+	decoder  *yaml.YAMLOrJSONDecoder
+	manifest []byte
 }
 
 // Read decodes yaml data into an unstructured object
 func (m *manifestReader) Read() (*unstructured.Unstructured, error) {
-	var (
-		data map[string]interface{}
-		err  error
-	)
-
 	// loop for skipping empty yaml objects
-	for err = m.decoder.Decode(&data); err == nil; err = m.decoder.Decode(&data) {
+	for {
+		var data map[string]interface{}
+
+		err := m.decoder.Decode(&data)
+		if err == io.EOF {
+			return nil, err
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error '%+v' decoding manifest: %s", err, string(m.manifest))
+		}
 		if data == nil {
 			continue
 		}
+
 		return &unstructured.Unstructured{Object: data}, nil
 	}
-	return nil, err
 }
 
 // NewNamespaceSettingReader initializes a reader for yaml manifests with support for setting the namespace

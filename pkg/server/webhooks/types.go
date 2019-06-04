@@ -16,10 +16,10 @@ package webhooks
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 type TestrunWebhook struct {
-	d      types.Decoder
+	d      admission.Decoder
 	codecs serializer.CodecFactory
 }

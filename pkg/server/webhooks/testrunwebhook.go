@@ -29,11 +29,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
 )
 
 // NewTestrunWebhook creates a new validation webhook for tesetruns with a controller-runtime decoder
-func NewTestrunWebhook(decoder types.Decoder) (*TestrunWebhook, error) {
+func NewTestrunWebhook() (*TestrunWebhook, error) {
 	scheme := runtime.NewScheme()
 	if err := corev1.AddToScheme(scheme); err != nil {
 		return nil, err
@@ -42,7 +41,12 @@ func NewTestrunWebhook(decoder types.Decoder) (*TestrunWebhook, error) {
 		return nil, err
 	}
 
-	return &TestrunWebhook{decoder, serializer.NewCodecFactory(scheme)}, nil
+	decoder, err := admission.NewDecoder(scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TestrunWebhook{*decoder, serializer.NewCodecFactory(scheme)}, nil
 }
 
 // Validate handles a admission webhook request for testruns.
@@ -63,38 +67,38 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	// Verify that the correct content-type header has been sent.
 	if contentType := r.Header.Get("Content-Type"); contentType != wantedContentType {
 		log.Errorf("contentType=%s, expect %s", contentType, wantedContentType)
-		res := admission.ErrorResponse(http.StatusConflict, fmt.Errorf("expect %s", wantedContentType))
-		respond(w, res.Response)
+		res := admission.Errored(http.StatusConflict, fmt.Errorf("expect %s", wantedContentType))
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
 	// Deserialize HTTP request body into admissionv1beta1.AdmissionReview object.
 	if _, _, err := deserializer.Decode(body, nil, &receivedReview); err != nil {
 		log.Error(err.Error())
-		res := admission.ErrorResponse(http.StatusConflict, err)
-		respond(w, res.Response)
+		res := admission.Errored(http.StatusConflict, err)
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
 	if receivedReview.Request == nil {
 		err := fmt.Errorf("invalid request body (missing admission request)")
 		log.Error(err.Error())
-		res := admission.ErrorResponse(http.StatusConflict, err)
-		respond(w, res.Response)
+		res := admission.Errored(http.StatusConflict, err)
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
 	if receivedReview.Request.Operation != v1beta1.Create {
 		res := admission.ValidationResponse(true, "No validation needed")
-		respond(w, res.Response)
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
 	tr := &tmv1beta1.Testrun{}
-	if err := wh.d.Decode(types.Request{AdmissionRequest: receivedReview.Request}, tr); err != nil {
+	if err := wh.d.Decode(admission.Request{AdmissionRequest: *receivedReview.Request}, tr); err != nil {
 		log.Error(err.Error())
-		res := admission.ErrorResponse(http.StatusConflict, err)
-		respond(w, res.Response)
+		res := admission.Errored(http.StatusConflict, err)
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
@@ -102,13 +106,13 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 		err := fmt.Errorf("Invalid Testrun %s: %s", tr.Name, err.Error())
 		log.Error(err.Error())
 		res := admission.ValidationResponse(false, err.Error())
-		respond(w, res.Response)
+		respond(w, &res.AdmissionResponse)
 		return
 	}
 
 	log.Infof("Successfully validated Testrun %s", tr.Name)
 	res := admission.ValidationResponse(true, "No reason")
-	respond(w, res.Response)
+	respond(w, &res.AdmissionResponse)
 }
 
 func respond(w http.ResponseWriter, response *v1beta1.AdmissionResponse) {

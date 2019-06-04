@@ -21,42 +21,67 @@ import (
 	"path"
 	"strings"
 
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
 
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
+	"k8s.io/helm/pkg/manifest"
 	chartapi "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
 )
 
 const notesFileSuffix = "NOTES.txt"
 
-// DefaultChartRenderer is a struct which contains the chart render engine and a Kubernetes client.
+// chartRenderer is a struct which contains the chart render engine and a Kubernetes client.
 // The chart render is used to render the Helm charts into a RenderedChart struct from which the
 // resulting manifest can be generated.
-type DefaultChartRenderer struct {
-	client       kubernetes.Interface
+type chartRenderer struct {
 	renderer     *engine.Engine
 	capabilities *chartutil.Capabilities
 }
 
-// New creates a new DefaultChartRenderer object. It requires a Kubernetes client as input which will be
+// NewForConfig creates a new ChartRenderer object. It requires a Kubernetes client as input which will be
 // injected in the Tiller environment.
-func New(client kubernetes.Interface) (ChartRenderer, error) {
-	sv, err := client.Discovery().ServerVersion()
+func NewForConfig(cfg *rest.Config) (Interface, error) {
+	disc, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	capabilities, err := DiscoverCapabilities(disc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chartRenderer{
+		renderer:     engine.New(),
+		capabilities: capabilities,
+	}, nil
+}
+
+// New creates a new chart renderer with the given Engine and Capabilities.
+func New(engine *engine.Engine, capabilities *chartutil.Capabilities) Interface {
+	return &chartRenderer{
+		renderer:     engine,
+		capabilities: capabilities,
+	}
+}
+
+// DiscoverCapabilities discovers the capabilities required for chart renderers using the given
+// DiscoveryInterface.
+func DiscoverCapabilities(disc discovery.DiscoveryInterface) (*chartutil.Capabilities, error) {
+	sv, err := disc.ServerVersion()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get kubernetes server version %v", err)
 	}
-	return &DefaultChartRenderer{
-		client:       client,
-		renderer:     engine.New(),
-		capabilities: &chartutil.Capabilities{KubeVersion: sv},
-	}, nil
+
+	return &chartutil.Capabilities{KubeVersion: sv}, nil
 }
 
 // Render loads the chart from the given location <chartPath> and calls the Render() function
 // to convert it into a ChartRelease object.
-func (r *DefaultChartRenderer) Render(chartPath, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
+func (r *chartRenderer) Render(chartPath, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
 	chart, err := chartutil.Load(chartPath)
 	if err != nil {
 		return nil, fmt.Errorf("can't create load chart from path %s:, %s", chartPath, err)
@@ -66,7 +91,7 @@ func (r *DefaultChartRenderer) Render(chartPath, releaseName, namespace string, 
 
 // RenderArchive loads the chart from the given location <chartPath> and calls the Render() function
 // to convert it into a ChartRelease object.
-func (r *DefaultChartRenderer) RenderArchive(archive []byte, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
+func (r *chartRenderer) RenderArchive(archive []byte, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
 	chart, err := chartutil.LoadArchive(bytes.NewReader(archive))
 	if err != nil {
 		return nil, fmt.Errorf("can't create load chart from archive: %s", err)
@@ -74,32 +99,7 @@ func (r *DefaultChartRenderer) RenderArchive(archive []byte, releaseName, namesp
 	return r.renderRelease(chart, releaseName, namespace, values)
 }
 
-// Manifest returns the manifest of the rendered chart as byte array.
-func (c *RenderedChart) Manifest() []byte {
-	// Aggregate all valid manifests into one big doc.
-	b := bytes.NewBuffer(nil)
-
-	for k, v := range c.Files {
-		b.WriteString("\n---\n# Source: " + k + "\n")
-		b.WriteString(v)
-	}
-	return b.Bytes()
-}
-
-// ManifestAsString returns the manifest of the rendered chart as string.
-func (c *RenderedChart) ManifestAsString() string {
-	return string(c.Manifest())
-}
-
-// FileContent returns explicitly the content of the provided <filename>.
-func (c *RenderedChart) FileContent(filename string) string {
-	if content, ok := c.Files[fmt.Sprintf("%s/templates/%s", c.ChartName, filename)]; ok {
-		return content
-	}
-	return ""
-}
-
-func (r *DefaultChartRenderer) renderRelease(chart *chartapi.Chart, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
+func (r *chartRenderer) renderRelease(chart *chartapi.Chart, releaseName, namespace string, values map[string]interface{}) (*RenderedChart, error) {
 	chartName := chart.GetMetadata().GetName()
 
 	parsedValues, err := json.Marshal(values)
@@ -135,7 +135,7 @@ func (r *DefaultChartRenderer) renderRelease(chart *chartapi.Chart, releaseName,
 	return r.renderResources(chart, valuesToRender)
 }
 
-func (r *DefaultChartRenderer) renderResources(ch *chartapi.Chart, values chartutil.Values) (*RenderedChart, error) {
+func (r *chartRenderer) renderResources(ch *chartapi.Chart, values chartutil.Values) (*RenderedChart, error) {
 	files, err := r.renderer.Render(ch, values)
 	if err != nil {
 		return nil, err
@@ -148,8 +148,42 @@ func (r *DefaultChartRenderer) renderResources(ch *chartapi.Chart, values chartu
 		}
 	}
 
+	manifests := manifest.SplitManifests(files)
+	manifests = SortByKind(manifests)
+
 	return &RenderedChart{
 		ChartName: ch.Metadata.Name,
-		Files:     files,
+		Manifests: manifests,
 	}, nil
+}
+
+// Manifest returns the manifest of the rendered chart as byte array.
+func (c *RenderedChart) Manifest() []byte {
+	// Aggregate all valid manifests into one big doc.
+	b := bytes.NewBuffer(nil)
+
+	for _, mf := range c.Manifests {
+		b.WriteString("\n---\n# Source: " + mf.Name + "\n")
+		b.WriteString(mf.Content)
+	}
+	return b.Bytes()
+}
+
+// Files returns all rendered manifests mapping their names to their content.
+func (c *RenderedChart) Files() map[string]string {
+	var files = make(map[string]string)
+	for _, manifest := range c.Manifests {
+		files[manifest.Name] = manifest.Content
+	}
+	return files
+}
+
+// FileContent returns explicitly the content of the provided <filename>.
+func (c *RenderedChart) FileContent(filename string) string {
+	for _, mf := range c.Manifests {
+		if mf.Name == fmt.Sprintf("%s/templates/%s", c.ChartName, filename) {
+			return mf.Content
+		}
+	}
+	return ""
 }
