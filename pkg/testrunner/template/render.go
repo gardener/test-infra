@@ -2,12 +2,11 @@ package template
 
 import (
 	"fmt"
-	"io/ioutil"
-
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
@@ -52,6 +51,7 @@ func renderSingleChart(renderer chartrenderer.ChartRenderer, parameters *Testrun
 			"autoscalerMax":        parameters.AutoscalerMax,
 			"floatingPoolName":     parameters.FloatingPoolName,
 			"loadbalancerProvider": parameters.LoadBalancerProvider,
+			"gardenerVersion":      parameters.GardenerVersion,
 		},
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(gardenKubeconfig),

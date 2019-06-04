@@ -46,6 +46,7 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 			return nil, fmt.Errorf("Cannot decode and parse the component descriptor: %s", err.Error())
 		}
 		metadata.ComponentDescriptor = componentDescriptor.JSON()
+		exposeGardenerVersionToParameters(componentDescriptor, parameters)
 	}
 
 	files, err := RenderChart(tmClient, parameters, versions)
@@ -82,4 +83,13 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 	}
 
 	return testruns, nil
+}
+
+func exposeGardenerVersionToParameters(componentDescriptor componentdescriptor.ComponentList, parameters *TestrunParameters) {
+	for _, component := range componentDescriptor {
+		if component.Name == "github.com/gardener/gardener.version" {
+			parameters.GardenerVersion = component.Version
+			break
+		}
+	}
 }
