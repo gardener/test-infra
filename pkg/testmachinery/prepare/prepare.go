@@ -106,7 +106,7 @@ func (p *Definition) AddRepositoriesAsArtifacts() error {
 	if err != nil {
 		return fmt.Errorf("Cannot add repositories to prepare step: %s", err.Error())
 	}
-	p.TestDefinition.Template.Inputs.Artifacts = append(p.TestDefinition.Template.Inputs.Artifacts, argov1.Artifact{
+	p.TestDefinition.AddInputArtifacts(argov1.Artifact{
 		Name: "repos",
 		Path: "/tm/repos.json",
 		ArtifactLocation: argov1.ArtifactLocation{

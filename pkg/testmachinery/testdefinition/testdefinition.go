@@ -37,8 +37,7 @@ var (
 // Annotation keys defined on the testdefinition template
 const (
 	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
-	AnnotationFlow        = "testmachinery.sapcloud.io/Flow"
-	AnnotationPosition    = "testmachinery.sapcloud.io/Position" // position of the source step in the format row/colum
+	AnnotationTestDefID   = "testmachinery.sapcloud.io/ID"
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
@@ -57,6 +56,11 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 
 	template := &argov1.Template{
 		Name: "",
+		Metadata: argov1.Metadata{
+			Annotations: map[string]string{
+				AnnotationTestDefName: def.Metadata.Name,
+			},
+		},
 		ArchiveLocation: &argov1.ArtifactLocation{
 			ArchiveLogs: &archiveLogs,
 		},
@@ -142,10 +146,15 @@ func (td *TestDefinition) Copy() *TestDefinition {
 }
 
 func (td *TestDefinition) SetName(name string) {
+	td.AddAnnotation(AnnotationTestDefID, name)
 	td.Template.Name = name
 }
 func (td *TestDefinition) GetName() string {
 	return td.Template.Name
+}
+
+func (td *TestDefinition) GetTemplate() argov1.Template {
+	return *td.Template
 }
 
 // HasBehavior checks if the testrun has defined a specific behavior like serial or disruptiv.
@@ -294,11 +303,9 @@ func (td *TestDefinition) AddVolumeFromConfig(cfg *config.Element) error {
 }
 
 // GetAnnotations returns Template annotations for a testdefinition
-func GetAnnotations(name, flow, position string) map[string]string {
-	annotations := map[string]string{
-		AnnotationTestDefName: name,
-		AnnotationFlow:        flow,
-		AnnotationPosition:    position,
+func (td *TestDefinition) AddAnnotation(key, value string) {
+	if td.Template.Metadata.Annotations == nil {
+		td.Template.Metadata.Annotations = make(map[string]string, 0)
 	}
-	return annotations
+	td.Template.Metadata.Annotations[key] = value
 }

@@ -64,7 +64,7 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 func (f *Flow) GetTemplates() ([]argov1.Template, error) {
 	var templates []argov1.Template
 	for td := range f.testdefinitions {
-		templates = append(templates, *td.Template)
+		templates = append(templates, td.GetTemplate())
 	}
 
 	return templates, nil

@@ -103,7 +103,7 @@ func (n *Node) ParentNames() []string {
 
 // Name return the unique name of the node's task
 func (n *Node) Name() string {
-	return n.TestDefinition.Template.Name
+	return n.TestDefinition.GetName()
 }
 
 // Task returns the argo task definition for the node.
