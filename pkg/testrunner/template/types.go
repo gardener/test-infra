@@ -38,6 +38,8 @@ type TestrunParameters struct {
 	FloatingPoolName        string
 	LoadBalancerProvider    string
 	ComponentDescriptorPath string
+
+	GardenerVersion string
 }
 
 // TestrunFile is the internal representation of a rendered testrun chart with metadata information
