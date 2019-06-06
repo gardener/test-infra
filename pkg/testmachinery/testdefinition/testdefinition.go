@@ -192,6 +192,9 @@ func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
 
 // AddInputArtifacts adds argo artifacts to the input of the TestDefinitions's template.
 func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
+	if td.inputArtifacts == nil {
+		td.inputArtifacts = make(map[string]bool, 0)
+	}
 	for _, a := range artifacts {
 		if _, ok := td.inputArtifacts[a.Name]; !ok {
 			td.Template.Inputs.Artifacts = append(td.Template.Inputs.Artifacts, a)
@@ -202,6 +205,9 @@ func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 
 // AddOutputArtifacts adds argo artifacts to the output of the TestDefinitions's template.
 func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
+	if td.outputArtifacts == nil {
+		td.outputArtifacts = make(map[string]bool, 0)
+	}
 	for _, a := range artifacts {
 		if _, ok := td.inputArtifacts[a.Name]; !ok {
 			td.Template.Outputs.Artifacts = append(td.Template.Outputs.Artifacts, artifacts...)
