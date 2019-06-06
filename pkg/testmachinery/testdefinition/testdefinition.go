@@ -93,40 +93,48 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 			Parameters: []argov1.Parameter{
 				{Name: "phase"},
 			},
-			Artifacts: []argov1.Artifact{
-				{
-					Name:     "kubeconfigs",
-					Path:     testmachinery.TM_KUBECONFIG_PATH,
-					Optional: true,
-				},
-				{
-					Name:     "sharedFolder",
-					Path:     testmachinery.TM_SHARED_PATH,
-					Optional: true,
-				},
-			},
+			Artifacts: make([]argov1.Artifact, 0),
 		},
 		Outputs: argov1.Outputs{
-			Artifacts: []argov1.Artifact{
-				{
-					Name:     testmachinery.ExportArtifact,
-					Path:     testmachinery.TM_EXPORT_PATH,
-					Optional: true,
-				},
-			},
+			Artifacts: make([]argov1.Artifact, 0),
+		},
+	}
+
+	inputArtifacts := []argov1.Artifact{
+		{
+			Name:     "kubeconfigs",
+			Path:     testmachinery.TM_KUBECONFIG_PATH,
+			Optional: true,
+		},
+		{
+			Name:     "sharedFolder",
+			Path:     testmachinery.TM_SHARED_PATH,
+			Optional: true,
+		},
+	}
+	outputArtifacts := []argov1.Artifact{
+		{
+			Name:     testmachinery.ExportArtifact,
+			Path:     testmachinery.TM_EXPORT_PATH,
+			Optional: true,
 		},
 	}
 
 	td := &TestDefinition{
-		Info:     def,
-		Location: loc,
-		FileName: fileName,
-		Template: template,
-		Config:   config.New(def.Spec.Config),
+		Info:            def,
+		Location:        loc,
+		FileName:        fileName,
+		Template:        template,
+		Config:          config.New(def.Spec.Config),
+		inputArtifacts:  make(map[string]bool, 0),
+		outputArtifacts: make(map[string]bool, 0),
 	}
 	if err := td.AddConfig(td.Config); err != nil {
 		return nil, err
 	}
+
+	td.AddInputArtifacts(inputArtifacts...)
+	td.AddOutputArtifacts(outputArtifacts...)
 
 	return td, nil
 }
@@ -177,19 +185,35 @@ func (td *TestDefinition) HasLabel(label string) bool {
 	return false
 }
 
-// AddEnvVars adds environment varibales to the container of the TestDefinition's template.
+// AddEnvVars adds environment variables to the container of the TestDefinition's template.
 func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
 	td.Template.Container.Env = append(td.Template.Container.Env, envs...)
 }
 
 // AddInputArtifacts adds argo artifacts to the input of the TestDefinitions's template.
 func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
-	td.Template.Inputs.Artifacts = append(td.Template.Inputs.Artifacts, artifacts...)
+	if td.inputArtifacts == nil {
+		td.inputArtifacts = make(map[string]bool, 0)
+	}
+	for _, a := range artifacts {
+		if _, ok := td.inputArtifacts[a.Name]; !ok {
+			td.Template.Inputs.Artifacts = append(td.Template.Inputs.Artifacts, a)
+			td.inputArtifacts[a.Name] = true
+		}
+	}
 }
 
 // AddOutputArtifacts adds argo artifacts to the output of the TestDefinitions's template.
 func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
-	td.Template.Outputs.Artifacts = append(td.Template.Outputs.Artifacts, artifacts...)
+	if td.outputArtifacts == nil {
+		td.outputArtifacts = make(map[string]bool, 0)
+	}
+	for _, a := range artifacts {
+		if _, ok := td.inputArtifacts[a.Name]; !ok {
+			td.Template.Outputs.Artifacts = append(td.Template.Outputs.Artifacts, artifacts...)
+			td.outputArtifacts[a.Name] = true
+		}
+	}
 }
 
 // AddInputParameter adds a parameter to the input of the TestDefinitions's template.
@@ -222,7 +246,9 @@ func (td *TestDefinition) AddStdOutput(global bool) {
 
 	if global {
 		kubeconfigArtifact.GlobalName = kubeconfigArtifact.Name
+		kubeconfigArtifact.Name = fmt.Sprintf("%s-global", kubeconfigArtifact.Name)
 		sharedFolderArtifact.GlobalName = sharedFolderArtifact.Name
+		sharedFolderArtifact.Name = fmt.Sprintf("%s-global", sharedFolderArtifact.Name)
 	}
 
 	td.AddOutputArtifacts(kubeconfigArtifact)
