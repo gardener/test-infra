@@ -189,6 +189,47 @@ var _ = Describe("Testflow execution tests", func() {
 
 		})
 
+		It("should execute the testflow with a step that is serial and globally serial", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
+				&tmv1beta1.DAGStep{
+					Name: "A",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "integration-testdef",
+					},
+				},
+				&tmv1beta1.DAGStep{
+					Name:      "B",
+					DependsOn: []string{"A"},
+					Definition: tmv1beta1.StepDefinition{
+						Label: "integration-testdef",
+					},
+				},
+				&tmv1beta1.DAGStep{
+					Name:      "C",
+					DependsOn: []string{"B"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "integration-testdef",
+					},
+				},
+			}
+
+			tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			numExecutedTestDefs := 0
+			for _, node := range wf.Status.Nodes {
+				if strings.HasPrefix(node.TemplateName, "integration-testdef") && node.Phase == argov1.NodeSucceeded {
+					numExecutedTestDefs++
+				}
+			}
+
+			Expect(numExecutedTestDefs).To(Equal(3), "Testrun: %s", tr.Name)
+		})
+
 		It("should execute one serial step successfully", func() {
 			ctx := context.Background()
 			defer ctx.Done()

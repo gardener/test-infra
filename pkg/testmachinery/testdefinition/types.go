@@ -17,6 +17,9 @@ type TestDefinition struct {
 	Config   []*config.Element
 
 	Volumes []apiv1.Volume
+
+	inputArtifacts  map[string]bool
+	outputArtifacts map[string]bool
 }
 
 // Location is an interface for different testDefLocation types like git or local
