@@ -189,7 +189,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 		})
 
-		It("should execute the testflow with a step that is serial and globally serial", func() {
+		It("should execute the testflow with a step that has outputs and is serial", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
@@ -204,7 +204,7 @@ var _ = Describe("Testflow execution tests", func() {
 					Name:      "B",
 					DependsOn: []string{"A"},
 					Definition: tmv1beta1.StepDefinition{
-						Label: "integration-testdef",
+						Name: "integration-testdef",
 					},
 				},
 				&tmv1beta1.DAGStep{
