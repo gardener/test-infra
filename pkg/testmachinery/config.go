@@ -23,17 +23,29 @@ import (
 )
 
 const (
+	// TM_KUBECONFIG_PATH is the name of the environment variable that holds the kubeconfigs folder path
+	TM_KUBECONFIG_PATH_NAME = "TM_KUBECONFIG_PATH"
+
 	// TM_KUBECONFIG_PATH is the path where kubeconfigs are mounted to tests.
 	TM_KUBECONFIG_PATH = "/tmp/tm/kubeconfig"
 
+	// TM_SHARED_PATH_NAME is the name of the environment variable that holds the shared folder path
+	TM_SHARED_PATH_NAME = "TM_SHARED_PATH"
+
 	// TM_SHARED_PATH is the path to a shared folder, where content is shared among the workflow steps
 	TM_SHARED_PATH = "/tmp/tm/shared"
+
+	// TM_REPO_PATH is the name of the environment variable that holds the repo path
+	TM_REPO_PATH_NAME = "TM_REPO_PATH"
 
 	// TM_REPO_PATH is the path where the repo/location is mounted to the tests.
 	TM_REPO_PATH = "/src"
 
 	// PHASE_RUNNING is the name of the running phase.
 	PHASE_RUNNING = "Running"
+
+	// TM_EXPORT_PATH is the name of the environment variable that holds the path to the export folder
+	TM_EXPORT_PATH_NAME = "TM_EXPORT_PATH"
 
 	// TM_EXPORT_PATH is the path where test results json's are placed to be persisted.
 	TM_EXPORT_PATH = "/tmp/tm/export"

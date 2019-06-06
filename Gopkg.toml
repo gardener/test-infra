@@ -10,7 +10,7 @@ required = [
 
 [[constraint]]
   name = "github.com/gardener/gardener"
-  version = "^0.23.0"
+  version = "^0.24.0"
 
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
