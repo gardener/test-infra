@@ -234,7 +234,7 @@ type TestFlow []*DAGStep
 type DAGStep struct {
 	Name               string         `json:"name,omitempty"`
 	Definition         StepDefinition `json:"definition,omitempty"`
-	UseGlobalArtifacts bool           `json:"useGlobalInput,omitempty"`
+	UseGlobalArtifacts bool           `json:"useGlobalArtifacts,omitempty"`
 	DependsOn          []string       `json:"dependsOn,omitempty"`
 	ArtifactsFrom      string         `json:"artifactsFrom,omitempty"`
 }

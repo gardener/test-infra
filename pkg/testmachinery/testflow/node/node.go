@@ -153,6 +153,23 @@ func (n *Node) isRootNode() bool {
 
 func (n *Node) DetermineArtifacts() []argov1.Artifact {
 	artifactsMap := make(map[string]argov1.Artifact)
+	if n.isRootNode() {
+		artifactsMap["kubeconfigs"] = argov1.Artifact{
+			Name: "kubeconfigs",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", n.inputSource.Name()),
+		}
+		artifactsMap["sharedFolder"] = argov1.Artifact{
+			Name: "sharedFolder",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", n.inputSource.Name()),
+		}
+
+		if n.TestDefinition.Location != nil && n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
+			artifactsMap["repo"] = argov1.Artifact{
+				Name: "repo",
+				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", n.TestDefinition.Location.Name()),
+			}
+		}
+	}
 
 	if n.step.UseGlobalArtifacts {
 		artifactsMap["kubeconfigs"] = argov1.Artifact{
@@ -162,26 +179,6 @@ func (n *Node) DetermineArtifacts() []argov1.Artifact {
 		artifactsMap["sharedFolder"] = argov1.Artifact{
 			Name: "sharedFolder",
 			From: "{{workflow.outputs.artifacts.sharedFolder}}",
-		}
-	}
-	if n.isRootNode() {
-		if !n.step.UseGlobalArtifacts {
-			// overwrite kubeconfigs and sharedFolder artifacts
-			artifactsMap["kubeconfigs"] = argov1.Artifact{
-				Name: "kubeconfigs",
-				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", n.inputSource.Name()),
-			}
-			artifactsMap["sharedFolder"] = argov1.Artifact{
-				Name: "sharedFolder",
-				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", n.inputSource.Name()),
-			}
-		}
-
-		if n.TestDefinition.Location != nil && n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
-			artifactsMap["repo"] = argov1.Artifact{
-				Name: "repo",
-				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", n.TestDefinition.Location.Name()),
-			}
 		}
 	}
 	return artifactsMapToList(artifactsMap)
