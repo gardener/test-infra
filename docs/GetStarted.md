@@ -6,8 +6,7 @@
     - [Export Contract](#export-contract)
     - [Shared Folder](#shared-folder)
     - [Images](#images)
-  - [Testrun](#create-a-testrun)
-    - [Locations](#locations)
+  - [Create a Testrun](#create-a-testrun)
   - [Configuration](#configuration)
     - [Types](#types)
     - [Sources](#sources)
@@ -208,6 +207,7 @@ spec:
         config: ...
         location: ...
       dependsOn: [ create-shoot ]
+      useGlobalArtifacts: true # optional, default get from last "serial" step
       artifactsFrom: create-shoot # optional, default get from last "serial" step
 
   # OnExit specifies the same execution flow as the testFlow.
