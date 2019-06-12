@@ -325,7 +325,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			})
 
-			It("should mount a global config as environement variable", func() {
+			It("should mount a global config as environment variable", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)

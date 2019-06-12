@@ -54,10 +54,14 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 
 	usedTestdefinitions := 0
 
-	usedStepNames := make(map[string]bool, 0)
+	usedStepNames := make(map[string]*tmv1beta1.DAGStep, 0)
 
 	for i, step := range tf {
 		identifier := fmt.Sprintf("%s.[%d]", identifier, i)
+
+		if step.ArtifactsFrom != "" && step.UseGlobalArtifacts {
+			return fmt.Errorf("Using 'artifactsFrom' and 'useGlobalArtifacts' in a Step is not allowed")
+		}
 
 		if step.Name == "" {
 			return fmt.Errorf("%s.Name: Required value: Name has to be defined", identifier)
@@ -82,12 +86,16 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 			}
 		}
 
-		usedStepNames[step.Name] = true
+		usedStepNames[step.Name] = step
 		usedTestdefinitions += len(testDefinitions)
 	}
 
 	// check if dependent steps exist
 	if err := checkIfDependentStepsExist(identifier, tf, usedStepNames); err != nil {
+		return err
+	}
+
+	if err := ensureArtifactsFromStepsExist(identifier, tf, usedStepNames); err != nil {
 		return err
 	}
 
@@ -99,7 +107,45 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 	return nil
 }
 
-func checkIfDependentStepsExist(identifier string, tf tmv1beta1.TestFlow, usedStepNames map[string]bool) error {
+func ensureArtifactsFromStepsExist(identifier string, tf tmv1beta1.TestFlow, usedStepNames map[string]*tmv1beta1.DAGStep) error {
+	for stepName, step := range usedStepNames {
+		identifier := fmt.Sprintf("%s.[%d]", identifier, stepName)
+		if step.ArtifactsFrom != "" {
+			if !previousStepExists(step, step.ArtifactsFrom, usedStepNames) {
+				return fmt.Errorf("%s.artifactsFrom: Invalid value: Step %s is unknown", identifier, step.ArtifactsFrom)
+			}
+		}
+	}
+	return nil
+}
+
+func previousStepExists(step *tmv1beta1.DAGStep, previousStepName string, usedStepNames map[string]*tmv1beta1.DAGStep) bool {
+	// no need to check if ArtifactsFrom is empty
+	if step.ArtifactsFrom == "" {
+		return true
+	}
+
+	if step.DependsOn == nil || len(step.DependsOn) == 0 {
+		// if there are no dependents, then there can be no matching ArtifactsFrom step
+		return false
+	} else {
+		// first check if one of direct dependents is the ArtifactsFrom step
+		for _, dependentStep := range step.DependsOn {
+			if dependentStep == step.ArtifactsFrom {
+				return true
+			}
+		}
+		// second check if dependents of dependents has the ArtifactsFrom step
+		for _, dependentStep := range step.DependsOn {
+			if previousStepExists(usedStepNames[dependentStep], step.ArtifactsFrom, usedStepNames) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func checkIfDependentStepsExist(identifier string, tf tmv1beta1.TestFlow, usedStepNames map[string]*tmv1beta1.DAGStep) error {
 	for i, step := range tf {
 		identifier := fmt.Sprintf("%s.[%d]", identifier, i)
 		if step.DependsOn != nil && len(step.DependsOn) != 0 {
