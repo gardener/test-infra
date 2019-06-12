@@ -74,8 +74,3 @@ var _ clientset.Interface = &Clientset{}
 func (c *Clientset) TestmachineryV1beta1() testmachineryv1beta1.TestmachineryV1beta1Interface {
 	return &faketestmachineryv1beta1.FakeTestmachineryV1beta1{Fake: &c.Fake}
 }
-
-// Testmachinery retrieves the TestmachineryV1beta1Client
-func (c *Clientset) Testmachinery() testmachineryv1beta1.TestmachineryV1beta1Interface {
-	return &faketestmachineryv1beta1.FakeTestmachineryV1beta1{Fake: &c.Fake}
-}

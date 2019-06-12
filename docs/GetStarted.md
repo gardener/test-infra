@@ -7,6 +7,7 @@
     - [Shared Folder](#shared-folder)
     - [Images](#images)
   - [Create a Testrun](#create-a-testrun)
+    - [Locations](#locations)
   - [Configuration](#configuration)
     - [Types](#types)
     - [Sources](#sources)

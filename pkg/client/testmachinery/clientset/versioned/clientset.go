@@ -27,8 +27,6 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	TestmachineryV1beta1() testmachineryv1beta1.TestmachineryV1beta1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Testmachinery() testmachineryv1beta1.TestmachineryV1beta1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -40,12 +38,6 @@ type Clientset struct {
 
 // TestmachineryV1beta1 retrieves the TestmachineryV1beta1Client
 func (c *Clientset) TestmachineryV1beta1() testmachineryv1beta1.TestmachineryV1beta1Interface {
-	return c.testmachineryV1beta1
-}
-
-// Deprecated: Testmachinery retrieves the default version of TestmachineryClient.
-// Please explicitly pick a version.
-func (c *Clientset) Testmachinery() testmachineryv1beta1.TestmachineryV1beta1Interface {
 	return c.testmachineryV1beta1
 }
 
