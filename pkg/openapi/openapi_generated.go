@@ -117,6 +117,12 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"),
 						},
 					},
+					"useGlobalArtifacts": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"dependsOn": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -801,7 +807,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							},
 						},
 					},
-					"testFlow": {
+					"testflow": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{

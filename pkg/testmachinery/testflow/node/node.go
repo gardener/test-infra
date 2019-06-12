@@ -108,29 +108,7 @@ func (n *Node) Name() string {
 
 // Task returns the argo task definition for the node.
 func (n *Node) Task() argov1.DAGTask {
-	artifacts := make([]argov1.Artifact, 0)
-	// should only be nil if the node is the root node
-	if n.inputSource != nil {
-		artifacts = []argov1.Artifact{
-			{
-				Name: "kubeconfigs",
-				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", n.inputSource.Name()),
-			},
-			{
-				Name: "sharedFolder",
-				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", n.inputSource.Name()),
-			},
-		}
-
-		if n.TestDefinition.Location != nil && n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
-			artifacts = append(artifacts, argov1.Artifact{
-				Name: "repo",
-				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", n.TestDefinition.Location.Name()),
-			})
-		}
-	}
-
-	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), testmachinery.PHASE_RUNNING, n.step.Definition.ContinueOnError, n.ParentNames(), artifacts)
+	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), testmachinery.PHASE_RUNNING, n.step.Definition.ContinueOnError, n.ParentNames(), n.DetermineArtifacts())
 
 	switch n.step.Definition.Condition {
 	case tmv1beta1.ConditionTypeSuccess:
@@ -167,6 +145,51 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 	}
 
 	return status
+}
+
+func (n *Node) isRootNode() bool {
+	return n.inputSource != nil
+}
+
+func (n *Node) DetermineArtifacts() []argov1.Artifact {
+	artifactsMap := make(map[string]argov1.Artifact)
+	if n.isRootNode() {
+		artifactsMap["kubeconfigs"] = argov1.Artifact{
+			Name: "kubeconfigs",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", n.inputSource.Name()),
+		}
+		artifactsMap["sharedFolder"] = argov1.Artifact{
+			Name: "sharedFolder",
+			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", n.inputSource.Name()),
+		}
+
+		if n.TestDefinition.Location != nil && n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
+			artifactsMap["repo"] = argov1.Artifact{
+				Name: "repo",
+				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", n.TestDefinition.Location.Name()),
+			}
+		}
+	}
+
+	if n.step.UseGlobalArtifacts {
+		artifactsMap["kubeconfigs"] = argov1.Artifact{
+			Name: "kubeconfigs",
+			From: "{{workflow.outputs.artifacts.kubeconfigs}}",
+		}
+		artifactsMap["sharedFolder"] = argov1.Artifact{
+			Name: "sharedFolder",
+			From: "{{workflow.outputs.artifacts.sharedFolder}}",
+		}
+	}
+	return artifactsMapToList(artifactsMap)
+}
+
+func artifactsMapToList(m map[string]argov1.Artifact) []argov1.Artifact {
+	list := make([]argov1.Artifact, 0, len(m))
+	for _, value := range m {
+		list = append(list, value)
+	}
+	return list
 }
 
 // EnableOutput adds std output to the test and marks the node as node with output.

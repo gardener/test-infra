@@ -232,10 +232,11 @@ type ConfigElement struct {
 type TestFlow []*DAGStep
 
 type DAGStep struct {
-	Name          string         `json:"name,omitempty"`
-	Definition    StepDefinition `json:"definition,omitempty"`
-	DependsOn     []string       `json:"dependsOn,omitempty"`
-	ArtifactsFrom string         `json:"artifactsFrom,omitempty"`
+	Name               string         `json:"name,omitempty"`
+	Definition         StepDefinition `json:"definition,omitempty"`
+	UseGlobalArtifacts bool           `json:"useGlobalArtifacts,omitempty"`
+	DependsOn          []string       `json:"dependsOn,omitempty"`
+	ArtifactsFrom      string         `json:"artifactsFrom,omitempty"`
 }
 
 // StepDefinition is a reference to one or more TestDefinitions to execute in a series of steps.StepDefinition
