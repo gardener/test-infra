@@ -60,7 +60,7 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 		identifier := fmt.Sprintf("%s.[%d]", identifier, i)
 
 		if step.ArtifactsFrom != "" && step.UseGlobalArtifacts {
-			return fmt.Errorf("Using 'artifactsFrom' and 'useGlobalArtifacts' in a Step is not allowed")
+			return fmt.Errorf("using 'artifactsFrom' and 'useGlobalArtifacts' in a Step is not allowed")
 		}
 
 		if step.Name == "" {
@@ -109,7 +109,7 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 
 func ensureArtifactsFromStepsExist(identifier string, tf tmv1beta1.TestFlow, usedStepNames map[string]*tmv1beta1.DAGStep) error {
 	for stepName, step := range usedStepNames {
-		identifier := fmt.Sprintf("%s.[%d]", identifier, stepName)
+		identifier := fmt.Sprintf("%s.[%s]", identifier, stepName)
 		if step.ArtifactsFrom != "" {
 			if !previousStepExists(step, step.ArtifactsFrom, usedStepNames) {
 				return fmt.Errorf("%s.artifactsFrom: Invalid value: Step %s is unknown", identifier, step.ArtifactsFrom)
@@ -122,7 +122,7 @@ func ensureArtifactsFromStepsExist(identifier string, tf tmv1beta1.TestFlow, use
 func previousStepExists(step *tmv1beta1.DAGStep, previousStepName string, usedStepNames map[string]*tmv1beta1.DAGStep) bool {
 	// no need to check if ArtifactsFrom is empty
 	if step.ArtifactsFrom == "" {
-		return true
+		return false
 	}
 
 	if step.DependsOn == nil || len(step.DependsOn) == 0 {
@@ -131,13 +131,13 @@ func previousStepExists(step *tmv1beta1.DAGStep, previousStepName string, usedSt
 	} else {
 		// first check if one of direct dependents is the ArtifactsFrom step
 		for _, dependentStep := range step.DependsOn {
-			if dependentStep == step.ArtifactsFrom {
+			if dependentStep == previousStepName {
 				return true
 			}
 		}
 		// second check if dependents of dependents has the ArtifactsFrom step
 		for _, dependentStep := range step.DependsOn {
-			if previousStepExists(usedStepNames[dependentStep], step.ArtifactsFrom, usedStepNames) {
+			if previousStepExists(usedStepNames[dependentStep], previousStepName, usedStepNames) {
 				return true
 			}
 		}
