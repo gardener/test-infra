@@ -25,7 +25,7 @@ import (
 
 // NewElement creates a new config element object.
 func NewElement(config *tmv1beta1.ConfigElement) *Element {
-	name := fmt.Sprintf("%s-%s", config.Type, util.RandomString(3))
+	name := fmt.Sprintf("%s-%s", config.Type, util.RandomString(5))
 	return &Element{config, name}
 }
 
@@ -48,10 +48,10 @@ func (c *Element) Name() string {
 // a valuefrom is specified.
 func (c *Element) Volume() (*corev1.Volume, error) {
 	if c.Info.Type != tmv1beta1.ConfigTypeFile {
-		return nil, fmt.Errorf("No volume for ConfigType 'file'")
+		return nil, fmt.Errorf("no volume for ConfigType 'file'")
 	}
 	if c.Info.Value != "" {
-		return nil, fmt.Errorf("No volume for config with value")
+		return nil, fmt.Errorf("no volume for config with value")
 	}
 	volume := &corev1.Volume{
 		Name: c.Name(),
