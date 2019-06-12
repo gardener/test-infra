@@ -82,7 +82,7 @@ var _ = Describe("Testflow", func() {
 					Definition: tmv1beta1.StepDefinition{
 						Name: "testdefname",
 					},
-					ArtifactsFrom: "int-test",
+					ArtifactsFrom:      "int-test",
 					UseGlobalArtifacts: true,
 				},
 			}
