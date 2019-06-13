@@ -100,18 +100,6 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		},
 	}
 
-	inputArtifacts := []argov1.Artifact{
-		{
-			Name:     "kubeconfigs",
-			Path:     testmachinery.TM_KUBECONFIG_PATH,
-			Optional: true,
-		},
-		{
-			Name:     "sharedFolder",
-			Path:     testmachinery.TM_SHARED_PATH,
-			Optional: true,
-		},
-	}
 	outputArtifacts := []argov1.Artifact{
 		{
 			Name:     testmachinery.ExportArtifact,
@@ -133,7 +121,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		return nil, err
 	}
 
-	td.AddInputArtifacts(inputArtifacts...)
+	td.AddInputArtifacts(GetStdInputArtifacts()...)
 	td.AddOutputArtifacts(outputArtifacts...)
 
 	return td, nil

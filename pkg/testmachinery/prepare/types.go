@@ -5,6 +5,7 @@ import "github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 // PrepareDefinition is the TestDefinition of the prepare step to initiliaze the setup.
 type Definition struct {
 	TestDefinition *testdefinition.TestDefinition
+	GlobalInput    bool
 	repositories   []*Repository
 }
 
