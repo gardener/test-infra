@@ -200,6 +200,11 @@ func (n *Node) EnableOutput() {
 	}
 }
 
+// HasOutput inidactes if the node has output
+func (n *Node) HasOutput() bool {
+	return n.hasOutput
+}
+
 // SetInputSource sets the input source node for artifacts that are mounted to the test.
 func (n *Node) SetInputSource(node *Node) {
 	n.inputSource = node

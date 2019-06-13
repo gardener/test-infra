@@ -48,7 +48,7 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 		return nil, err
 	}
 
-	postPrepareDef, err := prepare.New("PostPrepare", false)
+	postPrepareDef, err := prepare.New("PostPrepare", true)
 	if err != nil {
 		return nil, err
 	}

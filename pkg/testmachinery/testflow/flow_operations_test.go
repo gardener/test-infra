@@ -1,12 +1,13 @@
 package testflow_test
 
 import (
+	"testing"
+
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -223,6 +224,10 @@ var _ = Describe("flow operations", func() {
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
+			Expect(rootNode.HasOutput()).To(BeTrue())
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[0]))
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[1]))
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(HaveLen(2))
 			Expect(A.GetInputSource()).To(Equal(rootNode))
 
 			Expect(B.GetInputSource()).To(Equal(A))
@@ -244,6 +249,20 @@ var _ = Describe("flow operations", func() {
 			Expect(A.IsSerial()).To(BeFalse())
 			Expect(B.IsSerial()).To(BeFalse())
 			Expect(C.IsSerial()).To(BeFalse())
+			Expect(D.IsSerial()).To(BeTrue())
+		})
+
+		It("should mark all nodes as serial", func() {
+			A := testNode("A", node.NewSet(), &defaultTestDef)
+			B := testNode("B", node.NewSet(A), &defaultTestDef)
+			C := testNode("C", node.NewSet(B), &defaultTestDef)
+			D := testNode("D", node.NewSet(C), &defaultTestDef)
+
+			testflow.SetSerialNodes(A)
+
+			Expect(A.IsSerial()).To(BeFalse())
+			Expect(B.IsSerial()).To(BeTrue())
+			Expect(C.IsSerial()).To(BeTrue())
 			Expect(D.IsSerial()).To(BeTrue())
 		})
 

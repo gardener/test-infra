@@ -34,7 +34,7 @@ func New(flowID FlowIdentifier, tf tmv1beta1.TestFlow, locs locations.Locations,
 	if prepareDef != nil {
 		rootPrepare = prepareDef
 	}
-	rootNode := node.NewNode(rootPrepare.TestDefinition, prepare.GetPrepareStep(), string(flowID))
+	rootNode := node.NewNode(rootPrepare.TestDefinition, prepare.GetPrepareStep(rootPrepare.GlobalInput), string(flowID))
 	if err := rootNode.TestDefinition.AddConfig(globalConfig); err != nil {
 		return nil, err
 	}
