@@ -114,8 +114,8 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		FileName:        fileName,
 		Template:        template,
 		Config:          config.New(def.Spec.Config),
-		inputArtifacts:  make(map[string]bool, 0),
-		outputArtifacts: make(map[string]bool, 0),
+		inputArtifacts:  make(ArtifactSet, 0),
+		outputArtifacts: make(ArtifactSet, 0),
 	}
 	if err := td.AddConfig(td.Config); err != nil {
 		return nil, err
@@ -132,12 +132,14 @@ func (td *TestDefinition) Copy() *TestDefinition {
 	template := td.Template.DeepCopy()
 	template.Name = fmt.Sprintf("%s-%s", td.Info.Metadata.Name, util.RandomString(5))
 	return &TestDefinition{
-		Info:     td.Info,
-		Location: td.Location,
-		FileName: td.FileName,
-		Template: template,
-		Config:   td.Config,
-		Volumes:  td.Volumes,
+		Info:            td.Info,
+		Location:        td.Location,
+		FileName:        td.FileName,
+		Template:        template,
+		Config:          td.Config,
+		Volumes:         td.Volumes,
+		inputArtifacts:  td.inputArtifacts.Copy(),
+		outputArtifacts: td.outputArtifacts.Copy(),
 	}
 }
 
@@ -181,12 +183,12 @@ func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
 // AddInputArtifacts adds argo artifacts to the input of the TestDefinitions's template.
 func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 	if td.inputArtifacts == nil {
-		td.inputArtifacts = make(map[string]bool, 0)
+		td.inputArtifacts = make(ArtifactSet, 0)
 	}
 	for _, a := range artifacts {
-		if _, ok := td.inputArtifacts[a.Name]; !ok {
+		if !td.inputArtifacts.Has(a.Name) {
 			td.Template.Inputs.Artifacts = append(td.Template.Inputs.Artifacts, a)
-			td.inputArtifacts[a.Name] = true
+			td.inputArtifacts.Add(a.Name)
 		}
 	}
 }
@@ -194,12 +196,12 @@ func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 // AddOutputArtifacts adds argo artifacts to the output of the TestDefinitions's template.
 func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
 	if td.outputArtifacts == nil {
-		td.outputArtifacts = make(map[string]bool, 0)
+		td.outputArtifacts = make(ArtifactSet, 0)
 	}
 	for _, a := range artifacts {
-		if _, ok := td.inputArtifacts[a.Name]; !ok {
-			td.Template.Outputs.Artifacts = append(td.Template.Outputs.Artifacts, artifacts...)
-			td.outputArtifacts[a.Name] = true
+		if !td.outputArtifacts.Has(a.Name) {
+			td.Template.Outputs.Artifacts = append(td.Template.Outputs.Artifacts, a)
+			td.outputArtifacts.Add(a.Name)
 		}
 	}
 }
@@ -221,26 +223,7 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 
 // AddStdOutput adds the Kubeconfig output to the TestDefinitions's template.
 func (td *TestDefinition) AddStdOutput(global bool) {
-	kubeconfigArtifact := argov1.Artifact{
-		Name:     "kubeconfigs",
-		Path:     testmachinery.TM_KUBECONFIG_PATH,
-		Optional: true,
-	}
-	sharedFolderArtifact := argov1.Artifact{
-		Name:     "sharedFolder",
-		Path:     testmachinery.TM_SHARED_PATH,
-		Optional: true,
-	}
-
-	if global {
-		kubeconfigArtifact.GlobalName = kubeconfigArtifact.Name
-		kubeconfigArtifact.Name = fmt.Sprintf("%s-global", kubeconfigArtifact.Name)
-		sharedFolderArtifact.GlobalName = sharedFolderArtifact.Name
-		sharedFolderArtifact.Name = fmt.Sprintf("%s-global", sharedFolderArtifact.Name)
-	}
-
-	td.AddOutputArtifacts(kubeconfigArtifact)
-	td.AddOutputArtifacts(sharedFolderArtifact)
+	td.AddOutputArtifacts(GetStdOutputArtifacts(global)...)
 }
 
 // AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.

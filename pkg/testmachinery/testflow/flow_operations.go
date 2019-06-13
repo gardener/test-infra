@@ -157,10 +157,10 @@ func ApplyOutputScope(steps map[string]*Step) error {
 func SetSerialNodes(root *node.Node) {
 	children := root.Children
 	for len(children) != 0 {
-		children = children.GetChildren()
 		// node is a real serial step if all children of the root node point to one child.
 		if len(children) == 1 {
 			children.List()[0].SetSerial()
 		}
+		children = children.GetChildren()
 	}
 }
