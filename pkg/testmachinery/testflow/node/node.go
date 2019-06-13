@@ -158,10 +158,6 @@ func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 		return artifacts
 	}
 	artifactsMap := make(map[string]argov1.Artifact)
-	if n.step.ArtifactsFrom != "" {
-		artifacts = n.getPreviousNode(n.step.ArtifactsFrom).GetOrDetermineArtifacts()
-		return artifacts
-	}
 	if n.isRootNode() {
 		artifactsMap["kubeconfigs"] = argov1.Artifact{
 			Name: "kubeconfigs",

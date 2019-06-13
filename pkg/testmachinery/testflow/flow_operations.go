@@ -135,15 +135,20 @@ func reorderChildrenOfNode(root *node.Node) node.Set {
 func ApplyOutputScope(steps map[string]*Step) error {
 	for _, step := range steps {
 		for n := range step.Nodes {
-			parents := n.Parents
-			for len(parents) != 1 {
-				parents = parents.GetParents()
-				if len(parents) == 0 {
-					return fmt.Errorf("no serial parent node can be found for step %s in node %s", n.Name(), step.Info.Name)
+			var outputSourceNode *node.Node
+			if step.Info.ArtifactsFrom != "" {
+				outputSourceNode = steps[step.Info.ArtifactsFrom].Nodes.List()[0]
+			} else {
+				parents := n.Parents
+				for len(parents) != 1 {
+					parents = parents.GetParents()
+					if len(parents) == 0 {
+						return fmt.Errorf("no serial parent node can be found for step %s in node %s", n.Name(), step.Info.Name)
+					}
 				}
+				// rename
+				outputSourceNode = parents.List()[0]
 			}
-			// rename
-			outputSourceNode := parents.List()[0]
 			outputSourceNode.EnableOutput()
 			n.SetInputSource(outputSourceNode)
 		}
