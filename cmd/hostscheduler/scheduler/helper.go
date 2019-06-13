@@ -40,7 +40,7 @@ func WaitUntilShootIsReconciled(ctx context.Context, k8sClient kubernetes.Interf
 			return false, nil
 		}
 		shoot = shootObject
-		if err := shootReady(&shoot.Status, false); err != nil {
+		if err := shootReady(shoot); err != nil {
 			log.Infof("%s. Wait for shoot to be reconciled...", err.Error())
 			return false, nil
 		}
@@ -52,17 +52,19 @@ func WaitUntilShootIsReconciled(ctx context.Context, k8sClient kubernetes.Interf
 	return shoot, nil
 }
 
-func shootReady(newStatus *v1beta1.ShootStatus, isHibernated bool) error {
+func shootReady(newShoot *v1beta1.Shoot) error {
+	newStatus := newShoot.Status
 	if len(newStatus.Conditions) == 0 {
-		return fmt.Errorf("no conditions in shoot status")
+		return fmt.Errorf("no conditions in newShoot status")
+	}
+
+	if newShoot.Generation != newStatus.ObservedGeneration {
+		return fmt.Errorf("observed generation is unlike newShoot generation")
 	}
 
 	for _, condition := range newStatus.Conditions {
 		if condition.Status != gardencorev1alpha1.ConditionTrue {
 			return fmt.Errorf("condition of %s is %s", condition.Type, condition.Status)
-		}
-		if !isHibernated && condition.Reason == "ConditionNotChecked" {
-			return fmt.Errorf("shoot was hibernated and is now reconciling")
 		}
 	}
 

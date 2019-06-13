@@ -93,7 +93,7 @@ func getAvailableHost(ctx context.Context, k8sClient kubernetes.Interface, names
 	for _, shoot := range shoots.Items {
 
 		// Try to use the next shoot if the current shoot is not ready.
-		if shootReady(&shoot.Status, true) != nil {
+		if shootReady(&shoot) != nil {
 			log.Debugf("Shoot %s not ready. Skipping...", shoot.Name)
 			continue
 		}
