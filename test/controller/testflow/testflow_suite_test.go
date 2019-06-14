@@ -295,6 +295,65 @@ var _ = Describe("Testflow execution tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
+		It("should be visible from withing another step that uses artifactsFrom feature", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
+				{
+					Name: "create-artifact",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "check-file-content-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: sharedFilePath,
+							},
+							{
+								Type:  tmv1beta1.ConfigTypeFile,
+								Name:  "TEST_NAME",
+								Value: "dGVzdAo=", // base64 encoded 'test' string
+								Path:  sharedFilePath,
+							},
+						},
+					},
+				},
+				{
+					Name:      "check-artifact",
+					DependsOn: []string{"create-artifact"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "check-file-content-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: sharedFilePath,
+							},
+						},
+					},
+				},
+				{
+					Name:          "check-artifact2",
+					DependsOn:     []string{"check-artifact"},
+					ArtifactsFrom: "create-artifact",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "check-file-content-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: sharedFilePath,
+							},
+						},
+					},
+				},
+			}
+
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
 
 	Context("config", func() {
@@ -325,7 +384,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			})
 
-			It("should mount a global config as environement variable", func() {
+			It("should mount a global config as environment variable", func() {
 				ctx := context.Background()
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(namespace, commitSha)

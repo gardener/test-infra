@@ -108,7 +108,7 @@ func (n *Node) Name() string {
 
 // Task returns the argo task definition for the node.
 func (n *Node) Task() argov1.DAGTask {
-	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), testmachinery.PHASE_RUNNING, n.step.Definition.ContinueOnError, n.ParentNames(), n.DetermineArtifacts())
+	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), testmachinery.PHASE_RUNNING, n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
 
 	switch n.step.Definition.Condition {
 	case tmv1beta1.ConditionTypeSuccess:
@@ -151,7 +151,8 @@ func (n *Node) isRootNode() bool {
 	return n.inputSource != nil
 }
 
-func (n *Node) DetermineArtifacts() []argov1.Artifact {
+func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
+	var artifacts []argov1.Artifact
 	artifactsMap := make(map[string]argov1.Artifact)
 	if n.isRootNode() {
 		artifactsMap["kubeconfigs"] = argov1.Artifact{
@@ -181,7 +182,25 @@ func (n *Node) DetermineArtifacts() []argov1.Artifact {
 			From: "{{workflow.outputs.artifacts.sharedFolder}}",
 		}
 	}
-	return artifactsMapToList(artifactsMap)
+	artifacts = artifactsMapToList(artifactsMap)
+	return artifacts
+}
+
+func (n *Node) getPreviousNode(previousNodeStepName string) *Node {
+	if n.Parents == nil || len(n.Parents) == 0 {
+		return nil
+	}
+	for parent := range n.Parents {
+		if parent.step.Name == previousNodeStepName {
+			return parent
+		}
+	}
+	for parent := range n.Parents {
+		if previousNode := parent.getPreviousNode(previousNodeStepName); previousNode != nil {
+			return previousNode
+		}
+	}
+	return nil
 }
 
 func artifactsMapToList(m map[string]argov1.Artifact) []argov1.Artifact {
