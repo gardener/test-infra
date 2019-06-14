@@ -52,6 +52,10 @@ required = [
   name = "github.com/prometheus/client_golang"
   version = "^0.9.0"
 
+[[override]]
+  name = "github.com/golang/protobuf"
+  version = "v1.3.1"
+
 
 # Dependencies for testing purposes only
 [[constraint]]
