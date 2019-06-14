@@ -25,8 +25,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
-var artifacts []argov1.Artifact
-
 // CreateNodesFromStep creates new nodes from a step and adds default configuration
 func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globalConfig []*config.Element, flowID string) (Set, error) {
 	testdefinitions, err := loc.GetTestDefinitions(step.Definition)
@@ -154,9 +152,7 @@ func (n *Node) isRootNode() bool {
 }
 
 func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
-	if artifacts != nil {
-		return artifacts
-	}
+	var artifacts []argov1.Artifact
 	artifactsMap := make(map[string]argov1.Artifact)
 	if n.isRootNode() {
 		artifactsMap["kubeconfigs"] = argov1.Artifact{
