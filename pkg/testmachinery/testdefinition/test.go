@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package testdefinition
 
 import (
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
 )
 
-type Level int
+func NewEmpty() *TestDefinition {
+	td := TestDefinition{
+		Info:            &v1beta1.TestDefinition{},
+		Template:        &argov1.Template{},
+		inputArtifacts:  make(ArtifactSet, 0),
+		outputArtifacts: make(ArtifactSet, 0),
+		config:          make(config.Set, 0),
+	}
 
-const (
-	LevelGlobal         Level = 0
-	LevelShared         Level = 5
-	LevelStep           Level = 10
-	LevelTestDefinition Level = 15
-)
-
-// Element represents a configuration parameter for tests.
-type Element struct {
-	Info *tmv1beta1.ConfigElement
-	Level
-	name string
+	return &td
 }
-
-// Set is a config element set
-type Set map[string]*Element

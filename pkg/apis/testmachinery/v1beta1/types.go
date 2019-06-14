@@ -215,6 +215,9 @@ type ConfigElement struct {
 	// Name of the environment variable. Must be a C_IDENTIFIER.
 	Name string `json:"name"`
 
+	// Private indicates if the config is shared with further steps
+	Private *bool `json:"private"`
+
 	// value of the environment variable.
 	// +optional
 	Value string `json:"value"`

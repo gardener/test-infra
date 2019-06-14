@@ -35,12 +35,8 @@ func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globa
 	nodes := make(Set, 0)
 	for _, td := range testdefinitions {
 		node := NewNode(td, step, flowID)
-		if err := td.AddConfig(config.New(step.Definition.Config)); err != nil {
-			return nil, err
-		}
-		if err := td.AddConfig(globalConfig); err != nil {
-			return nil, err
-		}
+		td.AddConfig(config.New(step.Definition.Config, config.LevelStep))
+		td.AddConfig(globalConfig)
 		nodes.Add(node)
 	}
 	return nodes, nil
@@ -101,9 +97,19 @@ func (n *Node) ParentNames() []string {
 	return names
 }
 
-// Name return the unique name of the node's task
+// Name returns the unique name of the node's task
 func (n *Node) Name() string {
 	return n.TestDefinition.GetName()
+}
+
+// Step returns the origin step of the node
+func (n *Node) Step() *tmv1beta1.DAGStep {
+	return n.step
+}
+
+// SetStep set the step of a node
+func (n *Node) SetStep(step *tmv1beta1.DAGStep) {
+	n.step = step
 }
 
 // Task returns the argo task definition for the node.

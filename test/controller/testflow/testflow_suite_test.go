@@ -295,7 +295,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer utils.DeleteTestrun(tmClient, tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
-		It("should be visible from withing another step that uses artifactsFrom feature", func() {
+		It("should be visible from within another step that uses artifactsFrom feature", func() {
 			ctx := context.Background()
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)

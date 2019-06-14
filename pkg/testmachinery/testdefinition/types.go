@@ -16,12 +16,12 @@ type TestDefinition struct {
 	Location Location
 	FileName string
 	Template *argov1.Template
-	Config   []*config.Element
 
 	Volumes []apiv1.Volume
 
 	inputArtifacts  ArtifactSet
 	outputArtifacts ArtifactSet
+	config          config.Set
 }
 
 // Location is an interface for different testDefLocation types like git or local

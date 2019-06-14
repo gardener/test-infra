@@ -9,6 +9,20 @@ func NewSet(nodes ...*Node) Set {
 	return set
 }
 
+// Copy creates a deep copy of the set
+func (s Set) Copy() Set {
+	newSet := make(Set, len(s))
+	for key, val := range s {
+		newSet[key] = val
+	}
+	return newSet
+}
+
+func (s Set) Has(n *Node) bool {
+	_, ok := s[n]
+	return ok
+}
+
 // Add adds nodes to the set
 func (s Set) Add(nodes ...*Node) {
 	for _, n := range nodes {

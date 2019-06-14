@@ -37,12 +37,13 @@ import (
 // New creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
 func New(name string, addGlobalInput bool) (*Definition, error) {
-	td := &tmv1beta1.TestDefinition{
+	td := testdefinition.NewEmpty()
+	td.Info = &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
 			Name: name,
 		},
 	}
-	template := &argov1.Template{
+	td.Template = &argov1.Template{
 		Name: fmt.Sprintf("%s-%s", name, util.RandomString(5)),
 		Metadata: argov1.Metadata{
 			Annotations: map[string]string{
@@ -74,7 +75,7 @@ func New(name string, addGlobalInput bool) (*Definition, error) {
 			},
 		},
 	}
-	prepare := &Definition{&testdefinition.TestDefinition{Info: td, Template: template}, addGlobalInput, []*Repository{}}
+	prepare := &Definition{td, addGlobalInput, []*Repository{}}
 
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConf
 			Name:      name,
 			Path:      kubeconfigPath,
 			ValueFrom: kubeconfig.Config(),
-		})
+		}, config.LevelTestDefinition)
 		p.TestDefinition.AddVolumeMount(cfg.Name(), kubeconfigPath, path.Base(kubeconfigPath), true)
 		return p.TestDefinition.AddVolumeFromConfig(cfg)
 	}

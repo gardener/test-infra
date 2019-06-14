@@ -54,6 +54,8 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 		return nil, err
 	}
 
+	ApplyConfigScope(steps)
+
 	// Determine real serial steps
 	SetSerialNodes(root)
 
@@ -64,7 +66,11 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 func (f *Flow) GetTemplates() ([]argov1.Template, error) {
 	var templates []argov1.Template
 	for td := range f.testdefinitions {
-		templates = append(templates, td.GetTemplate())
+		newTemplate, err := td.GetTemplate()
+		if err != nil {
+			return nil, err
+		}
+		templates = append(templates, *newTemplate)
 	}
 
 	return templates, nil

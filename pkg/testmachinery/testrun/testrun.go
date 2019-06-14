@@ -33,7 +33,7 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 		return nil, err
 	}
 
-	globalConfig := config.New(tr.Spec.Config)
+	globalConfig := config.New(tr.Spec.Config, config.LevelGlobal)
 
 	// create initial prepare step
 	prepareDef, err := prepare.New("Prepare", false)
