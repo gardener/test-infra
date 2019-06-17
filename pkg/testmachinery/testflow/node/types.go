@@ -11,6 +11,7 @@ type empty struct{}
 
 // Node is an object that represents a node of the internal DAG representation
 type Node struct {
+	name     string
 	Parents  Set
 	Children Set
 

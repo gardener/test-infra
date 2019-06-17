@@ -478,17 +478,18 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should mark real serial nodes as serial in a huge DAG", func() {
-			A := testNode("A", node.NewSet(), defaultTestDef, nil)
-			B := testNode("B", node.NewSet(A), defaultTestDef, nil)
-			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
-			D := testNode("D", node.NewSet(B), defaultTestDef, nil)
-			E := testNode("E", node.NewSet(C), defaultTestDef, nil)
-			F := testNode("F", node.NewSet(C), defaultTestDef, nil)
-			G := testNode("D", node.NewSet(D, E, F), defaultTestDef, nil)
-			H := testNode("H", node.NewSet(G), defaultTestDef, nil)
-			I := testNode("I", node.NewSet(G), defaultTestDef, nil)
-			J := testNode("J", node.NewSet(H, I), defaultTestDef, nil)
-			K := testNode("K", node.NewSet(J), defaultTestDef, nil)
+			A := testNode("A", node.NewSet(), testdefinition.NewEmpty(), nil)
+			B := testNode("B", node.NewSet(A), testdefinition.NewEmpty(), nil)
+			C := testNode("C", node.NewSet(A), testdefinition.NewEmpty(), nil)
+			D := testNode("D", node.NewSet(B), testdefinition.NewEmpty(), nil)
+			E := testNode("E", node.NewSet(C), testdefinition.NewEmpty(), nil)
+			F := testNode("F", node.NewSet(C), testdefinition.NewEmpty(), nil)
+			G := testNode("G", node.NewSet(D, E, F), testdefinition.NewEmpty(), nil)
+			H := testNode("H", node.NewSet(G), testdefinition.NewEmpty(), nil)
+			I := testNode("I", node.NewSet(G), testdefinition.NewEmpty(), nil)
+			J := testNode("J", node.NewSet(I), testdefinition.NewEmpty(), nil)
+			K := testNode("K", node.NewSet(H, J), testdefinition.NewEmpty(), nil)
+			L := testNode("L", node.NewSet(K), testdefinition.NewEmpty(), nil)
 
 			testflow.SetSerialNodes(A)
 
@@ -501,8 +502,9 @@ var _ = Describe("flow operations", func() {
 			Expect(G.IsSerial()).To(BeTrue())
 			Expect(H.IsSerial()).To(BeFalse())
 			Expect(I.IsSerial()).To(BeFalse())
-			Expect(J.IsSerial()).To(BeTrue())
+			Expect(J.IsSerial()).To(BeFalse())
 			Expect(K.IsSerial()).To(BeTrue())
+			Expect(L.IsSerial()).To(BeTrue())
 		})
 	})
 })
@@ -511,11 +513,11 @@ func testNode(name string, parents node.Set, td *testdefinition.TestDefinition, 
 	if parents == nil {
 		parents = node.NewSet()
 	}
-	n := &node.Node{
-		Parents:        parents,
-		Children:       node.NewSet(),
-		TestDefinition: td,
-	}
+	n := node.NewEmtpy(name)
+	n.Parents = parents
+	n.Children = node.NewSet()
+	n.TestDefinition = td
+
 	n.SetStep(step)
 	if td != nil {
 		td.SetName(name)

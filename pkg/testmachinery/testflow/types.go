@@ -42,7 +42,7 @@ type Flow struct {
 	ID   FlowIdentifier
 	Root *node.Node
 
-	steps map[string] *Step
+	steps           map[string]*Step
 	testdefinitions map[*testdefinition.TestDefinition]interface{}
 	usedLocations   map[testdefinition.Location]interface{}
 	globalConfig    []*config.Element

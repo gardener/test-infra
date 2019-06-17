@@ -48,6 +48,7 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
 	node := &Node{
+		name:           name,
 		TestDefinition: td,
 		step:           step,
 		flow:           flow,
@@ -56,6 +57,13 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	}
 
 	return node
+}
+
+// NewEmpty creates and new emtpy node with a name.
+func NewEmtpy(name string) *Node {
+	return &Node{
+		name: name,
+	}
 }
 
 // AddChildren adds Nodes as children

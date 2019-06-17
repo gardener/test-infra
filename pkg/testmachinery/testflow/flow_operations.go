@@ -138,7 +138,7 @@ func ApplyOutputScope(steps map[string]*Step) error {
 			if step.Info.ArtifactsFrom != "" {
 				outputSourceNode = steps[step.Info.ArtifactsFrom].Nodes.List()[0]
 			} else {
-				outputSourceNode = getSerialParent(n)
+				outputSourceNode = getNextSerialParent(n)
 			}
 
 			outputSourceNode.EnableOutput()
@@ -157,7 +157,7 @@ func ApplyConfigScope(steps map[string]*Step) {
 			nextNode := n
 			configs := make(config.Set, 0)
 			for nextNode != nil && len(nextNode.Parents) != 0 {
-				nextNode = getSerialParent(nextNode)
+				nextNode = getNextSerialParent(nextNode)
 				if nextNode != nil && nextNode.Step() != nil {
 					cfgs := config.New(nextNode.Step().Definition.Config, config.LevelShared)
 					for _, element := range cfgs {
@@ -172,17 +172,20 @@ func ApplyConfigScope(steps map[string]*Step) {
 	}
 }
 
-func getSerialParent(n *node.Node) *node.Node {
+func getNextSerialParent(n *node.Node) *node.Node {
 	parent := &node.Node{}
 	lastParents := n.Parents.List()
 	branches := make([]node.Set, len(lastParents))
+	for i := range branches {
+		branches[i] = make(node.Set)
+	}
 
 	if len(lastParents) == 1 {
 		return lastParents[0]
 	}
 
 	for len(lastParents) != 0 {
-		parent, lastParents = getSerialParentsOfNodes(lastParents, branches)
+		parent, lastParents = getJointNodes(lastParents, branches, getNextSerialParent)
 		if parent != nil {
 			return parent
 		}
@@ -191,19 +194,55 @@ func getSerialParent(n *node.Node) *node.Node {
 	return nil
 }
 
-func getSerialParentsOfNodes(nodes []*node.Node, branches []node.Set) (*node.Node, []*node.Node) {
-	lastParents := make([]*node.Node, len(nodes))
+// SetSerialNodes evaluates real serial steps and marks them as serial.
+// A node is considered serial if all children of the root node point to one child.
+func SetSerialNodes(root *node.Node) {
+
+	child := root
+
+	for child != nil {
+		child = getNextSerialChild(child)
+		if child != nil {
+			child.SetSerial()
+		}
+	}
+}
+
+func getNextSerialChild(n *node.Node) *node.Node {
+	child := &node.Node{}
+	lastChildren := n.Children.List()
+	branches := make([]node.Set, len(lastChildren))
+	for i := range branches {
+		branches[i] = make(node.Set)
+	}
+
+	if len(lastChildren) == 1 {
+		return lastChildren[0]
+	}
+
+	for len(lastChildren) != 0 {
+		child, lastChildren = getJointNodes(lastChildren, branches, getNextSerialChild)
+		if child != nil {
+			return child
+		}
+	}
+
+	return nil
+}
+
+func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.Node) *node.Node) (*node.Node, []*node.Node) {
+	lastNodes := make([]*node.Node, len(nodes))
 	for i, n := range nodes {
-		if parent := getSerialParent(n); parent != nil {
-			lastParents[i] = parent
-			branches[i] = node.NewSet(parent)
+		if nextNode := getNext(n); nextNode != nil {
+			lastNodes[i] = nextNode
+			branches[i].Add(nextNode)
 		}
 	}
 	if n := findJointNode(branches); n != nil {
 		return n, nil
 	}
 
-	return nil, lastParents
+	return nil, lastNodes
 }
 
 func findJointNode(nodeSets []node.Set) *node.Node {
@@ -213,7 +252,7 @@ func findJointNode(nodeSets []node.Set) *node.Node {
 			if alreadyCheckedNodes.Has(n) {
 				continue
 			}
-			for j := i; j < len(nodeSets); j++ {
+			for j := i + 1; j < len(nodeSets); j++ {
 				if !nodeSets[j].Has(n) {
 					alreadyCheckedNodes.Add(n)
 					break
@@ -223,17 +262,4 @@ func findJointNode(nodeSets []node.Set) *node.Node {
 		}
 	}
 	return nil
-}
-
-// SetSerialNodes evaluates real serial steps and marks them as serial.
-// A node is considered serial if all children of the root node point to one child.
-func SetSerialNodes(root *node.Node) {
-	children := root.Children
-	for len(children) != 0 {
-		// node is a real serial step if all children of the root node point to one child.
-		if len(children) == 1 {
-			children.List()[0].SetSerial()
-		}
-		children = children.GetChildren()
-	}
 }
