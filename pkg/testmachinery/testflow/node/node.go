@@ -158,7 +158,6 @@ func (n *Node) isRootNode() bool {
 }
 
 func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
-	var artifacts []argov1.Artifact
 	artifactsMap := make(map[string]argov1.Artifact)
 	if n.isRootNode() {
 		artifactsMap["kubeconfigs"] = argov1.Artifact{
@@ -188,25 +187,7 @@ func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 			From: "{{workflow.outputs.artifacts.sharedFolder}}",
 		}
 	}
-	artifacts = artifactsMapToList(artifactsMap)
-	return artifacts
-}
-
-func (n *Node) getPreviousNode(previousNodeStepName string) *Node {
-	if n.Parents == nil || len(n.Parents) == 0 {
-		return nil
-	}
-	for parent := range n.Parents {
-		if parent.step.Name == previousNodeStepName {
-			return parent
-		}
-	}
-	for parent := range n.Parents {
-		if previousNode := parent.getPreviousNode(previousNodeStepName); previousNode != nil {
-			return previousNode
-		}
-	}
-	return nil
+	return artifactsMapToList(artifactsMap)
 }
 
 func artifactsMapToList(m map[string]argov1.Artifact) []argov1.Artifact {
@@ -225,7 +206,7 @@ func (n *Node) EnableOutput() {
 	}
 }
 
-// HasOutput inidactes if the node has output
+// HasOutput indicates if the node has output
 func (n *Node) HasOutput() bool {
 	return n.hasOutput
 }

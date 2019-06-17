@@ -36,6 +36,7 @@ func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc 
 	flow := &Flow{
 		ID:              flowID,
 		Root:            root,
+		steps:           steps,
 		globalConfig:    globalConfig,
 		testdefinitions: testdefinitions,
 		usedLocations:   usedLocations,
@@ -112,12 +113,10 @@ func (f *Flow) Iterate() <-chan *node.Node {
 	c := make(chan *node.Node)
 	go func() {
 		c <- f.Root
-		children := f.Root.Children
-		for len(children) != 0 {
-			for n := range children {
+		for _, step := range f.steps {
+			for n := range step.Nodes {
 				c <- n
 			}
-			children = children.GetChildren()
 		}
 		close(c)
 	}()
