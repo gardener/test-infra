@@ -328,6 +328,17 @@ spec:
 Test can be configured by passing environment variables to the test or mounting files.
 The testmachinery offers 2 types of configuration (Environment Variable and File) and 3 value sources (raw value, secret, configmap).
 
+Configuration elements of a step can come from 4 different sources:
+1. TestDefinition: Configuration that is directly defined in the testdefinition.
+2. Step: Configuration that is defined in a testflow step in the testrun.
+3. Shared: Configuration from previous steps that is shared with following steps.
+4. Global: Configuration that is defined in the spec of the testrun.
+
+As a configuration element needs to be unique, configurations with the same name are overwritten by the more specific level.
+This means that configuration defined by the TestDefinition overwrites anything coming from other configuration sources.
+
+Shared configuration will stack from the root of the dag to it's subtree's. There also the more specific (which is the nearest node) will win.
+
 ### Types
 Test configuration can be of type "env" and of type "file".
 

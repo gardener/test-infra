@@ -113,12 +113,9 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		Location:        loc,
 		FileName:        fileName,
 		Template:        template,
-		Config:          config.New(def.Spec.Config),
 		inputArtifacts:  make(ArtifactSet, 0),
 		outputArtifacts: make(ArtifactSet, 0),
-	}
-	if err := td.AddConfig(td.Config); err != nil {
-		return nil, err
+		config:          config.NewSet(config.New(def.Spec.Config, config.LevelTestDefinition)...),
 	}
 
 	td.AddInputArtifacts(GetStdInputArtifacts()...)
@@ -136,10 +133,10 @@ func (td *TestDefinition) Copy() *TestDefinition {
 		Location:        td.Location,
 		FileName:        td.FileName,
 		Template:        template,
-		Config:          td.Config,
 		Volumes:         td.Volumes,
 		inputArtifacts:  td.inputArtifacts.Copy(),
 		outputArtifacts: td.outputArtifacts.Copy(),
+		config:          td.config.Copy(),
 	}
 }
 
@@ -151,8 +148,18 @@ func (td *TestDefinition) GetName() string {
 	return td.Template.Name
 }
 
-func (td *TestDefinition) GetTemplate() argov1.Template {
-	return *td.Template
+func (td *TestDefinition) GetTemplate() (*argov1.Template, error) {
+	for _, cfg := range td.config {
+		switch cfg.Info.Type {
+		case tmv1beta1.ConfigTypeEnv:
+			td.addConfigAsEnv(cfg)
+		case tmv1beta1.ConfigTypeFile:
+			if err := td.addConfigAsFile(cfg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return td.Template, nil
 }
 
 // HasBehavior checks if the testrun has defined a specific behavior like serial or disruptiv.
@@ -226,25 +233,18 @@ func (td *TestDefinition) AddStdOutput(global bool) {
 	td.AddOutputArtifacts(GetStdOutputArtifacts(global)...)
 }
 
-// AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.
-func (td *TestDefinition) AddConfig(configs []*config.Element) error {
-	for _, cfg := range configs {
-		switch cfg.Info.Type {
-		case tmv1beta1.ConfigTypeEnv:
-			if err := td.addConfigAsEnv(cfg); err != nil {
-				return err
-			}
-		case tmv1beta1.ConfigTypeFile:
-			if err := td.addConfigAsFile(cfg); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+func (td *TestDefinition) GetConfig() config.Set {
+	return td.config
 }
 
-func (td *TestDefinition) addConfigAsEnv(element *config.Element) error {
+// AddConfig adds the config elements of different types (environment variable) to the TestDefinitions's template.
+func (td *TestDefinition) AddConfig(configs []*config.Element) {
+	for _, e := range configs {
+		td.config.Add(e)
+	}
+}
+
+func (td *TestDefinition) addConfigAsEnv(element *config.Element) {
 	if element.Info.Value != "" {
 		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Value))
@@ -260,7 +260,6 @@ func (td *TestDefinition) addConfigAsEnv(element *config.Element) error {
 			},
 		})
 	}
-	return nil
 }
 
 func (td *TestDefinition) addConfigAsFile(element *config.Element) error {

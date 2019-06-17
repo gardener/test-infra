@@ -1,7 +1,6 @@
 package testflow
 
 import (
-	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
@@ -139,21 +138,90 @@ func ApplyOutputScope(steps map[string]*Step) error {
 			if step.Info.ArtifactsFrom != "" {
 				outputSourceNode = steps[step.Info.ArtifactsFrom].Nodes.List()[0]
 			} else {
-				parents := n.Parents
-				for len(parents) != 1 {
-					parents = parents.GetParents()
-					if len(parents) == 0 {
-						return fmt.Errorf("no serial parent node can be found for step %s in node %s", n.Name(), step.Info.Name)
-					}
-				}
-				// rename
-				outputSourceNode = parents.List()[0]
+				outputSourceNode = getSerialParent(n)
 			}
+
 			outputSourceNode.EnableOutput()
 			n.SetInputSource(outputSourceNode)
 		}
 	}
 
+	return nil
+}
+
+// ApplyConfigScope calculates the artifacts from all serial parent nodes and merges them.
+// Whereas the nearer parent's configs overwrites the config when collisions occur
+func ApplyConfigScope(steps map[string]*Step) {
+	for _, step := range steps {
+		for n := range step.Nodes {
+			nextNode := n
+			configs := make(config.Set, 0)
+			for nextNode != nil && len(nextNode.Parents) != 0 {
+				nextNode = getSerialParent(nextNode)
+				if nextNode != nil && nextNode.Step() != nil {
+					cfgs := config.New(nextNode.Step().Definition.Config, config.LevelShared)
+					for _, element := range cfgs {
+						if element.Info.Private == nil || *element.Info.Private == false {
+							configs.Add(element)
+						}
+					}
+				}
+			}
+			n.TestDefinition.AddConfig(configs.List())
+		}
+	}
+}
+
+func getSerialParent(n *node.Node) *node.Node {
+	parent := &node.Node{}
+	lastParents := n.Parents.List()
+	branches := make([]node.Set, len(lastParents))
+
+	if len(lastParents) == 1 {
+		return lastParents[0]
+	}
+
+	for len(lastParents) != 0 {
+		parent, lastParents = getSerialParentsOfNodes(lastParents, branches)
+		if parent != nil {
+			return parent
+		}
+	}
+
+	return nil
+}
+
+func getSerialParentsOfNodes(nodes []*node.Node, branches []node.Set) (*node.Node, []*node.Node) {
+	lastParents := make([]*node.Node, len(nodes))
+	for i, n := range nodes {
+		if parent := getSerialParent(n); parent != nil {
+			lastParents[i] = parent
+			branches[i] = node.NewSet(parent)
+		}
+	}
+	if n := findJointNode(branches); n != nil {
+		return n, nil
+	}
+
+	return nil, lastParents
+}
+
+func findJointNode(nodeSets []node.Set) *node.Node {
+	alreadyCheckedNodes := make(node.Set)
+	for i, set := range nodeSets {
+		for n := range set {
+			if alreadyCheckedNodes.Has(n) {
+				continue
+			}
+			for j := i; j < len(nodeSets); j++ {
+				if !nodeSets[j].Has(n) {
+					alreadyCheckedNodes.Add(n)
+					break
+				}
+				return n
+			}
+		}
+	}
 	return nil
 }
 

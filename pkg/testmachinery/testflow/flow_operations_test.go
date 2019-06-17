@@ -5,6 +5,7 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
@@ -21,16 +22,16 @@ func TestConfig(t *testing.T) {
 var _ = Describe("flow operations", func() {
 	Context("create initial dag", func() {
 		It("should set the root node as parent of all steps with no dependencies", func() {
-			rootNode := testNode("root", nil, &defaultTestDef)
-			A := testNode("A", nil, &defaultTestDef)
-			B := testNode("B", nil, &defaultTestDef)
+			rootNode := testNode("root", nil, defaultTestDef, nil)
+			A := testNode("A", nil, defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", nil, defaultTestDef, testDAGStep([]string{"A"}))
 			steps := map[string]*testflow.Step{
 				"A": {
-					Info:  testDAGStep([]string{}),
+					Info:  A.Step(),
 					Nodes: node.NewSet(A),
 				},
 				"B": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  B.Step(),
 					Nodes: node.NewSet(B),
 				},
 			}
@@ -44,16 +45,16 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should set dependent nodes as parents", func() {
-			rootNode := testNode("root", nil, &defaultTestDef)
-			A := testNode("A", nil, &defaultTestDef)
-			B := testNode("B", nil, &defaultTestDef)
+			rootNode := testNode("root", nil, defaultTestDef, nil)
+			A := testNode("A", nil, defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", nil, defaultTestDef, testDAGStep([]string{"A"}))
 			steps := map[string]*testflow.Step{
 				"A": {
-					Info:  testDAGStep([]string{}),
+					Info:  A.Step(),
 					Nodes: node.NewSet(A),
 				},
 				"B": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  B.Step(),
 					Nodes: node.NewSet(B),
 				},
 			}
@@ -67,26 +68,26 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should set multiple dependent nodes as parents", func() {
-			rootNode := testNode("A", nil, &defaultTestDef)
-			A := testNode("A", nil, &defaultTestDef)
-			B := testNode("B", nil, &defaultTestDef)
-			C := testNode("C", nil, &defaultTestDef)
-			D := testNode("D", nil, &defaultTestDef)
+			rootNode := testNode("A", nil, defaultTestDef, nil)
+			A := testNode("A", nil, defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", nil, defaultTestDef, testDAGStep([]string{"A"}))
+			C := testNode("C", nil, defaultTestDef, testDAGStep([]string{"A"}))
+			D := testNode("D", nil, defaultTestDef, testDAGStep([]string{"B", "C"}))
 			steps := map[string]*testflow.Step{
 				"A": {
-					Info:  testDAGStep([]string{}),
+					Info:  A.Step(),
 					Nodes: node.NewSet(A),
 				},
 				"B": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  B.Step(),
 					Nodes: node.NewSet(B),
 				},
 				"C": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  C.Step(),
 					Nodes: node.NewSet(C),
 				},
 				"D": {
-					Info:  testDAGStep([]string{"B", "C"}),
+					Info:  D.Step(),
 					Nodes: node.NewSet(D),
 				},
 			}
@@ -111,10 +112,10 @@ var _ = Describe("flow operations", func() {
 
 	Context("serial steps", func() {
 		It("should reorder a DAG with 1 parallel and 1 serial step", func() {
-			A := testNode("A", nil, &defaultTestDef)
-			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(Bs, C), &defaultTestDef)
+			A := testNode("A", nil, defaultTestDef, nil)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef, nil)
+			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(Bs, C), defaultTestDef, nil)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -132,12 +133,12 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should reorder a DAG with 2 parallel and 2 serial step", func() {
-			A := testNode("A", nil, &defaultTestDef)
-			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(A), &defaultTestDef)
-			Es := testNode("Es", node.NewSet(A), &serialTestDef)
-			F := testNode("F", node.NewSet(Bs, C, D, Es), &defaultTestDef)
+			A := testNode("A", nil, defaultTestDef, nil)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef, nil)
+			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(A), defaultTestDef, nil)
+			Es := testNode("Es", node.NewSet(A), &serialTestDef, nil)
+			F := testNode("F", node.NewSet(Bs, C, D, Es), defaultTestDef, nil)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -160,10 +161,10 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should change a reordered DAG", func() {
-			A := testNode("A", nil, &defaultTestDef)
-			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(Bs, C), &defaultTestDef)
+			A := testNode("A", nil, defaultTestDef, nil)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef, nil)
+			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(Bs, C), defaultTestDef, nil)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
@@ -183,8 +184,8 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should not reorder a DAG with 1 serial step", func() {
-			A := testNode("A", nil, &defaultTestDef)
-			Bs := testNode("Bs", node.NewSet(A), &serialTestDef)
+			A := testNode("A", nil, defaultTestDef, nil)
+			Bs := testNode("Bs", node.NewSet(A), &serialTestDef, nil)
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
@@ -198,26 +199,26 @@ var _ = Describe("flow operations", func() {
 
 	Context("Apply namespaces", func() {
 		It("should set the last serial parent as artifact source", func() {
-			rootNode := testNode("root", node.NewSet(), &defaultTestDef)
-			A := testNode("A", node.NewSet(rootNode), &defaultTestDef)
-			B := testNode("B", node.NewSet(A), &defaultTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(B, C), &defaultTestDef)
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, nil)
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
+			C := testNode("C", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
+			D := testNode("D", node.NewSet(B, C), defaultTestDef, testDAGStep([]string{"B", "C"}))
 			steps := map[string]*testflow.Step{
 				"A": {
-					Info:  testDAGStep([]string{}),
+					Info:  A.Step(),
 					Nodes: node.NewSet(A),
 				},
 				"B": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  B.Step(),
 					Nodes: node.NewSet(B),
 				},
 				"C": {
-					Info:  testDAGStep([]string{"A"}),
+					Info:  C.Step(),
 					Nodes: node.NewSet(C),
 				},
 				"D": {
-					Info:  testDAGStep([]string{"B", "C"}),
+					Info:  D.Step(),
 					Nodes: node.NewSet(D),
 				},
 			}
@@ -237,12 +238,222 @@ var _ = Describe("flow operations", func() {
 
 	})
 
+	Context("Apply config namespaces", func() {
+		It("should propagate config from A to all nodes", func() {
+			configOfA := []v1beta1.ConfigElement{
+				{
+					Type:  v1beta1.ConfigTypeEnv,
+					Name:  "A",
+					Value: "Aa",
+				},
+			}
+
+			rootNode := testNode("root", node.NewSet(), testdefinition.NewEmpty(), nil)
+			A := testNode("A", node.NewSet(rootNode), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{}, configOfA))
+			B := testNode("B", node.NewSet(A), testdefinition.NewEmpty(), testDAGStep([]string{"A"}))
+			C := testNode("C", node.NewSet(A), testdefinition.NewEmpty(), testDAGStep([]string{"A"}))
+			D := testNode("D", node.NewSet(B, C), testdefinition.NewEmpty(), testDAGStep([]string{"B", "B"}))
+
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+			}
+
+			testflow.ApplyConfigScope(steps)
+
+			Expect(B.TestDefinition.GetConfig()).To(HaveKey(configOfA[0].Name))
+			Expect(C.TestDefinition.GetConfig()).To(HaveKey(configOfA[0].Name))
+			Expect(D.TestDefinition.GetConfig()).To(HaveKey(configOfA[0].Name))
+		})
+
+		It("should overwrite config from A in B", func() {
+			configOfA := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Aa",
+			}
+			configOfB := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Ab",
+			}
+
+			rootNode := testNode("root", node.NewSet(), testdefinition.NewEmpty(), nil)
+			A := testNode("A", node.NewSet(rootNode), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{}, []v1beta1.ConfigElement{configOfA}))
+			B := testNode("B", node.NewSet(A), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{"A"}, []v1beta1.ConfigElement{configOfB}))
+			C := testNode("C", node.NewSet(A), testdefinition.NewEmpty(), testDAGStep([]string{"A"}))
+			D := testNode("D", node.NewSet(B, C), testdefinition.NewEmpty(), testDAGStep([]string{"B", "C"}))
+
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+			}
+
+			testflow.ApplyConfigScope(steps)
+
+			Expect(B.TestDefinition.GetConfig()).To(HaveKey(configOfA.Name))
+			Expect(*B.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfB))
+
+			Expect(C.TestDefinition.GetConfig()).To(HaveKey(configOfA.Name))
+			Expect(*C.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfA))
+			Expect(D.TestDefinition.GetConfig()).To(HaveKey(configOfA.Name))
+		})
+
+		It("should overwrite config A from node A in B but keep config B", func() {
+			configOfAa := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Aa",
+			}
+			configOfBa := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Ab",
+			}
+			configOfBb := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "B",
+				Value: "Bb",
+			}
+
+			rootNode := testNode("root", node.NewSet(), testdefinition.NewEmpty(), nil)
+			A := testNode("A", node.NewSet(rootNode), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{}, []v1beta1.ConfigElement{configOfAa}))
+			B := testNode("B", node.NewSet(A), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{"A"}, []v1beta1.ConfigElement{configOfBa, configOfBb}))
+			C := testNode("C", node.NewSet(A), testdefinition.NewEmpty(), testDAGStep([]string{"A"}))
+			D := testNode("D", node.NewSet(B, C), testdefinition.NewEmpty(), testDAGStep([]string{"B", "C"}))
+
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+			}
+
+			testflow.ApplyConfigScope(steps)
+
+			Expect(B.TestDefinition.GetConfig()).To(HaveKey(configOfAa.Name))
+			Expect(*B.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfBa))
+			Expect(*B.TestDefinition.GetConfig()["B"].Info).To(Equal(configOfBb))
+
+			Expect(C.TestDefinition.GetConfig()).To(HaveKey(configOfAa.Name))
+			Expect(*C.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfAa))
+			Expect(D.TestDefinition.GetConfig()).To(HaveKey(configOfAa.Name))
+		})
+
+		It("should propagate config A from node A and config B from node B to C", func() {
+			configOfAa := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Aa",
+			}
+			configOfBa := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "A",
+				Value: "Ab",
+			}
+			configOfBb := v1beta1.ConfigElement{
+				Type:  v1beta1.ConfigTypeEnv,
+				Name:  "B",
+				Value: "Bp",
+			}
+
+			rootNode := testNode("root", node.NewSet(), testdefinition.NewEmpty(), nil)
+			A := testNode("A", node.NewSet(rootNode), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{}, []v1beta1.ConfigElement{configOfAa}))
+			B := testNode("B", node.NewSet(A), testdefinition.NewEmpty(), testDAGStepWithConfig([]string{"A"}, []v1beta1.ConfigElement{configOfBa, configOfBb}))
+			Bp := testNode("Bp", node.NewSet(A), testdefinition.NewEmpty(), testDAGStep([]string{"A"}))
+			C := testNode("C", node.NewSet(B), testdefinition.NewEmpty(), testDAGStep([]string{"B"}))
+			D := testNode("D", node.NewSet(Bp, C), testdefinition.NewEmpty(), testDAGStep([]string{"Bp", "C"}))
+
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"Bp": {
+					Info:  Bp.Step(),
+					Nodes: node.NewSet(Bp),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+			}
+
+			testflow.ApplyConfigScope(steps)
+
+			Expect(B.TestDefinition.GetConfig()).To(HaveKey("A"))
+			Expect(B.TestDefinition.GetConfig()).To(HaveKey("B"))
+			Expect(*B.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfBa))
+			Expect(*B.TestDefinition.GetConfig()["B"].Info).To(Equal(configOfBb))
+
+			Expect(Bp.TestDefinition.GetConfig()).To(HaveKey("A"))
+			Expect(*Bp.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfAa))
+
+			Expect(C.TestDefinition.GetConfig()).To(HaveKey("A"))
+			Expect(*C.TestDefinition.GetConfig()["A"].Info).To(Equal(configOfBa))
+
+			Expect(C.TestDefinition.GetConfig()).To(HaveKey("B"))
+			Expect(*C.TestDefinition.GetConfig()["B"].Info).To(Equal(configOfBb))
+
+			Expect(D.TestDefinition.GetConfig()).To(HaveKey("A"))
+		})
+
+	})
+
 	Context("serial nodes", func() {
 		It("should mark real serial nodes as serial", func() {
-			A := testNode("A", node.NewSet(), &defaultTestDef)
-			B := testNode("B", node.NewSet(A), &defaultTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(B, C), &defaultTestDef)
+			A := testNode("A", node.NewSet(), defaultTestDef, nil)
+			B := testNode("B", node.NewSet(A), defaultTestDef, nil)
+			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(B, C), defaultTestDef, nil)
 
 			testflow.SetSerialNodes(A)
 
@@ -253,10 +464,10 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should mark all nodes as serial", func() {
-			A := testNode("A", node.NewSet(), &defaultTestDef)
-			B := testNode("B", node.NewSet(A), &defaultTestDef)
-			C := testNode("C", node.NewSet(B), &defaultTestDef)
-			D := testNode("D", node.NewSet(C), &defaultTestDef)
+			A := testNode("A", node.NewSet(), defaultTestDef, nil)
+			B := testNode("B", node.NewSet(A), defaultTestDef, nil)
+			C := testNode("C", node.NewSet(B), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(C), defaultTestDef, nil)
 
 			testflow.SetSerialNodes(A)
 
@@ -267,17 +478,17 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should mark real serial nodes as serial in a huge DAG", func() {
-			A := testNode("A", node.NewSet(), &defaultTestDef)
-			B := testNode("B", node.NewSet(A), &defaultTestDef)
-			C := testNode("C", node.NewSet(A), &defaultTestDef)
-			D := testNode("D", node.NewSet(B), &defaultTestDef)
-			E := testNode("E", node.NewSet(C), &defaultTestDef)
-			F := testNode("F", node.NewSet(C), &defaultTestDef)
-			G := testNode("D", node.NewSet(D, E, F), &defaultTestDef)
-			H := testNode("H", node.NewSet(G), &defaultTestDef)
-			I := testNode("I", node.NewSet(G), &defaultTestDef)
-			J := testNode("J", node.NewSet(H, I), &defaultTestDef)
-			K := testNode("K", node.NewSet(J), &defaultTestDef)
+			A := testNode("A", node.NewSet(), defaultTestDef, nil)
+			B := testNode("B", node.NewSet(A), defaultTestDef, nil)
+			C := testNode("C", node.NewSet(A), defaultTestDef, nil)
+			D := testNode("D", node.NewSet(B), defaultTestDef, nil)
+			E := testNode("E", node.NewSet(C), defaultTestDef, nil)
+			F := testNode("F", node.NewSet(C), defaultTestDef, nil)
+			G := testNode("D", node.NewSet(D, E, F), defaultTestDef, nil)
+			H := testNode("H", node.NewSet(G), defaultTestDef, nil)
+			I := testNode("I", node.NewSet(G), defaultTestDef, nil)
+			J := testNode("J", node.NewSet(H, I), defaultTestDef, nil)
+			K := testNode("K", node.NewSet(J), defaultTestDef, nil)
 
 			testflow.SetSerialNodes(A)
 
@@ -296,7 +507,7 @@ var _ = Describe("flow operations", func() {
 	})
 })
 
-func testNode(name string, parents node.Set, td *testdefinition.TestDefinition) *node.Node {
+func testNode(name string, parents node.Set, td *testdefinition.TestDefinition, step *v1beta1.DAGStep) *node.Node {
 	if parents == nil {
 		parents = node.NewSet()
 	}
@@ -305,12 +516,17 @@ func testNode(name string, parents node.Set, td *testdefinition.TestDefinition) 
 		Children:       node.NewSet(),
 		TestDefinition: td,
 	}
+	n.SetStep(step)
+	if td != nil {
+		td.SetName(name)
+		if step != nil {
+			td.AddConfig(config.New(step.Definition.Config, config.LevelStep))
+		}
+	}
 
 	for parent := range parents {
 		parent.AddChildren(n)
 	}
-
-	td.SetName(name)
 
 	return n
 }
@@ -318,18 +534,33 @@ func testNode(name string, parents node.Set, td *testdefinition.TestDefinition) 
 func testDAGStep(dependencies []string) *v1beta1.DAGStep {
 	return &v1beta1.DAGStep{
 		DependsOn: dependencies,
+		Definition: v1beta1.StepDefinition{
+			Config: make([]v1beta1.ConfigElement, 0),
+		},
 	}
 }
 
-var serialTestDef = testdefinition.TestDefinition{
-	Info: &v1beta1.TestDefinition{
-		Spec: v1beta1.TestDefSpec{
-			Behavior: []string{"serial"},
-		},
-	},
-	Template: &argov1.Template{},
+func testDAGStepWithConfig(dependencies []string, elements []v1beta1.ConfigElement) *v1beta1.DAGStep {
+	step := testDAGStep(dependencies)
+	step.Definition.Config = elements
+
+	return step
 }
-var defaultTestDef = testdefinition.TestDefinition{
-	Info:     &v1beta1.TestDefinition{},
-	Template: &argov1.Template{},
+
+var serialTestDef = func() testdefinition.TestDefinition {
+	return testdefinition.TestDefinition{
+		Info: &v1beta1.TestDefinition{
+			Spec: v1beta1.TestDefSpec{
+				Behavior: []string{"serial"},
+			},
+		},
+		Template: &argov1.Template{},
+	}
+}()
+var defaultTestDef = testdefinition.NewEmpty()
+
+func testDefWithConfig(cfgs []v1beta1.ConfigElement) *testdefinition.TestDefinition {
+	td := testdefinition.NewEmpty()
+	td.AddConfig(config.New(cfgs, config.LevelTestDefinition))
+	return td
 }

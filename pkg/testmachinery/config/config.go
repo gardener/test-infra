@@ -24,17 +24,17 @@ import (
 )
 
 // NewElement creates a new config element object.
-func NewElement(config *tmv1beta1.ConfigElement) *Element {
+func NewElement(config *tmv1beta1.ConfigElement, level Level) *Element {
 	name := fmt.Sprintf("%s-%s", config.Type, util.RandomString(5))
-	return &Element{config, name}
+	return &Element{config, level, name}
 }
 
 // New creates new config elements.
-func New(configs []tmv1beta1.ConfigElement) []*Element {
+func New(configs []tmv1beta1.ConfigElement, level Level) []*Element {
 	var newConfigs []*Element
 	for _, config := range configs {
 		c := config
-		newConfigs = append(newConfigs, NewElement(&c))
+		newConfigs = append(newConfigs, NewElement(&c, level))
 	}
 	return newConfigs
 }

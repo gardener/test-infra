@@ -37,7 +37,7 @@ var _ = Describe("Config", func() {
 
 		DescribeTable("create config elements",
 			func(configs []tmv1beta1.ConfigElement) {
-				newConfigs := config.New(configs)
+				newConfigs := config.New(configs, config.LevelTestDefinition)
 				Expect(len(configs)).To(Equal(len(newConfigs)))
 				for i, newElem := range newConfigs {
 					Expect(*newElem.Info).To(Equal(configs[i]))

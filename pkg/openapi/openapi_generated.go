@@ -71,6 +71,13 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"private": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Private indicates if the config is shared with further steps",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
 							Description: "value of the environment variable.",
@@ -92,7 +99,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"type", "name"},
+				Required: []string{"type", "name", "private"},
 			},
 		},
 		Dependencies: []string{
