@@ -62,7 +62,9 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 // NewEmpty creates and new emtpy node with a name.
 func NewEmtpy(name string) *Node {
 	return &Node{
-		name: name,
+		name:     name,
+		Parents:  NewSet(),
+		Children: NewSet(),
 	}
 }
 

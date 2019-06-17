@@ -173,15 +173,18 @@ func ApplyConfigScope(steps map[string]*Step) {
 }
 
 func getNextSerialParent(n *node.Node) *node.Node {
+	if len(n.Parents) == 0 {
+		return nil
+	}
+	if len(n.Parents) == 1 {
+		return n.Parents.List()[0]
+	}
+
 	parent := &node.Node{}
 	lastParents := n.Parents.List()
 	branches := make([]node.Set, len(lastParents))
 	for i := range branches {
 		branches[i] = make(node.Set)
-	}
-
-	if len(lastParents) == 1 {
-		return lastParents[0]
 	}
 
 	for len(lastParents) != 0 {
@@ -209,15 +212,18 @@ func SetSerialNodes(root *node.Node) {
 }
 
 func getNextSerialChild(n *node.Node) *node.Node {
+	if len(n.Children) == 0 {
+		return nil
+	}
+	if len(n.Children) == 1 {
+		return n.Children.List()[0]
+	}
+
 	child := &node.Node{}
 	lastChildren := n.Children.List()
 	branches := make([]node.Set, len(lastChildren))
 	for i := range branches {
 		branches[i] = make(node.Set)
-	}
-
-	if len(lastChildren) == 1 {
-		return lastChildren[0]
 	}
 
 	for len(lastChildren) != 0 {
