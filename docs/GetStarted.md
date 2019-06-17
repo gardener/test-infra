@@ -313,7 +313,7 @@ spec:
     artifactsFrom: create-shoot # optional, default get from last "serial" step
   - name: test2
     definition:
-      name: default
+      label: "default,!beta" # matches all testdefintions with label default and not labeled beta
     dependsOn: [ create-shoot ]
     artifactsFrom: # automatically resolved to create-shoot
   - name: delete-shoot

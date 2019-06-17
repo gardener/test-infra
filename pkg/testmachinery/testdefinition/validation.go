@@ -43,6 +43,13 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 	if len(td.Spec.RecipientsOnFailure) != 0 && !isEmailListValid(td.Spec.RecipientsOnFailure) {
 		return fmt.Errorf("Invalid TestDefinition (%s) ReceipientsOnFailure: \"%s\": spec.notifyOnFailure : Required value: valid email has to be defined", identifier, td.Spec.RecipientsOnFailure)
 	}
+
+	for i, label := range td.Spec.Labels {
+		identifier := fmt.Sprintf("Invalid TestDefinition (%s): spec.labels[%d]", identifier, i)
+		if err := ValidateLabelName(identifier, label); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -68,6 +75,15 @@ func ValidateName(identifier, name string) error {
 		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: %s", identifier, strings.Join(errMsgs, ";"))
 	}
 
+	return nil
+}
+
+// ValidateLabelName validates the TestDefinition label string.
+// label starting with "!" are not valid as this is considered to mean exclude label
+func ValidateLabelName(identifier, label string) error {
+	if strings.HasPrefix(label, "!") {
+		return fmt.Errorf("%s : Invalid label: name must not contain '!'", identifier)
+	}
 	return nil
 }
 
