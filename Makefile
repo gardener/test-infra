@@ -92,6 +92,10 @@ mount-local:
 run-local:
 	@TM_NAMESPACE=${NS} go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true -local=true
 
+.PHONY: run-controller
+run-controller:
+	@TM_NAMESPACE=${NS} TESTDEF_PATH=test/.test-defs go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true
+
 .PHONY: install-controller-local
 install-controller-local:
 	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml --set "local.enabled=true,local.hostPath=/tmp/tm" \

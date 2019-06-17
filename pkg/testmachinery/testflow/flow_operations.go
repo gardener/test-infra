@@ -212,7 +212,7 @@ func SetSerialNodes(root *node.Node) {
 }
 
 func getNextSerialChild(n *node.Node) *node.Node {
-	if len(n.Children) == 0 {
+	if n == nil || len(n.Children) == 0 {
 		return nil
 	}
 	if len(n.Children) == 1 {
@@ -237,10 +237,10 @@ func getNextSerialChild(n *node.Node) *node.Node {
 }
 
 func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.Node) *node.Node) (*node.Node, []*node.Node) {
-	lastNodes := make([]*node.Node, len(nodes))
+	lastNodes := make([]*node.Node, 0)
 	for i, n := range nodes {
 		if nextNode := getNext(n); nextNode != nil {
-			lastNodes[i] = nextNode
+			lastNodes = append(lastNodes, nextNode)
 			branches[i].Add(nextNode)
 		}
 	}
