@@ -29,7 +29,7 @@ import (
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
 func WaitUntilShootIsReconciled(ctx context.Context, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) (*v1beta1.Shoot, error) {
-	interval := 60 * time.Second
+	interval := 1 * time.Minute
 	timeout := 30 * time.Minute
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &v1beta1.Shoot{}

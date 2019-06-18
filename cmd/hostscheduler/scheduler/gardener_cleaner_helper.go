@@ -26,8 +26,11 @@ var (
 	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
 	NotMonitoringComponent = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleMonitoring)
 
+	// NotAddonManagerReconcile is a requirment that something doesnt have the label addonmanager.kubernetes.io/mode = Reconcile
+	NotAddonManagerReconcile = botanist.MustNewRequirement("addonmanager.kubernetes.io/mode", selection.NotEquals, "Reconcile")
+
 	// NotSystemComponentSelector is a selector that excludes system components.
-	NotSystemComponentAndMonitoringSelector = labels.NewSelector().Add(botanist.NotSystemComponent, NotMonitoringComponent)
+	NotSystemComponentAndMonitoringSelector = labels.NewSelector().Add(botanist.NotSystemComponent, NotMonitoringComponent, NotAddonManagerReconcile)
 
 	// NotSystemComponentListOptions are ListOptions that exclude system components.
 	NotSystemComponentListOptions = client.ListOptions{

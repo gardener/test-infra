@@ -16,9 +16,9 @@ kind: TestDefinition
 metadata:
   name: tm-scheduler
 spec:
-  owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
-  - DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  - gardener-oq@listserv.sap.com
 
   description: Wake up a shoot as host from a given node pool
 

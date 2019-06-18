@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// CleanupShoot deletes all resources of a shoot and hibernates it afterwards
-func CleanupShoot(ctx context.Context, k8sClient kubernetes.Interface) error {
+// HibernateShoot deletes all resources of a shoot and hibernates it afterwards
+func HibernateShoot(ctx context.Context, k8sClient kubernetes.Interface) error {
 	data, err := ioutil.ReadFile(HostConfigFilePath())
 	if err != nil {
 		return fmt.Errorf("cannot read file %s: %s", HostConfigFilePath(), err.Error())

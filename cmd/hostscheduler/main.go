@@ -74,7 +74,7 @@ func main() {
 	}
 
 	if clean {
-		if err := scheduler.CleanupShoot(ctx, k8sClient); err != nil {
+		if err := scheduler.HibernateShoot(ctx, k8sClient); err != nil {
 			log.Fatal(err.Error())
 		}
 		log.Infof("Successfully hibernated shoot")

@@ -169,7 +169,7 @@
   version = "0.5.2"
 
 [[projects]]
-  digest = "1:10c656d7305e14d5509037907f7d0438e7638594b57f7ce10b08d28c72759ee0"
+  digest = "1:3e12be131311e794a226be77cce16570cb082f0b9b30aaf7098ae420f63da1dc"
   name = "github.com/gardener/gardener"
   packages = [
     "pkg/apis/core",
@@ -179,6 +179,7 @@
     "pkg/apis/extensions/v1alpha1",
     "pkg/apis/garden",
     "pkg/apis/garden/v1beta1",
+    "pkg/apis/garden/v1beta1/helper",
     "pkg/chartrenderer",
     "pkg/client/core/clientset/versioned",
     "pkg/client/core/clientset/versioned/scheme",
@@ -187,23 +188,57 @@
     "pkg/client/garden/clientset/versioned",
     "pkg/client/garden/clientset/versioned/scheme",
     "pkg/client/garden/clientset/versioned/typed/garden/v1beta1",
+    "pkg/client/garden/informers/externalversions/garden/v1beta1",
+    "pkg/client/garden/informers/externalversions/internalinterfaces",
     "pkg/client/garden/listers/garden/v1beta1",
     "pkg/client/kubernetes",
     "pkg/client/machine/clientset/versioned",
     "pkg/client/machine/clientset/versioned/scheme",
     "pkg/client/machine/clientset/versioned/typed/machine/v1alpha1",
+    "pkg/controllermanager/apis/config",
+    "pkg/controllermanager/controller/utils",
+    "pkg/controllermanager/features",
+    "pkg/features",
     "pkg/logger",
+    "pkg/migration",
+    "pkg/operation",
+    "pkg/operation/botanist",
     "pkg/operation/common",
+    "pkg/operation/garden",
+    "pkg/operation/seed",
+    "pkg/operation/shoot",
+    "pkg/operation/terraformer",
     "pkg/utils",
+    "pkg/utils/chart",
     "pkg/utils/context",
     "pkg/utils/flow",
+    "pkg/utils/imagevector",
     "pkg/utils/kubernetes",
     "pkg/utils/kubernetes/health",
     "pkg/utils/retry",
+    "pkg/utils/secrets",
   ]
   pruneopts = "NUT"
   revision = "b3b8faa6f651aec2259b64baabdf11f469c06bf0"
   version = "0.24.0"
+
+[[projects]]
+  digest = "1:b7664ce9118181b480ce1cdcb2bb60a83efbf85d368011e1b8a9ed0d8726394f"
+  name = "github.com/gardener/gardener-extensions"
+  packages = [
+    "controllers/provider-alicloud/pkg/apis/alicloud",
+    "controllers/provider-alicloud/pkg/apis/alicloud/v1alpha1",
+    "controllers/provider-aws/pkg/apis/aws",
+    "controllers/provider-aws/pkg/apis/aws/v1alpha1",
+    "controllers/provider-azure/pkg/apis/azure",
+    "controllers/provider-azure/pkg/apis/azure/v1alpha1",
+    "controllers/provider-gcp/pkg/apis/gcp",
+    "controllers/provider-gcp/pkg/apis/gcp/v1alpha1",
+    "controllers/provider-openstack/pkg/apis/openstack",
+    "controllers/provider-openstack/pkg/apis/openstack/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "f09dd7bc8d2fee9f4cfff1d95d39e7713728bf81"
 
 [[projects]]
   digest = "1:b678acaf8766b6df36723a4adefc3302191a34c22b7a38b0abaf5f6d3dd24090"
@@ -564,9 +599,11 @@
   revision = "816c9085562cd7ee03e7f8188a1cfd942858cded"
 
 [[projects]]
-  digest = "1:7c7cfeecd2b7147bcfec48a4bf622b4879e26aec145a9e373ce51d0c23b16f6b"
+  digest = "1:e411054f54a332ecadd5fe5a4a68d092f36583e554037587da86da298cffc72d"
   name = "github.com/prometheus/client_golang"
   packages = [
+    "api",
+    "api/prometheus/v1",
     "prometheus",
     "prometheus/internal",
     "prometheus/promhttp",
@@ -644,13 +681,20 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1b80a28fd309e7aa2d47188333f1fd2b5b9ce17d9dbd813b724d9fd2b9e308a2"
+  digest = "1:87d20fdbe5831852aa0023efc142a66ad27c2b2ef232c623416337f5a252b4fb"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
     "blake2b",
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "internal/subtle",
     "pbkdf2",
+    "poly1305",
     "scrypt",
+    "ssh",
     "ssh/terminal",
   ]
   pruneopts = "NUT"
@@ -913,13 +957,75 @@
   version = "kubernetes-1.14.1"
 
 [[projects]]
-  digest = "1:2ff36519872a0288dae426fcae1405a7cdebd5400046b7ccbe6ca9151970afff"
+  branch = "master"
+  digest = "1:f83a12540f1237f139da7a118ba715614963fe83dde46eebc0517a66ee38681a"
+  name = "k8s.io/apiserver"
+  packages = [
+    "pkg/authentication/user",
+    "pkg/util/feature",
+  ]
+  pruneopts = "NUT"
+  revision = "3722cb68559308c1666e47e0e6749b05343fa5c0"
+
+[[projects]]
+  digest = "1:88bcf5fe6152d83bd52ecdcb1a1e8760684cb383bc33ee3fae99b461c5bb0e7b"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
     "discovery/cached/memory",
     "discovery/fake",
     "dynamic",
+    "informers",
+    "informers/admissionregistration",
+    "informers/admissionregistration/v1beta1",
+    "informers/apps",
+    "informers/apps/v1",
+    "informers/apps/v1beta1",
+    "informers/apps/v1beta2",
+    "informers/auditregistration",
+    "informers/auditregistration/v1alpha1",
+    "informers/autoscaling",
+    "informers/autoscaling/v1",
+    "informers/autoscaling/v2beta1",
+    "informers/autoscaling/v2beta2",
+    "informers/batch",
+    "informers/batch/v1",
+    "informers/batch/v1beta1",
+    "informers/batch/v2alpha1",
+    "informers/certificates",
+    "informers/certificates/v1beta1",
+    "informers/coordination",
+    "informers/coordination/v1",
+    "informers/coordination/v1beta1",
+    "informers/core",
+    "informers/core/v1",
+    "informers/events",
+    "informers/events/v1beta1",
+    "informers/extensions",
+    "informers/extensions/v1beta1",
+    "informers/internalinterfaces",
+    "informers/networking",
+    "informers/networking/v1",
+    "informers/networking/v1beta1",
+    "informers/node",
+    "informers/node/v1alpha1",
+    "informers/node/v1beta1",
+    "informers/policy",
+    "informers/policy/v1beta1",
+    "informers/rbac",
+    "informers/rbac/v1",
+    "informers/rbac/v1alpha1",
+    "informers/rbac/v1beta1",
+    "informers/scheduling",
+    "informers/scheduling/v1",
+    "informers/scheduling/v1alpha1",
+    "informers/scheduling/v1beta1",
+    "informers/settings",
+    "informers/settings/v1alpha1",
+    "informers/storage",
+    "informers/storage/v1",
+    "informers/storage/v1alpha1",
+    "informers/storage/v1beta1",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1beta1",
@@ -958,6 +1064,38 @@
     "kubernetes/typed/storage/v1",
     "kubernetes/typed/storage/v1alpha1",
     "kubernetes/typed/storage/v1beta1",
+    "listers/admissionregistration/v1beta1",
+    "listers/apps/v1",
+    "listers/apps/v1beta1",
+    "listers/apps/v1beta2",
+    "listers/auditregistration/v1alpha1",
+    "listers/autoscaling/v1",
+    "listers/autoscaling/v2beta1",
+    "listers/autoscaling/v2beta2",
+    "listers/batch/v1",
+    "listers/batch/v1beta1",
+    "listers/batch/v2alpha1",
+    "listers/certificates/v1beta1",
+    "listers/coordination/v1",
+    "listers/coordination/v1beta1",
+    "listers/core/v1",
+    "listers/events/v1beta1",
+    "listers/extensions/v1beta1",
+    "listers/networking/v1",
+    "listers/networking/v1beta1",
+    "listers/node/v1alpha1",
+    "listers/node/v1beta1",
+    "listers/policy/v1beta1",
+    "listers/rbac/v1",
+    "listers/rbac/v1alpha1",
+    "listers/rbac/v1beta1",
+    "listers/scheduling/v1",
+    "listers/scheduling/v1alpha1",
+    "listers/scheduling/v1beta1",
+    "listers/settings/v1alpha1",
+    "listers/storage/v1",
+    "listers/storage/v1alpha1",
+    "listers/storage/v1beta1",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
@@ -1028,6 +1166,17 @@
   pruneopts = "T"
   revision = "50b561225d70b3eb79a1faafd3dfe7b1a62cbe73"
   version = "kubernetes-1.14.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:26eb890bbe5e56576a5b9cd7dbe11dda3a48e8074ca8589f4e40a29210f3e713"
+  name = "k8s.io/component-base"
+  packages = [
+    "config",
+    "featuregate",
+  ]
+  pruneopts = "NUT"
+  revision = "2b0aae80ca81fb9fbed1161304dc6fd356dcb098"
 
 [[projects]]
   branch = "master"
@@ -1186,11 +1335,11 @@
     "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
     "github.com/gardener/gardener/pkg/client/kubernetes",
+    "github.com/gardener/gardener/pkg/operation/botanist",
     "github.com/gardener/gardener/pkg/operation/common",
     "github.com/gardener/gardener/pkg/utils",
     "github.com/gardener/gardener/pkg/utils/flow",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
-    "github.com/gardener/gardener/pkg/utils/retry",
     "github.com/go-openapi/spec",
     "github.com/google/go-github/github",
     "github.com/joho/godotenv",
@@ -1212,9 +1361,7 @@
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
-    "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
@@ -1242,7 +1389,6 @@
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1",
-    "k8s.io/kube-aggregator/pkg/controllers/autoregister",
     "k8s.io/kube-openapi/cmd/openapi-gen",
     "k8s.io/kube-openapi/pkg/common",
     "sigs.k8s.io/controller-runtime/pkg/client",

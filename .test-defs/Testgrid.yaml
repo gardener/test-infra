@@ -16,9 +16,9 @@ kind: TestDefinition
 metadata:
   name: testgrid
 spec:
-  owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
-  - DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  - gardener-oq@listserv.sap.com
 
   description: Run kubernetes conformance tests and push result files (e2e.log and junit_01.xml) to testgrid repository.
 
