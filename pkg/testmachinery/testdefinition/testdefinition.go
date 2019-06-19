@@ -72,15 +72,19 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 			WorkingDir: testmachinery.TM_REPO_PATH,
 			Env: []apiv1.EnvVar{
 				{
-					Name:  "TM_KUBECONFIG_PATH",
+					Name:  testmachinery.TM_REPO_PATH_NAME,
+					Value: testmachinery.TM_REPO_PATH,
+				},
+				{
+					Name:  testmachinery.TM_KUBECONFIG_PATH_NAME,
 					Value: testmachinery.TM_KUBECONFIG_PATH,
 				},
 				{
-					Name:  "TM_SHARED_PATH",
+					Name:  testmachinery.TM_SHARED_PATH_NAME,
 					Value: testmachinery.TM_SHARED_PATH,
 				},
 				{
-					Name:  "TM_EXPORT_PATH",
+					Name:  testmachinery.TM_EXPORT_PATH_NAME,
 					Value: testmachinery.TM_EXPORT_PATH,
 				},
 				{

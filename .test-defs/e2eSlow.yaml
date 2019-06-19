@@ -16,9 +16,9 @@ kind: TestDefinition
 metadata:
   name: e2e-slow
 spec:
-  owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
-  - DL_5C5BE3E2970B9F404D0E2F50@sap.com
+  - gardener-oq@listserv.sap.com
 
   description: Run kubernetes e2e test with tags Slow and Serial.
 
