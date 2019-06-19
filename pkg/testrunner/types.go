@@ -65,14 +65,13 @@ type Metadata struct {
 
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
 	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
-	ComponentDescriptor interface{} `json:"bom"`
+	ComponentDescriptor interface{} ``
 
 	// Name of the testrun crd object.
 	Testrun TestrunMetadata `json:"tr"`
 
-	// Link to the workflow in the argo ui
-	// Argo URL is in format: https://argo-endpoint.com/workflows/namespace/wf-name
-	ArgoUIExternalURL string `json:"argo_url,omitempty"`
+	// all environment configuration values
+	Configuration map[string]string `json:"config"`
 }
 
 // TestrunMetadata represents the metadata of a testrun

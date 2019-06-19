@@ -172,6 +172,17 @@ func (in *StepStatusPosition) DeepCopy() *StepStatusPosition {
 func (in *StepStatusTestDefinition) DeepCopyInto(out *StepStatusTestDefinition) {
 	*out = *in
 	out.Location = in.Location
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = make([]*ConfigElement, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(ConfigElement)
+				(*in).DeepCopyInto(*out)
+			}
+		}
+	}
 	if in.RecipientsOnFailure != nil {
 		in, out := &in.RecipientsOnFailure, &out.RecipientsOnFailure
 		*out = make([]string, len(*in))

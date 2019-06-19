@@ -14,6 +14,8 @@
 
 package config
 
+import "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+
 func NewSet(elements ...*Element) Set {
 	s := make(Set, 0)
 	for _, e := range elements {
@@ -27,6 +29,16 @@ func (s Set) List() []*Element {
 	i := 0
 	for _, e := range s {
 		list[i] = e
+		i++
+	}
+	return list
+}
+
+func (s Set) RawList() []*v1beta1.ConfigElement {
+	list := make([]*v1beta1.ConfigElement, len(s))
+	i := 0
+	for _, e := range s {
+		list[i] = e.Info
 		i++
 	}
 	return list

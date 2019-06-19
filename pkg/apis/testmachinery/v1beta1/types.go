@@ -161,11 +161,12 @@ type StepStatus struct {
 
 // StepStatusTestDefinition holds information about the used testdefinition and its location.
 type StepStatusTestDefinition struct {
-	Name                  string       `json:"name,omitempty"`
-	Location              TestLocation `json:"location,omitempty"`
-	Owner                 string       `json:"owner,omitempty"`
-	RecipientsOnFailure   []string     `json:"recipientsOnFailure"`
-	ActiveDeadlineSeconds *int64       `json:"activeDeadlineSeconds"`
+	Name                  string           `json:"name,omitempty"`
+	Location              TestLocation     `json:"location,omitempty"`
+	Config                []*ConfigElement `json:"config,omitempty"`
+	Owner                 string           `json:"owner,omitempty"`
+	RecipientsOnFailure   []string         `json:"recipientsOnFailure"`
+	ActiveDeadlineSeconds *int64           `json:"activeDeadlineSeconds"`
 }
 
 type StepStatusPosition struct {

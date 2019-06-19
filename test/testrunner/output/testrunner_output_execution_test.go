@@ -33,6 +33,7 @@ import (
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -138,6 +139,55 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer ctx.Done()
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(namespace, commitSha)
+		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		defer utils.DeleteTestrun(tmClient, tr)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		Expect(err).ToNot(HaveOccurred())
+
+		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(len(files)).To(Equal(1), "Expected 1 file output")
+
+		file, err := os.Open(filepath.Join(testrunConfig.OutputDir, files[0].Name()))
+		Expect(err).ToNot(HaveOccurred())
+		defer file.Close()
+		defer func() {
+			err := os.RemoveAll(testrunConfig.OutputDir)
+			Expect(err).ToNot(HaveOccurred())
+		}()
+
+		documents := []map[string]interface{}{}
+		scanner := bufio.NewScanner(file)
+		var jsonBody map[string]interface{}
+		for scanner.Scan() {
+			err = json.Unmarshal([]byte(scanner.Text()), &jsonBody)
+			Expect(err).ToNot(HaveOccurred())
+
+			documents = append(documents, jsonBody)
+		}
+		Expect(scanner.Err()).ToNot(HaveOccurred())
+
+		Expect(jsonBody["tm"]).ToNot(BeNil())
+		Expect(jsonBody["tm"].(map[string]interface{})["tr"].(map[string]interface{})["id"]).To(Equal(tr.Name))
+
+		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
+	})
+
+	It("should add environemnt configuration to step metadata", func() {
+		ctx := context.Background()
+		defer ctx.Done()
+
+		configElement := tmv1beta1.ConfigElement{
+			Type:  tmv1beta1.ConfigTypeEnv,
+			Name:  "test",
+			Value: "val",
+		}
+
+		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
+		tr := resources.GetBasicTestrun(namespace, commitSha)
+		tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
 		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
 		defer utils.DeleteTestrun(tmClient, tr)
 		Expect(err).ToNot(HaveOccurred())

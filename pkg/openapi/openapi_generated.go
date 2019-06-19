@@ -383,6 +383,18 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
 						},
 					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
+									},
+								},
+							},
+						},
+					},
 					"owner": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -413,7 +425,7 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
 	}
 }
 

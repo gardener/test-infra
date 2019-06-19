@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -40,6 +41,24 @@ func writeToFile(filePath string, data []byte) error {
 	}
 
 	return nil
+}
+
+func mashalAndAppendSummaries(summary testrunner.TestrunSummary, stepSummaries []testrunner.StepSummary) ([][]byte, error) {
+	b, err := util.MarshalNoHTMLEscape(summary)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal %s", err.Error())
+	}
+
+	s := [][]byte{b}
+	for _, summary := range stepSummaries {
+		b, err := util.MarshalNoHTMLEscape(summary)
+		if err != nil {
+			return nil, fmt.Errorf("cannot marshal %s", err.Error())
+		}
+		s = append(s, b)
+	}
+	return s, nil
+
 }
 
 func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {

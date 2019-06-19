@@ -20,20 +20,16 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
-	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
 
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
-	"github.com/gardener/test-infra/pkg/util"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
 	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -43,16 +39,11 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 
 	metadata.Testrun.StartTime = tr.Status.StartTime
 
-	if config.ArgoUIEndpoint != "" && tr.Status.Workflow != "" {
-		if u, err := url.ParseRequestURI(config.ArgoUIEndpoint); err == nil {
-			u.Path = path.Join(u.Path, "workflows", namespace, tr.Status.Workflow)
-			metadata.ArgoUIExternalURL = u.String()
-		} else {
-			log.Debugf("Cannot parse argo Url %s: %s", config.ArgoUIEndpoint, err.Error())
-		}
+	trSummary, summaries, err := DetermineTestrunSummary(tr, metadata, config)
+	if err != nil {
+		return err
 	}
-
-	trSummary, err := getTestrunSummary(tr, metadata, config)
+	trStatusSummaries, err := mashalAndAppendSummaries(trSummary, summaries)
 	if err != nil {
 		return err
 	}
@@ -63,7 +54,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 			Type:  "_doc",
 		},
 	}
-	summaryBulk := elasticsearch.NewList(summaryMetadata, trSummary)
+	summaryBulk := elasticsearch.NewList(summaryMetadata, trStatusSummaries)
 
 	if config.S3Endpoint != "" {
 		osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
@@ -99,14 +90,24 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	return nil
 }
 
-func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config) ([][]byte, error) {
+// DetermineTestrunSummary parses a testruns status and returns
+func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config) (testrunner.TestrunSummary, []testrunner.StepSummary, error) {
 	status := tr.Status
 	testsRun := 0
-	summaries := [][]byte{}
+	summaries := make([]testrunner.StepSummary, 0)
 
 	for _, step := range status.Steps {
+
+		stepMetadata := *metadata
+		stepMetadata.Configuration = make(map[string]string, 0)
+		for _, elem := range step.TestDefinition.Config {
+			if elem.Type == tmv1beta1.ConfigTypeEnv && elem.Value != "" {
+				stepMetadata.Configuration[elem.Name] = elem.Value
+			}
+		}
+
 		summary := testrunner.StepSummary{
-			Metadata:          metadata,
+			Metadata:          &stepMetadata,
 			Type:              testrunner.SummaryTypeTeststep,
 			Name:              step.TestDefinition.Name,
 			Phase:             step.Phase,
@@ -115,11 +116,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, con
 			KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, step.TestDefinition.Name),
 		}
 
-		encSummary, err := util.MarshalNoHTMLEscape(summary)
-		if err != nil {
-			return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
-		}
-		summaries = append(summaries, encSummary)
+		summaries = append(summaries, summary)
 		if step.Phase != argov1.NodeSkipped {
 			testsRun++
 		}
@@ -135,12 +132,7 @@ func getTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, con
 		KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, ""),
 	}
 
-	encTrSummary, err := util.MarshalNoHTMLEscape(trSummary)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk: %s", err.Error())
-	}
-
-	return append([][]byte{encTrSummary}, summaries...), nil
+	return trSummary, summaries, nil
 }
 
 func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {

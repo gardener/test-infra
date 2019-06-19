@@ -149,6 +149,7 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 		TestDefinition: tmv1beta1.StepStatusTestDefinition{
 			Name:                  td.Info.Metadata.Name,
 			Owner:                 td.Info.Spec.Owner,
+			Config:                td.GetConfig().RawList(),
 			RecipientsOnFailure:   td.Info.Spec.RecipientsOnFailure,
 			ActiveDeadlineSeconds: td.Info.Spec.ActiveDeadlineSeconds,
 		},
