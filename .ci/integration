@@ -96,7 +96,6 @@ controller_chart="$(helm template --namespace ${NAMESPACE} \
 # clean previous installation  #
 ################################
 set +e
-kubectl --kubeconfig=$TM_KUBECONFIG delete tr --all --force=true --grace-period=0
 # remove zombies
 kubectl get tr -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
 kubectl get wf -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
