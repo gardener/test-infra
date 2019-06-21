@@ -18,12 +18,6 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-	"text/template"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -32,6 +26,10 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
 	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
@@ -107,13 +105,12 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 		}
 
 		summary := testrunner.StepSummary{
-			Metadata:          &stepMetadata,
-			Type:              testrunner.SummaryTypeTeststep,
-			Name:              step.TestDefinition.Name,
-			Phase:             step.Phase,
-			StartTime:         step.StartTime,
-			Duration:          step.Duration,
-			KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, step.TestDefinition.Name),
+			Metadata:  &stepMetadata,
+			Type:      testrunner.SummaryTypeTeststep,
+			Name:      step.TestDefinition.Name,
+			Phase:     step.Phase,
+			StartTime: step.StartTime,
+			Duration:  step.Duration,
 		}
 
 		summaries = append(summaries, summary)
@@ -123,13 +120,12 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 	}
 
 	trSummary := testrunner.TestrunSummary{
-		Metadata:          metadata,
-		Type:              testrunner.SummaryTypeTestrun,
-		Phase:             status.Phase,
-		StartTime:         status.StartTime,
-		Duration:          status.Duration,
-		TestsRun:          testsRun,
-		KibanaExternalURL: buildKibanaLogURL(config.KibanaEndpoint, tr.Status.Workflow, ""),
+		Metadata:  metadata,
+		Type:      testrunner.SummaryTypeTestrun,
+		Phase:     status.Phase,
+		StartTime: status.StartTime,
+		Duration:  status.Duration,
+		TestsRun:  testsRun,
 	}
 
 	return trSummary, summaries, nil
@@ -155,7 +151,7 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 
 	bulks := make(elasticsearch.BulkList, 0)
 	for _, step := range status.Steps {
-		if step.Phase != argov1.NodeSkipped {
+		if step.Phase != argov1.NodeSkipped && step.ExportArtifactKey != "" {
 			stepMeta := &testrunner.StepExportMetadata{
 				Metadata:    *metadata,
 				TestDefName: step.TestDefinition.Name,
@@ -169,7 +165,12 @@ func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1
 				log.Warnf("cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
 				continue
 			}
-			defer reader.Close()
+			defer func() {
+				err := reader.Close()
+				if err != nil {
+					log.Warn(err)
+				}
+			}()
 
 			info, err := reader.Stat()
 			if err != nil {
@@ -225,37 +226,4 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 	}
 
 	return files, nil
-}
-
-// buildKibanaLogURL construct a valid kibana url with predefined filters for the given endpoint, workflow and an optional testStepName
-// typical endpoint: https://kibana.ingress.<my-cluster-domain>
-// typical kibana url: https://kibana.ingress.<my-cluster-domain>/app/kibana#/...
-func buildKibanaLogURL(endpoint, workflow, testStepName string) string {
-	if endpoint == "" || workflow == "" {
-		return ""
-	}
-
-	const indexPatternID = "d1134060-5189-11e9-b7dc-3fcc67c9fd25"
-	const workflowTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-7d,mode:quick,to:now))&_a=(columns:!(workflow,testdef,stream,log,severity,cont),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:namespace.keyword,negate:!f,params:(query:default,type:phrase),type:phrase,value:default),query:(match:(namespace.keyword:(query:default,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:container.keyword,negate:!f,params:(query:main,type:phrase),type:phrase,value:main),query:(match:(container.keyword:(query:main,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:workflow,index:{{.IndexPatternID}},key:workflow,negate:!f,params:(value:{{.WorkflowID}}),type:phrase,value:{{.WorkflowID}}),script:(script:(lang:painless,params:(value:{{.WorkflowID}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'labels.workflows_argoproj_io%2Fworkflow.keyword!'].value%20},%20params.value);')))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
-	const testStepTemplate = "/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-7d,mode:quick,to:now))&_a=(columns:!(workflow,testdef,stream,log,severity,cont),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:namespace.keyword,negate:!f,params:(query:default,type:phrase),type:phrase,value:default),query:(match:(namespace.keyword:(query:default,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:{{.IndexPatternID}},key:container.keyword,negate:!f,params:(query:main,type:phrase),type:phrase,value:main),query:(match:(container.keyword:(query:main,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:workflow,index:{{.IndexPatternID}},key:workflow,negate:!f,params:(value:{{.WorkflowID}}),type:phrase,value:{{.WorkflowID}}),script:(script:(lang:painless,params:(value:{{.WorkflowID}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'labels.workflows_argoproj_io%2Fworkflow.keyword!'].value%20},%20params.value);'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,field:testdef,index:{{.IndexPatternID}},key:testdef,negate:!f,params:(value:{{.TestDefName}}),type:phrase,value:{{.TestDefName}}),script:(script:(lang:painless,params:(value:{{.TestDefName}}),source:'boolean%20compare(Supplier%20s,%20def%20v)%20{return%20s.get()%20%3D%3D%20v;}compare(()%20->%20{%20doc[!'annotations.testmachinery_sapcloud_io%2FTestDefinition.keyword!'].value%20},%20params.value);')))),index:{{.IndexPatternID}},interval:auto,query:(language:lucene,query:''),sort:!('@flb_time',asc))"
-
-	var tmpl *template.Template
-	var err error
-	if testStepName == "" {
-		tmpl, err = template.New("kibanaLink").Parse(workflowTemplate)
-	} else {
-		tmpl, err = template.New("kibanaLink").Parse(testStepTemplate)
-	}
-	if err != nil {
-		log.Errorf("cannot create kibana template url: %s", err.Error())
-	}
-
-	builder := strings.Builder{}
-	builder.WriteString(endpoint)
-	filters := kibanaFilter{indexPatternID, workflow, testStepName}
-	err = tmpl.Execute(&builder, filters)
-	if err != nil {
-		log.Errorf("cannot template kibana url for workflow '%s' and testStepName '%s': %s", workflow, testStepName, err.Error())
-	}
-	return builder.String()
 }

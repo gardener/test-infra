@@ -27,7 +27,6 @@ testrunner run-template [flags]
   -h, --help                               help for run-template
       --interval int                       Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
       --k8s-version string                 Kubernetes version of the shoot.
-      --kibana-logging-endpoint string     Kibana endpoint used for logging of the testmachinery cluster.
       --landscape string                   Current gardener landscape.
       --loadbalancer-provider string       LoadBalancer Provider like haproxy. Only applicable for Openstack.
       --machinetype string                 Machinetype of the shoot's worker nodes.
@@ -49,7 +48,8 @@ testrunner run-template [flags]
 ### Options inherited from parent commands
 
 ```
-  -d, --debug   Set debug mode for additional output
+  -d, --debug     Set debug mode for additional output
+      --dry-run   Dry run will print the rendered template
 ```
 
 ### SEE ALSO

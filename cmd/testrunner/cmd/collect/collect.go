@@ -42,8 +42,6 @@ var (
 	elasticSearchConfigName string
 	s3Endpoint              string
 	s3SSL                   bool
-	argouiEndpoint          string
-	kibanaEndpoint          string
 	concourseOnErrorDir     string
 )
 
@@ -71,8 +69,6 @@ var collectCmd = &cobra.Command{
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
-			ArgoUIEndpoint:      argouiEndpoint,
-			KibanaEndpoint:      kibanaEndpoint,
 			ConcourseOnErrorDir: concourseOnErrorDir,
 		}
 		log.Debugln(util.PrettyPrintStruct(collectConfig))
@@ -125,8 +121,6 @@ func init() {
 	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
-	collectCmd.Flags().StringVar(&argouiEndpoint, "argoui-endpoint", "", "ArgoUI endpoint of the testmachinery cluster.")
-	collectCmd.Flags().StringVar(&kibanaEndpoint, "kibana-logging-endpoint", "", "Kibana endpoint used for logging of the testmachinery cluster.")
 	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 }

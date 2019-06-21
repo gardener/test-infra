@@ -25,7 +25,8 @@ testrunner run-testrun [flags]
 ### Options inherited from parent commands
 
 ```
-  -d, --debug   Set debug mode for additional output
+  -d, --debug     Set debug mode for additional output
+      --dry-run   Dry run will print the rendered template
 ```
 
 ### SEE ALSO

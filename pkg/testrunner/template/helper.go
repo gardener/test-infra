@@ -17,7 +17,7 @@ import (
 )
 
 // getK8sVersions returns all K8s version that should be rendered by the chart
-func getK8sVersions(parameters *TestrunParameters) ([]string, error) {
+func getK8sVersions(parameters *ShootTestrunParameters) ([]string, error) {
 	if !parameters.MakeVersionMatrix && parameters.K8sVersion != "" {
 		return []string{parameters.K8sVersion}, nil
 	}
@@ -95,20 +95,42 @@ func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider
 	}
 }
 
-func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, componenets []*componentdescriptor.Component) {
-	if tr == nil || componenets == nil {
+func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, components []*componentdescriptor.Component) {
+	if tr == nil || components == nil {
 		return
 	}
 
 	bomLocations := make([]tmv1beta1.TestLocation, 0)
-	for _, component := range componenets {
+	for _, component := range components {
 		bomLocations = append(bomLocations, tmv1beta1.TestLocation{
 			Type:     tmv1beta1.LocationTypeGit,
 			Repo:     fmt.Sprintf("https://%s", component.Name),
 			Revision: component.Version,
 		})
 	}
-	tr.Spec.TestLocations = append(bomLocations, tr.Spec.TestLocations...)
+
+	// check if the locationSet already exists
+	for i, set := range tr.Spec.LocationSets {
+		if set.Name == locationSetName {
+			set.Locations = append(bomLocations, set.Locations...)
+			tr.Spec.LocationSets[i] = set
+			tr.Spec.TestLocations = nil
+			return
+		}
+	}
+
+	existingLocations := make([]tmv1beta1.TestLocation, 0)
+	if len(tr.Spec.TestLocations) != 0 {
+		existingLocations = tr.Spec.TestLocations
+	}
+
+	tr.Spec.LocationSets = []tmv1beta1.LocationSet{
+		{
+			Name:      locationSetName,
+			Locations: append(bomLocations, existingLocations...),
+		},
+	}
+	tr.Spec.TestLocations = nil
 }
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
@@ -116,4 +138,13 @@ func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]strin
 		return
 	}
 	tr.Annotations = utils.MergeStringMaps(tr.Annotations, annotations)
+}
+
+func getGardenerVersionFromComponentDescriptor(componentDescriptor componentdescriptor.ComponentList) string {
+	for _, component := range componentDescriptor {
+		if component.Name == "github.com/gardener/gardener.version" {
+			return component.Version
+		}
+	}
+	return ""
 }

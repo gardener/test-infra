@@ -64,8 +64,12 @@ type Metadata struct {
 	KubernetesVersion string `json:"k8s_version"`
 
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
-	// It is formated as an array of components: { name: "my_component", version: "0.0.1" }
-	ComponentDescriptor interface{} ``
+	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
+	ComponentDescriptor interface{} `json:"bom"`
+
+	// UpgradedComponentDescriptor describes the updated component_descriptor.
+	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
+	UpgradedComponentDescriptor interface{} `json:"upgraded_bom,omitempty"`
 
 	// Name of the testrun crd object.
 	Testrun TestrunMetadata `json:"tr"`
@@ -95,22 +99,20 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata          *Metadata        `json:"tm,omitempty"`
-	Type              SummaryType      `json:"type,omitempty"`
-	Phase             argov1.NodePhase `json:"phase,omitempty"`
-	StartTime         *metav1.Time     `json:"startTime,omitempty"`
-	Duration          int64            `json:"duration,omitempty"`
-	TestsRun          int              `json:"testsRun,omitempty"`
-	KibanaExternalURL string           `json:"kibana_url,omitempty"`
+	Metadata  *Metadata        `json:"tm,omitempty"`
+	Type      SummaryType      `json:"type,omitempty"`
+	Phase     argov1.NodePhase `json:"phase,omitempty"`
+	StartTime *metav1.Time     `json:"startTime,omitempty"`
+	Duration  int64            `json:"duration,omitempty"`
+	TestsRun  int              `json:"testsRun,omitempty"`
 }
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata          *Metadata        `json:"tm,omitempty"`
-	Type              SummaryType      `json:"type,omitempty"`
-	Name              string           `json:"name,omitempty"`
-	Phase             argov1.NodePhase `json:"phase,omitempty"`
-	StartTime         *metav1.Time     `json:"startTime,omitempty"`
-	Duration          int64            `json:"duration,omitempty"`
-	KibanaExternalURL string           `json:"kibana_url,omitempty"`
+	Metadata  *Metadata        `json:"tm,omitempty"`
+	Type      SummaryType      `json:"type,omitempty"`
+	Name      string           `json:"name,omitempty"`
+	Phase     argov1.NodePhase `json:"phase,omitempty"`
+	StartTime *metav1.Time     `json:"startTime,omitempty"`
+	Duration  int64            `json:"duration,omitempty"`
 }

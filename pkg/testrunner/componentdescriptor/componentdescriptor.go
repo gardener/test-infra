@@ -14,7 +14,10 @@
 package componentdescriptor
 
 import (
-	yaml "gopkg.in/yaml.v2"
+	"fmt"
+	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 // GetComponents returns a list of all git/component dependencies.
@@ -35,6 +38,18 @@ func GetComponents(content []byte) (ComponentList, error) {
 	}
 
 	return components.components, nil
+}
+
+// GetComponentsFromFile read a component descriptor and returns a ComponentList
+func GetComponentsFromFile(file string) (ComponentList, error) {
+	if file == "" {
+		return make(ComponentList, 0), nil
+	}
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot read component descriptor file %s: %s", file, err.Error())
+	}
+	return GetComponents(data)
 }
 
 // JSON returns the json output for a list of components
