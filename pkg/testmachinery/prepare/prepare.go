@@ -75,7 +75,7 @@ func New(name string, addGlobalInput bool) (*Definition, error) {
 			},
 		},
 	}
-	prepare := &Definition{td, addGlobalInput, []*Repository{}}
+	prepare := &Definition{td, addGlobalInput, make(map[string]*Repository, 0)}
 
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
@@ -89,23 +89,27 @@ func New(name string, addGlobalInput bool) (*Definition, error) {
 
 // AddLocation adds a testdef-location to the cloned repos and output artifacts.
 func (p *Definition) AddLocation(loc testdefinition.Location) {
-	if loc.Type() == tmv1beta1.LocationTypeGit {
-		gitLoc := loc.(*location.GitLocation)
-		p.repositories = append(p.repositories, &Repository{Name: loc.Name(), URL: gitLoc.Info.Repo, Revision: gitLoc.Info.Revision})
-
-		p.TestDefinition.AddOutputArtifacts(argov1.Artifact{
-			Name:       loc.Name(),
-			GlobalName: loc.Name(),
-			Path:       fmt.Sprintf("%s/%s", testmachinery.TM_REPO_PATH, loc.Name()),
-		})
+	if _, ok := p.repositories[loc.Name()]; ok {
+		return
 	}
+	if loc.Type() != tmv1beta1.LocationTypeGit {
+		return
+	}
+	gitLoc := loc.(*location.GitLocation)
+	p.repositories[loc.Name()] = &Repository{Name: loc.Name(), URL: gitLoc.Info.Repo, Revision: gitLoc.Info.Revision}
+
+	p.TestDefinition.AddOutputArtifacts(argov1.Artifact{
+		Name:       loc.Name(),
+		GlobalName: loc.Name(),
+		Path:       fmt.Sprintf("%s/%s", testmachinery.TM_REPO_PATH, loc.Name()),
+	})
 }
 
 // AddRepositoriesAsArtifacts adds all git repositories to be cloned as json array to the prepare step.
 func (p *Definition) AddRepositoriesAsArtifacts() error {
 	repoJSON, err := json.Marshal(p.repositories)
 	if err != nil {
-		return fmt.Errorf("Cannot add repositories to prepare step: %s", err.Error())
+		return fmt.Errorf("cannot add repositories to prepare step: %s", err.Error())
 	}
 	p.TestDefinition.AddInputArtifacts(argov1.Artifact{
 		Name: "repos",

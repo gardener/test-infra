@@ -6,7 +6,7 @@ import "github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 type Definition struct {
 	TestDefinition *testdefinition.TestDefinition
 	GlobalInput    bool
-	repositories   []*Repository
+	repositories   map[string]*Repository
 }
 
 // PrepareRepository is passed as a json array to the prepare step.
