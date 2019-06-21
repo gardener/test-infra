@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: network-test
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      k8s-app: network-test
+  template:
+    metadata:
+      labels:
+        k8s-app: network-test
+    spec:
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      containers:
+      - image: alpine:3.9
+        imagePullPolicy: IfNotPresent
+        name: network-test
+        volumeMounts:
+        - name: root
+          mountPath: /root
+        command:
+        - /bin/sleep
+        args:
+        - 30m
+        resources:
+          limits:
+            cpu: 50m
+            memory: 40Mi
+          requests:
+            cpu: 50m
+            memory: 40Mi
+        securityContext:
+          privileged: true
+          procMount: Default
+      volumes:
+      - name: root
+        hostPath:
+          path: /
+
+
