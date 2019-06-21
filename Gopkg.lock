@@ -823,6 +823,15 @@
   version = "v1.4.0"
 
 [[projects]]
+  digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
+  name = "gopkg.in/fsnotify.v1"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  source = "gopkg.in/fsnotify/fsnotify.v1"
+  version = "v1.4.7"
+
+[[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
   name = "gopkg.in/inf.v0"
   packages = ["."]
@@ -1277,7 +1286,7 @@
   revision = "6999998975a717e7f5fc2a7476497044cb111854"
 
 [[projects]]
-  digest = "1:40735261bc4255391a1c8ec32016172dec21e149ed239c9824fdfeaeffc04f22"
+  digest = "1:1b0ba7d43419e3f3afa24c1f3b08ec630af2b45986855ecb6ff3dc95b788d717"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -1309,11 +1318,12 @@
     "pkg/webhook",
     "pkg/webhook/admission",
     "pkg/webhook/conversion",
+    "pkg/webhook/internal/certwatcher",
     "pkg/webhook/internal/metrics",
   ]
   pruneopts = "NUT"
-  revision = "38483b2ad5f940ddc7356c8a34155c5170061859"
-  version = "v0.2.0-beta.1"
+  revision = "f60c87ec713cb8da81257228530605457ebf7220"
+  version = "v0.2.0-beta.2"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"

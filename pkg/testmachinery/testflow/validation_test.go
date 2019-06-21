@@ -68,6 +68,39 @@ var _ = Describe("Testflow", func() {
 			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
 		})
 
+		It("should fail when dependencies have a cycle", func() {
+			tf := tmv1beta1.TestFlow{
+				{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "testdefname",
+					},
+				},
+				{
+					Name:      "int-test1",
+					DependsOn: []string{"int-test3", "int-test"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "testdefname",
+					},
+				},
+				{
+					Name:      "int-test2",
+					DependsOn: []string{"int-test1"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "testdefname",
+					},
+				},
+				{
+					Name:      "int-test3",
+					DependsOn: []string{"int-test1"},
+					Definition: tmv1beta1.StepDefinition{
+						Name: "testdefname",
+					},
+				},
+			}
+			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
+		})
+
 		It("should fail when artifactsFrom and useGlobalArtifacts are used at the same time", func() {
 			tf := tmv1beta1.TestFlow{
 				{

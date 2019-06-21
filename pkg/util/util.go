@@ -183,3 +183,12 @@ func MarshalNoHTMLEscape(v interface{}) ([]byte, error) {
 	}
 	return buffer.Bytes(), nil
 }
+
+func StringArrayContains(ar []string, elem string) bool {
+	for _, val := range ar {
+		if val == elem {
+			return true
+		}
+	}
+	return false
+}

@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/util"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -95,6 +96,10 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 		return err
 	}
 
+	if err := checkDependencyCycle(identifier, tf, usedStepNames); err != nil {
+		return err
+	}
+
 	if err := ensureArtifactsFromStepsExist(identifier, tf, usedStepNames); err != nil {
 		return err
 	}
@@ -104,6 +109,36 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 		return fmt.Errorf("%s: No testdefinitions found", identifier)
 	}
 
+	return nil
+}
+
+// checkDependencyCycle checks if dependsOn definitions would result in a cycle.
+func checkDependencyCycle(identifier string, tf tmv1beta1.TestFlow, stepNameToStep map[string]*tmv1beta1.DAGStep) error {
+	for i, step := range tf {
+		identifier := fmt.Sprintf("%s.[%d]", identifier, i)
+		if len(step.DependsOn) == 0 {
+			continue
+		}
+		if err := checkPreviousStepHasDependentStep(stepNameToStep, step.DependsOn, step.Name); err != nil {
+			return fmt.Errorf("%s: %s", identifier, err.Error())
+		}
+	}
+	return nil
+}
+
+func checkPreviousStepHasDependentStep(stepNameToStep map[string]*tmv1beta1.DAGStep, parents []string, dependentStepName string) error {
+	for _, parent := range parents {
+		parentStep := stepNameToStep[parent]
+		if len(parentStep.DependsOn) == 0 {
+			continue
+		}
+		if util.StringArrayContains(parentStep.DependsOn, dependentStepName) {
+			return fmt.Errorf("step %s depends on %s", parent, dependentStepName)
+		}
+		if err := checkPreviousStepHasDependentStep(stepNameToStep, parentStep.DependsOn, dependentStepName); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
