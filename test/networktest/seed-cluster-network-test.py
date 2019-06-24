@@ -53,7 +53,7 @@ class Node:
         res = v1.list_node()
         nodes = []
         for i in res.items:
-            n = Node(ip=i.status.addresses[0].address, name=i.status.addresses[1].address)
+            n = Node(ip=i.status.addresses[0].address, name=i.metadata.name)
             nodes.append(n)
         return nodes
 
