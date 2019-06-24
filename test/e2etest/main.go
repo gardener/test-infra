@@ -15,7 +15,7 @@ func main() {
 	desc := kubetest.Generate()
 	kubetestResultsPath := kubetest.Run(desc)
 	resultSummary := kubetest.Analyze(kubetestResultsPath)
-	if config.GinkgoParallel == false && config.PublishResultsToTestgrid == true && resultSummary.TestsuiteSuccessful == true && config.DescriptionFile == "conformance.json" {
-		kubetest.Publish(kubetestResultsPath, resultSummary)
+	if config.PublishResultsToTestgrid == true && resultSummary.TestsuiteSuccessful == true {
+		kubetest.Publish(config.ExportPath, resultSummary)
 	}
 }

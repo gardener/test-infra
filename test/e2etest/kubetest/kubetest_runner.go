@@ -115,10 +115,14 @@ func runKubetest(args KubetestArgs) {
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
-	cmd.Stderr = &stderr
+	if log.GetLevel() == log.DebugLevel {
+		cmd.Stderr = &stderr
+	}
 	err := cmd.Run()
 
-	log.Info(fmt.Printf(stderr.String()))
+	if log.GetLevel() == log.DebugLevel {
+		log.Info(fmt.Printf(stderr.String()))
+	}
 
 	//	Output our results
 	if out.String() != "" {

@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -23,8 +25,6 @@ var (
 	TmpDir                   string
 	ShootKubeconfigPath      string
 	GinkgoParallel           bool
-	ConformanceTestsSkip     string
-	ConformanceTestsFocus    string
 	DescriptionFile          string
 	K8sRelease               string
 	CloudProvider            string
@@ -38,7 +38,10 @@ var (
 	K8sReleaseMajorMinor     string
 	GardenerVersion          string
 	RetestFlaggedOnly        bool
+	TestcaseGroup            []string
 )
+
+var WORKING_DESC_FILE = "working.json"
 
 func init() {
 	//log.SetLevel(log.DebugLevel)
@@ -69,12 +72,15 @@ func init() {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
 	GinkgoParallel, _ = strconv.ParseBool(util.GetEnv("GINKGO_PARALLEL", "true"))
-	ConformanceTestsSkip = os.Getenv("CONFORMANCE_SKIP")
-	ConformanceTestsFocus = os.Getenv("CONFORMANCE_FOCUS")
-	DescriptionFile = os.Getenv("DESCRIPTION_FILE")
+	DescriptionFile = util.GetEnv("DESCRIPTION_FILE", WORKING_DESC_FILE)
 	K8sRelease = os.Getenv("K8S_VERSION")
 	if K8sRelease == "" {
 		log.Fatal("K8S_VERSION environment variable not found")
+	}
+	TestcaseGroup = strings.Split(os.Getenv("TESTCASE_GROUPS"), ",")
+	sort.Strings(TestcaseGroup)
+	if len(TestcaseGroup) == 0 {
+		log.Fatal("TESTCASE_GROUP environment variable not found")
 	}
 	CloudProvider = os.Getenv("CLOUDPROVIDER")
 	if CloudProvider == "" {
@@ -85,6 +91,9 @@ func init() {
 	K8sReleaseMajorMinor = string(regexp.MustCompile(`^(\d+\.\d+)`).FindSubmatch([]byte(K8sRelease))[1])
 	DescriptionsPath = path.Join(OwnDir, "kubetest", "description", K8sReleaseMajorMinor)
 	DescriptionFilePath = path.Join(DescriptionsPath, DescriptionFile)
+	if _, err := os.Stat(DescriptionFilePath); err != nil {
+		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", DescriptionFilePath))
+	}
 	FlakeAttempts, _ = strconv.Atoi(util.GetEnv("FLAKE_ATTEMPTS", "2"))
 	PublishResultsToTestgrid, _ = strconv.ParseBool(util.GetEnv("PUBLISH_RESULTS_TO_TESTGRID", "false"))
 	IgnoreSkipList, _ = strconv.ParseBool(util.GetEnv("IGNORE_SKIP_LIST", "false"))
@@ -99,8 +108,6 @@ func init() {
 	log.Debugf("TestInfraPath: %s", TestInfraPath)
 	log.Debugf("ShootKubeconfigPath: %s", ShootKubeconfigPath)
 	log.Debugf("GinkgoParallel: %t", GinkgoParallel)
-	log.Debugf("ConformanceTestsSkip: %s", ConformanceTestsSkip)
-	log.Debugf("ConformanceTestsFocus: %s", ConformanceTestsFocus)
 	log.Debugf("K8sRelease: %s", K8sRelease)
 	log.Debugf("CloudProvider: %s", CloudProvider)
 	log.Debugf("IgnoreFalsePositiveList: %t", IgnoreFalsePositiveList)
@@ -112,4 +119,5 @@ func init() {
 	log.Debugf("FlakeAttempts: %o", FlakeAttempts)
 	log.Debugf("GardenerVersion: %o", GardenerVersion)
 	log.Debugf("RetestFlaggedOnly: %o", RetestFlaggedOnly)
+	log.Debugf("TestcaseGroup: %o", TestcaseGroup)
 }

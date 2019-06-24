@@ -16,9 +16,9 @@ kind: TestDefinition
 metadata:
   name: testgrid
 spec:
-  owner: gardener-oq@listserv.sap.com
+  owner: DL_5C5BE3E2970B9F404D0E2F50@sap.com
   recipientsOnFailure:
-  - gardener-oq@listserv.sap.com
+  - DL_5C5BE3E2970B9F404D0E2F50@sap.com
 
   description: Run kubernetes conformance tests and push result files (e2e.log and junit_01.xml) to testgrid repository.
 
@@ -27,7 +27,7 @@ spec:
 
   config:
   - type: env
-    name: PUBLISH_TO_TESTGRID
+    name: PUBLISH_RESULTS_TO_TESTGRID
     value: "true"
   - type: file
     name: GCLOUD_ACCOUNT_SECRET
@@ -36,7 +36,16 @@ spec:
       secretKeyRef:
         name: testgrid-gcs-secret
         key: gcloud.json
+  - type: env
+    name: TESTCASE_GROUPS
+    value: 'conformance'
+  - type: env
+    name: GINKGO_PARALLEL
+    value: "false"
+  - type: env
+    name: DESCRIPTION_FILE
+    value: "working.json"
 
   command: [bash, -c]
-  args: ["TESTDESCRIPTION_NAME=conformance.desc ./test/k8s-e2e/e2e-test-execute"]
+  args: go run $GOPATH/src/github.com/gardener/test-infra/test/e2etest
   image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step

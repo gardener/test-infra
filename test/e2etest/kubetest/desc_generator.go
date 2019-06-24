@@ -16,30 +16,47 @@ import (
 )
 
 const (
-	FALSE_POSITIVES_DESC_FILE = "false_positives.json"
-	SKIP_DESC_FILE            = "skip.json"
-	GENERATED_RUN_DESC_FILE   = "generated_tests_to_run.txt"
-	SUCCESS                   = "success"
-	FAILURE                   = "failure"
+	FalsePositivesDescFile = "false_positives.json"
+	SkipDescFile           = "skip.json"
+	GeneratedRunDescFile   = "generated_tests_to_run.txt"
+	AllTestcasesFile       = "all_testcases.txt"
+	Success                = "success"
+	Failure                = "failure"
+	Wildcard               = "*"
 )
 
-var falsePositiveDescPath = filepath.Join(config.DescriptionsPath, FALSE_POSITIVES_DESC_FILE)
-var GeneratedRunDescPath = filepath.Join(config.TmpDir, GENERATED_RUN_DESC_FILE)
-var skipDescPath = filepath.Join(config.DescriptionsPath, SKIP_DESC_FILE)
+var falsePositiveDescPath = filepath.Join(config.DescriptionsPath, FalsePositivesDescFile)
+var GeneratedRunDescPath = filepath.Join(config.TmpDir, GeneratedRunDescFile)
+var AllTestcasesFilePath = filepath.Join(config.TmpDir, AllTestcasesFile)
+var skipDescPath = filepath.Join(config.DescriptionsPath, SkipDescFile)
 
 func Generate() (desc string) {
+	log.Info("Generate test description file")
 	testcasesToRun := sets.NewStringSet()
 	allE2eTestcases := getAllE2eTestCases()
 
 	if config.DescriptionFilePath != "" {
-		testcasesFromDescriptionFile := getTestcaseNamesFromDesc(config.DescriptionFilePath)
-		testcasesToRun = allE2eTestcases.GetSetOfMatching(testcasesFromDescriptionFile)
+		testcasesFromDescFile := UnmarshalDescription(config.DescriptionFilePath)
+		for _, testcaseFromDesc := range testcasesFromDescFile {
+			matching := allE2eTestcases.GetMatchingForTestcase(testcaseFromDesc.Name, testcaseFromDesc.Skip, testcaseFromDesc.Focus)
+			if testcaseFromDesc.validForCurrentContext() {
+				if matching.Len() == 0 {
+					log.Warnf("Couldn't find testcase: '%s'", testcaseFromDesc.Name)
+					continue
+				}
+				testcasesToRun = testcasesToRun.Union(matching)
+			} else {
+				// this is necessary since e.g. all conformance testcases are added by a wildcard, but there may still be
+				// additionally a conformance test excluded explicitly or assigned to a group
+				testcasesToRun = testcasesToRun.Difference(matching)
+			}
+		}
 	}
 
 	if config.RetestFlaggedOnly {
 		var testcasesFromDescriptionFile = sets.NewStringSet()
 		testcasesFromDescriptionFile.Insert("[Conformance]")
-		testcasesToRun = allE2eTestcases.GetSetOfMatching(testcasesFromDescriptionFile)
+		testcasesToRun = allE2eTestcases.GetMatchingOfSet(testcasesFromDescriptionFile)
 	}
 
 	if !config.IgnoreFalsePositiveList {
@@ -77,26 +94,41 @@ func Generate() (desc string) {
 	if err := writeLinesToFile(testcasesToRun, GeneratedRunDescPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "Couldn't save testcasesToRun as file in %s", GeneratedRunDescPath))
 	}
+	log.Infof("Description file %s generated", GeneratedRunDescPath)
 	return GeneratedRunDescPath
 }
 
 func getTestcaseNamesFromDesc(descPath string) sets.StringSet {
-	testcasesOfCurrentProvider := sets.NewStringSet()
+	matchedTestcases := sets.NewStringSet()
 	testcases := UnmarshalDescription(descPath)
 	for _, testcase := range testcases {
 		if len(testcase.ExcludedProviders) != 0 && len(testcase.OnlyProviders) != 0 {
 			log.Warn("fields excluded and only of description file testcase, are not allowed to be defined both at the same time. Skipping testcase: %s", testcase.Name)
 			continue
 		}
-		// check
-		excludedExplicitly := util.Contains(testcase.ExcludedProviders, config.CloudProvider)
-		excludedImplicitly := len(testcase.OnlyProviders) != 0 && !util.Contains(testcase.OnlyProviders, config.CloudProvider)
-		retestActiveForThisProviderAndTest := config.RetestFlaggedOnly && util.Contains(testcase.Retest, config.CloudProvider)
-		if !excludedExplicitly && !excludedImplicitly && !config.RetestFlaggedOnly || retestActiveForThisProviderAndTest {
-			testcasesOfCurrentProvider.Insert(testcase.Name)
+		if testcase.validForCurrentContext() {
+			matchedTestcases.Insert(testcase.Name)
 		}
 	}
-	return testcasesOfCurrentProvider
+	return matchedTestcases
+}
+
+func (testcase TestcaseDesc) validForCurrentContext() bool {
+	validForCurrentContext := false
+	excludedExplicitly := util.Contains(testcase.ExcludedProviders, config.CloudProvider)
+	consideredByOnlyField := testcase.OnlyProviders == nil || len(testcase.OnlyProviders) != 0 && util.Contains(testcase.OnlyProviders, config.CloudProvider)
+	testcasesGroupMatched := false
+	for _, testcaseGroup := range config.TestcaseGroup {
+		if testcaseGroup == Wildcard || util.Contains(testcase.TestcaseGroups, testcaseGroup) {
+			testcasesGroupMatched = true
+			break
+		}
+	}
+	retestActiveForThisProviderAndTest := config.RetestFlaggedOnly && util.Contains(testcase.Retest, config.CloudProvider)
+	if !excludedExplicitly && consideredByOnlyField && !config.RetestFlaggedOnly && testcasesGroupMatched || retestActiveForThisProviderAndTest {
+		validForCurrentContext = true
+	}
+	return validForCurrentContext
 }
 
 func getAllE2eTestCases() sets.StringSet {
@@ -120,6 +152,9 @@ func getAllE2eTestCases() sets.StringSet {
 		if !testcase.Skipped {
 			allTestcases.Insert(testcase.Name)
 		}
+	}
+	if log.GetLevel() == log.DebugLevel {
+		allTestcases.WriteToFile(AllTestcasesFilePath)
 	}
 	return allTestcases
 }
@@ -172,4 +207,7 @@ type TestcaseDesc struct {
 	ExcludedProviders []string `json:"exclude,omitempty"`
 	OnlyProviders     []string `json:"only,omitempty"`
 	Retest            []string `json:"retest,omitempty"`
+	TestcaseGroups    []string `json:"groups"`
+	Skip              string   `json:"skip,omitempty"`
+	Focus             string   `json:"focus,omitempty"`
 }

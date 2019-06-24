@@ -1,5 +1,0 @@
-[
-  { "testcase": "[sig-network] Proxy version v1 should proxy through a service and a pod  [Conformance]"},
-  { "testcase": "[k8s.io] [sig-node] Security Context [Feature:SecurityContext] should support pod.Spec.SecurityContext.SupplementalGroups"},
-  { "testcase": "[k8s.io] [sig-node] Security Context [Feature:SecurityContext] should support seccomp alpha runtime/default annotation [Feature:Seccomp]"}
-]

@@ -14,21 +14,31 @@
 
 kind: TestDefinition
 metadata:
-  name: e2e-fast
+  name: testgrid
 spec:
   owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
   - gardener-oq@listserv.sap.com
 
-  description: Run fast kubernetes e2e tests.
+  description: Run kubernetes conformance tests and push result files (e2e.log and junit_01.xml) to testgrid repository.
 
   activeDeadlineSeconds: 10800
-  labels: ["default"]
+  behavior: ["serial"]
 
   config:
   - type: env
+    name: PUBLISH_RESULTS_TO_TESTGRID
+    value: "true"
+  - type: file
+    name: GCLOUD_ACCOUNT_SECRET
+    path: /tmp/secrets/gardener-logs-conformance-tests.json
+    valueFrom:
+      secretKeyRef:
+        name: testgrid-gcs-secret
+        key: gcloud.json
+  - type: env
     name: TESTCASE_GROUPS
-    value: 'fast'
+    value: 'fast,slow'
   - type: env
     name: DESCRIPTION_FILE
     value: "working.json"

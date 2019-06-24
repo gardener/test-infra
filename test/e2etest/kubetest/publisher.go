@@ -19,8 +19,9 @@ const (
 	gcsProjectID = "gardener"
 )
 
+// Publish creates meta files finished.json, started.json in kubetestResultsPath path and uploads them
+// and additionally e2e.log and junit_01.xml files to the google cloud storage
 func Publish(kubetestResultsPath string, resultSummary Summary) {
-	kubetestResultsPath = getDirectResultsDir(kubetestResultsPath)
 	files := make([]string, 0)
 	finishedJsonPath := filepath.Join(kubetestResultsPath, "finished.json")
 	startedJsonPath := filepath.Join(kubetestResultsPath, "started.json")
@@ -31,16 +32,8 @@ func Publish(kubetestResultsPath string, resultSummary Summary) {
 		startedJsonPath,
 	)
 	createMetadataFiles(startedJsonPath, finishedJsonPath, resultSummary)
+	log.Infof("Publish to google cloud storage: %v", files)
 	uploadTestResultFiles(files)
-}
-
-func getDirectResultsDir(generalResultsPath string) string {
-	filesInResultPath, err := ioutil.ReadDir(generalResultsPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	generalResultsPath = filepath.Join(generalResultsPath, filesInResultPath[0].Name())
-	return generalResultsPath
 }
 
 func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary Summary) {
@@ -49,9 +42,9 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 		log.Fatal(err)
 	}
 
-	testStatus := "FAILURE"
+	testStatus := "Failure"
 	if testSummary.TestsuiteSuccessful {
-		testStatus = "SUCCESS"
+		testStatus = "Success"
 	}
 	finishedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"%s\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testSummary.FinishedTime.Unix(), testStatus, config.K8sRelease, config.GardenerVersion))
 	if err := ioutil.WriteFile(finishedJsonPath, finishedJsonContent, 06444); err != nil {
@@ -82,7 +75,11 @@ func uploadTestResultFiles(files []string) {
 		if filepath.Base(fileSourcePath) == "junit_01.xml" {
 			filename = filepath.Join("artifacts", filename)
 		}
-		fileTargetPath := fmt.Sprintf("ci-gardener-e2e-conformance-%s-v%s/%s/%s", provider, config.K8sReleaseMajorMinor, timestamp, filename)
+		bucketSuffix := ""
+		if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
+			bucketSuffix = "-conformance"
+		}
+		fileTargetPath := fmt.Sprintf("ci-gardener-e2e%s-%s-v%s/%s/%s", bucketSuffix, provider, config.K8sReleaseMajorMinor, timestamp, filename)
 
 		if err := upload(client, gcsBucket, fileSourcePath, fileTargetPath); err != nil {
 			switch err {
