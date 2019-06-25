@@ -97,6 +97,29 @@ var _ = Describe("Result collection tests", func() {
 
 		})
 
+		It("should collect configurations for steps", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+
+			configElement := tmv1beta1.ConfigElement{
+				Type:  tmv1beta1.ConfigTypeEnv,
+				Name:  "test",
+				Value: "val",
+			}
+
+			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
+
+			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+			defer utils.DeleteTestrun(tmClient, tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
+
+			status := tr.Status.Steps[0]
+			Expect(status.TestDefinition.Config).To(ContainElement(&configElement))
+		})
+
 		It("should collect status of multiple workflow nodes", func() {
 			ctx := context.Background()
 			defer ctx.Done()

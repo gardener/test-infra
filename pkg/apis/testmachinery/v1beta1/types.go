@@ -148,7 +148,7 @@ type TestrunStatus struct {
 
 // StepStatus is the status of Testflow step
 type StepStatus struct {
-	Name              string                   `json:"name,omitempty"`
+	Name              string                   `json:"name"`
 	Position          StepStatusPosition       `json:"position"`
 	TestDefinition    StepStatusTestDefinition `json:"testdefinition,omitempty"`
 	Phase             argov1.NodePhase         `json:"phase,omitempty"`
@@ -161,11 +161,12 @@ type StepStatus struct {
 
 // StepStatusTestDefinition holds information about the used testdefinition and its location.
 type StepStatusTestDefinition struct {
-	Name                  string       `json:"name,omitempty"`
-	Location              TestLocation `json:"location,omitempty"`
-	Owner                 string       `json:"owner,omitempty"`
-	RecipientsOnFailure   []string     `json:"recipientsOnFailure"`
-	ActiveDeadlineSeconds *int64       `json:"activeDeadlineSeconds"`
+	Name                  string           `json:"name,omitempty"`
+	Location              TestLocation     `json:"location,omitempty"`
+	Config                []*ConfigElement `json:"config,omitempty"`
+	Owner                 string           `json:"owner,omitempty"`
+	RecipientsOnFailure   []string         `json:"recipientsOnFailure"`
+	ActiveDeadlineSeconds *int64           `json:"activeDeadlineSeconds"`
 }
 
 type StepStatusPosition struct {
