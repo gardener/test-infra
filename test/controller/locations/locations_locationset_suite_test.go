@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 
@@ -34,7 +35,7 @@ import (
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 300 * time.Second
 )
 
 var (

@@ -18,7 +18,7 @@ import util
 import yaml
 import ctx
 
-github_config_names=['github_com']
+github_config_names=['tm_github_com']
 
 def get_config(name: str):
     util.check_type(name, str)

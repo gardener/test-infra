@@ -17,6 +17,7 @@ package testflow_test
 import (
 	"context"
 	"encoding/base64"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path/filepath"
 
@@ -71,7 +72,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 	})
 
-	Context("kubeconfigs configsrouce", func() {
+	Context("kubeconfigs config source", func() {
 		It("should add a shoot kubeconfig referenced from a secret to all test steps", func() {
 			ctx := context.Background()
 			defer ctx.Done()
@@ -82,7 +83,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "test-kubeconfig",
+					GenerateName: "test-kubeconfig-",
 					Namespace:    namespace,
 				},
 				Type: corev1.SecretTypeOpaque,
@@ -96,6 +97,7 @@ var _ = Describe("Testflow execution tests", func() {
 				err := tmClient.Client().Delete(ctx, secret)
 				Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 			}()
+			log.Debugf("created secret %s", secret.Name)
 
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromConfig(strconf.ConfigSource{

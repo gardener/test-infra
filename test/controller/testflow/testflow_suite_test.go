@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/util/strconf"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"testing"
@@ -44,7 +45,7 @@ import (
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 10 * time.Minute
 )
 
 var (
@@ -65,6 +66,10 @@ var _ = Describe("Testflow execution tests", func() {
 		commitSha = os.Getenv("GIT_COMMIT_SHA")
 		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
 		namespace = os.Getenv("TM_NAMESPACE")
+
+		if os.Getenv("DEBUG") == "true" {
+			log.SetLevel(log.DebugLevel)
+		}
 
 		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,

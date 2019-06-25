@@ -17,6 +17,7 @@ package testrunner_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
@@ -33,7 +34,7 @@ import (
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 300 * time.Second
 )
 
 func TestValidationWebhook(t *testing.T) {
@@ -65,14 +66,15 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-		utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
+		_, err = utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	BeforeEach(func() {
 		testrunConfig = testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
-			Timeout:   maxWaitTime,
+			Timeout:   int64(maxWaitTime),
 			Interval:  5,
 		}
 	})

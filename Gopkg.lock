@@ -1350,6 +1350,7 @@
     "github.com/gardener/gardener/pkg/utils",
     "github.com/gardener/gardener/pkg/utils/flow",
     "github.com/gardener/gardener/pkg/utils/kubernetes/health",
+    "github.com/gardener/gardener/pkg/utils/retry",
     "github.com/go-openapi/spec",
     "github.com/google/go-github/github",
     "github.com/joho/godotenv",

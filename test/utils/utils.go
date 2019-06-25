@@ -18,8 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"reflect"
@@ -45,20 +47,21 @@ import (
 
 // RunTestrun executes a testrun on a cluster and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, namespace string, maxWaitTime time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	foundTestrun, err := WatchTestrun(ctx, tmClient, tr, namespace, maxWaitTime)
+	foundTestrun, err := WatchTestrunUntilCompleted(ctx, tmClient, tr, maxWaitTime)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error watching Testrun: %s\n%s", tr.Name, err.Error())
+		fmt.Print(util.PrettyPrintStruct(tr))
+		return nil, nil, fmt.Errorf("error watching Testrun: %s: %s", tr.Name, err.Error())
 	}
 
 	wf, err := GetWorkflow(ctx, tmClient, foundTestrun)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Cannot get Workflow for Testrun: %s\n%s", tr.Name, err.Error())
+		return nil, nil, fmt.Errorf("cannot get Workflow for Testrun: %s: %s", tr.Name, err.Error())
 	}
 
 	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
@@ -66,7 +69,7 @@ func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta
 	}
 	if foundTestrun.Status.Phase != phase {
 		// get additional errors message
-		errMsgs := []string{}
+		errMsgs := make([]string, 0)
 		for _, node := range wf.Status.Nodes {
 			if node.Message != "" {
 				errMsgs = append(errMsgs, fmt.Sprintf("%s: %s", node.TemplateName, node.Message))
@@ -97,27 +100,33 @@ func GetWorkflow(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1bet
 	return wf, nil
 }
 
-// WatchTestrun watches a testrun to finish and returns the newest testrun object.
-func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace string, maxWaitTime int64) (*tmv1beta1.Testrun, error) {
+// WatchTestrunUntilCompleted watches a testrun to finish and returns the newest testrun object.
+func WatchTestrunUntilCompleted(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
 	foundTestrun := &tmv1beta1.Testrun{}
 	var testrunPhase argov1.NodePhase
-	startTime := time.Now()
-	for !util.Completed(testrunPhase) {
-		var err error
-		if util.MaxTimeExceeded(startTime, maxWaitTime) {
-			return nil, fmt.Errorf("Maximum wait time exceeded")
-		}
 
-		err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, foundTestrun)
-		if err != nil {
-			return nil, err
-		}
+	err := WatchTestrun(ctx, tmClient, tr, maxWaitTime, func(newTestrun *tmv1beta1.Testrun) (bool, error) {
+		foundTestrun = newTestrun
 		testrunPhase = foundTestrun.Status.Phase
+		if util.Completed(testrunPhase) {
+			return retry.Ok()
+		}
+		return retry.NotOk()
+	})
 
-		time.Sleep(5 * time.Second)
-	}
+	return foundTestrun, err
+}
 
-	return foundTestrun, nil
+// WatchTestrun watches a testrun until the maxwait is reached.
+// Every time a testrun can be found without a problem the function f is called.
+func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, maxWaitTime time.Duration, f func(*tmv1beta1.Testrun) (bool, error)) error {
+	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
+		updatedTestrun := &tmv1beta1.Testrun{}
+		if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, updatedTestrun); err != nil {
+			return retry.MinorError(err)
+		}
+		return f(updatedTestrun)
+	})
 }
 
 // DeleteTestrun deletes a testrun and expects to be successful.
@@ -133,8 +142,8 @@ func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 }
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
-func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime int64) error {
-	return wait.PollImmediate(5*time.Second, time.Duration(maxWaitTime)*time.Second, func() (bool, error) {
+func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime time.Duration) error {
+	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
 		var (
 			tmControllerStatus    = deploymentIsReady(clusterClient, namespace, "testmachinery-controller")
 			wfControllerStatus    = deploymentIsReady(clusterClient, namespace, "workflow-controller")
@@ -149,35 +158,41 @@ func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace strin
 }
 
 // WaitForMinioService waits for the minio service to get an external IP and return the minio config.
-func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, namespace string, maxWaitTime int64) *testmachinery.ObjectStoreConfig {
-	minioConfig, err := clusterClient.GetConfigMap(namespace, "tm-config")
+func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, namespace string, maxWaitTime time.Duration) (*testmachinery.ObjectStoreConfig, error) {
+	ctx := context.Background()
+	defer ctx.Done()
+
+	minioConfig := &corev1.ConfigMap{}
+	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: "tm-config"}, minioConfig)
 	Expect(err).ToNot(HaveOccurred())
 
-	minioSecrets, err := clusterClient.GetSecret(namespace, minioConfig.Data["objectstore.secretName"])
+	minioSecret := &corev1.Secret{}
+	err = clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: minioConfig.Data["objectstore.secretName"]}, minioSecret)
 	Expect(err).ToNot(HaveOccurred())
 
 	// wait for service to get endpoint ip
-	if minioEndpoint != "" {
-		startTime := time.Now()
-		for {
-			Expect(util.MaxTimeExceeded(startTime, maxWaitTime)).To(BeFalse(), "Max Wait time for minio external ip exceeded.")
-			_, err := HTTPGet("http://" + minioEndpoint)
-			if err == nil {
-				break
-			}
+	err = wait.PollImmediate(10*time.Second, maxWaitTime, func() (bool, error) {
+		_, err := HTTPGet("http://" + minioEndpoint)
+		if err != nil {
+			return retry.MinorError(err)
 		}
+
+		return retry.Ok()
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &testmachinery.ObjectStoreConfig{
 		Endpoint:   minioEndpoint,
-		AccessKey:  string(minioSecrets.Data["accessKey"]),
-		SecretKey:  string(minioSecrets.Data["secretKey"]),
+		AccessKey:  string(minioSecret.Data["accessKey"]),
+		SecretKey:  string(minioSecret.Data["secretKey"]),
 		BucketName: minioConfig.Data["objectstore.bucketName"],
-	}
+	}, nil
 }
 
 func deploymentIsReady(clusterClient kubernetes.Interface, namespace, name string) bool {
-	deployment := &v1.Deployment{}
+	deployment := &appsv1.Deployment{}
 	err := clusterClient.Client().Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	if err != nil {
 		log.Debug(err.Error())
@@ -207,13 +222,4 @@ func HTTPGet(url string) (*http.Response, error) {
 	}
 
 	return response, nil
-}
-
-// TestflowLen returns the number of all items in 2 dimensional array.
-func TestflowLen(m [][]*tmv1beta1.StepStatus) int {
-	length := 0
-	for _, a := range m {
-		length += len(a)
-	}
-	return length
 }
