@@ -25,7 +25,7 @@ const (
 	JunitXmlFileNamePattern = `junit_\d+.xml$`
 	TestSummaryFileName     = "test_summary.json"
 	MergedJunitXmlFile      = "junit_01.xml"
-	MergedE2eLogFile        = "e2e.log"
+	MergedE2eLogFile        = "build-log.txt"
 )
 
 var mergedJunitXmlFilePath = filepath.Join(config.ExportPath, MergedJunitXmlFile)
@@ -33,7 +33,7 @@ var MergedE2eLogFilePath = filepath.Join(config.ExportPath, MergedE2eLogFile)
 
 // Analyze analyzes junit.xml files and e2e.log files, which are dumped by kubetest and provides a resulting test suite summary and results for each testcase individually. These results are then written to the export dir as files.
 func Analyze(kubetestResultsPath string) Summary {
-	log.Info("Analyze e2e.log and junit.xml files")
+	log.Infof("Analyze e2e.log and junit.xml files in %s", kubetestResultsPath)
 	e2eLogFilePaths := util.GetFilesByPattern(kubetestResultsPath, E2eLogFileNamePattern)
 	summary, err := analyzeE2eLogs(e2eLogFilePaths)
 	if err != nil {
@@ -108,7 +108,8 @@ func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
 }
 
 func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
-	summary := Summary{DescriptionFile: config.DescriptionFile}
+	emptySummary := Summary{DescriptionFile: config.DescriptionFile}
+	summary := emptySummary
 	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in (?P<TestSuiteDuration>\d+)`)
 	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*(?P<Failed>\d+) Failed.*Pending`)
 
@@ -119,27 +120,32 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 		}
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
+		buf := make([]byte, 0, 64*1024)
+		scanner.Buffer(buf, 2024*1024)
 
 		for scanner.Scan() {
 			if regexpRanSpecs.MatchString(scanner.Text()) {
-				groupToValue, _ := util.GetGroupMapOfRegexMatches(regexpRanSpecs, scanner.Text())
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpRanSpecs, scanner.Text())
 				groupToValueInt, err := convertValuesToInt(groupToValue)
 				if err != nil {
-					return summary, errors.Errorf("Empty or non integer values in map, for regexp %s", regexpRanSpecs.String())
+					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpRanSpecs.String())
 				}
 				summary.ExecutedTestcases += groupToValueInt["TestcasesRan"]
 				summary.TestsuiteDuration += groupToValueInt["TestSuiteDuration"]
 			}
 			if regexpPassedFailed.MatchString(scanner.Text()) {
-				groupToValue, _ := util.GetGroupMapOfRegexMatches(regexpPassedFailed, scanner.Text())
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpPassedFailed, scanner.Text())
 				groupToValueInt, err := convertValuesToInt(groupToValue)
 				if err != nil {
-					return summary, errors.Errorf("Empty or non integer values in map, for regexp %s", regexpRanSpecs.String())
+					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpPassedFailed.String())
 				}
 				summary.SuccessfulTestcases += groupToValueInt["Passed"]
 				summary.FailedTestcases += groupToValueInt["Failed"]
 				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 			}
+		}
+		if summary == emptySummary {
+			log.Fatal("Wasn't able to interpret e2e.log. Got only zero values.")
 		}
 
 		//TODO
@@ -150,7 +156,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 	summary.StartTime = summary.FinishedTime.Add(time.Second * time.Duration(-summary.TestsuiteDuration))
 	file, err := json.MarshalIndent(summary, "", " ")
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't marshal testsuite summary %s", summary))
+		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
 	}
 	log.Infof("test suite summary: %+v\n", summary)
 
@@ -165,11 +171,9 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 
 func convertValuesToInt(m map[string]string) (map[string]int, error) {
 	convertedMap := make(map[string]int, len(m))
-	first := true
 	for key, value := range m {
-		if first {
-			first = false
-			continue // first element is always the whole match
+		if key == "" {
+			continue // ignore fields without a key
 		}
 		convertedValue, err := strconv.Atoi(value)
 		if err != nil {
@@ -194,7 +198,11 @@ func mergeE2eLogFiles(dst string, e2eLogFilePaths []string) {
 			log.Fatalln("failed to append file %s to file %s:", fileToAppend, resultFile, err)
 		}
 	}
-	log.Infof("Merged %o e2e log files to %s", len(e2eLogFilePaths), dst)
+	if len(e2eLogFilePaths) == 1 {
+		log.Infof("copied %s file to %s/%s", e2eLogFilePaths[0], dst, MergedE2eLogFile)
+	} else {
+		log.Infof("merged %o e2e log files to %s%s%s", len(e2eLogFilePaths), dst, MergedE2eLogFile)
+	}
 }
 
 type Summary struct {

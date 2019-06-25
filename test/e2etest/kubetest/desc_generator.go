@@ -31,7 +31,7 @@ var AllTestcasesFilePath = filepath.Join(config.TmpDir, AllTestcasesFile)
 var skipDescPath = filepath.Join(config.DescriptionsPath, SkipDescFile)
 
 func Generate() (desc string) {
-	log.Info("Generate test description file")
+	log.Info("generate test description file")
 	testcasesToRun := sets.NewStringSet()
 	allE2eTestcases := getAllE2eTestCases()
 
@@ -87,14 +87,14 @@ func Generate() (desc string) {
 	}
 
 	if len(testcasesToRun) == 0 {
-		log.Fatal("No testcases found to run.")
+		log.Fatal("no testcases found to run.")
 	}
 
 	// write testcases to run to file
 	if err := writeLinesToFile(testcasesToRun, GeneratedRunDescPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "Couldn't save testcasesToRun as file in %s", GeneratedRunDescPath))
 	}
-	log.Infof("Description file %s generated", GeneratedRunDescPath)
+	log.Infof("description file %s generated", GeneratedRunDescPath)
 	return GeneratedRunDescPath
 }
 
@@ -137,14 +137,14 @@ func getAllE2eTestCases() sets.StringSet {
 	defer os.RemoveAll(resultsPath)
 	junitPaths := util.GetFilesByPattern(resultsPath, JunitXmlFileNamePattern)
 	if len(junitPaths) > 1 {
-		log.Fatalf("Found multiple junit.xml files after dry run of kubetest in %s. Expected only one.", resultsPath)
+		log.Fatalf("found multiple junit.xml files after dry run of kubetest in %s. Expected only one.", resultsPath)
 	}
 	if len(junitPaths) == 0 {
-		log.Fatalf("No junit file has been created during kubetest dry run.", resultsPath)
+		log.Fatalf("no junit file has been created during kubetest dry run. Cluster is probably not existing or hibernated.")
 	}
 	junitXml, err := UnmarshalJunitXMLResult(junitPaths[0])
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't unmarshal junit.xml %s", junitPaths[0]))
+		log.Fatal(errors.Wrapf(err, "couldn't unmarshal junit.xml %s", junitPaths[0]))
 	}
 
 	// get testcase names of all not skipped testcases
@@ -163,10 +163,10 @@ func UnmarshalDescription(descPath string) []TestcaseDesc {
 	var testcases []TestcaseDesc
 	descFile, err := ioutil.ReadFile(descPath)
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't read file %s: %s", descPath, descFile))
+		log.Fatal(errors.Wrapf(err, "couldn't read file %s: %s", descPath, descFile))
 	}
 	if err = json.Unmarshal(descFile, &testcases); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't unmarshal %s: %s", descPath, descFile))
+		log.Fatal(errors.Wrapf(err, "couldn't unmarshal %s: %s", descPath, descFile))
 	}
 	return testcases
 }
@@ -196,7 +196,7 @@ func writeLinesToFile(lines sets.StringSet, path string) error {
 	w := bufio.NewWriter(file)
 	for line := range lines {
 		if _, err := fmt.Fprintln(w, line); err != nil {
-			log.Warn(errors.Wrapf(err, "Couldn't write text '%s' to file %s", line, file))
+			log.Warn(errors.Wrapf(err, "couldn't write text '%s' to file %s", line, file))
 		}
 	}
 	return w.Flush()

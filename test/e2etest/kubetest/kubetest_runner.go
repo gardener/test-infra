@@ -30,21 +30,21 @@ func init() {
 	var err error
 	kubectlPath, _ := exec.Command("which", "kubectl").Output() // error is checked in previous steps
 	if err := os.Setenv("KUBECTL_PATH", strings.TrimSpace(string(kubectlPath))); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't set environment variable KUBECTL_PATH"))
+		log.Fatal(errors.Wrapf(err, "couldn't set environment variable KUBECTL_PATH"))
 	}
 	log.Debugf("KUBECTL_PATH: '%s'", os.Getenv("KUBECTL_PATH"))
 
 	if err = os.Setenv("KUBECONFIG", config.ShootKubeconfigPath); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't set environment variable KUBECONFIG"))
+		log.Fatal(errors.Wrapf(err, "couldn't set environment variable KUBECONFIG"))
 	}
 	log.Debugf("KUBECONFIG: '%s'", os.Getenv("KUBECONFIG"))
 
 	if err = os.Setenv("KUBERNETES_CONFORMANCE_TEST", "y"); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't set environment variable KUBERNETES_CONFORMANCE_TEST"))
+		log.Fatal(errors.Wrapf(err, "couldn't set environment variable KUBERNETES_CONFORMANCE_TEST"))
 	}
 
 	if err = os.Setenv("GINKGO_NO_COLOR", "y"); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't set environment variable GINKGO_NO_COLOR"))
+		log.Fatal(errors.Wrapf(err, "couldn't set environment variable GINKGO_NO_COLOR"))
 	}
 }
 
@@ -58,20 +58,20 @@ func DryRun() (logDir string) {
 // Run runs kubetest to execute e2e testcases for a given testcase description file
 func Run(descFile string) (resultsPath string) {
 	if descFile == "" {
-		log.Fatal("No valid description file provided.")
+		log.Fatal("no valid description file provided.")
 	}
-	log.Infof("Running kubetest for %d e2e tests:\n%s", getLinesCount(descFile), getFileContent(descFile))
+	log.Infof("running kubetest for %d e2e tests:\n%s", getLinesCount(descFile), getFileContent(descFile))
 
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
 	if parallelTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
-		log.Info("Run kubetest in parallel way")
+		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs)
 	}
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
-		log.Info("Run kubetest in serial way")
+		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs)
 	}
@@ -181,7 +181,7 @@ func escapeAndConcat(descFilePath string) (concatenatedParallelTests, concatenat
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(errors.Wrapf(err, "Scanning %s failed", descFilePath))
+		log.Fatal(errors.Wrapf(err, "scanning %s failed", descFilePath))
 	}
 	return parallelTestsBuffer.String(), serialTestsBuffer.String()
 }

@@ -31,7 +31,7 @@ func Setup() error {
 	if err := compileOrGetTestUtilities(config.K8sRelease); err != nil {
 		return err
 	}
-	log.Info("Setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
+	log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
 	return nil
 }
 
@@ -48,6 +48,10 @@ func cleanUpPreviousRuns() {
 	if err := os.Remove(kubetest.GeneratedRunDescPath); err != nil {
 		log.Error(err)
 	}
+	_ = os.Remove(filepath.Join(config.ExportPath, "started.json"))
+	_ = os.Remove(filepath.Join(config.ExportPath, "finished.json"))
+	_ = os.Remove(filepath.Join(config.ExportPath, "e2e.log"))
+	_ = os.Remove(filepath.Join(config.ExportPath, "junit_01.xml"))
 }
 
 func areTestUtilitiesReady() bool {
@@ -96,8 +100,12 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 	if err != nil || resp.StatusCode != http.StatusOK || (runtime.GOOS != "linux" && runtime.GOOS != "darwin") {
 		log.Info("no precompiled kubernetes test binaries available, or operating system is not linux/darwin, build e2e.test and ginko")
-		_ = util.RunCmd("make WHAT=test/e2e/e2e.test", config.KubernetesPath)
-		_ = util.RunCmd("make WHAT=vendor/github.com/onsi/ginkgo/ginkgo", config.KubernetesPath)
+		if err = util.RunCmd("make WHAT=test/e2e/e2e.test", config.KubernetesPath); err != nil {
+			return err
+		}
+		if err = util.RunCmd("make WHAT=vendor/github.com/onsi/ginkgo/ginkgo", config.KubernetesPath); err != nil {
+			return err
+		}
 	} else if resp.StatusCode == http.StatusOK {
 		log.Infof("precompiled kubernetes test binaries available, download kubernetes-test-linux-amd64 for v%s", k8sVersion)
 		k8sTestBinariesTarPath, err := util.DownloadFile(k8sTestBinariesVersionURL, config.TmpDir)
@@ -115,14 +123,24 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 		if runtime.GOOS == "linux" {
 			log.Info("Install glibc to run precompiled ginkgo and e2e.test binaries")
-			_ = util.RunCmd("apk --no-cache add ca-certificates wget", "")
-			_ = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", "")
-			_ = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", "")
-			_ = util.RunCmd("apk add glibc-2.29-r0.apk", "")
+			if err = util.RunCmd("apk --no-cache add ca-certificates wget", ""); err != nil {
+				return err
+			}
+			if err = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", ""); err != nil {
+				return err
+			}
+			if err = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", ""); err != nil {
+				return err
+			}
+			if err = util.RunCmd("apk add glibc-2.29-r0.apk", ""); err != nil {
+				return err
+			}
 		}
 	}
 
 	log.Info("get k8s examples")
-	_ = util.RunCmd("go get -u k8s.io/examples > /dev/null", "")
+	if err = util.RunCmd("go get -u k8s.io/examples > /dev/null", ""); err != nil {
+		return err
+	}
 	return nil
 }

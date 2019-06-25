@@ -73,18 +73,15 @@ func Contains(a []string, x string) bool {
 	return false
 }
 
-func GetGroupMapOfRegexMatches(re *regexp.Regexp, input string) (groupToValue map[string]string, matched bool) {
+func GetGroupMapOfRegexMatches(re *regexp.Regexp, input string) map[string]string {
 	n1 := re.SubexpNames()
 	r2 := re.FindAllStringSubmatch(input, -1)[0]
 
 	md := map[string]string{}
-	if r2 == nil {
-		return md, false
-	}
 	for i, n := range r2 {
 		md[n1[i]] = n
 	}
-	return md, len(md) != 0
+	return md
 }
 
 func GetFilesByPattern(rootDir, filenamePattern string) []string {

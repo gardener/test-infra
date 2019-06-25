@@ -27,12 +27,12 @@ func Publish(kubetestResultsPath string, resultSummary Summary) {
 	startedJsonPath := filepath.Join(kubetestResultsPath, "started.json")
 	files = append(files,
 		filepath.Join(kubetestResultsPath, "junit_01.xml"),
-		filepath.Join(kubetestResultsPath, "e2e.log"),
+		filepath.Join(kubetestResultsPath, "build-log.txt"),
 		finishedJsonPath,
 		startedJsonPath,
 	)
 	createMetadataFiles(startedJsonPath, finishedJsonPath, resultSummary)
-	log.Infof("Publish to google cloud storage: %v", files)
+	log.Infof("publish to google cloud storage: %v", files)
 	uploadTestResultFiles(files)
 }
 
@@ -63,7 +63,7 @@ func uploadTestResultFiles(files []string) {
 	// Creates a client.
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+		log.Fatalf("failed to create client: %v", err)
 	}
 	provider := config.CloudProvider
 	if config.CloudProvider == "gcp" {
@@ -89,7 +89,7 @@ func uploadTestResultFiles(files []string) {
 				log.Fatal(err)
 			}
 		}
-		log.Infof("uploaded %s, check ", filename, fmt.Sprintf("https://console.cloud.google.com/storage/browser/%s/%s?project=%s", gcsBucket, filepath.Dir(fileTargetPath), gcsProjectID))
+		log.Infof("uploaded %s, check %s", filename, fmt.Sprintf("https://console.cloud.google.com/storage/browser/%s/%s?project=%s", gcsBucket, filepath.Dir(fileTargetPath), gcsProjectID))
 	}
 }
 
