@@ -20,10 +20,10 @@ Ensure all required environment variables have been set. Create a `shoot.config`
 
 | Environment Variable  | Default | Description  |
 |---|---|---|
-| DESCRIPTION_FILE |  | **[Required]** Path to description json file, which lists the testcases to run |
 | K8S_VERSION |  | **[Required]** Kubernetes cluster version |
 | TESTCASE_GROUPS |  | **[Required]** testcases groups to run (comma separated). E.g. `fast,slow` |
 | CLOUDPROVIDER |  | **[Required]** Cloud provider (supported: aws, gcp, azure, alicloud, openstack) |
+| DESCRIPTION_FILE | working.json | Path to description json file, which lists the testcases to run |
 | EXPORT_PATH  | /tmp/e2e/export  | Location of `shoot.config` file and test results |
 | GINKGO_PARALLEL | true | Whether to run kubetest in parallel way. Testcases that consist of the `[Serial] tag are executed serially. |
 | IGNORE_FALSE_POSITIVE_LIST | false | Ignores exclusion of testcases that are listed in `false_positive.json` |

@@ -38,6 +38,7 @@ func Analyze(kubetestResultsPath string) Summary {
 	summary := analyzeE2eLogs(e2eLogFilePaths)
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
 	analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration)
+	log.Infof("Check out result files in %s", kubetestResultsPath)
 	return summary
 }
 

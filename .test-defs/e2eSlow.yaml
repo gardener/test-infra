@@ -30,9 +30,6 @@ spec:
     - type: env
       name: TESTCASE_GROUPS
       value: 'slow'
-    - type: env
-      name: DESCRIPTION_FILE
-      value: "working.json"
 
   command: [bash, -c]
   args: go run $GOPATH/src/github.com/gardener/test-infra/test/e2etest

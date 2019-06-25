@@ -42,9 +42,6 @@ spec:
   - type: env
     name: GINKGO_PARALLEL
     value: "false"
-  - type: env
-    name: DESCRIPTION_FILE
-    value: "working.json"
 
   command: [bash, -c]
   args: go run $GOPATH/src/github.com/gardener/test-infra/test/e2etest
