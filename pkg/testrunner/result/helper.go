@@ -43,7 +43,7 @@ func writeToFile(filePath string, data []byte) error {
 	return nil
 }
 
-func mashalAndAppendSummaries(summary testrunner.TestrunSummary, stepSummaries []testrunner.StepSummary) ([][]byte, error) {
+func marshalAndAppendSummaries(summary testrunner.TestrunSummary, stepSummaries []testrunner.StepSummary) ([][]byte, error) {
 	b, err := util.MarshalNoHTMLEscape(summary)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal %s", err.Error())

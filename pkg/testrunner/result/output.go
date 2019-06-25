@@ -43,7 +43,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	if err != nil {
 		return err
 	}
-	trStatusSummaries, err := mashalAndAppendSummaries(trSummary, summaries)
+	trStatusSummaries, err := marshalAndAppendSummaries(trSummary, summaries)
 	if err != nil {
 		return err
 	}

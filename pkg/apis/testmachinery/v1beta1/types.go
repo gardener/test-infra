@@ -148,7 +148,7 @@ type TestrunStatus struct {
 
 // StepStatus is the status of Testflow step
 type StepStatus struct {
-	Name              string                   `json:"name,omitempty"`
+	Name              string                   `json:"name"`
 	Position          StepStatusPosition       `json:"position"`
 	TestDefinition    StepStatusTestDefinition `json:"testdefinition,omitempty"`
 	Phase             argov1.NodePhase         `json:"phase,omitempty"`
