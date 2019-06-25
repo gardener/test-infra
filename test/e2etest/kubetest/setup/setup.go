@@ -6,9 +6,11 @@ import (
 	"github.com/gardener/test-infra/test/e2etest/kubetest"
 	"github.com/gardener/test-infra/test/e2etest/util"
 	"github.com/mholt/archiver"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -50,6 +52,9 @@ func cleanUpPreviousRuns() {
 
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
+	if _, err := exec.Command("which", "kubectl").Output(); err != nil {
+		log.Fatal(errors.Wrapf(err, "kubectl command unknown"))
+	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
 	if _, err := os.Stat(e2eTestPath); os.IsNotExist(err) {
 		log.Infof("test utility not ready: %s", e2eTestPath)

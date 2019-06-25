@@ -13,7 +13,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -32,25 +31,6 @@ func DownloadFile(url, dir string) (filePath string, err error) {
 		return "", err
 	}
 	return filePath, nil
-}
-
-func UniqueStrings(stringSlice []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range stringSlice {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
-}
-
-func GetEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
 }
 
 func RunCmd(command, execPath string) error {
@@ -93,19 +73,14 @@ func Contains(a []string, x string) bool {
 	return false
 }
 
-func SilentStrToInt(s string) int {
-	num, err := strconv.Atoi(s)
-	if err != nil {
-		log.Error(err)
-	}
-	return num
-}
-
 func GetGroupMapOfRegexMatches(re *regexp.Regexp, input string) (groupToValue map[string]string, matched bool) {
 	n1 := re.SubexpNames()
 	r2 := re.FindAllStringSubmatch(input, -1)[0]
 
 	md := map[string]string{}
+	if r2 == nil {
+		return md, false
+	}
 	for i, n := range r2 {
 		md[n1[i]] = n
 	}

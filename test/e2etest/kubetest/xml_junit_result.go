@@ -39,23 +39,23 @@ type JunitXMLResult struct {
 	ExecutedTests   int              `xml:"tests,attr"`
 	FailedTests     int              `xml:"failures,attr"`
 	DurationFloat   float32          `xml:"time,attr"`
-	DurationInt     int              `xml:"-"`
 	Testcases       []TestcaseResult `xml:"testcase"`
-	SuccessfulTests int              `xml:"-"`
+	DurationInt     int              `xml:"-"` // calculated
+	SuccessfulTests int              `xml:"-"` // calculated
 }
 
 type TestcaseResult struct {
 	XMLName        xml.Name  `xml:"testcase" json:"-"`
 	Name           string    `xml:"name,attr" json:"name"`
-	Status         string    `xml:"-" json:"status"`
+	Status         string    `xml:"-" json:"status"` // calculated
 	SkippedRaw     *struct{} `xml:"skipped" json:"-"`
-	Skipped        bool      `xml:"-" json:"-"`
+	Skipped        bool      `xml:"-" json:"-"` // calculated
 	FailureText    string    `xml:"failure,omitempty" json:"failure.text,omitempty"`
 	SystemOutput   string    `xml:"system-out,omitempty" json:"system-out,omitempty"`
 	DurationFloat  float32   `xml:"time,attr" json:"-"`
-	DurationInt    int       `xml:"-" json:"duration"`
-	SigGroup       string    `xml:"-" json:"sig"`
-	TestDesc       string    `xml:"-" json:"test_desc_file"`
-	ExecutionGroup string    `xml:"-" json:"execution_group"`
-	Successful     bool      `xml:"-" json:"successful"`
+	DurationInt    int       `xml:"-" json:"duration"`        // calculated
+	SigGroup       string    `xml:"-" json:"sig"`             // calculated
+	TestDesc       string    `xml:"-" json:"test_desc_file"`  // calculated
+	ExecutionGroup string    `xml:"-" json:"execution_group"` // calculated
+	Successful     bool      `xml:"-" json:"successful"`      // calculated
 }

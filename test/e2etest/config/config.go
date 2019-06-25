@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/gardener/test-infra/test/e2etest/util"
+	tiutil "github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -56,8 +56,8 @@ func init() {
 	if GoPath == "" {
 		log.Fatal("GOPATH environment variable not found")
 	}
-	GardenerVersion = util.GetEnv("GARDENER_VERSION", "")
-	ExportPath = util.GetEnv("EXPORT_PATH", path.Join(TmpDir, "export"))
+	GardenerVersion = tiutil.Getenv("GARDENER_VERSION", "")
+	ExportPath = tiutil.Getenv("E2E_EXPORT_PATH", path.Join(TmpDir, "export"))
 	if _, err := os.Stat(ExportPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(ExportPath, os.FileMode(0777)); err != nil {
 			log.Fatal(err)
@@ -67,12 +67,12 @@ func init() {
 	K8sRoot = filepath.Join(GoPath, "src/k8s.io")
 	KubernetesPath = filepath.Join(K8sRoot, "kubernetes")
 	TestInfraPath = filepath.Join(K8sRoot, "test-infra")
-	ShootKubeconfigPath = filepath.Join(ExportPath, "shoot.config")
+	ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", filepath.Join(ExportPath, "shoot.config"))
 	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
-	GinkgoParallel, _ = strconv.ParseBool(util.GetEnv("GINKGO_PARALLEL", "true"))
-	DescriptionFile = util.GetEnv("DESCRIPTION_FILE", WORKING_DESC_FILE)
+	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
+	DescriptionFile = tiutil.Getenv("DESCRIPTION_FILE", WORKING_DESC_FILE)
 	K8sRelease = os.Getenv("K8S_VERSION")
 	if K8sRelease == "" {
 		log.Fatal("K8S_VERSION environment variable not found")
@@ -86,18 +86,18 @@ func init() {
 	if CloudProvider == "" {
 		log.Fatal("CLOUDPROVIDER environment variable not found")
 	}
-	IgnoreFalsePositiveList, _ = strconv.ParseBool(util.GetEnv("IGNORE_FALSE_POSITIVE_LIST", "false"))
-	IncludeUntrackedTests, _ = strconv.ParseBool(util.GetEnv("INCLUDE_UNTRACKED_TESTS", "false"))
+	IgnoreFalsePositiveList = tiutil.GetenvBool("IGNORE_FALSE_POSITIVE_LIST", false)
+	IncludeUntrackedTests = tiutil.GetenvBool("INCLUDE_UNTRACKED_TESTS", false)
 	K8sReleaseMajorMinor = string(regexp.MustCompile(`^(\d+\.\d+)`).FindSubmatch([]byte(K8sRelease))[1])
 	DescriptionsPath = path.Join(OwnDir, "kubetest", "description", K8sReleaseMajorMinor)
 	DescriptionFilePath = path.Join(DescriptionsPath, DescriptionFile)
 	if _, err := os.Stat(DescriptionFilePath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", DescriptionFilePath))
 	}
-	FlakeAttempts, _ = strconv.Atoi(util.GetEnv("FLAKE_ATTEMPTS", "2"))
-	PublishResultsToTestgrid, _ = strconv.ParseBool(util.GetEnv("PUBLISH_RESULTS_TO_TESTGRID", "false"))
-	IgnoreSkipList, _ = strconv.ParseBool(util.GetEnv("IGNORE_SKIP_LIST", "false"))
-	RetestFlaggedOnly, _ = strconv.ParseBool(util.GetEnv("RETEST_FLAGGED_ONLY", "false"))
+	FlakeAttempts, _ = strconv.Atoi(tiutil.Getenv("FLAKE_ATTEMPTS", "2"))
+	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
+	IgnoreSkipList = tiutil.GetenvBool("IGNORE_SKIP_LIST", false)
+	RetestFlaggedOnly = tiutil.GetenvBool("RETEST_FLAGGED_ONLY", false)
 
 	log.Debugf("GoPath: %s", GoPath)
 	log.Debugf("K8sRoot: %s", K8sRoot)

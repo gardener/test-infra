@@ -35,25 +35,30 @@ var MergedE2eLogFilePath = filepath.Join(config.ExportPath, MergedE2eLogFile)
 func Analyze(kubetestResultsPath string) Summary {
 	log.Info("Analyze e2e.log and junit.xml files")
 	e2eLogFilePaths := util.GetFilesByPattern(kubetestResultsPath, E2eLogFileNamePattern)
-	summary := analyzeE2eLogs(e2eLogFilePaths)
+	summary, err := analyzeE2eLogs(e2eLogFilePaths)
+	if err != nil {
+		log.Fatal(errors.Wrapf(err, "results analysis failed at e2e.log analysis"))
+	}
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
-	analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration)
+	if err := analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration); err != nil {
+		log.Fatal(errors.Wrapf(err, "results analysis failed at junit.xml analysis"))
+	}
 	log.Infof("Check out result files in %s", kubetestResultsPath)
 	return summary
 }
 
-func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int) {
+func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int) error {
 	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: durationSec}
 	testcaseNameToTestcase := make(map[string]TestcaseResult)
 	for _, junitXMLPath := range junitXMLFilePaths {
 		file, err := os.Open(junitXMLPath)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		defer file.Close()
 		junitXml, err := UnmarshalJunitXMLResult(file.Name())
 		if err != nil {
-			log.Fatal(errors.Wrapf(err, "Couldn't unmarshal %s", file.Name()))
+			return errors.Wrapf(err, "Couldn't unmarshal %s", file.Name())
 		}
 		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
 		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
@@ -68,38 +73,42 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int) {
 			testcaseNameToTestcase[testcase.Name] = testcase
 			testcaseJSON, err := json.MarshalIndent(testcase, "", " ")
 			if err != nil {
-				log.Fatal(errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON))
+				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
 			}
 
 			jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
 			testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
 			if err := ioutil.WriteFile(testcaseJsonFilePath, testcaseJSON, 0644); err != nil {
-				log.Fatal(errors.Wrapf(err, "Couldn't write %s to file", testcaseJsonFilePath))
+				return errors.Wrapf(err, "Couldn't write %s to file", testcaseJsonFilePath)
 			}
 		}
 	}
 	for _, testcase := range testcaseNameToTestcase {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
-	saveJunitXmlToFile(mergedJunitXmlResult)
+	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
+		return err
+	}
+	return nil
 }
 
-func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) {
+func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
 	output, err := xml.MarshalIndent(mergedJunitXmlResult, "  ", "    ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		return err
 	}
 	output = append([]byte(xml.Header), output...)
 
 	file, _ := os.Create(mergedJunitXmlFilePath)
 	defer file.Close()
 	if _, err = file.Write(output); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func analyzeE2eLogs(e2eLogFilePaths []string) Summary {
-	summary := Summary{TestsuiteSuccessful: false, FailedTestcases: 0, SuccessfulTestcases: 0, ExecutedTestcases: 0, TestsuiteDuration: 0, FlakedTestcases: 0, DescriptionFile: config.DescriptionFile, Flaked: false}
+func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
+	summary := Summary{DescriptionFile: config.DescriptionFile}
 	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in (?P<TestSuiteDuration>\d+)`)
 	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*(?P<Failed>\d+) Failed.*Pending`)
 
@@ -114,17 +123,26 @@ func analyzeE2eLogs(e2eLogFilePaths []string) Summary {
 		for scanner.Scan() {
 			if regexpRanSpecs.MatchString(scanner.Text()) {
 				groupToValue, _ := util.GetGroupMapOfRegexMatches(regexpRanSpecs, scanner.Text())
-				summary.ExecutedTestcases += util.SilentStrToInt(groupToValue["TestcasesRan"])
-				summary.TestsuiteDuration += util.SilentStrToInt(groupToValue["TestSuiteDuration"])
+				groupToValueInt, err := convertValuesToInt(groupToValue)
+				if err != nil {
+					return summary, errors.Errorf("Empty or non integer values in map, for regexp %s", regexpRanSpecs.String())
+				}
+				summary.ExecutedTestcases += groupToValueInt["TestcasesRan"]
+				summary.TestsuiteDuration += groupToValueInt["TestSuiteDuration"]
 			}
 			if regexpPassedFailed.MatchString(scanner.Text()) {
 				groupToValue, _ := util.GetGroupMapOfRegexMatches(regexpPassedFailed, scanner.Text())
-				summary.SuccessfulTestcases += util.SilentStrToInt(groupToValue["Passed"])
-				summary.FailedTestcases += util.SilentStrToInt(groupToValue["Failed"])
+				groupToValueInt, err := convertValuesToInt(groupToValue)
+				if err != nil {
+					return summary, errors.Errorf("Empty or non integer values in map, for regexp %s", regexpRanSpecs.String())
+				}
+				summary.SuccessfulTestcases += groupToValueInt["Passed"]
+				summary.FailedTestcases += groupToValueInt["Failed"]
 				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 			}
 		}
 
+		//TODO
 		summary.Flaked = summary.FlakedTestcases != 0
 	}
 	summary.ExecutionGroup = strings.Join(config.TestcaseGroup, ",")
@@ -142,7 +160,24 @@ func analyzeE2eLogs(e2eLogFilePaths []string) Summary {
 	}
 
 	mergeE2eLogFiles(MergedE2eLogFilePath, e2eLogFilePaths)
-	return summary
+	return summary, nil
+}
+
+func convertValuesToInt(m map[string]string) (map[string]int, error) {
+	convertedMap := make(map[string]int, len(m))
+	first := true
+	for key, value := range m {
+		if first {
+			first = false
+			continue // first element is always the whole match
+		}
+		convertedValue, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, err
+		}
+		convertedMap[key] = convertedValue
+	}
+	return convertedMap, nil
 }
 
 func mergeE2eLogFiles(dst string, e2eLogFilePaths []string) {

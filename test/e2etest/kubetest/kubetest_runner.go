@@ -27,11 +27,9 @@ const (
 )
 
 func init() {
-	kubectlPath, err := exec.Command("which", "kubectl").Output()
-	if err != nil {
-		log.Fatal(errors.Wrapf(err, "kubectl command unknown"))
-	}
-	if err = os.Setenv("KUBECTL_PATH", strings.TrimSpace(string(kubectlPath))); err != nil {
+	var err error
+	kubectlPath, _ := exec.Command("which", "kubectl").Output() // error is checked in previous steps
+	if err := os.Setenv("KUBECTL_PATH", strings.TrimSpace(string(kubectlPath))); err != nil {
 		log.Fatal(errors.Wrapf(err, "Couldn't set environment variable KUBECTL_PATH"))
 	}
 	log.Debugf("KUBECTL_PATH: '%s'", os.Getenv("KUBECTL_PATH"))
