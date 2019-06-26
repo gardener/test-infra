@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 var k8sOutputBinDir string = filepath.Join(config.KubernetesPath, "_output/bin")
@@ -24,7 +25,6 @@ func Setup() error {
 		// nothing to do here
 		return nil
 	}
-	defer os.RemoveAll(config.TmpDir)
 	if err := downloadKubernetes(config.K8sRelease); err != nil {
 		return err
 	}
@@ -74,22 +74,30 @@ func areTestUtilitiesReady() bool {
 }
 
 func downloadKubernetes(k8sVersion string) error {
-	log.Infof("downloading kubernetes v%s", k8sVersion)
+	log.Infof("get kubernetes v%s", k8sVersion)
 
 	if _, err := os.Stat(config.KubernetesPath); !os.IsNotExist(err) {
-		if err := util.RunCmd("git checkout master", config.KubernetesPath); err != nil {
+		if _, err := util.RunCmd("git checkout master", config.KubernetesPath); err != nil {
 			log.Errorf("failed to checkout master branch in %s", config.KubernetesPath, err)
+			return err
+		}
+		if _, err := util.RunCmd("git pull --rebase", config.KubernetesPath); err != nil {
+			log.Errorf("failed to run 'git pull --rebase' in %s", config.KubernetesPath, err)
+			return err
+		}
+	} else if os.IsNotExist(err) {
+		log.Infof("directory %s does not exist. Run go get -d k8s.io/kubernetes", config.KubernetesPath)
+		if stderr, err := util.RunCmd("go get -d k8s.io/kubernetes", ""); err != nil && !isNoGoFilesErr(stderr) {
+			log.Error("failed to go get k8s.io/kubernetes", err)
+			return err
 		}
 	} else {
-		log.Infof("directory %s does not exist", config.KubernetesPath)
+		return err
 	}
 
-	if err := util.RunCmd("go get -d k8s.io/kubernetes", ""); err != nil {
-		log.Error("failed to go get k8s.io/kubernetes", err)
-	}
 
-	if err := util.RunCmd(fmt.Sprintf("git checkout v%s", k8sVersion), config.KubernetesPath); err != nil {
-		log.Error(err)
+	if _, err := util.RunCmd(fmt.Sprintf("git checkout v%s", k8sVersion), config.KubernetesPath); err != nil {
+		return err
 	}
 	return nil
 }
@@ -100,10 +108,10 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 	if err != nil || resp.StatusCode != http.StatusOK || (runtime.GOOS != "linux" && runtime.GOOS != "darwin") {
 		log.Info("no precompiled kubernetes test binaries available, or operating system is not linux/darwin, build e2e.test and ginko")
-		if err = util.RunCmd("make WHAT=test/e2e/e2e.test", config.KubernetesPath); err != nil {
+		if _, err = util.RunCmd("make WHAT=test/e2e/e2e.test", config.KubernetesPath); err != nil {
 			return err
 		}
-		if err = util.RunCmd("make WHAT=vendor/github.com/onsi/ginkgo/ginkgo", config.KubernetesPath); err != nil {
+		if _, err = util.RunCmd("make WHAT=vendor/github.com/onsi/ginkgo/ginkgo", config.KubernetesPath); err != nil {
 			return err
 		}
 	} else if resp.StatusCode == http.StatusOK {
@@ -123,24 +131,31 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 		if runtime.GOOS == "linux" {
 			log.Info("Install glibc to run precompiled ginkgo and e2e.test binaries")
-			if err = util.RunCmd("apk --no-cache add ca-certificates wget", ""); err != nil {
+			if _, err = util.RunCmd("apk --no-cache add ca-certificates wget", ""); err != nil {
 				return err
 			}
-			if err = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", ""); err != nil {
+			if _, err = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", ""); err != nil {
 				return err
 			}
-			if err = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", ""); err != nil {
+			if _, err = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", ""); err != nil {
 				return err
 			}
-			if err = util.RunCmd("apk add glibc-2.29-r0.apk", ""); err != nil {
+			if _, err = util.RunCmd("apk add glibc-2.29-r0.apk", ""); err != nil {
 				return err
 			}
 		}
 	}
 
 	log.Info("get k8s examples")
-	if err = util.RunCmd("go get -u k8s.io/examples > /dev/null", ""); err != nil {
+	if stderr, err := util.RunCmd("go get -u k8s.io/examples", ""); err != nil && !isNoGoFilesErr(stderr) {
 		return err
 	}
 	return nil
+}
+
+func isNoGoFilesErr(s string) bool {
+	if strings.Contains(s, "no Go files in") {
+		return true
+	}
+	return false
 }

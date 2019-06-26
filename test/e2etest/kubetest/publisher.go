@@ -42,9 +42,9 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 		log.Fatal(err)
 	}
 
-	testStatus := "Failure"
+	testStatus := "FAILURE"
 	if testSummary.TestsuiteSuccessful {
-		testStatus = "Success"
+		testStatus = "SUCCESS"
 	}
 	finishedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"%s\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testSummary.FinishedTime.Unix(), testStatus, config.K8sRelease, config.GardenerVersion))
 	if err := ioutil.WriteFile(finishedJsonPath, finishedJsonContent, 06444); err != nil {

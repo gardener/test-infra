@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	tiutil "github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -42,9 +43,14 @@ var (
 )
 
 var WORKING_DESC_FILE = "working.json"
+var Debug bool
 
 func init() {
-	//log.SetLevel(log.DebugLevel)
+	flag.BoolVar(&Debug, "debug", false, "Run e2etest in debug mode")
+	flag.Parse()
+	if Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	_, b, _, _ := runtime.Caller(0)
 	OwnDir = filepath.Dir(filepath.Dir(b))
@@ -117,7 +123,7 @@ func init() {
 	log.Debugf("IgnoreSkipList: %t", IgnoreSkipList)
 	log.Debugf("PublishResultsToTestgrid: %t", PublishResultsToTestgrid)
 	log.Debugf("FlakeAttempts: %o", FlakeAttempts)
-	log.Debugf("GardenerVersion: %o", GardenerVersion)
-	log.Debugf("RetestFlaggedOnly: %o", RetestFlaggedOnly)
-	log.Debugf("TestcaseGroup: %o", TestcaseGroup)
+	log.Debugf("GardenerVersion: %s", GardenerVersion)
+	log.Debugf("RetestFlaggedOnly: %t", RetestFlaggedOnly)
+	log.Debugf("TestcaseGroup: %v", TestcaseGroup)
 }

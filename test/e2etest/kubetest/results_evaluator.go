@@ -40,14 +40,15 @@ func Analyze(kubetestResultsPath string) Summary {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at e2e.log analysis"))
 	}
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
-	if err := analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration); err != nil {
+	if err := analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration, &summary.FailedTestcaseNames); err != nil {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at junit.xml analysis"))
 	}
+	log.Infof("test suite summary: %+v\n", summary)
 	log.Infof("Check out result files in %s", kubetestResultsPath)
 	return summary
 }
 
-func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int) error {
+func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailedTestcases *[]string) error {
 	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: durationSec}
 	testcaseNameToTestcase := make(map[string]TestcaseResult)
 	for _, junitXMLPath := range junitXMLFilePaths {
@@ -69,6 +70,9 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int) error {
 					testcaseNameToTestcase[testcase.Name] = testcase
 				}
 				continue
+			}
+			if !testcase.Successful {
+				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
 			}
 			testcaseNameToTestcase[testcase.Name] = testcase
 			testcaseJSON, err := json.MarshalIndent(testcase, "", " ")
@@ -144,7 +148,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 			}
 		}
-		if summary == emptySummary {
+		if summary.isEmpty() {
 			log.Fatal("Wasn't able to interpret e2e.log. Got only zero values.")
 		}
 
@@ -158,7 +162,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
 	}
-	log.Infof("test suite summary: %+v\n", summary)
 
 	summaryFilePath := path.Join(config.ExportPath, TestSummaryFileName)
 	if err := ioutil.WriteFile(summaryFilePath, file, 0644); err != nil {
@@ -217,4 +220,18 @@ type Summary struct {
 	StartTime           time.Time `json:"-"`
 	FinishedTime        time.Time `json:"-"`
 	ExecutionGroup      string    `json:"execution_group"`
+	FailedTestcaseNames []string  `json:"failed_testcase_names"`
+}
+
+func (summary Summary) isEmpty() bool {
+	return summary.ExecutedTestcases == 0 &&
+		summary.SuccessfulTestcases == 0 &&
+		summary.FailedTestcases == 0 &&
+		summary.FlakedTestcases == 0 &&
+		summary.Flaked == false &&
+		summary.TestsuiteDuration == 0 &&
+		summary.TestsuiteSuccessful == false &&
+		summary.DescriptionFile == "" &&
+		summary.ExecutionGroup == "" &&
+		len(summary.FailedTestcaseNames) == 0
 }

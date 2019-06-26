@@ -2,7 +2,6 @@ package util
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +32,7 @@ func DownloadFile(url, dir string) (filePath string, err error) {
 	return filePath, nil
 }
 
-func RunCmd(command, execPath string) error {
+func RunCmd(command, execPath string) (stderrString string, err error) {
 	separator := " "
 	parts := strings.Split(command, separator)
 
@@ -50,17 +49,18 @@ func RunCmd(command, execPath string) error {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	//	Output our results
 	if out.String() != "" {
 		log.Info(out.String())
 	}
-	if stderr.String() != "" {
-		log.Error(fmt.Println(stderr.String()))
+	stderrString = stderr.String()
+	if stderr.Len() != 0 {
+		log.Error(stderrString)
 	}
 
-	return err
+	return stderrString, err
 }
 
 // Contains tells whether a contains x.
