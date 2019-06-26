@@ -18,6 +18,7 @@ import (
 	"context"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"os"
+	"time"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
@@ -39,7 +40,7 @@ var _ = Describe("Testrun validation tests", func() {
 		commitSha   string
 		namespace   string
 		tmClient    kubernetes.Interface
-		maxWaitTime int64 = 300
+		maxWaitTime = 300 * time.Second
 	)
 
 	BeforeSuite(func() {

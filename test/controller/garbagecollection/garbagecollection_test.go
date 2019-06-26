@@ -17,6 +17,7 @@ package garbagecollection_test
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	"net/http"
 	"os"
 	"time"
@@ -27,18 +28,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 300 * time.Second
 )
 
 var _ = Describe("Garbage collection tests", func() {
@@ -64,7 +64,8 @@ var _ = Describe("Garbage collection tests", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-		osConfig := utils.WaitForMinioService(tmClient, minioEndpoint, namespace, maxWaitTime)
+		osConfig, err := utils.WaitForMinioService(tmClient, minioEndpoint, namespace, maxWaitTime)
+		Expect(err).ToNot(HaveOccurred())
 
 		minioBucket = osConfig.BucketName
 		minioClient, err = minio.New(osConfig.Endpoint, osConfig.AccessKey, osConfig.SecretKey, false)
@@ -80,17 +81,16 @@ var _ = Describe("Garbage collection tests", func() {
 		Expect(err).ToNot(HaveOccurred())
 		utils.DeleteTestrun(tmClient, tr)
 
-		startTime := time.Now()
-		for {
-			Expect(util.MaxTimeExceeded(startTime, maxWaitTime)).To(BeFalse(), "Max Wait time exceeded.")
-
+		err = retry.UntilTimeout(ctx, 5*time.Second, maxWaitTime, func(ctx context.Context) (bool, error) {
 			if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr); err != nil {
-				Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun: %s", tr.Name)
-				break
+				if errors.IsNotFound(err) {
+					return retry.Ok()
+				}
+				return retry.MinorError(err)
 			}
-
-			time.Sleep(5 * time.Second)
-		}
+			return retry.NotOk()
+		})
+		Expect(err).ToNot(HaveOccurred())
 
 		// check if artifacts are deleted
 		ok, err := minioClient.BucketExists(minioBucket)

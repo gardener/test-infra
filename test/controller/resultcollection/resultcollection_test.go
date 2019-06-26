@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 10 * time.Minute
 )
 
 var _ = Describe("Result collection tests", func() {

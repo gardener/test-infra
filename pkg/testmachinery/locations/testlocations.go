@@ -72,7 +72,7 @@ func (l *testLocation) GetTestDefinitions(step tmv1beta1.StepDefinition) ([]*tes
 		return []*testdefinition.TestDefinition{td}, nil
 	}
 	if step.Label != "" {
-		defs := []*testdefinition.TestDefinition{}
+		defs := make([]*testdefinition.TestDefinition, 0)
 		for _, td := range l.TestDefinitions {
 			if td.HasLabel(step.Label) {
 				newTd := td.Copy()

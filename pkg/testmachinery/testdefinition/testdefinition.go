@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/util"
@@ -178,12 +179,24 @@ func (td *TestDefinition) HasBehavior(behavior string) bool {
 
 // HasLabel checks if the TestDefinition has a specific label. (Group in testdef)
 func (td *TestDefinition) HasLabel(label string) bool {
-	for _, l := range td.Info.Spec.Labels {
-		if l == label {
-			return true
+	wantedLabels := strings.Split(label, ",")
+
+	for _, wantedLabel := range wantedLabels {
+		hasLabel := false
+		for _, haveLabel := range td.Info.Spec.Labels {
+			if strings.HasPrefix(wantedLabel, "!") && strings.TrimPrefix(wantedLabel, "!") == haveLabel {
+				return false
+			}
+			if haveLabel == wantedLabel {
+				hasLabel = true
+				break
+			}
+		}
+		if !hasLabel {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 // AddEnvVars adds environment variables to the container of the TestDefinition's template.

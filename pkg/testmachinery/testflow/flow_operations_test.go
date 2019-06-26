@@ -513,7 +513,7 @@ func testNode(name string, parents node.Set, td *testdefinition.TestDefinition, 
 	if parents == nil {
 		parents = node.NewSet()
 	}
-	n := node.NewEmtpy(name)
+	n := node.NewEmpty(name)
 	n.Parents = parents
 	n.Children = node.NewSet()
 	n.TestDefinition = td

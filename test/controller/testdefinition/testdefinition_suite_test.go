@@ -18,6 +18,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
@@ -35,7 +36,7 @@ import (
 )
 
 var (
-	maxWaitTime int64 = 300
+	maxWaitTime = 10 * time.Minute
 )
 
 func TestValidationWebhook(t *testing.T) {

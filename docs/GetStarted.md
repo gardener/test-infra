@@ -289,8 +289,8 @@ revision: master # tag, commit or branch
 A testflow can be specified for the the real tests `spec.testflow` or exit handlers `.spec.onExit`.
 The exit handler flow is called when the testflow finished (success or unsuccessful).
 
-A flow is a DAG (Directed Asycyclic graph) that can be described by using the `dependsOn` to set a dependency to another step.
-The `dependsOn` attribute is a list of step names :warning: do not use `definition.name`.
+A flow is a DAG (Directed Acyclic graph) that can be described by using the `dependsOn` to set a dependency to another step.
+The `dependsOn` attribute is a list of step names :warning: do not use `definition.name` as dependency.
 
 ```yaml
 apiVersion: testmachinery.sapcloud.io/v1beta1
@@ -313,7 +313,7 @@ spec:
     artifactsFrom: create-shoot # optional, default get from last "serial" step
   - name: test2
     definition:
-      name: default
+      label: "default,!beta" # matches all testdefintions with label default and not labeled beta
     dependsOn: [ create-shoot ]
     artifactsFrom: # automatically resolved to create-shoot
   - name: delete-shoot
@@ -322,6 +322,47 @@ spec:
     dependsOn: [ test1, test2 ]
     artifactsFrom: # automatically resolved to create-shoot
 ```
+
+#### Step Definition
+Step definitions define the testdefinitions with their configuration that should be executed within this step.
+
+Test Definitions can be defined by specifying a Testdefinition `name` or `label`.
+##### Name
+If a definition is specified by a name, then only one TestDefinition with the specified name is searched in the locationSet and executed.
+
+#### Label
+If a definition is specified by a labelSelector, then the Test Machinery searches for all TestDefinitions in a locationSet where the specified label Selector is true.
+The labelSelector consists of a list of comma separated label names where labels can be included or excluded by adding a `!` at the beginning of the label.
+
+Examples:
+
+TestDefinitions:
+```yaml
+kind: TestDefinition
+metadata:
+  name: def1
+spec:
+  labels: "default_1"
+```
+```yaml
+kind: TestDefinition
+metadata:
+  name: def2
+spec:
+  labels: "default_2" 
+```
+```yaml
+kind: TestDefinition
+metadata:
+  name: def3
+spec:
+  labels: "default_1,default_2"
+```
+
+`definition.label: "default_1"`: matches `def1` and `def3` <br>
+`definition.label: "default_2"`: matches `def2` and `def3` <br>
+`definition.label: "default_1,default_2"`: matches `def3` <br>
+`definition.label: "default_1,!default_2"`: matches `def1`
 
 ## Configuration
 
