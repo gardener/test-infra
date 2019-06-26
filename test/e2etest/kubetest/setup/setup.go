@@ -22,9 +22,11 @@ var k8sOutputBinDir string = filepath.Join(config.KubernetesPath, "_output/bin")
 func Setup() error {
 	cleanUpPreviousRuns()
 	if areTestUtilitiesReady() {
-		// nothing to do here
+		log.Info("all test utilities were already ready")
 		return nil
 	}
+
+	log.Info("test utilities are not ready. Install...")
 	if err := downloadKubernetes(config.K8sRelease); err != nil {
 		return err
 	}
@@ -61,15 +63,22 @@ func areTestUtilitiesReady() bool {
 	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
 	if _, err := os.Stat(e2eTestPath); os.IsNotExist(err) {
-		log.Infof("test utility not ready: %s", e2eTestPath)
+		log.Infof("test utility not ready: %s doesn't exist", e2eTestPath)
 		return false // path does not exist
 	}
 	ginkgoPath := path.Join(k8sOutputBinDir, "ginkgo")
 	if _, err := os.Stat(ginkgoPath); os.IsNotExist(err) {
-		log.Infof("test utility not ready: %s", ginkgoPath)
+		log.Infof("test utility not ready: %s doesn't exist", ginkgoPath)
 		return false // path does not exist
 	}
-	log.Info("all test utilities were already ready")
+	if out, err := util.RunCmd("git describe", config.KubernetesPath); err != nil {
+		log.Errorf("failed to run 'git describe' in %s", config.KubernetesPath, err)
+		return false
+	} else if strings.TrimSpace(out.StdOut) != fmt.Sprintf("v%s", config.K8sRelease) {
+		log.Infof("test utility not ready: current k8s release version is %s, but the requested version is v%s", out.StdOut, config.K8sRelease)
+		return false
+	}
+
 	return true
 }
 
@@ -87,14 +96,13 @@ func downloadKubernetes(k8sVersion string) error {
 		}
 	} else if os.IsNotExist(err) {
 		log.Infof("directory %s does not exist. Run go get -d k8s.io/kubernetes", config.KubernetesPath)
-		if stderr, err := util.RunCmd("go get -d k8s.io/kubernetes", ""); err != nil && !isNoGoFilesErr(stderr) {
+		if out, err := util.RunCmd("go get -d k8s.io/kubernetes", ""); err != nil && !isNoGoFilesErr(out.StdErr) {
 			log.Error("failed to go get k8s.io/kubernetes", err)
 			return err
 		}
 	} else {
 		return err
 	}
-
 
 	if _, err := util.RunCmd(fmt.Sprintf("git checkout v%s", k8sVersion), config.KubernetesPath); err != nil {
 		return err
@@ -107,7 +115,10 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 	resp, err := http.Get(k8sTestBinariesVersionURL)
 
 	if err != nil || resp.StatusCode != http.StatusOK || (runtime.GOOS != "linux" && runtime.GOOS != "darwin") {
-		log.Info("no precompiled kubernetes test binaries available, or operating system is not linux/darwin, build e2e.test and ginko")
+		log.Info("no precompiled kubernetes test binaries available, or operating system is not linux/darwin, build e2e.test and ginkgo")
+		if err := os.RemoveAll(k8sOutputBinDir); err != nil {
+			return err
+		}
 		if _, err = util.RunCmd("make WHAT=test/e2e/e2e.test", config.KubernetesPath); err != nil {
 			return err
 		}
@@ -147,7 +158,7 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 	}
 
 	log.Info("get k8s examples")
-	if stderr, err := util.RunCmd("go get -u k8s.io/examples", ""); err != nil && !isNoGoFilesErr(stderr) {
+	if out, err := util.RunCmd("go get -u k8s.io/examples", ""); err != nil && !isNoGoFilesErr(out.StdErr) {
 		return err
 	}
 	return nil

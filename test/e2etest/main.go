@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 func main() {
 	if err := setup.Setup(); err != nil {
 		log.Fatal(errors.Wrapf(err, "Initial setup invocation failed"))

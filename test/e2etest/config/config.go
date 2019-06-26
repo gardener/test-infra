@@ -40,6 +40,7 @@ var (
 	GardenerVersion          string
 	RetestFlaggedOnly        bool
 	TestcaseGroup            []string
+	TestcaseGroupString      string
 )
 
 var WORKING_DESC_FILE = "working.json"
@@ -47,6 +48,11 @@ var Debug bool
 
 func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2etest in debug mode")
+	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
+	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
+	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
+	flag.IntVar(&FlakeAttempts, "flakeAttemps", 2, "Testcase flake attempts. Will run testcase n times, until it is successful")
+	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
 	flag.Parse()
 	if Debug {
 		log.SetLevel(log.DebugLevel)
@@ -73,22 +79,32 @@ func init() {
 	K8sRoot = filepath.Join(GoPath, "src/k8s.io")
 	KubernetesPath = filepath.Join(K8sRoot, "kubernetes")
 	TestInfraPath = filepath.Join(K8sRoot, "test-infra")
-	ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", filepath.Join(ExportPath, "shoot.config"))
+	if ShootKubeconfigPath == "" {
+		ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", filepath.Join(ExportPath, "shoot.config"))
+	}
 	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
 	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
 	DescriptionFile = tiutil.Getenv("DESCRIPTION_FILE", WORKING_DESC_FILE)
-	K8sRelease = os.Getenv("K8S_VERSION")
+	if K8sRelease == "" {
+		K8sRelease = os.Getenv("K8S_VERSION")
+	}
 	if K8sRelease == "" {
 		log.Fatal("K8S_VERSION environment variable not found")
 	}
-	TestcaseGroup = strings.Split(os.Getenv("TESTCASE_GROUPS"), ",")
+	if TestcaseGroupString == "" {
+		TestcaseGroup = strings.Split(os.Getenv("TESTCASE_GROUPS"), ",")
+	} else {
+		TestcaseGroup = strings.Split(TestcaseGroupString, ",")
+	}
 	sort.Strings(TestcaseGroup)
 	if len(TestcaseGroup) == 0 {
 		log.Fatal("TESTCASE_GROUP environment variable not found")
 	}
-	CloudProvider = os.Getenv("CLOUDPROVIDER")
+	if CloudProvider == "" {
+		CloudProvider = os.Getenv("CLOUDPROVIDER")
+	}
 	if CloudProvider == "" {
 		log.Fatal("CLOUDPROVIDER environment variable not found")
 	}
@@ -100,7 +116,9 @@ func init() {
 	if _, err := os.Stat(DescriptionFilePath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", DescriptionFilePath))
 	}
-	FlakeAttempts, _ = strconv.Atoi(tiutil.Getenv("FLAKE_ATTEMPTS", "2"))
+	if FlakeAttempts == 0 || FlakeAttempts == 2 {
+		FlakeAttempts, _ = strconv.Atoi(tiutil.Getenv("FLAKE_ATTEMPTS", "2"))
+	}
 	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
 	IgnoreSkipList = tiutil.GetenvBool("IGNORE_SKIP_LIST", false)
 	RetestFlaggedOnly = tiutil.GetenvBool("RETEST_FLAGGED_ONLY", false)

@@ -32,7 +32,7 @@ func DownloadFile(url, dir string) (filePath string, err error) {
 	return filePath, nil
 }
 
-func RunCmd(command, execPath string) (stderrString string, err error) {
+func RunCmd(command, execPath string) (output CmdOutput, err error) {
 	separator := " "
 	parts := strings.Split(command, separator)
 
@@ -49,18 +49,22 @@ func RunCmd(command, execPath string) (stderrString string, err error) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
+	log.Infof("run command: '%s'", command)
 	err = cmd.Run()
 
 	//	Output our results
 	if out.String() != "" {
-		log.Info(out.String())
+		stdoutString := out.String()
+		output.StdOut = stdoutString
+		log.Info(stdoutString)
 	}
-	stderrString = stderr.String()
 	if stderr.Len() != 0 {
+		stderrString := stderr.String()
+		output.StdErr = stderrString
 		log.Error(stderrString)
 	}
 
-	return stderrString, err
+	return output, err
 }
 
 // Contains tells whether a contains x.
@@ -98,4 +102,9 @@ func GetFilesByPattern(rootDir, filenamePattern string) []string {
 		log.Fatal(errors.Wrapf(err, "Couldn't walk path %s", rootDir))
 	}
 	return files
+}
+
+type CmdOutput struct {
+	StdOut string
+	StdErr string
 }
