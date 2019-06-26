@@ -42,7 +42,7 @@ test-infra:
       steps:
         <<: *ti_test_steps
         integration:
-          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.7.0'
           depends:
           - publish
     pull-request:
@@ -53,7 +53,7 @@ test-infra:
       steps:
         <<: *ti_test_steps
         integration:
-          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.5.0'
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.7.0'
           depends:
           - publish
     release:
