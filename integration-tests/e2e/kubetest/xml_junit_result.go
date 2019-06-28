@@ -2,7 +2,7 @@ package kubetest
 
 import (
 	"encoding/xml"
-	"github.com/gardener/test-infra/test/e2etest/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"regexp"
 	"strings"
 )

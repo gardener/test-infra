@@ -2,9 +2,9 @@ package setup
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/test/e2etest/config"
-	"github.com/gardener/test-infra/test/e2etest/kubetest"
-	"github.com/gardener/test-infra/test/e2etest/util"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/mholt/archiver"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/gardener/test-infra/test/e2etest/config"
-	"github.com/gardener/test-infra/test/e2etest/util"
-	"github.com/gardener/test-infra/test/e2etest/util/sets"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
+	"github.com/gardener/test-infra/integration-tests/e2e/util/sets"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -148,9 +148,9 @@ func getAllE2eTestCases() sets.StringSet {
 	}
 
 	// get testcase names of all not skipped testcases
-	for _, testcase := range junitXml.Testcases {
-		if !testcase.Skipped {
-			allTestcases.Insert(testcase.Name)
+	for _, testcase := range Testcases {
+		if !Skipped {
+			allTestcases.Insert(Name)
 		}
 	}
 	if log.GetLevel() == log.DebugLevel {
@@ -181,7 +181,7 @@ func UnmarshalJunitXMLResult(junitXmlPath string) (junitXml JunitXMLResult, err 
 		return xmlResult, err
 	}
 
-	xmlResult.CalculateAdditionalFields()
+	CalculateAdditionalFields()
 	return xmlResult, nil
 }
 

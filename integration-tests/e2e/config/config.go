@@ -47,7 +47,7 @@ var WORKING_DESC_FILE = "working.json"
 var Debug bool
 
 func init() {
-	flag.BoolVar(&Debug, "debug", false, "Run e2etest in debug mode")
+	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")

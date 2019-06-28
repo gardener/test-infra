@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/gardener/test-infra/test/e2etest/config"
-	"github.com/gardener/test-infra/test/e2etest/kubetest"
-	"github.com/gardener/test-infra/test/e2etest/kubetest/setup"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
+	"github.com/gardener/test-infra/integration-tests/e2e/kubetest/setup"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

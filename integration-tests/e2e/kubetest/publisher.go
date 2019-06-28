@@ -4,7 +4,7 @@ import (
 	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/test/e2etest/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
@@ -43,7 +43,7 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 	}
 
 	testStatus := "FAILURE"
-	if testSummary.TestsuiteSuccessful {
+	if TestsuiteSuccessful {
 		testStatus = "SUCCESS"
 	}
 	finishedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"%s\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testSummary.FinishedTime.Unix(), testStatus, config.K8sRelease, config.GardenerVersion))

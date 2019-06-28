@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/gardener/test-infra/test/e2etest/config"
-	"github.com/gardener/test-infra/test/e2etest/util"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -61,20 +61,20 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 		if err != nil {
 			return errors.Wrapf(err, "Couldn't unmarshal %s", file.Name())
 		}
-		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
-		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
-		mergedJunitXmlResult.SuccessfulTests += junitXml.SuccessfulTests
-		for _, testcase := range junitXml.Testcases {
-			if testcase.Skipped {
-				if _, ok := testcaseNameToTestcase[testcase.Name]; !ok {
-					testcaseNameToTestcase[testcase.Name] = testcase
+		FailedTests += FailedTests
+		ExecutedTests += ExecutedTests
+		SuccessfulTests += SuccessfulTests
+		for _, testcase := range Testcases {
+			if Skipped {
+				if _, ok := testcaseNameToTestcase[Name]; !ok {
+					testcaseNameToTestcase[Name] = testcase
 				}
 				continue
 			}
-			if !testcase.Successful {
-				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
+			if !Successful {
+				*summaryFailedTestcases = append(*summaryFailedTestcases, Name)
 			}
-			testcaseNameToTestcase[testcase.Name] = testcase
+			testcaseNameToTestcase[Name] = testcase
 			testcaseJSON, err := json.MarshalIndent(testcase, "", " ")
 			if err != nil {
 				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
@@ -88,7 +88,7 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 		}
 	}
 	for _, testcase := range testcaseNameToTestcase {
-		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
+		Testcases = append(Testcases, testcase)
 	}
 	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
 		return err

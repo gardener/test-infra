@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/gardener/test-infra/test/e2etest/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
