@@ -1,0 +1,10 @@
+[sig-network] Services should have session affinity work for LoadBalancer service with ESIPP on [Slow] [DisabledForLargeClusters]
+[sig-network] Services should have session affinity work for LoadBalancer service with ESIPP off [Slow] [DisabledForLargeClusters]
+[sig-network] Services should be able to switch session affinity for LoadBalancer service with ESIPP off [Slow] [DisabledForLargeClusters]
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should not deadlock when a pod's predecessor fails
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications with PVCs
+[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should provide basic identity
+[sig-apps] StatefulSet [k8s.io] Deploy clustered applications [Feature:StatefulSet] [Slow] should creating a working CockroachDB cluster
+[sig-scheduling] SchedulerPriorities [Serial] Pod should avoid nodes that have avoidPod annotation
+[sig-scheduling] SchedulerPriorities [Serial] Pod should be preferably scheduled to nodes pod can tolerate
+[sig-scheduling] SchedulerPriorities [Serial] Pod should be scheduled to node that don't match the PodAntiAffinity terms
