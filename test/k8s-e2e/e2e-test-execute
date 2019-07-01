@@ -229,6 +229,11 @@ function build_k8s() {
 
 	echo -e "$(info INFO:) Get kubetest"
 	go get -u k8s.io/test-infra/kubetest
+
+	curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
+	chmod +x ./kubectl
+	mv ./kubectl $(which kubectl)
+
 	
 	popd > /dev/null
 	popd > /dev/null
