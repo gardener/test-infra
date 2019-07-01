@@ -60,14 +60,14 @@ func Generate() (desc string) {
 	}
 
 	if !config.IgnoreFalsePositiveList {
-		falsePositiveTestcases := getTestcaseNamesFromDesc(falsePositiveDescPath)
+		falsePositiveTestcases := validateAndGetTestcaseNamesFromDesc(falsePositiveDescPath)
 		for falsePositiveTestcase := range falsePositiveTestcases {
 			testcasesToRun.Delete(falsePositiveTestcase)
 		}
 	}
 
 	if !config.IgnoreSkipList {
-		skipTestcases := getTestcaseNamesFromDesc(skipDescPath)
+		skipTestcases := validateAndGetTestcaseNamesFromDesc(skipDescPath)
 		for skipTestcase := range skipTestcases {
 			testcasesToRun.DeleteMatching(skipTestcase)
 		}
@@ -78,12 +78,12 @@ func Generate() (desc string) {
 		trackedTestcases := sets.NewStringSet()
 		descFiles := util.GetFilesByPattern(config.DescriptionsPath, `\.json`)
 		for _, descFile := range descFiles {
-			trackedTestcases.Union(getTestcaseNamesFromDesc(descFile))
+			trackedTestcases = trackedTestcases.Union(getTestcaseNamesFromDesc(descFile))
 		}
 		for trackedTestcase := range trackedTestcases {
 			untrackedTestcases.DeleteMatching(trackedTestcase)
 		}
-		testcasesToRun.Union(untrackedTestcases)
+		testcasesToRun = testcasesToRun.Union(untrackedTestcases)
 	}
 
 	if len(testcasesToRun) == 0 {
@@ -98,7 +98,7 @@ func Generate() (desc string) {
 	return GeneratedRunDescPath
 }
 
-func getTestcaseNamesFromDesc(descPath string) sets.StringSet {
+func validateAndGetTestcaseNamesFromDesc(descPath string) sets.StringSet {
 	matchedTestcases := sets.NewStringSet()
 	testcases := UnmarshalDescription(descPath)
 	for _, testcase := range testcases {
@@ -109,6 +109,19 @@ func getTestcaseNamesFromDesc(descPath string) sets.StringSet {
 		if testcase.validForCurrentContext() {
 			matchedTestcases.Insert(testcase.Name)
 		}
+	}
+	return matchedTestcases
+}
+
+func getTestcaseNamesFromDesc(descPath string) sets.StringSet {
+	matchedTestcases := sets.NewStringSet()
+	testcases := UnmarshalDescription(descPath)
+	for _, testcase := range testcases {
+		if len(testcase.ExcludedProviders) != 0 && len(testcase.OnlyProviders) != 0 {
+			log.Warn("fields excluded and only of description file testcase, are not allowed to be defined both at the same time. Skipping testcase: %s", testcase.Name)
+			continue
+		}
+		matchedTestcases.Insert(testcase.Name)
 	}
 	return matchedTestcases
 }
@@ -148,9 +161,9 @@ func getAllE2eTestCases() sets.StringSet {
 	}
 
 	// get testcase names of all not skipped testcases
-	for _, testcase := range Testcases {
-		if !Skipped {
-			allTestcases.Insert(Name)
+	for _, testcase := range junitXml.Testcases {
+		if !testcase.Skipped {
+			allTestcases.Insert(testcase.Name)
 		}
 	}
 	if log.GetLevel() == log.DebugLevel {
@@ -181,7 +194,7 @@ func UnmarshalJunitXMLResult(junitXmlPath string) (junitXml JunitXMLResult, err 
 		return xmlResult, err
 	}
 
-	CalculateAdditionalFields()
+	xmlResult.CalculateAdditionalFields()
 	return xmlResult, nil
 }
 
