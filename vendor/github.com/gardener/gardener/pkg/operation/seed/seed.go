@@ -34,6 +34,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils/imagevector"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	kutils "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/gardener/pkg/utils/secrets"
 	utilsecrets "github.com/gardener/gardener/pkg/utils/secrets"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -97,6 +98,16 @@ func NewFromName(k8sGardenClient kubernetes.Interface, k8sGardenInformers garden
 	return New(k8sGardenClient, k8sGardenInformers, seed)
 }
 
+// DetermineCloudProviderForSeed determines the cloud provider for the given seed.
+func DetermineCloudProviderForSeed(ctx context.Context, c client.Client, seed *gardenv1beta1.Seed) (gardenv1beta1.CloudProvider, error) {
+	cloudProfile := &gardenv1beta1.CloudProfile{}
+	if err := c.Get(ctx, kutil.Key(seed.Spec.Cloud.Profile), cloudProfile); err != nil {
+		return "", err
+	}
+
+	return helper.DetermineCloudProviderInProfile(cloudProfile.Spec)
+}
+
 // List returns a list of Seed clusters (along with the referenced secrets).
 func List(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface) ([]*Seed, error) {
 	var seedList []*Seed
@@ -149,6 +160,14 @@ func generateWantedSecrets(seed *Seed, certificateAuthorities map[string]*utilse
 
 				Username:       "admin",
 				PasswordLength: 32,
+			},
+			&secrets.BasicAuthSecretConfig{
+				Name:   "fluentd-es-sg-credentials",
+				Format: secrets.BasicAuthFormatNormal,
+
+				Username:                  "fluentd",
+				PasswordLength:            32,
+				BcryptPasswordHashRequest: true,
 			},
 		)
 	}
@@ -249,16 +268,18 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 
 	// Logging feature gate
 	var (
-		basicAuth           string
-		kibanaHost          string
-		fluentdReplicaCount int32
-		loggingEnabled      = controllermanagerfeatures.FeatureGate.Enabled(features.Logging)
-		existingSecretsMap  = map[string]*corev1.Secret{}
+		basicAuth             string
+		kibanaHost            string
+		sgFluentdPassword     string
+		sgFluentdPasswordHash string
+		fluentdReplicaCount   int32
+		loggingEnabled        = controllermanagerfeatures.FeatureGate.Enabled(features.Logging)
+		existingSecretsMap    = map[string]*corev1.Secret{}
 	)
 
 	if loggingEnabled {
 		existingSecrets := &corev1.SecretList{}
-		if err = k8sSeedClient.Client().List(context.TODO(), client.InNamespace(common.GardenNamespace), existingSecrets); err != nil {
+		if err = k8sSeedClient.Client().List(context.TODO(), existingSecrets, client.InNamespace(common.GardenNamespace)); err != nil {
 			return err
 		}
 
@@ -279,8 +300,12 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 		credentials := deployedSecretsMap["seed-logging-ingress-credentials"]
 		basicAuth = utils.CreateSHA1Secret(credentials.Data[utilsecrets.DataKeyUserName], credentials.Data[utilsecrets.DataKeyPassword])
 		kibanaHost = seed.GetIngressFQDN("k", "", "garden")
+
+		sgFluentdCredentials := deployedSecretsMap["fluentd-es-sg-credentials"]
+		sgFluentdPassword = string(sgFluentdCredentials.Data[utilsecrets.DataKeyPassword])
+		sgFluentdPasswordHash = string(sgFluentdCredentials.Data[utilsecrets.DataKeyPasswordBcryptHash])
 	} else {
-		if err := common.DeleteLoggingStack(k8sSeedClient, common.GardenNamespace); err != nil && !apierrors.IsNotFound(err) {
+		if err := common.DeleteLoggingStack(context.TODO(), k8sSeedClient.Client(), common.GardenNamespace); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
@@ -293,7 +318,7 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 
 	if vpaEnabled {
 		existingSecrets := &corev1.SecretList{}
-		if err = k8sSeedClient.Client().List(context.TODO(), client.InNamespace(common.GardenNamespace), existingSecrets); err != nil {
+		if err = k8sSeedClient.Client().List(context.TODO(), existingSecrets, client.InNamespace(common.GardenNamespace)); err != nil {
 			return err
 		}
 
@@ -354,7 +379,7 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 	}
 
 	nodes := &corev1.NodeList{}
-	if err = k8sSeedClient.Client().List(context.TODO(), nil, nodes); err != nil {
+	if err = k8sSeedClient.Client().List(context.TODO(), nodes); err != nil {
 		return err
 	}
 	nodeCount := len(nodes.Items)
@@ -370,7 +395,7 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 	chartApplier := kubernetes.NewChartApplier(chartRenderer, applier)
 
 	var (
-		applierOptions          = kubernetes.DefaultApplierOptions
+		applierOptions          = kubernetes.CopyApplierOptions(kubernetes.DefaultApplierOptions)
 		retainStatusInformation = func(new, old *unstructured.Unstructured) {
 			// Apply status from old Object to retain status information
 			new.Object["status"] = old.Object["status"]
@@ -381,6 +406,15 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 
 	applierOptions.MergeFuncs[vpaGK] = retainStatusInformation
 	applierOptions.MergeFuncs[issuerGK] = retainStatusInformation
+
+	privateNetworks, err := common.ToExceptNetworks(
+		common.AllPrivateNetworkBlocks(),
+		seed.Info.Spec.Networks.Nodes,
+		seed.Info.Spec.Networks.Pods,
+		seed.Info.Spec.Networks.Services)
+	if err != nil {
+		return err
+	}
 
 	return chartApplier.ApplyChartWithOptions(context.TODO(), filepath.Join("charts", chartName), common.GardenNamespace, chartName, nil, map[string]interface{}{
 		"cloudProvider": seed.CloudProvider,
@@ -411,11 +445,20 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 					"size": seed.GetValidVolumeSize("100Gi"),
 				},
 			},
+			"searchguard": map[string]interface{}{
+				"users": map[string]interface{}{
+					"fluentd": map[string]interface{}{
+						"hash": sgFluentdPasswordHash,
+					},
+				},
+			},
 		},
 		"fluentd-es": map[string]interface{}{
 			"enabled": loggingEnabled,
 			"fluentd": map[string]interface{}{
 				"replicaCount": fluentdReplicaCount,
+				"sgUsername":   "fluentd",
+				"sgPassword":   sgFluentdPassword,
 				"storage":      seed.GetValidVolumeSize("9Gi"),
 			},
 		},
@@ -423,6 +466,13 @@ func BootstrapCluster(seed *Seed, secrets map[string]*corev1.Secret, imageVector
 		"vpa": map[string]interface{}{
 			"enabled":        vpaEnabled,
 			"podAnnotations": vpaPodAnnotations,
+		},
+		"global-network-policies": map[string]interface{}{
+			// TODO (mvladev): Move the Provider specific metadata IP
+			// somewhere else, so it's accessible here.
+			// "metadataService": "169.254.169.254/32"
+			"denyAll":         false,
+			"privateNetworks": privateNetworks,
 		},
 	}, applierOptions)
 }

@@ -16,28 +16,28 @@ package botanist
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils/flow"
+
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -66,123 +66,95 @@ func MustNewRequirement(key string, op selection.Operator, vals ...string) label
 var (
 	// NotSystemComponent is a requirement that something doesn't have the GardenRole GardenRoleSystemComponent.
 	NotSystemComponent = MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleSystemComponent)
+	// NoCleanupPrevention is a requirement that the ShootNoCleanup label of something is not true.
+	NoCleanupPrevention = MustNewRequirement(common.ShootNoCleanup, selection.NotEquals, "true")
 	// NotKubernetesProvider is a requirement that the Provider label of something is not KubernetesProvider.
 	NotKubernetesProvider = MustNewRequirement(Provider, selection.NotEquals, KubernetesProvider)
 	// NotKubeAggregatorAutoManaged is a requirement that something is not auto-managed by Kube-Aggregator.
 	NotKubeAggregatorAutoManaged = MustNewRequirement(KubeAggregatorAutoManaged, selection.DoesNotExist)
 
-	// NotSystemComponentSelector is a selector that excludes system components.
-	NotSystemComponentSelector = labels.NewSelector().Add(NotSystemComponent)
+	// CleanupSelector is a selector that excludes system components and all resources not considered for auto cleanup.
+	CleanupSelector = labels.NewSelector().Add(NotSystemComponent).Add(NoCleanupPrevention)
 
-	// NotSystemComponentListOptions are ListOptions that exclude system components.
-	NotSystemComponentListOptions = client.ListOptions{
-		LabelSelector: NotSystemComponentSelector,
+	// NoCleanupPreventionListOptions are ListOptions that exclude system components or non-auto clean upped resource.
+	NoCleanupPreventionListOptions = client.ListOptions{
+		LabelSelector: CleanupSelector,
 	}
 
-	// MutatingWebhookConfigurationDeleteSelector is the delete selector for MutatingWebhookConfigurations.
-	MutatingWebhookConfigurationDeleteSelector = &NotSystemComponentListOptions
-	// MutatingWebhookConfigurationCheckSelector is the check selector for MutatingWebhookConfigurations.
-	MutatingWebhookConfigurationCheckSelector = MutatingWebhookConfigurationDeleteSelector
+	// MutatingWebhookConfigurationCleanOptions is the delete selector for MutatingWebhookConfigurations.
+	MutatingWebhookConfigurationCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// ValidatingWebhookConfigurationDeleteSelector is the delete selector for ValidatingWebhookConfigurations.
-	ValidatingWebhookConfigurationDeleteSelector = &NotSystemComponentListOptions
-	// ValidatingWebhookConfigurationCheckSelector is the check selector for ValidatingWebhookConfigurations.
-	ValidatingWebhookConfigurationCheckSelector = ValidatingWebhookConfigurationDeleteSelector
+	// ValidatingWebhookConfigurationCleanOptions is the delete selector for ValidatingWebhookConfigurations.
+	ValidatingWebhookConfigurationCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// CustomResourceDefinitionDeleteSelector is the delete selector for CustomResources.
-	CustomResourceDefinitionDeleteSelector = &NotSystemComponentListOptions
-	// CustomResourceDefinitionCheckSelector is the check selector for CustomResources.
-	CustomResourceDefinitionCheckSelector = CustomResourceDefinitionDeleteSelector
+	// CustomResourceDefinitionCleanOptions is the delete selector for CustomResources.
+	CustomResourceDefinitionCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// DaemonSetDeleteSelector is the delete selector for DaemonSets.
-	DaemonSetDeleteSelector = &NotSystemComponentListOptions
-	// DaemonSetCheckSelector is the check selector for DaemonSets.
-	DaemonSetCheckSelector = DaemonSetDeleteSelector
+	// DaemonSetCleanOptions is the delete selector for DaemonSets.
+	DaemonSetCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// DeploymentDeleteSelector is the delete selector for Deployments.
-	DeploymentDeleteSelector = &NotSystemComponentListOptions
-	// DeploymentCheckSelector is the check selector for Deployments.
-	DeploymentCheckSelector = DeploymentDeleteSelector
+	// DeploymentCleanOptions is the delete selector for Deployments.
+	DeploymentCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// StatefulSetDeleteSelector is the delete selector for StatefulSets.
-	StatefulSetDeleteSelector = &NotSystemComponentListOptions
-	// StatefulSetCheckSelector is the check selector for StatefulSets.
-	StatefulSetCheckSelector = StatefulSetDeleteSelector
+	// StatefulSetCleanOptions is the delete selector for StatefulSets.
+	StatefulSetCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// ServiceDeleteSelector is the delete selector for Services.
-	ServiceDeleteSelector = &client.ListOptions{
-		LabelSelector: labels.NewSelector().Add(NotKubernetesProvider, NotSystemComponent),
-	}
-	// ServiceCheckSelector is the check selector for Services.
-	ServiceCheckSelector = ServiceDeleteSelector
+	// ServiceCleanOptions is the delete selector for Services.
+	ServiceCleanOptions = ListOptions(client.UseListOptions(&client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(NotKubernetesProvider, NotSystemComponent, NoCleanupPrevention),
+	}))
 
-	// NamespaceDeleteSelector is the delete selector for Namespaces.
-	NamespaceDeleteSelector = &client.ListOptions{
-		LabelSelector: NotSystemComponentSelector,
+	// NamespaceCleanOptions is the delete selector for Namespaces.
+	NamespaceCleanOptions = ListOptions(client.UseListOptions(&client.ListOptions{
+		LabelSelector: CleanupSelector,
 		FieldSelector: fields.AndSelectors(
 			fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespacePublic),
 			fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespaceSystem),
 			fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespaceDefault),
 			fields.OneTermNotEqualSelector(MetadataNameField, corev1.NamespaceNodeLease),
 		),
-	}
-	// NamespaceCheckSelector is the check selector for Namespaces.
-	NamespaceCheckSelector = NamespaceDeleteSelector
+	}))
 
-	// APIServiceDeleteSelector is the delete selector for APIServices.
-	APIServiceDeleteSelector = &client.ListOptions{
+	// APIServiceCleanOptions is the delete selector for APIServices.
+	APIServiceCleanOptions = ListOptions(client.UseListOptions(&client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(NotSystemComponent, NotKubeAggregatorAutoManaged),
-	}
-	// APIServiceCheckSelector is the check selector for APIServices.
-	APIServiceCheckSelector = APIServiceDeleteSelector
+	}))
 
-	// CronJobDeleteSelector is the delete selector for CronJobs.
-	CronJobDeleteSelector = &NotSystemComponentListOptions
-	// CronJobCheckSelector is the check selector for CronJobs.
-	CronJobCheckSelector = CronJobDeleteSelector
+	// CronJobCleanOptions is the delete selector for CronJobs.
+	CronJobCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// IngressDeleteSelector is the delete selector for Ingresses.
-	IngressDeleteSelector = &NotSystemComponentListOptions
-	// IngressCheckSelector is the check selector for Ingresses.
-	IngressCheckSelector = IngressDeleteSelector
+	// IngressCleanOptions is the delete selector for Ingresses.
+	IngressCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// JobDeleteSelector is the delete selector for Jobs.
-	JobDeleteSelector = &NotSystemComponentListOptions
-	// JobCheckSelector is the check selector for Jobs.
-	JobCheckSelector = JobDeleteSelector
+	// JobCleanOptions is the delete selector for Jobs.
+	JobCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// PodDeleteSelector is the delete selector for Pods.
-	PodDeleteSelector = &NotSystemComponentListOptions
-	// PodCheckSelector is the check selector for Pods.
-	PodCheckSelector = PodDeleteSelector
+	// PodCleanOptions is the delete selector for Pods.
+	PodCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// ReplicaSetDeleteSelector is the delete selector for ReplicaSets.
-	ReplicaSetDeleteSelector = &NotSystemComponentListOptions
-	// ReplicaSetCheckSelector is the check selector for ReplicaSets.
-	ReplicaSetCheckSelector = ReplicaSetDeleteSelector
+	// ReplicaSetCleanOptions is the delete selector for ReplicaSets.
+	ReplicaSetCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// ReplicationControllerDeleteSelector is the delete selector for ReplicationControllers.
-	ReplicationControllerDeleteSelector = &NotSystemComponentListOptions
-	// ReplicationControllerCheckSelector is the check selector for ReplicationControllers.
-	ReplicationControllerCheckSelector = ReplicationControllerDeleteSelector
+	// ReplicationControllerCleanOptions is the delete selector for ReplicationControllers.
+	ReplicationControllerCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 
-	// PersistentVolumeClaimDeleteSelector is the delete selector for PersistentVolumeClaims.
-	PersistentVolumeClaimDeleteSelector = &NotSystemComponentListOptions
-	// PersistentVolumeClaimCheckSelector is the check selector for PersistentVolumeClaims.
-	PersistentVolumeClaimCheckSelector = PersistentVolumeClaimDeleteSelector
+	// PersistentVolumeClaimCleanOptions is the delete selector for PersistentVolumeClaims.
+	PersistentVolumeClaimCleanOptions = ListOptions(client.UseListOptions(&NoCleanupPreventionListOptions))
 )
 
-func cleanResourceFn(c client.Client, deleteSelector, checkSelector *client.ListOptions, list runtime.Object, finalize bool) flow.TaskFn {
+func cleanResourceFn(c client.Client, list runtime.Object, finalize bool, opts ...CleanOptionFunc) flow.TaskFn {
 	mkCleaner := func(finalize bool) flow.TaskFn {
-		var opts []client.DeleteOptionFunc
+		newOpts := make([]CleanOptionFunc, len(opts), len(opts)+1)
+		copy(newOpts, opts)
+
 		if !finalize {
-			opts = []client.DeleteOptionFunc{client.GracePeriodSeconds(60)}
+			newOpts = append(newOpts, DeleteOptions(client.GracePeriodSeconds(0)))
 		} else {
-			opts = []client.DeleteOptionFunc{client.GracePeriodSeconds(0)}
+			newOpts = append(newOpts, Finalize)
 		}
 
 		return func(ctx context.Context) error {
-			return RetryCleanMatchingUntil(ctx, DefaultInterval, c, deleteSelector, checkSelector, list, finalize, opts...)
+			return RetryCleanMatchingUntil(ctx, DefaultInterval, c, list, newOpts...)
 		}
 	}
 	if !finalize {
@@ -207,8 +179,8 @@ func (b *Botanist) CleanWebhooks(ctx context.Context) error {
 	c := b.K8sShootClient.Client()
 
 	return flow.Parallel(
-		cleanResourceFn(c, MutatingWebhookConfigurationDeleteSelector, MutatingWebhookConfigurationCheckSelector, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, true),
-		cleanResourceFn(c, ValidatingWebhookConfigurationDeleteSelector, ValidatingWebhookConfigurationCheckSelector, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, true),
+		cleanResourceFn(c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, true, MutatingWebhookConfigurationCleanOptions),
+		cleanResourceFn(c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, true, ValidatingWebhookConfigurationCleanOptions),
 	)(ctx)
 }
 
@@ -217,8 +189,8 @@ func (b *Botanist) CleanExtendedAPIs(ctx context.Context) error {
 	c := b.K8sShootClient.Client()
 
 	return flow.Parallel(
-		cleanResourceFn(c, APIServiceDeleteSelector, APIServiceCheckSelector, &apiregistrationv1beta1.APIServiceList{}, true),
-		cleanResourceFn(c, CustomResourceDefinitionDeleteSelector, CustomResourceDefinitionCheckSelector, &apiextensionsv1beta1.CustomResourceDefinitionList{}, true),
+		cleanResourceFn(c, &apiregistrationv1beta1.APIServiceList{}, true, APIServiceCleanOptions),
+		cleanResourceFn(c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, true, CustomResourceDefinitionCleanOptions),
 	)(ctx)
 }
 
@@ -230,17 +202,33 @@ func (b *Botanist) CleanKubernetesResources(ctx context.Context) error {
 	c := b.K8sShootClient.Client()
 
 	return flow.Parallel(
-		cleanResourceFn(c, CronJobDeleteSelector, CronJobCheckSelector, &batchv1beta1.CronJobList{}, false),
-		cleanResourceFn(c, DaemonSetDeleteSelector, DaemonSetCheckSelector, &appsv1.DaemonSetList{}, false),
-		cleanResourceFn(c, DeploymentDeleteSelector, DeploymentCheckSelector, &appsv1.DeploymentList{}, false),
-		cleanResourceFn(c, IngressDeleteSelector, IngressCheckSelector, &extensionsv1beta1.IngressList{}, false),
-		cleanResourceFn(c, JobDeleteSelector, JobCheckSelector, &batchv1.JobList{}, false),
-		cleanResourceFn(c, NamespaceDeleteSelector, NamespaceCheckSelector, &corev1.NamespaceList{}, false),
-		cleanResourceFn(c, PodDeleteSelector, PodCheckSelector, &corev1.PodList{}, false),
-		cleanResourceFn(c, ReplicaSetDeleteSelector, ReplicaSetCheckSelector, &appsv1.ReplicaSetList{}, false),
-		cleanResourceFn(c, ReplicationControllerDeleteSelector, ReplicationControllerCheckSelector, &corev1.ReplicationControllerList{}, false),
-		cleanResourceFn(c, ServiceDeleteSelector, ServiceCheckSelector, &corev1.ServiceList{}, false),
-		cleanResourceFn(c, StatefulSetDeleteSelector, StatefulSetCheckSelector, &appsv1.StatefulSetList{}, false),
-		cleanResourceFn(c, PersistentVolumeClaimDeleteSelector, PersistentVolumeClaimCheckSelector, &corev1.PersistentVolumeClaimList{}, false),
+		cleanResourceFn(c, &batchv1beta1.CronJobList{}, false, CronJobCleanOptions),
+		cleanResourceFn(c, &appsv1.DaemonSetList{}, false, DaemonSetCleanOptions),
+		cleanResourceFn(c, &appsv1.DeploymentList{}, false, DeploymentCleanOptions),
+		cleanResourceFn(c, &extensionsv1beta1.IngressList{}, false, IngressCleanOptions),
+		cleanResourceFn(c, &batchv1.JobList{}, false, JobCleanOptions),
+		cleanResourceFn(c, &corev1.NamespaceList{}, false, NamespaceCleanOptions),
+		cleanResourceFn(c, &corev1.PodList{}, false, PodCleanOptions),
+		cleanResourceFn(c, &appsv1.ReplicaSetList{}, false, ReplicaSetCleanOptions),
+		cleanResourceFn(c, &corev1.ReplicationControllerList{}, false, ReplicationControllerCleanOptions),
+		cleanResourceFn(c, &corev1.ServiceList{}, false, ServiceCleanOptions),
+		cleanResourceFn(c, &appsv1.StatefulSetList{}, false, StatefulSetCleanOptions),
+		cleanResourceFn(c, &corev1.PersistentVolumeClaimList{}, false, PersistentVolumeClaimCleanOptions),
 	)(ctx)
+}
+
+// DeleteOrphanEtcdMainPVC delete the orphan PVC associated with old etcd-main statefulsets as a result of migration in Release 0.22.0 (https://github.com/gardener/gardener/releases/tag/0.22.0).
+func (b *Botanist) DeleteOrphanEtcdMainPVC(ctx context.Context) error {
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("etcd-%s-etcd-%s-0", common.EtcdRoleMain, common.EtcdRoleMain),
+			Namespace: b.Shoot.SeedNamespace,
+		},
+	}
+
+	// Since there isn't any further dependency on this PVC, we don't wait here until PVC
+	// and associated PV get deleted completely. Yes this won't report any error face while deleting
+	// PVC. But eventually at the time of shoot deletion we cleanup the seednamespace and all resource
+	// in it with proper error reporting. So, we can safely avoid waiting.
+	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, pvc))
 }

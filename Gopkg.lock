@@ -169,7 +169,7 @@
   version = "0.5.2"
 
 [[projects]]
-  digest = "1:3e12be131311e794a226be77cce16570cb082f0b9b30aaf7098ae420f63da1dc"
+  digest = "1:e17351ad4a520a2d110734372a304ffa01336b5b0b27532e692bca2eb8ede862"
   name = "github.com/gardener/gardener"
   packages = [
     "pkg/apis/core",
@@ -217,13 +217,14 @@
     "pkg/utils/kubernetes/health",
     "pkg/utils/retry",
     "pkg/utils/secrets",
+    "pkg/version",
   ]
   pruneopts = "NUT"
-  revision = "b3b8faa6f651aec2259b64baabdf11f469c06bf0"
-  version = "0.24.0"
+  revision = "06358ff44e464157c8542c566974143296dc3da7"
+  version = "0.26.1"
 
 [[projects]]
-  digest = "1:b7664ce9118181b480ce1cdcb2bb60a83efbf85d368011e1b8a9ed0d8726394f"
+  digest = "1:909977177effbf602c7a0b525b030e011cb86d019585433d7d9db24d58270468"
   name = "github.com/gardener/gardener-extensions"
   packages = [
     "controllers/provider-alicloud/pkg/apis/alicloud",
@@ -236,9 +237,21 @@
     "controllers/provider-gcp/pkg/apis/gcp/v1alpha1",
     "controllers/provider-openstack/pkg/apis/openstack",
     "controllers/provider-openstack/pkg/apis/openstack/v1alpha1",
+    "controllers/provider-packet/pkg/apis/packet",
+    "controllers/provider-packet/pkg/apis/packet/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "f09dd7bc8d2fee9f4cfff1d95d39e7713728bf81"
+  revision = "227adb277fa467b9e805af798a502514ccbe75dd"
+
+[[projects]]
+  digest = "1:acc5740aa4375aeb48e6d7d5ba2985c8bb5002f894bf6cc552f3cfdf3c8d3dca"
+  name = "github.com/gardener/gardener-resource-manager"
+  packages = [
+    "pkg/apis/resources",
+    "pkg/apis/resources/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "b43a76cdf9a7fa740f5e5fb83d931d0a086a1892"
 
 [[projects]]
   digest = "1:b678acaf8766b6df36723a4adefc3302191a34c22b7a38b0abaf5f6d3dd24090"
@@ -680,12 +693,13 @@
   version = "v1.0.3"
 
 [[projects]]
-  branch = "master"
-  digest = "1:87d20fdbe5831852aa0023efc142a66ad27c2b2ef232c623416337f5a252b4fb"
+  digest = "1:4f79afcebb18ccbfca5561524492c18bbe231464edb3ef8e82f8649de0c43867"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
+    "bcrypt",
     "blake2b",
+    "blowfish",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
@@ -698,7 +712,7 @@
     "ssh/terminal",
   ]
   pruneopts = "NUT"
-  revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
+  revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
 
 [[projects]]
   branch = "master"
@@ -966,15 +980,15 @@
   version = "kubernetes-1.14.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f83a12540f1237f139da7a118ba715614963fe83dde46eebc0517a66ee38681a"
+  digest = "1:36b173a18241df1b9aec7ea22d9e811659dce3246ec79a47f91c91fdaa37ebe1"
   name = "k8s.io/apiserver"
   packages = [
     "pkg/authentication/user",
     "pkg/util/feature",
   ]
   pruneopts = "NUT"
-  revision = "3722cb68559308c1666e47e0e6749b05343fa5c0"
+  revision = "8b27c41bdbb11ff103caa673315e097bf0289171"
+  version = "kubernetes-1.14.0"
 
 [[projects]]
   digest = "1:88bcf5fe6152d83bd52ecdcb1a1e8760684cb383bc33ee3fae99b461c5bb0e7b"
@@ -1178,12 +1192,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:26eb890bbe5e56576a5b9cd7dbe11dda3a48e8074ca8589f4e40a29210f3e713"
+  digest = "1:521c25e5a0d3a6c5919b559a6e2cd34d1b36ce63351f27666677080c1f99bc16"
   name = "k8s.io/component-base"
-  packages = [
-    "config",
-    "featuregate",
-  ]
+  packages = ["config"]
   pruneopts = "NUT"
   revision = "2b0aae80ca81fb9fbed1161304dc6fd356dcb098"
 

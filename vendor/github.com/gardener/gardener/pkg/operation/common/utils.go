@@ -20,8 +20,11 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gardener/gardener/pkg/version"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -324,37 +327,8 @@ func DeleteVpa(k8sClient kubernetes.Interface, namespace string) error {
 	return nil
 }
 
-// InjectCSIFeatureGates adds required feature gates for csi when starting Kubelet/Kube-APIServer based on kubernetes version
-func InjectCSIFeatureGates(kubeVersion string, featureGates map[string]bool) (map[string]bool, error) {
-	lessV1_13, err := utils.CompareVersions(kubeVersion, "<", "v1.13.0")
-	if err != nil {
-		return featureGates, err
-	}
-	if lessV1_13 {
-		return featureGates, nil
-	}
-
-	//https://kubernetes-csi.github.io/docs/Setup.html
-	csiFG := map[string]bool{
-		"VolumeSnapshotDataSource": true,
-		"KubeletPluginsWatcher":    true,
-		"CSINodeInfo":              true,
-		"CSIDriverRegistry":        true,
-	}
-
-	if featureGates == nil {
-		return csiFG, nil
-	}
-
-	for k, v := range csiFG {
-		featureGates[k] = v
-	}
-
-	return featureGates, nil
-}
-
 // DeleteLoggingStack deletes all resource of the EFK logging stack in the given namespace.
-func DeleteLoggingStack(k8sClient kubernetes.Interface, namespace string) error {
+func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace string) error {
 	if k8sClient == nil {
 		return errors.New("must provide non-nil kubernetes client to common.DeleteLoggingStack")
 	}
@@ -375,23 +349,18 @@ func DeleteLoggingStack(k8sClient kubernetes.Interface, namespace string) error 
 		&appsv1.StatefulSetList{},
 	}
 
-	listOptions := client.InNamespace(namespace).MatchingLabels(map[string]string{
-		GardenRole: GardenRoleLogging,
-	})
-
 	// TODO: Use `DeleteCollection` as soon it is in the controller-runtime:
 	// https://github.com/kubernetes-sigs/controller-runtime/pull/324
 
 	for _, list := range lists {
-		if err := k8sClient.Client().List(context.TODO(), listOptions, list); err != nil {
+		if err := k8sClient.List(ctx, list,
+			client.InNamespace(namespace),
+			client.MatchingLabels(map[string]string{GardenRole: GardenRoleLogging})); err != nil {
 			return err
 		}
 
 		if err := meta.EachListItem(list, func(obj runtime.Object) error {
-			if err := k8sClient.Client().Delete(context.TODO(), obj, kubernetes.DefaultDeleteOptionFuncs...); err != nil && !apierrors.IsNotFound(err) {
-				return err
-			}
-			return nil
+			return client.IgnoreNotFound(k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptionFuncs...))
 		}); err != nil {
 			return err
 		}
@@ -401,28 +370,138 @@ func DeleteLoggingStack(k8sClient kubernetes.Interface, namespace string) error 
 }
 
 // DeleteAlertmanager deletes all resources of the Alertmanager in a given namespace.
-func DeleteAlertmanager(k8sClient kubernetes.Interface, namespace string) error {
-	var (
-		services = []string{"alertmanager-client", "alertmanager"}
-		secrets  = []string{"alertmanager-basic-auth", "alertmanager-tls", "alertmanager-config"}
-	)
+func DeleteAlertmanager(ctx context.Context, k8sClient client.Client, namespace string) error {
+	objs := []runtime.Object{
+		&appsv1.StatefulSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      AlertManagerStatefulSetName,
+				Namespace: namespace,
+			},
+		},
+		&extensionsv1beta1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager",
+				Namespace: namespace,
+			},
+		},
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager-client",
+				Namespace: namespace,
+			},
+		},
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager",
+				Namespace: namespace,
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager-basic-auth",
+				Namespace: namespace,
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager-tls",
+				Namespace: namespace,
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager-config",
+				Namespace: namespace,
+			},
+		},
+	}
 
-	if err := k8sClient.DeleteStatefulSet(namespace, AlertManagerStatefulSetName); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	if err := k8sClient.DeleteIngress(namespace, "alertmanager"); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	for _, svc := range services {
-		if err := k8sClient.DeleteService(namespace, svc); err != nil && !apierrors.IsNotFound(err) {
+	for _, obj := range objs {
+		if err := k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptionFuncs...); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
-	for _, secret := range secrets {
-		if err := k8sClient.DeleteSecret(namespace, secret); err != nil && !apierrors.IsNotFound(err) {
+
+	return nil
+}
+
+// DeleteGrafanaByRole deletes the monitoring stack for the shoot owner.
+func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string) error {
+	if k8sClient == nil {
+		return fmt.Errorf("require kubernetes client")
+	}
+
+	listOptions := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s=%s", "component", "grafana", "role", role),
+	}
+
+	deletePropagation := metav1.DeletePropagationForeground
+	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(
+		&metav1.DeleteOptions{
+			PropagationPolicy: &deletePropagation,
+		}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).DeleteCollection(
+		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().ExtensionsV1beta1().Ingresses(namespace).DeleteCollection(
+		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().CoreV1().Secrets(namespace).DeleteCollection(
+		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete(fmt.Sprintf("grafana-%s", role),
+		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+// TODO: Remove later
+
+// DeleteOldGrafanaStack deletes all left over grafana objects.
+func DeleteOldGrafanaStack(k8sClient kubernetes.Interface, namespace string) error {
+	if k8sClient == nil {
+		return fmt.Errorf("require kubernetes client")
+	}
+
+	configMaps := []string{"grafana-dashboards", "grafana-dashboard-providers", "grafana-datasources"}
+
+	for _, configMap := range configMaps {
+		if err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).Delete(configMap,
+			&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
+
+	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).Delete("grafana",
+		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().CoreV1().Secrets(namespace).Delete("grafana-basic-auth",
+		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().ExtensionsV1beta1().Ingresses(namespace).Delete("grafana",
+		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete("grafana",
+		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
 	return nil
 }
 
@@ -466,4 +545,96 @@ func CurrentReplicaCount(client client.Client, namespace, deploymentName string)
 		return 0, nil
 	}
 	return *deployment.Spec.Replicas, nil
+}
+
+// RespectShootSyncPeriodOverwrite checks whether to respect the sync period overwrite of a Shoot or not.
+func RespectShootSyncPeriodOverwrite(respectSyncPeriodOverwrite bool, shoot *gardenv1beta1.Shoot) bool {
+	return respectSyncPeriodOverwrite || shoot.Namespace == GardenNamespace
+}
+
+// ShouldIgnoreShoot determines whether a Shoot should be ignored or not.
+func ShouldIgnoreShoot(respectSyncPeriodOverwrite bool, shoot *gardenv1beta1.Shoot) bool {
+	if !RespectShootSyncPeriodOverwrite(respectSyncPeriodOverwrite, shoot) {
+		return false
+	}
+
+	value, ok := shoot.Annotations[ShootIgnore]
+	if !ok {
+		return false
+	}
+
+	ignore, _ := strconv.ParseBool(value)
+	return ignore
+}
+
+// IsShootFailed checks if a Shoot is failed.
+func IsShootFailed(shoot *gardenv1beta1.Shoot) bool {
+	lastOperation := shoot.Status.LastOperation
+
+	return lastOperation != nil && lastOperation.State == gardencorev1alpha1.LastOperationStateFailed &&
+		shoot.Generation == shoot.Status.ObservedGeneration &&
+		shoot.Status.Gardener.Version == version.Get().GitVersion
+}
+
+// IsNowInEffectiveShootMaintenanceTimeWindow checks if the current time is in the effective
+// maintenance time window of the Shoot.
+func IsNowInEffectiveShootMaintenanceTimeWindow(shoot *gardenv1beta1.Shoot) bool {
+	return EffectiveShootMaintenanceTimeWindow(shoot).Contains(time.Now())
+}
+
+// IsUpToDate checks whether the Shoot's generation has changed or if the LastOperation status
+// is not Succeeded.
+func IsUpToDate(shoot *gardenv1beta1.Shoot) bool {
+	lastOperation := shoot.Status.LastOperation
+	return shoot.Generation != shoot.Status.ObservedGeneration ||
+		(lastOperation != nil && lastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded)
+}
+
+// SyncPeriodOfShoot determines the sync period of the given shoot.
+//
+// If no overwrite is allowed, the defaultMinSyncPeriod is returned.
+// Otherwise, the overwrite is parsed. If an error occurs or it is smaller than the defaultMinSyncPeriod,
+// the defaultMinSyncPeriod is returned. Otherwise, the overwrite is returned.
+func SyncPeriodOfShoot(respectSyncPeriodOverwrite bool, defaultMinSyncPeriod time.Duration, shoot *gardenv1beta1.Shoot) time.Duration {
+	if !RespectShootSyncPeriodOverwrite(respectSyncPeriodOverwrite, shoot) {
+		return defaultMinSyncPeriod
+	}
+
+	syncPeriodOverwrite, ok := shoot.Annotations[ShootSyncPeriod]
+	if !ok {
+		return defaultMinSyncPeriod
+	}
+
+	syncPeriod, err := time.ParseDuration(syncPeriodOverwrite)
+	if err != nil {
+		return defaultMinSyncPeriod
+	}
+
+	if syncPeriod < defaultMinSyncPeriod {
+		return defaultMinSyncPeriod
+	}
+	return syncPeriod
+}
+
+// EffectiveMaintenanceTimeWindow cuts a maintenance time window at the end with a guess of 15 minutes. It is subtracted from the end
+// of a maintenance time window to use a best-effort kind of finishing the operation before the end.
+// Generally, we can't make sure that the maintenance operation is done by the end of the time window anyway (considering large
+// clusters with hundreds of nodes, a rolling update will take several hours).
+func EffectiveMaintenanceTimeWindow(timeWindow *utils.MaintenanceTimeWindow) *utils.MaintenanceTimeWindow {
+	return timeWindow.WithEnd(timeWindow.End().Add(0, -15, 0))
+}
+
+// EffectiveShootMaintenanceTimeWindow returns the effective MaintenanceTimeWindow of the given Shoot.
+func EffectiveShootMaintenanceTimeWindow(shoot *gardenv1beta1.Shoot) *utils.MaintenanceTimeWindow {
+	maintenance := shoot.Spec.Maintenance
+	if maintenance == nil || maintenance.TimeWindow == nil {
+		return utils.AlwaysTimeWindow
+	}
+
+	timeWindow, err := utils.ParseMaintenanceTimeWindow(maintenance.TimeWindow.Begin, maintenance.TimeWindow.End)
+	if err != nil {
+		return utils.AlwaysTimeWindow
+	}
+
+	return EffectiveMaintenanceTimeWindow(timeWindow)
 }

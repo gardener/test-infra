@@ -26,6 +26,7 @@ import (
 	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
 	machinescheme "github.com/gardener/gardener/pkg/client/machine/clientset/versioned/scheme"
 
+	resourcesscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -106,6 +107,11 @@ var (
 		client.PropagationPolicy(metav1.DeletePropagationForeground),
 		client.GracePeriodSeconds(60),
 	}
+	// ForceDeleteOptionFuncs use background propagation policy and grace period of 0 seconds.
+	ForceDeleteOptionFuncs = []client.DeleteOptionFunc{
+		client.PropagationPolicy(metav1.DeletePropagationBackground),
+		client.GracePeriodSeconds(0),
+	}
 
 	propagationPolicy    = metav1.DeletePropagationForeground
 	gracePeriodSeconds   = int64(60)
@@ -134,6 +140,7 @@ func init() {
 		machinescheme.AddToScheme,
 		dnsscheme.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
+		resourcesscheme.AddToScheme,
 	)
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 
@@ -198,6 +205,7 @@ type ApplierOptions struct {
 // Kubernetes objects.
 type ApplierInterface interface {
 	ApplyManifest(ctx context.Context, unstructured UnstructuredReader, options ApplierOptions) error
+	DeleteManifest(ctx context.Context, unstructured UnstructuredReader) error
 }
 
 // Interface is used to wrap the interactions with a Kubernetes cluster

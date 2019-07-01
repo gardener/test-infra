@@ -27,6 +27,7 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
+	gardenv1beta1helper "github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
 	gardeninformers "github.com/gardener/gardener/pkg/client/garden/informers/externalversions/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/operation/common"
@@ -57,8 +58,8 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformer
 	if err != nil {
 		return nil, err
 	}
-	secret, err = k8sGardenClient.GetSecret(binding.SecretRef.Namespace, binding.SecretRef.Name)
-	if err != nil {
+	secret = &corev1.Secret{}
+	if err = k8sGardenClient.Client().Get(context.TODO(), kutil.Key(binding.SecretRef.Namespace, binding.SecretRef.Name), secret); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +119,7 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformer
 
 func calculateExtensions(gardenClient client.Client, shoot *gardenv1beta1.Shoot, seedNamespace string) (map[string]Extension, error) {
 	var controllerRegistrations = &corev1alpha1.ControllerRegistrationList{}
-	if err := gardenClient.List(context.TODO(), nil, controllerRegistrations); err != nil {
+	if err := gardenClient.List(context.TODO(), controllerRegistrations); err != nil {
 		return nil, err
 	}
 	return MergeExtensions(controllerRegistrations.Items, shoot.Spec.Extensions, seedNamespace)
@@ -159,20 +160,8 @@ func (s *Shoot) GetNodeCount() int {
 }
 
 // GetK8SNetworks returns the Kubernetes network CIDRs for the Shoot cluster.
-func (s *Shoot) GetK8SNetworks() *gardencorev1alpha1.K8SNetworks {
-	switch s.CloudProvider {
-	case gardenv1beta1.CloudProviderAWS:
-		return &s.Info.Spec.Cloud.AWS.Networks.K8SNetworks
-	case gardenv1beta1.CloudProviderAzure:
-		return &s.Info.Spec.Cloud.Azure.Networks.K8SNetworks
-	case gardenv1beta1.CloudProviderGCP:
-		return &s.Info.Spec.Cloud.GCP.Networks.K8SNetworks
-	case gardenv1beta1.CloudProviderOpenStack:
-		return &s.Info.Spec.Cloud.OpenStack.Networks.K8SNetworks
-	case gardenv1beta1.CloudProviderAlicloud:
-		return &s.Info.Spec.Cloud.Alicloud.Networks.K8SNetworks
-	}
-	return nil
+func (s *Shoot) GetK8SNetworks() (*gardencorev1alpha1.K8SNetworks, error) {
+	return gardenv1beta1helper.GetK8SNetworks(s.Info)
 }
 
 // GetWorkerVolumesByName returns the volume information for the specific worker pool (if there
@@ -244,32 +233,37 @@ func (s *Shoot) GetZones() []string {
 		return s.Info.Spec.Cloud.OpenStack.Zones
 	case gardenv1beta1.CloudProviderAlicloud:
 		return s.Info.Spec.Cloud.Alicloud.Zones
+	case gardenv1beta1.CloudProviderPacket:
+		return s.Info.Spec.Cloud.Packet.Zones
 	}
 	return nil
 }
 
 // GetPodNetwork returns the pod network CIDR for the Shoot cluster.
 func (s *Shoot) GetPodNetwork() gardencorev1alpha1.CIDR {
-	if k8sNetworks := s.GetK8SNetworks(); k8sNetworks != nil {
-		return *k8sNetworks.Pods
+	k8sNetworks, err := s.GetK8SNetworks()
+	if err != nil {
+		return ""
 	}
-	return ""
+	return *k8sNetworks.Pods
 }
 
 // GetServiceNetwork returns the service network CIDR for the Shoot cluster.
 func (s *Shoot) GetServiceNetwork() gardencorev1alpha1.CIDR {
-	if k8sNetworks := s.GetK8SNetworks(); k8sNetworks != nil {
-		return *k8sNetworks.Services
+	k8sNetworks, err := s.GetK8SNetworks()
+	if err != nil {
+		return ""
 	}
-	return ""
+	return *k8sNetworks.Services
 }
 
 // GetNodeNetwork returns the node network CIDR for the Shoot cluster.
 func (s *Shoot) GetNodeNetwork() gardencorev1alpha1.CIDR {
-	if k8sNetworks := s.GetK8SNetworks(); k8sNetworks != nil {
-		return *k8sNetworks.Nodes
+	k8sNetworks, err := s.GetK8SNetworks()
+	if err != nil {
+		return ""
 	}
-	return ""
+	return *k8sNetworks.Nodes
 }
 
 // GetMachineImage returns the name of the used machine image.
@@ -315,11 +309,6 @@ func (s *Shoot) GetReplicas(wokenUp int) int {
 		return 0
 	}
 	return wokenUp
-}
-
-// UsesCSI returns whether the given shoot uses CSI volume plugins.
-func (s *Shoot) UsesCSI() bool {
-	return s.CloudProvider == gardenv1beta1.CloudProviderAlicloud
 }
 
 // ComputeAPIServerURL takes a boolean value identifying whether the component connecting to the API server
@@ -424,7 +413,7 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 }
 
 // ExtensionDefaultTimeout is the default timeout and defines how long Gardener should wait
-// for a successful reconcilation of this extension resource.
+// for a successful reconciliation of this extension resource.
 const ExtensionDefaultTimeout = 10 * time.Minute
 
 // MergeExtensions merges the given controller registrations with the given extensions, expecting that each type in extensions is also represented in the registration.

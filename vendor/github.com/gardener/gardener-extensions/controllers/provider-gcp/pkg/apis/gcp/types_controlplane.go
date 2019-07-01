@@ -29,7 +29,6 @@ type ControlPlaneConfig struct {
 	Zone string
 
 	// CloudControllerManager contains configuration settings for the cloud-controller-manager.
-	// +optional
 	CloudControllerManager *CloudControllerManagerConfig
 }
 
