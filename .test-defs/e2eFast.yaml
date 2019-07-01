@@ -33,7 +33,7 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    export E2E_EXPORT_PATH=$TM_EXPORT_PATH
-    export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH
+    export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
+    export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH &&
     go run $GOPATH/src/github.com/gardener/test-infra/test/e2etest
   image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
