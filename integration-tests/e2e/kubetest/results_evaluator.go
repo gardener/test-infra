@@ -115,7 +115,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 	emptySummary := Summary{DescriptionFile: config.DescriptionFile}
 	summary := emptySummary
 	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in (?P<TestSuiteDuration>\d+)`)
-	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*(?P<Failed>\d+) Failed.*Pending`)
+	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*?(?P<Failed>\d+) Failed.*Pending`)
 
 	for _, e2eLogPath := range e2eLogFilePaths {
 		file, err := os.Open(e2eLogPath)
@@ -204,7 +204,7 @@ func mergeE2eLogFiles(dst string, e2eLogFilePaths []string) {
 	if len(e2eLogFilePaths) == 1 {
 		log.Infof("copied %s file to %s/%s", e2eLogFilePaths[0], dst, MergedE2eLogFile)
 	} else {
-		log.Infof("merged %o e2e log files to %s%s%s", len(e2eLogFilePaths), dst, MergedE2eLogFile)
+		log.Infof("merged %o e2e log files to %s%s", len(e2eLogFilePaths), dst, MergedE2eLogFile)
 	}
 }
 
