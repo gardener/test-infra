@@ -1,11 +1,12 @@
 package setup
 
 import (
+	"context"
 	"fmt"
+	"github.com/codeclysm/extract"
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
-	"github.com/mholt/archiver"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -131,34 +132,42 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 		if err != nil {
 			return err
 		}
-		if err := archiver.Unarchive(k8sTestBinariesTarPath, config.TmpDir); err != nil {
-			return err
+
+		archiveFile, err := os.Open(k8sTestBinariesTarPath)
+		shiftFile := func(path string) string {
+			parts := strings.Split(path, string(filepath.Separator))
+			parts = parts[2:]
+			return strings.Join(parts, string(filepath.Separator))
 		}
-		var extractedDirPath string = filepath.Join(config.TmpDir, "kubernetes/test/bin")
-		_ = os.MkdirAll(filepath.Dir(k8sOutputBinDir), os.FileMode(0777))
-		if err := os.Rename(extractedDirPath, k8sOutputBinDir); err != nil {
+		if err := extract.Gz(context.Background(), archiveFile, filepath.Dir(k8sOutputBinDir), shiftFile); err != nil {
 			return err
 		}
 
 		if runtime.GOOS == "linux" {
-			log.Info("Install glibc to run precompiled ginkgo and e2e.test binaries")
-			if _, err = util.RunCmd("apk --no-cache add ca-certificates wget", ""); err != nil {
-				return err
-			}
-			if _, err = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", ""); err != nil {
-				return err
-			}
-			if _, err = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", ""); err != nil {
-				return err
-			}
-			if _, err = util.RunCmd("apk add glibc-2.29-r0.apk", ""); err != nil {
-				return err
-			}
+			err = installGlibC()
 		}
 	}
 
 	log.Info("get k8s examples")
 	if out, err := util.RunCmd("go get -u k8s.io/examples", ""); err != nil && !isNoGoFilesErr(out.StdErr) {
+		return err
+	}
+	return nil
+}
+
+func installGlibC() error {
+	log.Info("Install glibc to run precompiled ginkgo and e2e.test binaries")
+	var err error
+	if _, err = util.RunCmd("apk --no-cache add ca-certificates wget", ""); err != nil {
+		return err
+	}
+	if _, err = util.RunCmd("wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub", ""); err != nil {
+		return err
+	}
+	if _, err = util.RunCmd("wget --quiet https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk", ""); err != nil {
+		return err
+	}
+	if _, err = util.RunCmd("apk add glibc-2.29-r0.apk", ""); err != nil {
 		return err
 	}
 	return nil
