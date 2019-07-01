@@ -31,10 +31,31 @@ func Setup() error {
 	if err := downloadKubernetes(config.K8sRelease); err != nil {
 		return err
 	}
+	if err := downloadKubectl(config.K8sRelease); err != nil {
+		return err
+	}
 	if err := compileOrGetTestUtilities(config.K8sRelease); err != nil {
 		return err
 	}
 	log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
+	return nil
+}
+
+func downloadKubectl(k8sVersion string) error {
+	log.Info("download corresponding kubectl version")
+	if _, err := util.RunCmd(fmt.Sprintf("curl -LO https://storage.googleapis.com/kubernetes-release/release/v%s/bin/darwin/amd64/kubectl", k8sVersion), ""); err != nil {
+		return err
+	}
+	if err := os.Chmod("./kubectl",0755); err != nil {
+		return err
+	}
+	out, err := util.RunCmd("which kubectl", "")
+	if err != nil {
+		return err
+	}
+	if err := os.Rename("./kubectl", strings.TrimSpace(out.StdOut)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -127,7 +148,7 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 			return err
 		}
 	} else if resp.StatusCode == http.StatusOK {
-		log.Infof("precompiled kubernetes test binaries available, download kubernetes-test-linux-amd64 for v%s", k8sVersion)
+		log.Infof("precompiled kubernetes test binaries available, download kubernetes-test-linux-amd64 for kubernetes v%s", k8sVersion)
 		k8sTestBinariesTarPath, err := util.DownloadFile(k8sTestBinariesVersionURL, config.TmpDir)
 		if err != nil {
 			return err
