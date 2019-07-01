@@ -34,18 +34,34 @@ var MergedE2eLogFilePath = filepath.Join(config.ExportPath, MergedE2eLogFile)
 // Analyze analyzes junit.xml files and e2e.log files, which are dumped by kubetest and provides a resulting test suite summary and results for each testcase individually. These results are then written to the export dir as files.
 func Analyze(kubetestResultsPath string) Summary {
 	log.Infof("Analyze e2e.log and junit.xml files in %s", kubetestResultsPath)
+
 	e2eLogFilePaths := util.GetFilesByPattern(kubetestResultsPath, E2eLogFileNamePattern)
 	summary, err := analyzeE2eLogs(e2eLogFilePaths)
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at e2e.log analysis"))
 	}
+
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
 	if err := analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration, &summary.FailedTestcaseNames); err != nil {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at junit.xml analysis"))
 	}
+
 	log.Infof("test suite summary: %+v\n", summary)
+	writeSummaryToFile(summary)
 	log.Infof("Check out result files in %s", kubetestResultsPath)
+
 	return summary
+}
+
+func writeSummaryToFile(summary Summary) {
+	file, err := json.MarshalIndent(summary, "", " ")
+	if err != nil {
+		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
+	}
+	summaryFilePath := path.Join(config.ExportPath, TestSummaryFileName)
+	if err := ioutil.WriteFile(summaryFilePath, file, 0644); err != nil {
+		log.Fatal(errors.Wrapf(err, "Couldn't write %s to file", summaryFilePath))
+	}
 }
 
 func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailedTestcases *[]string) error {
@@ -158,15 +174,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 	summary.ExecutionGroup = strings.Join(config.TestcaseGroup, ",")
 	summary.FinishedTime = time.Now()
 	summary.StartTime = summary.FinishedTime.Add(time.Second * time.Duration(-summary.TestsuiteDuration))
-	file, err := json.MarshalIndent(summary, "", " ")
-	if err != nil {
-		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
-	}
-
-	summaryFilePath := path.Join(config.ExportPath, TestSummaryFileName)
-	if err := ioutil.WriteFile(summaryFilePath, file, 0644); err != nil {
-		log.Fatal(errors.Wrapf(err, "Couldn't write %s to file", summaryFilePath))
-	}
 
 	mergeE2eLogFiles(MergedE2eLogFilePath, e2eLogFilePaths)
 	return summary, nil
