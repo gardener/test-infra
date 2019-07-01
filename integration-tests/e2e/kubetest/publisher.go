@@ -43,7 +43,7 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 	}
 
 	testStatus := "FAILURE"
-	if TestsuiteSuccessful {
+	if testSummary.TestsuiteSuccessful {
 		testStatus = "SUCCESS"
 	}
 	finishedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"%s\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testSummary.FinishedTime.Unix(), testStatus, config.K8sRelease, config.GardenerVersion))

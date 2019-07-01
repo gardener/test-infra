@@ -61,20 +61,20 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 		if err != nil {
 			return errors.Wrapf(err, "Couldn't unmarshal %s", file.Name())
 		}
-		FailedTests += FailedTests
-		ExecutedTests += ExecutedTests
-		SuccessfulTests += SuccessfulTests
-		for _, testcase := range Testcases {
-			if Skipped {
-				if _, ok := testcaseNameToTestcase[Name]; !ok {
-					testcaseNameToTestcase[Name] = testcase
+		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
+		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
+		mergedJunitXmlResult.SuccessfulTests += junitXml.SuccessfulTests
+		for _, testcase := range junitXml.Testcases {
+			if testcase.Skipped {
+				if _, ok := testcaseNameToTestcase[testcase.Name]; !ok {
+					testcaseNameToTestcase[testcase.Name] = testcase
 				}
 				continue
 			}
-			if !Successful {
-				*summaryFailedTestcases = append(*summaryFailedTestcases, Name)
+			if !testcase.Successful {
+				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
 			}
-			testcaseNameToTestcase[Name] = testcase
+			testcaseNameToTestcase[testcase.Name] = testcase
 			testcaseJSON, err := json.MarshalIndent(testcase, "", " ")
 			if err != nil {
 				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
@@ -88,7 +88,7 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 		}
 	}
 	for _, testcase := range testcaseNameToTestcase {
-		Testcases = append(Testcases, testcase)
+		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
 	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
 		return err

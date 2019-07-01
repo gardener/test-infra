@@ -95,6 +95,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:7a6f6bfd9cab4c4f0dee3812031db4bf9a2a5236475a36757b97ace075ae2d07"
+  name = "github.com/codeclysm/extract"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "cb78af9c8af24b50533f931fa83bdfd4170bf840"
+  version = "v2.2.0"
+
+[[projects]]
   digest = "1:7cb4fdca4c251b3ef8027c90ea35f70c7b661a593b9eeae34753c65499098bb1"
   name = "github.com/cpuguy83/go-md2man"
   packages = ["md2man"]
@@ -463,6 +471,19 @@
   version = "v0.2.0"
 
 [[projects]]
+  digest = "1:923634e22bf44fd043d91727cf6bd312cd5856c97c3af301e492c75d350f56f6"
+  name = "github.com/h2non/filetype"
+  packages = [
+    ".",
+    "matchers",
+    "matchers/isobmff",
+    "types",
+  ]
+  pruneopts = "NUT"
+  revision = "2248f2e2f77cd8cf9694216e3f9589d71005de37"
+  version = "v1.0.8"
+
+[[projects]]
   digest = "1:f0d9d74edbd40fdeada436d5ac9cb5197407899af3fef85ff0137077ffe8ae19"
   name = "github.com/hashicorp/errwrap"
   packages = ["."]
@@ -527,6 +548,14 @@
   pruneopts = "NUT"
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
   version = "v1.1.5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:9c83139d1b88efd3e44b326d4863c89980969644f21e6c1eef9bfa6415ae38dd"
+  name = "github.com/juju/errors"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "e65537c515d77e35697c471d6c2755375cb3adc4"
 
 [[projects]]
   digest = "1:4059c14e87a2de3a434430340521b5feece186c1469eff0834c29a63870de3ed"
@@ -1557,6 +1586,7 @@
     "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1",
     "github.com/argoproj/argo/pkg/client/clientset/versioned",
     "github.com/argoproj/argo/pkg/client/clientset/versioned/scheme",
+    "github.com/codeclysm/extract",
     "github.com/gardener/gardener/pkg/apis/core/v1alpha1",
     "github.com/gardener/gardener/pkg/apis/garden/v1beta1",
     "github.com/gardener/gardener/pkg/chartrenderer",
