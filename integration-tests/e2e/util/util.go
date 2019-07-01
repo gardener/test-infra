@@ -49,7 +49,11 @@ func RunCmd(command, execPath string) (output CmdOutput, err error) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	log.Infof("run command: '%s'", command)
+	cmdStrLen := len(command)
+	if cmdStrLen > 300 {
+		cmdStrLen = 300
+	}
+	log.Infof("run command: '%s'", command[:cmdStrLen-1])
 	err = cmd.Run()
 
 	//	Output our results
