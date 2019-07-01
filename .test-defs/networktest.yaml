@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# Note: test deploys a daemonset to the seed nodes which results in motion of the seed workflow
+# Therefore do not run this test on productive clusters
+
 kind: TestDefinition
 metadata:
   name: network-connectivity-test
@@ -23,7 +27,7 @@ spec:
   description: Run network connectivity tests for shoots and seeds
 
   activeDeadlineSeconds: 900
-  labels: ["default"]
+  labels: ["beta", "destructive"]
 
   config:
 
@@ -32,7 +36,7 @@ spec:
   - >-
     test/networktest/install.sh &&
     export KUBECONFIG=$TM_KUBECONFIG_PATH/shoot.config &&
-    test/networktest/seed-cluster-network-test.py --nodes &&
+    integration-test/networktest/seed-cluster-network-test.py --nodes &&
     export KUBECONFIG=$TM_KUBECONFIG_PATH/seed.config &&
-    test/networktest/seed-cluster-network-test.py --control-planes --seed shoot--it--$SHOOT_NAME
+    integration-test/networktest/seed-cluster-network-test.py --control-planes --seed shoot--it--$SHOOT_NAME
   image: python:3.7.3-alpine3.9
