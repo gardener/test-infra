@@ -17,6 +17,9 @@ import (
 	"strings"
 )
 
+// use max log line length, because kubetest commands can be very long
+const logMaxLength = 300
+
 func DownloadFile(url, dir string) (filePath string, err error) {
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -51,11 +54,11 @@ func RunCmd(command, execPath string) (output CmdOutput, err error) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	cmdStrLen := len(command)
-	if cmdStrLen > 300 {
-		cmdStrLen = 300
+	if len(command) > logMaxLength {
+		log.Infof("%s...", command[:logMaxLength])
+	} else {
+		log.Info(command)
 	}
-	log.Infof("run command: '%s'", command[:cmdStrLen-1])
 	err = cmd.Run()
 
 	//	Output our results

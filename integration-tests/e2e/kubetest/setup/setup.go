@@ -77,7 +77,7 @@ func cleanUpPreviousRuns() {
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
 	if _, err := exec.Command("which", "kubectl").Output(); err != nil {
-		log.Warn(errors.Wrapf(err, "kubectl command unknown"))
+		log.Warn(errors.Wrapf(err, "kubectl not installed"))
 		return false
 	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
