@@ -47,7 +47,7 @@ func GetComponentsFromFile(file string) (ComponentList, error) {
 	}
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot read component descriptor file %s: %s", file, err.Error())
+		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
 	}
 	return GetComponents(data)
 }

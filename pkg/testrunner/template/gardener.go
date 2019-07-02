@@ -24,8 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// RenderShootTestrun renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
-// Adds the component descriptor to metadata.
+// RenderGardenerTestrun renders a helm chart with containing testruns.
+// The current component_descriptor as well as the upgraded component_descriptor are added to the locationSets.
 func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 	var componentDescriptor componentdescriptor.ComponentList
 

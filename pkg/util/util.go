@@ -184,7 +184,7 @@ func MarshalNoHTMLEscape(v interface{}) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// StringArrayContains checks if a string array contains s string element
+// StringArrayContains checks if a string array contains the string elem
 func StringArrayContains(ar []string, elem string) bool {
 	for _, val := range ar {
 		if val == elem {
@@ -194,7 +194,7 @@ func StringArrayContains(ar []string, elem string) bool {
 	return false
 }
 
-// String default checks of a string is defined.
+// StringDefault checks if a string is defined.
 // If the value is emtpy the default string is returned
 func StringDefault(value, def string) string {
 	if value == "" {
