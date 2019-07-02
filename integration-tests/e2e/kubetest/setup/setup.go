@@ -49,11 +49,7 @@ func downloadKubectl(k8sVersion string) error {
 	if err := os.Chmod("./kubectl",0755); err != nil {
 		return err
 	}
-	out, err := util.RunCmd("which kubectl", "")
-	if err != nil {
-		return err
-	}
-	if err := os.Rename("./kubectl", strings.TrimSpace(out.StdOut)); err != nil {
+	if err := os.Rename("./kubectl", "/usr/local/bin/kubectl"); err != nil {
 		return err
 	}
 	return nil
@@ -81,20 +77,21 @@ func cleanUpPreviousRuns() {
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
 	if _, err := exec.Command("which", "kubectl").Output(); err != nil {
-		log.Fatal(errors.Wrapf(err, "kubectl command unknown"))
+		log.Warn(errors.Wrapf(err, "kubectl command unknown"))
+		return false
 	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
 	if _, err := os.Stat(e2eTestPath); os.IsNotExist(err) {
-		log.Infof("test utility not ready: %s doesn't exist", e2eTestPath)
+		log.Warnf("test utility not ready: %s doesn't exist", e2eTestPath)
 		return false // path does not exist
 	}
 	ginkgoPath := path.Join(k8sOutputBinDir, "ginkgo")
 	if _, err := os.Stat(ginkgoPath); os.IsNotExist(err) {
-		log.Infof("test utility not ready: %s doesn't exist", ginkgoPath)
+		log.Warnf("test utility not ready: %s doesn't exist", ginkgoPath)
 		return false // path does not exist
 	}
 	if out, err := util.RunCmd("git describe", config.KubernetesPath); err != nil {
-		log.Errorf("failed to run 'git describe' in %s", config.KubernetesPath, err)
+		log.Warnf("failed to run 'git describe' in %s", config.KubernetesPath, err)
 		return false
 	} else if strings.TrimSpace(out.StdOut) != fmt.Sprintf("v%s", config.K8sRelease) {
 		log.Infof("test utility not ready: current k8s release version is %s, but the requested version is v%s", out.StdOut, config.K8sRelease)
