@@ -49,7 +49,7 @@ func downloadKubectl(k8sVersion string) error {
 	if err := os.Chmod("./kubectl",0755); err != nil {
 		return err
 	}
-	if err := os.Rename("./kubectl", "/usr/local/bin/kubectl"); err != nil {
+	if err := util.MoveFile("./kubectl", "/usr/local/bin/kubectl"); err != nil {
 		return err
 	}
 	return nil
