@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -41,20 +40,6 @@ func Setup() error {
 	return nil
 }
 
-func downloadKubectl(k8sVersion string) error {
-	log.Info("download corresponding kubectl version")
-	if _, err := util.RunCmd(fmt.Sprintf("curl -LO https://storage.googleapis.com/kubernetes-release/release/v%s/bin/darwin/amd64/kubectl", k8sVersion), ""); err != nil {
-		return err
-	}
-	if err := os.Chmod("./kubectl",0755); err != nil {
-		return err
-	}
-	if err := util.MoveFile("./kubectl", "/usr/local/bin/kubectl"); err != nil {
-		return err
-	}
-	return nil
-}
-
 func cleanUpPreviousRuns() {
 	if err := os.RemoveAll(config.LogDir); err != nil {
 		log.Error(err)
@@ -76,8 +61,12 @@ func cleanUpPreviousRuns() {
 
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
-	if _, err := exec.Command("which", "kubectl").Output(); err != nil {
+	if _, err := util.RunCmd("which kubectl", ""); err != nil {
 		log.Warn(errors.Wrapf(err, "kubectl not installed"))
+		return false
+	}
+	if out, err := util.RunCmd("kubectl version", ""); err != nil || !strings.Contains(out.StdOut, fmt.Sprintf("v%s", config.K8sRelease)) {
+		log.Warn(errors.Wrapf(err, "kubectl version doesn't match kubernetes version"))
 		return false
 	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
@@ -125,6 +114,29 @@ func downloadKubernetes(k8sVersion string) error {
 
 	if _, err := util.RunCmd(fmt.Sprintf("git checkout v%s", k8sVersion), config.KubernetesPath); err != nil {
 		return err
+	}
+	log.Infof("kubernetes v%s successfully installed", k8sVersion)
+	return nil
+}
+
+func downloadKubectl(k8sVersion string) error {
+	log.Info("download corresponding kubectl version")
+	if _, err := util.RunCmd(fmt.Sprintf("curl -LO https://storage.googleapis.com/kubernetes-release/release/v%s/bin/%s/amd64/kubectl", k8sVersion, runtime.GOOS), ""); err != nil {
+		return err
+	}
+	kubectlBinPath := "/usr/local/bin/kubectl"
+	if err := util.MoveFile("./kubectl", kubectlBinPath); err != nil {
+		return err
+	}
+	if err := os.Chmod(kubectlBinPath,0755); err != nil {
+		return err
+	}
+
+	// verify successful kubectl installation
+	if _, err := util.RunCmd("kubectl version", ""); err != nil {
+		return err
+	} else {
+		log.Info("kubectl successfully installed")
 	}
 	return nil
 }
