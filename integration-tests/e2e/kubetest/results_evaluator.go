@@ -42,7 +42,7 @@ func Analyze(kubetestResultsPath string) Summary {
 	}
 
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
-	if err := analyzeJunitXMLs(junitXMLFilePaths, summary.TestsuiteDuration, &summary.FailedTestcaseNames); err != nil {
+	if err := analyzeJunitXMLsEnrichSummary(junitXMLFilePaths, summary.TestsuiteDuration, &summary.FailedTestcaseNames); err != nil {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at junit.xml analysis"))
 	}
 
@@ -64,7 +64,7 @@ func writeSummaryToFile(summary Summary) {
 	}
 }
 
-func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailedTestcases *[]string) error {
+func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, summaryFailedTestcases *[]string) error {
 	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: durationSec}
 	testcaseNameToTestcase := make(map[string]TestcaseResult)
 	for _, junitXMLPath := range junitXMLFilePaths {
@@ -87,7 +87,7 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 				}
 				continue
 			}
-			if !testcase.Successful {
+			if !testcase.Successful && !testcase.Skipped {
 				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
 			}
 			testcaseNameToTestcase[testcase.Name] = testcase
@@ -106,10 +106,33 @@ func analyzeJunitXMLs(junitXMLFilePaths []string, durationSec int, summaryFailed
 	for _, testcase := range testcaseNameToTestcase {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
+	log.Infof("Flaked testcases: %d", countFlakedTests(mergedJunitXmlResult))
 	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
 		return err
 	}
 	return nil
+}
+
+func countFlakedTests(junitXml *JunitXMLResult) int {
+	successfulTestcases := make(map[string]bool)
+	failedTestcases := make(map[string]bool)
+	flakedTestcasesCount := 0
+	for _, testcase := range junitXml.Testcases {
+		if testcase.Skipped {
+			continue
+		}
+		if testcase.Successful {
+			successfulTestcases[testcase.Name] = true
+		} else {
+			failedTestcases[testcase.Name] = true
+		}
+	}
+	for key, _ := range failedTestcases {
+		if _, ok := successfulTestcases[key]; ok {
+			flakedTestcasesCount++
+		}
+	}
+	return flakedTestcasesCount
 }
 
 func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {

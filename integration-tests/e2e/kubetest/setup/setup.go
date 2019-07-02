@@ -7,7 +7,6 @@ import (
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -62,11 +61,11 @@ func cleanUpPreviousRuns() {
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
 	if _, err := util.RunCmd("which kubectl", ""); err != nil {
-		log.Warn(errors.Wrapf(err, "kubectl not installed"))
+		log.Warn("kubectl not installed")
 		return false
 	}
 	if out, err := util.RunCmd("kubectl version", ""); err != nil || !strings.Contains(out.StdOut, fmt.Sprintf("v%s", config.K8sRelease)) {
-		log.Warn(errors.Wrapf(err, "kubectl version doesn't match kubernetes version"))
+		log.Warn("kubectl version doesn't match kubernetes version")
 		return false
 	}
 	e2eTestPath := path.Join(k8sOutputBinDir, "e2e.test")
