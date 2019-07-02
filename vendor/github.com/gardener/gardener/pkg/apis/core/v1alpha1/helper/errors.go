@@ -18,9 +18,11 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type errorWithCode struct {
@@ -97,4 +99,15 @@ func FormatLastErrDescription(err error) string {
 		errString = strings.ToUpper(string(errString[0])) + errString[1:]
 	}
 	return errString
+}
+
+// LastError creates a new LastError with the given description, optional codes and sets timestamp when the error is lastly observed.
+func LastError(description string, codes ...gardencorev1alpha1.ErrorCode) *gardencorev1alpha1.LastError {
+	return &gardencorev1alpha1.LastError{
+		Description: description,
+		Codes:       codes,
+		LastUpdateTime: &metav1.Time{
+			Time: time.Now(),
+		},
+	}
 }

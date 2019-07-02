@@ -59,12 +59,12 @@ import (
 
 // New creates a new operation object with a Shoot resource object.
 func New(shoot *gardenv1beta1.Shoot, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector, shootBackup *config.ShootBackup) (*Operation, error) {
-	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, *(shoot.Spec.Cloud.Seed), shoot, nil, shootBackup)
+	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, shoot.Spec.Cloud.Seed, shoot, nil, shootBackup)
 }
 
 // NewWithBackupInfrastructure creates a new operation object without a Shoot resource object but the BackupInfrastructure resource.
 func NewWithBackupInfrastructure(backupInfrastructure *gardenv1beta1.BackupInfrastructure, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector) (*Operation, error) {
-	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, backupInfrastructure.Namespace, backupInfrastructure.Spec.Seed, nil, backupInfrastructure, nil)
+	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, backupInfrastructure.Namespace, &backupInfrastructure.Spec.Seed, nil, backupInfrastructure, nil)
 }
 
 func newOperation(
@@ -74,8 +74,8 @@ func newOperation(
 	gardenerInfo *gardenv1beta1.Gardener,
 	secretsMap map[string]*corev1.Secret,
 	imageVector imagevector.ImageVector,
-	namespace,
-	seedName string,
+	namespace string,
+	seedName *string,
 	shoot *gardenv1beta1.Shoot,
 	backupInfrastructure *gardenv1beta1.BackupInfrastructure,
 	shootBackup *config.ShootBackup,
@@ -90,9 +90,13 @@ func newOperation(
 	if err != nil {
 		return nil, err
 	}
-	seedObj, err := seed.NewFromName(k8sGardenClient, k8sGardenInformers, seedName)
-	if err != nil {
-		return nil, err
+
+	var seedObj *seed.Seed
+	if seedName != nil {
+		seedObj, err = seed.NewFromName(k8sGardenClient, k8sGardenInformers, *seedName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	renderer, err := chartrenderer.NewForConfig(k8sGardenClient.RESTConfig())
@@ -221,11 +225,6 @@ func (o *Operation) controlPlaneHibernated() (bool, error) {
 	return true, nil
 }
 
-//ComputePrometheusIngressFQDN computes full qualified domain name for prometheus ingress sub-resource and returns it.
-func (o *Operation) ComputePrometheusIngressFQDN() string {
-	return o.Seed.GetIngressFQDN("p", o.Shoot.Info.Name, o.Garden.Project.Name)
-}
-
 // InitializeMonitoringClient will read the Prometheus ingress auth and tls
 // secrets from the Seed cluster, which are containing the cert to secure
 // the connection and the credentials authenticate against the Shoot Prometheus.
@@ -252,7 +251,7 @@ func (o *Operation) InitializeMonitoringClient() error {
 	}
 
 	config := prometheusapi.Config{
-		Address: fmt.Sprintf("https://%s", o.ComputePrometheusIngressFQDN()),
+		Address: fmt.Sprintf("https://%s", o.ComputeIngressHost("p")),
 		RoundTripper: &prometheusRoundTripper{
 			authHeader: fmt.Sprintf("Basic %s", utils.EncodeBase64([]byte(fmt.Sprintf("%s:%s", credentials.Data[secrets.DataKeyUserName], credentials.Data[secrets.DataKeyPassword])))),
 			ca:         ca,
@@ -472,4 +471,42 @@ func (o *Operation) DeleteClusterResourceFromSeed(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// ComputeGrafanaHosts computes the host for both grafanas.
+func (o *Operation) ComputeGrafanaHosts() []string {
+	return []string{
+		o.ComputeGrafanaOperatorsHost(),
+		o.ComputeGrafanaUsersHost(),
+	}
+}
+
+// ComputeGrafanaOperatorsHost computes the host for users Grafana.
+func (o *Operation) ComputeGrafanaOperatorsHost() string {
+	return o.ComputeIngressHost(common.GrafanaOperatorsPrefix)
+}
+
+// ComputeGrafanaUsersHost computes the host for operators Grafana.
+func (o *Operation) ComputeGrafanaUsersHost() string {
+	return o.ComputeIngressHost(common.GrafanaUsersPrefix)
+}
+
+// ComputeAlertManagerHost computes the host for alert manager.
+func (o *Operation) ComputeAlertManagerHost() string {
+	return o.ComputeIngressHost("a")
+}
+
+// ComputePrometheusHost computes the host for prometheus.
+func (o *Operation) ComputePrometheusHost() string {
+	return o.ComputeIngressHost("p")
+}
+
+// ComputeKibanaHost computes the host for kibana.
+func (o *Operation) ComputeKibanaHost() string {
+	return o.ComputeIngressHost("k")
+}
+
+// ComputeIngressHost computes the host for a given prefix.
+func (o *Operation) ComputeIngressHost(prefix string) string {
+	return o.Seed.GetIngressFQDN(prefix, o.Shoot.Info.Name, o.Garden.Project.Name)
 }

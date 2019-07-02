@@ -82,10 +82,10 @@ func ScheduleNewHostShoot(ctx context.Context, k8sClient kubernetes.Interface, n
 func getAvailableHost(ctx context.Context, k8sClient kubernetes.Interface, namespace string) (*v1beta1.Shoot, error) {
 	shoots := &v1beta1.ShootList{}
 	selector := labels.SelectorFromSet(labels.Set(map[string]string{ShootLabel: "true"}))
-	err := k8sClient.Client().List(ctx, &client.ListOptions{
+	err := k8sClient.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
 		LabelSelector: selector,
 		Namespace:     namespace,
-	}, shoots)
+	}))
 	if err != nil {
 		return nil, fmt.Errorf("shoots cannot be listed: %s", err.Error())
 	}

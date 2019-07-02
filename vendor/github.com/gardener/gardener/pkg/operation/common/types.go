@@ -156,10 +156,10 @@ const (
 	// GardenRoleMembers is the value of GardenRole key indicating type 'members'.
 	GardenRoleMembers = "members"
 
-	//GardenRoleProject is the value of GardenRole key indicating type 'project'.
+	// GardenRoleProject is the value of GardenRole key indicating type 'project'.
 	GardenRoleProject = "project"
 
-	//GardenRoleBackup is the value of GardenRole key indicating type 'backup'.
+	// GardenRoleBackup is the value of GardenRole key indicating type 'backup'.
 	GardenRoleBackup = "backup"
 
 	// GardenRoleVpa is the value of GardenRole key indicating type 'vpa'.
@@ -177,6 +177,12 @@ const (
 	// if alerts for this cluster should be ignored
 	GardenIgnoreAlerts = "shoot.garden.sapcloud.io/ignore-alerts"
 
+	// GrafanaOperatorsPrefix is a constant for a prefix used for the operators Grafana instance.
+	GrafanaOperatorsPrefix = "g-operators"
+
+	// GrafanaUsersPrefix is a constant for a prefix used for the users Grafana instance.
+	GrafanaUsersPrefix = "g-users"
+
 	// IngressPrefix is the part of a FQDN which will be used to construct the domain name for an ingress controller of
 	// a Shoot cluster. For example, when a Shoot specifies domain 'cluster.example.com', the ingress domain would be
 	// '*.<IngressPrefix>.cluster.example.com'.
@@ -193,12 +199,6 @@ const (
 	// AWSLBReadvertiserDeploymentName is the name for the aws-lb-readvertiser
 	AWSLBReadvertiserDeploymentName = "aws-lb-readvertiser"
 
-	// CloudControllerManagerDeploymentName is the name of the cloud-controller-manager deployment.
-	CloudControllerManagerDeploymentName = "cloud-controller-manager"
-
-	// CloudControllerManagerServerName is the name of the cloud-controller-manager server.
-	CloudControllerManagerServerName = "cloud-controller-manager-server"
-
 	// KubeControllerManagerDeploymentName is the name of the kube-controller-manager deployment.
 	KubeControllerManagerDeploymentName = "kube-controller-manager"
 
@@ -214,8 +214,8 @@ const (
 	// KubeSchedulerServerName is the name of the kube-scheduler server.
 	KubeSchedulerServerName = "kube-scheduler-server"
 
-	// KubeAddonManagerDeploymentName is the name of the kube-addon-manager deployment.
-	KubeAddonManagerDeploymentName = "kube-addon-manager"
+	// GardenerResourceManagerDeploymentName is the name of the gardener-resource-manager deployment.
+	GardenerResourceManagerDeploymentName = "gardener-resource-manager"
 
 	// CalicoTyphaDeploymentName is the name of the calico-typha deployment.
 	CalicoTyphaDeploymentName = "calico-typha"
@@ -235,8 +235,11 @@ const (
 	// KubeProxyDaemonSetName is the name of the kube-proxy daemon set.
 	KubeProxyDaemonSetName = "kube-proxy"
 
-	// GrafanaDeploymentName is the name of the grafana deployment.
-	GrafanaDeploymentName = "grafana"
+	// GrafanaOperatorsDeploymentName is the name of the grafana deployment.
+	GrafanaOperatorsDeploymentName = "grafana-operators"
+
+	// GrafanaUsersDeploymentName is the name of the grafana deployment for the user-facing grafana.
+	GrafanaUsersDeploymentName = "grafana-users"
 
 	// KubeStateMetricsShootDeploymentName is the name of the kube-state-metrics deployment.
 	KubeStateMetricsShootDeploymentName = "kube-state-metrics"
@@ -252,6 +255,9 @@ const (
 
 	// KibanaDeploymentName is the name of the kibana-logging deployment.
 	KibanaDeploymentName = "kibana-logging"
+
+	// KibanaAdminIngressCredentialsSecretName is the name of the secret which holds admin credentials.
+	KibanaAdminIngressCredentialsSecretName = "logging-ingress-credentials"
 
 	// FluentBitDaemonSetName is the name of the fluent-bit daemon set.
 	FluentBitDaemonSetName = "fluent-bit"
@@ -313,6 +319,10 @@ const (
 	// is expired. The lifetime can be extended, but at most by the minimal value of the 'clusterLifetimeDays' property
 	// of referenced quotas.
 	ShootExpirationTimestamp = "shoot.garden.sapcloud.io/expirationTimestamp"
+
+	// ShootNoCleanup is a constant for a label on a resource indicating the the Gardener cleaner should not delete this
+	// resource when cleaning a shoot during the deletion flow.
+	ShootNoCleanup = "shoot.gardener.cloud/no-cleanup"
 
 	// ShootUseAsSeed is a constant for an annotation on a Shoot resource indicating that the Shoot shall be registered as Seed in the
 	// Garden cluster once successfully created.
@@ -383,8 +393,8 @@ const (
 	// BackupNamespacePrefix is a constant for backup namespace created for shoot's backup infrastructure related resources.
 	BackupNamespacePrefix = "backup"
 
-	// KubeAddonManagerImageName is the name of the KubeAddonManager image.
-	KubeAddonManagerImageName = "kube-addon-manager"
+	// GardenerResourceManagerImageName is the name of the GardenerResourceManager image.
+	GardenerResourceManagerImageName = "gardener-resource-manager"
 
 	// CalicoNodeImageName is the name of the CalicoNode image.
 	CalicoNodeImageName = "calico-node"
@@ -458,39 +468,14 @@ const (
 	// ETCDImageName is the name of the ETCD image.
 	ETCDImageName = "etcd"
 
-	// ETCDBackupRestoreImageName is the name of the ETCDBackupRestore image.
-	ETCDBackupRestoreImageName = "etcd-backup-restore"
-
-	// AlicloudControllerManagerImageName is the name of the AlicloudControllerManager image.
-	AlicloudControllerManagerImageName = "alicloud-controller-manager"
-
-	// CSI Images
-
-	// CSIAttacherImageName is the name of csi attacher - https://github.com/kubernetes-csi/external-attacher
-	CSIAttacherImageName = "csi-attacher"
-	// CSIAttacher is the name of CSI Attacher
-	CSIAttacher = "csi-attacher"
-
 	// CSINodeDriverRegistrarImageName is the name of driver registrar - https://github.com/kubernetes-csi/node-driver-registrar
 	CSINodeDriverRegistrarImageName = "csi-node-driver-registrar"
 
-	// CSIProvisionerImageName is the name of csi provisioner - https://github.com/kubernetes-csi/external-provisioner
-	CSIProvisionerImageName = "csi-provisioner"
-	// CSIProvisioner is the name of CSI Provisioner
-	CSIProvisioner = "csi-provisioner"
-
-	// CSISnapshotterImageName is the name of csi plugin for Alicloud - https://github.com/kubernetes-csi/external-snapshotter
-	CSISnapshotterImageName = "csi-snapshotter"
-	// CSISnapshotter is the name of CSI Snapshotter
-	CSISnapshotter = "csi-snapshotter"
-
 	// CSIPluginAlicloudImageName is the name of csi plugin for Alicloud - https://github.com/AliyunContainerService/csi-plugin
 	CSIPluginAlicloudImageName = "csi-plugin-alicloud"
-	// CSIPluginAlicloud is the name of Alicloud CSI Plugin
-	CSIPluginAlicloud = "csi-disk-plugin-alicloud"
 
-	// CSIPluginController is the name of CSI plugin controller
-	CSIPluginController = "csi-plugin-controller"
+	// CSIPluginPacketImageName is the name of csi plugin for Packet - https://github.com/packethost/csi-packet
+	CSIPluginPacketImageName = "packet-storage-interface"
 
 	// AWSLBReadvertiserImageName is the name of the AWSLBReadvertiser image.
 	AWSLBReadvertiserImageName = "aws-lb-readvertiser"
@@ -507,11 +492,17 @@ const (
 	// ElasticsearchMetricsExporterImageName is the name of the metrics exporter image used to fetch elasticsearch metrics.
 	ElasticsearchMetricsExporterImageName = "elasticsearch-metrics-exporter"
 
+	// ElasticsearchSearchguardImageName is the name of the Elastic-Search image with installed searchguard plugin used for logging
+	ElasticsearchSearchguardImageName = "elasticsearch-searchguard-oss"
+
 	// CuratorImageName is the name of the curator image used to alter the Elastic-search logs
 	CuratorImageName = "curator-es"
 
 	// KibanaImageName is the name of the Kibana image used for logging  UI
 	KibanaImageName = "kibana-oss"
+
+	// SearchguardImageName is the name of the Searchguard image used for updating the users and roles
+	SearchguardImageName = "sg-sgadmin"
 
 	// FluentdEsImageName is the image of the Fluentd image used for logging
 	FluentdEsImageName = "fluentd-es"
@@ -521,6 +512,9 @@ const (
 
 	// AlpineImageName is the name of alpine image
 	AlpineImageName = "alpine"
+
+	// AlpineIptablesImageName is the name of the alpine image with pre-installed iptable rules
+	AlpineIptablesImageName = "alpine-iptables"
 
 	// DependencyWatchdogDeploymentName is the name of the dependency controller resources.
 	DependencyWatchdogDeploymentName = "dependency-watchdog"
@@ -556,8 +550,7 @@ var (
 	// RequiredControlPlaneDeployments is a set of the required shoot control plane deployments
 	// running in the seed.
 	RequiredControlPlaneDeployments = sets.NewString(
-		CloudControllerManagerDeploymentName,
-		KubeAddonManagerDeploymentName,
+		GardenerResourceManagerDeploymentName,
 		KubeAPIServerDeploymentName,
 		KubeControllerManagerDeploymentName,
 		KubeSchedulerDeploymentName,
@@ -588,7 +581,8 @@ var (
 
 	// RequiredMonitoringSeedDeployments is a set of the required seed monitoring deployments.
 	RequiredMonitoringSeedDeployments = sets.NewString(
-		GrafanaDeploymentName,
+		GrafanaOperatorsDeploymentName,
+		GrafanaUsersDeploymentName,
 		KubeStateMetricsSeedDeploymentName,
 		KubeStateMetricsShootDeploymentName,
 	)
@@ -608,13 +602,3 @@ var (
 		KibanaDeploymentName,
 	)
 )
-
-// CloudConfigUserDataConfig is a struct containing cloud-specific configuration required to
-// render the shoot-cloud-config chart properly.
-type CloudConfigUserDataConfig struct {
-	ProvisionCloudProviderConfig bool
-	KubeletParameters            []string
-	HostnameOverride             bool
-	EnableCSI                    bool
-	ProviderIDProvided           bool
-}

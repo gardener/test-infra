@@ -18,11 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
