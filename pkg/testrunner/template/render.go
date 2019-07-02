@@ -10,9 +10,9 @@ import (
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
-func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, versions []string) ([]*TestrunFile, error) {
+func RenderChart(tmClient kubernetes.Interface, parameters *ShootTestrunParameters, versions []string) ([]*TestrunFile, error) {
 	log.Debugf("Parameters: %+v", util.PrettyPrintStruct(parameters))
-	log.Debugf("Render chart from %s", parameters.TestrunChartPath)
+	log.Debugf("RenderShootTestrun chart from %s", parameters.TestrunChartPath)
 
 	tmChartRenderer, err := chartrenderer.NewForConfig(tmClient.RESTConfig())
 	if err != nil {
@@ -26,7 +26,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 
 	renderedFiles := []*TestrunFile{}
 	for _, version := range versions {
-		files, err := renderSingleChart(tmChartRenderer, parameters, gardenKubeconfig, version)
+		files, err := RenderSingleChart(tmChartRenderer, parameters, gardenKubeconfig, version)
 		if err != nil {
 			return nil, err
 		}
@@ -35,7 +35,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *TestrunParameters, v
 	return renderedFiles, nil
 }
 
-func renderSingleChart(renderer chartrenderer.Interface, parameters *TestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
+func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":                 fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
@@ -64,15 +64,18 @@ func renderSingleChart(renderer chartrenderer.Interface, parameters *TestrunPara
 		return nil, err
 	}
 
-	files := []*TestrunFile{}
+	return ParseTestrunChart(chart, TestrunFileMetadata{
+		KubernetesVersion: version,
+	}), nil
+}
+
+func ParseTestrunChart(chart *chartrenderer.RenderedChart, metadata TestrunFileMetadata) []*TestrunFile {
+	files := make([]*TestrunFile, 0)
 	for _, file := range chart.Files() {
 		files = append(files, &TestrunFile{
-			File: file,
-			Metadata: TestrunFileMetadata{
-				KubernetesVersion: version,
-			},
+			File:     file,
+			Metadata: metadata,
 		})
 	}
-
-	return files, nil
+	return files
 }

@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardenertemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
 	"os"
 
@@ -47,9 +48,11 @@ func init() {
 	log.SetOutput(os.Stderr)
 
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Set debug mode for additional output")
+	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 
 	runtemplate.AddCommand(rootCmd)
 	runtestrun.AddCommand(rootCmd)
+	rungardenertemplate.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)

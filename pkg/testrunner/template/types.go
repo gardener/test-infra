@@ -14,8 +14,8 @@
 
 package template
 
-// TestrunParameters are the parameters which describe the test that is executed by the testrunner.
-type TestrunParameters struct {
+// ShootTestrunParameters are the parameters which describe the test that is executed by the testrunner.
+type ShootTestrunParameters struct {
 	// Path to the kubeconfig where the gardener is running.
 	GardenKubeconfigPath string
 	Namespace            string
@@ -40,6 +40,19 @@ type TestrunParameters struct {
 	ComponentDescriptorPath string
 
 	GardenerVersion string
+}
+
+type GardenerTestrunParameters struct {
+	Namespace        string
+	TestrunChartPath string
+
+	ComponentDescriptorPath         string
+	UpgradedComponentDescriptorPath string
+
+	GardenerCurrentVersion   string
+	GardenerCurrentRevision  string
+	GardenerUpgradedVersion  string
+	GardenerUpgradedRevision string
 }
 
 // TestrunFile is the internal representation of a rendered testrun chart with metadata information

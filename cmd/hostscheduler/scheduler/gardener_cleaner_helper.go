@@ -29,7 +29,7 @@ var (
 	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
 	NotMonitoringComponent = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleMonitoring)
 
-	// NotAddonManagerReconcile is a requirment that something doesnt have the label addonmanager.kubernetes.io/mode = Reconcile
+	// NotAddonManagerReconcile is a requirement that something doesnt have the label addonmanager.kubernetes.io/mode = Reconcile
 	NotAddonManagerReconcile = botanist.MustNewRequirement("addonmanager.kubernetes.io/mode", selection.NotEquals, "Reconcile")
 
 	// NotMonitoringSelector is a selector that excludes monitoring and addon components.

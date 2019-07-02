@@ -16,8 +16,6 @@ package template
 
 import (
 	"fmt"
-	"io/ioutil"
-
 	"github.com/gardener/test-infra/pkg/testrunner"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -26,28 +24,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Render renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
+// RenderShootTestrun renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
-	var componentDescriptor componentdescriptor.ComponentList
+func RenderShootTestrun(tmClient kubernetes.Interface, parameters *ShootTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	if parameters.ComponentDescriptorPath != "" {
-		data, err := ioutil.ReadFile(parameters.ComponentDescriptorPath)
-		if err != nil {
-			return nil, fmt.Errorf("Cannot read component descriptor file %s: %s", parameters.ComponentDescriptorPath, err.Error())
-		}
-		componentDescriptor, err = componentdescriptor.GetComponents(data)
-		if err != nil {
-			return nil, fmt.Errorf("Cannot decode and parse the component descriptor: %s", err.Error())
-		}
-		metadata.ComponentDescriptor = componentDescriptor.JSON()
-		exposeGardenerVersionToParameters(componentDescriptor, parameters)
+	componentDescriptor, err := componentdescriptor.GetComponentsFromFile(parameters.ComponentDescriptorPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode and parse the component descriptor: %s", err.Error())
 	}
+	metadata.ComponentDescriptor = componentDescriptor.JSON()
+	exposeGardenerVersionToParameters(componentDescriptor, parameters)
 
 	files, err := RenderChart(tmClient, parameters, versions)
 	if err != nil {
@@ -55,7 +46,7 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 	}
 
 	// parse the rendered testruns and add locations from BOM of a bom was provided.
-	testruns := []*testrunner.Run{}
+	testruns := make([]*testrunner.Run, 0)
 	for _, file := range files {
 		tr, err := util.ParseTestrun([]byte(file.File))
 		if err != nil {
@@ -67,7 +58,7 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
-		addBOMLocationsToTestrun(&tr, componentDescriptor)
+		addBOMLocationsToTestrun(&tr, "default", componentDescriptor)
 
 		// Add runtime annotations to the testrun
 		addAnnotationsToTestrun(&tr, metadata.Annotations())
@@ -79,17 +70,12 @@ func Render(tmClient kubernetes.Interface, parameters *TestrunParameters, metada
 	}
 
 	if len(testruns) == 0 {
-		return nil, fmt.Errorf("No testruns in the helm chart at %s", parameters.TestrunChartPath)
+		return nil, fmt.Errorf("no testruns in the helm chart at %s", parameters.TestrunChartPath)
 	}
 
 	return testruns, nil
 }
 
-func exposeGardenerVersionToParameters(componentDescriptor componentdescriptor.ComponentList, parameters *TestrunParameters) {
-	for _, component := range componentDescriptor {
-		if component.Name == "github.com/gardener/gardener.version" {
-			parameters.GardenerVersion = component.Version
-			return
-		}
-	}
+func exposeGardenerVersionToParameters(componentDescriptor componentdescriptor.ComponentList, parameters *ShootTestrunParameters) {
+	parameters.GardenerVersion = getGardenerVersionFromComponentDescriptor(componentDescriptor)
 }

@@ -217,11 +217,11 @@ type ConfigElement struct {
 	Name string `json:"name"`
 
 	// Private indicates if the config is shared with further steps
-	Private *bool `json:"private"`
+	Private *bool `json:"private,omitempty"`
 
 	// value of the environment variable.
 	// +optional
-	Value string `json:"value"`
+	Value string `json:"value,omitempty"`
 
 	// Fetches the value from a secret or configmap on the testmachinery cluster.
 	// +optional

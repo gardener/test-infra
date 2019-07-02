@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package runtemplate
+package rungardenertemplate
 
 import (
 	"fmt"
@@ -42,28 +42,18 @@ var (
 	elasticSearchConfigName string
 	s3Endpoint              string
 	s3SSL                   bool
-	argouiEndpoint          string
 	concourseOnErrorDir     string
 
-	testrunChartPath         string
-	gardenKubeconfigPath     string
-	allK8sVersions           bool
-	testrunNamePrefix        string
-	projectName              string
-	shootName                string
-	landscape                string
-	cloudprovider            string
-	cloudprofile             string
-	secretBinding            string
-	region                   string
-	zone                     string
-	k8sVersion               string
-	machineType              string
-	autoscalerMin            string
-	autoscalerMax            string
-	floatingPoolName         string
-	loadbalancerProvider     string
-	componenetDescriptorPath string
+	testrunChartPath                string
+	testrunNamePrefix               string
+	componentDescriptorPath         string
+	upgradedComponentDescriptorPath string
+
+	// optional
+	gardenerCurrentVersion   string
+	gardenerCurrentRevision  string
+	gardenerUpgradedVersion  string
+	gardenerUpgradedRevision string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -72,11 +62,12 @@ func AddCommand(cmd *cobra.Command) {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run-template",
+	Use:   "run-gardener-template",
 	Short: "Run the testrunner with a helm template containing testruns",
 	Aliases: []string{
-		"run", // for backward compatibility
-		"run-tmpl",
+		"run-full",
+		"run-gardener",
+		"run-tmpl-full",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		debug, _ := cmd.Flags().GetBool("debug")
@@ -102,7 +93,7 @@ var runCmd = &cobra.Command{
 			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
 		}
 
-		testrunName := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
+		testrunName := fmt.Sprintf("%s-", testrunNamePrefix)
 		config := &testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
@@ -115,38 +106,19 @@ var runCmd = &cobra.Command{
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
 			S3SSL:               s3SSL,
-			ArgoUIEndpoint:      argouiEndpoint,
 			ConcourseOnErrorDir: concourseOnErrorDir,
 		}
 
-		parameters := &testrunnerTemplate.ShootTestrunParameters{
-			GardenKubeconfigPath: gardenKubeconfigPath,
-			TestrunChartPath:     testrunChartPath,
-			MakeVersionMatrix:    allK8sVersions,
+		parameters := &testrunnerTemplate.GardenerTestrunParameters{
+			TestrunChartPath: testrunChartPath,
+			Namespace:        namespace,
 
-			ProjectName:             projectName,
-			ShootName:               shootName,
-			Landscape:               landscape,
-			Cloudprovider:           cloudprovider,
-			Cloudprofile:            cloudprofile,
-			SecretBinding:           secretBinding,
-			Region:                  region,
-			Zone:                    zone,
-			K8sVersion:              k8sVersion,
-			MachineType:             machineType,
-			AutoscalerMin:           autoscalerMin,
-			AutoscalerMax:           autoscalerMax,
-			FloatingPoolName:        floatingPoolName,
-			LoadBalancerProvider:    loadbalancerProvider,
-			ComponentDescriptorPath: componenetDescriptorPath,
+			ComponentDescriptorPath:         componentDescriptorPath,
+			UpgradedComponentDescriptorPath: upgradedComponentDescriptorPath,
 		}
 
-		metadata := &testrunner.Metadata{
-			Landscape:         parameters.Landscape,
-			CloudProvider:     parameters.Cloudprovider,
-			KubernetesVersion: parameters.K8sVersion,
-		}
-		runs, err := testrunnerTemplate.RenderShootTestrun(tmClient, parameters, metadata)
+		metadata := &testrunner.Metadata{}
+		runs, err := testrunnerTemplate.RenderGardenerTestrun(tmClient, parameters, metadata)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -181,9 +153,6 @@ func init() {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
-	if err := runCmd.MarkFlagRequired("testrun-prefix"); err != nil {
-		log.Debug(err.Error())
-	}
 	runCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
@@ -192,7 +161,6 @@ func init() {
 	runCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	runCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
-	runCmd.Flags().StringVar(&argouiEndpoint, "argoui-endpoint", "", "ArgoUI endpoint of the testmachinery cluster.")
 	runCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// parameter flags
@@ -203,49 +171,13 @@ func init() {
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
 		log.Debug(err.Error())
 	}
-	runCmd.Flags().StringVar(&gardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	if err := runCmd.MarkFlagFilename("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().BoolVar(&allK8sVersions, "all-k8s-versions", false, "Run the testrun with all available versions specified by the cloudprovider.")
-	runCmd.Flags().StringVar(&projectName, "project-name", "", "Gardener project name of the shoot")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&shootName, "shoot-name", "", "Shoot name which is used to run tests.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&cloudprovider, "cloudprovider", "", "Cloudprovider where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&cloudprofile, "cloudprofile", "", "Cloudprofile of shoot.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&secretBinding, "secret-binding", "", "SecretBinding that should be used to create the shoot.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&region, "region", "", "Region where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
-	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
-	}
 
-	runCmd.Flags().StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
-	runCmd.Flags().StringVar(&machineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
-	runCmd.Flags().StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
-	runCmd.Flags().StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
-	runCmd.Flags().StringVar(&floatingPoolName, "floating-pool-name", "", "Floating pool name where the cluster is created. Only needed for Openstack.")
-	runCmd.Flags().StringVar(&loadbalancerProvider, "loadbalancer-provider", "", "LoadBalancer Provider like haproxy. Only applicable for Openstack.")
-	runCmd.Flags().StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
-	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
+	runCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
+	runCmd.Flags().StringVar(&upgradedComponentDescriptorPath, "upgraded-component-descriptor-path", "", "Path to the component descriptor (BOM) of the new landscape.")
+
+	runCmd.Flags().StringVar(&gardenerCurrentVersion, "gardener-current-version", "", "Set current version of gardener. This will result in the helm value {{ .Values.gardener.current.version }}")
+	runCmd.Flags().StringVar(&gardenerCurrentRevision, "gardener-current-revision", "", "Set current revision of gardener. This will result in the helm value {{ .Values.gardener.current.revision }}")
+	runCmd.Flags().StringVar(&gardenerUpgradedVersion, "gardener-upgraded-version", "", "Set current version of gardener. This will result in the helm value {{ .Values.gardener.upgraded.version }}")
+	runCmd.Flags().StringVar(&gardenerUpgradedRevision, "gardener-upgraded-revision", "", "Set current revision of gardener. This will result in the helm value {{ .Values.gardener.upgraded.revision }}")
+
 }
