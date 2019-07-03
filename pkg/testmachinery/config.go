@@ -53,6 +53,7 @@ const (
 	// ExportArtifact is the name of the output artifact where results are stored.
 	ExportArtifact = "ExportArtifact"
 
+	// ConfigMapName is the name of the testmachinery configmap in the cluster
 	ConfigMapName = "tm-config"
 )
 
