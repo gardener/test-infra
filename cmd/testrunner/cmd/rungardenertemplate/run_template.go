@@ -50,6 +50,7 @@ var (
 	upgradedComponentDescriptorPath string
 
 	// optional
+	landscape                string
 	gardenerCurrentVersion   string
 	gardenerCurrentRevision  string
 	gardenerUpgradedVersion  string
@@ -117,7 +118,9 @@ var runCmd = &cobra.Command{
 			UpgradedComponentDescriptorPath: upgradedComponentDescriptorPath,
 		}
 
-		metadata := &testrunner.Metadata{}
+		metadata := &testrunner.Metadata{
+			Landscape: landscape,
+		}
 		runs, err := testrunnerTemplate.RenderGardenerTestrun(tmClient, parameters, metadata)
 		if err != nil {
 			log.Fatal(err)
@@ -175,6 +178,7 @@ func init() {
 	runCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&upgradedComponentDescriptorPath, "upgraded-component-descriptor-path", "", "Path to the component descriptor (BOM) of the new landscape.")
 
+	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
 	runCmd.Flags().StringVar(&gardenerCurrentVersion, "gardener-current-version", "", "Set current version of gardener. This will result in the helm value {{ .Values.gardener.current.version }}")
 	runCmd.Flags().StringVar(&gardenerCurrentRevision, "gardener-current-revision", "", "Set current revision of gardener. This will result in the helm value {{ .Values.gardener.current.revision }}")
 	runCmd.Flags().StringVar(&gardenerUpgradedVersion, "gardener-upgraded-version", "", "Set current version of gardener. This will result in the helm value {{ .Values.gardener.upgraded.version }}")

@@ -49,6 +49,7 @@ type GardenerTestrunParameters struct {
 	ComponentDescriptorPath         string
 	UpgradedComponentDescriptorPath string
 
+	Landscape                string
 	GardenerCurrentVersion   string
 	GardenerCurrentRevision  string
 	GardenerUpgradedVersion  string
