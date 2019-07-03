@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -35,7 +36,7 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 	}
 
 	foundWf := &argov1.Workflow{}
-	if err := r.Get(ctx, types.NamespacedName{Name: getWorkflowName(tr), Namespace: tr.Namespace}, foundWf); err == nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf); err == nil {
 		log.Infof("Cleanup testrun %s", tr.Name)
 
 		// garbage collect all outputs by traversing through nodes and collect outputs artifacts from minio

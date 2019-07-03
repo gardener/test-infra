@@ -16,7 +16,12 @@ package testrunner
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"k8s.io/api/extensions/v1beta1"
+	"net/url"
+	"path"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +36,7 @@ import (
 
 // GetTestruns returns all testruns of a RunList as testrun array
 func (r RunList) GetTestruns() []*tmv1beta1.Testrun {
-	testruns := []*tmv1beta1.Testrun{}
+	testruns := make([]*tmv1beta1.Testrun, len(r))
 	for _, run := range r {
 		testruns = append(testruns, run.Testrun)
 	}
@@ -47,9 +52,13 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 	tr.Namespace = namespace
 	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot create testrun: %s", err.Error())
+		return nil, fmt.Errorf("cannot create testrun: %s", err.Error())
 	}
 	log.Infof("Testrun %s deployed", tr.Name)
+
+	if argoUrl, err := GetArgoURL(tmClient, tr); err != nil {
+		log.Infof("Argo workflow: %s", argoUrl)
+	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
 	interval := time.Duration(pollIntervalSeconds) * time.Second
@@ -58,7 +67,7 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 		testrun := &tmv1beta1.Testrun{}
 		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, testrun)
 		if err != nil {
-			log.Errorf("Cannot get testrun: %s", err.Error())
+			log.Errorf("cannot get testrun: %s", err.Error())
 			return false, nil
 		}
 		tr = testrun
@@ -72,8 +81,38 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, name)
+		return nil, fmt.Errorf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, name)
 	}
 
 	return tr, nil
+}
+
+func GetArgoURL(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (string, error) {
+	// get argo url from the argo ingress if possible
+	// return err if the ingress cannot be found
+	argoIngress := &v1beta1.Ingress{}
+	err := tmClient.Client().Get(context.TODO(), client.ObjectKey{Name: "argo-ui", Namespace: "default"}, argoIngress)
+	if err != nil {
+		return "", err
+	}
+
+	if len(argoIngress.Spec.Rules) == 0 {
+		return "", errors.New("no rules defined")
+	}
+	rule := argoIngress.Spec.Rules[0]
+	if len(rule.HTTP.Paths) == 0 {
+		return "", errors.New("no http backend defined")
+	}
+
+	protocol := "http://"
+	if len(argoIngress.Spec.TLS) != 0 {
+		protocol = "https://"
+	}
+	argoUrl, err := url.ParseRequestURI(protocol + rule.Host)
+	if err != nil {
+		return "", err
+	}
+	argoUrl.Path = path.Join(argoUrl.Path, "workflows", tr.Namespace, testmachinery.GetWorkflowName(tr))
+
+	return argoUrl.String(), nil
 }

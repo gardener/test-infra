@@ -16,19 +16,13 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-func getWorkflowName(tr *tmv1beta1.Testrun) string {
-	return fmt.Sprintf("%s-wf", tr.Name)
-}
 
 func (r *TestrunReconciler) getImagePullSecrets(ctx context.Context) []string {
 	configMap := &corev1.ConfigMap{}

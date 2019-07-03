@@ -15,12 +15,14 @@
 package testmachinery
 
 import (
+	"fmt"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/util"
 
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var tmConfig *TmConfiguration
@@ -61,4 +63,9 @@ func GetConfig() *TmConfiguration {
 // IsRunInsecure returns if the testmachinery is run locally
 func IsRunInsecure() bool {
 	return tmConfig.Insecure
+}
+
+// GetWorkflowName returns the workflow name of a testruns
+func GetWorkflowName(tr *v1beta1.Testrun) string {
+	return fmt.Sprintf("%s-wf", tr.Name)
 }
