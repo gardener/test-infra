@@ -151,6 +151,7 @@ type StepStatus struct {
 	Name              string                   `json:"name"`
 	Position          StepStatusPosition       `json:"position"`
 	TestDefinition    StepStatusTestDefinition `json:"testdefinition,omitempty"`
+	Annotations       map[string]string        `json:"annotations,omitempty"`
 	Phase             argov1.NodePhase         `json:"phase,omitempty"`
 	StartTime         *metav1.Time             `json:"startTime,omitempty"`
 	CompletionTime    *metav1.Time             `json:"completionTime,omitempty"`
@@ -236,11 +237,12 @@ type ConfigElement struct {
 type TestFlow []*DAGStep
 
 type DAGStep struct {
-	Name               string         `json:"name,omitempty"`
-	Definition         StepDefinition `json:"definition,omitempty"`
-	UseGlobalArtifacts bool           `json:"useGlobalArtifacts,omitempty"`
-	DependsOn          []string       `json:"dependsOn,omitempty"`
-	ArtifactsFrom      string         `json:"artifactsFrom,omitempty"`
+	Name               string            `json:"name,omitempty"`
+	Definition         StepDefinition    `json:"definition,omitempty"`
+	UseGlobalArtifacts bool              `json:"useGlobalArtifacts,omitempty"`
+	DependsOn          []string          `json:"dependsOn,omitempty"`
+	ArtifactsFrom      string            `json:"artifactsFrom,omitempty"`
+	Annotations        map[string]string `json:"annotations,omitempty"`
 }
 
 // StepDefinition is a reference to one or more TestDefinitions to execute in a series of steps.StepDefinition

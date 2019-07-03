@@ -105,12 +105,14 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 		}
 
 		summary := testrunner.StepSummary{
-			Metadata:  &stepMetadata,
-			Type:      testrunner.SummaryTypeTeststep,
-			Name:      step.TestDefinition.Name,
-			Phase:     step.Phase,
-			StartTime: step.StartTime,
-			Duration:  step.Duration,
+			Metadata:    &stepMetadata,
+			Type:        testrunner.SummaryTypeTeststep,
+			Name:        step.TestDefinition.Name,
+			StepName:    step.Name,
+			Annotations: step.Annotations,
+			Phase:       step.Phase,
+			StartTime:   step.StartTime,
+			Duration:    step.Duration,
 		}
 
 		summaries = append(summaries, summary)

@@ -118,7 +118,6 @@ type CmdOutput struct {
 	StdErr string
 }
 
-
 /*
    GoLang: os.Rename() give error "invalid cross-device link" for Docker container with Volumes.
    MoveFile(source, destination) will work moving file between folders

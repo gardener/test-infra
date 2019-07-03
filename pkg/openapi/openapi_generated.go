@@ -99,7 +99,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"type", "name", "private"},
+				Required: []string{"type", "name"},
 			},
 		},
 		Dependencies: []string{
@@ -147,6 +147,19 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -284,6 +297,19 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition"),
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 					"phase": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -319,7 +345,7 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"position", "exportArtifactKey", "podName"},
+				Required: []string{"name", "position", "exportArtifactKey", "podName"},
 			},
 		},
 		Dependencies: []string{

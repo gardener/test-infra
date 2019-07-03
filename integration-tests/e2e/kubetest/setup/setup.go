@@ -128,7 +128,7 @@ func downloadKubectl(k8sVersion string) error {
 	if err := util.MoveFile("./kubectl", kubectlBinPath); err != nil {
 		return err
 	}
-	if err := os.Chmod(kubectlBinPath,0755); err != nil {
+	if err := os.Chmod(kubectlBinPath, 0755); err != nil {
 		return err
 	}
 
