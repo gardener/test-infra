@@ -1,17 +1,17 @@
 # Getting started
 
-- [Getting started](#getting-started)
-  - [Create a Test](#create-a-test)
-    - [Input Contract](#input-contract)
-    - [Export Contract](#export-contract)
-    - [Shared Folder](#shared-folder)
-    - [Images](#images)
-  - [Create a Testrun](#create-a-testrun)
-    - [Locations](#locations)
-  - [Configuration](#configuration)
-    - [Types](#types)
-    - [Sources](#sources)
-    - [Location](#location)
+- [Getting started](#Getting-started)
+  - [Create a Test](#Create-a-Test)
+    - [Input Contract](#Input-Contract)
+    - [Export Contract](#Export-Contract)
+    - [Shared Folder](#Shared-Folder)
+    - [Images](#Images)
+    - [Test](#Test)
+  - [Create a Testrun](#Create-a-Testrun)
+  - [Configuration](#Configuration)
+    - [Types](#Types)
+    - [Sources](#Sources)
+    - [Location](#Location)
 
 ## Create a Test
 
@@ -141,7 +141,36 @@ The Testmachinery provides some images to run your Integration Tests (Dockerfile
 - ginkgo test suite at $GOPATH/src/github.com/onsi/ginkgo
 - Go project setup script
   - automatically setup test repository at the provided gopath and cd's into it
-  - RUN ```/tm/setup github.com/org repo``` e.g. ``` /tm/setup github.com/gardener/test-infra ```
+  - RUN ```/tm/setup github.com/org repo``` e.g. ``` /tm/setup github.com/gardener test-infra ```
+
+### Test
+A TestDefinition can be easily tested with the Test Machinery wiht the following steps:
+
+- Upload your Test and TestDefinition e.g. `my-test` to your repo e.g. `github.com/my-repo/it.git`
+- Copy the example Testrun for a single test from `/examples/single-testrun.yaml`
+- Add your test repository to the `locationSets` of the copied Testrun:
+  ```yaml
+  spec:
+    locationSets:
+    - name: default
+      default: true
+      locations:
+      - type: git
+        repo: github.com/my-repo/it.git
+        revision: master
+  ```
+- Add your testdefinition name to `testflow[0]definition.name` of the copied testrun
+  ```yaml
+  spec:
+    testflow:
+    - name: test
+      definition:
+        name: my-test
+  ```
+- Add your dependent kubeconfigs to `kubeconfigs` of the testrun.
+  For exmaple if you just want to test a already existing shoot. Just base64 encode the kubeconfig `cat $KUBECONFIG | base64 -w0` and copy the string to `kubeconfigs.shoot`.
+  The same procedure applies for other kubeconfigs (but all kubeconfigs are optional).
+- Run the testrun with `kubectl create -f single-testrun.yaml` (Note: your current kubecontext need to point to the cluster where the testmachinery is installed).
 
 ## Create a Testrun
 Before a TestDefinition is executed by the TestMachinery, it must be added to a Testrun.
@@ -164,12 +193,12 @@ spec:
   - type: git
     repo: https://github.com/gardener/test-infra.git
     revision: master
-    
+
   # LocationSets defines multiple TestLocations which can be referenced from steps
   locationSets:
   - name: other
     # optional; defines the default location set which is used if no specific location is defined for a step.
-    default: true 
+    default: true
     locations:
     - type: git
       repo: https://github.com/gardener/test-infra.git
@@ -222,7 +251,7 @@ spec:
  ### Locations
  Locations are references to a local directory or a github repository where the TestDefinition reside.
  These 2 location types are used by the TestMachinery to search for all TestDefinitions.
- 
+
  Git Location:
  ```yaml
 type: git
@@ -234,9 +263,9 @@ revision: master # tag, commit or branch
  type: local
  hostPath: /tmp/tm # hostpath to a directory containing TestDefinition
   ```
- 
+
  Multiple of these locations can be defined in the testrun in 2 different ways:
- 
+
  #### TestLocations (Deprecated)
  :warning: Deprecated old way to define locations
  ```yaml
@@ -245,7 +274,7 @@ revision: master # tag, commit or branch
  metadata:
    generateName: integration-
    namespace: default
- spec: 
+ spec:
    # TestLocations define where to search for TestDefinitions.
    # Note: it is only possible to describe testLocations or locationSets.
    testLocations:
@@ -267,10 +296,10 @@ revision: master # tag, commit or branch
   metadata:
     generateName: integration-
     namespace: default
-  spec: 
+  spec:
     locationSets:
     - name: first
-      default: true 
+      default: true
       locations:
       - type: git
         repo: https://github.com/gardener/gardener.git
@@ -349,7 +378,7 @@ kind: TestDefinition
 metadata:
   name: def2
 spec:
-  labels: "default_2" 
+  labels: "default_2"
 ```
 ```yaml
 kind: TestDefinition
