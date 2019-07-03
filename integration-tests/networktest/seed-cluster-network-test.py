@@ -228,7 +228,7 @@ def ping_etcd_from_apiserver(api_server, root_pod_map, etcd_pod):
 
     root_pod = root_pod_map[api_server.hostIP]
 
-    cmd = "kubectl exec -it {} -- chroot /root docker inspect {}".format(root_pod.name, containerID)
+    cmd = "kubectl exec -n {} -it {} -- chroot /root docker inspect {}".format(root_pod.namespace, root_pod.name, containerID)
     print("Running " + cmd)
     inspect = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
     if inspect.returncode != 0:
@@ -237,7 +237,7 @@ def ping_etcd_from_apiserver(api_server, root_pod_map, etcd_pod):
     inspect_json = json.loads(inspect.stdout)
     api_server_pid = inspect_json[0]["State"]["Pid"]
 
-    cmd = "kubectl exec -it {} -- nsenter -n/proc/{}/ns/net  -- nc -vz -w 2 {} {}".format(root_pod.name, api_server_pid, etcd_pod.podIP, 2379)
+    cmd = "kubectl exec -n {} -it {} -- nsenter -n/proc/{}/ns/net  -- nc -vz -w 2 {} {}".format(root_pod.namespace, root_pod.name, api_server_pid, etcd_pod.podIP, 2379)
     print("Running " + cmd)
     nc = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
     if nc.returncode != 0:
@@ -288,7 +288,7 @@ def is_deamon_set_running():
     num_nodes = len(Node.read_nodes())
     retries = 0
     pods_running = 0
-    while pods_running != num_nodes and retries < 20:
+    while pods_running != num_nodes and retries < 50:
         time.sleep(2)
         retries = retries + 1
         pods_running = 0
