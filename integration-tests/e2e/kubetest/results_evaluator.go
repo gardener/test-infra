@@ -54,7 +54,8 @@ func Analyze(kubetestResultsPath string) Summary {
 }
 
 func writeSummaryToFile(summary Summary) {
-	file, err := json.MarshalIndent(summary, "", " ")
+	file, err := json.Marshal(summary)
+	file = append([]byte("{\"index\": {\"_index\": \"e2e_testsuite\", \"_type\": \"_doc\"}}\n"), file...)
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
 	}
@@ -91,10 +92,11 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, 
 				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
 			}
 			testcaseNameToTestcase[testcase.Name] = testcase
-			testcaseJSON, err := json.MarshalIndent(testcase, "", " ")
+			testcaseJSON, err := json.Marshal(testcase)
 			if err != nil {
 				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
 			}
+			testcaseJSON = append([]byte("{\"index\": {\"_index\": \"e2e_testsuite\", \"_type\": \"_doc\"}}\n"), testcaseJSON...)
 
 			jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
 			testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
@@ -153,8 +155,9 @@ func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
 func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 	emptySummary := Summary{DescriptionFile: config.DescriptionFile}
 	summary := emptySummary
-	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in (?P<TestSuiteDuration>\d+)`)
+	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in`)
 	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*?(?P<Failed>\d+) Failed.*Pending`)
+	regexpGinkgoRanIn := regexp.MustCompile(`Ginkgo ran \d+ suite in (?P<TestSuiteDuration>.+)`)
 
 	for _, e2eLogPath := range e2eLogFilePaths {
 		file, err := os.Open(e2eLogPath)
@@ -174,7 +177,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpRanSpecs.String())
 				}
 				summary.ExecutedTestcases += groupToValueInt["TestcasesRan"]
-				summary.TestsuiteDuration += groupToValueInt["TestSuiteDuration"]
 			}
 			if regexpPassedFailed.MatchString(scanner.Text()) {
 				groupToValue := util.GetGroupMapOfRegexMatches(regexpPassedFailed, scanner.Text())
@@ -185,6 +187,16 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 				summary.SuccessfulTestcases += groupToValueInt["Passed"]
 				summary.FailedTestcases += groupToValueInt["Failed"]
 				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
+			}
+			if regexpGinkgoRanIn.MatchString(scanner.Text()) {
+				var test = scanner.Text()
+				log.Info(test)
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpGinkgoRanIn, scanner.Text())
+				duration, err := time.ParseDuration(groupToValue["TestSuiteDuration"])
+				if err != nil {
+					return summary, err
+				}
+				summary.TestsuiteDuration += int(duration.Seconds())
 			}
 		}
 		if summary.isEmpty() {
