@@ -59,13 +59,13 @@ const (
 // Metadata is the common metadata of all outputs and summaries.
 type Metadata struct {
 	// Landscape describes the current dev,staging,canary,office or live.
-	Landscape         string `json:"landscape"`
-	CloudProvider     string `json:"cloudprovider"`
-	KubernetesVersion string `json:"k8s_version"`
+	Landscape         string `json:"landscape,omitempty"`
+	CloudProvider     string `json:"cloudprovider,omitempty"`
+	KubernetesVersion string `json:"k8s_version,omitempty"`
 
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
 	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
-	ComponentDescriptor interface{} `json:"bom"`
+	ComponentDescriptor interface{} `json:"bom,omitempty"`
 
 	// UpgradedComponentDescriptor describes the updated component_descriptor.
 	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
@@ -75,7 +75,7 @@ type Metadata struct {
 	Testrun TestrunMetadata `json:"tr"`
 
 	// all environment configuration values
-	Configuration map[string]string `json:"config"`
+	Configuration map[string]string `json:"config,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
