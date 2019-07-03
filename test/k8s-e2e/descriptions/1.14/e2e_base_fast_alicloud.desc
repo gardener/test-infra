@@ -1,2 +1,0 @@
-[sig-network] Networking should provide Internet connection for containers [Feature:Networking-IPv4]
-[sig-cli] Kubectl client [k8s.io] Simple pod should support inline execution and attach

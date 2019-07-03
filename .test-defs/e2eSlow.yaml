@@ -27,13 +27,15 @@ spec:
   behavior: ["serial"]
 
   config:
-  - type: env
-    name: CONFORMANCE_FOCUS
-    value: 'Serial\|Slow'
-  - type: env
-    name: GINKGO_PARALLEL
-    value: "true"
+    - type: env
+      name: TESTCASE_GROUPS
+      value: 'slow'
 
   command: [bash, -c]
-  args: ["TESTDESCRIPTION_NAME=e2e_base_slow.desc ./test/k8s-e2e/e2e-test-execute"]
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
+  args:
+  - >-
+    /tm/setup github.com/gardener test-infra &&
+    export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
+    export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
+    go run $GOPATH/src/github.com/gardener/test-infra/integration-tests/e2e
+  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.42.0

@@ -26,13 +26,15 @@ spec:
   labels: ["default"]
 
   config:
-  - type: env
-    name: CONFORMANCE_SKIP
-    value: 'Serial\|Slow\|\[k8s.io\]\sProbing\scontainer\sshould\sbe\srestarted\swith\sa\s\/healthz\shttp\sliveness\sprobe\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sProbing\scontainer\sshould\s\*not\*\sbe\srestarted\swith\sa\s\/healthz\shttp\sliveness\sprobe\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sProbing\scontainer\sshould\shave\smonotonically\sincreasing\srestart\scount\s\[NodeConformance\]\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sBurst\sscaling\sshould\srun\sto\scompletion\seven\swith\sunhealthy\spods\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sScaling\sshould\shappen\sin\spredictable\sorder\sand\shalt\sif\sany\sstateful\spod\sis\sunhealthy\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sshould\sperform\scanary\supdates\sand\sphased\srolling\supdates\sof\stemplate\smodifications\s\[Conformance\]\|\[k8s.io\]\sBasic\sStatefulSet\sfunctionality\s\[StatefulSetBasic\]\sshould\sperform\srolling\supdates\sand\sroll\sbacks\sof\stemplate\smodifications\s\[Conformance\]\|\[k8s.io\]\sGuestbook\sapplication\sshould\screate\sand\sstop\sa\sworking\sapplication\s\s\[Conformance\]'
-  - type: env
-    name: GINKGO_PARALLEL
-    value: "true"
+    - type: env
+      name: TESTCASE_GROUPS
+      value: 'fast'
 
   command: [bash, -c]
-  args: ["TESTDESCRIPTION_NAME=e2e_base_fast.desc ./test/k8s-e2e/e2e-test-execute"]
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
+  args:
+  - >-
+    /tm/setup github.com/gardener test-infra &&
+    export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
+    export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
+    go run $GOPATH/src/github.com/gardener/test-infra/integration-tests/e2e -debug=true
+  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.42.0

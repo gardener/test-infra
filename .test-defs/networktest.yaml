@@ -36,7 +36,7 @@ spec:
   - >-
     test/networktest/install.sh &&
     export KUBECONFIG=$TM_KUBECONFIG_PATH/shoot.config &&
-    integration-test/networktest/seed-cluster-network-test.py --nodes &&
+    integration-tests/networktest/seed-cluster-network-test.py --nodes &&
     export KUBECONFIG=$TM_KUBECONFIG_PATH/seed.config &&
-    integration-test/networktest/seed-cluster-network-test.py --control-planes --seed shoot--it--$SHOOT_NAME
+    integration-tests/networktest/seed-cluster-network-test.py --control-planes --seed shoot--it--$SHOOT_NAME
   image: python:3.7.3-alpine3.9
