@@ -144,7 +144,7 @@ The Testmachinery provides some images to run your Integration Tests (Dockerfile
   - RUN ```/tm/setup github.com/org repo``` e.g. ``` /tm/setup github.com/gardener test-infra ```
 
 ### Test
-A TestDefinition can be easily tested with the Test Machinery wiht the following steps:
+A TestDefinition can be easily tested with the Testmachinery with the following steps:
 
 - Upload your Test and TestDefinition e.g. `my-test` to your repo e.g. `github.com/my-repo/it.git`
 - Copy the example Testrun for a single test from `/examples/single-testrun.yaml`
@@ -159,7 +159,7 @@ A TestDefinition can be easily tested with the Test Machinery wiht the following
         repo: github.com/my-repo/it.git
         revision: master
   ```
-- Add your testdefinition name to `testflow[0]definition.name` of the copied testrun
+- Add your TestDefinition name to `testflow[0]definition.name` of the copied Testrun
   ```yaml
   spec:
     testflow:
@@ -167,10 +167,10 @@ A TestDefinition can be easily tested with the Test Machinery wiht the following
       definition:
         name: my-test
   ```
-- Add your dependent kubeconfigs to `kubeconfigs` of the testrun.
-  For exmaple if you just want to test a already existing shoot. Just base64 encode the kubeconfig `cat $KUBECONFIG | base64 -w0` and copy the string to `kubeconfigs.shoot`.
+- Add your dependent kubeconfigs to `kubeconfigs` of the Testrun.
+  For example if you just want to test an already existing shoot, then just base64 encode the kubeconfig `cat $KUBECONFIG | base64 -w0` and copy the string to `kubeconfigs.shoot`.
   The same procedure applies for other kubeconfigs (but all kubeconfigs are optional).
-- Run the testrun with `kubectl create -f single-testrun.yaml` (Note: your current kubecontext need to point to the cluster where the testmachinery is installed).
+- Run the Testrun with `kubectl create -f single-testrun.yaml` (Note: your current kubecontext need to point to the cluster where the Testmachinery is installed).
 
 ## Create a Testrun
 Before a TestDefinition is executed by the TestMachinery, it must be added to a Testrun.
