@@ -59,6 +59,13 @@ func (in *DAGStep) DeepCopyInto(out *DAGStep) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Annotations != nil {
+		in, out := &in.Annotations, &out.Annotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -126,6 +133,13 @@ func (in *StepStatus) DeepCopyInto(out *StepStatus) {
 	*out = *in
 	in.Position.DeepCopyInto(&out.Position)
 	in.TestDefinition.DeepCopyInto(&out.TestDefinition)
+	if in.Annotations != nil {
+		in, out := &in.Annotations, &out.Annotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.StartTime != nil {
 		in, out := &in.StartTime, &out.StartTime
 		*out = (*in).DeepCopy()

@@ -109,10 +109,12 @@ type TestrunSummary struct {
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata  *Metadata        `json:"tm,omitempty"`
-	Type      SummaryType      `json:"type,omitempty"`
-	Name      string           `json:"name,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
+	Metadata    *Metadata         `json:"tm,omitempty"`
+	Type        SummaryType       `json:"type,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	StepName    string            `json:"stepName,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Phase       argov1.NodePhase  `json:"phase,omitempty"`
+	StartTime   *metav1.Time      `json:"startTime,omitempty"`
+	Duration    int64             `json:"duration,omitempty"`
 }
