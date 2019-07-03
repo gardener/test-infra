@@ -19,7 +19,8 @@ metadata:
   generateName: integration-
   namespace: default
 spec:
-  creator: pipeline-xyz # for diagnostic purposes, could contain the concourse job url as well
+  owner: gardener@example.com # test owner and contact person in case of a test failure
+  recipientsOnFailure: developer1@example.com, developer2@example.com # optional, list of emails to be notified if a step fails
 
   # defines where to look for TestDefs
   locationSets:
