@@ -37,8 +37,8 @@ import (
 // GetTestruns returns all testruns of a RunList as testrun array
 func (r RunList) GetTestruns() []*tmv1beta1.Testrun {
 	testruns := make([]*tmv1beta1.Testrun, len(r))
-	for _, run := range r {
-		testruns = append(testruns, run.Testrun)
+	for i, run := range r {
+		testruns[i] = run.Testrun
 	}
 	return testruns
 }

@@ -40,7 +40,7 @@ func ExecuteTestrun(config *Config, runs RunList, testrunNamePrefix string) (Run
 	finishedTestruns := runChart(config.TmClient, runs, config.Namespace, testrunNamePrefix)
 
 	if len(finishedTestruns) == 0 {
-		return nil, errors.New("No testruns finished")
+		return nil, errors.New("no testruns finished")
 	}
 
 	return finishedTestruns, nil
