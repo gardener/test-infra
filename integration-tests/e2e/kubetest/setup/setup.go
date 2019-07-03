@@ -124,6 +124,7 @@ func downloadKubectl(k8sVersion string) error {
 		return err
 	}
 	kubectlBinPath := "/usr/local/bin/kubectl"
+	_ = os.Setenv("KUBECTL_PATH", kubectlBinPath)
 	if err := util.MoveFile("./kubectl", kubectlBinPath); err != nil {
 		return err
 	}
@@ -132,6 +133,7 @@ func downloadKubectl(k8sVersion string) error {
 	}
 
 	// verify successful kubectl installation
+	log.Infof("KUBECTL_PATH=%s", os.Getenv("KUBECTL_PATH"))
 	if _, err := util.RunCmd("kubectl version", ""); err != nil {
 		return err
 	} else {
