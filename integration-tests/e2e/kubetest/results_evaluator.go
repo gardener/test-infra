@@ -96,7 +96,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, 
 			if err != nil {
 				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
 			}
-			testcaseJSON = append([]byte("{\"index\": {\"_index\": \"e2e_testsuite\", \"_type\": \"_doc\"}}\n"), testcaseJSON...)
+			testcaseJSON = append([]byte("{\"index\": {\"_index\": \"e2e_testcase\", \"_type\": \"_doc\"}}\n"), testcaseJSON...)
 
 			jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
 			testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
