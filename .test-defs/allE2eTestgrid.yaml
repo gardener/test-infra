@@ -29,8 +29,11 @@ spec:
   - type: env
     name: PUBLISH_RESULTS_TO_TESTGRID
     value: "true"
+  - type: env
+    name: GOOGLE_APPLICATION_CREDENTIALS
+    value: "/tmp/secrets/gardener-logs-conformance-tests.json"
   - type: file
-    name: GCLOUD_ACCOUNT_SECRET
+    name: GOOGLE_APPLICATION_CREDENTIALS
     path: /tmp/secrets/gardener-logs-conformance-tests.json
     valueFrom:
       secretKeyRef:
