@@ -10,7 +10,7 @@ const (
 	AnnotationCloudProvider = "testrunner.testmachinery.sapcloud.io/cloudprovider"
 )
 
-func (m *Metadata) Annotations() map[string]string {
+func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
 		AnnotationLandscape:     m.Landscape,
 		AnnotationK8sVersion:    m.KubernetesVersion,

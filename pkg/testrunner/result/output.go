@@ -20,6 +20,7 @@ import (
 	"fmt"
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/utils"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -36,6 +37,7 @@ import (
 func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
 
 	metadata.Testrun.StartTime = tr.Status.StartTime
+	metadata.Annotations = tr.Annotations
 
 	trSummary, summaries, err := DetermineTestrunSummary(tr, metadata, config)
 	if err != nil {
@@ -98,6 +100,7 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 
 		stepMetadata := *metadata
 		stepMetadata.Configuration = make(map[string]string, 0)
+		stepMetadata.Annotations = utils.MergeStringMaps(stepMetadata.Annotations, step.Annotations)
 		for _, elem := range step.TestDefinition.Config {
 			if elem.Type == tmv1beta1.ConfigTypeEnv && elem.Value != "" {
 				stepMetadata.Configuration[elem.Name] = elem.Value
@@ -105,14 +108,13 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 		}
 
 		summary := testrunner.StepSummary{
-			Metadata:    &stepMetadata,
-			Type:        testrunner.SummaryTypeTeststep,
-			Name:        step.TestDefinition.Name,
-			StepName:    step.Position.Step,
-			Annotations: step.Annotations,
-			Phase:       step.Phase,
-			StartTime:   step.StartTime,
-			Duration:    step.Duration,
+			Metadata:  &stepMetadata,
+			Type:      testrunner.SummaryTypeTeststep,
+			Name:      step.TestDefinition.Name,
+			StepName:  step.Position.Step,
+			Phase:     step.Phase,
+			StartTime: step.StartTime,
+			Duration:  step.Duration,
 		}
 
 		summaries = append(summaries, summary)
