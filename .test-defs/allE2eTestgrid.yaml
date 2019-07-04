@@ -14,7 +14,7 @@
 
 kind: TestDefinition
 metadata:
-  name: testgrid
+  name: all-e2e-testgrid
 spec:
   owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
