@@ -55,10 +55,9 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 
 func uploadTestResultFiles(files []string) {
 	_ = os.Setenv("GOOGLE_CLOUD_PROJECT", gcsProjectID)
-	if os.Getenv("GCLOUD_CREDENTIAL") == "" {
+	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
 		log.Fatal("environment variable GOOGLE_APPLICATION_CREDENTIALS is not set. Hence no upload to google cloud storage possible.")
 	}
-	_ = os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", os.Getenv("GCLOUD_CREDENTIAL"))
 	ctx := context.Background()
 	// Creates a client.
 	client, err := storage.NewClient(ctx)
