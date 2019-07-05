@@ -1,9 +1,8 @@
-FROM golang:1.12.1 AS ginkgo
+FROM golang:1.12.9 AS ginkgo
 
 RUN  \
-  apk update \
-  && apk add \
-    rsync \
+  apt-get update \
+  && apt-get install rsync \
   && go get -u github.com/onsi/ginkgo/ginkgo
 
 COPY ./setup /tm/setup
