@@ -14,19 +14,25 @@
 package scheduler
 
 import (
+	"context"
+	"flag"
 	"fmt"
-	"os"
-	"path/filepath"
+	"github.com/sirupsen/logrus"
 )
 
-func ShootKubeconfigSecretName(shootName string) string {
-	return fmt.Sprintf("%s.kubeconfig", shootName)
+func (r Registrations) GetInterface(name string, ctx context.Context, logger *logrus.Logger, flagset *flag.FlagSet, args []string) (Interface, error) {
+	s, ok := r[name]
+	if !ok {
+		return nil, fmt.Errorf("no scheduler of type %s found", name)
+	}
+	return s.Interface(ctx, logger)
 }
 
-func HostKubeconfigPath() string {
-	return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config")
-}
-
-func HostConfigFilePath() string {
-	return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json")
+func (r Registrations) ApplyFlags(name string, fs *flag.FlagSet) error {
+	s, ok := r[name]
+	if !ok {
+		return fmt.Errorf("no scheduler of type %s found", name)
+	}
+	s.Flags(fs)
+	return nil
 }

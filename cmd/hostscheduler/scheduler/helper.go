@@ -15,66 +15,43 @@
 package scheduler
 
 import (
-	"context"
 	"fmt"
-	"time"
-
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/util/secrets"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
-// WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
-func WaitUntilShootIsReconciled(ctx context.Context, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) (*v1beta1.Shoot, error) {
-	interval := 1 * time.Minute
-	timeout := 30 * time.Minute
-	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		shootObject := &v1beta1.Shoot{}
-		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
-		if err != nil {
-			log.Infof("Wait for shoot to be reconciled...")
-			log.Debug(err.Error())
-			return false, nil
-		}
-		shoot = shootObject
-		if err := shootReady(shoot); err != nil {
-			log.Infof("%s. Wait for shoot to be reconciled...", err.Error())
-			return false, nil
-		}
-		return true, nil
-	})
+func IsFlagsetError(err error) error {
 	if err != nil {
-		return nil, err
+		if !strings.HasPrefix(err.Error(), "flag provided but not defined") {
+			return err
+		}
 	}
-	return shoot, nil
+	return nil
 }
 
-func shootReady(newShoot *v1beta1.Shoot) error {
-	newStatus := newShoot.Status
-	if len(newStatus.Conditions) == 0 {
-		return fmt.Errorf("no conditions in newShoot status")
+// WriteHostKubeconfig writes a kubeconfig from a restclient to the kubeconfig host path
+func WriteHostKubeconfig(k8sClient kubernetes.Interface) error {
+	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
+	log.Infof("Writing host kubeconfig to %s", HostKubeconfigPath())
+
+	// Generate kubeconfig from restclient
+	kubeconfig, err := secrets.GenerateKubeconfigFromRestConfig(k8sClient.RESTConfig(), "gke-host")
+	if err != nil {
+		return err
 	}
 
-	if newShoot.Generation != newStatus.ObservedGeneration {
-		return fmt.Errorf("observed generation is unlike newShoot generation")
+	err = os.MkdirAll(filepath.Dir(HostKubeconfigPath()), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(HostKubeconfigPath()), err.Error())
 	}
-
-	for _, condition := range newStatus.Conditions {
-		if condition.Status != gardencorev1alpha1.ConditionTrue {
-			return fmt.Errorf("condition of %s is %s", condition.Type, condition.Status)
-		}
-	}
-
-	if newStatus.LastOperation != nil {
-		if newStatus.LastOperation.Type == gardencorev1alpha1.LastOperationTypeCreate ||
-			newStatus.LastOperation.Type == gardencorev1alpha1.LastOperationTypeReconcile {
-			if newStatus.LastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded {
-				return fmt.Errorf("last operation %s is %s", newStatus.LastOperation.Type, newStatus.LastOperation.State)
-			}
-		}
+	err = ioutil.WriteFile(HostKubeconfigPath(), kubeconfig, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("cannot write kubeconfig to %s: %s", HostKubeconfigPath(), err.Error())
 	}
 
 	return nil

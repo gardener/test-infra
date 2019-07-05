@@ -221,27 +221,27 @@ func init() {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&shootName, "shoot-name", "", "Shoot name which is used to run tests.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("shoot-name"); err != nil {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&cloudprovider, "cloudprovider", "", "Cloudprovider where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("cloudprovider"); err != nil {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&cloudprofile, "cloudprofile", "", "Cloudprofile of shoot.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("cloudprofile"); err != nil {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&secretBinding, "secret-binding", "", "SecretBinding that should be used to create the shoot.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("secret-binding"); err != nil {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&region, "region", "", "Region where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("region"); err != nil {
 		log.Debug(err.Error())
 	}
 	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
+	if err := runCmd.MarkFlagRequired("zone"); err != nil {
 		log.Debug(err.Error())
 	}
 

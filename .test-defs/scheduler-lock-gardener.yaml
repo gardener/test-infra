@@ -14,13 +14,13 @@
 
 kind: TestDefinition
 metadata:
-  name: tm-scheduler
+  name: tm-scheduler-lock-gardener
 spec:
   owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
   - gardener-oq@listserv.sap.com
 
-  description: Wake up a shoot as host from a given node pool
+  description: Wake up a shoot as host from a given cluster pool
 
   activeDeadlineSeconds: 10800
 
@@ -30,12 +30,12 @@ spec:
     path: /tmp/secrets/gardener-service-account.kubeconfig
     valueFrom:
       secretKeyRef:
-        name: tm-hosts-serviceaccount
+        name: tm-hosts-gardener
         key: kubeconfig
 
   command: [bash, -c]
   args:
   - >-
     /tm/setup github.com/gardener test-infra &&
-    go run $GOPATH/src/github.com/gardener/test-infra/cmd/hostscheduler --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --clean=$CLEAN
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.54.0
+    go run $GOPATH/src/github.com/gardener/test-infra/cmd/hostscheduler lock gardener --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig
+  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.42.0

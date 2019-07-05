@@ -11,22 +11,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scheduler
+package gardenerscheduler
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/sirupsen/logrus"
+)
+
+const (
+	ShootLabel = "testmachinery.sapcloud.io/host"
 )
 
 func ShootKubeconfigSecretName(shootName string) string {
 	return fmt.Sprintf("%s.kubeconfig", shootName)
 }
 
-func HostKubeconfigPath() string {
-	return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config")
-}
+type gardenerscheduler struct {
+	client kubernetes.Interface
+	logger *logrus.Logger
 
-func HostConfigFilePath() string {
-	return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json")
+	namespace string
 }
