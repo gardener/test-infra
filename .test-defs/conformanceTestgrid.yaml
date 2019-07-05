@@ -30,7 +30,7 @@ spec:
     name: PUBLISH_RESULTS_TO_TESTGRID
     value: "true"
   - type: env
-    name: GOOGLE_APPLICATION_CREDENTIALS
+    name: GCLOUD_CREDENTIAL
     value: "/tmp/secrets/gardener-logs-conformance-tests.json"
   - type: file
     name: GOOGLE_APPLICATION_CREDENTIALS
