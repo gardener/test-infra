@@ -14,7 +14,7 @@
 
 kind: TestDefinition
 metadata:
-  name: testgrid
+  name: conformance-testgrid
 spec:
   owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
