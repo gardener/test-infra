@@ -38,4 +38,4 @@ spec:
   - >-
     /tm/setup github.com/gardener test-infra &&
     go run $GOPATH/src/github.com/gardener/test-infra/cmd/hostscheduler --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --clean=$CLEAN
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.42.0
+  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.54.0
