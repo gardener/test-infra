@@ -420,6 +420,7 @@ Test configuration can be of type "env" and of type "file".
   ```
 
 "file" configration is available as mounted file at the specified `path`.
+The path to the mounted file is exposed through a Environment Variable with the configname pointing to the file. (e.g `export file="/file/path"`)
   ```yaml
   config:
   - type: file
