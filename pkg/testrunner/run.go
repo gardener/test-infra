@@ -56,7 +56,7 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 	}
 	log.Infof("Testrun %s deployed", tr.Name)
 
-	if argoUrl, err := GetArgoURL(tmClient, tr); err != nil {
+	if argoUrl, err := GetArgoURL(tmClient, tr); err == nil {
 		log.Infof("Argo workflow: %s", argoUrl)
 	}
 
