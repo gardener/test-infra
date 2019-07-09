@@ -53,12 +53,6 @@ func Generate() (desc string) {
 		}
 	}
 
-	if config.RetestFlaggedOnly {
-		var testcasesFromDescriptionFile = sets.NewStringSet()
-		testcasesFromDescriptionFile.Insert("[Conformance]")
-		testcasesToRun = allE2eTestcases.GetMatchingOfSet(testcasesFromDescriptionFile)
-	}
-
 	if !config.IgnoreFalsePositiveList {
 		falsePositiveTestcases := validateAndGetTestcaseNamesFromDesc(falsePositiveDescPath)
 		for falsePositiveTestcase := range falsePositiveTestcases {

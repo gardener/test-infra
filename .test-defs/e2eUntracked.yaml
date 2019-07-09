@@ -22,14 +22,14 @@ spec:
 
   description: Run kubernetes e2e tests which are not tracked in e2e description files or are flagged as retest
 
-  activeDeadlineSeconds: 28800
+  activeDeadlineSeconds: 35000
   labels: ["slow"]
   behavior: ["serial"]
 
   config:
     - type: env
       name: TESTCASE_GROUPS
-      value: 'untracked'
+      value: 'untrackedOrRetest'
     - type: env
       name: INCLUDE_UNTRACKED_TESTS
       value: 'true'
