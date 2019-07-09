@@ -93,7 +93,7 @@ func getFileContent(filepath string) string {
 func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts int) KubetestArgs {
 	ginkgoParallelArg := ""
 	if parallel {
-		ginkgoParallelArg = "--ginkgo-parallel"
+		ginkgoParallelArg = "--ginkgo-parallel=8"
 	}
 	if ginkgoFocus != "" {
 		ginkgoFocus = fmt.Sprintf("--ginkgo.focus=%s", ginkgoFocus)
