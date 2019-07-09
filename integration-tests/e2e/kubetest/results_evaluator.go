@@ -42,7 +42,7 @@ func Analyze(kubetestResultsPath string) Summary {
 	}
 
 	junitXMLFilePaths := util.GetFilesByPattern(kubetestResultsPath, JunitXmlFileNamePattern)
-	if err := analyzeJunitXMLsEnrichSummary(junitXMLFilePaths, summary.TestsuiteDuration, &summary.FailedTestcaseNames); err != nil {
+	if err := analyzeJunitXMLsEnrichSummary(junitXMLFilePaths, &summary); err != nil {
 		log.Fatal(errors.Wrapf(err, "results analysis failed at junit.xml analysis"))
 	}
 
@@ -65,9 +65,10 @@ func writeSummaryToFile(summary Summary) {
 	}
 }
 
-func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, summaryFailedTestcases *[]string) error {
-	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: durationSec}
+func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary) error {
+	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: summary.TestsuiteDuration}
 	testcaseNameToTestcase := make(map[string]TestcaseResult)
+	failureOccurrences := make(map[string]int)
 	for _, junitXMLPath := range junitXMLFilePaths {
 		file, err := os.Open(junitXMLPath)
 		if err != nil {
@@ -89,7 +90,11 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, 
 				continue
 			}
 			if !testcase.Successful && !testcase.Skipped {
-				*summaryFailedTestcases = append(*summaryFailedTestcases, testcase.Name)
+				if _, ok := failureOccurrences[testcase.Name]; ok {
+					failureOccurrences[testcase.Name] += 1
+				} else {
+					failureOccurrences[testcase.Name] = 1
+				}
 			}
 			testcaseNameToTestcase[testcase.Name] = testcase
 			testcaseJSON, err := json.Marshal(testcase)
@@ -108,33 +113,26 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, durationSec int, 
 	for _, testcase := range testcaseNameToTestcase {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
-	log.Infof("Flaked testcases: %d", countFlakedTests(mergedJunitXmlResult))
+	addFlakynessInfoToSummary(summary, &failureOccurrences)
 	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
 		return err
 	}
 	return nil
 }
 
-func countFlakedTests(junitXml *JunitXMLResult) int {
-	successfulTestcases := make(map[string]bool)
-	failedTestcases := make(map[string]bool)
-	flakedTestcasesCount := 0
-	for _, testcase := range junitXml.Testcases {
-		if testcase.Skipped {
-			continue
-		}
-		if testcase.Successful {
-			successfulTestcases[testcase.Name] = true
+func addFlakynessInfoToSummary(summary *Summary, failureOccurrences *map[string]int) {
+	for testcaseName, failureOccurrence := range *failureOccurrences {
+		if failureOccurrence != config.FlakeAttempts {
+			// testcase had failures and successes
+			summary.FlakedTestcases += 1
 		} else {
-			failedTestcases[testcase.Name] = true
+			// testcase has failed in all attempts
+			summary.FailedTestcaseNames = append(summary.FailedTestcaseNames, testcaseName)
 		}
 	}
-	for key, _ := range failedTestcases {
-		if _, ok := successfulTestcases[key]; ok {
-			flakedTestcasesCount++
-		}
+	if summary.FlakedTestcases != 0 {
+		summary.Flaked = true
 	}
-	return flakedTestcasesCount
 }
 
 func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
