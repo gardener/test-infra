@@ -200,7 +200,11 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 			}
 		}
 		if summary.isEmpty() {
-			log.Fatal("Wasn't able to interpret e2e.log. Got only zero values.")
+			contentBytes, err := ioutil.ReadFile(e2eLogPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Fatalf("Wasn't able to interpret e2e.log. Got only zero values. Check e2e.log output:\n%s", string(contentBytes))
 		}
 
 		//TODO
@@ -271,9 +275,6 @@ func (summary Summary) isEmpty() bool {
 		summary.FailedTestcases == 0 &&
 		summary.FlakedTestcases == 0 &&
 		summary.Flaked == false &&
-		summary.TestsuiteDuration == 0 &&
 		summary.TestsuiteSuccessful == false &&
-		summary.DescriptionFile == "" &&
-		summary.ExecutionGroup == "" &&
 		len(summary.FailedTestcaseNames) == 0
 }
