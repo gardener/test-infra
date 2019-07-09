@@ -79,7 +79,7 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 		addBOMLocationsToTestrun(&tr, "upgraded", upgradedComponentDescriptor)
 
 		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(&tr, metadata.Annotations())
+		addAnnotationsToTestrun(&tr, metadata.CreateAnnotations())
 
 		testruns = append(testruns, &testrunner.Run{
 			Testrun:  &tr,

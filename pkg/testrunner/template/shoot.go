@@ -61,7 +61,7 @@ func RenderShootTestrun(tmClient kubernetes.Interface, parameters *ShootTestrunP
 		addBOMLocationsToTestrun(&tr, "default", componentDescriptor)
 
 		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(&tr, metadata.Annotations())
+		addAnnotationsToTestrun(&tr, metadata.CreateAnnotations())
 
 		testruns = append(testruns, &testrunner.Run{
 			Testrun:  &tr,

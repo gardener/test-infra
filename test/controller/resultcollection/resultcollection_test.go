@@ -16,6 +16,7 @@ package resultcollection_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -196,22 +197,24 @@ var _ = Describe("Result collection tests", func() {
 
 			Expect(tr.Status.Steps).To(HaveLen(3), "Should be 3 step's statuses.")
 
-			for i := 0; i < 2; i++ {
-				status := tr.Status.Steps[i]
+			for _, status := range tr.Status.Steps {
 				Expect(status.TestDefinition.Name).To(Or(Equal("integration-testdef"), Equal("failing-integration-testdef")))
 
 				if status.TestDefinition.Name == "failing-integration-testdef" {
 					Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
 					Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
-				} else if status.TestDefinition.Name == "integration-testdef" {
-					Expect(status.ExportArtifactKey).ToNot(BeZero())
+				}
+
+				if status.Position.Step == "A" {
+					Expect(status.ExportArtifactKey).ToNot(BeZero(), fmt.Sprintf("string is %s not zero valued", status.ExportArtifactKey))
+				}
+
+				if status.Position.Step == "C" {
+					Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
+					Expect(status.ExportArtifactKey).To(BeZero())
+					Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
 				}
 			}
-
-			status := tr.Status.Steps[2]
-			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
-			Expect(status.ExportArtifactKey).To(BeZero())
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
 		})
 
 		It("should mark timeouted step with own timeout phase", func() {
