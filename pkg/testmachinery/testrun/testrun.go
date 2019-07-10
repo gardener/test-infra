@@ -17,6 +17,7 @@ package testrun
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
@@ -27,13 +28,13 @@ import (
 // New takes a testrun crd and creates a new Testrun representation.
 // It fetches testruns from specified testdeflocations and generates a testflow object.
 func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
-
 	locs, err := locations.NewLocations(tr.Spec)
 	if err != nil {
 		return nil, err
 	}
 
 	globalConfig := config.New(tr.Spec.Config, config.LevelGlobal)
+	globalConfig = append(globalConfig, config.NewElement(createTestrunIDConfig(tr.Name), config.LevelGlobal))
 
 	// create initial prepare step
 	prepareDef, err := prepare.New("Prepare", false)
@@ -81,4 +82,12 @@ func (tr *Testrun) GetWorkflow(name, namespace string, pullImageSecretNames []st
 	onExitVolumes := tr.OnExitTestflow.GetLocalVolumes()
 
 	return argo.CreateWorkflow(name, namespace, testrunName, onExitName, append(templates, onExitTemplates...), append(volumes, onExitVolumes...), tr.Info.Spec.TTLSecondsAfterFinished, pullImageSecretNames)
+}
+
+func createTestrunIDConfig(id string) *tmv1beta1.ConfigElement {
+	return &tmv1beta1.ConfigElement{
+		Type:  tmv1beta1.ConfigTypeEnv,
+		Name:  testmachinery.TM_TESTRUN_ID_NAME,
+		Value: id,
+	}
 }

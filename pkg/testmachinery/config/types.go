@@ -21,10 +21,10 @@ import (
 type Level int
 
 const (
-	LevelGlobal         Level = 0
-	LevelShared         Level = 5
-	LevelStep           Level = 10
-	LevelTestDefinition Level = 15
+	LevelTestDefinition Level = 0
+	LevelGlobal         Level = 5
+	LevelShared         Level = 10
+	LevelStep           Level = 15
 )
 
 // Element represents a configuration parameter for tests.

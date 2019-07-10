@@ -53,6 +53,9 @@ const (
 	// ExportArtifact is the name of the output artifact where results are stored.
 	ExportArtifact = "ExportArtifact"
 
+	// TM_TESTRUN_ID_NAME is the name of the environment variable that holds the current testrun id
+	TM_TESTRUN_ID_NAME = "TM_TESTRUN_ID"
+
 	// ConfigMapName is the name of the testmachinery configmap in the cluster
 	ConfigMapName = "tm-config"
 )

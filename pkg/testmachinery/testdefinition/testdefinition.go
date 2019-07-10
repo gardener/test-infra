@@ -287,7 +287,9 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 		}
 
 		// add as input parameter to see parameters in argo ui
-		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Value))
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
+		// Add the file path as env var with the config name to the pod
+		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
 		td.AddInputArtifacts(argov1.Artifact{
 			Name: element.Name(),
 			Path: element.Info.Path,
@@ -298,7 +300,7 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 			},
 		})
 	} else if element.Info.ValueFrom != nil {
-		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, "from secret or configmap"))
+		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
 		td.AddVolumeMount(element.Name(), element.Info.Path, path.Base(element.Info.Path), true)
 		return td.AddVolumeFromConfig(element)
 	}
