@@ -119,11 +119,12 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, com
 		}
 	}
 
-	existingLocations := make([]tmv1beta1.TestLocation, 0)
-	if len(tr.Spec.TestLocations) != 0 {
-		existingLocations = tr.Spec.TestLocations
-	}
 
+	// if old locations exist we migrate them to the new locationSet form
+	if len(tr.Spec.TestLocations) == 0 {
+		return
+	}
+	existingLocations := tr.Spec.TestLocations
 	tr.Spec.LocationSets = []tmv1beta1.LocationSet{
 		{
 			Name:      locationSetName,
