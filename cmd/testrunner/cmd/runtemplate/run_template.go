@@ -65,6 +65,8 @@ var (
 	floatingPoolName         string
 	loadbalancerProvider     string
 	componenetDescriptorPath string
+
+	setValues string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -140,6 +142,7 @@ var runCmd = &cobra.Command{
 			FloatingPoolName:        floatingPoolName,
 			LoadBalancerProvider:    loadbalancerProvider,
 			ComponentDescriptorPath: componenetDescriptorPath,
+			SetValues:               setValues,
 		}
 
 		metadata := &testrunner.Metadata{
@@ -250,4 +253,6 @@ func init() {
 	runCmd.Flags().StringVar(&loadbalancerProvider, "loadbalancer-provider", "", "LoadBalancer Provider like haproxy. Only applicable for Openstack.")
 	runCmd.Flags().StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
+
+	runCmd.Flags().StringVar(&setValues, "set", "", "setValues additional helm values")
 }

@@ -40,6 +40,7 @@ type ShootTestrunParameters struct {
 	ComponentDescriptorPath string
 
 	GardenerVersion string
+	SetValues       string
 }
 
 type GardenerTestrunParameters struct {
@@ -54,6 +55,8 @@ type GardenerTestrunParameters struct {
 	GardenerCurrentRevision  string
 	GardenerUpgradedVersion  string
 	GardenerUpgradedRevision string
+
+	SetValues string
 }
 
 // TestrunFile is the internal representation of a rendered testrun chart with metadata information

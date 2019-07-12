@@ -18,10 +18,13 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
+
+	"k8s.io/helm/pkg/strvals"
 )
 
 // RenderGardenerTestrun renders a helm chart with containing testruns.
@@ -45,7 +48,7 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 		return nil, fmt.Errorf("cannot create chartrenderer for tm cluster: %s", err.Error())
 	}
 
-	chart, err := tmChartRenderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, map[string]interface{}{
+	values := map[string]interface{}{
 		"gardener": map[string]interface{}{
 			"current": map[string]string{
 				"version":  util.StringDefault(parameters.GardenerCurrentVersion, getGardenerVersionFromComponentDescriptor(componentDescriptor)),
@@ -56,7 +59,13 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 				"revision": util.StringDefault(parameters.GardenerUpgradedRevision, getGardenerVersionFromComponentDescriptor(upgradedComponentDescriptor)),
 			},
 		},
-	})
+	}
+	newValues, err := strvals.ParseString(parameters.SetValues)
+	if err == nil {
+		values = utils.MergeMaps(values, newValues)
+	}
+
+	chart, err := tmChartRenderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render chart: %s", err.Error())
 	}

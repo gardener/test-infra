@@ -119,7 +119,6 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, com
 		}
 	}
 
-
 	// if old locations exist we migrate them to the new locationSet form
 	if len(tr.Spec.TestLocations) == 0 {
 		return
