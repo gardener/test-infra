@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"k8s.io/helm/pkg/strvals"
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
@@ -36,7 +38,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *ShootTestrunParamete
 }
 
 func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
-	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, map[string]interface{}{
+	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":                 fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
 			"projectNamespace":     fmt.Sprintf("garden-%s", parameters.ProjectName),
@@ -58,8 +60,12 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(gardenKubeconfig),
 		},
-	})
-
+	}
+	newValues, err := strvals.ParseString(parameters.SetValues)
+	if err == nil {
+		values = utils.MergeMaps(values, newValues)
+	}
+	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
 		return nil, err
 	}

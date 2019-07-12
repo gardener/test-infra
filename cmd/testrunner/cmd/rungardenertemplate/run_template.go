@@ -55,6 +55,7 @@ var (
 	gardenerCurrentRevision  string
 	gardenerUpgradedVersion  string
 	gardenerUpgradedRevision string
+	setValues                string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -116,6 +117,7 @@ var runCmd = &cobra.Command{
 
 			ComponentDescriptorPath:         componentDescriptorPath,
 			UpgradedComponentDescriptorPath: upgradedComponentDescriptorPath,
+			SetValues:                       setValues,
 		}
 
 		metadata := &testrunner.Metadata{
@@ -184,4 +186,5 @@ func init() {
 	runCmd.Flags().StringVar(&gardenerUpgradedVersion, "gardener-upgraded-version", "", "Set current version of gardener. This will result in the helm value {{ .Values.gardener.upgraded.version }}")
 	runCmd.Flags().StringVar(&gardenerUpgradedRevision, "gardener-upgraded-revision", "", "Set current revision of gardener. This will result in the helm value {{ .Values.gardener.upgraded.revision }}")
 
+	runCmd.Flags().StringVar(&setValues, "set", "", "setValues additional helm values")
 }
