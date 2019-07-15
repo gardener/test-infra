@@ -31,6 +31,10 @@ data:
                 secretKeySecret:                #omit if accessing via AWS IAM
                     name: {{.Values.objectStorage.secret.name}}
                     key: secretKey
+        metricsConfig:
+          enabled: true
+          path: /metrics
+          port: 80
 ---
 apiVersion: v1
 kind: Service
