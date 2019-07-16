@@ -19,18 +19,26 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
     config: |
+        executor:
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "100Mi"
+            limits:
+              cpu: "100m"
+              memory: "150Mi"
         artifactRepository:
-            s3:
-                bucket: {{.Values.objectStorage.bucketName}}
-                keyPrefix: {{ .Values.objectStorage.keyPrefix }}
-                endpoint: "{{ tpl .Values.objectStorage.endpoint . }}"        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
-                insecure: {{ not .Values.objectStorage.ssl }}                  #omit for S3/GCS. Needed when minio runs without TLS
-                accessKeySecret:                #omit if accessing via AWS IAM
-                    name: {{.Values.objectStorage.secret.name}}
-                    key: accessKey
-                secretKeySecret:                #omit if accessing via AWS IAM
-                    name: {{.Values.objectStorage.secret.name}}
-                    key: secretKey
+          s3:
+            bucket: {{.Values.objectStorage.bucketName}}
+            keyPrefix: {{ .Values.objectStorage.keyPrefix }}
+            endpoint: "{{ tpl .Values.objectStorage.endpoint . }}"        #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
+            insecure: {{ not .Values.objectStorage.ssl }}                  #omit for S3/GCS. Needed when minio runs without TLS
+            accessKeySecret:                #omit if accessing via AWS IAM
+              name: {{.Values.objectStorage.secret.name}}
+              key: accessKey
+            secretKeySecret:                #omit if accessing via AWS IAM
+              name: {{.Values.objectStorage.secret.name}}
+              key: secretKey
         metricsConfig:
           enabled: true
           path: /metrics
