@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
-	"github.com/gardener/test-infra/integration-tests/e2e/util"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"os"
@@ -18,6 +14,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -91,7 +92,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 			}
 			if !testcase.Successful && !testcase.Skipped {
 				if _, ok := failureOccurrences[testcase.Name]; ok {
-					failureOccurrences[testcase.Name] += 1
+					failureOccurrences[testcase.Name]++
 				} else {
 					failureOccurrences[testcase.Name] = 1
 				}
@@ -124,7 +125,7 @@ func addFlakynessInfoToSummary(summary *Summary, failureOccurrences *map[string]
 	for testcaseName, failureOccurrence := range *failureOccurrences {
 		if failureOccurrence != config.FlakeAttempts {
 			// testcase had failures and successes
-			summary.FlakedTestcases += 1
+			summary.FlakedTestcases++
 		} else {
 			// testcase has failed in all attempts
 			summary.FailedTestcaseNames = append(summary.FailedTestcaseNames, testcaseName)
@@ -165,7 +166,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
 		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 2024*1024)
+		scanner.Buffer(buf, 3036*1024)
 
 		for scanner.Scan() {
 			if regexpRanSpecs.MatchString(scanner.Text()) {
