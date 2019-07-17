@@ -152,6 +152,8 @@ func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
 }
 
 func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
+	mergeE2eLogFiles(MergedE2eLogFilePath, e2eLogFilePaths)
+
 	emptySummary := Summary{DescriptionFile: config.DescriptionFile}
 	summary := emptySummary
 	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in`)
@@ -205,15 +207,11 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 			}
 			log.Fatalf("Wasn't able to interpret e2e.log. Got only zero values. Check e2e.log output:\n%s", string(contentBytes))
 		}
-
-		//TODO
-		summary.Flaked = summary.FlakedTestcases != 0
 	}
 	summary.ExecutionGroup = strings.Join(config.TestcaseGroup, ",")
 	summary.FinishedTime = time.Now()
 	summary.StartTime = summary.FinishedTime.Add(time.Second * time.Duration(-summary.TestsuiteDuration))
 
-	mergeE2eLogFiles(MergedE2eLogFilePath, e2eLogFilePaths)
 	return summary, nil
 }
 
