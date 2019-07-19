@@ -138,11 +138,17 @@ func ApplyOutputScope(steps map[string]*Step) error {
 			if step.Info.ArtifactsFrom != "" {
 				outputSourceNode = steps[step.Info.ArtifactsFrom].Nodes.List()[0]
 			} else {
-				outputSourceNode = getNextSerialParent(n)
+				outputSourceNode = getNextSerialParent(n, func(node *node.Node) bool {
+					if node.Step() == nil {
+						return true
+					}
+					return !node.Step().Definition.ContinueOnError
+				})
 			}
-
-			outputSourceNode.EnableOutput()
-			n.SetInputSource(outputSourceNode)
+			if outputSourceNode != nil {
+				outputSourceNode.EnableOutput()
+				n.SetInputSource(outputSourceNode)
+			}
 		}
 	}
 
@@ -172,31 +178,6 @@ func ApplyConfigScope(steps map[string]*Step) {
 	}
 }
 
-func getNextSerialParent(n *node.Node) *node.Node {
-	if len(n.Parents) == 0 {
-		return nil
-	}
-	if len(n.Parents) == 1 {
-		return n.Parents.List()[0]
-	}
-
-	parent := &node.Node{}
-	lastParents := n.Parents.List()
-	branches := make([]node.Set, len(lastParents))
-	for i := range branches {
-		branches[i] = make(node.Set)
-	}
-
-	for len(lastParents) != 0 {
-		parent, lastParents = getJointNodes(lastParents, branches, getNextSerialParent)
-		if parent != nil {
-			return parent
-		}
-	}
-
-	return nil
-}
-
 // SetSerialNodes evaluates real serial steps and marks them as serial.
 // A node is considered serial if all children of the root node point to one child.
 func SetSerialNodes(root *node.Node) {
@@ -211,11 +192,38 @@ func SetSerialNodes(root *node.Node) {
 	}
 }
 
-func getNextSerialChild(n *node.Node) *node.Node {
+type nodeFilterFunc = func(node *node.Node) bool
+
+func getNextSerialParent(n *node.Node, filters ...nodeFilterFunc) *node.Node {
+	if len(n.Parents) == 0 {
+		return nil
+	}
+	if len(n.Parents) == 1 && checkFilter(n.Parents.List()[0], filters...) {
+		return n.Parents.List()[0]
+	}
+
+	parent := &node.Node{}
+	lastParents := n.Parents.List()
+	branches := make([]node.Set, len(lastParents))
+	for i := range branches {
+		branches[i] = make(node.Set)
+	}
+
+	for len(lastParents) != 0 {
+		parent, lastParents = getJointNodes(lastParents, branches, getNextSerialParent)
+		if parent != nil && checkFilter(parent, filters...) {
+			return parent
+		}
+	}
+
+	return nil
+}
+
+func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 	if n == nil || len(n.Children) == 0 {
 		return nil
 	}
-	if len(n.Children) == 1 {
+	if len(n.Children) == 1 && checkFilter(n.Children.List()[0], filters...) {
 		return n.Children.List()[0]
 	}
 
@@ -228,7 +236,7 @@ func getNextSerialChild(n *node.Node) *node.Node {
 
 	for len(lastChildren) != 0 {
 		child, lastChildren = getJointNodes(lastChildren, branches, getNextSerialChild)
-		if child != nil {
+		if child != nil && checkFilter(child, filters...) {
 			return child
 		}
 	}
@@ -236,7 +244,7 @@ func getNextSerialChild(n *node.Node) *node.Node {
 	return nil
 }
 
-func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.Node) *node.Node) (*node.Node, []*node.Node) {
+func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.Node, ...nodeFilterFunc) *node.Node) (*node.Node, []*node.Node) {
 	lastNodes := make([]*node.Node, 0)
 	for i, n := range nodes {
 		if nextNode := getNext(n); nextNode != nil {
@@ -252,6 +260,10 @@ func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.N
 }
 
 func findJointNode(nodeSets []node.Set) *node.Node {
+	if len(nodeSets) == 1 && len(nodeSets[0]) == 1 {
+		return nodeSets[0].List()[0]
+	}
+
 	alreadyCheckedNodes := make(node.Set)
 	for i, set := range nodeSets {
 		for n := range set {
@@ -268,4 +280,13 @@ func findJointNode(nodeSets []node.Set) *node.Node {
 		}
 	}
 	return nil
+}
+
+func checkFilter(node *node.Node, filters ...nodeFilterFunc) bool {
+	for _, filter := range filters {
+		if !filter(node) {
+			return false
+		}
+	}
+	return true
 }
