@@ -1,5 +1,13 @@
 components:
-- dependencies:
-    components:
-    - {name: github.com/gardener/gardener, version: 0.17.0}
-    - {name: github.com/gardener/dashboard, version: 1.27.0}
+- name: github.com/gardener/gardener
+  version: 0.17.0
+  dependencies:
+      components:
+      - {name: github.com/gardener/gardener, version: 0.17.0}
+      - {name: github.com/gardener/dashboard, version: 1.27.0}
+- name: github.com/gardener/dashboard
+  version: 1.27.0
+  dependencies:
+      components:
+      - {name: github.com/gardener/gardener, version: 0.17.0}
+      - {name: github.com/gardener/dashboard, version: 1.27.0}

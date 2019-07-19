@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 // GetComponents returns a list of all git/component dependencies.
@@ -34,7 +34,7 @@ func GetComponents(content []byte) (ComponentList, error) {
 	}
 
 	for _, component := range componentDescriptor.Components {
-		components.add(component.Dependencies.Components)
+		components.add(component.Component)
 	}
 
 	return components.components, nil
@@ -69,7 +69,7 @@ func (c ComponentList) JSON() map[string]ComponentJSON {
 	return components
 }
 
-func (c *components) add(newComponents []Component) {
+func (c *components) add(newComponents ...Component) {
 	for _, item := range newComponents {
 		component := item
 		if !c.has(component) {
