@@ -3,6 +3,10 @@ components:
     components:
     - {name: repo1, version: 0.17.0}
     - {name: repo2, version: 1.27.0}
+  name: repo1
+  version: 0.17.0
 - dependencies:
     components:
     - {name: repo1, version: 0.17.0}
+  name: repo2
+  version: 1.27.0

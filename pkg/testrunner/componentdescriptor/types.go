@@ -15,8 +15,8 @@ package componentdescriptor
 
 // Component describes a component consisting of the git repository url and a version.
 type Component struct {
-	Name    string `yaml:"name"`
-	Version string `yaml:"version"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 // ComponentList is a set of multiple components.
@@ -32,14 +32,15 @@ type components struct {
 }
 
 type descriptor struct {
-	Components []dependencies `yaml:"components"`
+	Components []dependencies `json:"components"`
 }
 
 type dependencies struct {
-	Dependencies dependency `yaml:"dependencies"`
+	Component
+	Dependencies dependency `json:"dependencies"`
 }
 
 type dependency struct {
-	Name       string      `yaml:"name"`
-	Components []Component `yaml:"components"`
+	Name       string      `json:"name"`
+	Components []Component `json:"components"`
 }
