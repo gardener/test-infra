@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/utils"
 	"sort"
+	"strings"
 
 	"github.com/Masterminds/semver"
 
@@ -105,7 +106,7 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, com
 		bomLocations = append(bomLocations, tmv1beta1.TestLocation{
 			Type:     tmv1beta1.LocationTypeGit,
 			Repo:     fmt.Sprintf("https://%s", component.Name),
-			Revision: component.Version,
+			Revision: getRevisionFromVersion(component.Version),
 		})
 	}
 
@@ -131,6 +132,15 @@ func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, com
 		},
 	}
 	tr.Spec.TestLocations = nil
+}
+
+// getRevisionFromVersion parses the version of a component and returns its revision if applicable.
+func getRevisionFromVersion(version string) string {
+	if strings.Contains(version, "dev") {
+		splitVersion := strings.Split(version, "-")
+		return splitVersion[len(splitVersion)-1]
+	}
+	return version
 }
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
