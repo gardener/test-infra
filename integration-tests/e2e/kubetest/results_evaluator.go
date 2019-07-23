@@ -168,7 +168,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
 		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 2024*1024)
+		scanner.Buffer(buf, 3072*1024)
 
 		for scanner.Scan() {
 			if regexpRanSpecs.MatchString(scanner.Text()) {
