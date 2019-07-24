@@ -253,15 +253,16 @@ func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.N
 		}
 	}
 	if n := findJointNode(branches); n != nil {
-		return n, nil
+		return n, lastNodes
 	}
 
 	return nil, lastNodes
 }
 
 func findJointNode(nodeSets []node.Set) *node.Node {
-	if len(nodeSets) == 1 && len(nodeSets[0]) == 1 {
-		return nodeSets[0].List()[0]
+	if len(nodeSets) == 1 {
+		nodeList := nodeSets[0].List()
+		return nodeList[len(nodeList)-1]
 	}
 
 	alreadyCheckedNodes := make(node.Set)
