@@ -36,6 +36,22 @@ spec:
       - name: "{{.Values.controller.imagePullSecretName}}"
 {{end}}
       serviceAccountName: {{ required ".Values.controller.serviceAccountName is required" .Values.controller.serviceAccountName }}
+      # prefer nodes tainted+labeled with "purpose: tm-control-plane"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: purpose
+                operator: In
+                values:
+                - tm-control-plane
+            weight: 100
+      tolerations:
+      - effect: NoSchedule
+        key: purpose
+        operator: Equal
+        value: tm-control-plane
       containers:
       - name: testmachinery-controller
         image: "{{ .Values.controller.image }}:{{ .Values.controller.tag }}"
