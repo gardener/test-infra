@@ -49,7 +49,7 @@ func Analyze(kubetestResultsPath string) Summary {
 
 	log.Infof("test suite summary: %+v\n", summary)
 	writeSummaryToFile(summary)
-	log.Infof("Check out result files in %s", kubetestResultsPath)
+	log.Infof("Check out result files in %s", config.ExportPath)
 
 	return summary
 }
