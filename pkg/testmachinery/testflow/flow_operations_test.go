@@ -237,7 +237,6 @@ var _ = Describe("flow operations", func() {
 		})
 
 		It("should set the last serial parent that has no continueOnError as artifact source", func() {
-
 			testDAGStepB := testDAGStep([]string{"A"})
 			testDAGStepB.Definition.ContinueOnError = true
 
@@ -270,6 +269,46 @@ var _ = Describe("flow operations", func() {
 			Expect(B.GetInputSource()).To(Equal(A))
 			Expect(C.GetInputSource()).To(Equal(A))
 			Expect(D.GetInputSource()).To(Equal(C))
+		})
+
+		It("should set the rootNote as artifact source", func() {
+			testDAGStepA := testDAGStep([]string{})
+			testDAGStepA.Definition.ContinueOnError = true
+			testDAGStepB := testDAGStep([]string{"A"})
+			testDAGStepB.Definition.ContinueOnError = true
+			testDAGStepC := testDAGStep([]string{"B"})
+			testDAGStepC.Definition.ContinueOnError = true
+
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, testDAGStep([]string{}))
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStepA)
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
+			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStepC)
+			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStep([]string{"C"}))
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+			}
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+
+			Expect(A.GetInputSource()).To(Equal(rootNode))
+			Expect(B.GetInputSource()).To(Equal(rootNode))
+			Expect(C.GetInputSource()).To(Equal(rootNode))
+			Expect(D.GetInputSource()).To(Equal(rootNode))
 		})
 
 	})
