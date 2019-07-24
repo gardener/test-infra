@@ -6,14 +6,16 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
-type Set map[*Node]empty
-type empty struct{}
+type Set struct {
+	list []*Node
+	set  map[*Node]int
+}
 
 // Node is an object that represents a node of the internal DAG representation
 type Node struct {
 	name     string
-	Parents  Set
-	Children Set
+	Parents  *Set
+	Children *Set
 
 	hasOutput   bool
 	inputSource *Node

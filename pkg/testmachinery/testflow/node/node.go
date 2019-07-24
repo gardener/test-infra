@@ -16,6 +16,7 @@ package node
 
 import (
 	"fmt"
+
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -26,13 +27,13 @@ import (
 )
 
 // CreateNodesFromStep creates new nodes from a step and adds default configuration
-func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globalConfig []*config.Element, flowID string) (Set, error) {
+func CreateNodesFromStep(step *tmv1beta1.DAGStep, loc locations.Locations, globalConfig []*config.Element, flowID string) (*Set, error) {
 	testdefinitions, err := loc.GetTestDefinitions(step.Definition)
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := make(Set, 0)
+	nodes := NewSet()
 	for _, td := range testdefinitions {
 		node := NewNode(td, step, flowID)
 		td.AddConfig(config.New(step.Definition.Config, config.LevelStep))
@@ -80,7 +81,7 @@ func (n *Node) RemoveChild(child *Node) {
 
 // ClearChildren removes all children from the current node
 func (n *Node) ClearChildren() {
-	n.Children = make(Set, 0)
+	n.Children = NewSet()
 }
 
 // AddParents adds nodes as parents.
@@ -95,13 +96,13 @@ func (n *Node) RemoveParent(parent *Node) {
 
 // ClearParents removes all parents from the current node
 func (n *Node) ClearParents() {
-	n.Parents = make(Set, 0)
+	n.Parents = NewSet()
 }
 
 // ParentNames returns the names of all parent nodes
 func (n *Node) ParentNames() []string {
 	names := make([]string, 0)
-	for parent := range n.Parents {
+	for parent := range n.Parents.Iterate() {
 		names = append(names, parent.Name())
 	}
 	return names

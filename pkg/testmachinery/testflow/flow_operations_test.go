@@ -37,11 +37,11 @@ var _ = Describe("flow operations", func() {
 			}
 			testflow.CreateInitialDAG(steps, rootNode)
 
-			Expect(A.Parents).To(HaveLen(1))
-			Expect(A.Parents).To(HaveKey(rootNode))
+			Expect(A.Parents.List()).To(HaveLen(1))
+			Expect(A.Parents.List()).To(ContainElement(rootNode))
 
-			Expect(rootNode.Children).To(HaveLen(1))
-			Expect(rootNode.Children).To(HaveKey(A))
+			Expect(rootNode.Children.List()).To(HaveLen(1))
+			Expect(rootNode.Children.List()).To(ContainElement(A))
 		})
 
 		It("should set dependent nodes as parents", func() {
@@ -60,11 +60,11 @@ var _ = Describe("flow operations", func() {
 			}
 			testflow.CreateInitialDAG(steps, rootNode)
 
-			Expect(B.Parents).To(HaveLen(1))
-			Expect(B.Parents).To(HaveKey(A))
+			Expect(B.Parents.List()).To(HaveLen(1))
+			Expect(B.Parents.List()).To(ContainElement(A))
 
-			Expect(A.Children).To(HaveLen(1))
-			Expect(A.Children).To(HaveKey(B))
+			Expect(A.Children.List()).To(HaveLen(1))
+			Expect(A.Children.List()).To(ContainElement(B))
 		})
 
 		It("should set multiple dependent nodes as parents", func() {
@@ -93,19 +93,19 @@ var _ = Describe("flow operations", func() {
 			}
 			testflow.CreateInitialDAG(steps, rootNode)
 
-			Expect(A.Children).To(HaveLen(2))
-			Expect(A.Children).To(HaveKey(B))
-			Expect(A.Children).To(HaveKey(C))
+			Expect(A.Children.List()).To(HaveLen(2))
+			Expect(A.Children.List()).To(ContainElement(B))
+			Expect(A.Children.List()).To(ContainElement(C))
 
-			Expect(B.Parents).To(HaveLen(1))
-			Expect(B.Parents).To(HaveKey(A))
+			Expect(B.Parents.List()).To(HaveLen(1))
+			Expect(B.Parents.List()).To(ContainElement(A))
 
-			Expect(C.Parents).To(HaveLen(1))
-			Expect(C.Parents).To(HaveKey(A))
+			Expect(C.Parents.List()).To(HaveLen(1))
+			Expect(C.Parents.List()).To(ContainElement(A))
 
-			Expect(D.Parents).To(HaveLen(2))
-			Expect(D.Parents).To(HaveKey(B))
-			Expect(D.Parents).To(HaveKey(C))
+			Expect(D.Parents.List()).To(HaveLen(2))
+			Expect(D.Parents.List()).To(ContainElement(B))
+			Expect(D.Parents.List()).To(ContainElement(C))
 		})
 
 	})
@@ -119,17 +119,17 @@ var _ = Describe("flow operations", func() {
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
-			Expect(A.Children).To(HaveLen(1))
-			Expect(A.Children).To(HaveKey(C))
+			Expect(A.Children.List()).To(HaveLen(1))
+			Expect(A.Children.List()).To(ContainElement(C))
 
-			Expect(C.Children).To(HaveLen(1))
-			Expect(C.Children).To(HaveKey(Bs))
+			Expect(C.Children.List()).To(HaveLen(1))
+			Expect(C.Children.List()).To(ContainElement(Bs))
 
-			Expect(Bs.Children).To(HaveLen(1))
-			Expect(Bs.Children).To(HaveKey(D))
+			Expect(Bs.Children.List()).To(HaveLen(1))
+			Expect(Bs.Children.List()).To(ContainElement(D))
 
-			Expect(D.Parents).To(HaveLen(1))
-			Expect(D.Parents).To(HaveKey(Bs))
+			Expect(D.Parents.List()).To(HaveLen(1))
+			Expect(D.Parents.List()).To(ContainElement(Bs))
 		})
 
 		It("should reorder a DAG with 2 parallel and 2 serial step", func() {
@@ -142,22 +142,22 @@ var _ = Describe("flow operations", func() {
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
-			Expect(A.Children).To(HaveLen(2))
-			Expect(A.Children).To(HaveKey(C))
-			Expect(A.Children).To(HaveKey(D))
+			Expect(A.Children.List()).To(HaveLen(2))
+			Expect(A.Children.List()).To(ContainElement(C))
+			Expect(A.Children.List()).To(ContainElement(D))
 
-			Expect(C.Children).To(HaveLen(1))
-			Expect(C.Children).To(Or(HaveKey(Bs), HaveKey(Es)))
-			Expect(D.Children).To(HaveLen(1))
-			Expect(D.Children).To(Or(HaveKey(Bs), HaveKey(Es)))
+			Expect(C.Children.List()).To(HaveLen(1))
+			Expect(C.Children.List()).To(Or(ContainElement(Bs), ContainElement(Es)))
+			Expect(D.Children.List()).To(HaveLen(1))
+			Expect(D.Children.List()).To(Or(ContainElement(Bs), ContainElement(Es)))
 
-			Expect(Bs.Children).To(HaveLen(1))
-			Expect(Bs.Children).To(Or(HaveKey(Es), HaveKey(F)))
-			Expect(Es.Children).To(HaveLen(1))
-			Expect(Es.Children).To(Or(HaveKey(Bs), HaveKey(F)))
+			Expect(Bs.Children.List()).To(HaveLen(1))
+			Expect(Bs.Children.List()).To(Or(ContainElement(Es), ContainElement(F)))
+			Expect(Es.Children.List()).To(HaveLen(1))
+			Expect(Es.Children.List()).To(Or(ContainElement(Bs), ContainElement(F)))
 
-			Expect(F.Parents).To(HaveLen(1))
-			Expect(F.Parents).To(Or(HaveKey(Bs), HaveKey(Es)))
+			Expect(F.Parents.List()).To(HaveLen(1))
+			Expect(F.Parents.List()).To(Or(ContainElement(Bs), ContainElement(Es)))
 		})
 
 		It("should change a reordered DAG", func() {
@@ -169,17 +169,17 @@ var _ = Describe("flow operations", func() {
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
-			Expect(len(A.Children)).To(Equal(1))
-			Expect(A.Children).To(HaveKey(C))
+			Expect(A.Children.Len()).To(Equal(1))
+			Expect(A.Children.List()).To(ContainElement(C))
 
-			Expect(len(C.Children)).To(Equal(1))
-			Expect(C.Children).To(HaveKey(Bs))
+			Expect(C.Children.Len()).To(Equal(1))
+			Expect(C.Children.List()).To(ContainElement(Bs))
 
-			Expect(len(Bs.Children)).To(Equal(1))
-			Expect(Bs.Children).To(HaveKey(D))
+			Expect(Bs.Children.Len()).To(Equal(1))
+			Expect(Bs.Children.List()).To(ContainElement(D))
 
-			Expect(len(D.Parents)).To(Equal(1))
-			Expect(D.Parents).To(HaveKey(Bs))
+			Expect(D.Parents.Len()).To(Equal(1))
+			Expect(D.Parents.List()).To(ContainElement(Bs))
 
 		})
 
@@ -189,10 +189,10 @@ var _ = Describe("flow operations", func() {
 
 			Expect(testflow.ReorderChildrenOfNodes(node.NewSet(A))).To(BeNil())
 
-			Expect(A.Children).To(HaveLen(1))
-			Expect(A.Children).To(HaveKey(Bs))
+			Expect(A.Children.List()).To(HaveLen(1))
+			Expect(A.Children.List()).To(ContainElement(Bs))
 
-			Expect(Bs.Children).To(HaveLen(0))
+			Expect(Bs.Children.List()).To(HaveLen(0))
 
 		})
 	})
@@ -276,13 +276,11 @@ var _ = Describe("flow operations", func() {
 			testDAGStepA.Definition.ContinueOnError = true
 			testDAGStepB := testDAGStep([]string{"A"})
 			testDAGStepB.Definition.ContinueOnError = true
-			testDAGStepC := testDAGStep([]string{"B"})
-			testDAGStepC.Definition.ContinueOnError = true
 
 			rootNode := testNode("root", node.NewSet(), defaultTestDef, testDAGStep([]string{}))
 			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStepA)
 			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
-			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStepC)
+			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStep([]string{"B"}))
 			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStep([]string{"C"}))
 			steps := map[string]*testflow.Step{
 				"A": {
@@ -308,7 +306,41 @@ var _ = Describe("flow operations", func() {
 			Expect(A.GetInputSource()).To(Equal(rootNode))
 			Expect(B.GetInputSource()).To(Equal(rootNode))
 			Expect(C.GetInputSource()).To(Equal(rootNode))
-			Expect(D.GetInputSource()).To(Equal(rootNode))
+			Expect(D.GetInputSource()).To(Equal(C))
+
+		})
+
+		It("should set the rootNote as artifact source when names are not in alphabetical order", func() {
+			testDAGStepA := testDAGStep([]string{})
+			testDAGStepA.Definition.ContinueOnError = true
+			testDAGStepC := testDAGStep([]string{"ZA"})
+			testDAGStepC.Definition.ContinueOnError = true
+
+			rootNode := testNode("AA", node.NewSet(), defaultTestDef, testDAGStep([]string{}))
+			A := testNode("ZA", node.NewSet(rootNode), defaultTestDef, testDAGStepA)
+			C := testNode("ZC", node.NewSet(A), defaultTestDef, testDAGStepC)
+			B := testNode("ZB", node.NewSet(C), defaultTestDef, testDAGStep([]string{"ZC"}))
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+			}
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+
+			Expect(A.GetInputSource()).To(Equal(rootNode))
+			Expect(B.GetInputSource()).To(Equal(rootNode))
+			Expect(C.GetInputSource()).To(Equal(rootNode))
+
 		})
 
 	})
@@ -584,24 +616,26 @@ var _ = Describe("flow operations", func() {
 	})
 })
 
-func testNode(name string, parents node.Set, td *testdefinition.TestDefinition, step *v1beta1.DAGStep) *node.Node {
+func testNode(name string, parents *node.Set, td *testdefinition.TestDefinition, step *v1beta1.DAGStep) *node.Node {
 	if parents == nil {
 		parents = node.NewSet()
 	}
 	n := node.NewEmpty(name)
 	n.Parents = parents
 	n.Children = node.NewSet()
-	n.TestDefinition = td
+
+	n.TestDefinition = td.Copy()
+	n.TestDefinition.SetName(name)
 
 	n.SetStep(step)
-	if td != nil {
-		td.SetName(name)
+	if n.TestDefinition != nil {
+		n.TestDefinition.SetName(name)
 		if step != nil {
-			td.AddConfig(config.New(step.Definition.Config, config.LevelStep))
+			n.TestDefinition.AddConfig(config.New(step.Definition.Config, config.LevelStep))
 		}
 	}
 
-	for parent := range parents {
+	for parent := range parents.Iterate() {
 		parent.AddChildren(n)
 	}
 

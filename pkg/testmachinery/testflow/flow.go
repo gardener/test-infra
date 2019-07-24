@@ -114,7 +114,7 @@ func (f *Flow) Iterate() <-chan *node.Node {
 	go func() {
 		c <- f.Root
 		for _, step := range f.steps {
-			for n := range step.Nodes {
+			for n := range step.Nodes.Iterate() {
 				c <- n
 			}
 		}
