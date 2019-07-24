@@ -21,7 +21,7 @@ func preprocessTestflow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.Tes
 			return nil, nil, nil, err
 		}
 
-		for n := range nodes {
+		for n := range nodes.Iterate() {
 			testdefinitions[n.TestDefinition] = nil
 			usedLocations[n.TestDefinition.Location] = nil
 		}
@@ -59,13 +59,13 @@ func addDependentStepsAsParent(steps map[string]*Step, step *Step) {
 
 // ReorderChildrenOfNodes recursively reorders all children of a nodelist so that serial steps run in serial after parallel nodes.
 // Returns nil if successful.
-func ReorderChildrenOfNodes(list node.Set) node.Set {
-	children := make(node.Set, 0)
-	for item := range list {
+func ReorderChildrenOfNodes(list *node.Set) *node.Set {
+	children := node.NewSet()
+	for item := range list.Iterate() {
 		// use k8s sets
 		children.Add(reorderChildrenOfNode(item).List()...)
 	}
-	if len(children) == 0 {
+	if children.Len() == 0 {
 		return nil
 	}
 	return ReorderChildrenOfNodes(children)
@@ -73,18 +73,18 @@ func ReorderChildrenOfNodes(list node.Set) node.Set {
 
 // reorderSerialNodes reorders all children of a node so that serial steps run in serial after parallel nodes.
 // The functions returns the new Children
-func reorderChildrenOfNode(root *node.Node) node.Set {
+func reorderChildrenOfNode(root *node.Node) *node.Set {
 	grandChildren := root.Children.GetChildren()
 
 	// directly return if there is only one node in the pool
-	if len(root.Children) == 1 {
+	if root.Children.Len() == 1 {
 		// todo: write test for special case
 		return root.Children
 	}
 
-	serialNodes := make(node.Set, 0)
-	parallelNodes := make(node.Set, 0)
-	for item := range root.Children {
+	serialNodes := node.NewSet()
+	parallelNodes := node.NewSet()
+	for item := range root.Children.Iterate() {
 		if item.TestDefinition.HasBehavior("serial") {
 			serialNodes.Add(item)
 		} else {
@@ -93,7 +93,7 @@ func reorderChildrenOfNode(root *node.Node) node.Set {
 	}
 
 	// directly return if there are no serial steps
-	if len(serialNodes) == 0 {
+	if serialNodes.Len() == 0 {
 		return root.Children
 	}
 
@@ -117,7 +117,7 @@ func reorderChildrenOfNode(root *node.Node) node.Set {
 			serialNode.AddParents(prevNode)
 		}
 
-		if i == len(serialNodes)-1 {
+		if i == serialNodes.Len()-1 {
 			serialNode.ClearChildren()
 			serialNode.AddChildren(grandChildren.List()...)
 
@@ -133,7 +133,7 @@ func reorderChildrenOfNode(root *node.Node) node.Set {
 // This is done by getting the last serial step and setting is as the current nodes artifact source.
 func ApplyOutputScope(steps map[string]*Step) error {
 	for _, step := range steps {
-		for n := range step.Nodes {
+		for n := range step.Nodes.Iterate() {
 			var outputSourceNode *node.Node
 			if step.Info.ArtifactsFrom != "" {
 				outputSourceNode = steps[step.Info.ArtifactsFrom].Nodes.List()[0]
@@ -159,10 +159,10 @@ func ApplyOutputScope(steps map[string]*Step) error {
 // Whereas the nearer parent's configs overwrites the config when collisions occur
 func ApplyConfigScope(steps map[string]*Step) {
 	for _, step := range steps {
-		for n := range step.Nodes {
+		for n := range step.Nodes.Iterate() {
 			nextNode := n
-			configs := make(config.Set, 0)
-			for nextNode != nil && len(nextNode.Parents) != 0 {
+			configs := config.NewSet(config.New(n.Step().Definition.Config, config.LevelStep)...)
+			for nextNode != nil && nextNode.Parents.Len() != 0 {
 				nextNode = getNextSerialParent(nextNode)
 				if nextNode != nil && nextNode.Step() != nil {
 					cfgs := config.New(nextNode.Step().Definition.Config, config.LevelShared)
@@ -195,18 +195,21 @@ func SetSerialNodes(root *node.Node) {
 type nodeFilterFunc = func(node *node.Node) bool
 
 func getNextSerialParent(n *node.Node, filters ...nodeFilterFunc) *node.Node {
-	if len(n.Parents) == 0 {
+	if n.Parents.Len() == 0 {
 		return nil
 	}
-	if len(n.Parents) == 1 && checkFilter(n.Parents.List()[0], filters...) {
-		return n.Parents.List()[0]
+	if n.Parents.Len() == 1 {
+		parentsList := n.Parents.List()
+		if checkFilter(parentsList[len(parentsList)-1], filters...) {
+			return n.Parents.List()[0]
+		}
 	}
 
 	parent := &node.Node{}
 	lastParents := n.Parents.List()
-	branches := make([]node.Set, len(lastParents))
+	branches := make([]*node.Set, len(lastParents))
 	for i := range branches {
-		branches[i] = make(node.Set)
+		branches[i] = node.NewSet()
 	}
 
 	for len(lastParents) != 0 {
@@ -220,18 +223,21 @@ func getNextSerialParent(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 }
 
 func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
-	if n == nil || len(n.Children) == 0 {
+	if n == nil || n.Children.Len() == 0 {
 		return nil
 	}
-	if len(n.Children) == 1 && checkFilter(n.Children.List()[0], filters...) {
-		return n.Children.List()[0]
+	if n.Children.Len() == 1 {
+		childrenList := n.Children.List()
+		if checkFilter(childrenList[len(childrenList)-1], filters...) {
+			return n.Children.List()[0]
+		}
 	}
 
 	child := &node.Node{}
 	lastChildren := n.Children.List()
-	branches := make([]node.Set, len(lastChildren))
+	branches := make([]*node.Set, len(lastChildren))
 	for i := range branches {
-		branches[i] = make(node.Set)
+		branches[i] = node.NewSet()
 	}
 
 	for len(lastChildren) != 0 {
@@ -244,7 +250,7 @@ func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 	return nil
 }
 
-func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.Node, ...nodeFilterFunc) *node.Node) (*node.Node, []*node.Node) {
+func getJointNodes(nodes []*node.Node, branches []*node.Set, getNext func(*node.Node, ...nodeFilterFunc) *node.Node) (*node.Node, []*node.Node) {
 	lastNodes := make([]*node.Node, 0)
 	for i, n := range nodes {
 		if nextNode := getNext(n); nextNode != nil {
@@ -259,15 +265,15 @@ func getJointNodes(nodes []*node.Node, branches []node.Set, getNext func(*node.N
 	return nil, lastNodes
 }
 
-func findJointNode(nodeSets []node.Set) *node.Node {
+func findJointNode(nodeSets []*node.Set) *node.Node {
 	if len(nodeSets) == 1 {
 		nodeList := nodeSets[0].List()
 		return nodeList[len(nodeList)-1]
 	}
 
-	alreadyCheckedNodes := make(node.Set)
+	alreadyCheckedNodes := node.NewSet()
 	for i, set := range nodeSets {
-		for n := range set {
+		for n := range set.Iterate() {
 			if alreadyCheckedNodes.Has(n) {
 				continue
 			}
