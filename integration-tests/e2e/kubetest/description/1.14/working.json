@@ -96,7 +96,6 @@
   { "testcase": "[sig-storage] Projected downwardAPI should provide podname as non-root with fsgroup [NodeFeature:FSGroup]", "groups": ["fast"]},
   { "testcase": "[sig-storage] Projected downwardAPI should provide podname as non-root with fsgroup and defaultMode [NodeFeature:FSGroup]", "groups": ["fast"]},
   { "testcase": "[sig-storage] Projected secret should be able to mount in a volume regardless of a different secret existing with same name in different namespace [NodeConformance]", "groups": ["fast"]},
-  { "testcase": "[k8s.io] Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]", "groups": ["fast"]},
   { "testcase": "[k8s.io] Container Runtime blackbox test when running a container with a new image should be able to pull image from docker hub [NodeConformance]", "groups": ["fast"]},
   { "testcase": "[k8s.io] Container Runtime blackbox test when running a container with a new image should be able to pull image from gcr.io [NodeConformance]", "groups": ["fast"]},
   { "testcase": "[k8s.io] Container Runtime blackbox test when running a container with a new image should not be able to pull from private registry without secret [NodeConformance]", "groups": ["fast"]},
