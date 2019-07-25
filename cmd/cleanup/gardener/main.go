@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
 	"time"
 
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -50,6 +51,12 @@ func main() {
 	if debug {
 		log.SetLevel(log.DebugLevel)
 		log.Warn("Set debug log level")
+	}
+
+	// if file does not exist we exit with 0 as this means that gardener wasn't deployed
+	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+		log.Infof("gardener kubeconfig at %s does not exists", kubeconfigPath)
+		os.Exit(0)
 	}
 
 	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, client.Options{
