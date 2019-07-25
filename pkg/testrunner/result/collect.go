@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
+	"sort"
 )
 
 // Collect collects results of all testruns and writes them to a file.
@@ -59,3 +60,16 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 
 	return testrunsFailed, nil
 }
+
+// orderSteps orders the steps by their finihsed date
+func orderSteps(steps []*tmv1beta1.StepStatus) {
+	sort.Sort(StepStatusList(steps))
+}
+
+type StepStatusList []*tmv1beta1.StepStatus
+
+func (s StepStatusList) Less(a, b int) bool {
+	return s[a].StartTime.Before(s[b].StartTime)
+}
+func (s StepStatusList) Len() int      { return len(s) }
+func (s StepStatusList) Swap(a, b int) { s[a], s[b] = s[b], s[a] }
