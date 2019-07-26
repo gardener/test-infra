@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/gardener/test-infra/integration-tests/e2e/util/sets"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 )
 
 const (
@@ -35,21 +36,26 @@ func Generate() (desc string) {
 	testcasesToRun := sets.NewStringSet()
 	allE2eTestcases := getAllE2eTestCases()
 
-	if config.DescriptionFilePath != "" {
-		testcasesFromDescFile := UnmarshalDescription(config.DescriptionFilePath)
-		for _, testcaseFromDesc := range testcasesFromDescFile {
-			matching := allE2eTestcases.GetMatchingForTestcase(testcaseFromDesc.Name, testcaseFromDesc.Skip, testcaseFromDesc.Focus)
-			if testcaseFromDesc.validForCurrentContext() {
-				if matching.Len() == 0 {
-					log.Warnf("Couldn't find testcase: '%s'", testcaseFromDesc.Name)
-					continue
-				}
-				testcasesToRun = testcasesToRun.Union(matching)
-			} else {
-				// this is necessary since e.g. all conformance testcases are added by a wildcard, but there may still be
-				// additionally a conformance test excluded explicitly or assigned to a group
-				testcasesToRun = testcasesToRun.Difference(matching)
+	var testcasesFromDescFile []TestcaseDesc
+	if len(config.ExplicitTestcases) != 0 {
+		for _, testcase := range config.ExplicitTestcases {
+			testcasesFromDescFile = append(testcasesFromDescFile, TestcaseDesc{Name: testcase, TestcaseGroups: config.TestcaseGroup})
+		}
+	} else {
+		testcasesFromDescFile = UnmarshalDescription(config.DescriptionFilePath)
+	}
+	for _, testcaseFromDesc := range testcasesFromDescFile {
+		matching := allE2eTestcases.GetMatchingForTestcase(testcaseFromDesc.Name, testcaseFromDesc.Skip, testcaseFromDesc.Focus)
+		if testcaseFromDesc.validForCurrentContext() {
+			if matching.Len() == 0 {
+				log.Warnf("Couldn't find testcase: '%s'", testcaseFromDesc.Name)
+				continue
 			}
+			testcasesToRun = testcasesToRun.Union(matching)
+		} else {
+			// this is necessary since e.g. all conformance testcases are added by a wildcard, but there may still be
+			// additionally a conformance test excluded explicitly or assigned to a group
+			testcasesToRun = testcasesToRun.Difference(matching)
 		}
 	}
 

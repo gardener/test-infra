@@ -8,7 +8,10 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 
 ## Usage
 
-Ensure all required environment variables have been set. Create a `shoot.config` file in `EXPORT_PATH` directory and paste the kubeconfig of the kubernetes cluster to test in it. Run `e2etest` in command line to execute the e2e tests.
+Ensure all required environment variables have been set. Create a `shoot.config` file in `EXPORT_PATH` directory and paste the kubeconfig of the kubernetes cluster to test in it. Run `e2e` in command line to execute the e2e tests.
+
+Example usage:
+`go run /path/e2e -kubeconfig=$KUBECONFIG -k8sVersion=1.15.1 -cloudprovider=gcp -testcase="[sig-apps] Job should delete a job" -testcase="[sig-apps] Job should exceed backoffLimit"`
 
 ### Prerequisites:
 
@@ -34,6 +37,7 @@ Ensure all required environment variables have been set. Create a `shoot.config`
 | RETEST_FLAGGED_ONLY |  | false | Runs testcases with retest flag only. Value of `DESCRIPTION_FILE` is ignored |
 | E2E_KUBECONFIG_PATH | kubeconfig | $E2E_EXPORT_PATH/shoot.config | File path of kubeconfig file |
 | - | debug | false | Runs application in debug mode |
+| - | testcase |  | List of explicit testcases to test. If used, `TESTCASE_GROUPS` and `TESTCASE_GROUPS` are ignored.  |
 
 ### Description Files
 Example:

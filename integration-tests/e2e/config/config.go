@@ -2,9 +2,7 @@ package config
 
 import (
 	"flag"
-	tiutil "github.com/gardener/test-infra/pkg/util"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,7 +11,22 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	tiutil "github.com/gardener/test-infra/pkg/util"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
+
+type arrayTestcase []string
+
+func (i *arrayTestcase) String() string {
+	return fmt.Sprintf("%s", *i)
+}
+
+func (i *arrayTestcase) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
 
 var (
 	GoPath                   string
@@ -41,10 +54,14 @@ var (
 	RetestFlaggedOnly        bool
 	TestcaseGroup            []string
 	TestcaseGroupString      string
+	ExplicitTestcases        arrayTestcase
 )
 
-var WORKING_DESC_FILE = "working.json"
 var Debug bool
+
+const (
+ 	workingDescFile = "working.json"
+)
 
 func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
@@ -53,6 +70,7 @@ func init() {
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
 	flag.IntVar(&FlakeAttempts, "flakeAttemps", 2, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
+	flag.Var(&ExplicitTestcases, "testcase", "List of testcases. If used description file and execution group are ingored.")
 	flag.Parse()
 	if Debug {
 		log.SetLevel(log.DebugLevel)
@@ -86,12 +104,15 @@ func init() {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
 	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
-	DescriptionFile = tiutil.Getenv("DESCRIPTION_FILE", WORKING_DESC_FILE)
+	DescriptionFile = tiutil.Getenv("DESCRIPTION_FILE", workingDescFile)
 	if K8sRelease == "" {
 		K8sRelease = os.Getenv("K8S_VERSION")
 	}
 	if K8sRelease == "" {
 		log.Fatal("K8S_VERSION environment variable not found")
+	}
+	if len(ExplicitTestcases) != 0 {
+		TestcaseGroupString = "explicit"
 	}
 	if TestcaseGroupString == "" {
 		TestcaseGroup = strings.Split(os.Getenv("TESTCASE_GROUPS"), ",")
@@ -144,4 +165,5 @@ func init() {
 	log.Debugf("GardenerVersion: %s", GardenerVersion)
 	log.Debugf("RetestFlaggedOnly: %t", RetestFlaggedOnly)
 	log.Debugf("TestcaseGroup: %v", TestcaseGroup)
+	log.Debugf("ExplicitTestcases: %v", strings.Join(ExplicitTestcases, ", "))
 }

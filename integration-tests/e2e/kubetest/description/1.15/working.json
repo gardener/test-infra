@@ -115,7 +115,7 @@
   { "testcase": "[sig-api-machinery] Servers with support for Table transformation should return chunks of table results for list calls", "groups": ["fast"]},
   { "testcase": "[sig-api-machinery] Servers with support for Table transformation should return generic metadata details across all namespaces for nodes", "groups": ["fast"]},
   { "testcase": "[sig-api-machinery] Servers with support for Table transformation should return pod details", "groups": ["fast"]},
-  { "testcase": "[sig-api-machinery] Watchers should receive events on concurrent watches in same order", "groups": ["fast"]},
+  { "testcase": "[sig-api-machinery] Watchers should receive events on concurrent watches in same order [Conformance]", "groups": ["fast"]},
   { "testcase": "[sig-apps] CronJob should remove from active list jobs that have been deleted", "groups": ["fast"]},
   { "testcase": "[sig-apps] Deployment deployment reaping should cascade to its replica sets and pods", "groups": ["fast"]},
   { "testcase": "[sig-apps] Deployment deployment should support rollback", "groups": ["fast"]},

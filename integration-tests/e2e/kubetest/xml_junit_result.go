@@ -13,7 +13,7 @@ func (result *JunitXMLResult) CalculateAdditionalFields() {
 	regexpSigGroup := regexp.MustCompile(`^\[.*?]`)
 	for i, _ := range result.Testcases {
 		result.Testcases[i].calculateAdditionalFields(regexpSigGroup)
-		// TODO: why is here result.Testcases[i].calculateAdditionalFields(regexpSigGroup) not possible, why is assigning to variable is required?
+		// TODO: why is here result.ExplicitTestcases[i].calculateAdditionalFields(regexpSigGroup) not possible, why is assigning to variable is required?
 	}
 }
 
