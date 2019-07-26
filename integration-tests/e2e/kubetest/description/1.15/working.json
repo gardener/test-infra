@@ -477,5 +477,10 @@
   { "testcase": "[sig-storage] PVC Protection Verify \"immediate\" deletion of a PVC that is not in active use by a pod", "groups": ["slow"] },
   { "testcase": "[k8s.io] Variable Expansion should succeed in writing subpaths in container [sig-storage][NodeFeature:VolumeSubpathEnvExpansion][Slow]", "groups": ["slow"] },
   { "testcase": "[sig-cli] Kubectl client [k8s.io] Simple pod should handle in-cluster config", "groups": ["slow"] },
-  { "testcase": "[sig-storage] CSI mock volume CSI attach test using mock driver should not require VolumeAttach for drivers without attachment", "groups": ["slow"] }
+  { "testcase": "[sig-storage] CSI mock volume CSI attach test using mock driver should not require VolumeAttach for drivers without attachment", "groups": ["slow"] },
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a tcp:8080 liveness probe [NodeConformance]", "groups": ["slow"]},
+  { "testcase": "[sig-api-machinery] CustomResourcePublishOpenAPI works for CRD preserving unknown fields at the schema root", "groups": ["fast"]},
+  { "testcase": "[sig-api-machinery] CustomResourcePublishOpenAPI works for CRD preserving unknown fields in an embedded object", "groups": ["fast"]},
+  { "testcase": "[sig-storage] PersistentVolumes-local  Pods sharing a single local PV [Serial] all pods should be running", "groups": ["slow"]},
+  { "testcase": "[sig-storage] PersistentVolumes-local  Stress with local volumes [Serial] should be able to process many pods and reuse local volumes", "groups": ["slow"]}
 ]
