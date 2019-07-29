@@ -32,7 +32,7 @@ Example usage:
 | IGNORE_FALSE_POSITIVE_LIST |  | false | Ignores exclusion of testcases that are listed in `false_positive.json` |
 | IGNORE_SKIP_LIST |  | false | Ignores exclusion of testcases that are listed in `skip.json`  |
 | INCLUDE_UNTRACKED_TESTS |  | false | Executes testcases that are not mentioned in description files for given provider and kubernetes release version |
-| FLAKE_ATTEMPTS | flakeAttemps | 2 | Flake attempts for kubetest: how many time a failed test should be rerun |
+| FLAKE_ATTEMPTS | flakeAttempts | 2 | Flake attempts for kubetest: how many time a failed test should be rerun |
 | PUBLISH_RESULTS_TO_TESTGRID |  | false | Whether to push test results to google cloud storage, for testgrid |
 | RETEST_FLAGGED_ONLY |  | false | Runs testcases with retest flag only. Value of `DESCRIPTION_FILE` is ignored |
 | E2E_KUBECONFIG_PATH | kubeconfig | $E2E_EXPORT_PATH/shoot.config | File path of kubeconfig file |
