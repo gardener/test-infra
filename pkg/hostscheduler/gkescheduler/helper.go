@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -117,20 +117,20 @@ func writeHostInformationToFile(host *hostCluster) error {
 		log.Fatalf("cannot unmashal hostconfig: %s", err.Error())
 	}
 
-	err = os.MkdirAll(filepath.Dir(scheduler.HostConfigFilePath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(hostscheduler.HostConfigFilePath()), os.ModePerm)
 	if err != nil {
-		log.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(scheduler.HostConfigFilePath()), err.Error())
+		log.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(hostscheduler.HostConfigFilePath()), err.Error())
 	}
-	err = ioutil.WriteFile(scheduler.HostConfigFilePath(), data, os.ModePerm)
+	err = ioutil.WriteFile(hostscheduler.HostConfigFilePath(), data, os.ModePerm)
 	if err != nil {
-		log.Fatalf("cannot write host config to %s: %s", scheduler.HostConfigFilePath(), err.Error())
+		log.Fatalf("cannot write host config to %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
 	}
 
 	return nil
 }
 
 func readHostInformationFromFile() (string, error) {
-	dat, err := ioutil.ReadFile(scheduler.HostConfigFilePath())
+	dat, err := ioutil.ReadFile(hostscheduler.HostConfigFilePath())
 	if err != nil {
 		return "", err
 	}

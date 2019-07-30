@@ -18,16 +18,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/gardenerscheduler"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/gkescheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	registration    scheduler.Registrations
+	registration    hostscheduler.Registrations
 	schedulerLogger *log.Logger
 
 	flagset *flag.FlagSet
@@ -41,8 +41,8 @@ const (
 )
 
 func init() {
-	// register scheduler provider
-	registration = make(scheduler.Registrations)
+	// register hostscheduler provider
+	registration = make(hostscheduler.Registrations)
 	gkescheduler.Register(registration)
 	gardenerscheduler.Register(registration)
 
@@ -68,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Add the flags correspnding to the choosing scheduler to the flagset of the command
+	// Add the flags correspnding to the choosing hostscheduler to the flagset of the command
 	if err := registration.ApplyFlags(schedulerName, flagset); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -80,7 +80,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize the requested scheduler
+	// Initialize the requested hostscheduler
 	hostScheduler, err := registration.GetInterface(schedulerName, ctx, schedulerLogger, flagset, args)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -97,7 +97,7 @@ func main() {
 	}
 }
 
-func lockCmd(ctx context.Context, hostScheduler scheduler.Interface) {
+func lockCmd(ctx context.Context, hostScheduler hostscheduler.Interface) {
 	err := hostScheduler.Lock(ctx)
 	if err != nil {
 		schedulerLogger.Fatal(err)
@@ -105,7 +105,7 @@ func lockCmd(ctx context.Context, hostScheduler scheduler.Interface) {
 	schedulerLogger.Infof("Cluster successfully locked and ready")
 }
 
-func releaseCmd(ctx context.Context, hostScheduler scheduler.Interface, clean bool) {
+func releaseCmd(ctx context.Context, hostScheduler hostscheduler.Interface, clean bool) {
 	if clean {
 		err := hostScheduler.Cleanup(ctx)
 		if err != nil {

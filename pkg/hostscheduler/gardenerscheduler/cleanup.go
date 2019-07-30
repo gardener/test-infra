@@ -17,10 +17,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (s *gardenerscheduler) Release(ctx context.Context) error {
+func (s *gardenerscheduler) Cleanup(ctx context.Context) error {
 
 	hostConfig, err := readHostInformationFromFile()
 	if err != nil {
@@ -33,22 +35,26 @@ func (s *gardenerscheduler) Release(ctx context.Context) error {
 		return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 	}
 
-	shoot, err = WaitUntilShootIsReconciled(ctx, s.logger, s.client, shoot)
+	hostClient, err := kubernetes.NewClientFromSecret(s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), client.Options{
+		Scheme: kubernetes.ShootScheme,
+	})
 	if err != nil {
-		return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
+		return fmt.Errorf("cannot build shoot client: %s", err.Error())
 	}
 
-	if shoot.Spec.Hibernation == nil || shoot.Spec.Hibernation.Enabled == false {
-		// Do not set any hibernation schedule as hibernation should be handled automatically by this scheduler.
-		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot get shoot %s: %s", shoot.Name, err.Error())
-		}
-		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: true}
-		err := s.client.Client().Update(ctx, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
-		}
+	shoot, err = WaitUntilShootIsReconciled(ctx, s.logger, s.client, shoot)
+	if err != nil {
+		return fmt.Errorf("cannot reconcile shoot %s: %s", shoot.Name, err.Error())
 	}
+
+	if shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled {
+		s.logger.Infof("Cluster %s is already free. No need to cleanup.", shoot.Name)
+		return nil
+	}
+
+	if err := cleanup.CleanResources(ctx, s.logger, hostClient); err != nil {
+		return err
+	}
+
 	return nil
 }

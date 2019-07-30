@@ -20,7 +20,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 )
@@ -35,23 +35,23 @@ var (
 	zone              string
 )
 
-var Register scheduler.Register = func(m scheduler.Registrations) {
+var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
 	if m == nil {
-		m = make(scheduler.Registrations)
+		m = make(hostscheduler.Registrations)
 	}
-	m[Name] = &scheduler.Registration{
+	m[Name] = &hostscheduler.Registration{
 		Interface: registerScheduler,
 		Flags:     registerFlags,
 	}
 }
 
-var registerFlags scheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
+var registerFlags hostscheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
 	fs.StringVar(&gcloudKeyfilePath, "key", "", "Path to the gardener cluster gcloudKeyfilePath")
 	fs.StringVar(&project, "project", "", "gcp project name")
 	fs.StringVar(&zone, "zone", "", "gcp zone name")
 }
 
-var registerScheduler scheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (scheduler.Interface, error) {
+var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (hostscheduler.Interface, error) {
 	if gcloudKeyfilePath == "" {
 		return nil, errors.New("no gcloud keyfile is specified")
 	}
@@ -69,7 +69,7 @@ var registerScheduler scheduler.RegisterInterfaceFromArgsFunc = func(ctx context
 	return New(ctx, logger, project, zone, gcloudKeyfilePath)
 }
 
-func New(ctx context.Context, logger *logrus.Logger, project, zone string, gcloudKeyfilePath string) (scheduler.Interface, error) {
+func New(ctx context.Context, logger *logrus.Logger, project, zone string, gcloudKeyfilePath string) (hostscheduler.Interface, error) {
 	c, err := container.NewClusterManagerClient(ctx, option.WithCredentialsFile(gcloudKeyfilePath))
 	if err != nil {
 		return nil, err
@@ -93,4 +93,4 @@ func (s gkescheduler) getOperationName(name string) string {
 	return fmt.Sprintf("%s/operations/%s", s.getParentName(), name)
 }
 
-var _ scheduler.Interface = &gkescheduler{}
+var _ hostscheduler.Interface = &gkescheduler{}

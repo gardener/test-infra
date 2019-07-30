@@ -25,7 +25,7 @@ import (
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -110,7 +110,7 @@ func getAvailableHost(ctx context.Context, logger *logrus.Logger, k8sClient kube
 
 func downloadHostKubeconfig(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
-	logger.Infof("Downloading host kubeconfig to %s", scheduler.HostKubeconfigPath())
+	logger.Infof("Downloading host kubeconfig to %s", hostscheduler.HostKubeconfigPath())
 
 	// Download kubeconfigPath secret from gardener
 	secret := &corev1.Secret{}
@@ -119,13 +119,13 @@ func downloadHostKubeconfig(ctx context.Context, logger *logrus.Logger, k8sClien
 		return fmt.Errorf("cannot download kubeconfig for shoot %s: %s", shoot.Name, err.Error())
 	}
 
-	err = os.MkdirAll(filepath.Dir(scheduler.HostKubeconfigPath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(hostscheduler.HostKubeconfigPath()), os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(scheduler.HostKubeconfigPath()), err.Error())
+		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(hostscheduler.HostKubeconfigPath()), err.Error())
 	}
-	err = ioutil.WriteFile(scheduler.HostKubeconfigPath(), secret.Data["kubeconfig"], os.ModePerm)
+	err = ioutil.WriteFile(hostscheduler.HostKubeconfigPath(), secret.Data["kubeconfig"], os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot write kubeconfig to %s: %s", scheduler.HostKubeconfigPath(), err.Error())
+		return fmt.Errorf("cannot write kubeconfig to %s: %s", hostscheduler.HostKubeconfigPath(), err.Error())
 	}
 
 	return nil
@@ -141,13 +141,13 @@ func writeHostInformationToFile(logger *logrus.Logger, shoot *v1beta1.Shoot) err
 		logger.Fatalf("cannot unmarshal hostconfig: %s", err.Error())
 	}
 
-	err = os.MkdirAll(filepath.Dir(scheduler.HostConfigFilePath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(hostscheduler.HostConfigFilePath()), os.ModePerm)
 	if err != nil {
-		logger.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(scheduler.HostConfigFilePath()), err.Error())
+		logger.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(hostscheduler.HostConfigFilePath()), err.Error())
 	}
-	err = ioutil.WriteFile(scheduler.HostConfigFilePath(), data, os.ModePerm)
+	err = ioutil.WriteFile(hostscheduler.HostConfigFilePath(), data, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("cannot write host config to %s: %s", scheduler.HostConfigFilePath(), err.Error())
+		logger.Fatalf("cannot write host config to %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
 	}
 
 	return nil

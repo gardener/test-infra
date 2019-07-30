@@ -17,12 +17,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/cleanup"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (s *gardenerscheduler) Cleanup(ctx context.Context) error {
+func (s *gardenerscheduler) Release(ctx context.Context) error {
 
 	hostConfig, err := readHostInformationFromFile()
 	if err != nil {
@@ -35,21 +33,22 @@ func (s *gardenerscheduler) Cleanup(ctx context.Context) error {
 		return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 	}
 
-	hostClient, err := kubernetes.NewClientFromSecret(s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), client.Options{
-		Scheme: kubernetes.ShootScheme,
-	})
-	if err != nil {
-		return fmt.Errorf("cannot build shoot client: %s", err.Error())
-	}
-
 	shoot, err = WaitUntilShootIsReconciled(ctx, s.logger, s.client, shoot)
 	if err != nil {
 		return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 	}
 
-	if err := cleanup.CleanResources(ctx, s.logger, hostClient); err != nil {
-		return err
+	if shoot.Spec.Hibernation == nil || shoot.Spec.Hibernation.Enabled == false {
+		// Do not set any hibernation schedule as hibernation should be handled automatically by this hostscheduler.
+		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot)
+		if err != nil {
+			return fmt.Errorf("cannot get shoot %s: %s", shoot.Name, err.Error())
+		}
+		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: true}
+		err := s.client.Client().Update(ctx, shoot)
+		if err != nil {
+			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
+		}
 	}
-
 	return nil
 }

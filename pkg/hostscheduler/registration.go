@@ -11,32 +11,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gkescheduler
+package hostscheduler
 
 import (
 	"context"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/cleanup"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
+	"flag"
+	"fmt"
+	"github.com/sirupsen/logrus"
 )
 
-func (s *gkescheduler) Cleanup(ctx context.Context) error {
-	hostName, err := readHostInformationFromFile()
-	if err != nil {
-		return err
+func (r Registrations) GetInterface(name string, ctx context.Context, logger *logrus.Logger, flagset *flag.FlagSet, args []string) (Interface, error) {
+	s, ok := r[name]
+	if !ok {
+		return nil, fmt.Errorf("no hostscheduler of type %s found", name)
 	}
+	return s.Interface(ctx, logger)
+}
 
-	cluster, err := s.client.GetCluster(ctx, &containerpb.GetClusterRequest{Name: s.getClusterName(hostName)})
-	if err != nil {
-		return err
+func (r Registrations) ApplyFlags(name string, fs *flag.FlagSet) error {
+	s, ok := r[name]
+	if !ok {
+		return fmt.Errorf("no hostscheduler of type %s found", name)
 	}
-
-	k8sClient, err := clientFromCluster(cluster)
-	if err != nil {
-		return err
-	}
-
-	if err := cleanup.CleanResources(ctx, s.logger, k8sClient); err != nil {
-		return err
-	}
+	s.Flags(fs)
 	return nil
 }

@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/sirupsen/logrus"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	"strconv"
@@ -62,7 +62,7 @@ func (s gkescheduler) Lock(ctx context.Context) error {
 		return err
 	}
 
-	if err := scheduler.WriteHostKubeconfig(host.Client); err != nil {
+	if err := hostscheduler.WriteHostKubeconfig(host.Client); err != nil {
 		return err
 	}
 
