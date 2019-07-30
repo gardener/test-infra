@@ -30,8 +30,19 @@ func (s *Set) Copy() *Set {
 func (s *Set) Iterate() chan *Node {
 	c := make(chan *Node)
 	go func() {
-		for n := range s.set {
+		for _, n := range s.list {
 			c <- n
+		}
+		close(c)
+	}()
+	return c
+}
+
+func (s *Set) IterateInverse() chan *Node {
+	c := make(chan *Node)
+	go func() {
+		for i := len(s.list) - 1; i >= 0; i-- {
+			c <- s.list[i]
 		}
 		close(c)
 	}()

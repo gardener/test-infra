@@ -273,7 +273,7 @@ func findJointNode(nodeSets []*node.Set) *node.Node {
 
 	alreadyCheckedNodes := node.NewSet()
 	for i, set := range nodeSets {
-		for n := range set.Iterate() {
+		for n := range set.IterateInverse() {
 			if alreadyCheckedNodes.Has(n) {
 				continue
 			}
