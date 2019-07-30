@@ -343,6 +343,68 @@ var _ = Describe("flow operations", func() {
 
 		})
 
+		It("should set node A as artifact source of last node", func() {
+			testDAGStepB := testDAGStep([]string{"A"})
+			testDAGStepB.Definition.ContinueOnError = true
+			testDAGStepC := testDAGStep([]string{"B"})
+			testDAGStepC.Definition.ContinueOnError = true
+			testDAGStepD := testDAGStep([]string{"C"})
+			testDAGStepD.Definition.ContinueOnError = true
+			testDAGStepE := testDAGStep([]string{"C"})
+			testDAGStepE.Definition.ContinueOnError = true
+			testDAGStepF := testDAGStep([]string{"C"})
+			testDAGStepF.Definition.ContinueOnError = true
+
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, testDAGStep([]string{}))
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
+			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStepC)
+			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStepD)
+			E := testNode("E", node.NewSet(C), defaultTestDef, testDAGStepE)
+			F := testNode("F", node.NewSet(C), defaultTestDef, testDAGStepF)
+			G := testNode("G", node.NewSet(D, E, F), defaultTestDef, testDAGStep([]string{"D", "E", "F"}))
+			steps := map[string]*testflow.Step{
+				"A": {
+					Info:  A.Step(),
+					Nodes: node.NewSet(A),
+				},
+				"B": {
+					Info:  B.Step(),
+					Nodes: node.NewSet(B),
+				},
+				"C": {
+					Info:  C.Step(),
+					Nodes: node.NewSet(C),
+				},
+				"D": {
+					Info:  D.Step(),
+					Nodes: node.NewSet(D),
+				},
+				"E": {
+					Info:  E.Step(),
+					Nodes: node.NewSet(E),
+				},
+				"F": {
+					Info:  F.Step(),
+					Nodes: node.NewSet(F),
+				},
+				"G": {
+					Info:  G.Step(),
+					Nodes: node.NewSet(G),
+				},
+			}
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+
+			Expect(A.GetInputSource()).To(Equal(rootNode))
+			Expect(B.GetInputSource()).To(Equal(A))
+			Expect(C.GetInputSource()).To(Equal(A))
+			Expect(D.GetInputSource()).To(Equal(A))
+			Expect(E.GetInputSource()).To(Equal(A))
+			Expect(F.GetInputSource()).To(Equal(A))
+			Expect(G.GetInputSource()).To(Equal(A))
+		})
+
 	})
 
 	Context("Apply config namespaces", func() {
