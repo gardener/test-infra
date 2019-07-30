@@ -102,10 +102,7 @@ var collectCmd = &cobra.Command{
 
 func init() {
 	// configuration flags
-	collectCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
-	if err := collectCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
-		log.Debug(err)
-	}
+	collectCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", os.Getenv("KUBECONFIG"), "Path to the testmachinery cluster kubeconfig")
 	if err := collectCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
 		log.Debug(err)
 	}
