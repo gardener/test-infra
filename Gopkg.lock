@@ -2,10 +2,12 @@
 
 
 [[projects]]
-  digest = "1:137194cebcc9b67701c67df1bd5cbe85b9c5a0280dc226d68c65e166c78a429a"
+  digest = "1:43df2fe65054c07b727a6fe88fcfa042d406750fc55f888df40f31945773f5c2"
   name = "cloud.google.com/go"
   packages = [
     "compute/metadata",
+    "container",
+    "container/apiv1",
     "iam",
     "internal",
     "internal/optional",
@@ -381,7 +383,7 @@
   revision = "c65c006176ff7ff98bb916961c7abbc6b0afc0aa"
 
 [[projects]]
-  digest = "1:a98a0b00720dc3149bf3d0c8d5726188899e5bab2f5072b9a7ef82958fbc98b2"
+  digest = "1:20fbcb14466e20006cbbaaef66ff09d98c425c443dda2181f77b0edf1307b64b"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -389,6 +391,7 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/empty",
     "ptypes/timestamp",
   ]
   pruneopts = "NUT"
@@ -771,6 +774,7 @@
     "internal/tagencoding",
     "metric/metricdata",
     "metric/metricproducer",
+    "plugin/ocgrpc",
     "plugin/ochttp",
     "plugin/ochttp/propagation/b3",
     "resource",
@@ -921,9 +925,10 @@
   revision = "b4b6fe2cb82970f144debbe03ecb71e340b15446"
 
 [[projects]]
-  digest = "1:5b47538750b21fb112d6f5d36316bd6d43b620295150c0f5d00d1bc0cd62a818"
+  digest = "1:94a075a2f6fbc5de7304f6112ea9ea2bab5413ae928c25920c7359ccdbfb0fc8"
   name = "google.golang.org/api"
   packages = [
+    "container/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
@@ -932,6 +937,8 @@
     "iterator",
     "option",
     "storage/v1",
+    "transport",
+    "transport/grpc",
     "transport/http",
     "transport/http/internal/propagation",
   ]
@@ -940,7 +947,7 @@
   version = "v0.6.0"
 
 [[projects]]
-  digest = "1:d395d49d784dd3a11938a3e85091b6570664aa90ff2767a626565c6c130fa7e9"
+  digest = "1:898bf528e5c601c4a1111586f75ab9515467ebe7a41ae849d5a839720d4e2580"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -951,7 +958,9 @@
     "internal/log",
     "internal/modules",
     "internal/remote_api",
+    "internal/socket",
     "internal/urlfetch",
+    "socket",
     "urlfetch",
   ]
   pruneopts = "NUT"
@@ -960,10 +969,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1d7e4e8b75502678019b764e524684c25aeeb855ef93f0d5b52fd66e834a5d17"
+  digest = "1:41a7df1cd6dc00b787c189767e0fb8df4ad434ee7d7ffc8a429ff6a03fed36df"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
+    "googleapis/container/v1",
     "googleapis/iam/v1",
     "googleapis/rpc/code",
     "googleapis/rpc/status",
@@ -973,18 +983,29 @@
   revision = "a7e196e89fd3a3c4d103ca540bd5dac3a736e375"
 
 [[projects]]
-  digest = "1:1ec4bc6f7cbf98268fafafea40cdeb5ff5d4914cc9b9ef615fbbfc1ac43c0622"
+  digest = "1:e289f85ba02e2df4965a3e92f04c8266b09b8a41171bf33488865e3f94f1fa69"
   name = "google.golang.org/grpc"
   packages = [
     ".",
     "balancer",
     "balancer/base",
+    "balancer/grpclb",
+    "balancer/grpclb/grpc_lb_v1",
     "balancer/roundrobin",
     "binarylog/grpc_binarylog_v1",
     "codes",
     "connectivity",
     "credentials",
+    "credentials/alts",
+    "credentials/alts/internal",
+    "credentials/alts/internal/authinfo",
+    "credentials/alts/internal/conn",
+    "credentials/alts/internal/handshaker",
+    "credentials/alts/internal/handshaker/service",
+    "credentials/alts/internal/proto/grpc_gcp",
+    "credentials/google",
     "credentials/internal",
+    "credentials/oauth",
     "encoding",
     "encoding/proto",
     "grpclog",
@@ -1526,6 +1547,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "cloud.google.com/go/container",
+    "cloud.google.com/go/container/apiv1",
     "cloud.google.com/go/storage",
     "github.com/Masterminds/semver",
     "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1",
@@ -1554,6 +1577,8 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
+    "google.golang.org/api/option",
+    "google.golang.org/genproto/googleapis/container/v1",
     "gopkg.in/yaml.v2",
     "k8s.io/api/admission/v1beta1",
     "k8s.io/api/admissionregistration/v1beta1",

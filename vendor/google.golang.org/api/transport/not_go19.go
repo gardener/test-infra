@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scheduler
+// +build !go1.9
+
+package transport
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
+	"context"
+
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/internal"
+	"google.golang.org/api/option"
 )
 
-func ShootKubeconfigSecretName(shootName string) string {
-	return fmt.Sprintf("%s.kubeconfig", shootName)
-}
-
-func HostKubeconfigPath() string {
-	return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config")
-}
-
-func HostConfigFilePath() string {
-	return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json")
+// Creds constructs a google.DefaultCredentials from the information in the options,
+// or obtains the default credentials in the same way as google.FindDefaultCredentials.
+func Creds(ctx context.Context, opts ...option.ClientOption) (*google.DefaultCredentials, error) {
+	var ds internal.DialSettings
+	for _, opt := range opts {
+		opt.Apply(&ds)
+	}
+	return internal.Creds(ctx, &ds)
 }

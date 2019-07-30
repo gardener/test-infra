@@ -1,3 +1,4 @@
+// Copyright 2016 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,22 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scheduler
+// +build appengine
+
+package grpc
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
+	"context"
+	"net"
+	"time"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/socket"
+	"google.golang.org/grpc"
 )
 
-func ShootKubeconfigSecretName(shootName string) string {
-	return fmt.Sprintf("%s.kubeconfig", shootName)
-}
+func init() {
+	// NOTE: dev_appserver doesn't currently support SSL.
+	// When it does, this code can be removed.
+	if appengine.IsDevAppServer() {
+		return
+	}
 
-func HostKubeconfigPath() string {
-	return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config")
-}
-
-func HostConfigFilePath() string {
-	return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json")
+	appengineDialerHook = func(ctx context.Context) grpc.DialOption {
+		return grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
+			return socket.DialTimeout(ctx, "tcp", addr, timeout)
+		})
+	}
 }

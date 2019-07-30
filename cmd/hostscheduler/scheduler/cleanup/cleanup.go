@@ -12,30 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package versioncmd
+package cleanup
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/gardener/test-infra/pkg/version"
-	"github.com/spf13/cobra"
-	"log"
+	"context"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/sirupsen/logrus"
 )
 
-// AddCommand adds run-testrun to a command.
-func AddCommand(cmd *cobra.Command) {
-	cmd.AddCommand(versionCmd)
-}
+func CleanResources(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface) error {
+	if err := CleanWebhooks(ctx, logger, k8sClient.Client()); err != nil {
+		return err
+	}
+	logger.Info("Cleaned Webhooks...")
+	if err := CleanExtendedAPIs(ctx, logger, k8sClient.Client()); err != nil {
+		return err
+	}
+	logger.Info("Cleaned Extended API...")
+	if err := CleanKubernetesResources(ctx, logger, k8sClient.Client()); err != nil {
+		return err
+	}
+	logger.Info("Cleaned Kubernetes resources...")
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "GetInterface testrunner version",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		v, err := json.Marshal(version.Get())
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		fmt.Print(string(v))
-	},
+	return nil
 }

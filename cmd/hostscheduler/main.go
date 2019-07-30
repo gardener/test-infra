@@ -18,95 +18,123 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"io/ioutil"
-	"k8s.io/client-go/tools/clientcmd"
+	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/gardenerscheduler"
+	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler/gkescheduler"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
-	kubeconfigPath string
-	clean          bool
-	debug          bool
+	registration    scheduler.Registrations
+	schedulerLogger *log.Logger
+
+	flagset *flag.FlagSet
+	clean   bool
+	debug   bool
+)
+
+const (
+	cmdLock    = "lock"
+	cmdRelease = "release"
 )
 
 func init() {
-	// configuration flags
-	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
-	flag.BoolVar(&clean, "clean", false, "cleanup a previously used shoot. Which means to hibernate the shoot and cleanup left resources.")
-	flag.BoolVar(&debug, "debug", false, "debug output.")
+	// register scheduler provider
+	registration = make(scheduler.Registrations)
+	gkescheduler.Register(registration)
+	gardenerscheduler.Register(registration)
+
+	flagset = flag.NewFlagSet("all", flag.ContinueOnError)
+	flagset.BoolVar(&clean, "clean", false, "cleanup cluster")
+	flagset.BoolVar(&debug, "debug", false, "debug output")
 }
 
 func main() {
-	flag.Parse()
-
 	ctx := context.Background()
 	defer ctx.Done()
-	if debug {
-		log.SetLevel(log.DebugLevel)
-		log.Warn("Set debug log level")
+
+	if len(os.Args) < 3 {
+		schedulerLogger.Fatal("list or count subcommand is required")
 	}
 
-	if kubeconfigPath == "" {
-		if os.Getenv("KUBECONFIG") != "" {
-			kubeconfigPath = os.Getenv("KUBECONFIG")
-		}
+	cmd := os.Args[1]
+	schedulerName := os.Args[2]
+	args := os.Args[3:]
+
+	if cmd != cmdLock && cmd != cmdRelease {
+		fmt.Printf("%s is not a valid command. Allowed commands: 'lock', 'release'", cmd)
+		os.Exit(1)
 	}
 
-	if kubeconfigPath == "" {
-		log.Fatal("No gardener kubeconfigPath is specified")
+	// Add the flags correspnding to the choosing scheduler to the flagset of the command
+	if err := registration.ApplyFlags(schedulerName, flagset); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
-	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, client.Options{
-		Scheme: kubernetes.GardenScheme,
-	})
+	// parse the arguments and initialize common standard objects like logging
+	if err := parseAndSetupStdParameters(args); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	// Initialize the requested scheduler
+	hostScheduler, err := registration.GetInterface(schedulerName, ctx, schedulerLogger, flagset, args)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
-	namespace, err := getNamespaceOfKubeconfig(kubeconfigPath)
-	if err != nil {
-		log.Fatal(err)
+	switch cmd {
+	case cmdLock:
+		lockCmd(ctx, hostScheduler)
+	case cmdRelease:
+		releaseCmd(ctx, hostScheduler, clean)
+	default:
+		fmt.Printf("%s is not a valid command. Allowed commands: 'lock', 'release'", cmd)
 	}
-
-	if clean {
-		if err := scheduler.HibernateShoot(ctx, k8sClient); err != nil {
-			log.Fatal(err.Error())
-		}
-		log.Infof("Successfully hibernated shoot")
-		return
-	}
-
-	shoot, err := scheduler.ScheduleNewHostShoot(ctx, k8sClient, namespace)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	_, err = scheduler.WaitUntilShootIsReconciled(ctx, k8sClient, shoot)
-	if err != nil {
-		log.Fatal(fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error()))
-	}
-
-	log.Infof("Shoot %s successfully woken up and reconciled", shoot.Name)
 }
 
-func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
-	data, err := ioutil.ReadFile(kubeconfigPath)
+func lockCmd(ctx context.Context, hostScheduler scheduler.Interface) {
+	err := hostScheduler.Lock(ctx)
 	if err != nil {
-		return "", errors.Wrapf(err, "cannot read file from %s", kubeconfigPath)
+		schedulerLogger.Fatal(err)
 	}
-	cfg, err := clientcmd.NewClientConfigFromBytes(data)
-	if err != nil {
-		return "", err
+	schedulerLogger.Infof("Cluster successfully locked and ready")
+}
+
+func releaseCmd(ctx context.Context, hostScheduler scheduler.Interface, clean bool) {
+	if clean {
+		err := hostScheduler.Cleanup(ctx)
+		if err != nil {
+			schedulerLogger.Fatal(err)
+		}
 	}
 
-	ns, _, err := cfg.Namespace()
+	err := hostScheduler.Release(ctx)
 	if err != nil {
-		return "", err
+		schedulerLogger.Fatal(err)
 	}
-	return ns, nil
+	schedulerLogger.Infof("Successfully released cluster")
+}
+
+func parseAndSetupStdParameters(args []string) error {
+	err := flagset.Parse(args)
+	if err != nil {
+		return fmt.Errorf("flags cannot be parsed: %s", err.Error())
+	}
+	schedulerLogger = log.StandardLogger()
+	formatter := &log.TextFormatter{
+		FullTimestamp: true,
+		DisableColors: true,
+	}
+	schedulerLogger.SetFormatter(formatter)
+	schedulerLogger.SetOutput(os.Stderr)
+	if debug {
+		schedulerLogger.SetLevel(log.DebugLevel)
+		schedulerLogger.Warn("Set debug log level")
+	}
+	return nil
 }

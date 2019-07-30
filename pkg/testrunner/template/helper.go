@@ -152,6 +152,9 @@ func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]strin
 
 func getGardenerVersionFromComponentDescriptor(componentDescriptor componentdescriptor.ComponentList) string {
 	for _, component := range componentDescriptor {
+		if component == nil {
+			continue
+		}
 		if component.Name == "github.com/gardener/gardener" {
 			return component.Version
 		}
