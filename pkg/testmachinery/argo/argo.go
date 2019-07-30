@@ -17,12 +17,10 @@ package argo
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-// the label and taint of the nodes in the worker pool which are reserved for workflow pods
-const workerPoolTaintLabelName = "testload"
 
 // CreateWorkflow takes a name, templates and volumes to generate an argo workflow object.
 func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []argov1.Template, volumes []corev1.Volume, ttl *int32, pullImageSecretNames []string) (*argov1.Workflow, error) {
@@ -110,7 +108,7 @@ func getWorkflowAffinity() *corev1.Affinity {
 							{
 								Key:      "purpose",
 								Operator: "In",
-								Values:   []string{workerPoolTaintLabelName},
+								Values:   []string{testmachinery.WorkerPoolTaintLabelName},
 							},
 						},
 					},
@@ -126,7 +124,7 @@ func getWorkflowTolerations() []corev1.Toleration {
 		{
 			Key:      "purpose",
 			Operator: "Equal",
-			Value:    workerPoolTaintLabelName,
+			Value:    testmachinery.WorkerPoolTaintLabelName,
 			Effect:   "NoSchedule",
 		},
 	}

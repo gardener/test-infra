@@ -58,6 +58,9 @@ const (
 
 	// ConfigMapName is the name of the testmachinery configmap in the cluster
 	ConfigMapName = "tm-config"
+
+	// the label and taint of the nodes in the worker pool which are preferably used for workflow pods
+	WorkerPoolTaintLabelName = "testload"
 )
 
 var (
