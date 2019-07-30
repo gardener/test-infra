@@ -36,7 +36,7 @@ import (
 
 // New creates the TM prepare step
 // The step clones all needed github repositories and outputs these repos as argo artifacts with the name "repoOwner-repoName-revision".
-func New(name string, addGlobalInput bool) (*Definition, error) {
+func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error) {
 	td := testdefinition.NewEmpty()
 	td.Info = &tmv1beta1.TestDefinition{
 		Metadata: tmv1beta1.TestDefMetadata{
@@ -79,6 +79,9 @@ func New(name string, addGlobalInput bool) (*Definition, error) {
 
 	if err := prepare.addNetrcFile(); err != nil {
 		return nil, err
+	}
+	if addGlobalOutput {
+		prepare.TestDefinition.AddStdOutput(true)
 	}
 	if addGlobalInput {
 		prepare.TestDefinition.AddInputArtifacts(testdefinition.GetStdInputArtifacts()...)

@@ -60,7 +60,7 @@ var (
 var Debug bool
 
 const (
- 	workingDescFile = "working.json"
+	workingDescFile = "working.json"
 )
 
 func init() {

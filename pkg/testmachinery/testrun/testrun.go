@@ -37,7 +37,7 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig = append(globalConfig, config.NewElement(createTestrunIDConfig(tr.Name), config.LevelGlobal))
 
 	// create initial prepare step
-	prepareDef, err := prepare.New("Prepare", false)
+	prepareDef, err := prepare.New("Prepare", false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
 		return nil, err
 	}
 
-	postPrepareDef, err := prepare.New("PostPrepare", true)
+	postPrepareDef, err := prepare.New("PostPrepare", true, false)
 	if err != nil {
 		return nil, err
 	}
