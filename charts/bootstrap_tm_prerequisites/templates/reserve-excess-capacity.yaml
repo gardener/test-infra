@@ -39,6 +39,22 @@ spec:
       labels:
         app: reserve-excess-capacity
     spec:
+      # ensure pods are placed on "purpose: testload" labeled nodes (if present)
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: purpose
+                operator: In
+                values:
+                - testload
+      tolerations:
+      - key: purpose
+        operator: Equal
+        value: testload
+        effect: NoSchedule
       terminationGracePeriodSeconds: 5
       containers:
       - name: pause-container
