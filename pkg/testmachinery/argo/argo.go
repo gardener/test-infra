@@ -21,11 +21,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// the label and taint of the nodes in the worker pool which are reserved for workflow pods
+const workerPoolTaintLabelName = "testload"
+
 // CreateWorkflow takes a name, templates and volumes to generate an argo workflow object.
 func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []argov1.Template, volumes []corev1.Volume, ttl *int32, pullImageSecretNames []string) (*argov1.Workflow, error) {
 
 	wf := &argov1.Workflow{
 		Spec: argov1.WorkflowSpec{
+			Affinity:                getWorkflowAffinity(),
+			Tolerations:             getWorkflowTolerations(),
 			Entrypoint:              entrypoint,
 			ImagePullSecrets:        getImagePullSecrets(pullImageSecretNames),
 			Volumes:                 volumes,
@@ -91,4 +96,38 @@ func getImagePullSecrets(pullSecretNames []string) []corev1.LocalObjectReference
 		secrets = append(secrets, corev1.LocalObjectReference{Name: name})
 	}
 	return secrets
+}
+
+// getWorkflowAffinity returns the default spec to prefer workflow pods being scheduled on specially labeled nodes
+func getWorkflowAffinity() *corev1.Affinity {
+	return &corev1.Affinity{
+		NodeAffinity: &corev1.NodeAffinity{
+			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+				{
+					Weight:     100,
+					Preference: corev1.NodeSelectorTerm{
+						MatchExpressions: []corev1.NodeSelectorRequirement{
+							{
+								Key:      "purpose",
+								Operator: "In",
+								Values:   []string{workerPoolTaintLabelName},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// getWorkflowTolerations returns the default spec to allow workflow pods being scheduled on specially tainted nodes
+func getWorkflowTolerations() []corev1.Toleration {
+	return []corev1.Toleration{
+		{
+			Key:      "purpose",
+			Operator: "Equal",
+			Value:    workerPoolTaintLabelName,
+			Effect:   "NoSchedule",
+		},
+	}
 }
