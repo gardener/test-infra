@@ -3,6 +3,7 @@
 .DS_Store
 temp/
 tmp/
+venv
 
 # Generated testlogs
 tests
