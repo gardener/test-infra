@@ -2,11 +2,10 @@
 
 
 [[projects]]
-  digest = "1:43df2fe65054c07b727a6fe88fcfa042d406750fc55f888df40f31945773f5c2"
+  digest = "1:4b704375645ec2fc3cd9bf9217472b11699f040d69c162dd54206fb4820672f9"
   name = "cloud.google.com/go"
   packages = [
     "compute/metadata",
-    "container",
     "container/apiv1",
     "iam",
     "internal",
@@ -766,7 +765,7 @@
   version = "v1.0.3"
 
 [[projects]]
-  digest = "1:389349011e4eb001d6a0447c9eb837d5388cd131f27b5ddb13a73682605a0e65"
+  digest = "1:59a0bfab08de2de3bfe8d36dbeff8cd15c71ed83c08fe11f7545a436aa2a31cc"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -925,10 +924,9 @@
   revision = "b4b6fe2cb82970f144debbe03ecb71e340b15446"
 
 [[projects]]
-  digest = "1:94a075a2f6fbc5de7304f6112ea9ea2bab5413ae928c25920c7359ccdbfb0fc8"
+  digest = "1:20d771b9f86336e2968e307454f5cf1581980ec9d945263c2419b58bf1c7220f"
   name = "google.golang.org/api"
   packages = [
-    "container/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
@@ -1547,7 +1545,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "cloud.google.com/go/container",
     "cloud.google.com/go/container/apiv1",
     "cloud.google.com/go/storage",
     "github.com/Masterminds/semver",
@@ -1618,7 +1615,6 @@
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/helm/pkg/strvals",
-    "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1",
     "k8s.io/kube-openapi/cmd/openapi-gen",
     "k8s.io/kube-openapi/pkg/common",
     "sigs.k8s.io/controller-runtime/pkg/client",

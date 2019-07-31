@@ -18,7 +18,7 @@ import (
 	"errors"
 	"flag"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,21 +29,21 @@ const (
 
 var kubeconfigPath string
 
-var Register scheduler.Register = func(m scheduler.Registrations) {
+var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
 	if m == nil {
-		m = make(scheduler.Registrations)
+		m = make(hostscheduler.Registrations)
 	}
-	m[Name] = &scheduler.Registration{
+	m[Name] = &hostscheduler.Registration{
 		Interface: registerScheduler,
 		Flags:     registerFlags,
 	}
 }
 
-var registerFlags scheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
+var registerFlags hostscheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
 	fs.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
 }
 
-var registerScheduler scheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (scheduler.Interface, error) {
+var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (hostscheduler.Interface, error) {
 
 	if kubeconfigPath == "" {
 		return nil, errors.New("no kubeconfig is specified")
@@ -73,4 +73,4 @@ func New(_ context.Context, logger *logrus.Logger, kubeconfigPath string) (*gard
 	}, nil
 }
 
-var _ scheduler.Interface = &gardenerscheduler{}
+var _ hostscheduler.Interface = &gardenerscheduler{}

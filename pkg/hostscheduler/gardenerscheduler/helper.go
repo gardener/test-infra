@@ -17,7 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/cmd/hostscheduler/scheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"io/ioutil"
 	"time"
 
@@ -102,9 +102,9 @@ func shootReady(newShoot *v1beta1.Shoot) error {
 }
 
 func readHostInformationFromFile() (*client.ObjectKey, error) {
-	data, err := ioutil.ReadFile(scheduler.HostConfigFilePath())
+	data, err := ioutil.ReadFile(hostscheduler.HostConfigFilePath())
 	if err != nil {
-		return nil, fmt.Errorf("cannot read file %s: %s", scheduler.HostConfigFilePath(), err.Error())
+		return nil, fmt.Errorf("cannot read file %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
 	}
 
 	var hostConfig client.ObjectKey
