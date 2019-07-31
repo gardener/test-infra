@@ -240,11 +240,8 @@ func init() {
 	if err := runCmd.MarkFlagRequired("region"); err != nil {
 		log.Debug(err.Error())
 	}
-	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
-	if err := runCmd.MarkFlagRequired("zone"); err != nil {
-		log.Debug(err.Error())
-	}
 
+	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
 	runCmd.Flags().StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
 	runCmd.Flags().StringVar(&machineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
 	runCmd.Flags().StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
