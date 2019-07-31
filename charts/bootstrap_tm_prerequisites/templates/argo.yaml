@@ -28,6 +28,7 @@ data:
               cpu: "100m"
               memory: "150Mi"
         artifactRepository:
+          archiveLogs: true
           s3:
             bucket: {{.Values.objectStorage.bucketName}}
             keyPrefix: {{ .Values.objectStorage.keyPrefix }}
