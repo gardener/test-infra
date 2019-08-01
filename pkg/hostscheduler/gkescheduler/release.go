@@ -15,6 +15,7 @@ package gkescheduler
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
@@ -29,22 +30,25 @@ func (s gkescheduler) Release(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.logger.Infof("starting to release cluster %s", cluster.GetName())
 
 	// scale all non-default node pools to 0
 	for _, nodepool := range cluster.NodePools {
 		if nodepool.GetName() != GKEDefaultNodePoolName {
+			s.logger.Infof("scale down node pool %s to 0", nodepool.GetName())
 			o, err := s.client.SetNodePoolSize(ctx, &containerpb.SetNodePoolSizeRequest{
 				NodeCount: 0,
 				Name:      s.getNodePoolName(cluster.GetName(), nodepool.GetName()),
 			})
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "unable to scale node pool %s of cluster %s down to 0", nodepool.GetName(), cluster.GetName())
 			}
 			if err := s.waitUntilOperationFinishedSuccessfully(ctx, o); err != nil {
-				return err
+				return errors.Wrapf(err, "waiting for operation %s to finish. unable to scale node pool %s of cluster %s down to 0.", o.GetName(), nodepool.GetName(), cluster.GetName())
 			}
 		}
 	}
+	s.logger.Info("all non-default nodepools scaled down successfully")
 
 	labels := cluster.GetResourceLabels()
 
@@ -53,6 +57,7 @@ func (s gkescheduler) Release(ctx context.Context) error {
 		return nil
 	}
 
+	s.logger.Info("update labels of cluster")
 	labels[ClusterStatusLabel] = ClusterStatusFree
 	delete(labels, ClusterLockedAtLabel)
 
@@ -62,7 +67,7 @@ func (s gkescheduler) Release(ctx context.Context) error {
 	}
 	o, err := s.client.SetLabels(ctx, labelsRequest)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to update labels for cluster %s", cluster.GetName())
 	}
 
 	return s.waitUntilOperationFinishedSuccessfully(ctx, o)

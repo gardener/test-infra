@@ -29,6 +29,7 @@ func (s *gkescheduler) Cleanup(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.logger.Infof("starting to cleanup cluster %s", cluster.GetName())
 
 	// do not cleanup if cluster is already freed
 	if isFree(cluster.GetResourceLabels()) {
