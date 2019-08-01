@@ -110,10 +110,11 @@ func runKubetest(args KubetestArgs) {
 	cmd.Dir = config.KubernetesPath
 
 	cmdString := strings.Join(cmd.Args, " ")
-	if len(cmdString) > logMaxLength {
-		log.Infof("%s...", cmdString[:logMaxLength])
+	logMsg := fmt.Sprintf("Executing '%s' in working dir '%s'", cmdString, cmd.Dir)
+	if len(logMsg) > logMaxLength {
+		log.Infof("%s...", logMsg[:logMaxLength])
 	} else {
-		log.Info(cmdString)
+		log.Info(logMsg)
 	}
 
 	var out bytes.Buffer
