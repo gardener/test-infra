@@ -64,7 +64,7 @@ func PostRunCleanFiles() error {
 		return err
 	}
 	// remove kubernetes folder
-	if err := os.RemoveAll(filepath.Join(os.Getenv("GOPATH"), "src/k8s.io/kubernetes")); err != nil {
+	if err := os.RemoveAll(os.Getenv("GOPATH")); err != nil {
 		return err
 	}
 	//remove downloads dir
