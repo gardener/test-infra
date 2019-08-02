@@ -196,9 +196,6 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 		if runtime.GOOS == "linux" {
 			err = installGlibC()
-			if err = installGlibC(); err != nil {
-				return err
-			}
 		}
 	}
 
