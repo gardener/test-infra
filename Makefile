@@ -118,6 +118,11 @@ validate:
 # Binary build and docker image  #
 ##################################
 
+.PHONY: revendor
+revendor:
+	@GO111MODULE=on go mod vendor
+	@GO111MODULE=on go mod tidy
+
 .PHONY: testrunner
 testrunner:
 	@go install -v \

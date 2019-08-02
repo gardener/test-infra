@@ -28,7 +28,7 @@ import (
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v27/github"
 
 	"github.com/gardener/test-infra/pkg/util"
 )
