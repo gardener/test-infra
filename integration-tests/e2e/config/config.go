@@ -55,6 +55,8 @@ var (
 	TestcaseGroup            []string
 	TestcaseGroupString      string
 	ExplicitTestcases        arrayTestcase
+	DownloadsDir             string
+	RunCleanUpAfterTest      bool
 )
 
 var Debug bool
@@ -65,6 +67,7 @@ const (
 
 func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
+	flag.BoolVar(&Debug, "cleanUpAfterwards", false, "Clean downloads folder and remove kubernetes folder after test run")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
@@ -80,8 +83,10 @@ func init() {
 	OwnDir = filepath.Dir(filepath.Dir(b))
 	TmpDir = "/tmp/e2e/"
 	LogDir = path.Join(TmpDir, "artifacts")
+	DownloadsDir = path.Join(TmpDir, "downloads")
 	_ = os.Mkdir(LogDir, os.FileMode(0777))
 	_ = os.Mkdir(TmpDir, os.FileMode(0777))
+	_ = os.Mkdir(DownloadsDir, os.FileMode(0777))
 	GoPath = os.Getenv("GOPATH")
 	if GoPath == "" {
 		log.Fatal("GOPATH environment variable not found")

@@ -58,6 +58,22 @@ func cleanUpPreviousRuns() {
 	_ = os.Remove(filepath.Join(config.ExportPath, "junit_01.xml"))
 }
 
+func PostRunCleanFiles() error {
+	// remove log dir
+	if err := os.RemoveAll(config.LogDir); err != nil {
+		return err
+	}
+	// remove kubernetes folder
+	if err := os.RemoveAll(filepath.Join(os.Getenv("GOPATH"), "src/k8s.io/kubernetes")); err != nil {
+		return err
+	}
+	//remove downloads dir
+	if err := os.RemoveAll(config.DownloadsDir); err != nil {
+		return err
+	}
+	return nil
+}
+
 func areTestUtilitiesReady() bool {
 	log.Info("checking whether any test utility is not ready")
 	if _, err := util.RunCmd("which kubectl", ""); err != nil {
@@ -93,6 +109,10 @@ func downloadKubernetes(k8sVersion string) error {
 	log.Infof("get kubernetes v%s", k8sVersion)
 
 	if _, err := os.Stat(config.KubernetesPath); !os.IsNotExist(err) {
+		if _, err := util.RunCmd("git clean -f -d", config.KubernetesPath); err != nil {
+			log.Errorf("failed to failed to run git clean in %s", config.KubernetesPath, err)
+			return err
+		}
 		if _, err := util.RunCmd("git checkout master", config.KubernetesPath); err != nil {
 			log.Errorf("failed to checkout master branch in %s", config.KubernetesPath, err)
 			return err
@@ -159,7 +179,7 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 		}
 	} else if resp.StatusCode == http.StatusOK {
 		log.Infof("precompiled kubernetes test binaries available, download kubernetes-test-linux-amd64 for kubernetes v%s", k8sVersion)
-		k8sTestBinariesTarPath, err := util.DownloadFile(k8sTestBinariesVersionURL, config.TmpDir)
+		k8sTestBinariesTarPath, err := util.DownloadFile(k8sTestBinariesVersionURL, config.DownloadsDir)
 		if err != nil {
 			return err
 		}
@@ -176,6 +196,9 @@ func compileOrGetTestUtilities(k8sVersion string) error {
 
 		if runtime.GOOS == "linux" {
 			err = installGlibC()
+			if err = installGlibC(); err != nil {
+				return err
+			}
 		}
 	}
 

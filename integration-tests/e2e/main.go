@@ -18,6 +18,11 @@ func main() {
 	if config.PublishResultsToTestgrid == true && resultSummary.TestsuiteSuccessful == true {
 		kubetest.Publish(config.ExportPath, resultSummary)
 	}
+	if config.RunCleanUpAfterTest {
+		if err := setup.PostRunCleanFiles(); err != nil {
+			log.Fatal(errors.Wrapf(err, "cleaning up downloaded artifacts and kubernetes folder failed"))
+		}
+	}
 	if !resultSummary.TestsuiteSuccessful {
 		log.Fatalf("e2e testsuite failed for %d testcases: %v", resultSummary.FailedTestcases, resultSummary.FailedTestcaseNames)
 	}

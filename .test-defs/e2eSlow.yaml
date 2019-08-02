@@ -37,5 +37,5 @@ spec:
     /tm/setup github.com/gardener test-infra &&
     export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
-    go run $GOPATH/src/github.com/gardener/test-infra/integration-tests/e2e
+    go run $GOPATH/src/github.com/gardener/test-infra/integration-tests/e2e -cleanUpAfterwards=true
   image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.54.0
