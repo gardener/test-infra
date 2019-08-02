@@ -67,7 +67,7 @@ const (
 
 func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
-	flag.BoolVar(&Debug, "cleanUpAfterwards", false, "Clean downloads folder and remove kubernetes folder after test run")
+	flag.BoolVar(&RunCleanUpAfterTest, "cleanUpAfterwards", false, "Clean downloads folder and remove kubernetes folder after test run")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
