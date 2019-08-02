@@ -45,7 +45,7 @@ echo "go vet successful"
 # Execute automatic code formatting directive.
 echo "Running gofmt..."
 for pkg in ${PACKAGES}; do
-  go fmt -mod=vendor ./${pkg}/...
+  go fmt ./${pkg}/...
 done
 echo "go fmt successful"
 

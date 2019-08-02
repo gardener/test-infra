@@ -26,6 +26,9 @@ spec:
   behavior: ["serial"]
 
   config:
+  - name: GO111MODULE
+    value: "on"
+    type: env
   - type: env
     name: PUBLISH_RESULTS_TO_TESTGRID
     value: "true"
@@ -49,8 +52,7 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    /tm/setup github.com/gardener test-infra &&
     export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
-    go run $GOPATH/src/github.com/gardener/test-infra/integration-tests/e2e -cleanUpAfterwards=true
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.54.0
+    go run -mod=vendor ./integration-tests/e2e -cleanUpAfterwards=true
+  image: golang:1.12.7

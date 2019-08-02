@@ -24,8 +24,6 @@ else
   export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
-cd "${SOURCE_PATH}"
-
 VERSION_PATH="$(readlink -f "${VERSION_PATH}")"
 
 VERSION="$(cat $VERSION_PATH/version)"
@@ -51,7 +49,8 @@ fi
 
 
 # Install Ginkgo (test framework) to be able to execute the tests.
-go install -mod=vendor ./vendor/github.com/onsi/ginkgo
+cd "${SOURCE_PATH}"
+go install -mod=vendor ./vendor/github.com/onsi/ginkgo/ginkgo
 
 
 # Download Testmachinery Kubeconfig
