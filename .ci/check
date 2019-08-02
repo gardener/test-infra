@@ -15,39 +15,43 @@
 # limitations under the License.
 set -e
 
+export GO111MODULE=on
+
 if [[ -z "${SOURCE_PATH}" ]]; then
   export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
 else
   export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
-
-# The `go <cmd>` commands requires to see the target repository to be part of a
-# Go workspace. Thus, if we are not yet in a Go workspace, let's create one
-# temporarily by using symbolic links.
-if [[ "${SOURCE_PATH}" != *"src/github.com/gardener/test-infra" ]]; then
-  SOURCE_SYMLINK_PATH="${GOPATH}/src/github.com/gardener/test-infra"
-  mkdir -p "${GOPATH}/src/github.com/gardener"
-  ln -s "${SOURCE_PATH}" "${SOURCE_SYMLINK_PATH}"
-  cd "${SOURCE_SYMLINK_PATH}"
-
-  export PATH="${GOBIN}:${PATH}"
-fi
-
+cd "${SOURCE_PATH}"
 
 # Install Golint
 if ! which golint 1>/dev/null; then
   echo -n "Installing golint... "
-  go get -u golang.org/x/lint/golint
+  # Build Golint.
+  go install -mod=vendor ./vendor/golang.org/x/lint/golint
   echo "done."
 fi
 
-go vet ./pkg/...
-go vet ./cmd/...
-go vet ./test/...
+PACKAGES=("pkg" "cmd" "test")
+
+# Execute static code checks.
+echo "Running go vet..."
+for pkg in ${PACKAGES}; do
+  go vet -mod=vendor ./${pkg}/...
+done
 echo "go vet successful"
 
-go fmt ./pkg/...
-go fmt ./cmd/...
-go fmt ./test/...
+# Execute automatic code formatting directive.
+echo "Running gofmt..."
+for pkg in ${PACKAGES}; do
+  go fmt ./${pkg}/...
+done
 echo "go fmt successful"
+
+# Execute lint checks.
+echo "Running golint..."
+for dir in ${PACKAGES}; do
+  golint -set_exit_status $(find $dir -maxdepth 1 -name "*.go" | grep -vE 'zz_generated|_test.go')
+done
+echo "golint successfull"

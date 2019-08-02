@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -e
+export GO111MODULE=on
 
 printf "\nIntegration tests\n"
-
 
 if [[ -z "${SOURCE_PATH}" ]]; then
   export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
@@ -29,19 +29,6 @@ VERSION_PATH="$(readlink -f "${VERSION_PATH}")"
 VERSION="$(cat $VERSION_PATH/version)"
 GIT_COMMIT_SHA="$(GIT_DIR=$SOURCE_PATH/.git git rev-parse @)"
 NAMESPACE=default
-
-
-# The `go <cmd>` commands requires to see the target repository to be part of a
-# Go workspace. Thus, if we are not yet in a Go workspace, let's create one
-# temporarily by using symbolic links.
-if [[ "${SOURCE_PATH}" != *"src/github.com/gardener/test-infra" ]]; then
-  SOURCE_SYMLINK_PATH="${GOPATH}/src/github.com/gardener/test-infra"
-  mkdir -p "${GOPATH}/src/github.com/gardener"
-  ln -s "${SOURCE_PATH}" "${SOURCE_SYMLINK_PATH}"
-  cd "${SOURCE_SYMLINK_PATH}"
-
-  export PATH="${GOBIN}:${PATH}"
-fi
 
 # Install Kubectl
 curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl
@@ -62,7 +49,8 @@ fi
 
 
 # Install Ginkgo (test framework) to be able to execute the tests.
-go get -u github.com/onsi/ginkgo/ginkgo
+cd "${SOURCE_PATH}"
+go install -mod=vendor ./vendor/github.com/onsi/ginkgo/ginkgo
 
 
 # Download Testmachinery Kubeconfig
@@ -115,9 +103,9 @@ echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 
 # run integration tests with ginkgo
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=5 ./test/validationwebhook
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -r -p --nodes=5 ./test/controller
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -p --nodes=5 ./test/testrunner/...
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -p --nodes=5 ./test/validationwebhook
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -r -p --nodes=5 ./test/controller
+TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -p --nodes=5 ./test/testrunner/...
 
 
 #######################

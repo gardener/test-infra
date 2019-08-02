@@ -24,9 +24,13 @@ spec:
 
   activeDeadlineSeconds: 2400
 
+  config:
+  - name: GO111MODULE
+    value: "on"
+    type: env
+
   command: [bash, -c]
   args:
   - >-
-    /tm/setup github.com/gardener test-infra &&
-    go run $GOPATH/src/github.com/gardener/test-infra/cmd/cleanup/gardener --kubeconfig=$TM_KUBECONFIG_PATH/gardener.config --debug=true
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.54.0
+    go run -mod=vendor ./cmd/cleanup/gardener --kubeconfig=$TM_KUBECONFIG_PATH/gardener.config --debug=true
+  image: golang:1.12.7

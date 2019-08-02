@@ -25,6 +25,9 @@ spec:
   activeDeadlineSeconds: 10800
 
   config:
+  - name: GO111MODULE
+    value: "on"
+    type: env
   - type: file
     name: GCLOUD_HOST_ACCOUNT
     path: /tmp/secrets/gcloud.json
@@ -48,6 +51,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    /tm/setup github.com/gardener test-infra &&
-    go run $GOPATH/src/github.com/gardener/test-infra/cmd/hostscheduler lock gke --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.42.0
+    go run -mod=vendor ./cmd/hostscheduler lock gke --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE
+  image: golang:1.12.7
