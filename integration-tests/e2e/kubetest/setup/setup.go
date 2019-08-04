@@ -122,9 +122,10 @@ func downloadKubernetes(k8sVersion string) error {
 			return err
 		}
 	} else if os.IsNotExist(err) {
-		log.Infof("directory %s does not exist. Run go get -d k8s.io/kubernetes", config.KubernetesPath)
-		if out, err := util.RunCmd("go get -d k8s.io/kubernetes", ""); err != nil && !isNoGoFilesErr(out.StdErr) {
-			log.Error("failed to go get k8s.io/kubernetes", err)
+		cloneCmd := fmt.Sprintf("git clone --branch=v%s --depth=1 https://github.com/kubernetes/kubernetes %s", config.K8sRelease, config.KubernetesPath)
+		log.Infof("directory %s does not exist. Run %s", config.KubernetesPath, cloneCmd)
+		if out, err := util.RunCmd(cloneCmd, ""); err != nil && !isNoGoFilesErr(out.StdErr) {
+			log.Errorf("failed to %s", cloneCmd, err)
 			return err
 		}
 	} else {
