@@ -106,7 +106,7 @@ func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts
 
 func runKubetest(args KubetestArgs) {
 	ginkgoArgs := fmt.Sprintf("--test_args=--ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
-	cmd := exec.Command("go", "run", "hack/e2e.go", "--", "--provider=skeleton", "--deployment=local", "--test", "--check-version-skew=false", args.GinkgoParallel, ginkgoArgs, fmt.Sprintf("--dump=%s", args.LogDir))
+	cmd := exec.Command("kubetest", "--provider=skeleton", "--deployment=local", "--test", "--check-version-skew=false", args.GinkgoParallel, ginkgoArgs, fmt.Sprintf("--dump=%s", args.LogDir))
 	cmd.Dir = config.KubernetesPath
 
 	cmdString := strings.Join(cmd.Args, " ")
