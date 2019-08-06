@@ -17,6 +17,7 @@ RUN  \
     git \
     jq \
     libc-dev \
+    libev-dev \
     libffi-dev \
     openssh \
     openssl \
@@ -33,13 +34,13 @@ RUN  \
     linux-headers \
     libxml2-utils \
   && pip3 install --upgrade pip \
-  && pip3 install \
+    gardener-cicd-cli \
+    gardener-cicd-libs \
     mako \
     semver \
     xmljson \
     xmltodict \
   && git clone https://github.com/gardener/cc-utils /cc/utils \
-  && pip3 install -r /cc/utils/requirements.txt \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
@@ -68,5 +69,4 @@ RUN  \
       /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
   && update-ca-certificates
 
-ENV PATH /cc/utils/:/cc/utils/bin:$PATH
-ENV PYTHONPATH /cc/utils
+ENV PATH /cc/utils/bin:$PATH
