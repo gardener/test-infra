@@ -142,11 +142,15 @@ func runKubetest(args KubetestArgs) {
 	if err != nil {
 		outStr := out.String()
 		if outStr != "" {
-			stringIndex := out.Len() - 50000
+			stringIndex := len(outStr) - 50000
 			if stringIndex < 0 {
 				stringIndex = 0
 			}
-			log.Info(fmt.Sprintf("... %s", outStr[out.Len() - stringIndex:]))
+			//log.Info(fmt.Sprintf("... %s", outStr[stringIndex:]))
+			scanner := bufio.NewScanner(strings.NewReader(outStr[stringIndex:]))
+			for scanner.Scan() {
+				log.Info("    " + scanner.Text())
+			}
 		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
 	} else {
