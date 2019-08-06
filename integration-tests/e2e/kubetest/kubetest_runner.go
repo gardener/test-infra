@@ -140,6 +140,14 @@ func runKubetest(args KubetestArgs) {
 
 	// kubetest run fails if one of the testcases failes, therefore the execution is still successful and no err needs to be returned
 	if err != nil {
+		outStr := out.String()
+		if outStr != "" {
+			stringIndex := out.Len() - 50000
+			if stringIndex < 0 {
+				stringIndex = 0
+			}
+			log.Info(fmt.Sprintf("... %s", outStr[out.Len() - stringIndex:]))
+		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
 	} else {
 		log.Info("kubtest test run successful")
