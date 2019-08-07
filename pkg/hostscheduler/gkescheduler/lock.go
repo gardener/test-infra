@@ -48,6 +48,9 @@ func (s gkescheduler) Lock(ctx context.Context) error {
 	labels := cluster.GetResourceLabels()
 	labels[ClusterStatusLabel] = ClusterStatusLocked
 	labels[ClusterLockedAtLabel] = strconv.FormatInt(time.Now().Unix(), 10)
+	if s.id != "" {
+		labels[ClusterLabelID] = s.id
+	}
 
 	labelsRequest := &containerpb.SetLabelsRequest{
 		Name:           s.getClusterName(host.Name),

@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -59,7 +60,7 @@ func waitUntilOperationFinished(ctx context.Context, client *container.ClusterMa
 		return retry.NotOk()
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error while waiting for operation %s to finish", name)
 	}
 	return newOperation, nil
 }
@@ -103,7 +104,7 @@ func (s gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context
 		return err
 	}
 	if operation.Status == containerpb.Operation_ABORTING {
-		return fmt.Errorf("Operation was aborted: %s", operation.GetStatusMessage())
+		return fmt.Errorf("operation was aborted: %s", operation.GetStatusMessage())
 	}
 	return nil
 }

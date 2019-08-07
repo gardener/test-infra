@@ -38,17 +38,34 @@ func (s *gardenerscheduler) Release(ctx context.Context) error {
 		return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 	}
 
-	if shoot.Spec.Hibernation == nil || shoot.Spec.Hibernation.Enabled == false {
-		// Do not set any hibernation schedule as hibernation should be handled automatically by this hostscheduler.
-		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot get shoot %s: %s", shoot.Name, err.Error())
-		}
-		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: true}
-		err := s.client.Client().Update(ctx, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
-		}
+	if isLocked(shoot) && isHibernated(shoot) {
+		s.logger.Debugf("Shoot %s is already locked and hibernated", shoot.Name)
+		return nil
+	}
+
+	// Do not set any hibernation schedule as hibernation should be handled automatically by this hostscheduler.
+	err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot)
+	if err != nil {
+		return fmt.Errorf("cannot get shoot %s: %s", shoot.Name, err.Error())
+	}
+
+	err = s.client.Client().Update(ctx, shoot)
+	if err != nil {
+		return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
+	}
+
+	shoot, err = WaitUntilShootIsReconciled(ctx, s.logger, s.client, shoot)
+	if err != nil {
+		return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
+	}
+
+	shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: true}
+	shoot.Labels[ShootLabelStatus] = ShootStatusFree
+	delete(shoot.Annotations, ShootAnnotationLockedAt)
+	delete(shoot.Annotations, ShootAnnotationID)
+	err = s.client.Client().Update(ctx, shoot)
+	if err != nil {
+		return fmt.Errorf("cannot update shoot annotations %s: %s", shoot.Name, err.Error())
 	}
 	return nil
 }

@@ -15,12 +15,20 @@ package gardenerscheduler
 
 import (
 	"fmt"
+	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/sirupsen/logrus"
 )
 
 const (
 	ShootLabel = "testmachinery.sapcloud.io/host"
+
+	ShootLabelStatus  = "testmachinery.sapcloud.io/status"
+	ShootStatusLocked = "locked"
+	ShootStatusFree   = "free"
+
+	ShootAnnotationLockedAt = "testmachinery.sapcloud.io/lockedAt"
+	ShootAnnotationID       = "testmachinery.sapcloud.io/id"
 )
 
 func ShootKubeconfigSecretName(shootName string) string {
@@ -30,6 +38,25 @@ func ShootKubeconfigSecretName(shootName string) string {
 type gardenerscheduler struct {
 	client kubernetes.Interface
 	logger *logrus.Logger
+	id     string
 
 	namespace string
+}
+
+func isFree(shoot *v1beta1.Shoot) bool {
+	val, ok := shoot.Labels[ShootLabelStatus]
+	if !ok {
+		return false
+	}
+
+	return val == ShootStatusFree
+}
+
+func isLocked(shoot *v1beta1.Shoot) bool {
+	val, ok := shoot.Labels[ShootLabelStatus]
+	if !ok {
+		return false
+	}
+
+	return val == ShootStatusLocked
 }
