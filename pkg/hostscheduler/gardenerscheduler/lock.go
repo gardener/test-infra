@@ -41,7 +41,7 @@ func (s *gardenerscheduler) Lock(ctx context.Context) error {
 	// try to get an available until the timeout is reached
 	return retry.UntilTimeout(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
 		var err error
-		shoot, err = getAvailableHost(ctx, s.logger, s.client, s.namespace)
+		shoot, err = s.getAvailableHost(ctx, s.logger, s.client, s.namespace)
 		if err != nil {
 			s.logger.Info("No host available. Trying again...")
 			s.logger.Debug(err.Error())
@@ -70,9 +70,12 @@ func (s *gardenerscheduler) Lock(ctx context.Context) error {
 	})
 }
 
-func getAvailableHost(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, namespace string) (*v1beta1.Shoot, error) {
+func (s *gardenerscheduler) getAvailableHost(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, namespace string) (*v1beta1.Shoot, error) {
 	shoots := &v1beta1.ShootList{}
-	selector := labels.SelectorFromSet(labels.Set(map[string]string{ShootLabel: "true"}))
+	selector := labels.SelectorFromSet(labels.Set(map[string]string{
+		ShootLabel:       "true",
+		ShootLabelStatus: ShootStatusFree,
+	}))
 	err := k8sClient.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
 		LabelSelector: selector,
 		Namespace:     namespace,
@@ -89,21 +92,30 @@ func getAvailableHost(ctx context.Context, logger *logrus.Logger, k8sClient kube
 			continue
 		}
 
+		if !isHibernated(&shoot) {
+			logger.Debugf("Shoot %s not hibernated. Skipping...", shoot.Name)
+			continue
+		}
+
 		// if shoot is hibernated it is ready to be used as host for a test.
 		// then the hibernated shoot is woken up and the gardener tests can start
-		if shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled {
-			shoot.Spec.Hibernation.Enabled = false
+		shoot.Spec.Hibernation.Enabled = false
 
-			err = k8sClient.Client().Update(ctx, &shoot)
-			if err != nil {
-				// shoot could not be updated, maybe it was concurrently updated by another test.
-				// therefore we try the next shoot
-				logger.Debugf("Shoot %s cannot be updated. Skipping...", shoot.Name)
-				logger.Debug(err.Error())
-				continue
-			}
-			return &shoot, nil
+		shoot.Labels[ShootLabelStatus] = ShootStatusLocked
+		shoot.Annotations[ShootAnnotationLockedAt] = time.Now().String()
+		if s.id != "" {
+			shoot.Annotations[ShootAnnotationID] = s.id
 		}
+
+		err = k8sClient.Client().Update(ctx, &shoot)
+		if err != nil {
+			// shoot could not be updated, maybe it was concurrently updated by another test.
+			// therefore we try the next shoot
+			logger.Debugf("Shoot %s cannot be updated. Skipping...", shoot.Name)
+			logger.Debug(err.Error())
+			continue
+		}
+		return &shoot, nil
 	}
 	return nil, fmt.Errorf("cannot find available shoots")
 }

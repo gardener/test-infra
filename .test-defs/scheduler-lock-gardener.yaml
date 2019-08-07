@@ -39,5 +39,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/hostscheduler lock gardener --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig
+    go run -mod=vendor ./cmd/hostscheduler lock gardener --id=$TM_TESTRUN_ID --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig
   image: golang:1.12.7

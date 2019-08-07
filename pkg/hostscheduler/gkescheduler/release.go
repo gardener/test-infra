@@ -60,6 +60,7 @@ func (s gkescheduler) Release(ctx context.Context) error {
 	s.logger.Info("update labels of cluster")
 	labels[ClusterStatusLabel] = ClusterStatusFree
 	delete(labels, ClusterLockedAtLabel)
+	delete(labels, ClusterLabelID)
 
 	labelsRequest := &containerpb.SetLabelsRequest{
 		Name:           s.getClusterName(hostName),

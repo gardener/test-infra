@@ -23,6 +23,7 @@ const (
 	ClusterLabel = "tm-host"
 
 	ClusterLockedAtLabel = "tm-host-lockedat"
+	ClusterLabelID       = "tm-id"
 
 	ClusterStatusLabel  = "tm-host-status"
 	ClusterStatusLocked = "locked"
@@ -39,6 +40,7 @@ type hostCluster struct {
 type gkescheduler struct {
 	client *container.ClusterManagerClient
 	logger *logrus.Logger
+	id     string
 
 	project string
 	zone    string

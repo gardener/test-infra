@@ -27,7 +27,10 @@ const (
 	Name = "gardener"
 )
 
-var kubeconfigPath string
+var (
+	kubeconfigPath string
+	id             string
+)
 
 var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
 	if m == nil {
@@ -41,6 +44,7 @@ var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
 
 var registerFlags hostscheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
 	fs.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
+	fs.StringVar(&id, "id", "", "Unique id to identify the cluster")
 }
 
 var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (hostscheduler.Interface, error) {
@@ -50,10 +54,10 @@ var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx con
 	}
 	logger.Debugf("Kubeconig path: %s", kubeconfigPath)
 
-	return New(ctx, logger, kubeconfigPath)
+	return New(ctx, logger, id, kubeconfigPath)
 }
 
-func New(_ context.Context, logger *logrus.Logger, kubeconfigPath string) (*gardenerscheduler, error) {
+func New(_ context.Context, logger *logrus.Logger, id, kubeconfigPath string) (*gardenerscheduler, error) {
 
 	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, client.Options{
 		Scheme: kubernetes.GardenScheme,
@@ -69,6 +73,7 @@ func New(_ context.Context, logger *logrus.Logger, kubeconfigPath string) (*gard
 	return &gardenerscheduler{
 		client:    k8sClient,
 		logger:    logger,
+		id:        id,
 		namespace: namespace,
 	}, nil
 }

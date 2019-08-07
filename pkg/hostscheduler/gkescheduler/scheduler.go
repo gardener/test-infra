@@ -33,6 +33,8 @@ var (
 	gcloudKeyfilePath string
 	project           string
 	zone              string
+
+	ID string
 )
 
 var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
@@ -49,6 +51,7 @@ var registerFlags hostscheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
 	fs.StringVar(&gcloudKeyfilePath, "key", "", "Path to the gardener cluster gcloudKeyfilePath")
 	fs.StringVar(&project, "project", "", "gcp project name")
 	fs.StringVar(&zone, "zone", "", "gcp zone name")
+	fs.StringVar(&ID, "id", "", "unique id to identify the cluster")
 }
 
 var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx context.Context, logger *logrus.Logger) (hostscheduler.Interface, error) {
@@ -65,16 +68,17 @@ var registerScheduler hostscheduler.RegisterInterfaceFromArgsFunc = func(ctx con
 	logger.Debugf("GCloud Secret Path: %s", gcloudKeyfilePath)
 	logger.Debugf("Project: %s", project)
 	logger.Debugf("Zone: %s", zone)
+	logger.Debugf("ID: %s", ID)
 
-	return New(ctx, logger, project, zone, gcloudKeyfilePath)
+	return New(ctx, logger, project, zone, gcloudKeyfilePath, ID)
 }
 
-func New(ctx context.Context, logger *logrus.Logger, project, zone string, gcloudKeyfilePath string) (hostscheduler.Interface, error) {
+func New(ctx context.Context, logger *logrus.Logger, project, zone string, gcloudKeyfilePath, id string) (hostscheduler.Interface, error) {
 	c, err := container.NewClusterManagerClient(ctx, option.WithCredentialsFile(gcloudKeyfilePath))
 	if err != nil {
 		return nil, err
 	}
-	return &gkescheduler{client: c, logger: logger, project: project, zone: zone}, nil
+	return &gkescheduler{client: c, logger: logger, id: id, project: project, zone: zone}, nil
 }
 
 func (s gkescheduler) getParentName() string {
