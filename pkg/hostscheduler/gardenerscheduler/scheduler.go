@@ -47,7 +47,7 @@ var Register hostscheduler.Register = func(m hostscheduler.Registrations) {
 
 var registerFlags hostscheduler.RegisterFlagsFunc = func(fs *flag.FlagSet) {
 	fs.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
-	fs.StringVar(&cloudproviderName, "cloudprovider", "", "Specify teh cloudprovider of the shoot that should be taken from the pool")
+	fs.StringVar(&cloudproviderName, "cloudprovider", "", "Specify the cloudprovider of the shoot that should be taken from the pool")
 	fs.StringVar(&id, "id", "", "Unique id to identify the cluster")
 }
 
