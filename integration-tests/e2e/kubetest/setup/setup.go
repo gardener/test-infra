@@ -7,6 +7,7 @@ import (
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -105,6 +106,16 @@ func areTestUtilitiesReady() bool {
 		} else {
 			log.Info(fmt.Sprintf("%s dir exists", requiredPath))
 		}
+	}
+
+	kubernetesVersionFile := path.Join(config.K8sRoot, "kubernetes/version")
+	currentKubernetesVersion, err := ioutil.ReadFile(kubernetesVersionFile)
+	if err != nil {
+		log.Fatal("Failed to read file: " + kubernetesVersionFile)
+	}
+	if string(currentKubernetesVersion) != config.K8sRelease {
+		testUtilitiesReady = false
+		log.Warn(fmt.Sprintf("found kubernetes version %s, required version %s: ", currentKubernetesVersion, config.K8sRelease))
 	}
 	return testUtilitiesReady
 }

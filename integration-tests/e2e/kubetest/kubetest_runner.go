@@ -142,7 +142,7 @@ func runKubetest(args KubetestArgs) {
 	if err != nil {
 		outStr := out.String()
 		if outStr != "" {
-			stringIndex := len(outStr) - 50000
+			stringIndex := len(outStr) - 20000
 			if stringIndex < 0 {
 				stringIndex = 0
 			}
