@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,7 +42,7 @@ func (s *gardenerscheduler) Lock(ctx context.Context) error {
 	// try to get an available until the timeout is reached
 	return retry.UntilTimeout(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
 		var err error
-		shoot, err = s.getAvailableHost(ctx, s.logger, s.client, s.namespace)
+		shoot, err = s.getAvailableHost(ctx)
 		if err != nil {
 			s.logger.Info("No host available. Trying again...")
 			s.logger.Debug(err.Error())
@@ -70,15 +71,15 @@ func (s *gardenerscheduler) Lock(ctx context.Context) error {
 	})
 }
 
-func (s *gardenerscheduler) getAvailableHost(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, namespace string) (*v1beta1.Shoot, error) {
+func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1beta1.Shoot, error) {
 	shoots := &v1beta1.ShootList{}
 	selector := labels.SelectorFromSet(labels.Set(map[string]string{
 		ShootLabel:       "true",
 		ShootLabelStatus: ShootStatusFree,
 	}))
-	err := k8sClient.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
+	err := s.client.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
 		LabelSelector: selector,
-		Namespace:     namespace,
+		Namespace:     s.namespace,
 	}))
 	if err != nil {
 		return nil, fmt.Errorf("shoots cannot be listed: %s", err.Error())
@@ -86,14 +87,22 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context, logger *logrus
 
 	for _, shoot := range shoots.Items {
 
+		// check if the cloudprovider matches
+		if s.cloudprovider != CloudProviderAll {
+			if cp, err := helper.GetShootCloudProvider(&shoot); err != nil || cp != s.cloudprovider {
+				s.logger.Debugf("Shoot %s is from cloudprovider %s but want cloudprovider %s", shoot.Name, cp, s.cloudprovider)
+				continue
+			}
+		}
+
 		// Try to use the next shoot if the current shoot is not ready.
 		if shootReady(&shoot) != nil {
-			logger.Debugf("Shoot %s not ready. Skipping...", shoot.Name)
+			s.logger.Debugf("Shoot %s not ready. Skipping...", shoot.Name)
 			continue
 		}
 
 		if !isHibernated(&shoot) {
-			logger.Debugf("Shoot %s not hibernated. Skipping...", shoot.Name)
+			s.logger.Debugf("Shoot %s not hibernated. Skipping...", shoot.Name)
 			continue
 		}
 
@@ -107,12 +116,12 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context, logger *logrus
 			shoot.Annotations[ShootAnnotationID] = s.id
 		}
 
-		err = k8sClient.Client().Update(ctx, &shoot)
+		err = s.client.Client().Update(ctx, &shoot)
 		if err != nil {
 			// shoot could not be updated, maybe it was concurrently updated by another test.
 			// therefore we try the next shoot
-			logger.Debugf("Shoot %s cannot be updated. Skipping...", shoot.Name)
-			logger.Debug(err.Error())
+			s.logger.Debugf("Shoot %s cannot be updated. Skipping...", shoot.Name)
+			s.logger.Debug(err.Error())
 			continue
 		}
 		return &shoot, nil

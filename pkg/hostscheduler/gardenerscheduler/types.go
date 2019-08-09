@@ -15,7 +15,8 @@ package gardenerscheduler
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+
+	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/sirupsen/logrus"
 )
@@ -40,10 +41,11 @@ type gardenerscheduler struct {
 	logger *logrus.Logger
 	id     string
 
-	namespace string
+	namespace     string
+	cloudprovider gardenv1beta1.CloudProvider
 }
 
-func isFree(shoot *v1beta1.Shoot) bool {
+func isFree(shoot *gardenv1beta1.Shoot) bool {
 	val, ok := shoot.Labels[ShootLabelStatus]
 	if !ok {
 		return false
@@ -52,7 +54,7 @@ func isFree(shoot *v1beta1.Shoot) bool {
 	return val == ShootStatusFree
 }
 
-func isLocked(shoot *v1beta1.Shoot) bool {
+func isLocked(shoot *gardenv1beta1.Shoot) bool {
 	val, ok := shoot.Labels[ShootLabelStatus]
 	if !ok {
 		return false
