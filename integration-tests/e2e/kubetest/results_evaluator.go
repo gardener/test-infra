@@ -1,7 +1,6 @@
 package kubetest
 
 import (
-	"bufio"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -166,21 +165,19 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 			log.Fatal(err)
 		}
 		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 3072*1024)
 
-		for scanner.Scan() {
-			if regexpRanSpecs.MatchString(scanner.Text()) {
-				groupToValue := util.GetGroupMapOfRegexMatches(regexpRanSpecs, scanner.Text())
+		for lineByte := range util.ReadLinesFromFile(file) {
+			lineString := string(lineByte)
+			if regexpRanSpecs.MatchString(lineString) {
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpRanSpecs, lineString)
 				groupToValueInt, err := convertValuesToInt(groupToValue)
 				if err != nil {
 					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpRanSpecs.String())
 				}
 				summary.ExecutedTestcases += groupToValueInt["TestcasesRan"]
 			}
-			if regexpPassedFailed.MatchString(scanner.Text()) {
-				groupToValue := util.GetGroupMapOfRegexMatches(regexpPassedFailed, scanner.Text())
+			if regexpPassedFailed.MatchString(lineString) {
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpPassedFailed, lineString)
 				groupToValueInt, err := convertValuesToInt(groupToValue)
 				if err != nil {
 					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpPassedFailed.String())
@@ -189,10 +186,9 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 				summary.FailedTestcases += groupToValueInt["Failed"]
 				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 			}
-			if regexpGinkgoRanIn.MatchString(scanner.Text()) {
-				var test = scanner.Text()
-				log.Info(test)
-				groupToValue := util.GetGroupMapOfRegexMatches(regexpGinkgoRanIn, scanner.Text())
+			if regexpGinkgoRanIn.MatchString(lineString) {
+				log.Info(lineString)
+				groupToValue := util.GetGroupMapOfRegexMatches(regexpGinkgoRanIn, lineString)
 				duration, err := time.ParseDuration(groupToValue["TestSuiteDuration"])
 				if err != nil {
 					return summary, err
