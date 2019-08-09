@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/util"
@@ -153,4 +154,30 @@ func MoveFile(sourcePath, destPath string) error {
 func CommandExists(cmd string) bool {
 	_, err := exec.LookPath(cmd)
 	return err == nil
+}
+
+func ReadLinesFromFile(file io.Reader) <-chan []byte {
+	c := make(chan []byte)
+	go func() {
+		reader := bufio.NewReader(file)
+		doc := make([]byte, 0)
+		for {
+			line, isPrefix, err := reader.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return
+			}
+			doc = append(doc, line...)
+			if isPrefix {
+				continue
+			}
+			c <- doc
+			doc = make([]byte, 0)
+		}
+
+		close(c)
+	}()
+	return c
 }
