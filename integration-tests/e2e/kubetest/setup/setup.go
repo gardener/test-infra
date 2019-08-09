@@ -111,7 +111,7 @@ func areTestUtilitiesReady() bool {
 	kubernetesVersionFile := path.Join(config.K8sRoot, "kubernetes/version")
 	currentKubernetesVersion, err := ioutil.ReadFile(kubernetesVersionFile)
 	if err != nil {
-		log.Fatal("Failed to read file: " + kubernetesVersionFile)
+		log.Warn("File %s does not exist: " + kubernetesVersionFile)
 	}
 	if string(currentKubernetesVersion) != config.K8sRelease {
 		testUtilitiesReady = false
