@@ -111,11 +111,10 @@ func areTestUtilitiesReady() bool {
 
 	kubernetesVersionFile := path.Join(config.K8sRoot, "kubernetes/version")
 	currentKubernetesVersionByte, err := ioutil.ReadFile(kubernetesVersionFile)
-	currentKubernetesVersion := strings.TrimSpace(string(currentKubernetesVersionByte[1:]))
-	if err != nil {
+	if err != nil || len(currentKubernetesVersionByte) == 0 {
 		testUtilitiesReady = false
-		log.Warn(fmt.Sprintf("Required file %s does not exist: ", kubernetesVersionFile))
-	} else if currentKubernetesVersion != config.K8sRelease {
+		log.Warn(fmt.Sprintf("Required file %s does not exist or is empty: ", kubernetesVersionFile))
+	} else if currentKubernetesVersion := strings.TrimSpace(string(currentKubernetesVersionByte[1:])); currentKubernetesVersion != config.K8sRelease {
 		testUtilitiesReady = false
 		log.Warn(fmt.Sprintf("found kubernetes version %s, required version %s: ", currentKubernetesVersion, config.K8sRelease))
 	}
