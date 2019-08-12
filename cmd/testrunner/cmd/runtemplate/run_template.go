@@ -66,7 +66,8 @@ var (
 	loadbalancerProvider     string
 	componenetDescriptorPath string
 
-	setValues string
+	setValues  string
+	fileValues []string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -252,4 +253,5 @@ func init() {
 	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
 
 	runCmd.Flags().StringVar(&setValues, "set", "", "setValues additional helm values")
+	runCmd.Flags().StringArrayVarP(&fileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
 }

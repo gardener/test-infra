@@ -6,6 +6,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"k8s.io/helm/pkg/strvals"
@@ -61,10 +62,12 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 			"gardener": string(gardenKubeconfig),
 		},
 	}
-	newValues, err := strvals.ParseString(parameters.SetValues)
-	if err == nil {
-		values = utils.MergeMaps(values, newValues)
+
+	values, err := determineValues(values, parameters)
+	if err != nil {
+		return nil, err
 	}
+
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
 		return nil, err
@@ -73,6 +76,23 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 	return ParseTestrunChart(chart, TestrunFileMetadata{
 		KubernetesVersion: version,
 	}), nil
+}
+
+// determineValues fetches values from all specifed files and set values.
+// The values are merged with the defaultValues whereas file values overwrite default values and set values overwrite file values.
+func determineValues(defaultValues map[string]interface{}, parameters *ShootTestrunParameters) (map[string]interface{}, error) {
+	newFileValues, err := readFileValues(parameters.FileValues)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read values from file")
+	}
+	defaultValues = utils.MergeMaps(defaultValues, newFileValues)
+	newSetValues, err := strvals.ParseString(parameters.SetValues)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse set values")
+	}
+	defaultValues = utils.MergeMaps(defaultValues, newSetValues)
+
+	return defaultValues, nil
 }
 
 func ParseTestrunChart(chart *chartrenderer.RenderedChart, metadata TestrunFileMetadata) []*TestrunFile {

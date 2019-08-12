@@ -56,6 +56,7 @@ var (
 	gardenerUpgradedVersion  string
 	gardenerUpgradedRevision string
 	setValues                string
+	fileValues               []string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -118,6 +119,7 @@ var runCmd = &cobra.Command{
 			ComponentDescriptorPath:         componentDescriptorPath,
 			UpgradedComponentDescriptorPath: upgradedComponentDescriptorPath,
 			SetValues:                       setValues,
+			FileValues:                      fileValues,
 		}
 
 		metadata := &testrunner.Metadata{
@@ -187,4 +189,5 @@ func init() {
 	runCmd.Flags().StringVar(&gardenerUpgradedRevision, "gardener-upgraded-revision", "", "Set current revision of gardener. This will result in the helm value {{ .Values.gardener.upgraded.revision }}")
 
 	runCmd.Flags().StringVar(&setValues, "set", "", "setValues additional helm values")
+	runCmd.Flags().StringArrayVarP(&fileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
 }
