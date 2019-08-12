@@ -38,7 +38,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-run #############
-FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.33.0 AS tm-run
+FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-run
 
 COPY --from=builder /go/bin/testrunner /testrunner
 
