@@ -147,10 +147,9 @@ func MoveFile(sourcePath, destPath string) error {
 	return nil
 }
 
-
 /*
 	CommandExists checks whether the given command executable exists and returns a boolean result value
- */
+*/
 func CommandExists(cmd string) bool {
 	_, err := exec.LookPath(cmd)
 	return err == nil
