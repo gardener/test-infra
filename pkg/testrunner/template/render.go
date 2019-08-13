@@ -63,10 +63,11 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 		},
 	}
 
-	values, err := determineValues(values, parameters)
+	values, err := determineValues(values, parameters.SetValues, parameters.FileValues)
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("Values: \n%s \n", util.PrettyPrintStruct(values))
 
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
@@ -78,15 +79,15 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 	}), nil
 }
 
-// determineValues fetches values from all specifed files and set values.
+// determineValues fetches values from all specified files and set values.
 // The values are merged with the defaultValues whereas file values overwrite default values and set values overwrite file values.
-func determineValues(defaultValues map[string]interface{}, parameters *ShootTestrunParameters) (map[string]interface{}, error) {
-	newFileValues, err := readFileValues(parameters.FileValues)
+func determineValues(defaultValues map[string]interface{}, setValues string, fileValues []string) (map[string]interface{}, error) {
+	newFileValues, err := readFileValues(fileValues)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read values from file")
 	}
 	defaultValues = utils.MergeMaps(defaultValues, newFileValues)
-	newSetValues, err := strvals.ParseString(parameters.SetValues)
+	newSetValues, err := strvals.ParseString(setValues)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse set values")
 	}

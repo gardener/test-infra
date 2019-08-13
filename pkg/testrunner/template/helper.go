@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/gardener/pkg/utils"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -16,7 +17,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	yaml "sigs.k8s.io/yaml"
+	"sigs.k8s.io/yaml"
 )
 
 // getK8sVersions returns all K8s version that should be rendered by the chart
@@ -167,13 +168,13 @@ func getGardenerVersionFromComponentDescriptor(componentDescriptor componentdesc
 func readFileValues(files []string) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 	for _, file := range files {
-		newValues := make(map[string]interface{})
+		var newValues map[string]interface{}
 		data, err := ioutil.ReadFile(file)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "unable to read file %s", file)
 		}
-		if err := yaml.Unmarshal(data, newValues); err != nil {
-			return nil, err
+		if err := yaml.Unmarshal(data, &newValues); err != nil {
+			return nil, errors.Wrapf(err, "unable to unmarshal yaml file %s", file)
 		}
 		values = utils.MergeMaps(values, newValues)
 	}

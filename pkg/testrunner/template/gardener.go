@@ -18,13 +18,10 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
 	log "github.com/sirupsen/logrus"
-
-	"k8s.io/helm/pkg/strvals"
 )
 
 // RenderGardenerTestrun renders a helm chart with containing testruns.
@@ -60,10 +57,11 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 			},
 		},
 	}
-	newValues, err := strvals.ParseString(parameters.SetValues)
-	if err == nil {
-		values = utils.MergeMaps(values, newValues)
+	values, err = determineValues(values, parameters.SetValues, parameters.FileValues)
+	if err != nil {
+		return nil, err
 	}
+	log.Debugf("Values: \n%s \n", util.PrettyPrintStruct(values))
 
 	chart, err := tmChartRenderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
