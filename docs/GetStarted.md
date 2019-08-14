@@ -1,17 +1,19 @@
 # Getting started
 
-- [Getting started](#Getting-started)
-  - [Create a Test](#Create-a-Test)
-    - [Input Contract](#Input-Contract)
-    - [Export Contract](#Export-Contract)
-    - [Shared Folder](#Shared-Folder)
-    - [Images](#Images)
-    - [Test](#Test)
-  - [Create a Testrun](#Create-a-Testrun)
-  - [Configuration](#Configuration)
-    - [Types](#Types)
-    - [Sources](#Sources)
-    - [Location](#Location)
+- [Getting started](#getting-started)
+  - [Create a Test](#create-a-test)
+    - [Input Contract](#input-contract)
+      - [Default](#default)
+      - [Shoot tests](#shoot-tests)
+    - [Export Contract](#export-contract)
+    - [Shared Folder](#shared-folder)
+    - [Images](#images)
+    - [Test](#test)
+  - [Create a Testrun](#create-a-testrun)
+  - [Configuration](#configuration)
+    - [Types](#types)
+    - [Sources](#sources)
+    - [Location](#location)
 
 ## Create a Test
 
@@ -79,17 +81,29 @@ spec:
 
 ### Input Contract
 
+#### Default
 | Environment Variable Name        | Description           |
 | ------------- |-------------|
-| TM_KUBECONFIG_PATH      | points to a directory containing all kubeconfig files (defaults to `/tmp/env/kubeconfig`). </br> The files contained in this dir depend on the concrete TestRun and can contain up to 3 files: <ul><li>_gardener.config_: the kubeconfig pointing to the gardener cluster created by TM (or predefined/given by a TestRun)</li><li>_seed.config_: the kubeconfig pointing to the seed cluster configured by TM (or predefined/given by a TestRun)</li><li>_shoot.config_: the kubeconfig pointing to the shoot cluster created by TM (or predefined/given by a TestRun)</li></ul>|
+| TM_KUBECONFIG_PATH      | points to a directory containing all kubeconfig files (defaults to `/tmp/env/kubeconfig`). </br> The files contained in this dir depend on the concrete TestRun and can contain up to 3 files: <ul><li>_host.config_: the kubeconfig pointing to the cluster hosting the gardener (not available for every Testrun)</li><li>_gardener.config_: the kubeconfig pointing to the gardener cluster created by TM (or predefined/given by a TestRun)</li><li>_seed.config_: the kubeconfig pointing to the seed cluster configured by TM (or predefined/given by a TestRun)</li><li>_shoot.config_: the kubeconfig pointing to the shoot cluster created by TM (or predefined/given by a TestRun)</li></ul>|
 | TM_EXPORT_PATH | points to a directory where the test can place arbitrary test-run data which will be archived at the end. Useful if some postprocessing needs to be done on that data. Further information can be found [here](#export-contract) |
 | TM_TESTRUN_ID | Name of the testrun |
+
+#### Shoot tests
+When your test is running as part of the gardener test suite to test a shoot, there are some more available context variables.
+
+| Environment Variable Name        | Description           |
+| ------------- |-------------|
+| GARDENER_VERSION      | The current version of the gardener installation. |
+| SHOOT_NAME | Name of the shoot to test. |
+| PROJECT_NAMESPACE | Project namespace where the current shoot was created. |
+| CLOUDPROVIDER | Cloudprovider of the shoot. |
+| K8S_VERSION | Kubernetes version of the shoot. |
 
 ### Export Contract
 
 Some installations of the TestMachinery contain a connection to an elasticsearch installation for persistence and evaluation of test results.
 
-The TestMachinery writes some metadata into elasticsearch upon each TestRun completion. It conconsists of the following attributes:
+The TestMachinery writes some metadata into elasticsearch upon each TestRun completion. It consists of the following attributes:
 ```
 tm_meta.landscape: Gardener Landscape of th shoot, e.g. dev, staging,... .
 tm_meta.cloudprovider: Cloudprovider of the shoot, e.g. gcp, aws, azure or openstack.
