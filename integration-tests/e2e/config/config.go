@@ -105,6 +105,9 @@ func init() {
 	if ShootKubeconfigPath == "" {
 		ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", os.Getenv("KUBECONFIG"))
 	}
+	if ShootKubeconfigPath == "" {
+		log.Fatal("shoot config not set")
+	}
 	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
