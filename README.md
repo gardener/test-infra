@@ -1,10 +1,7 @@
 # Test Machinery
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/test-infra)](https://goreportcard.com/report/github.com/gardener/test-infra)
 
-### Note, this project is WIP, so expect outdated documentation
-
 - [Test Machinery](#test-machinery)
-    - [Note, this project is WIP, so expect outdated documentation](#note-this-project-is-wip-so-expect-outdated-documentation)
   - [Usage](#usage)
     - [Write your own tests (integrate into the testmachinery)](#write-your-own-tests-integrate-into-the-testmachinery)
     - [TestMachinery Deployment](#testmachinery-deployment)
@@ -20,13 +17,13 @@ Read the [design draft here](docs/DesignDraft.md).
 
 The TestMachinery is a k8s controller that watches a k8s cluster for `Testrun`s and executes the tests in the specified order as an argo workflow.
 
-`TestRun`s reference tests by name or label in the `testrun.spec.testflow`. An additional exit flow can be specified in `testrun.spec.onExit`. The exit flow is called based on the success condition of the testflow.
+`Testruns` reference tests by name or label in the `testrun.spec.testflow`. An additional exit flow can be specified in `testrun.spec.onExit`. The exit flow is called based on the success condition of the testflow.
 
-The tests themselves are described as `TestDefinition`s and specify the execution of a test such as the command or the image that should run.
+The tests themselves are described as `TestDefinition` and specify the execution of a test such as the command or the image that should run.
 TestDefinitions are described as a Kubernetes resource but are just used as configuration file by the testmachinery.
 If a `TestRun` enumerates tests by a label, all `TestDefinition`s that are found in the given locations and match that label are executed in parallel.
 
-The TestMachinery searches the locations in `testrun.spec.testDefLocations` (in the `.test-defs` folder) for the `TestDefinition` (specified by name and label in the testFlow and onExit), executes them with the provided global and local config and mounts the files of the location to the container where the TestDefinition is found.
+The TestMachinery searches the locations in `testrun.spec.locationSets` (in the `.test-defs` folder) for the `TestDefinition` (specified by name and label in the testFlow and onExit), executes them with the provided global and local config and mounts the files of the location to the container where the TestDefinition is found.
 Accordingly, TestDefinitions do not need to be deployed to the k8s cluster.
 They are automatically picked up and parsed by the testmachinery.
 
