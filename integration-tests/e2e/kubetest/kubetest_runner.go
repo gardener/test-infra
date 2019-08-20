@@ -105,7 +105,9 @@ func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts
 }
 
 func runKubetest(args KubetestArgs) {
-	ginkgoArgs := fmt.Sprintf("--test_args=--ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
+	//  -clean-start
+	//    	If true, purge all namespaces except default and system before running tests. This serves to Cleanup test namespaces from failed/interrupted e2e runs in a long-lived cluster.
+	ginkgoArgs := fmt.Sprintf("--test_args=--clean-start --ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
 	cmd := exec.Command("kubetest", "--provider=skeleton", "--deployment=local", "--test", "--check-version-skew=false", args.GinkgoParallel, ginkgoArgs, fmt.Sprintf("--dump=%s", args.LogDir))
 	cmd.Dir = config.KubernetesPath
 
@@ -142,15 +144,17 @@ func runKubetest(args KubetestArgs) {
 	if err != nil {
 		outStr := out.String()
 		if outStr != "" {
-			stringIndex := len(outStr) - 20000
+			stringIndex := len(outStr) - 10000
 			if stringIndex < 0 {
 				stringIndex = 0
 			}
 			//log.Info(fmt.Sprintf("... %s", outStr[stringIndex:]))
 			scanner := bufio.NewScanner(strings.NewReader(outStr[stringIndex:]))
+			log.Info("BEGIN: dump kubetest stdout last 10000 bytes")
 			for scanner.Scan() {
 				log.Info("    " + scanner.Text())
 			}
+			log.Info("END: dump kubetest stdout last 10000 bytes")
 		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
 	} else {
