@@ -49,12 +49,19 @@ test-infra:
       traits:
         <<: *ti_default_traits
         <<: *ti_docker_images
-        pull-request: ~
+        pull-request:
+          disable-status-report:
+          - prepare-test
       steps:
         <<: *ti_test_steps
+        prepare-test:
+          image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest
+          execute:
+          - ./it-prepare.py
         integration:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.8.0'
           depends:
+          - prepare-test
           - publish
     release:
       traits:
