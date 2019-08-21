@@ -16,8 +16,9 @@ package runtemplate
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/util"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -60,6 +61,8 @@ var (
 	zone                     string
 	k8sVersion               string
 	machineType              string
+	machineImage             string
+	machineImageVersion      string
 	autoscalerMin            string
 	autoscalerMax            string
 	floatingPoolName         string
@@ -138,6 +141,8 @@ var runCmd = &cobra.Command{
 			Zone:                    zone,
 			K8sVersion:              k8sVersion,
 			MachineType:             machineType,
+			MachineImage:            machineImage,
+			MachineImageVersion:     machineImageVersion,
 			AutoscalerMin:           autoscalerMin,
 			AutoscalerMax:           autoscalerMax,
 			FloatingPoolName:        floatingPoolName,
@@ -245,6 +250,8 @@ func init() {
 	runCmd.Flags().StringVar(&zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
 	runCmd.Flags().StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
 	runCmd.Flags().StringVar(&machineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
+	runCmd.Flags().StringVar(&machineImage, "machine-image", "", "Image of the OS running on the machine")
+	runCmd.Flags().StringVar(&machineImageVersion, "machine-image-version", "", "The version of the machine image")
 	runCmd.Flags().StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
 	runCmd.Flags().StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
 	runCmd.Flags().StringVar(&floatingPoolName, "floating-pool-name", "", "Floating pool name where the cluster is created. Only needed for Openstack.")

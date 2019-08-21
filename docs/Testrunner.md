@@ -8,7 +8,7 @@ Testrunner is an additional component of the Test Machinery that abstracts templ
     - [Component Descriptor](#component-descriptor)
   - [run-template cmd](#run-template)
   - [run-gardener-template cmd](#run-template)
- 
+
 
 <p align="center">
   <img alt= "testrunner overview" src="https://github.com/gardener/test-infra/raw/master/docs/testrunner_overview.png">
@@ -103,6 +103,8 @@ components:
 | zone | | Zone of the shoot workers. <br>:warning: Note that currently only 1 workerpool is supported for testing. | x |
 | k8s-version | | Kubernetes version of the created shoot. | x |
 | machinetype | | Machinetype of the first worker pool. |  |
+| machine-image | | Image of the OS running on the machine. |  |
+| machine-image-version | | The version of the machine image. |  |
 | autoscaler-min | | Minimum number of worker nodes of the first worker pool. | |
 | autoscaler-max | | Maximum number of worker nodes of the first worker pool. | |
 | floating-pool-name | | Floating pool name of the created cluster. Needed for Openstack. | Only required for Openstack clusters|
@@ -170,10 +172,20 @@ spec:
         - name: ZONE
           type: env
           value: {{ .Values.shoot.zone }}
-        {{ if .Values.shoot.machinetype }}
+        {{ if .Values.shoot.machine.type }}
         - name: MACHINE_TYPE
           type: env
-          value: {{ .Values.shoot.machinetype }}
+          value: {{ .Values.shoot.machine.type }}
+        {{ end }}
+        {{ if .Values.shoot.machine.image }}
+        - name: MACHINE_IMAGE
+          type: env
+          value: {{ .Values.shoot.machine.image }}
+        {{ end }}
+        {{ if .Values.shoot.machine.imageVersion }}
+        - name: MACHINE_IMAGE_VERSION
+          type: env
+          value: {{ .Values.shoot.machine.imageVersion }}
         {{ end }}
         {{ if .Values.shoot.autoscalerMin }}
         - name: AUTOSCALER_MIN
@@ -185,7 +197,7 @@ spec:
           type: env
           value: {{ .Values.shoot.autoscalerMax }}
         {{ end }}
-  
+
     - name: tests
       dependsOn: [ create-shoot ]
       definition:
@@ -195,7 +207,7 @@ spec:
       dependsOn: [ tests ]
       definition:
         name: delete-shoot
-  
+
   onExit:
     - name: delete-shoot
       definition:
@@ -260,7 +272,7 @@ metadata:
 spec:
 
   ttlSecondsAfterFinished: 172800 # 2 days
-    
+
   locationSets:
     - name: default
       default: true
@@ -274,7 +286,7 @@ spec:
       - type: git
         repo: https://github.com/gardener/garden-setup.git
         revision: master
-  
+
     - name: upgraded
       locations:
       - type: git

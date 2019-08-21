@@ -2,13 +2,14 @@ package template
 
 import (
 	"fmt"
+	"io/ioutil"
+
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"k8s.io/helm/pkg/strvals"
 )
 
@@ -41,15 +42,19 @@ func RenderChart(tmClient kubernetes.Interface, parameters *ShootTestrunParamete
 func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
 	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
-			"name":                 fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
-			"projectNamespace":     fmt.Sprintf("garden-%s", parameters.ProjectName),
-			"cloudprovider":        parameters.Cloudprovider,
-			"cloudprofile":         parameters.Cloudprofile,
-			"secretBinding":        parameters.SecretBinding,
-			"region":               parameters.Region,
-			"zone":                 parameters.Zone,
-			"k8sVersion":           version,
-			"machinetype":          parameters.MachineType,
+			"name":             fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
+			"projectNamespace": fmt.Sprintf("garden-%s", parameters.ProjectName),
+			"cloudprovider":    parameters.Cloudprovider,
+			"cloudprofile":     parameters.Cloudprofile,
+			"secretBinding":    parameters.SecretBinding,
+			"region":           parameters.Region,
+			"zone":             parameters.Zone,
+			"k8sVersion":       version,
+			"machine": map[string]interface{}{
+				"type":         parameters.MachineType,
+				"image":        parameters.MachineImage,
+				"imageVersion": parameters.MachineImageVersion,
+			},
 			"autoscalerMin":        parameters.AutoscalerMin,
 			"autoscalerMax":        parameters.AutoscalerMax,
 			"floatingPoolName":     parameters.FloatingPoolName,
