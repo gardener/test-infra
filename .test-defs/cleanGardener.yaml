@@ -33,4 +33,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/cleanup/gardener --kubeconfig=$TM_KUBECONFIG_PATH/gardener.config --debug=true
-  image: golang:1.12.7
+  image: golang:1.12.9

@@ -69,7 +69,7 @@ func MarkTestrunsAsIngested(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun
 	tr.Status.Ingested = true
 	err := tmClient.Client().Update(ctx, tr)
 	if err != nil {
-		return fmt.Errorf("Cannot update status off testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
+		return fmt.Errorf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
 	}
 	log.Debugf("Successfully updated status of testrun %s in namespace %s", tr.Name, tr.Namespace)
 
