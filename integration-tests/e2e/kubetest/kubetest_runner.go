@@ -119,42 +119,56 @@ func runKubetest(args KubetestArgs) {
 		log.Info(logMsg)
 	}
 
-	var out bytes.Buffer
 	var stderr bytes.Buffer
-	cmd.Stdout = &out
+	// setup log file
+	e2eLogFilePath := filepath.Join(args.LogDir, "e2e.log")
+	file, err := os.Create(e2eLogFilePath)
+	if err != nil {
+		log.Error(err)
+	}
+
+	cmd.Stdout = file
 	if log.GetLevel() == log.DebugLevel {
 		cmd.Stderr = &stderr
 	}
-	err := cmd.Run()
+
+	if err = cmd.Start(); err != nil {
+		log.Error(err)
+	}
+	if err = cmd.Wait(); err != nil {
+		log.Error(err)
+	}
 
 	if log.GetLevel() == log.DebugLevel {
 		log.Info(fmt.Printf(stderr.String()))
 	}
 
-	//	Output our results
-	if out.String() != "" {
-		e2eLogFilePath := filepath.Join(args.LogDir, "e2e.log")
-		err := ioutil.WriteFile(e2eLogFilePath, out.Bytes(), 0644)
-		if err != nil {
-			log.Error(errors.Wrapf(err, "Couldn't write file %s", e2eLogFilePath))
-		}
-	}
-
 	// kubetest run fails if one of the testcases failes, therefore the execution is still successful and no err needs to be returned
 	if err != nil {
-		outStr := out.String()
-		if outStr != "" {
-			stringIndex := len(outStr) - 10000
-			if stringIndex < 0 {
-				stringIndex = 0
-			}
-			//log.Info(fmt.Sprintf("... %s", outStr[stringIndex:]))
-			scanner := bufio.NewScanner(strings.NewReader(outStr[stringIndex:]))
-			log.Info("BEGIN: dump kubetest stdout last 10000 bytes")
+		file, err := os.Open(e2eLogFilePath)
+		defer file.Close()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		bufferSize := int64(5000)
+		buf := make([]byte, bufferSize)
+		stat, err := os.Stat(e2eLogFilePath)
+		var start int64
+		if stat.Size() < bufferSize {
+			start = stat.Size()
+		} else {
+			start = stat.Size() - bufferSize
+		}
+		_, err = file.ReadAt(buf, start)
+		if err == nil {
+			log.Infof("BEGIN: dump kubetest stdout last %d bytes", bufferSize)
+			scanner := bufio.NewScanner(strings.NewReader(string(buf)))
 			for scanner.Scan() {
 				log.Info("    " + scanner.Text())
 			}
-			log.Info("END: dump kubetest stdout last 10000 bytes")
+			log.Info("END: dump kubetest stdout last %d bytes", bufferSize)
 		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
 	} else {
