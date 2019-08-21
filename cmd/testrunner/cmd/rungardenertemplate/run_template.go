@@ -37,6 +37,7 @@ var (
 	namespace        string
 	timeout          int64
 	interval         int64
+	failOnError      bool
 
 	outputDirPath           string
 	elasticSearchConfigName string
@@ -135,16 +136,21 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		finishedRuns, err := testrunner.ExecuteTestrun(config, runs, testrunName)
-		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, finishedRuns)
+		testrunner.ExecuteTestruns(config, runs, testrunName)
+		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, runs)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		result.GenerateNotificationConfigForAlerting(finishedRuns.GetTestruns(), rsConfig.ConcourseOnErrorDir)
+		result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), rsConfig.ConcourseOnErrorDir)
 
 		log.Info("Testrunner finished.")
-		if failed {
+		// Fail when one testrun is failed and we should fail on failed testruns.
+		// Otherwise only fail when the testrun execution is erroneous.
+		if runs.HasErrors() {
+			os.Exit(1)
+		}
+		if failOnError && failed {
 			os.Exit(1)
 		}
 	},
@@ -163,6 +169,7 @@ func init() {
 	runCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 
 	runCmd.Flags().StringVar(&outputDirPath, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")

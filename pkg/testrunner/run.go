@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"k8s.io/api/extensions/v1beta1"
 	"net/url"
 	"path"
@@ -35,12 +36,24 @@ import (
 )
 
 // GetTestruns returns all testruns of a RunList as testrun array
-func (r RunList) GetTestruns() []*tmv1beta1.Testrun {
-	testruns := make([]*tmv1beta1.Testrun, len(r))
-	for i, run := range r {
-		testruns[i] = run.Testrun
+func (rl RunList) GetTestruns() []*tmv1beta1.Testrun {
+	testruns := make([]*tmv1beta1.Testrun, len(rl))
+	for i, run := range rl {
+		if run != nil {
+			testruns[i] = run.Testrun
+		}
 	}
 	return testruns
+}
+
+// HasError checks whether one run in list is erroneous.
+func (rl RunList) HasErrors() bool {
+	for _, run := range rl {
+		if run.Error != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
@@ -52,7 +65,7 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 	tr.Namespace = namespace
 	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create testrun: %s", err.Error())
+		return nil, trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
 	}
 	log.Infof("Testrun %s deployed", tr.Name)
 
@@ -81,7 +94,7 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, name)
+		return nil, trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, name))
 	}
 
 	return tr, nil
