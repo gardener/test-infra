@@ -14,30 +14,23 @@
 
 kind: TestDefinition
 metadata:
-  name: tm-scheduler-lock-gardener
+  name: log-gardener
 spec:
   owner: gardener-oq@listserv.sap.com
   recipientsOnFailure:
   - gardener-oq@listserv.sap.com
 
-  description: Wake up a shoot as host from a given cluster pool
+  description: Fetches all logs from gardener components and writes them to the export path
 
-  activeDeadlineSeconds: 10800
+  activeDeadlineSeconds: 2400
 
   config:
   - name: GO111MODULE
     value: "on"
     type: env
-  - type: file
-    name: GARDENER_SERVICE_ACCOUNT
-    path: /tmp/secrets/gardener-service-account.kubeconfig
-    valueFrom:
-      secretKeyRef:
-        name: tm-hosts-gardener
-        key: kubeconfig
 
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/hostscheduler lock gardener --id=$TM_TESTRUN_ID --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --cloudprovider=$HOST_CLOUDPROVIDER
+    go run -mod=vendor ./cmd/logging --kubeconfig=$TM_KUBECONFIG_PATH/host.config --output=$TM_EXPORT_PATH
   image: golang:1.12.9

@@ -34,7 +34,7 @@ require (
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/h2non/filetype v1.0.8 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v0.0.0-20180717150148-3d5d8f294aa0 // indirect
+	github.com/hashicorp/go-multierror v0.0.0-20180717150148-3d5d8f294aa0
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
