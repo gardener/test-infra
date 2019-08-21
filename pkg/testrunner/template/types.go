@@ -33,6 +33,8 @@ type ShootTestrunParameters struct {
 	Zone                    string
 	K8sVersion              string
 	MachineType             string
+	MachineImage            string
+	MachineImageVersion     string
 	AutoscalerMin           string
 	AutoscalerMax           string
 	FloatingPoolName        string

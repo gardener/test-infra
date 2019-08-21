@@ -30,6 +30,8 @@ testrunner run-template [flags]
       --landscape string                   Current gardener landscape.
       --loadbalancer-provider string       LoadBalancer Provider like haproxy. Only applicable for Openstack.
       --machinetype string                 Machinetype of the shoot's worker nodes.
+      --machine-image string               Image of the OS running on the machine
+      --machine-image-version string       The version of the machine image
   -n, --namespace string                   Namesapce where the testrun should be deployed. (default "default")
       --output-dir-path string             The filepath where the summary should be written to. (default "./testout")
       --project-name string                Gardener project name of the shoot
