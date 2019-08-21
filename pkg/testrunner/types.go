@@ -42,6 +42,7 @@ type Config struct {
 type Run struct {
 	Testrun  *tmv1beta1.Testrun
 	Metadata *Metadata
+	Error    error
 }
 
 // RunList represents a list of Runs.

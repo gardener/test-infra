@@ -109,7 +109,7 @@ var runCmd = &cobra.Command{
 			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
 		}
 
-		testrunName := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
+		testrunComputedPrefix := fmt.Sprintf("%s-%s-", testrunNamePrefix, cloudprovider)
 		config := &testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
@@ -166,15 +166,22 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		finishedRuns, err := testrunner.ExecuteTestrun(config, runs, testrunName)
-		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, finishedRuns)
+		testrunner.ExecuteTestruns(config, runs, testrunComputedPrefix)
+
+		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, runs)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("unable to collect test output: %s", err.Error())
 		}
 
-		result.GenerateNotificationConfigForAlerting(finishedRuns.GetTestruns(), rsConfig.ConcourseOnErrorDir)
+		result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), rsConfig.ConcourseOnErrorDir)
 
-		log.Info("Testrunner finished.")
+		log.Info("Testrunner finished")
+
+		// Fail when one testrun is failed and we should fail on failed testruns.
+		// Otherwise only fail when the testrun execution is erroneous.
+		if runs.HasErrors() {
+			os.Exit(1)
+		}
 		if failOnError && failed {
 			os.Exit(1)
 		}

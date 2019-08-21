@@ -16,6 +16,8 @@ package result
 
 import (
 	"fmt"
+	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
+	"github.com/hashicorp/go-multierror"
 	"path/filepath"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -28,13 +30,23 @@ import (
 // Collect collects results of all testruns and writes them to a file.
 // It returns whether there are failed testruns or not.
 func Collect(config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
-	testrunsFailed := false
+	var (
+		testrunsFailed = false
+		result         *multierror.Error
+	)
 	for _, run := range runs {
+		// Do only try to collect testruns results of testruns that ran into a timeout.
+		// Any other error can not be retrieved.
+		if !trerrors.IsTimeout(run.Error) {
+			continue
+		}
+
 		cfg := *config
 		cfg.OutputDir = filepath.Join(config.OutputDir, util.RandomString(3))
 		err := Output(&cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
-			return false, err
+			result = multierror.Append(result, err)
+			continue
 		}
 
 		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
@@ -59,5 +71,5 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 		printStatusTable(run.Testrun.Status.Steps)
 	}
 
-	return testrunsFailed, nil
+	return testrunsFailed, result.ErrorOrNil()
 }
