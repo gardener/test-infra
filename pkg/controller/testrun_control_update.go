@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"time"
 
@@ -25,8 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
-
-	log "github.com/sirupsen/logrus"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -39,6 +38,8 @@ import (
 var ErrDeadlineExceeded = "Pod was active on the node longer than the specified deadline"
 
 func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Testrun, wf *argov1.Workflow) (reconcile.Result, error) {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
+
 	if !tr.Status.StartTime.Equal(&wf.Status.StartedAt) {
 		tr.Status.StartTime = &wf.Status.StartedAt
 	}
@@ -55,12 +56,12 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 			return reconcile.Result{}, nil
 		}
 
-		log.Infof("Testrun %s completed", tr.Name)
+		log.Info("testrun completed")
 	}
 
 	err := r.Update(ctx, tr)
 	if err != nil {
-		log.Errorf("Error updating Testrun status %s: %s", tr.Name, err.Error())
+		log.Error(err, "unable to update testrun status")
 		return reconcile.Result{}, err
 	}
 
@@ -68,7 +69,8 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Test
 }
 
 func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
-	log.Infof("Collecting node status of Testrun %s in Namespace %s", tr.Name, tr.Namespace)
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
+	log.Info("start collecting node status of Testrun")
 
 	tr.Status.Phase = wf.Status.Phase
 	tr.Status.CompletionTime = &wf.Status.FinishedAt
@@ -86,7 +88,9 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 
 	// cleanup pods to remove workload from the api server
 	// logs are still accessible through "archiveLogs" option in argo
-	garbagecollection.CleanWorkflowPods(r.Client, wf)
+	if err := garbagecollection.CleanWorkflowPods(r.Client, wf); err != nil {
+		log.Error(err, "error while trying to cleanup pods")
+	}
 
 	return nil
 }

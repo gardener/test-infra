@@ -23,12 +23,13 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	"github.com/go-logr/logr"
 )
 
 // New takes a testrun crd and creates a new Testrun representation.
 // It fetches testruns from specified testdeflocations and generates a testflow object.
-func New(tr *tmv1beta1.Testrun) (*Testrun, error) {
-	locs, err := locations.NewLocations(tr.Spec)
+func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
+	locs, err := locations.NewLocations(log, tr.Spec)
 	if err != nil {
 		return nil, err
 	}

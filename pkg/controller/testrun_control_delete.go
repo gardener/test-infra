@@ -16,13 +16,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -30,6 +30,7 @@ import (
 )
 
 func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Testrun) (reconcile.Result, error) {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
 
 	if finalizers := sets.NewString(tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		return reconcile.Result{}, nil
@@ -37,12 +38,12 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 
 	foundWf := &argov1.Workflow{}
 	if err := r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf); err == nil {
-		log.Infof("Cleanup testrun %s", tr.Name)
+		log.Info("starting cleanup")
 
 		// garbage collect all outputs by traversing through nodes and collect outputs artifacts from minio
 		os, err := garbagecollection.NewObjectStore()
 		if err != nil {
-			log.Debug(err.Error())
+			log.Error(err, "unable to initialize object store client")
 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 		}
 		for _, node := range foundWf.Status.Nodes {
@@ -50,11 +51,11 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 				continue
 			}
 			for _, artifact := range node.Outputs.Artifacts {
-				log.Debugf("Processing artifact %s", artifact.Name)
+				log.V(5).Info(fmt.Sprintf("Processing artifact %s", artifact.Name))
 				if artifact.S3 != nil {
 					err := os.DeleteObject(artifact.S3.Key)
 					if err != nil {
-						log.Errorf("Cannot delete object %s from object storage: %s", artifact.S3.Key, err.Error())
+						log.Error(err, "unable to delete object from object storage", "artifact", artifact.S3.Key)
 
 						// do not retry deletion if the key does not not exist in s3 anymore
 						// maybe use const from aws lib -> need to change to aws lib
@@ -62,7 +63,7 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 							return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 						}
 					}
-					log.Debugf("Deleted object %s from object store", artifact.S3.Key)
+					log.V(5).Info("object deleted", "artifact", artifact.S3.Key)
 				}
 			}
 		}
@@ -70,17 +71,17 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 		if removeFinalizer(foundWf, tmv1beta1.SchemeGroupVersion.Group) {
 			err = r.Update(ctx, foundWf)
 			if err != nil {
-				log.Errorf("Error while removing finalizer from Workflow %s: %s", tr.Name, err.Error())
+				log.Error(err, "unable to remove finalizer from workflow", "workflow", foundWf.Name)
 				return reconcile.Result{}, err
 			}
 		}
 
-		log.Infof("Deleting testrun %s", foundWf.Name)
+		log.Info("deleting", "workflow", foundWf.Name)
 		if tr.DeletionTimestamp == nil {
 			removeFinalizer(tr, tmv1beta1.SchemeGroupVersion.Group)
 			err = r.Delete(ctx, tr)
 			if err != nil {
-				log.Errorf("Cannot delete testrun %s: %s", foundWf.Name, err.Error())
+				log.Error(err, "unable to delete workflow", "workflow", foundWf.Name)
 				return reconcile.Result{}, err
 			}
 			return reconcile.Result{}, err
@@ -91,7 +92,7 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 	if removeFinalizer(tr, tmv1beta1.SchemeGroupVersion.Group) {
 		err := r.Update(ctx, tr)
 		if err != nil {
-			log.Debugf("Cannot remove finalizer from Testrun %s: %s", tr.Name, err.Error())
+			log.Error(err, "unable to remove finalizer from testrun")
 			return reconcile.Result{}, err
 		}
 	}

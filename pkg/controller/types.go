@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -27,4 +28,5 @@ type TestmachineryController struct {
 type TestrunReconciler struct {
 	client.Client
 	scheme *runtime.Scheme
+	Logger logr.Logger
 }

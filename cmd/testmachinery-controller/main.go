@@ -17,96 +17,99 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/version"
+	"fmt"
 	"os"
 
+	"github.com/gardener/test-infra/pkg/controller/logger"
+
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/version"
+
 	"github.com/gardener/test-infra/pkg/controller"
-	"github.com/gardener/test-infra/pkg/server"
+	"github.com/gardener/test-infra/pkg/controller/admission/server"
 	"github.com/joho/godotenv"
-	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
-	log "github.com/sirupsen/logrus"
-
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 var (
-	masterURL  string
-	kubeconfig string
-	local      bool
+	local                bool
+	enableLeaderElection bool
+
+	setupLogger = ctrl.Log.WithName("setup")
 )
 
 func main() {
-
-	log.Infof("Start Test Machinery with Version %s", version.Get().String())
-	flag.Parse()
+	setupLogger.Info(fmt.Sprintf("start Test Machinery with version %s", version.Get().String()))
 
 	if testmachinery.IsRunInsecure() {
-		log.Warn("testmachinery is running in insecure mode")
+		setupLogger.Info("testmachinery is running in insecure mode")
 	}
 
-	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
+	setupLogger.Info("setting up manager")
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		LeaderElection: enableLeaderElection,
+	})
 	if err != nil {
-		log.Fatalf("cannot build config from %s", kubeconfig)
+		setupLogger.Error(err, "unable to setup manager")
+		os.Exit(1)
 	}
 
-	log.Info("setting up manager")
-	mgr, err := manager.New(cfg, manager.Options{})
+	tmController, err := controller.New(mgr, ctrl.Log.WithName("controllers").WithName("Testrun"))
 	if err != nil {
-		log.Fatalf("Unable to set up overall controller manager: %s", err.Error())
-	}
-
-	tmController, err := controller.New(mgr)
-	if err != nil {
-		log.Fatalf("Cannot register controller: %s", err.Error())
+		setupLogger.Error(err, "unable to create controller", "controllers", "Testrun")
+		os.Exit(1)
 	}
 	err = tmController.RegisterWatches()
 	if err != nil {
-		log.Fatalf("Cannot register watches: %s", err.Error())
+		setupLogger.Error(err, "unable to register watches", "controllers", "Testrun")
+		os.Exit(1)
 	}
 
 	if !local {
-		go server.Serve(context.Background(), mgr)
+		go server.Serve(context.Background(), ctrl.Log.WithName("admission"))
 		server.UpdateHealth(true)
 	}
 
-	log.Info("Starting the Controller.")
+	setupLogger.Info("starting the controller", "controllers", "Testrun")
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Fatalf("unable to run the manager: %s", err.Error())
+		setupLogger.Error(err, "error while running manager")
+		os.Exit(1)
 	}
 
 }
 
 func init() {
-	err := godotenv.Load()
-	if err == nil {
-		log.Info(".env file loaded")
-	} else {
-		log.Warnf("Error loading .env file: %s", err.Error())
-	}
-	testmachinery.Setup()
-
-	formatter := &log.TextFormatter{
-		FullTimestamp: true,
-	}
-	log.SetFormatter(formatter)
-	log.SetOutput(os.Stderr)
-
-	if os.Getenv("LOG_LEVEL") == "debug" {
-		log.SetLevel(log.DebugLevel)
-		log.Warn("Set debug log level")
-	}
-
-	log.Infof("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
-
 	// Set commandline flags
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.BoolVar(&testmachinery.GetConfig().Insecure, "insecure", false, "The test machinery runs in insecure mode which menas that local testdefs are allowed and therefore hostPaths are mounted.")
 	flag.BoolVar(&local, "local", false, "The controller runs outside of a cluster.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	logger.InitFlags(nil)
+	flag.Parse()
+
+	log, err := logger.New(nil)
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+	ctrl.SetLogger(log)
+
+	err = godotenv.Load()
+	if err == nil {
+		setupLogger.Info(".env file loaded")
+	} else {
+		setupLogger.Info("Error loading .env file: %s", err.Error())
+	}
+
+	if err = testmachinery.Setup(); err != nil {
+		setupLogger.Error(err, "unable to setup testmachinery")
+		os.Exit(1)
+	}
+
+	setupLogger.Info("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
 
 }

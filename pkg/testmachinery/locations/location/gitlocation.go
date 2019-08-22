@@ -19,13 +19,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/go-logr/logr"
 	"net/http"
 	"net/url"
 	"strings"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	log "github.com/sirupsen/logrus"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/google/go-github/v27/github"
@@ -37,6 +36,7 @@ var githubContentTypeFile = "file"
 
 // GitLocation represents the testDefLocation of type "git".
 type GitLocation struct {
+	log  logr.Logger
 	Info *tmv1beta1.TestLocation
 
 	config    *testmachinery.GitConfig
@@ -46,15 +46,22 @@ type GitLocation struct {
 }
 
 // NewGitLocation creates a TestDefLocation of type git.
-func NewGitLocation(testDefLocation *tmv1beta1.TestLocation) (testdefinition.Location, error) {
+func NewGitLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) (testdefinition.Location, error) {
 	repoURL, err := url.Parse(testDefLocation.Repo)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot parse url %s", testDefLocation.Repo)
+		return nil, fmt.Errorf("unable to parse url %s", testDefLocation.Repo)
 	}
 	config := getGitConfig(repoURL)
 	repoOwner, repoName := parseRepoURL(repoURL)
 
-	return &GitLocation{testDefLocation, config, repoOwner, repoName, repoURL}, nil
+	return &GitLocation{
+		Info:      testDefLocation,
+		log:       log,
+		config:    config,
+		repoOwner: repoOwner,
+		repoName:  repoName,
+		repoURL:   repoURL,
+	}, nil
 }
 
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
@@ -97,39 +104,35 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 
 	client, err := l.getGitHubClient()
 	if err != nil {
-		log.Debug(err.Error())
-		return nil, fmt.Errorf("No testdefinitions found in %s", l.Info.Repo)
+		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
 	}
 
 	_, directoryContent, _, err := client.Repositories.GetContents(context.Background(), l.repoOwner, l.repoName,
 		testmachinery.TESTDEF_PATH, &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
-		log.Debug(err.Error())
-		return nil, fmt.Errorf("No testdefinitions found in %s", l.Info.Repo)
+		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
 	}
 
 	for _, file := range directoryContent {
 		if *file.Type == githubContentTypeFile {
-			log.Debugf("Found file %s in Path: %s", *file.Name, *file.Path)
+			l.log.V(5).Info("found file", "filename", *file.Name, "path", *file.Path)
 			data, err := util.DownloadFile(l.getHTTPClient(), file.GetDownloadURL())
 			if err != nil {
 				return nil, err
 			}
 			def, err := util.ParseTestDef(data)
-			if err == nil {
-				if def.Kind == tmv1beta1.TestDefinitionName {
-					if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-						definition, err := testdefinition.New(&def, l, file.GetName())
-						if err != nil {
-							log.Debugf("cannot build testdefinition for %s: %s", *file.Name, err.Error())
-							continue
-						}
-						definitions = append(definitions, definition)
-						log.Debugf("found Testdefinition %s", def.Metadata.Name)
-					}
+			if err != nil {
+				l.log.V(5).Info(fmt.Sprintf("ignoring file: %s", err.Error()), "filename", *file.Name)
+				continue
+			}
+			if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
+				definition, err := testdefinition.New(&def, l, file.GetName())
+				if err != nil {
+					l.log.Info(fmt.Sprintf("unable to build testdefinition: %s", err.Error()), "filename", *file.Name)
+					continue
 				}
-			} else {
-				log.Debugf("Ignoring file %s : %s", *file.Name, err.Error())
+				definitions = append(definitions, definition)
+				l.log.V(3).Info(fmt.Sprintf("found TestDefinition %s", def.Metadata.Name))
 			}
 		}
 	}
@@ -154,11 +157,11 @@ func (l *GitLocation) getHTTPClient() *http.Client {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
 			},
 		}
-		log.Debugf("Used gitconfig for %s to authenticate", l.config.HttpUrl)
+		l.log.V(3).Info(fmt.Sprintf("used gitconfig for %s to authenticate", l.config.HttpUrl))
 		return basicAuth.Client()
 	}
 
-	log.Warn("Insecure and unauthenticated git connection is used")
+	l.log.V(3).Info("insecure and unauthenticated git connection is used")
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

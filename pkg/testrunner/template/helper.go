@@ -3,11 +3,12 @@ package template
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/utils"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"sort"
 	"strings"
+
+	"github.com/gardener/gardener/pkg/utils"
+	"github.com/pkg/errors"
 
 	"github.com/Masterminds/semver"
 

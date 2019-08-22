@@ -21,14 +21,13 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util"
 
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 var tmConfig *TmConfiguration
 
 // Setup fetches all configuration values and creates the TmConfiguration.
-func Setup() {
+func Setup() error {
 	TESTDEF_PATH = util.Getenv("TESTDEF_PATH", ".test-defs")
 	PREPARE_IMAGE = util.Getenv("PREPARE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:latest")
 	BASE_IMAGE = util.Getenv("BASE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.28.0")
@@ -36,7 +35,7 @@ func Setup() {
 	var gitSecrets GitSecrets
 	err := yaml.Unmarshal([]byte(os.Getenv("GIT_SECRETS")), &gitSecrets)
 	if err != nil {
-		log.Warnf("Cannot read git secrets: %s", err.Error())
+		return fmt.Errorf("unable to read git secrets: %s", err.Error())
 	}
 
 	tmConfig = &TmConfiguration{
@@ -53,6 +52,7 @@ func Setup() {
 		},
 	}
 
+	return nil
 }
 
 // GetConfig returns the current testmachinery configuration

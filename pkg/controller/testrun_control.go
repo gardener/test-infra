@@ -22,7 +22,6 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,6 +34,7 @@ import (
 func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 	defer ctx.Done()
+	log := r.Logger.WithValues("testrun", request.NamespacedName)
 
 	tr := &tmv1beta1.Testrun{}
 	err := r.Get(ctx, request.NamespacedName, tr)
@@ -46,7 +46,7 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	if tr.DeletionTimestamp != nil {
-		log.Debug("Deletion: cause testrun")
+		log.Info("deletion caused by testrun")
 		return r.deleteTestrun(ctx, tr)
 	}
 
@@ -57,19 +57,20 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 	foundWf := &argov1.Workflow{}
 	err = r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf)
 	if err != nil && !errors.IsNotFound(err) {
+		log.Error(err, "unable to get workflow", "workflow", testmachinery.GetWorkflowName(tr), "namespace", tr.Namespace)
 		return reconcile.Result{}, err
 	}
 
 	if err != nil && errors.IsNotFound(err) && tr.Status.CompletionTime == nil {
 		wf, err := r.createWorkflow(ctx, tr)
 		if err != nil {
-			log.Errorf("Error creating workflow for testrun %s\n%s", tr.Name, err.Error())
+			log.Error(err, "unable to setup workflow")
 			return reconcile.Result{}, err
 		}
-		log.Infof("Creating workflow %s in namespace %s", wf.Name, wf.Namespace)
+		log.Info("creating workflow %s in namespace %s", "workflow", wf.Name, "namespace", wf.Namespace)
 		err = r.Create(ctx, wf)
 		if err != nil {
-			log.Error(err)
+			r.Logger.Error(err, "unable to create workflow", "workflow", wf.Name, "namespace", wf.Namespace)
 			return reconcile.Result{Requeue: true}, err
 		}
 
@@ -88,17 +89,17 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 
 		err = r.Update(ctx, tr)
 		if err != nil {
-			log.Errorf("Error updating testrun %s: %s", tr.Name, err.Error())
+			log.Error(err, "unable to update testrun")
 			return reconcile.Result{}, err
 		}
 	} else if err != nil {
-		log.Errorf("Cannot get workflow %s in namespace %s: %s", testmachinery.GetWorkflowName(tr), tr.Namespace, err.Error())
+		log.Error(err, "unable to get workflow", "workflow", testmachinery.GetWorkflowName(tr), "namespace", tr.Namespace)
 		return reconcile.Result{}, err
 	}
 
 	if tr.Status.CompletionTime != nil {
 		if foundWf.DeletionTimestamp != nil {
-			log.Debug("Deletion: cause workflow")
+			log.V(2).Info("Deletion: cause workflow")
 			return r.deleteTestrun(ctx, tr)
 		}
 		return reconcile.Result{}, err
@@ -109,7 +110,7 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 }
 
 func (r *TestrunReconciler) createWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, error) {
-	tr, err := testrun.New(testrunDef)
+	tr, err := testrun.New(r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing testrun: %s", err.Error())
 	}
