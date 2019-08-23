@@ -37,7 +37,7 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 	for _, run := range runs {
 		// Do only try to collect testruns results of testruns that ran into a timeout.
 		// Any other error can not be retrieved.
-		if !trerrors.IsTimeout(run.Error) {
+		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 			continue
 		}
 
