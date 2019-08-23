@@ -1,3 +1,17 @@
+// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package template
 
 import (
@@ -37,7 +51,7 @@ func getK8sVersions(parameters *ShootTestrunParameters) ([]string, error) {
 		return getK8sVersionsFromCloudprofile(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
 	}
 
-	return nil, fmt.Errorf("No K8s version can be specified")
+	return nil, fmt.Errorf("no K8s version can be specified")
 }
 
 func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider string) ([]string, error) {
@@ -55,8 +69,35 @@ func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudp
 	if err != nil {
 		return nil, err
 	}
+	cloudProfileVersions, err := getCloudproviderVersions(profile, cloudprovider)
+	if err != nil {
+		return nil, err
+	}
+	if len(cloudProfileVersions) == 0 {
+		return nil, fmt.Errorf("no kubernetes versions found for cloudprofile %s", cloudprofile)
+	}
+	return filterPatchVersions(cloudProfileVersions)
+}
 
-	return getCloudproviderVersions(profile, cloudprovider)
+// filterPatchVersions keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
+func filterPatchVersions(cloudProfileVersions []string) ([]string, error) {
+	newestPatchVersionMap := make(map[string]*semver.Version)
+	for _, rawVersion := range cloudProfileVersions {
+		parsedVersion, err := semver.NewVersion(rawVersion)
+		if err != nil {
+			return nil, err
+		}
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+		if newestPatch, ok := newestPatchVersionMap[majorMinor]; !ok || newestPatch.LessThan(parsedVersion) {
+			newestPatchVersionMap[majorMinor] = parsedVersion
+		}
+	}
+
+	newestPatchVersions := make([]string, 0)
+	for _, version := range newestPatchVersionMap {
+		newestPatchVersions = append(newestPatchVersions, version.String())
+	}
+	return newestPatchVersions, nil
 }
 
 func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider string) (string, error) {
@@ -66,7 +107,7 @@ func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider str
 	}
 
 	if len(rawVersions) == 0 {
-		return "", fmt.Errorf("No kubernetes versions found for cloudprofle %s", cloudprofile)
+		return "", fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile)
 	}
 
 	versions := make([]*semver.Version, len(rawVersions))
