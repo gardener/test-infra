@@ -37,6 +37,7 @@ import (
 
 var (
 	local                bool
+	metricsAddr          string
 	enableLeaderElection bool
 
 	setupLogger = ctrl.Log.WithName("setup")
@@ -51,7 +52,8 @@ func main() {
 
 	setupLogger.Info("setting up manager")
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		LeaderElection: enableLeaderElection,
+		MetricsBindAddress: metricsAddr,
+		LeaderElection:     enableLeaderElection,
 	})
 	if err != nil {
 		setupLogger.Error(err, "unable to setup manager")
@@ -84,11 +86,12 @@ func main() {
 
 func init() {
 	// Set commandline flags
-	flag.BoolVar(&testmachinery.GetConfig().Insecure, "insecure", false, "The test machinery runs in insecure mode which menas that local testdefs are allowed and therefore hostPaths are mounted.")
 	flag.BoolVar(&local, "local", false, "The controller runs outside of a cluster.")
+	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	logger.InitFlags(nil)
+	testmachinery.InitFlags(nil)
 	flag.Parse()
 
 	log, err := logger.New(nil)
@@ -110,6 +113,5 @@ func init() {
 		os.Exit(1)
 	}
 
-	setupLogger.Info("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
-
+	fmt.Printf("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
 }

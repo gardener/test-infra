@@ -28,7 +28,7 @@ func (r *TestrunReconciler) getImagePullSecrets(ctx context.Context) []string {
 	configMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetConfig().Namespace}, configMap)
 	if err != nil {
-		r.Logger.Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace), "setup")
+		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace))
 		return nil
 	}
 

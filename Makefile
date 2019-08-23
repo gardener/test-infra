@@ -13,6 +13,9 @@
 # limitations under the License.
 
 SHELL = /bin/sh
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(shell dirname $(mkfile_path))
+current_sha := $(shell GIT_DIR=${current_dir}/.git git rev-parse @)
 
 REGISTRY            := eu.gcr.io/gardener-project/gardener/testmachinery
 
@@ -49,7 +52,7 @@ remove-controller:
 
 .PHONY: install-prerequisites
 install-prerequisites:
-	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites | kubectl apply -f -
+	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites --set="argo.containerRuntimeExecutor=pns" | kubectl apply -f -
 
 .PHONY: remove-prerequisites
 remove-prerequisites:
@@ -90,11 +93,11 @@ mount-local:
 
 .PHONY: run-local
 run-local:
-	@TM_NAMESPACE=${NS} go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true -local=true
+	@TM_NAMESPACE=${NS} go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true -local=true --dev
 
 .PHONY: run-controller
 run-controller:
-	@TM_NAMESPACE=${NS} TESTDEF_PATH=test/.test-defs go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true
+	@TM_NAMESPACE=${NS} TESTDEF_PATH=test/.test-defs go run cmd/testmachinery-controller/main.go -kubeconfig=${KUBECONFIG} -insecure=true --dev
 
 .PHONY: install-controller-local
 install-controller-local:
@@ -103,7 +106,7 @@ install-controller-local:
 
 .PHONY: run-it-tests
 run-it-tests:
-	@TM_NAMESPACE=${NS} TM_KUBECONFIG_PATH=${KUBECONFIG} ginkgo ./test/...
+	@TM_NAMESPACE=${NS} TM_KUBECONFIG_PATH=${KUBECONFIG} GIT_COMMIT_SHA=${current_sha} ginkgo ./test/...
 
 .PHONY: code-gen
 code-gen:

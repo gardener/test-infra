@@ -40,14 +40,20 @@ spec:
       - name: testmachinery-controller
         image: "{{ .Values.controller.image }}:{{ .Values.controller.tag }}"
         imagePullPolicy: {{ .Values.controller.pullPolicy }}
-{{ if .Values.local.enabled }}
-        command: ["/testmachinery-controller", "-insecure=true"]
-{{end}}
+        command: ["/testmachinery-controller"]
+        args:
+        - --enable-pod-gc={{ .Values.cleanup.enabled }}
+        - --base-image={{ .Values.controller.steps.baseImage }}
+        - --prepare-image={{ .Values.controller.steps.prepareImage }}
+        {{- if .Values.local.enabled }}
+        - -insecure=true
+        {{- end}}
+        {{- if .Values.controller.testDefPath }}
+        - --testdef-path={{ .Values.controller.testDefPath }}
+        {{- end }}
         env:
         - name: TM_NAMESPACE
           value: {{ .Release.Namespace }}
-        - name: CLEAN_WORKFLOW_PODS
-          value: "{{ .Values.cleanup.enabled }}"
         - name: WEBHOOK_HTTP_BINDADDRESS
           value: "0.0.0.0"
         - name: WEBHOOK_HTTPS_BINDADDRESS
@@ -60,14 +66,6 @@ spec:
           value: /etc/testmachinery-controller/srv/tls.crt
         - name: WEBHOOK_KEY_FILE
           value: /etc/testmachinery-controller/srv/tls.key
-        - name: BASE_IMAGE
-          value: "{{ .Values.controller.steps.baseImage }}"
-        - name: PREPARE_IMAGE
-          value: "{{ .Values.controller.steps.prepareImage }}"
-        {{- if .Values.controller.testDefPath }}
-        - name: TESTDEF_PATH
-          value: "{{ .Values.controller.testDefPath }}"
-        {{- end }}
         - name: S3_ENDPOINT
           valueFrom:
             configMapKeyRef:

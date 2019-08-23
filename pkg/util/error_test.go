@@ -12,37 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package util_test
 
 import (
-	"bufio"
-	"bytes"
-	"io"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/hashicorp/go-multierror"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-// ReadLines reads a byte array line by line ('\n' or '\r\n'); and return the content without the line end.
-func ReadLines(document []byte) <-chan []byte {
-	c := make(chan []byte)
-	go func() {
-		reader := bufio.NewReader(bytes.NewReader(document))
-		doc := make([]byte, 0)
-		for {
-			line, isPrefix, err := reader.ReadLine()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return
-			}
-			doc = append(doc, line...)
-			if isPrefix {
-				continue
-			}
-			c <- doc
-			doc = make([]byte, 0)
-		}
-
-		close(c)
-	}()
-	return c
-}
+var _ = Describe("error util", func() {
+	It("should return nil if the error is nil ", func() {
+		Expect(util.ReturnMultiError(nil)).ToNot(HaveOccurred())
+	})
+	It("should return nil if the multierr is nil", func() {
+		var err *multierror.Error
+		Expect(util.ReturnMultiError(err)).ToNot(HaveOccurred())
+	})
+	It("should return nil if the multierr contains 0 errors", func() {
+		var err *multierror.Error
+		err = multierror.Append(err, nil)
+		Expect(util.ReturnMultiError(err)).ToNot(HaveOccurred())
+	})
+})

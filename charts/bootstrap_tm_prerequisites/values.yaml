@@ -14,6 +14,7 @@
 
 argo:
   tag: v2.3.0
+  containerRuntimeExecutor: docker
 
 configmap:
   name: tm-config
@@ -35,7 +36,7 @@ objectStorage:
 
   bucketName: "tm-bucket"
   keyPrefix: "testmachinery"
-  endpoint: "minio-service.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.minio.service.port }}" # use  #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
+  endpoint: "minio.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.objectStorage.minio.service.port }}" # use  #AWS => s3.amazonaws.com; GCS => storage.googleapis.com
   ssl: false
 
   secret:

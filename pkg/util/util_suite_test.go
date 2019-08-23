@@ -12,37 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package util_test
 
 import (
-	"bufio"
-	"bytes"
-	"io"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"testing"
 )
 
-// ReadLines reads a byte array line by line ('\n' or '\r\n'); and return the content without the line end.
-func ReadLines(document []byte) <-chan []byte {
-	c := make(chan []byte)
-	go func() {
-		reader := bufio.NewReader(bytes.NewReader(document))
-		doc := make([]byte, 0)
-		for {
-			line, isPrefix, err := reader.ReadLine()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return
-			}
-			doc = append(doc, line...)
-			if isPrefix {
-				continue
-			}
-			c <- doc
-			doc = make([]byte, 0)
-		}
-
-		close(c)
-	}()
-	return c
+func TestUtil(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Utils Test Suite")
 }

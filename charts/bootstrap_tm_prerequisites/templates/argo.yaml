@@ -19,6 +19,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
     config: |
+        containerRuntimeExecutor: {{ .Values.argo.containerRuntimeExecutor }}
         executor:
           resources:
             requests:
