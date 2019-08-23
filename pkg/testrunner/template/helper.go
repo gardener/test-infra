@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -55,8 +56,37 @@ func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudp
 	if err != nil {
 		return nil, err
 	}
+	cloudProfileVersions, err := getCloudproviderVersions(profile, cloudprovider)
+	if err != nil {
+		return nil, err
+	}
+	return keepNewestPatchVersions(cloudProfileVersions)
+}
 
-	return getCloudproviderVersions(profile, cloudprovider)
+// keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
+func keepNewestPatchVersions(cloudProfileVersions []string) ([]string, error) {
+	if len(cloudProfileVersions) == 0 {
+		return nil, fmt.Errorf("No kubernetes versions found for cloudprofle %s", cloudProfileVersions)
+	}
+
+	newestPatchVersionMap := make(map[string]*semver.Version)
+	for _, rawVersion := range cloudProfileVersions {
+		parsedVersion, err := semver.NewVersion(rawVersion)
+		if err != nil {
+			return nil, err
+		}
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+		if versionFromMap, ok := newestPatchVersionMap[majorMinor]; !ok || versionFromMap.LessThan(parsedVersion) {
+			newestPatchVersionMap[majorMinor] = parsedVersion
+		}
+	}
+
+	//parse map to string slice
+	newestPatchVersionSlice := make([]string, len(newestPatchVersionMap))
+	for _, version := range newestPatchVersionMap {
+		newestPatchVersionSlice = append(newestPatchVersionSlice, version.String())
+	}
+	return newestPatchVersionSlice, nil
 }
 
 func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider string) (string, error) {
