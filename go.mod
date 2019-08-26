@@ -8,7 +8,6 @@ require (
 	github.com/Masterminds/sprig v2.17.1+incompatible // indirect
 	github.com/aokoli/goutils v1.1.0 // indirect
 	github.com/argoproj/argo v2.3.0+incompatible
-	github.com/codeclysm/extract v2.2.0+incompatible
 	github.com/cpuguy83/go-md2man v1.0.8 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
@@ -23,6 +22,8 @@ require (
 	github.com/gardener/machine-controller-manager v0.0.0-20190228095106-36a42c48af0a // indirect
 	github.com/ghodss/yaml v0.0.0-20190212211648-25d852aebe32 // indirect
 	github.com/go-ini/ini v1.41.0 // indirect
+	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/zapr v0.1.0
 	github.com/go-openapi/jsonpointer v0.18.0 // indirect
 	github.com/go-openapi/jsonreference v0.18.0 // indirect
 	github.com/go-openapi/spec v0.18.0
@@ -32,15 +33,11 @@ require (
 	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.0 // indirect
-	github.com/h2non/filetype v1.0.8 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v0.0.0-20180717150148-3d5d8f294aa0
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
-	github.com/juju/errors v0.0.0-20190207033735-e65537c515d7 // indirect
-	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
-	github.com/juju/testing v0.0.0-20190723135506-ce30eb24acd2 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/minio/minio-go v6.0.13+incompatible
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
@@ -60,13 +57,13 @@ require (
 	github.com/spf13/cobra v0.0.0-20181021141114-fe5e611709b0
 	github.com/spf13/pflag v1.0.3 // indirect
 	go.opencensus.io v0.22.0 // indirect
+	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	google.golang.org/api v0.6.0
 	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3
 	google.golang.org/grpc v1.21.1 // indirect
 	gopkg.in/ini.v1 v1.44.0 // indirect
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0-20190409021203-6e4e0e4f393b
 	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
@@ -77,7 +74,7 @@ require (
 	k8s.io/component-base v0.0.0-20190617074208-2b0aae80ca81 // indirect
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/helm v2.12.2+incompatible
-	k8s.io/klog v0.3.1 // indirect
+	k8s.io/klog v0.3.1
 	k8s.io/kube-aggregator v0.0.0-20190116053718-60c339211c1a // indirect
 	k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
 	k8s.io/utils v0.0.0-20190529001817-6999998975a7 // indirect

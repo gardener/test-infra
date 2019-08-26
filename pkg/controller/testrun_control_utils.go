@@ -16,10 +16,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -28,12 +28,11 @@ func (r *TestrunReconciler) getImagePullSecrets(ctx context.Context) []string {
 	configMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetConfig().Namespace}, configMap)
 	if err != nil {
-		log.Warnf("Cannot fetch Testmachinery config: %s", err.Error())
+		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace))
 		return nil
 	}
 
 	pullSecretNames := configMap.Data["secrets.PullSecrets"]
-
 	if pullSecretNames == "" {
 		return nil
 	}

@@ -17,6 +17,7 @@ package location
 import (
 	"encoding/base32"
 	"fmt"
+	"github.com/go-logr/logr"
 	"hash/fnv"
 	"io/ioutil"
 	"strings"
@@ -25,7 +26,6 @@ import (
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	log "github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 
 	"github.com/gardener/test-infra/pkg/util"
@@ -33,18 +33,24 @@ import (
 
 // LocalLocation represents the testDefLocation of type "local".
 type LocalLocation struct {
-	info        *tmv1beta1.TestLocation
+	Info        *tmv1beta1.TestLocation
+	log         logr.Logger
 	testdefPath string
 	name        string
 }
 
 // NewLocalLocation creates a TestDefLocation of type git.
-func NewLocalLocation(testDefLocation *tmv1beta1.TestLocation) testdefinition.Location {
+func NewLocalLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) testdefinition.Location {
 
 	hash := fnv.New32().Sum([]byte(testDefLocation.HostPath))
 	b32 := base32.StdEncoding.EncodeToString(hash)
 
-	return &LocalLocation{testDefLocation, fmt.Sprintf("%s/%s", testDefLocation.HostPath, testmachinery.TESTDEF_PATH), strings.ToLower(b32[0:5])}
+	return &LocalLocation{
+		Info:        testDefLocation,
+		log:         log,
+		testdefPath: fmt.Sprintf("%s/%s", testDefLocation.HostPath, testmachinery.TESTDEF_PATH),
+		name:        strings.ToLower(b32[0:5]),
+	}
 }
 
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
@@ -62,7 +68,7 @@ func (l *LocalLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDe
 
 // GetLocation returns the local location object
 func (l *LocalLocation) GetLocation() *tmv1beta1.TestLocation {
-	return l.info
+	return l.Info
 }
 
 // Name returns the generated name of the local location.
@@ -86,19 +92,20 @@ func (l *LocalLocation) readTestDefs() ([]*testdefinition.TestDefinition, error)
 		if !file.IsDir() {
 			data, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", l.testdefPath, file.Name()))
 			if err != nil {
-				log.Debugf("Cannot read file %s from %s", file.Name(), l.testdefPath)
+				l.log.Info(fmt.Sprintf("unable to read file from %s: %s", l.testdefPath, err.Error()), "filename", file.Name())
 				continue
 			}
 			def, err := util.ParseTestDef(data)
-			if err == nil {
-				if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
-					definition, err := testdefinition.New(&def, l, file.Name())
-					if err != nil {
-						log.Debugf("cannot build testdefinition %s: %s", file.Name(), err.Error())
-						continue
-					}
-					definitions = append(definitions, definition)
+			if err != nil {
+				continue
+			}
+			if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
+				definition, err := testdefinition.New(&def, l, file.Name())
+				if err != nil {
+					l.log.Info(fmt.Sprintf("unable to build testdefinition: %s", err.Error()), "filename", file.Name())
+					continue
 				}
+				definitions = append(definitions, definition)
 			}
 		}
 	}
@@ -113,7 +120,7 @@ func (l *LocalLocation) GetVolume() apiv1.Volume {
 		Name: l.Name(),
 		VolumeSource: apiv1.VolumeSource{
 			HostPath: &apiv1.HostPathVolumeSource{
-				Path: l.info.HostPath,
+				Path: l.Info.HostPath,
 				Type: &dirType,
 			},
 		},

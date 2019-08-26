@@ -31,7 +31,9 @@ func TestConfig(t *testing.T) {
 
 var _ = Describe("TestDefinition Validation", func() {
 
-	testmachinery.Setup()
+	BeforeSuite(func() {
+		Expect(testmachinery.Setup()).ToNot(HaveOccurred())
+	})
 
 	Context("validating testdefinition locations", func() {
 		var location tmv1beta1.TestLocation

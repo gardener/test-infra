@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/go-logr/logr"
 	"reflect"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -28,7 +29,7 @@ import (
 )
 
 // New creates a new Testmachinery controller for handling testruns and argo workflows.
-func New(mgr manager.Manager) (*TestmachineryController, error) {
+func New(mgr manager.Manager, logger logr.Logger) (*TestmachineryController, error) {
 
 	if err := tmv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		return nil, err
@@ -36,7 +37,11 @@ func New(mgr manager.Manager) (*TestmachineryController, error) {
 	if err := argov1.AddToScheme(mgr.GetScheme()); err != nil {
 		return nil, err
 	}
-	reconciler := &TestrunReconciler{mgr.GetClient(), mgr.GetScheme()}
+	reconciler := &TestrunReconciler{
+		Client: mgr.GetClient(),
+		scheme: mgr.GetScheme(),
+		Logger: logger,
+	}
 	c, err := controller.New("testmachinery-controller", mgr, controller.Options{Reconciler: reconciler})
 	if err != nil {
 		return nil, err

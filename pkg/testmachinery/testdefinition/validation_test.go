@@ -15,9 +15,9 @@
 package testdefinition_test
 
 import (
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"testing"
 
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -31,8 +31,9 @@ func TestConfig(t *testing.T) {
 }
 
 var _ = Describe("TestDefinition Validation", func() {
-
-	testmachinery.Setup()
+	BeforeSuite(func() {
+		Expect(testmachinery.Setup()).ToNot(HaveOccurred())
+	})
 
 	Context("validating testdefinitions", func() {
 		var testdef *tmv1beta1.TestDefinition

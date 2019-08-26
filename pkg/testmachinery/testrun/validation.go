@@ -18,7 +18,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/strconf"
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
 	"reflect"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -29,8 +32,8 @@ import (
 )
 
 // Validate validates a testrun.
-func Validate(tr *tmv1beta1.Testrun) error {
-
+func Validate(log logr.Logger, tr *tmv1beta1.Testrun) error {
+	var result *multierror.Error
 	// validate locations
 	if err := locations.ValidateLocations("spec", tr.Spec); err != nil {
 		return err
@@ -39,7 +42,7 @@ func Validate(tr *tmv1beta1.Testrun) error {
 	// validate global config
 	for i, elem := range tr.Spec.Config {
 		if err := config.Validate(fmt.Sprintf("spec.config.[%d]", i), elem); err != nil {
-			return err
+			result = multierror.Append(result, err)
 		}
 	}
 
@@ -48,24 +51,25 @@ func Validate(tr *tmv1beta1.Testrun) error {
 	typeOfK := k.Type()
 	for i := 0; i < k.NumField(); i++ {
 		if err := validateKubeconfig(fmt.Sprintf("spec.strconf.%s", typeOfK.Field(i).Name), k.Field(i).Interface().(*strconf.StringOrConfig)); err != nil {
-			return err
+			result = multierror.Append(result, err)
 		}
 	}
 
-	locs, err := locations.NewLocations(tr.Spec)
+	locs, err := locations.NewLocations(log, tr.Spec)
 	if err != nil {
-		return err
+		result = multierror.Append(result, err)
+		return result
 	}
 
 	if err := testflow.Validate("spec.testflow", tr.Spec.TestFlow, locs, false); err != nil {
-		return err
+		result = multierror.Append(result, err)
 	}
 
 	if err := testflow.Validate("spec.onExit", tr.Spec.OnExit, locs, true); err != nil {
-		return err
+		result = multierror.Append(result, err)
 	}
 
-	return nil
+	return util.ReturnMultiError(result)
 }
 
 func validateKubeconfig(identifier string, kubeconfig *strconf.StringOrConfig) error {

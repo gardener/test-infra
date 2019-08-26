@@ -1,10 +1,12 @@
 package locations
 
 import (
-	"errors"
 	"fmt"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 func ValidateLocations(identifier string, spec tmv1beta1.TestrunSpec) error {
@@ -20,12 +22,13 @@ func ValidateLocations(identifier string, spec tmv1beta1.TestrunSpec) error {
 }
 
 func ValidateLocationSets(identifier string, sets []tmv1beta1.LocationSet) error {
+	var result *multierror.Error
 	for i, set := range sets {
 		if err := ValidateLocationSet(fmt.Sprintf("%s.%d", identifier, i), set); err != nil {
-			return err
+			result = multierror.Append(result, err)
 		}
 	}
-	return nil
+	return result.ErrorOrNil()
 }
 
 func ValidateLocationSet(identifier string, set tmv1beta1.LocationSet) error {

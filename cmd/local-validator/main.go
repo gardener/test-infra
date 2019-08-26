@@ -16,41 +16,55 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/controller/logger"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
-)
-
-var (
-	trFilePath string
 )
 
 // Connection to remote is needed to validate remote testdefinitions
 func main() {
-	log.Info("Start Validator")
+	logger.InitFlags(nil)
+	trFilePath := flag.String("testrun", "examples/int-testrun.yaml", "Filepath to the testrun")
 	flag.Parse()
 
-	tr, err := util.ParseTestrunFromFile(trFilePath)
+	log, err := logger.New(nil)
 	if err != nil {
-		log.Fatalf("Error parsing testrun: %s", err.Error())
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
 
-	if err := testrun.Validate(&tr); err != nil {
-		log.Fatalf("Invalid Testrun %s: %s", tr.Name, err.Error())
+	log.Info("Start Validator")
+	log.V(3).Info("test 3")
+	log.V(4).Info("test 4")
+	log.V(5).Info("test 5")
+
+	tr, err := util.ParseTestrunFromFile(*trFilePath)
+	if err != nil {
+		log.Error(err, "unable to parse", "path", *trFilePath)
+		os.Exit(1)
 	}
 
-	log.Infof("Testrun %s is valid", tr.Name)
+	if err := testrun.Validate(log.WithValues("testrun", internalName(tr)), &tr); err != nil {
+		log.Error(err, "invalid Testrun", "testrun", internalName(tr))
+		os.Exit(1)
+	}
+
+	log.Info("successfully validated", "testrun", internalName(tr))
 }
 
-func init() {
-	formatter := &log.TextFormatter{
-		FullTimestamp: true,
+// internalName determines an internal name that can be the testruns name, generated name or
+// if none is defined it returns noName
+func internalName(tr v1beta1.Testrun) string {
+	if tr.Name != "" {
+		return tr.Name
 	}
-	log.SetFormatter(formatter)
-	log.SetOutput(os.Stderr)
-	log.SetLevel(log.DebugLevel)
-
-	flag.StringVar(&trFilePath, "testrun", "examples/int-testrun.yaml", "Filepath to the testrun")
+	if tr.GenerateName != "" {
+		return tr.GenerateName
+	}
+	return "noName"
 }

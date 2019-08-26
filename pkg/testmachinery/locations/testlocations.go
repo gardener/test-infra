@@ -15,46 +15,48 @@
 package locations
 
 import (
-	"errors"
 	"fmt"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 )
 
 // NewTestLocations takes the parsed CRD Locations and fetches all TestDefintions from all locations.
-func NewTestLocations(testLocations []tmv1beta1.TestLocation) (Locations, error) {
+func NewTestLocations(log logr.Logger, testLocations []tmv1beta1.TestLocation) (Locations, error) {
 	testDefs := map[string]*testdefinition.TestDefinition{}
 
 	if len(testLocations) == 0 {
-		return nil, errors.New("no TestDefinition locations defined")
+		return nil, errors.New("no test locations defined")
 	}
 
 	for i, testLocation := range testLocations {
 		t := testLocation
+		locationLog := log.WithValues("testlocation", i)
 
 		if err := ValidateTestLocation(fmt.Sprintf("spec.testDefLocations.[%d]", i), t); err != nil {
 			return nil, err
 		}
 
 		if testLocation.Type == tmv1beta1.LocationTypeGit {
-			loc, err := location.NewGitLocation(&t)
+			loc, err := location.NewGitLocation(locationLog, &t)
 			if err != nil {
-				log.Warn(err.Error())
+				locationLog.Error(err, "unable to create git testlocation")
 				continue
 			}
 			err = loc.SetTestDefs(testDefs)
 			if err != nil {
-				log.Warn(err.Error())
+				locationLog.Error(err, "unable to get testdefinitions")
 				continue
 			}
 		}
 		if testLocation.Type == tmv1beta1.LocationTypeLocal {
-			loc := location.NewLocalLocation(&t)
+			loc := location.NewLocalLocation(locationLog, &t)
 			err := loc.SetTestDefs(testDefs)
 			if err != nil {
-				log.Error(err.Error())
+				locationLog.Error(err, "unable to get testdefinitions")
 			}
 		}
 	}

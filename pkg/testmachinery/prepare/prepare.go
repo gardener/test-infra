@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
+	"github.com/pkg/errors"
 	"net/url"
 	"path"
 
@@ -30,7 +31,6 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 )
 
@@ -152,8 +152,7 @@ func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConf
 	if kubeconfig.Type == strconf.String {
 		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
 		if err != nil {
-			log.Error("Cannot parse shoot config")
-			return err
+			return errors.Wrapf(err, "unable to parse kubeconfig")
 		}
 		p.TestDefinition.AddInputArtifacts(argov1.Artifact{
 			Name: name,
@@ -176,7 +175,7 @@ func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConf
 		p.TestDefinition.AddVolumeMount(cfg.Name(), kubeconfigPath, path.Base(kubeconfigPath), true)
 		return p.TestDefinition.AddVolumeFromConfig(cfg)
 	}
-	return fmt.Errorf("Undefined StringSecType %s", string(kubeconfig.Type))
+	return fmt.Errorf("undefined StringSecType %s", string(kubeconfig.Type))
 }
 
 func (p *Definition) addNetrcFile() error {
@@ -185,8 +184,7 @@ func (p *Definition) addNetrcFile() error {
 	for _, secret := range testmachinery.GetConfig().GitSecrets {
 		u, err := url.Parse(secret.HttpUrl)
 		if err != nil {
-			log.Debugf("%s is not a valid URL: %s", secret.HttpUrl, err.Error())
-			continue
+			return errors.Wrapf(err, "%s is not a valid URL", secret.HttpUrl)
 		}
 		netrc = netrc + fmt.Sprintf("machine %s\nlogin %s\npassword %s\n\n", u.Hostname(), secret.TechnicalUser.Username, secret.TechnicalUser.AuthToken)
 	}

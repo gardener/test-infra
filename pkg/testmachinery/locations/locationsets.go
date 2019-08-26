@@ -1,32 +1,34 @@
 package locations
 
 import (
-	"errors"
 	"fmt"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 )
 
 // NewLocations returns locations interface for a testrun
-func NewLocations(spec tmv1beta1.TestrunSpec) (Locations, error) {
+func NewLocations(log logr.Logger, spec tmv1beta1.TestrunSpec) (Locations, error) {
 	if spec.LocationSets != nil {
-		return NewSetLocations(spec.LocationSets)
+		return NewSetLocations(log, spec.LocationSets)
 	}
 
 	if len(spec.TestLocations) > 0 {
-		return NewTestLocations(spec.TestLocations)
+		return NewTestLocations(log, spec.TestLocations)
 	}
 
-	return nil, errors.New("no location for TestDefinitions defined")
+	return nil, errors.New("no test locations defined")
 }
 
-func NewSetLocations(sets []tmv1beta1.LocationSet) (Locations, error) {
+func NewSetLocations(log logr.Logger, sets []tmv1beta1.LocationSet) (Locations, error) {
 	locSets := &Sets{
 		Sets: make(map[string]*Set),
 	}
 	var firstSet *Set
 	for _, set := range sets {
-		testlocation, err := NewTestLocations(set.Locations)
+		testlocation, err := NewTestLocations(log, set.Locations)
 		if err != nil {
 			return nil, err
 		}
