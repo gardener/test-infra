@@ -43,6 +43,10 @@ spec:
         imagePullPolicy: {{ .Values.controller.pullPolicy }}
         command: ["/testmachinery-controller"]
         args:
+        - --webhook-http-address=0.0.0.0:{{.Values.controller.webhook.http.port}}
+        - --webhook-https-address=0.0.0.0:{{.Values.controller.webhook.https.port}}
+        - --cert-file=/etc/testmachinery-controller/srv/tls.crt
+        - --key-file=/etc/testmachinery-controller/srv/tls.key
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - --base-image={{ .Values.controller.steps.baseImage }}
         - --prepare-image={{ .Values.controller.steps.prepareImage }}
@@ -58,18 +62,6 @@ spec:
         env:
         - name: TM_NAMESPACE
           value: {{ .Release.Namespace }}
-        - name: WEBHOOK_HTTP_BINDADDRESS
-          value: "0.0.0.0"
-        - name: WEBHOOK_HTTPS_BINDADDRESS
-          value: "0.0.0.0"
-        - name: WEBHOOK_HTTP_PORT
-          value: "{{.Values.controller.webhook.http.port}}"
-        - name: WEBHOOK_HTTPS_PORT
-          value: "{{.Values.controller.webhook.https.port}}"
-        - name: WEBHOOK_CERT_FILE
-          value: /etc/testmachinery-controller/srv/tls.crt
-        - name: WEBHOOK_KEY_FILE
-          value: /etc/testmachinery-controller/srv/tls.key
         - name: S3_ENDPOINT
           valueFrom:
             configMapKeyRef:

@@ -52,4 +52,3 @@ var _ = Describe("helper test", func() {
 		})
 	})
 })
-

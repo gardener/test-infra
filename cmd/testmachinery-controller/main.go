@@ -92,6 +92,7 @@ func init() {
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	logger.InitFlags(nil)
 	testmachinery.InitFlags(nil)
+	server.InitFlags(nil)
 	flag.Parse()
 
 	log, err := logger.New(nil)

@@ -22,7 +22,7 @@ import (
 
 // ReturnMultiError takes an err object and returns a multierror with a custom format.
 func ReturnMultiError(err error) error {
-	if err == nil || reflect.ValueOf(err).IsNil(){
+	if err == nil || reflect.ValueOf(err).IsNil() {
 		return nil
 	}
 
