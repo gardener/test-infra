@@ -28,6 +28,7 @@ spec:
     metadata:
       annotations:
         checksum/tls-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/github-secret: {{ include (print $.Template.BasePath "/gh-secrets.yaml") . | sha256sum }}
       labels:
         app: tm-controller
     spec:
