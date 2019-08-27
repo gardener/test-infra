@@ -22,6 +22,7 @@ controller:
   pullPolicy: IfNotPresent
   imagePullSecretName: ""
   testDefPath: ""
+  verbosity: 2
 
   steps:
     baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0

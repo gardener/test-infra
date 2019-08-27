@@ -22,7 +22,6 @@ import (
 
 	"github.com/gardener/test-infra/pkg/controller/logger"
 
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/version"
 
 	"github.com/gardener/test-infra/pkg/controller"
@@ -112,5 +111,5 @@ func init() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
+	fmt.Println(testmachinery.GetConfig().String())
 }

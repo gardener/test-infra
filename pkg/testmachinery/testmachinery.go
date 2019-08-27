@@ -37,23 +37,16 @@ var tmConfig = TmConfiguration{
 	Insecure:          false,
 	Namespace:         "default",
 	CleanWorkflowPods: false,
-	GitSecrets:        make([]*GitConfig, 0),
+	GitSecrets:        make([]GitConfig, 0),
 	S3:                &objectStoreConfig,
 }
 
 // Setup fetches all configuration values and creates the TmConfiguration.
 func Setup() error {
-	if _, err := os.Stat(githubSecretsPath); len(githubSecretsPath) != 0 && err != nil {
-		var gitSecrets GitSecrets
-		rawSecrets, err := ioutil.ReadFile(githubSecretsPath)
-		if err != nil {
-			return errors.Wrapf(err, "unable to read file from %s", githubSecretsPath)
-		}
-		err = yaml.Unmarshal(rawSecrets, &gitSecrets)
-		if err != nil {
-			return fmt.Errorf("unable to read git secrets: %s", err.Error())
-		}
-		tmConfig.GitSecrets = gitSecrets.Secrets
+	var err error
+	tmConfig.GitSecrets, err = readSecretsFromFile(githubSecretsPath)
+	if err != nil {
+		return err
 	}
 
 	// if no endpoint is defined we assume that no cleanup should happen
@@ -115,4 +108,26 @@ func IsRunInsecure() bool {
 // GetWorkflowName returns the workflow name of a testruns
 func GetWorkflowName(tr *v1beta1.Testrun) string {
 	return fmt.Sprintf("%s-wf", tr.Name)
+}
+
+func readSecretsFromFile(path string) ([]GitConfig, error) {
+	if len(path) == 0 {
+		return make([]GitConfig, 0), nil
+	}
+	if _, err := os.Stat(githubSecretsPath); err != nil {
+		return nil, errors.Wrapf(err, "file %s does not exist", path)
+	}
+	rawSecrets, err := ioutil.ReadFile(githubSecretsPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to read file from %s", githubSecretsPath)
+	}
+	gitSecrets := GitSecrets{}
+	err = yaml.Unmarshal(rawSecrets, &gitSecrets)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse git secrets")
+	}
+	if len(gitSecrets.Secrets) == 0 {
+		return nil, errors.New("git secrets are emtpy")
+	}
+	return gitSecrets.Secrets, nil
 }
