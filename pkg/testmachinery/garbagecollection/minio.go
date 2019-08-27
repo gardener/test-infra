@@ -16,6 +16,9 @@ package garbagecollection
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -28,10 +31,7 @@ const (
 )
 
 // NewObjectStore fetches endpoint and credentials, and creates a ObjectStorage object.
-func NewObjectStore() (*ObjectStore, error) {
-
-	cfg := testmachinery.GetConfig().ObjectStore
-
+func NewObjectStore(cfg *testmachinery.S3Config) (*ObjectStore, error) {
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func NewObjectStore() (*ObjectStore, error) {
 
 	ok, err := minioClient.BucketExists(cfg.BucketName)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting bucket name %s: %s", cfg.BucketName, err.Error())
+		return nil, errors.Wrapf(err, "unable to get bucket name %s", cfg.BucketName)
 	}
 	if !ok {
 		return nil, fmt.Errorf("Bucket %s does not exist", cfg.BucketName)
@@ -54,24 +54,32 @@ func (o *ObjectStore) DeleteObject(key string) error {
 }
 
 // CleanTestrun deletes all data of a Testrun
-func (o *ObjectStore) CleanTestrun(trName string) {
+func (o *ObjectStore) CleanTestrun(trName string) error {
+	var result *multierror.Error
 	// get all objects of the testrun
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 	for object := range o.client.ListObjectsV2(o.bucketName, "testmachinery/"+trName, true, doneCh) {
-		o.client.RemoveObject(o.bucketName, object.Key)
+		if err := o.client.RemoveObject(o.bucketName, object.Key); err != nil {
+			result = multierror.Append(result, err)
+		}
 	}
+	return util.ReturnMultiError(result)
 }
 
 // CleanOldData deletes all data from object storage that is older than cleanupDays
-func (o *ObjectStore) CleanOldData() {
+func (o *ObjectStore) CleanOldData() error {
+	var result *multierror.Error
 	// get all objects of the testrun
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 	for object := range o.client.ListObjectsV2(o.bucketName, "testmachinery", true, doneCh) {
 		cleanupDate := time.Now().Add(-(time.Hour * 24 * cleanupDays))
 		if object.LastModified.Before(cleanupDate) {
-			o.client.RemoveObject(o.bucketName, object.Key)
+			if err := o.client.RemoveObject(o.bucketName, object.Key); err != nil {
+				result = multierror.Append(result, err)
+			}
 		}
 	}
+	return util.ReturnMultiError(result)
 }

@@ -27,16 +27,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	githubSecretsPath string
+	objectStoreConfig S3Config
+)
+
 var tmConfig = TmConfiguration{
+	Local:             false,
 	Insecure:          false,
 	Namespace:         "default",
 	CleanWorkflowPods: false,
 	GitSecrets:        make([]*GitConfig, 0),
+	S3:                &objectStoreConfig,
 }
-var (
-	githubSecretsPath string
-	objectStoreConfig ObjectStoreConfig
-)
 
 // Setup fetches all configuration values and creates the TmConfiguration.
 func Setup() error {
@@ -53,10 +56,14 @@ func Setup() error {
 		tmConfig.GitSecrets = gitSecrets.Secrets
 	}
 
-	if objectStoreConfig.Endpoint != "" {
-		// todo validate object store config
+	// if no endpoint is defined we assume that no cleanup should happen
+	// this should only happen in local environments
+	if tmConfig.Local && len(objectStoreConfig.Endpoint) == 0 {
+		tmConfig.S3 = nil
 	}
-	tmConfig.ObjectStore = &objectStoreConfig
+	if err := ValidateS3Config(tmConfig.S3); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -73,6 +80,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&BASE_IMAGE, "base-image", util.Getenv("BASE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest"),
 		"Set the base image that is used as the default image if a TestDefinition does not define a image")
 
+	flag.BoolVar(&tmConfig.Local, "local", false, "The controller runs outside of a cluster.")
 	flagset.BoolVar(&tmConfig.Insecure, "insecure", tmConfig.Insecure,
 		"Enable insecure mode. The test machinery runs in insecure mode which means that local testdefs are allowed and therefore hostPaths are mounted.")
 	flagset.StringVar(&tmConfig.Namespace, "namespace", util.Getenv("TM_NAMESPACE", tmConfig.Namespace),

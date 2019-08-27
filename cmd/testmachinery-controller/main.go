@@ -36,7 +36,6 @@ import (
 )
 
 var (
-	local                bool
 	metricsAddr          string
 	enableLeaderElection bool
 
@@ -71,7 +70,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !local {
+	if !testmachinery.GetConfig().Local {
 		go server.Serve(context.Background(), ctrl.Log.WithName("admission"))
 		server.UpdateHealth(true)
 	}
@@ -86,7 +85,6 @@ func main() {
 
 func init() {
 	// Set commandline flags
-	flag.BoolVar(&local, "local", false, "The controller runs outside of a cluster.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")

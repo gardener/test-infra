@@ -47,6 +47,7 @@ spec:
         - --webhook-https-address=0.0.0.0:{{.Values.controller.webhook.https.port}}
         - --cert-file=/etc/testmachinery-controller/srv/tls.crt
         - --key-file=/etc/testmachinery-controller/srv/tls.key
+        - --namespace={{ .Release.Namespace }}
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - --base-image={{ .Values.controller.steps.baseImage }}
         - --prepare-image={{ .Values.controller.steps.prepareImage }}
@@ -60,8 +61,6 @@ spec:
         - --testdef-path={{ .Values.controller.testDefPath }}
         {{- end }}
         env:
-        - name: TM_NAMESPACE
-          value: {{ .Release.Namespace }}
         - name: S3_ENDPOINT
           valueFrom:
             configMapKeyRef:

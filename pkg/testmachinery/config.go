@@ -77,14 +77,15 @@ var (
 // TmConfiguration is an object containing the actual configuration of the Testmachinery
 type TmConfiguration struct {
 	Namespace         string
+	Local             bool
 	Insecure          bool
 	CleanWorkflowPods bool
 	GitSecrets        []*GitConfig
-	ObjectStore       *ObjectStoreConfig
+	S3                *S3Config
 }
 
-// ObjectStoreConfig is an object containing the ObjectStore specific configuration
-type ObjectStoreConfig struct {
+// S3Config is an object containing the S3 specific configuration
+type S3Config struct {
 	Endpoint   string
 	SSL        bool
 	AccessKey  string

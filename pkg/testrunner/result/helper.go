@@ -61,7 +61,7 @@ func marshalAndAppendSummaries(summary testrunner.TestrunSummary, stepSummaries 
 
 }
 
-func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string, ssl bool) (*testmachinery.ObjectStoreConfig, error) {
+func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string, ssl bool) (*testmachinery.S3Config, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -76,7 +76,7 @@ func getOSConfig(tmClient kubernetes.Interface, namespace, minioEndpoint string,
 		return nil, fmt.Errorf("cannot get Secret '%s': %s", minioConfig.Data["objectstore.secretName"], err.Error())
 	}
 
-	return &testmachinery.ObjectStoreConfig{
+	return &testmachinery.S3Config{
 		Endpoint:   minioEndpoint,
 		SSL:        ssl,
 		AccessKey:  string(minioSecrets.Data["accessKey"]),
