@@ -22,7 +22,6 @@ import (
 
 	"github.com/gardener/test-infra/pkg/controller/logger"
 
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/version"
 
 	"github.com/gardener/test-infra/pkg/controller"
@@ -36,7 +35,6 @@ import (
 )
 
 var (
-	local                bool
 	metricsAddr          string
 	enableLeaderElection bool
 
@@ -71,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !local {
+	if !testmachinery.GetConfig().Local {
 		go server.Serve(context.Background(), ctrl.Log.WithName("admission"))
 		server.UpdateHealth(true)
 	}
@@ -86,12 +84,12 @@ func main() {
 
 func init() {
 	// Set commandline flags
-	flag.BoolVar(&local, "local", false, "The controller runs outside of a cluster.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	logger.InitFlags(nil)
 	testmachinery.InitFlags(nil)
+	server.InitFlags(nil)
 	flag.Parse()
 
 	log, err := logger.New(nil)
@@ -113,5 +111,5 @@ func init() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Config: %s", util.PrettyPrintStruct(testmachinery.GetConfig()))
+	fmt.Println(testmachinery.GetConfig().String())
 }

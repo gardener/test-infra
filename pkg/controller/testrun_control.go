@@ -67,7 +67,7 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 			log.Error(err, "unable to setup workflow")
 			return reconcile.Result{}, err
 		}
-		log.Info("creating workflow %s in namespace %s", "workflow", wf.Name, "namespace", wf.Namespace)
+		log.Info("creating workflow", "workflow", wf.Name, "namespace", wf.Namespace)
 		err = r.Create(ctx, wf)
 		if err != nil {
 			r.Logger.Error(err, "unable to create workflow", "workflow", wf.Name, "namespace", wf.Namespace)

@@ -16,7 +16,7 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"github.com/go-logr/logr"
 	"net/http"
 	"os"
@@ -25,15 +25,16 @@ import (
 	"github.com/gardener/test-infra/pkg/controller/admission/server/webhooks"
 )
 
+var (
+	listenAddressHTTP  string
+	listenAddressHTTPS string
+
+	serverCertFile string
+	serverKeyFile  string
+)
+
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
-
-	listenAddressHTTP := fmt.Sprintf("%s:%s", os.Getenv("WEBHOOK_HTTP_BINDADDRESS"), os.Getenv("WEBHOOK_HTTP_PORT"))
-	listenAddressHTTPS := fmt.Sprintf("%s:%s", os.Getenv("WEBHOOK_HTTPS_BINDADDRESS"), os.Getenv("WEBHOOK_HTTPS_PORT"))
-
-	serverCertFile := os.Getenv("WEBHOOK_CERT_FILE")
-	serverKeyFile := os.Getenv("WEBHOOK_KEY_FILE")
-
 	serverMuxHTTP := http.NewServeMux()
 	serverMuxHTTPS := http.NewServeMux()
 
@@ -74,4 +75,20 @@ func Serve(ctx context.Context, log logr.Logger) {
 		log.Error(err, "unable to shut down HTTPS server")
 	}
 	log.Info("HTTP(S) servers stopped.")
+}
+
+func InitFlags(flagset *flag.FlagSet) {
+	if flagset == nil {
+		flagset = flag.CommandLine
+	}
+
+	flagset.StringVar(&listenAddressHTTP, "webhook-http-address", ":80",
+		"Webhook HTTP address to bind")
+	flagset.StringVar(&listenAddressHTTPS, "webhook-https-address", ":443",
+		"Webhook HTTPS address to bind")
+
+	flagset.StringVar(&serverCertFile, "cert-file", os.Getenv("WEBHOOK_CERT_FILE"),
+		"Path to server certificate")
+	flagset.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
+		"Path to private key")
 }

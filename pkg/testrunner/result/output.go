@@ -135,7 +135,7 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 	return trSummary, summaries, nil
 }
 
-func getExportedDocuments(cfg *testmachinery.ObjectStoreConfig, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
+func getExportedDocuments(cfg *testmachinery.S3Config, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {

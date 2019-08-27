@@ -51,7 +51,7 @@ func NewGitLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) (t
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse url %s", testDefLocation.Repo)
 	}
-	config := getGitConfig(repoURL)
+	config := getGitConfig(log, repoURL)
 	repoOwner, repoName := parseRepoURL(repoURL)
 
 	return &GitLocation{
@@ -88,7 +88,7 @@ func (l *GitLocation) GetLocation() *tmv1beta1.TestLocation {
 	return l.Info
 }
 
-// Name returns the unique name of the git location consiting of the repositorie's owner, name and revision.
+// Name returns the unique name of the git location consisting of the repository's owner, name and revision.
 func (l *GitLocation) Name() string {
 	name := fmt.Sprintf("%s-%s-%s", l.repoOwner, l.repoName, l.Info.Revision)
 	return util.FormatArtifactName(name)
@@ -104,7 +104,7 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 
 	client, err := l.getGitHubClient()
 	if err != nil {
-		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
+		return nil, fmt.Errorf("unable to create github client for %s: %s", l.Info.Repo, err.Error())
 	}
 
 	_, directoryContent, _, err := client.Repositories.GetContents(context.Background(), l.repoOwner, l.repoName,
@@ -191,14 +191,16 @@ func (l *GitLocation) getGitHubAPI() string {
 	return apiURL
 }
 
-func getGitConfig(gitURL *url.URL) *testmachinery.GitConfig {
+func getGitConfig(log logr.Logger, gitURL *url.URL) *testmachinery.GitConfig {
 	httpURL := fmt.Sprintf("%s://%s", gitURL.Scheme, gitURL.Host)
 	if testmachinery.GetConfig() == nil {
+		log.V(5).Info("no testmachinery config defined")
 		return nil
 	}
-	for _, secret := range testmachinery.GetConfig().GitSecrets {
-		if secret != nil && secret.HttpUrl == httpURL {
-			return secret
+	for i, secret := range testmachinery.GetConfig().GitSecrets {
+		if secret.HttpUrl == httpURL {
+			log.V(5).Info(fmt.Sprintf("found secret %d for github %s", i, gitURL))
+			return &secret
 		}
 	}
 	return nil

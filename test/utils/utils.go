@@ -158,7 +158,7 @@ func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace strin
 }
 
 // WaitForMinioService waits for the minio service to get an external IP and return the minio config.
-func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, namespace string, maxWaitTime time.Duration) (*testmachinery.ObjectStoreConfig, error) {
+func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, namespace string, maxWaitTime time.Duration) (*testmachinery.S3Config, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -183,7 +183,7 @@ func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, name
 		return nil, err
 	}
 
-	return &testmachinery.ObjectStoreConfig{
+	return &testmachinery.S3Config{
 		Endpoint:   minioEndpoint,
 		AccessKey:  string(minioSecret.Data["accessKey"]),
 		SecretKey:  string(minioSecret.Data["secretKey"]),

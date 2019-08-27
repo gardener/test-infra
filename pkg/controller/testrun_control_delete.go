@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -37,54 +39,35 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 	}
 
 	foundWf := &argov1.Workflow{}
-	if err := r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf); err == nil {
+	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf)
+	if err != nil && !errors.IsNotFound(err) {
+		return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
+	}
+	if err == nil {
 		log.Info("starting cleanup")
 
-		// garbage collect all outputs by traversing through nodes and collect outputs artifacts from minio
-		os, err := garbagecollection.NewObjectStore()
-		if err != nil {
-			log.Error(err, "unable to initialize object store client")
-			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
-		}
-		for _, node := range foundWf.Status.Nodes {
-			if node.Outputs == nil {
-				continue
-			}
-			for _, artifact := range node.Outputs.Artifacts {
-				log.V(5).Info(fmt.Sprintf("Processing artifact %s", artifact.Name))
-				if artifact.S3 != nil {
-					err := os.DeleteObject(artifact.S3.Key)
-					if err != nil {
-						log.Error(err, "unable to delete object from object storage", "artifact", artifact.S3.Key)
-
-						// do not retry deletion if the key does not not exist in s3 anymore
-						// maybe use const from aws lib -> need to change to aws lib
-						if err.Error() != "The specified key does not exist." {
-							return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
-						}
-					}
-					log.V(5).Info("object deleted", "artifact", artifact.S3.Key)
-				}
-			}
+		if res, err := gcWorkflowArtifacts(log, foundWf); err != nil {
+			return res, err
 		}
 
+		log.Info("deleting", "workflow", foundWf.Name)
 		if removeFinalizer(foundWf, tmv1beta1.SchemeGroupVersion.Group) {
 			err = r.Update(ctx, foundWf)
 			if err != nil {
 				log.Error(err, "unable to remove finalizer from workflow", "workflow", foundWf.Name)
-				return reconcile.Result{}, err
+				return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 			}
 		}
 
-		log.Info("deleting", "workflow", foundWf.Name)
 		if tr.DeletionTimestamp == nil {
+			log.Info("deleting", "testrun", tr.Name)
 			removeFinalizer(tr, tmv1beta1.SchemeGroupVersion.Group)
 			err = r.Delete(ctx, tr)
 			if err != nil {
 				log.Error(err, "unable to delete workflow", "workflow", foundWf.Name)
 				return reconcile.Result{}, err
 			}
-			return reconcile.Result{}, err
+			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 		}
 	}
 
@@ -93,9 +76,46 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 		err := r.Update(ctx, tr)
 		if err != nil {
 			log.Error(err, "unable to remove finalizer from testrun")
-			return reconcile.Result{}, err
+			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 		}
 	}
+	return reconcile.Result{}, nil
+}
+
+// gcWorkflowArtifacts collects all outputs of a workflow by traversing through nodes and collect outputs artifacts from minio.
+// These artifacts are then deleted form the s3 storage
+func gcWorkflowArtifacts(log logr.Logger, wf *argov1.Workflow) (reconcile.Result, error) {
+	if testmachinery.GetConfig().S3 == nil {
+		log.V(3).Info("skip garbage collection of artifacts")
+		return reconcile.Result{}, nil
+	}
+	os, err := garbagecollection.NewObjectStore(testmachinery.GetConfig().S3)
+	if err != nil {
+		log.Error(err, "unable to initialize object store client")
+		return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
+	}
+	for _, node := range wf.Status.Nodes {
+		if node.Outputs == nil {
+			continue
+		}
+		for _, artifact := range node.Outputs.Artifacts {
+			log.V(5).Info(fmt.Sprintf("Processing artifact %s", artifact.Name))
+			if artifact.S3 != nil {
+				err := os.DeleteObject(artifact.S3.Key)
+				if err != nil {
+					log.Error(err, "unable to delete object from object storage", "artifact", artifact.S3.Key)
+
+					// do not retry deletion if the key does not not exist in s3 anymore
+					// maybe use const from aws lib -> need to change to aws lib
+					if err.Error() != "The specified key does not exist." {
+						return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
+					}
+				}
+				log.V(5).Info("object deleted", "artifact", artifact.S3.Key)
+			}
+		}
+	}
+
 	return reconcile.Result{}, nil
 }
 
