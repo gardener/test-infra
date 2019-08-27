@@ -18,6 +18,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/pkg/errors"
+	"io/ioutil"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/util"
@@ -31,14 +33,20 @@ var tmConfig = TmConfiguration{
 	CleanWorkflowPods: false,
 	GitSecrets:        make([]*GitConfig, 0),
 }
-var objectStoreConfig ObjectStoreConfig
+var (
+	githubSecretsPath string
+	objectStoreConfig ObjectStoreConfig
+)
 
 // Setup fetches all configuration values and creates the TmConfiguration.
 func Setup() error {
-	// todo refactor to read from file
-	if rawSecrets := os.Getenv("GIT_SECRETS"); rawSecrets != "" {
+	if _, err := os.Stat(githubSecretsPath); len(githubSecretsPath) != 0 && err != nil {
 		var gitSecrets GitSecrets
-		err := yaml.Unmarshal([]byte(rawSecrets), &gitSecrets)
+		rawSecrets, err := ioutil.ReadFile(githubSecretsPath)
+		if err != nil {
+			return errors.Wrapf(err, "unable to read file from %s", githubSecretsPath)
+		}
+		err = yaml.Unmarshal(rawSecrets, &gitSecrets)
 		if err != nil {
 			return fmt.Errorf("unable to read git secrets: %s", err.Error())
 		}
@@ -72,6 +80,8 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.BoolVar(&tmConfig.CleanWorkflowPods, "enable-pod-gc", util.GetenvBool("CLEAN_WORKFLOW_PODS", tmConfig.CleanWorkflowPods),
 		"Enable garbage collection of pods after a testrun has finished")
 
+	flagset.StringVar(&githubSecretsPath, "github-secrets-path", "secrets.yaml",
+		"Path to the github secrets configuration")
 	flagset.StringVar(&objectStoreConfig.Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"),
 		"Set the s3 object storage endpoint")
 	flagset.StringVar(&objectStoreConfig.AccessKey, "s3-access-key", os.Getenv("S3_ACCESS_KEY"),

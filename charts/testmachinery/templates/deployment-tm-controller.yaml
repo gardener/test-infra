@@ -45,6 +45,9 @@ spec:
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - --base-image={{ .Values.controller.steps.baseImage }}
         - --prepare-image={{ .Values.controller.steps.prepareImage }}
+        {{- if .Values.secrets.github.data }}
+        - --github-secrets-path={{ .Values.secrets.github.path }}/github-secrets.yaml
+        {{- end }}
         {{- if .Values.local.enabled }}
         - -insecure=true
         {{- end}}
@@ -91,12 +94,6 @@ spec:
             configMapKeyRef:
               name: {{.Values.config.name}}
               key: objectstore.ssl
-        - name: GIT_SECRETS
-          valueFrom:
-            secretKeyRef:
-              name: tm-git
-              key: config.yaml
-              optional: true
         livenessProbe:
           httpGet:
             path: /healthz
@@ -113,16 +110,26 @@ spec:
         - name: certs
           mountPath: /etc/testmachinery-controller/srv
           readOnly: true
-{{ if and (.Values.local.enabled) (.Values.local.hostPath) }}
+        {{- if .Values.secrets.github.data }}
+        - name: github-secrets
+          mountPath: {{ .Values.secrets.github.path }}
+          readOnly: true
+        {{- end}}
+        {{- if and (.Values.local.enabled) (.Values.local.hostPath) }}
         - name: local-host
           mountPath: "{{.Values.local.hostPath}}"
-{{ end }}
+        {{- end }}
       volumes:
       - name: certs
         secret:
           secretName: testmachinery-controller-cert
-{{ if and (.Values.local.enabled) (.Values.local.hostPath) }}
+      {{- if .Values.secrets.github.data }}
+      - name: github-secrets
+        secret:
+          secretName: tm-github
+      {{- end }}
+      {{- if and (.Values.local.enabled) (.Values.local.hostPath) }}
       - name: local-host
         hostPath:
           path: "{{.Values.local.hostPath}}"
-{{end }}
+      {{- end }}

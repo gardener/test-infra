@@ -47,6 +47,11 @@ controller:
       ...
       -----END RSA PRIVATE KEY-----
 
+secrets:
+  github:
+    path: /etc/testmachinery-controller/secrets/git
+    data: "" # base64 encoded secrets
+
 config:
   name: tm-config
 

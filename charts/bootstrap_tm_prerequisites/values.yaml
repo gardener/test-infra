@@ -45,7 +45,6 @@ objectStorage:
     secretKey: "lzzlRK1Q7LE"
 
 secrets:
-  github: "" # base64 encoded secrets
   pullSecrets: []
   # - name: myDockerPullSecretName
   #   dockerconfigjson: base64 encoded dockerconfigjson
