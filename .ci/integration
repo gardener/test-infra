@@ -85,11 +85,12 @@ controller_chart="$(helm template --namespace ${NAMESPACE} \
 ################################
 set +e
 # remove zombies
-kubectl get tr -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
-kubectl get wf -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
-kubectl --kubeconfig=$TM_KUBECONFIG delete tr --all
-kubectl get wf -oname | xargs kubectl patch -p '{"metadata":{"finalizers":[]}}' --type=merge
-kubectl --kubeconfig=$TM_KUBECONFIG delete wf --all
+for ns in $(kubectl get ns | awk 'FNR > 1 { print $1 }'); do
+  kubectl -n $ns get tr -oname | xargs kubectl -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+  kubectl -n $ns get wf -oname | xargs kubectl -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+done
+kubectl --kubeconfig=$TM_KUBECONFIG delete tr --all --all-namespaces
+kubectl --kubeconfig=$TM_KUBECONFIG delete wf --all --all-namespaces
 echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
 echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
 set -e
@@ -103,10 +104,10 @@ echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 
 # run integration tests with ginkgo
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -p --nodes=5 ./test/validationwebhook
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -r -p --nodes=5 ./test/controller
-TM_NAMESPACE=${NAMESPACE} TM_KUBECONFIG_PATH=$TM_KUBECONFIG GIT_COMMIT_SHA=$GIT_COMMIT_SHA ginkgo -mod=vendor -p --nodes=5 ./test/testrunner/...
 
+ginkgo -mod=vendor -p --nodes=5 ./test/validationwebhook -- --tm-namespace=${NAMESPACE} --kubeconfig=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
+ginkgo -mod=vendor -r -p --nodes=5 ./test/controller -- --tm-namespace=${NAMESPACE} --kubeconfig=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
+ginkgo -mod=vendor -p --nodes=5 ./test/testrunner/... -- --tm-namespace=${NAMESPACE} --kubeconfig=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
 
 #######################
 # clean installation  #

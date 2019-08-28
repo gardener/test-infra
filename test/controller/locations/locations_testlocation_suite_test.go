@@ -28,18 +28,18 @@ var _ = Describe("Locations TestLocations tests", func() {
 	It("should run a test with a TestLocations", func() {
 		ctx := context.Background()
 		defer ctx.Done()
-		tr := resources.GetBasicTestrun(namespace, commitSha)
+		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 		tr.Spec.LocationSets = nil
 		tr.Spec.TestLocations = []tmv1beta1.TestLocation{
 			{
 				Type:     tmv1beta1.LocationTypeGit,
 				Repo:     "https://github.com/gardener/test-infra.git",
-				Revision: commitSha,
+				Revision: operation.Commit(),
 			},
 		}
 
-		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, tmv1beta1.PhaseStatusSuccess, namespace, maxWaitTime)
-		defer utils.DeleteTestrun(tmClient, tr)
+		tr, _, err := operation.RunTestrun(ctx, tr, tmv1beta1.PhaseStatusSuccess, TestrunDurationTimeout)
+		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })

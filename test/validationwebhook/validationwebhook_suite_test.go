@@ -15,8 +15,11 @@
 package validationwebhook_test
 
 import (
+	"github.com/gardener/test-infra/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"time"
 
 	"testing"
 )
@@ -25,3 +28,28 @@ func TestValidationWebhook(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Validation webhook Integration Test Suite")
 }
+
+const (
+	InitializationTimeout = 10 * time.Minute
+	CleanupTimeout        = 1 * time.Minute
+)
+
+var (
+	cfg       *framework.Config
+	operation *framework.Operation
+)
+
+func init() {
+	cfg = framework.InitFlags(nil)
+}
+
+var _ = BeforeSuite(func() {
+	var err error
+	operation, err = framework.New(zap.LoggerTo(GinkgoWriter, true), cfg)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(operation.WaitForClusterReadiness(InitializationTimeout)).ToNot(HaveOccurred())
+})
+
+var _ = AfterSuite(func() {
+	operation.AfterSuite()
+}, CleanupTimeout.Seconds())

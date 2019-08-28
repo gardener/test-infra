@@ -16,62 +16,24 @@ package locations_test
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"os"
-	"testing"
-	"time"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
-
-var (
-	maxWaitTime = 300 * time.Second
-)
-
-var (
-	commitSha string
-	namespace string
-	tmClient  kubernetes.Interface
-)
-
-func TestTestflowWebhook(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrun locations Integration Test Suite")
-}
 
 var _ = Describe("Locations LocationSets tests", func() {
-
-	BeforeSuite(func() {
-		var err error
-		commitSha = os.Getenv("GIT_COMMIT_SHA")
-		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
-		namespace = os.Getenv("TM_NAMESPACE")
-
-		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-	})
 
 	Context("LocationSets", func() {
 		It("should run a test with one location set and a specific default location", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 		})
@@ -79,7 +41,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 		It("should use the first location set as default", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.LocationSets = []tmv1beta1.LocationSet{
 				{
 					Name: "default",
@@ -87,7 +49,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 						{
 							Type:     tmv1beta1.LocationTypeGit,
 							Repo:     "https://github.com/gardener/test-infra.git",
-							Revision: commitSha,
+							Revision: operation.Commit(),
 						},
 					},
 				},
@@ -103,15 +65,15 @@ var _ = Describe("Locations LocationSets tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("should use the second location set as default", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.LocationSets = []tmv1beta1.LocationSet{
 				{
 					Name: "non-default",
@@ -130,14 +92,14 @@ var _ = Describe("Locations LocationSets tests", func() {
 						{
 							Type:     tmv1beta1.LocationTypeGit,
 							Repo:     "https://github.com/gardener/test-infra.git",
-							Revision: commitSha,
+							Revision: operation.Commit(),
 						},
 					},
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
@@ -148,7 +110,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 			defer ctx.Done()
 
 			setName := "default"
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.LocationSets = []tmv1beta1.LocationSet{
 				{
 					Name: "non-default",
@@ -166,15 +128,15 @@ var _ = Describe("Locations LocationSets tests", func() {
 						{
 							Type:     tmv1beta1.LocationTypeGit,
 							Repo:     "https://github.com/gardener/test-infra.git",
-							Revision: commitSha,
+							Revision: operation.Commit(),
 						},
 					},
 				},
 			}
 			tr.Spec.TestFlow[0].Definition.LocationSet = &setName
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

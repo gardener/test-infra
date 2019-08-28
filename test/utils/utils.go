@@ -16,10 +16,10 @@ package utils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -47,7 +47,7 @@ import (
 
 // RunTestrun executes a testrun on a cluster and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, namespace string, maxWaitTime time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, maxWaitTime time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
@@ -55,8 +55,11 @@ func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta
 
 	foundTestrun, err := WatchTestrunUntilCompleted(ctx, tmClient, tr, maxWaitTime)
 	if err != nil {
-		fmt.Print(util.PrettyPrintStruct(tr))
-		return nil, nil, fmt.Errorf("error watching Testrun: %s: %s", tr.Name, err.Error())
+		fmt.Println("Testrun:")
+		fmt.Println(util.PrettyPrintStruct(tr))
+		fmt.Println("FoundTestrun:")
+		fmt.Println(util.PrettyPrintStruct(foundTestrun))
+		return nil, nil, errors.Wrapf(err, "error watching Testrun %s in Namespace %s", tr.Name, tr.Namespace)
 	}
 
 	wf, err := GetWorkflow(ctx, tmClient, foundTestrun)
@@ -65,7 +68,7 @@ func RunTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta
 	}
 
 	if reflect.DeepEqual(foundTestrun.Status, tmv1beta1.TestrunStatus{}) {
-		return nil, nil, fmt.Errorf("Testrun %s status is empty", tr.Name)
+		return nil, nil, errors.Wrapf(err, "Testrun %s in namespace % status is empty", tr.Name, tr.Namespace)
 	}
 	if foundTestrun.Status.Phase != phase {
 		// get additional errors message
@@ -142,17 +145,17 @@ func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 }
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
-func WaitForClusterReadiness(clusterClient kubernetes.Interface, namespace string, maxWaitTime time.Duration) error {
+func WaitForClusterReadiness(log logr.Logger, clusterClient kubernetes.Interface, namespace string, maxWaitTime time.Duration) error {
 	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
 		var (
-			tmControllerStatus    = deploymentIsReady(clusterClient, namespace, "testmachinery-controller")
-			wfControllerStatus    = deploymentIsReady(clusterClient, namespace, "workflow-controller")
-			minioDeploymentStatus = deploymentIsReady(clusterClient, namespace, "minio-deployment")
+			tmControllerStatus    = deploymentIsReady(log, clusterClient, namespace, "testmachinery-controller")
+			wfControllerStatus    = deploymentIsReady(log, clusterClient, namespace, "workflow-controller")
+			minioDeploymentStatus = deploymentIsReady(log, clusterClient, namespace, "minio-deployment")
 		)
 		if tmControllerStatus && wfControllerStatus && minioDeploymentStatus {
 			return true, nil
 		}
-		log.Infof("waiting for cluster TestMachinery-Controller: %t, Workflow-Controller: %t, Minio: %t readiness...", tmControllerStatus, wfControllerStatus, minioDeploymentStatus)
+		log.Info("waiting for Test Machinery components to become ready", "TestMachinery-controller", tmControllerStatus, "workflow-controller", wfControllerStatus, "minio", minioDeploymentStatus)
 		return false, nil
 	})
 }
@@ -191,11 +194,11 @@ func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, name
 	}, nil
 }
 
-func deploymentIsReady(clusterClient kubernetes.Interface, namespace, name string) bool {
+func deploymentIsReady(log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
 	deployment := &appsv1.Deployment{}
 	err := clusterClient.Client().Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	if err != nil {
-		log.Debug(err.Error())
+		log.V(3).Info(err.Error())
 		return false
 	}
 	err = health.CheckDeployment(deployment)

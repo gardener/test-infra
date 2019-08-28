@@ -21,20 +21,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"testing"
-	"time"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 
-	"github.com/gardener/test-infra/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -42,49 +36,18 @@ import (
 	"github.com/gardener/test-infra/test/utils"
 )
 
-var (
-	maxWaitTime = 300 * time.Second
-)
-
-func TestValidationWebhook(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrunner Integration Test Suite")
-}
-
 var _ = Describe("Testrunner execution tests", func() {
 
 	var (
-		commitSha     string
-		namespace     string
-		tmKubeconfig  string
-		tmClient      kubernetes.Interface
 		outputDirPath = "./out-"
 		testrunConfig result.Config
-		s3Endpoint    string
 	)
-
-	BeforeSuite(func() {
-		var err error
-		commitSha = os.Getenv("GIT_COMMIT_SHA")
-		tmKubeconfig = os.Getenv("TM_KUBECONFIG_PATH")
-		namespace = os.Getenv("TM_NAMESPACE")
-		s3Endpoint = os.Getenv("S3_ENDPOINT")
-
-		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-		_, err = utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
-		Expect(err).ToNot(HaveOccurred())
-	})
 
 	BeforeEach(func() {
 		testrunConfig = result.Config{
 			OutputDir:           ".",
 			ESConfigName:        "es-config-name",
-			S3Endpoint:          s3Endpoint,
+			S3Endpoint:          operation.S3Endpoint(),
 			ConcourseOnErrorDir: ".",
 		}
 	})
@@ -93,12 +56,12 @@ var _ = Describe("Testrunner execution tests", func() {
 		ctx := context.Background()
 		defer ctx.Done()
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
-		tr := resources.GetBasicTestrun(namespace, commitSha)
-		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-		defer utils.DeleteTestrun(tmClient, tr)
+		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(&testrunConfig, operation.Client(), operation.TestNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -140,12 +103,12 @@ var _ = Describe("Testrunner execution tests", func() {
 		ctx := context.Background()
 		defer ctx.Done()
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
-		tr := resources.GetBasicTestrun(namespace, commitSha)
-		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-		defer utils.DeleteTestrun(tmClient, tr)
+		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(&testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -177,7 +140,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
 	})
 
-	It("should add environemnt configuration to step metadata", func() {
+	It("should add environment configuration to step metadata", func() {
 		ctx := context.Background()
 		defer ctx.Done()
 
@@ -188,13 +151,13 @@ var _ = Describe("Testrunner execution tests", func() {
 		}
 
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
-		tr := resources.GetBasicTestrun(namespace, commitSha)
+		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 		tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
-		tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-		defer utils.DeleteTestrun(tmClient, tr)
+		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, tmClient, namespace, tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(&testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
