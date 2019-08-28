@@ -42,7 +42,7 @@ func getKubetestAndUtilities() error {
 		return err
 	}
 	_ = os.Setenv("GO111MODULE", goModuleOriginValue)
-	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), config.K8sRoot); err != nil {
+	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), ""); err != nil {
 		return err
 	}
 	return nil
