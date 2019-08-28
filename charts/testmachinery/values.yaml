@@ -25,8 +25,8 @@ controller:
   verbosity: 2
 
   steps:
-    baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0
-    prepareImage: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:0.29.0
+    baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.69.0
+    prepareImage: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:0.69.0
 
   serviceAccountName: testmachinery-controller
   webhook:

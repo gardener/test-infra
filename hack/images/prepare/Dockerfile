@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0 AS tm-prepare
+FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-prepare
 
 COPY ./prepare /tm/prepare
 
