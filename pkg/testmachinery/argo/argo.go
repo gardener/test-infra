@@ -66,7 +66,7 @@ func DeployWorkflow(wf *argov1.Workflow, masterURL, kubeconfig string) (*argov1.
 }
 
 // CreateTask takes a name, the running phase name, dependencies and artifacts, and return an argo task object.
-func CreateTask(taskName, templateName, phaseRunning string, continueOnError bool, dependencies []string, artifacts []argov1.Artifact) argov1.DAGTask {
+func CreateTask(taskName, templateName, phase string, continueOnError bool, dependencies []string, artifacts []argov1.Artifact) argov1.DAGTask {
 	return argov1.DAGTask{
 		Name:         taskName,
 		Template:     templateName,
@@ -80,7 +80,7 @@ func CreateTask(taskName, templateName, phaseRunning string, continueOnError boo
 			Parameters: []argov1.Parameter{
 				{
 					Name:  "phase",
-					Value: &phaseRunning,
+					Value: &phase,
 				},
 			},
 		},

@@ -124,8 +124,8 @@ func (n *Node) SetStep(step *tmv1beta1.DAGStep) {
 }
 
 // Task returns the argo task definition for the node.
-func (n *Node) Task() argov1.DAGTask {
-	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), testmachinery.PHASE_RUNNING, n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
+func (n *Node) Task(phase testmachinery.Phase) argov1.DAGTask {
+	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
 
 	switch n.step.Definition.Condition {
 	case tmv1beta1.ConditionTypeSuccess:

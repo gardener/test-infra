@@ -524,65 +524,6 @@ var _ = Describe("Testflow execution tests", func() {
 
 	})
 
-	Context("onExit", func() {
-		It("should run ExitHandlerTestDef when testflow succeeds", func() {
-			ctx := context.Background()
-			defer ctx.Done()
-			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeSuccess)
-
-			tr, wf, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
-			defer utils.DeleteTestrun(operation.Client(), tr)
-			Expect(err).ToNot(HaveOccurred())
-
-			numExecutedTestDefs := 0
-			for _, node := range wf.Status.Nodes {
-				if strings.HasPrefix(node.TemplateName, "exit-handler-testdef") && node.Phase == argov1.NodeSucceeded {
-					numExecutedTestDefs++
-				}
-			}
-
-			Expect(numExecutedTestDefs).To(Equal(1), "Testrun: %s", tr.Name)
-		})
-
-		It("should not run exit-handler-testdef when testflow succeeds", func() {
-			ctx := context.Background()
-			defer ctx.Done()
-			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeError)
-
-			tr, wf, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
-			defer utils.DeleteTestrun(operation.Client(), tr)
-			Expect(err).ToNot(HaveOccurred())
-
-			numExecutedTestDefs := 0
-			for _, node := range wf.Status.Nodes {
-				if strings.HasPrefix(node.TemplateName, "exit-handler-testdef") && node.Phase != argov1.NodeSkipped {
-					numExecutedTestDefs++
-				}
-			}
-
-			Expect(numExecutedTestDefs).To(Equal(0), "Testrun: %s", tr.Name)
-		})
-
-		It("should run exit-handler-testdef when testflow fails", func() {
-			ctx := context.Background()
-			defer ctx.Done()
-			tr := resources.GetTestrunWithExitHandler(resources.GetFailingTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeError)
-
-			tr, wf, err := operation.RunTestrun(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
-			defer utils.DeleteTestrun(operation.Client(), tr)
-			Expect(err).ToNot(HaveOccurred())
-
-			numExecutedTestDefs := 0
-			for _, node := range wf.Status.Nodes {
-				if strings.HasPrefix(node.TemplateName, "exit-handler-testdef") && node.Phase != argov1.NodeSkipped {
-					numExecutedTestDefs++
-				}
-			}
-
-			Expect(numExecutedTestDefs).To(Equal(1), "Testrun: %s", tr.Name)
-		})
-	})
-
 	Context("TTL", func() {
 		It("should delete the testrun after ttl has finished", func() {
 			ctx := context.Background()
