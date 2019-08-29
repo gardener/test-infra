@@ -50,7 +50,7 @@ func init() {
 // DryRun runs kubetest with dryrun=true argument
 func DryRun() (logDir string) {
 	kubetestArgs := createKubetestArgs("", false, true, 1)
-	runKubetest(kubetestArgs)
+	runKubetest(kubetestArgs, false)
 	return kubetestArgs.LogDir
 }
 
@@ -59,20 +59,23 @@ func Run(descFile string) (resultsPath string) {
 	if descFile == "" {
 		log.Fatal("no valid description file provided.")
 	}
-	log.Infof("running kubetest for %d e2e tests:\n%s", getLinesCount(descFile), getFileContent(descFile))
+	log.Infof("running kubetest for %d e2e tests:", getLinesCount(descFile))
+	// print readable file contents
+	fmt.Print(getFileContent(descFile))
+
 
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
 	if parallelTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
 		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
-		runKubetest(kubtestArgs)
+		runKubetest(kubtestArgs, true)
 	}
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
 		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
-		runKubetest(kubtestArgs)
+		runKubetest(kubtestArgs, true)
 	}
 	return config.LogDir
 }
@@ -104,7 +107,7 @@ func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts
 	return kubetestArgs
 }
 
-func runKubetest(args KubetestArgs) {
+func runKubetest(args KubetestArgs, logToStd bool) {
 	//  -clean-start
 	//    	If true, purge all namespaces except default and system before running tests. This serves to Cleanup test namespaces from failed/interrupted e2e runs in a long-lived cluster.
 	ginkgoArgs := fmt.Sprintf("--test_args=--clean-start --ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
@@ -119,7 +122,6 @@ func runKubetest(args KubetestArgs) {
 		log.Info(logMsg)
 	}
 
-	var stderr bytes.Buffer
 	// setup log file
 	e2eLogFilePath := filepath.Join(args.LogDir, "e2e.log")
 	file, err := os.Create(e2eLogFilePath)
@@ -128,8 +130,12 @@ func runKubetest(args KubetestArgs) {
 	}
 
 	cmd.Stdout = file
+	if logToStd {
+		outWriter := io.MultiWriter(os.Stdout, file)
+		cmd.Stdout = outWriter
+	}
 	if log.GetLevel() == log.DebugLevel {
-		cmd.Stderr = &stderr
+		cmd.Stderr = os.Stderr
 	}
 
 	if err = cmd.Start(); err != nil {
@@ -137,10 +143,6 @@ func runKubetest(args KubetestArgs) {
 	}
 	if err = cmd.Wait(); err != nil {
 		log.Error(err)
-	}
-
-	if log.GetLevel() == log.DebugLevel {
-		log.Info(fmt.Printf(stderr.String()))
 	}
 
 	// kubetest run fails if one of the testcases failes, therefore the execution is still successful and no err needs to be returned
@@ -155,6 +157,9 @@ func runKubetest(args KubetestArgs) {
 		bufferSize := int64(5000)
 		buf := make([]byte, bufferSize)
 		stat, err := os.Stat(e2eLogFilePath)
+		if err != nil {
+			log.Error("unable to get stat of path %s: %s", e2eLogFilePath, err.Error())
+		}
 		var start int64
 		if stat.Size() < bufferSize {
 			start = stat.Size()
