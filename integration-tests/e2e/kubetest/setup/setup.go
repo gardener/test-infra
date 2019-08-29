@@ -5,6 +5,8 @@ import (
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
+	tmutil "github.com/gardener/test-infra/pkg/util"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -16,7 +18,7 @@ import (
 
 func Setup() error {
 	cleanUpPreviousRuns()
-	if areTestUtilitiesReady() {
+	if err := areTestUtilitiesReady(); err != nil {
 		log.Info("all test utilities were already ready")
 		log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
 		return nil
@@ -24,14 +26,13 @@ func Setup() error {
 
 	log.Info("test utilities are not ready. Install...")
 	if err := getKubetestAndUtilities(); err != nil {
-		return err
+		return errors.Wrap(err, "unable to setup kubetest and utilities")
 	}
 
-	if areTestUtilitiesReady() {
-		log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
-		return nil
+	if err := areTestUtilitiesReady(); err != nil {
+		return err
 	}
-	log.Fatal("Couldn't prepare kubetest utilities")
+	log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
 	return nil
 }
 
@@ -42,7 +43,11 @@ func getKubetestAndUtilities() error {
 		return err
 	}
 	_ = os.Setenv("GO111MODULE", goModuleOriginValue)
-	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), ""); err != nil {
+
+	if err := os.MkdirAll(config.K8sRoot, os.ModePerm); err != nil {
+		return errors.Wrapf(err, "unable to create directories %s", config.K8sRoot)
+	}
+	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), config.K8sRoot); err != nil {
 		return err
 	}
 	return nil
@@ -83,13 +88,12 @@ func PostRunCleanFiles() error {
 	return nil
 }
 
-func areTestUtilitiesReady() bool {
+func areTestUtilitiesReady() error {
 	log.Info("checking whether any test utility is not ready")
+	var res *multierror.Error
 
-	testUtilitiesReady := true
 	if !util.CommandExists("kubetest") {
-		log.Warn("kubetest not installed")
-		testUtilitiesReady = false
+		res = multierror.Append(res, errors.New("kubetest not installed"))
 	}
 	log.Info("kubetest binary available")
 
@@ -102,8 +106,7 @@ func areTestUtilitiesReady() bool {
 		path.Join(config.K8sRoot, "kubernetes/server")}
 	for _, requiredPath := range requiredPaths {
 		if _, err := os.Stat(requiredPath); err != nil {
-			log.Warn(errors.Wrapf(err, "dir %s does not exist: ", requiredPath))
-			testUtilitiesReady = false
+			res = multierror.Append(res, errors.Wrapf(err, "dir %s does not exist: ", requiredPath))
 		} else {
 			log.Info(fmt.Sprintf("%s dir exists", requiredPath))
 		}
@@ -112,11 +115,9 @@ func areTestUtilitiesReady() bool {
 	kubernetesVersionFile := path.Join(config.K8sRoot, "kubernetes/version")
 	currentKubernetesVersionByte, err := ioutil.ReadFile(kubernetesVersionFile)
 	if err != nil || len(currentKubernetesVersionByte) == 0 {
-		testUtilitiesReady = false
-		log.Warn(fmt.Sprintf("Required file %s does not exist or is empty: ", kubernetesVersionFile))
+		res = multierror.Append(res, fmt.Errorf("Required file %s does not exist or is empty: ", kubernetesVersionFile))
 	} else if currentKubernetesVersion := strings.TrimSpace(string(currentKubernetesVersionByte[1:])); currentKubernetesVersion != config.K8sRelease {
-		testUtilitiesReady = false
-		log.Warn(fmt.Sprintf("found kubernetes version %s, required version %s: ", currentKubernetesVersion, config.K8sRelease))
+		res = multierror.Append(res, fmt.Errorf("found kubernetes version %s, required version %s: ", currentKubernetesVersion, config.K8sRelease))
 	}
-	return testUtilitiesReady
+	return tmutil.ReturnMultiError(res)
 }
