@@ -19,12 +19,8 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -37,52 +33,19 @@ import (
 	"github.com/gardener/test-infra/test/utils"
 )
 
-var (
-	maxWaitTime = 300 * time.Second
-)
-
 var _ = Describe("Garbage collection tests", func() {
-
-	var (
-		commitSha   string
-		namespace   string
-		tmClient    kubernetes.Interface
-		minioClient *minio.Client
-		minioBucket string
-	)
-
-	BeforeSuite(func() {
-		var err error
-		commitSha = os.Getenv("GIT_COMMIT_SHA")
-		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
-		namespace = os.Getenv("TM_NAMESPACE")
-		minioEndpoint := os.Getenv("S3_ENDPOINT")
-
-		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-		osConfig, err := utils.WaitForMinioService(tmClient, minioEndpoint, namespace, maxWaitTime)
-		Expect(err).ToNot(HaveOccurred())
-
-		minioBucket = osConfig.BucketName
-		minioClient, err = minio.New(osConfig.Endpoint, osConfig.AccessKey, osConfig.SecretKey, false)
-		Expect(err).ToNot(HaveOccurred())
-	})
 
 	It("should cleanup all artifacts when a TestDef is deleted", func() {
 		ctx := context.Background()
 		defer ctx.Done()
-		tr := resources.GetBasicTestrun(namespace, commitSha)
+		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-		tr, wf, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
+		tr, wf, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 		Expect(err).ToNot(HaveOccurred())
-		utils.DeleteTestrun(tmClient, tr)
+		utils.DeleteTestrun(operation.Client(), tr)
 
-		err = retry.UntilTimeout(ctx, 5*time.Second, maxWaitTime, func(ctx context.Context) (bool, error) {
-			if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr); err != nil {
+		err = retry.UntilTimeout(ctx, 5*time.Second, InitializationTimeout, func(ctx context.Context) (bool, error) {
+			if err := operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr); err != nil {
 				if errors.IsNotFound(err) {
 					return retry.Ok()
 				}

@@ -12,18 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testrunner_test
+package testrunner_run_test
 
 import (
-	"os"
-	"testing"
-	"time"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,55 +24,24 @@ import (
 	"github.com/gardener/test-infra/test/utils"
 )
 
-var (
-	maxWaitTime = 300 * time.Second
-)
-
-func TestValidationWebhook(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrunner Integration Test Suite")
-}
-
 var _ = Describe("Testrunner execution tests", func() {
 
 	var (
-		commitSha     string
-		namespace     string
-		tmKubeconfig  string
-		tmClient      kubernetes.Interface
 		testrunConfig testrunner.Config
-		s3Endpoint    string
 	)
-
-	BeforeSuite(func() {
-		var err error
-		commitSha = os.Getenv("GIT_COMMIT_SHA")
-		tmKubeconfig = os.Getenv("TM_KUBECONFIG_PATH")
-		namespace = os.Getenv("TM_NAMESPACE")
-		s3Endpoint = os.Getenv("S3_ENDPOINT")
-
-		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-		_, err = utils.WaitForMinioService(tmClient, s3Endpoint, namespace, maxWaitTime)
-		Expect(err).ToNot(HaveOccurred())
-	})
 
 	BeforeEach(func() {
 		testrunConfig = testrunner.Config{
-			TmClient:  tmClient,
-			Namespace: namespace,
-			Timeout:   int64(maxWaitTime),
+			TmClient:  operation.Client(),
+			Namespace: operation.TestNamespace(),
+			Timeout:   int64(InitializationTimeout),
 			Interval:  5,
 		}
 	})
 
 	Context("testrun", func() {
 		It("should run a single testrun", func() {
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{
 				{
 					Testrun:  tr,
@@ -89,7 +49,7 @@ var _ = Describe("Testrunner execution tests", func() {
 				},
 			}
 			testrunner.ExecuteTestruns(&testrunConfig, run, "test-")
-			defer utils.DeleteTestrun(tmClient, run[0].Testrun)
+			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(1))
@@ -97,8 +57,8 @@ var _ = Describe("Testrunner execution tests", func() {
 		})
 
 		It("should run 2 testruns", func() {
-			tr := resources.GetBasicTestrun(namespace, commitSha)
-			tr2 := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+			tr2 := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{
 				{
 					Testrun:  tr,
@@ -110,8 +70,8 @@ var _ = Describe("Testrunner execution tests", func() {
 				},
 			}
 			testrunner.ExecuteTestruns(&testrunConfig, run, "test-")
-			defer utils.DeleteTestrun(tmClient, run[0].Testrun)
-			defer utils.DeleteTestrun(tmClient, run[1].Testrun)
+			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
+			defer utils.DeleteTestrun(operation.Client(), run[1].Testrun)
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(2))

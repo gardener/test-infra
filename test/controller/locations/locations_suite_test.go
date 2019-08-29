@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition_test
+package locations_test
 
 import (
 	"github.com/gardener/test-infra/test/framework"
@@ -24,9 +24,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTestDefinitions(t *testing.T) {
+func TestLocations(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrun testdefinition Integration Test Suite")
+	RunSpecs(t, "Testrun locations Integration Test Suite")
 }
 
 const (

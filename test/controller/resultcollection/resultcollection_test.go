@@ -17,17 +17,13 @@ package resultcollection_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
@@ -39,39 +35,19 @@ var (
 
 var _ = Describe("Result collection tests", func() {
 
-	var (
-		commitSha string
-		namespace string
-		tmClient  kubernetes.Interface
-	)
-
-	BeforeSuite(func() {
-		var err error
-		commitSha = os.Getenv("GIT_COMMIT_SHA")
-		tmKubeconfig := os.Getenv("TM_KUBECONFIG_PATH")
-		namespace = os.Getenv("TM_NAMESPACE")
-
-		tmClient, err = kubernetes.NewClientFromFile("", tmKubeconfig, client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		Expect(utils.WaitForClusterReadiness(tmClient, namespace, maxWaitTime)).ToNot(HaveOccurred())
-	})
-
 	Context("step status", func() {
 		It("should update status immediately with all steps of the generated testflow", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			err := tmClient.Client().Create(ctx, tr)
-			defer utils.DeleteTestrun(tmClient, tr)
+			err := operation.Client().Client().Create(ctx, tr)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			// todo: add polling instead of timeouts
 			time.Sleep(10 * time.Second)
-			err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, tr)
+			err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
@@ -83,10 +59,10 @@ var _ = Describe("Result collection tests", func() {
 		It("should collect status of all workflow nodes", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
@@ -108,11 +84,11 @@ var _ = Describe("Result collection tests", func() {
 				Value: "val",
 			}
 
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
@@ -124,7 +100,7 @@ var _ = Describe("Result collection tests", func() {
 		It("should collect status of multiple workflow nodes", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
 					Name: "A",
@@ -147,8 +123,8 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(2), "Should be 2 step's statuses.")
@@ -168,7 +144,7 @@ var _ = Describe("Result collection tests", func() {
 		It("should collect status of multiple workflow nodes with a failing step", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
 					Name: "A",
@@ -191,8 +167,8 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(3), "Should be 3 step's statuses.")
@@ -220,7 +196,7 @@ var _ = Describe("Result collection tests", func() {
 		It("should mark timeouted step with own timeout phase", func() {
 			ctx := context.Background()
 			defer ctx.Done()
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
 					Name: "int-test",
@@ -230,8 +206,8 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := utils.RunTestrun(ctx, tmClient, tr, argov1.NodeFailed, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")

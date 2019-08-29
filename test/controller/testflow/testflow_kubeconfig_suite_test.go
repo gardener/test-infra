@@ -47,7 +47,7 @@ var _ = Describe("Testflow execution tests", func() {
 			file, err := ioutil.ReadFile("./testdata/kubeconfig")
 			Expect(err).ToNot(HaveOccurred())
 
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromString(base64.StdEncoding.EncodeToString(file))
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
 				{
@@ -65,8 +65,8 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err = utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err = operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -84,22 +84,22 @@ var _ = Describe("Testflow execution tests", func() {
 			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "test-kubeconfig-",
-					Namespace:    namespace,
+					Namespace:    operation.TestNamespace(),
 				},
 				Type: corev1.SecretTypeOpaque,
 				Data: map[string][]byte{
 					"kubeconfig": file,
 				},
 			}
-			err = tmClient.Client().Create(ctx, secret)
+			err = operation.Client().Client().Create(ctx, secret)
 			Expect(err).ToNot(HaveOccurred())
 			defer func() {
-				err := tmClient.Client().Delete(ctx, secret)
+				err := operation.Client().Client().Delete(ctx, secret)
 				Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 			}()
 			log.Debugf("created secret %s", secret.Name)
 
-			tr := resources.GetBasicTestrun(namespace, commitSha)
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromConfig(strconf.ConfigSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
@@ -124,8 +124,8 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err = utils.RunTestrun(ctx, tmClient, tr, argov1.NodeSucceeded, namespace, maxWaitTime)
-			defer utils.DeleteTestrun(tmClient, tr)
+			tr, _, err = operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

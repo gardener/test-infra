@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition_test
+package testrunner_run_test
 
 import (
 	"github.com/gardener/test-infra/test/framework"
@@ -24,16 +24,16 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTestDefinitions(t *testing.T) {
+func TestTestrunnerRun(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrun testdefinition Integration Test Suite")
+	RunSpecs(t, "Testrunner Integration Test Suite")
 }
 
 const (
-	InitializationTimeout = 10 * time.Minute
-	CleanupTimeout        = 1 * time.Minute
-
-	TestrunDurationTimeout = 3 * time.Minute
+	InitializationTimeout        = 20 * time.Minute
+	ClusterReadinessTimeout      = 10 * time.Minute
+	MinioServiceReadinessTimeout = 5 * time.Minute
+	CleanupTimeout               = 1 * time.Minute
 )
 
 var (
@@ -49,8 +49,10 @@ var _ = BeforeSuite(func() {
 	var err error
 	operation, err = framework.New(zap.LoggerTo(GinkgoWriter, true), cfg)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(operation.WaitForClusterReadiness(InitializationTimeout)).ToNot(HaveOccurred())
-})
+	Expect(operation.WaitForClusterReadiness(ClusterReadinessTimeout)).ToNot(HaveOccurred())
+	_, err = operation.WaitForMinioServiceReadiness(MinioServiceReadinessTimeout)
+	Expect(err).ToNot(HaveOccurred())
+}, InitializationTimeout.Seconds())
 
 var _ = AfterSuite(func() {
 	operation.AfterSuite()
