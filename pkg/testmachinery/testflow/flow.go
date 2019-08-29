@@ -17,6 +17,7 @@ package testflow
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
@@ -123,11 +124,11 @@ func (f *Flow) Iterate() <-chan *node.Node {
 	return c
 }
 
-func (f *Flow) GetDAGTemplate() *argov1.DAGTemplate {
+func (f *Flow) GetDAGTemplate(phase testmachinery.Phase) *argov1.DAGTemplate {
 	dag := &argov1.DAGTemplate{}
 
 	for n := range f.Iterate() {
-		dag.Tasks = append(dag.Tasks, n.Task())
+		dag.Tasks = append(dag.Tasks, n.Task(phase))
 	}
 
 	return dag

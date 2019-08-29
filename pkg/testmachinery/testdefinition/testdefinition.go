@@ -89,7 +89,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 					Value: testmachinery.TM_EXPORT_PATH,
 				},
 				{
-					Name:  "TM_PHASE",
+					Name:  testmachinery.TM_PHASE_NAME,
 					Value: "{{inputs.parameters.phase}}",
 				},
 			},

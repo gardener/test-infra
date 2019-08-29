@@ -70,11 +70,11 @@ func (tr *Testrun) GetWorkflow(name, namespace string, pullImageSecretNames []st
 	testrunName := "testrun"
 	onExitName := "exit-handler"
 
-	templates, err := tr.Testflow.GetTemplates(testrunName)
+	templates, err := tr.Testflow.GetTemplates(testrunName, testmachinery.PhaseRunning)
 	if err != nil {
 		return nil, err
 	}
-	onExitTemplates, err := tr.OnExitTestflow.GetTemplates(onExitName)
+	onExitTemplates, err := tr.OnExitTestflow.GetTemplates(onExitName, testmachinery.PhaseExit)
 	if err != nil {
 		return nil, err
 	}

@@ -23,6 +23,16 @@ import (
 	corescheme "k8s.io/client-go/kubernetes/scheme"
 )
 
+type Phase string
+
+const (
+	// PhaseRunning is the name of the running phase.
+	PhaseRunning Phase = "Running"
+
+	// PHASE_EXIT is the name of the running phase.
+	PhaseExit Phase = "Exit"
+)
+
 const (
 	// TM_KUBECONFIG_PATH is the name of the environment variable that holds the kubeconfigs folder path
 	TM_KUBECONFIG_PATH_NAME = "TM_KUBECONFIG_PATH"
@@ -42,8 +52,8 @@ const (
 	// TM_REPO_PATH is the path where the repo/location is mounted to the tests.
 	TM_REPO_PATH = "/src"
 
-	// PHASE_RUNNING is the name of the running phase.
-	PHASE_RUNNING = "Running"
+	// TM_PHASE_NAME is the name of the environment variable that holds the Test Machinery phase
+	TM_PHASE_NAME = "TM_PHASE"
 
 	// TM_EXPORT_PATH is the name of the environment variable that holds the path to the export folder
 	TM_EXPORT_PATH_NAME = "TM_EXPORT_PATH"

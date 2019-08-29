@@ -15,6 +15,7 @@
 package testflow
 
 import (
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
@@ -56,11 +57,11 @@ func New(flowID FlowIdentifier, tf tmv1beta1.TestFlow, locs locations.Locations,
 }
 
 // GetTemplates returns all TestDefinitions templates and the DAG of the testrun
-func (tf *Testflow) GetTemplates(name string) ([]argov1.Template, error) {
+func (tf *Testflow) GetTemplates(name string, phase testmachinery.Phase) ([]argov1.Template, error) {
 	templates := []argov1.Template{
 		{
 			Name: name,
-			DAG:  tf.Flow.GetDAGTemplate(),
+			DAG:  tf.Flow.GetDAGTemplate(phase),
 		},
 	}
 
