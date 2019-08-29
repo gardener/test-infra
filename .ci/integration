@@ -85,9 +85,12 @@ controller_chart="$(helm template --namespace ${NAMESPACE} \
 ################################
 set +e
 # remove zombies
-for ns in $(kubectl get ns | awk 'FNR > 1 { print $1 }'); do
-  kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete tr --all
-  kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete wf --all
+for ns in $(kubectl get ns --no-headers | awk '{ print $1 }'); do
+  kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete tr --all --wait=false
+  kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete wf --all --wait=false
+  # give the tm some time to delete tr's correctly
+  sleep 20
+
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns get tr -oname | xargs kubectl --kubeconfig=$TM_KUBECONFIG -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns get wf -oname | xargs kubectl --kubeconfig=$TM_KUBECONFIG -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
 done
