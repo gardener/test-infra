@@ -81,7 +81,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.BoolVar(&tmConfig.CleanWorkflowPods, "enable-pod-gc", util.GetenvBool("CLEAN_WORKFLOW_PODS", tmConfig.CleanWorkflowPods),
 		"Enable garbage collection of pods after a testrun has finished")
 
-	flagset.StringVar(&githubSecretsPath, "github-secrets-path", "secrets.yaml",
+	flagset.StringVar(&githubSecretsPath, "github-secrets-path", "",
 		"Path to the github secrets configuration")
 	flagset.StringVar(&objectStoreConfig.Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"),
 		"Set the s3 object storage endpoint")

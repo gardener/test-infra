@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: tm-git
+  name: tm-github
 type: Opaque
 data:
     config.yaml: github config # base64 encoded github config array:
@@ -28,6 +28,5 @@ data:
     #   webhook_token:
     #   technicalUser:
     #     username:
-    #     password:
     #     emailAddress:
     #     authToken:
