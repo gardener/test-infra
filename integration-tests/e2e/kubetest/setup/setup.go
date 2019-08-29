@@ -18,7 +18,7 @@ import (
 
 func Setup() error {
 	cleanUpPreviousRuns()
-	if err := areTestUtilitiesReady(); err != nil {
+	if err := areTestUtilitiesReady(); err == nil {
 		log.Info("all test utilities were already ready")
 		log.Info("setup finished successfuly. Testutilities ready. Kubetest is ready for usage.")
 		return nil
@@ -94,8 +94,9 @@ func areTestUtilitiesReady() error {
 
 	if !util.CommandExists("kubetest") {
 		res = multierror.Append(res, errors.New("kubetest not installed"))
+	} else {
+		log.Info("kubetest binary available")
 	}
-	log.Info("kubetest binary available")
 
 	// check if required directories exist
 	requiredPaths := [...]string{
@@ -119,5 +120,6 @@ func areTestUtilitiesReady() error {
 	} else if currentKubernetesVersion := strings.TrimSpace(string(currentKubernetesVersionByte[1:])); currentKubernetesVersion != config.K8sRelease {
 		res = multierror.Append(res, fmt.Errorf("found kubernetes version %s, required version %s: ", currentKubernetesVersion, config.K8sRelease))
 	}
+
 	return tmutil.ReturnMultiError(res)
 }
