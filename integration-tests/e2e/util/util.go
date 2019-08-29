@@ -49,11 +49,14 @@ func RunCmd(command, execPath string) (output CmdOutput, err error) {
 		cmd.Dir = execPath
 	}
 
-	//	Sanity check -- capture stdout and stderr:
+	//	Sanity check -- capture outPipe and stderr:
 	var out bytes.Buffer
 	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
+
+	outWriter := io.MultiWriter(os.Stdout, &out)
+	errWriter := io.MultiWriter(os.Stderr, &stderr)
+	cmd.Stdout = outWriter
+	cmd.Stderr = errWriter
 
 	if len(command) > logMaxLength {
 		log.Infof("%s...", command[:logMaxLength])
@@ -66,12 +69,10 @@ func RunCmd(command, execPath string) (output CmdOutput, err error) {
 	if out.String() != "" {
 		stdoutString := out.String()
 		output.StdOut = stdoutString
-		log.Info(stdoutString)
 	}
 	if stderr.Len() != 0 {
 		stderrString := stderr.String()
 		output.StdErr = stderrString
-		log.Error(stderrString)
 	}
 
 	return output, err
