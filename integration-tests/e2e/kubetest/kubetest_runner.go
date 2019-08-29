@@ -69,13 +69,13 @@ func Run(descFile string) (resultsPath string) {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
 		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
-		runKubetest(kubtestArgs, true)
+		runKubetest(kubtestArgs, false)
 	}
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
 		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
-		runKubetest(kubtestArgs, true)
+		runKubetest(kubtestArgs, false)
 	}
 	return config.LogDir
 }
