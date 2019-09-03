@@ -17,6 +17,8 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/fields"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/gardener/gardener/pkg/operation/common"
@@ -32,6 +34,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -44,6 +47,18 @@ var (
 
 	// NotAddonManagerReconcile is a requirement that something doesnt have the label addonmanager.kubernetes.io/mode = Reconcile
 	NotAddonManagerReconcile = botanist.MustNewRequirement("addonmanager.kubernetes.io/mode", selection.NotEquals, "Reconcile")
+
+	// NamespaceCleanOptions is the delete selector for Namespaces.
+	NamespaceCleanOptions = botanist.ListOptions(client.UseListOptions(&client.ListOptions{
+		LabelSelector: botanist.CleanupSelector,
+		FieldSelector: fields.AndSelectors(
+			fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespacePublic),
+			fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespaceSystem),
+			fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespaceDefault),
+			fields.OneTermNotEqualSelector(botanist.MetadataNameField, corev1.NamespaceNodeLease),
+			fields.OneTermNotEqualSelector(botanist.MetadataNameField, "garden-setup-state"),
+		),
+	}))
 
 	// NotMonitoringSelector is a selector that excludes monitoring and addon components.
 	NotMonitoringOrAddonSelector = labels.NewSelector().Add(NotMonitoringComponent, NotAddonManagerReconcile)
@@ -113,7 +128,7 @@ func CleanKubernetesResources(ctx context.Context, l *logrus.Logger, c client.Cl
 		cleanResourceFn(l, c, &corev1.PersistentVolumeClaimList{}, "PVC", false, addMonitoringOrAddonListOptions(botanist.PersistentVolumeClaimCleanOptions)),
 		cleanResourceFn(l, c, &extensionsv1beta1.IngressList{}, "Ingress", false, addMonitoringOrAddonListOptions(botanist.IngressCleanOptions)),
 		cleanResourceFn(l, c, &corev1.ServiceList{}, "Service", false, addMonitoringOrAddonListOptions(botanist.ServiceCleanOptions)),
-		cleanResourceFn(l, c, &corev1.NamespaceList{}, "Namespace", false, botanist.NamespaceCleanOptions),
+		cleanResourceFn(l, c, &corev1.NamespaceList{}, "Namespace", false, NamespaceCleanOptions),
 	)(ctx)
 }
 
