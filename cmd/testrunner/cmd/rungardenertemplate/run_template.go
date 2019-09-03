@@ -16,6 +16,7 @@ package rungardenertemplate
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/controller/logger"
 	"github.com/gardener/test-infra/pkg/util"
 	"os"
 
@@ -74,27 +75,19 @@ var runCmd = &cobra.Command{
 		"run-tmpl-full",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		debug, _ := cmd.Flags().GetBool("debug")
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		if debug {
-			log.SetLevel(log.DebugLevel)
-			log.Warn("Set debug log level")
-
-			cmd.DebugFlags()
-		}
-		log.Info("Start testmachinery testrunner")
+		logger.Log.Info("Start testmachinery testrunner")
 		err := godotenv.Load()
-		if err == nil {
-			log.Debug(".env file loaded")
-		} else {
-			log.Debugf("Error loading .env file: %s", err.Error())
+		if err != nil {
+			logger.Log.Error(err, "Error loading .env file")
 		}
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,
 		})
 		if err != nil {
-			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
+			os.Exit(1)
 		}
 
 		testrunName := fmt.Sprintf("%s-", testrunNamePrefix)
@@ -126,9 +119,10 @@ var runCmd = &cobra.Command{
 		metadata := &testrunner.Metadata{
 			Landscape: landscape,
 		}
-		runs, err := testrunnerTemplate.RenderGardenerTestrun(tmClient, parameters, metadata)
+		runs, err := testrunnerTemplate.RenderGardenerTestrun(logger.Log.WithName("Render"), tmClient, parameters, metadata)
 		if err != nil {
-			log.Fatal(err)
+			logger.Log.Error(err, "unable to render testrun")
+			os.Exit(1)
 		}
 
 		if dryRun {
@@ -136,10 +130,11 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		testrunner.ExecuteTestruns(config, runs, testrunName)
-		failed, err := result.Collect(rsConfig, tmClient, config.Namespace, runs)
+		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), config, runs, testrunName)
+		failed, err := result.Collect(logger.Log.WithName("Collect"), rsConfig, tmClient, config.Namespace, runs)
 		if err != nil {
-			log.Fatal(err)
+			logger.Log.Error(err, "unable to collect results")
+			os.Exit(1)
 		}
 
 		result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), rsConfig.ConcourseOnErrorDir)
@@ -160,10 +155,10 @@ func init() {
 	// configuration flags
 	runCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	if err := runCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag required", "flag", "tm-kubeconfig-path")
 	}
 	if err := runCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag filename", "flag", "tm-kubeconfig-path")
 	}
 	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
 	runCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
@@ -180,10 +175,10 @@ func init() {
 	// parameter flags
 	runCmd.Flags().StringVar(&testrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
 	if err := runCmd.MarkFlagRequired("testruns-chart-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag required", "flag", "testruns-chart-path")
 	}
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}
 
 	runCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")

@@ -16,11 +16,12 @@ package server
 
 import (
 	"context"
-	"flag"
-	"github.com/go-logr/logr"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-logr/logr"
+	flag "github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/controller/admission/server/webhooks"
 )

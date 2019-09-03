@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"github.com/go-logr/logr"
 	"io/ioutil"
 
 	"github.com/gardener/gardener/pkg/chartrenderer"
@@ -9,28 +10,27 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/strvals"
 )
 
 // RenderChart renders the provided helm chart with testruns, adds the testrun parameters and returns the templated files.
-func RenderChart(tmClient kubernetes.Interface, parameters *ShootTestrunParameters, versions []string) ([]*TestrunFile, error) {
-	log.Debugf("Parameters: %+v", util.PrettyPrintStruct(parameters))
-	log.Debugf("RenderShootTestrun chart from %s", parameters.TestrunChartPath)
+func RenderChart(log logr.Logger, tmClient kubernetes.Interface, parameters *ShootTestrunParameters, versions []string) ([]*TestrunFile, error) {
+	log.V(3).Info(fmt.Sprintf("Parameters: %+v", util.PrettyPrintStruct(parameters)))
+	log.V(3).Info("RenderShootTestrun chart", "chart", parameters.TestrunChartPath)
 
 	tmChartRenderer, err := chartrenderer.NewForConfig(tmClient.RESTConfig())
 	if err != nil {
-		return nil, fmt.Errorf("Cannot create chartrenderer for gardener: %s", err.Error())
+		return nil, errors.Wrap(err, "cannot create chartrenderer for gardener")
 	}
 
 	gardenKubeconfig, err := ioutil.ReadFile(parameters.GardenKubeconfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot read gardener kubeconfig %s, Error: %s", parameters.GardenKubeconfigPath, err.Error())
+		return nil, errors.Wrapf(err, "cannot read gardener kubeconfig %s", parameters.GardenKubeconfigPath)
 	}
 
 	renderedFiles := []*TestrunFile{}
 	for _, version := range versions {
-		files, err := RenderSingleChart(tmChartRenderer, parameters, gardenKubeconfig, version)
+		files, err := RenderSingleChart(log, tmChartRenderer, parameters, gardenKubeconfig, version)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func RenderChart(tmClient kubernetes.Interface, parameters *ShootTestrunParamete
 	return renderedFiles, nil
 }
 
-func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
+func RenderSingleChart(log logr.Logger, renderer chartrenderer.Interface, parameters *ShootTestrunParameters, gardenKubeconfig []byte, version string) ([]*TestrunFile, error) {
 	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":             fmt.Sprintf("%s-%s", parameters.ShootName, util.RandomString(5)),
@@ -72,7 +72,7 @@ func RenderSingleChart(renderer chartrenderer.Interface, parameters *ShootTestru
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Values: \n%s \n", util.PrettyPrintStruct(values))
+	log.V(3).Info(fmt.Sprintf("Values: \n%s \n", util.PrettyPrintStruct(values)))
 
 	chart, err := renderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {

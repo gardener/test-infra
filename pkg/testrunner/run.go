@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
 	"k8s.io/api/extensions/v1beta1"
 	"net/url"
 	"path"
@@ -31,7 +33,6 @@ import (
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -46,7 +47,7 @@ func (rl RunList) GetTestruns() []*tmv1beta1.Testrun {
 	return testruns
 }
 
-// HasError checks whether one run in list is erroneous.
+// HasErrors checks whether one run in list is erroneous.
 func (rl RunList) HasErrors() bool {
 	for _, run := range rl {
 		if run.Error != nil {
@@ -56,7 +57,18 @@ func (rl RunList) HasErrors() bool {
 	return false
 }
 
-func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
+// Errors returns all errors of all testruns in this testrun
+func (rl RunList) Errors() error {
+	var res *multierror.Error
+	for _, run := range rl {
+		if run.Error != nil {
+			res = multierror.Append(res, run.Error)
+		}
+	}
+	return util.ReturnMultiError(res)
+}
+
+func runTestrun(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 	// TODO: Remove legacy name attribute. Instead enforce usage of generateName.
@@ -67,10 +79,10 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 	if err != nil {
 		return nil, trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
 	}
-	log.Infof("Testrun %s deployed", tr.Name)
+	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
 
 	if argoUrl, err := GetArgoURL(tmClient, tr); err == nil {
-		log.Infof("Argo workflow: %s", argoUrl)
+		log.WithValues("testrun", tr.Name).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
@@ -80,16 +92,16 @@ func runTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace,
 		testrun := &tmv1beta1.Testrun{}
 		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, testrun)
 		if err != nil {
-			log.Errorf("cannot get testrun: %s", err.Error())
+			log.Error(err, "cannot get testrun")
 			return false, nil
 		}
 		tr = testrun
 
 		if tr.Status.State != "" {
 			testrunPhase = tr.Status.Phase
-			log.Infof("Testrun %s is in %s phase. State: %s", tr.Name, testrunPhase, tr.Status.State)
+			log.Info(fmt.Sprintf("Testrun %s is in %s phase. State: %s", tr.Name, testrunPhase, tr.Status.State))
 		} else {
-			log.Infof("Testrun %s is in %s phase. Waiting ...", tr.Name, testrunPhase)
+			log.Info(fmt.Sprintf("Testrun %s is in %s phase. Waiting ...", tr.Name, testrunPhase))
 		}
 		return util.Completed(testrunPhase), nil
 	})

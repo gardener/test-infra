@@ -55,7 +55,7 @@ require (
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/spf13/cobra v0.0.0-20181021141114-fe5e611709b0
-	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/spf13/pflag v1.0.3
 	go.opencensus.io v0.22.0 // indirect
 	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c // indirect

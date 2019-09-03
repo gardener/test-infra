@@ -17,6 +17,7 @@ package result
 import (
 	"fmt"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
+	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"path/filepath"
 
@@ -24,17 +25,17 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
 )
 
 // Collect collects results of all testruns and writes them to a file.
 // It returns whether there are failed testruns or not.
-func Collect(config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
+func Collect(log logr.Logger, config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
 	var (
 		testrunsFailed = false
 		result         *multierror.Error
 	)
 	for _, run := range runs {
+		runLogger := log.WithValues("testrun", run.Testrun.Name, "namespace", run.Testrun.Namespace)
 		// Do only try to collect testruns results of testruns that ran into a timeout.
 		// Any other error can not be retrieved.
 		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
@@ -43,33 +44,33 @@ func Collect(config *Config, tmClient kubernetes.Interface, namespace string, ru
 
 		cfg := *config
 		cfg.OutputDir = filepath.Join(config.OutputDir, util.RandomString(3))
-		err := Output(&cfg, tmClient, namespace, run.Testrun, run.Metadata)
+		err := Output(runLogger, &cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
 
 		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
-			err = IngestDir(cfg.OutputDir, cfg.ESConfigName)
+			err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
 			if err != nil {
-				log.Errorf("cannot persist file %s: %s", cfg.OutputDir, err.Error())
+				runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
 			} else {
-				err := MarkTestrunsAsIngested(tmClient, run.Testrun)
+				err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 				if err != nil {
-					log.Warn(err.Error())
+					runLogger.Error(err, "unable to ingest testrun")
 				}
 			}
 		}
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-			log.Infof("Testrun %s finished successfully", run.Testrun.Name)
+			runLogger.Info("Testrun finished successfully")
 		} else {
 			testrunsFailed = true
-			log.Errorf("Testrun %s failed with phase %s", run.Testrun.Name, run.Testrun.Status.Phase)
+			runLogger.Error(fmt.Errorf("Testrun failed with phase %s", run.Testrun.Status.Phase), "")
 		}
 		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
 		printStatusTable(run.Testrun.Status.Steps)
 	}
 
-	return testrunsFailed, result.ErrorOrNil()
+	return testrunsFailed, util.ReturnMultiError(result)
 }

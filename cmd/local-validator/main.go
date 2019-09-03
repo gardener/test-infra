@@ -15,10 +15,11 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	flag "github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/controller/logger"
 

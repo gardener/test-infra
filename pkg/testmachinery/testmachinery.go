@@ -15,12 +15,13 @@
 package testmachinery
 
 import (
-	"flag"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/util"
 

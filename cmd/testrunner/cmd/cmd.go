@@ -15,39 +15,43 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardenertemplate"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
-	"os"
-
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardenertemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtestrun"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
+	"github.com/gardener/test-infra/pkg/controller/logger"
+	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "testrunner",
 	Short: "Testrunner for Test Machinery",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		_, err = logger.New(nil)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 // Execute executes the testrunner cli commands
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatalln(err.Error())
+		fmt.Printf("%v", err)
+		os.Exit(1)
 	}
 }
 
 func init() {
-	formatter := &log.TextFormatter{
-		FullTimestamp: true,
-	}
-	log.SetFormatter(formatter)
-	log.SetOutput(os.Stderr)
 
-	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Set debug mode for additional output")
+	logger.InitFlags(rootCmd.PersistentFlags())
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 
 	runtemplate.AddCommand(rootCmd)

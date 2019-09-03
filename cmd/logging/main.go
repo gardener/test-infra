@@ -17,13 +17,14 @@ package main
 import (
 	"bytes"
 	"context"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+
+	flag "github.com/spf13/pflag"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"

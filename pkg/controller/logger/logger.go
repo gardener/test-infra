@@ -15,14 +15,17 @@
 package logger
 
 import (
-	"flag"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	flag "github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-var configFromFlags = Config{}
+var (
+	Log             logr.Logger
+	configFromFlags = Config{}
+)
 
 var developmentConfig = zap.Config{
 	Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
@@ -59,7 +62,8 @@ func New(config *Config) (logr.Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return zapr.NewLogger(zapLog), nil
+	Log = zapr.NewLogger(zapLog)
+	return Log, nil
 }
 
 func determineZapConfig(config *Config) zap.Config {
