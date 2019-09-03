@@ -21,12 +21,12 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
 )
 
 // RenderGardenerTestrun renders a helm chart with containing testruns.
 // The current component_descriptor as well as the upgraded component_descriptor are added to the locationSets.
-func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
+func RenderGardenerTestrun(log logr.Logger, tmClient kubernetes.Interface, parameters *GardenerTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 	var componentDescriptor componentdescriptor.ComponentList
 
 	componentDescriptor, err := componentdescriptor.GetComponentsFromFile(parameters.ComponentDescriptorPath)
@@ -61,7 +61,7 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Values: \n%s \n", util.PrettyPrintStruct(values))
+	log.V(3).Info(fmt.Sprintf("Values: \n%s \n", util.PrettyPrintStruct(values)))
 
 	chart, err := tmChartRenderer.Render(parameters.TestrunChartPath, "", parameters.Namespace, values)
 	if err != nil {
@@ -75,7 +75,7 @@ func RenderGardenerTestrun(tmClient kubernetes.Interface, parameters *GardenerTe
 	for _, file := range files {
 		tr, err := util.ParseTestrun([]byte(file.File))
 		if err != nil {
-			log.Warnf("Cannot parse rendered file: %s", err.Error())
+			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
 		}
 
 		testrunMetadata := *metadata

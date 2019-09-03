@@ -15,13 +15,12 @@
 package testrunner_run_test
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Testrunner execution tests", func() {
@@ -48,7 +47,7 @@ var _ = Describe("Testrunner execution tests", func() {
 					Metadata: &testrunner.Metadata{},
 				},
 			}
-			testrunner.ExecuteTestruns(&testrunConfig, run, "test-")
+			testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
 			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
 			Expect(run.HasErrors()).To(BeFalse())
 
@@ -69,7 +68,7 @@ var _ = Describe("Testrunner execution tests", func() {
 					Metadata: &testrunner.Metadata{},
 				},
 			}
-			testrunner.ExecuteTestruns(&testrunConfig, run, "test-")
+			testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
 			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
 			defer utils.DeleteTestrun(operation.Client(), run[1].Testrun)
 			Expect(run.HasErrors()).To(BeFalse())

@@ -16,12 +16,12 @@ package docs
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/controller/logger"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -30,7 +30,9 @@ var (
 
 func init() {
 	docsCmd.Flags().StringVarP(&outputDir, "output", "o", "", "Directory where the doc is written to.")
-	docsCmd.MarkFlagFilename("output")
+	if err := docsCmd.MarkFlagFilename("output"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "output")
+	}
 }
 
 // AddCommand adds run-testrun to a command.
@@ -42,22 +44,26 @@ var docsCmd = &cobra.Command{
 	Use:   "docs",
 	Short: "Generate docs for the testrunner",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		if outputDir == "" {
 			buf := getDoc(cmd.Parent())
-			os.Stdout.Write(buf.Bytes())
+			if _, err := os.Stdout.Write(buf.Bytes()); err != nil {
+				logger.Log.Error(err, "unable to write output to stdout")
+				os.Exit(1)
+			}
 			return
 		}
 		err := os.MkdirAll(outputDir, os.ModePerm)
 		if err != nil {
-			log.Fatal(err)
+			logger.Log.Error(err, "cannot create directories")
+			os.Exit(1)
 		}
 		cmd.Parent().DisableAutoGenTag = true
 		err = doc.GenMarkdownTree(cmd.Parent(), outputDir)
 		if err != nil {
-			log.Fatal(err)
+			logger.Log.Error(err, "unable to create markdown")
+			os.Exit(1)
 		}
-		log.Infof("Successfully written docs to %s", outputDir)
+		logger.Log.Info(fmt.Sprintf("Successfully written docs to %s", outputDir))
 	},
 }
 

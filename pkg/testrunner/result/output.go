@@ -25,8 +25,8 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
+	"github.com/go-logr/logr"
 	"github.com/minio/minio-go"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -34,7 +34,7 @@ import (
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
+func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
 
 	metadata.Testrun.StartTime = tr.Status.StartTime
 	metadata.Annotations = tr.Annotations
@@ -59,9 +59,9 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 	if config.S3Endpoint != "" {
 		osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
 		if err != nil {
-			log.Warnf("Cannot get exported Test results of steps: %s", err.Error())
+			log.Error(err, "cannot get exported test results of steps")
 		} else {
-			exportedDocumentsBulk := getExportedDocuments(osConfig, tr.Status, metadata)
+			exportedDocumentsBulk := getExportedDocuments(log, osConfig, tr.Status, metadata)
 			summaryBulk = append(summaryBulk, exportedDocumentsBulk...)
 		}
 	}
@@ -73,7 +73,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 
 	// Print out the summary if no outputfile is specified
 	if config.OutputDir == "" {
-		log.Infof("Collected summary:\n%s", summary)
+		fmt.Printf("Collected summary:\n%s", summary)
 		return nil
 	}
 
@@ -86,7 +86,7 @@ func Output(config *Config, tmClient kubernetes.Interface, namespace string, tr 
 		return err
 	}
 
-	log.Infof("Successfully written output to dir %s", outputDirPath)
+	log.Info("successfully written output", "dir", outputDirPath)
 	return nil
 }
 
@@ -135,21 +135,21 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 	return trSummary, summaries, nil
 }
 
-func getExportedDocuments(cfg *testmachinery.S3Config, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
+func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
-		log.Errorf("Error creating minio client %s: %s", cfg.Endpoint, err.Error())
+		log.Error(err, "unable to create minio client", "endpoint", cfg.Endpoint)
 		return nil
 	}
 
 	ok, err := minioClient.BucketExists(cfg.BucketName)
 	if err != nil {
-		log.Errorf("Error getting bucket name %s: %s", cfg.BucketName, err.Error())
+		log.Error(err, "error getting bucket name", "bucket")
 		return nil
 	}
 	if !ok {
-		log.Errorf("Bucket %s does not exist", cfg.BucketName)
+		log.Error(fmt.Errorf("bucket %s does not exist", cfg.BucketName), "", "bucket", cfg.BucketName)
 		return nil
 	}
 
@@ -166,19 +166,19 @@ func getExportedDocuments(cfg *testmachinery.S3Config, status tmv1beta1.TestrunS
 			}
 			reader, err := minioClient.GetObject(cfg.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 			if err != nil {
-				log.Warnf("cannot get exportet artifact %s: %s", step.ExportArtifactKey, err.Error())
+				log.Info(fmt.Sprintf("cannot get exportet artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
 				continue
 			}
 			defer func() {
 				err := reader.Close()
 				if err != nil {
-					log.Warn(err)
+					log.Info("cannot close reader", "artifact", step.ExportArtifactKey)
 				}
 			}()
 
 			info, err := reader.Stat()
 			if err != nil {
-				log.Warnf("cannot get exported artifact %s: %s", step.ExportArtifactKey, err.Error())
+				log.Info(fmt.Sprintf("cannot get exportet artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
 				continue
 			}
 
@@ -186,7 +186,7 @@ func getExportedDocuments(cfg *testmachinery.S3Config, status tmv1beta1.TestrunS
 
 				files, err := getFilesFromTar(reader)
 				if err != nil {
-					log.Warnf("cannot untar artifact %s: %s", step.ExportArtifactKey, err.Error())
+					log.Info(fmt.Sprintf("cannot untar artifact: %s", err.Error()), "artifact", step.ExportArtifactKey)
 					continue
 				}
 
@@ -206,7 +206,7 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot create gzip reader %s", err.Error())
+		return nil, fmt.Errorf("cannot create gzip reader %s", err.Error())
 	}
 
 	tarReader := tar.NewReader(gzr)
@@ -216,13 +216,13 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("Cannot read tar %s", err.Error())
+			return nil, fmt.Errorf("cannot read tar %s", err.Error())
 		}
 
 		if header.Typeflag == tar.TypeReg && header.Size > 0 {
 			file, err := ioutil.ReadAll(tarReader)
 			if err != nil {
-				return nil, fmt.Errorf("Cannot read from file %s in tar %s", header.Name, err.Error())
+				return nil, fmt.Errorf("cannot read from file %s in tar %s", header.Name, err.Error())
 			}
 			files = append(files, file)
 		}

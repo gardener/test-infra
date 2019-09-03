@@ -17,20 +17,22 @@ package template
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/go-logr/logr"
+	"os"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
-	log "github.com/sirupsen/logrus"
 )
 
 // RenderShootTestrun renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func RenderShootTestrun(tmClient kubernetes.Interface, parameters *ShootTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
+func RenderShootTestrun(log logr.Logger, tmClient kubernetes.Interface, parameters *ShootTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
 
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err, "cannot get kubernetes versions")
+		os.Exit(1)
 	}
 
 	componentDescriptor, err := componentdescriptor.GetComponentsFromFile(parameters.ComponentDescriptorPath)
@@ -40,7 +42,7 @@ func RenderShootTestrun(tmClient kubernetes.Interface, parameters *ShootTestrunP
 	metadata.ComponentDescriptor = componentDescriptor.JSON()
 	exposeGardenerVersionToParameters(componentDescriptor, parameters)
 
-	files, err := RenderChart(tmClient, parameters, versions)
+	files, err := RenderChart(log, tmClient, parameters, versions)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,8 @@ func RenderShootTestrun(tmClient kubernetes.Interface, parameters *ShootTestrunP
 	for _, file := range files {
 		tr, err := util.ParseTestrun([]byte(file.File))
 		if err != nil {
-			log.Warnf("Cannot parse rendered file: %s", err.Error())
+			log.V(3).Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
+			continue
 		}
 
 		testrunMetadata := *metadata

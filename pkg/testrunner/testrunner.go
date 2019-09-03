@@ -15,6 +15,8 @@
 package testrunner
 
 import (
+	"fmt"
+	"github.com/go-logr/logr"
 	"sync"
 
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
@@ -23,8 +25,6 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,16 +33,16 @@ var (
 )
 
 // ExecuteTestruns deploys it to a testmachinery cluster and waits for the testruns results
-func ExecuteTestruns(config *Config, runs RunList, testrunNamePrefix string) {
-	log.Debugf("Config: %+v", util.PrettyPrintStruct(config))
+func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNamePrefix string) {
+	log.V(3).Info(fmt.Sprintf("Config: %+v", util.PrettyPrintStruct(config)))
 	maxWaitTimeSeconds = config.Timeout
 	pollIntervalSeconds = config.Interval
 
-	runs.Run(config.TmClient, config.Namespace, testrunNamePrefix)
+	runs.Run(log.WithValues("namespace", config.Namespace), config.TmClient, config.Namespace, testrunNamePrefix)
 }
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
-func (rl RunList) Run(tmClient kubernetes.Interface, namespace, testrunNamePrefix string) {
+func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace, testrunNamePrefix string) {
 	var wg sync.WaitGroup
 	for i := range rl {
 		if rl[i].Error != nil {
@@ -53,9 +53,9 @@ func (rl RunList) Run(tmClient kubernetes.Interface, namespace, testrunNamePrefi
 		go func(i int) {
 			defer wg.Done()
 
-			tr, err := runTestrun(tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
+			tr, err := runTestrun(log, tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
 			if err != nil {
-				log.Error(err.Error())
+				log.Error(err, "unable to run testrun")
 
 				if trerrors.IsTimeout(err) {
 					rl[i].Testrun.Status.Phase = tmv1beta1.PhaseStatusTimeout
@@ -70,5 +70,5 @@ func (rl RunList) Run(tmClient kubernetes.Interface, namespace, testrunNamePrefi
 		}(i)
 	}
 	wg.Wait()
-	log.Infof("All testruns completed.")
+	log.Info("All testruns completed.")
 }

@@ -18,11 +18,10 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/gardener/test-infra/pkg/testrunner"
 
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 
@@ -61,7 +60,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, operation.Client(), operation.TestNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -108,7 +107,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -157,7 +156,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(&testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)

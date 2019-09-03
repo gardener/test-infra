@@ -16,6 +16,8 @@ package collectcmd
 
 import (
 	"context"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/controller/logger"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"os"
 
@@ -26,8 +28,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/spf13/cobra"
-
-	log "github.com/sirupsen/logrus"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -54,15 +54,9 @@ var collectCmd = &cobra.Command{
 	Use:   "collect",
 	Short: "Collects results from a completed testrun.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if debug, _ := cmd.Flags().GetBool("debug"); debug {
-			log.SetLevel(log.DebugLevel)
-			log.Warn("Set debug log level")
-
-			cmd.DebugFlags()
-		}
 		ctx := context.Background()
 		defer ctx.Done()
-		log.Info("Start testmachinery testrunner")
+		logger.Log.Info("Start testmachinery testrunner")
 
 		collectConfig := &result.Config{
 			OutputDir:           outputDirPath,
@@ -71,19 +65,21 @@ var collectCmd = &cobra.Command{
 			S3SSL:               s3SSL,
 			ConcourseOnErrorDir: concourseOnErrorDir,
 		}
-		log.Debugln(util.PrettyPrintStruct(collectConfig))
+		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,
 		})
 		if err != nil {
-			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+			logger.Log.Error(err, fmt.Sprintf("Cannot build kubernetes client from %s", tmKubeconfigPath))
+			os.Exit(1)
 		}
 
 		tr := &tmv1beta1.Testrun{}
 		err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: testrunName}, tr)
 		if err != nil {
-			log.Fatalf("Cannot fetch testrun %s from cluster", testrunName)
+			logger.Log.Error(err, "unable to fetch testrun %s from cluster", "testrun", testrunName)
+			os.Exit(1)
 		}
 
 		run := &testrunner.Run{
@@ -91,12 +87,13 @@ var collectCmd = &cobra.Command{
 			Metadata: testrunner.MetadataFromTestrun(tr),
 		}
 
-		_, err = result.Collect(collectConfig, tmClient, namespace, []*testrunner.Run{run})
+		_, err = result.Collect(logger.Log.WithName("Collect"), collectConfig, tmClient, namespace, []*testrunner.Run{run})
 		if err != nil {
-			log.Fatal(err.Error())
+			logger.Log.Error(err, "unable to collect result", "testrun", testrunName)
+			os.Exit(1)
 		}
 
-		log.Info("Finished collecting testrun results.")
+		logger.Log.Info("finished collecting testrun results.")
 	},
 }
 
@@ -104,13 +101,13 @@ func init() {
 	// configuration flags
 	collectCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", os.Getenv("KUBECONFIG"), "Path to the testmachinery cluster kubeconfig")
 	if err := collectCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		log.Debug(err)
+		logger.Log.Error(err, "mark flag filename", "flag", "tm-kubeconfig-path")
 	}
 	collectCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	collectCmd.Flags().StringVarP(&testrunName, "tr-name", "t", "", "Name of the testrun to collect results.")
 	if err := collectCmd.MarkFlagRequired("tr-name"); err != nil {
-		log.Debug(err)
+		logger.Log.Error(err, "mark flag required", "flag", "tr-name")
 	}
 
 	// parameter flags

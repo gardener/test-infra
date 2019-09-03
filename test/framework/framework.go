@@ -16,8 +16,9 @@ package framework
 
 import (
 	"context"
-	"flag"
 	"os"
+
+	"flag"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"

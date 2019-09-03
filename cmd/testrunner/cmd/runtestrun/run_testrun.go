@@ -16,6 +16,9 @@ package runtestrun
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/pkg/errors"
+	"os"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -26,8 +29,6 @@ import (
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/spf13/cobra"
-
-	log "github.com/sirupsen/logrus"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -54,25 +55,18 @@ var runTestrunCmd = &cobra.Command{
 		"run-tr",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if debug, _ := cmd.Flags().GetBool("debug"); debug {
-			log.SetLevel(log.DebugLevel)
-			log.Warn("Set debug log level")
-
-			cmd.DebugFlags()
-		}
-		log.Info("Start testmachinery testrunner")
+		logger.Log.Info("Start testmachinery testrunner")
 		err := godotenv.Load()
-		if err == nil {
-			log.Debug(".env file loaded")
-		} else {
-			log.Debugf("Error loading .env file: %s", err.Error())
+		if err != nil {
+			logger.Log.Error(err, "Error loading .env file")
 		}
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,
 		})
 		if err != nil {
-			log.Fatalf("Cannot build kubernetes client from %s: %s", tmKubeconfigPath, err.Error())
+			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
+			os.Exit(1)
 		}
 
 		config := &testrunner.Config{
@@ -84,7 +78,8 @@ var runTestrunCmd = &cobra.Command{
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)
 		if err != nil {
-			log.Fatalf("Testrunner execution disrupted: %s", err.Error())
+			logger.Log.Error(err, "unable to parse testrun")
+			os.Exit(1)
 		}
 
 		run := testrunner.RunList{
@@ -94,15 +89,16 @@ var runTestrunCmd = &cobra.Command{
 			},
 		}
 
-		testrunner.ExecuteTestruns(config, run, testrunNamePrefix)
+		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), config, run, testrunNamePrefix)
 		if run.HasErrors() {
-			log.Fatalf("Testrunner execution disrupted")
+			logger.Log.Error(run.Errors(), "Testrunner execution disrupted")
+			os.Exit(1)
 		}
 
 		if run[0].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-			log.Info("Testrunner successfully finished.")
+			logger.Log.Info("Testrunner successfully finished.")
 		} else {
-			log.Errorf("Testrunner finished with phase %s", run[0].Testrun.Status.Phase)
+			logger.Log.Error(errors.New("Testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
 		}
 
 		fmt.Print(util.PrettyPrintStruct(run[0].Testrun.Status))
@@ -113,10 +109,10 @@ func init() {
 	// configuration flags
 	runTestrunCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	if err := runTestrunCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag required", "flag", "tm-kubeconfig-path")
 	}
 	if err := runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+		logger.Log.Error(err, "mark flag filename", "flag", "tm-kubeconfig-path")
 	}
 	runTestrunCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
@@ -125,11 +121,11 @@ func init() {
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")
-	if err := runTestrunCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+	if err := runTestrunCmd.MarkFlagRequired("file"); err != nil {
+		logger.Log.Error(err, "mark flag required", "flag", "file")
 	}
-	if err := runTestrunCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		log.Debug(err.Error())
+	if err := runTestrunCmd.MarkFlagFilename("file"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "file")
 	}
 	runTestrunCmd.Flags().StringVar(&testrunNamePrefix, "name-prefix", "testrunner-", "Name prefix of the testrun")
 
