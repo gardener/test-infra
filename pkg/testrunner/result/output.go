@@ -191,7 +191,7 @@ func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status t
 				}
 
 				for _, doc := range files {
-					bulks = append(bulks, elasticsearch.ParseExportedFiles(strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
+					bulks = append(bulks, elasticsearch.ParseExportedFiles(log, strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
 				}
 			}
 

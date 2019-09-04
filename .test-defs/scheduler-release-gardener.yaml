@@ -39,5 +39,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/hostscheduler release gardener --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --clean=$CLEAN
+    go run -mod=vendor ./cmd/hostscheduler gardener release --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --clean=$CLEAN
   image: golang:1.12.9

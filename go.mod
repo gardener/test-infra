@@ -20,7 +20,6 @@ require (
 	github.com/gardener/gardener-extensions v0.0.0-20190620142130-227adb277fa4 // indirect
 	github.com/gardener/gardener-resource-manager v0.0.0-20190627140746-b43a76cdf9a7 // indirect
 	github.com/gardener/machine-controller-manager v0.0.0-20190228095106-36a42c48af0a // indirect
-	github.com/ghodss/yaml v0.0.0-20190212211648-25d852aebe32 // indirect
 	github.com/go-ini/ini v1.41.0 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.0
@@ -29,8 +28,6 @@ require (
 	github.com/go-openapi/spec v0.18.0
 	github.com/go-openapi/swag v0.18.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/gogo/protobuf v1.2.0 // indirect
-	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
@@ -47,17 +44,14 @@ require (
 	github.com/onsi/gomega v1.5.0
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.2 // indirect
-	github.com/prometheus/client_model v0.0.0-20190115171406-56726106282f // indirect
-	github.com/prometheus/common v0.1.0 // indirect
-	github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/spf13/cobra v0.0.0-20181021141114-fe5e611709b0
 	github.com/spf13/pflag v1.0.3
+	github.com/spf13/viper v1.4.0
 	go.opencensus.io v0.22.0 // indirect
-	go.uber.org/zap v1.9.1
+	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	google.golang.org/api v0.6.0
@@ -74,7 +68,7 @@ require (
 	k8s.io/component-base v0.0.0-20190617074208-2b0aae80ca81 // indirect
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/helm v2.12.2+incompatible
-	k8s.io/klog v0.3.1
+	k8s.io/klog v0.3.1 // indirect
 	k8s.io/kube-aggregator v0.0.0-20190116053718-60c339211c1a // indirect
 	k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
 	k8s.io/utils v0.0.0-20190529001817-6999998975a7 // indirect

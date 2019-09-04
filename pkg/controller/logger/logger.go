@@ -27,13 +27,27 @@ var (
 	configFromFlags = Config{}
 )
 
+var encoderConfig = zapcore.EncoderConfig{
+	TimeKey:        "ts",
+	LevelKey:       "level",
+	NameKey:        "logger",
+	CallerKey:      "caller",
+	MessageKey:     "msg",
+	StacktraceKey:  "stacktrace",
+	LineEnding:     zapcore.DefaultLineEnding,
+	EncodeLevel:    zapcore.LowercaseLevelEncoder,
+	EncodeTime:     zapcore.ISO8601TimeEncoder,
+	EncodeDuration: zapcore.SecondsDurationEncoder,
+	EncodeCaller:   zapcore.ShortCallerEncoder,
+}
+
 var developmentConfig = zap.Config{
 	Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
 	Development:       true,
 	Encoding:          "console",
 	DisableStacktrace: false,
 	DisableCaller:     false,
-	EncoderConfig:     zap.NewProductionEncoderConfig(),
+	EncoderConfig:     encoderConfig,
 	OutputPaths:       []string{"stderr"},
 	ErrorOutputPaths:  []string{"stderr"},
 }
@@ -44,7 +58,7 @@ var productionConfig = zap.Config{
 	DisableStacktrace: true,
 	DisableCaller:     true,
 	Encoding:          "json",
-	EncoderConfig:     zap.NewProductionEncoderConfig(),
+	EncoderConfig:     encoderConfig,
 	OutputPaths:       []string{"stderr"},
 	ErrorOutputPaths:  []string{"stderr"},
 }
@@ -66,6 +80,15 @@ func New(config *Config) (logr.Logger, error) {
 	return Log, nil
 }
 
+// NewWithoutTimestamp creates a new Logger without logging the timestamp
+func NewWithoutTimestamp(config *Config) (logr.Logger, error) {
+	if config == nil {
+		config = &configFromFlags
+	}
+	config.DisableTimestamp = true
+	return New(config)
+}
+
 func determineZapConfig(config *Config) zap.Config {
 	var cfg zap.Config
 	if config.Development {
@@ -76,6 +99,10 @@ func determineZapConfig(config *Config) zap.Config {
 
 	cfg.DisableStacktrace = config.DisableStacktrace
 	cfg.DisableCaller = config.DisableCaller
+
+	if config.DisableTimestamp {
+		cfg.EncoderConfig.TimeKey = ""
+	}
 
 	return cfg
 }

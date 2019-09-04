@@ -15,35 +15,51 @@ package gkescheduler
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
+	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
-func (s *gkescheduler) Cleanup(ctx context.Context) error {
-	hostName, err := readHostInformationFromFile()
-	if err != nil {
-		return err
-	}
+func (s *gkescheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
+	clean := flagset.Bool("clean", false, "Cleanup the specified cluster")
 
-	cluster, err := s.client.GetCluster(ctx, &containerpb.GetClusterRequest{Name: s.getClusterName(hostName)})
-	if err != nil {
-		return err
-	}
-	s.logger.Infof("starting to cleanup cluster %s", cluster.GetName())
+	return func(ctx context.Context) error {
+		if clean != nil && *clean == false {
+			s.log.V(3).Info("clean is not defined. Therefore the cluster is not cleaned up.")
+			return nil
+		}
+		if s.hostname == "" {
+			var err error
+			s.hostname, err = readHostInformationFromFile()
+			if err != nil {
+				s.log.V(3).Info(err.Error())
+				return errors.New("no shoot cluster is defined. Use --name or create a config file")
+			}
+		}
+		s.log = s.log.WithValues("host", s.getClusterName(s.hostname))
 
-	// do not cleanup if cluster is already freed
-	if isFree(cluster.GetResourceLabels()) {
-		s.logger.Infof("Cluster %s is already free. No need to cleanup.", hostName)
+		cluster, err := s.client.GetCluster(ctx, &containerpb.GetClusterRequest{Name: s.getClusterName(s.hostname)})
+		if err != nil {
+			return errors.Wrap(err, "unable to fetch cluster")
+		}
+		s.log.Info("starting to cleanup cluster")
+
+		// do not cleanup if cluster is already freed
+		if isFree(cluster.GetResourceLabels()) {
+			s.log.Info("Cluster is already free. No need to cleanup.")
+			return nil
+		}
+
+		k8sClient, err := clientFromCluster(cluster)
+		if err != nil {
+			return errors.Wrap(err, "unable to build kubernetes client")
+		}
+
+		if err := cleanup.CleanResources(ctx, s.log, k8sClient); err != nil {
+			return errors.Wrap(err, "unable to cleanup cluster")
+		}
 		return nil
-	}
-
-	k8sClient, err := clientFromCluster(cluster)
-	if err != nil {
-		return err
-	}
-
-	if err := cleanup.CleanResources(ctx, s.logger, k8sClient); err != nil {
-		return err
-	}
-	return nil
+	}, nil
 }

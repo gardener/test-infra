@@ -15,61 +15,72 @@ package gkescheduler
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
-func (s gkescheduler) Release(ctx context.Context) error {
+func (s *gkescheduler) Release(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 
-	hostName, err := readHostInformationFromFile()
-	if err != nil {
-		return err
-	}
-
-	cluster, err := s.client.GetCluster(ctx, &containerpb.GetClusterRequest{Name: s.getClusterName(hostName)})
-	if err != nil {
-		return err
-	}
-	s.logger.Infof("starting to release cluster %s", cluster.GetName())
-
-	// scale all non-default node pools to 0
-	for _, nodepool := range cluster.NodePools {
-		if nodepool.GetName() != GKEDefaultNodePoolName {
-			s.logger.Infof("scale down node pool %s to 0", nodepool.GetName())
-			o, err := s.client.SetNodePoolSize(ctx, &containerpb.SetNodePoolSizeRequest{
-				NodeCount: 0,
-				Name:      s.getNodePoolName(cluster.GetName(), nodepool.GetName()),
-			})
+	return func(ctx context.Context) error {
+		if len(s.hostname) == 0 {
+			var err error
+			s.hostname, err = readHostInformationFromFile()
 			if err != nil {
-				return errors.Wrapf(err, "unable to scale node pool %s of cluster %s down to 0", nodepool.GetName(), cluster.GetName())
-			}
-			if err := s.waitUntilOperationFinishedSuccessfully(ctx, o); err != nil {
-				return errors.Wrapf(err, "waiting for operation %s to finish. unable to scale node pool %s of cluster %s down to 0.", o.GetName(), nodepool.GetName(), cluster.GetName())
+				s.log.V(3).Info(err.Error())
+				return errors.New("no shoot cluster is defined. Use --name or create a config file")
 			}
 		}
-	}
-	s.logger.Info("all non-default nodepools scaled down successfully")
+		s.log = s.log.WithValues("host", s.getClusterName(s.hostname))
 
-	labels := cluster.GetResourceLabels()
+		cluster, err := s.client.GetCluster(ctx, &containerpb.GetClusterRequest{Name: s.getClusterName(s.hostname)})
+		if err != nil {
+			return err
+		}
+		s.log.Info("starting to release cluster")
 
-	// directly return if the shoot is already freed
-	if isFree(labels) {
-		return nil
-	}
+		// scale all non-default node pools to 0
+		for _, nodepool := range cluster.NodePools {
+			if nodepool.GetName() != GKEDefaultNodePoolName {
+				s.log.Info(fmt.Sprintf("scale down node pool %s to 0", nodepool.GetName()))
+				o, err := s.client.SetNodePoolSize(ctx, &containerpb.SetNodePoolSizeRequest{
+					NodeCount: 0,
+					Name:      s.getNodePoolName(cluster.GetName(), nodepool.GetName()),
+				})
+				if err != nil {
+					return errors.Wrapf(err, "unable to scale node pool %s of cluster %s down to 0", nodepool.GetName(), cluster.GetName())
+				}
+				if err := s.waitUntilOperationFinishedSuccessfully(ctx, o); err != nil {
+					return errors.Wrapf(err, "waiting for operation %s to finish. unable to scale node pool %s of cluster %s down to 0.", o.GetName(), nodepool.GetName(), cluster.GetName())
+				}
+			}
+		}
+		s.log.Info("all non-default nodepools scaled down successfully")
 
-	s.logger.Info("update labels of cluster")
-	labels[ClusterStatusLabel] = ClusterStatusFree
-	delete(labels, ClusterLockedAtLabel)
-	delete(labels, ClusterLabelID)
+		labels := cluster.GetResourceLabels()
 
-	labelsRequest := &containerpb.SetLabelsRequest{
-		Name:           s.getClusterName(hostName),
-		ResourceLabels: labels,
-	}
-	o, err := s.client.SetLabels(ctx, labelsRequest)
-	if err != nil {
-		return errors.Wrapf(err, "unable to update labels for cluster %s", cluster.GetName())
-	}
+		// directly return if the shoot is already freed
+		if isFree(labels) {
+			return nil
+		}
 
-	return s.waitUntilOperationFinishedSuccessfully(ctx, o)
+		s.log.Info("update labels of cluster")
+		labels[ClusterStatusLabel] = ClusterStatusFree
+		delete(labels, ClusterLockedAtLabel)
+		delete(labels, ClusterLabelID)
+
+		labelsRequest := &containerpb.SetLabelsRequest{
+			Name:           s.getClusterName(s.hostname),
+			ResourceLabels: labels,
+		}
+		o, err := s.client.SetLabels(ctx, labelsRequest)
+		if err != nil {
+			return errors.Wrapf(err, "unable to update labels for cluster %s", cluster.GetName())
+		}
+
+		return s.waitUntilOperationFinishedSuccessfully(ctx, o)
+	}, nil
 }

@@ -29,8 +29,6 @@ import (
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -139,7 +137,7 @@ var runCmd = &cobra.Command{
 
 		result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), rsConfig.ConcourseOnErrorDir)
 
-		log.Info("Testrunner finished.")
+		logger.Log.Info("Testrunner finished")
 		// Fail when one testrun is failed and we should fail on failed testruns.
 		// Otherwise only fail when the testrun execution is erroneous.
 		if runs.HasErrors() {

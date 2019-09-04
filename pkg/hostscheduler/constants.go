@@ -15,6 +15,7 @@ package hostscheduler
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 )
@@ -23,10 +24,16 @@ func ShootKubeconfigSecretName(shootName string) string {
 	return fmt.Sprintf("%s.kubeconfig", shootName)
 }
 
-func HostKubeconfigPath() string {
-	return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config")
+func HostKubeconfigPath() (string, error) {
+	if tmKubeconfigPath := os.Getenv("TM_KUBECONFIG_PATH"); len(tmKubeconfigPath) != 0 {
+		return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config"), nil
+	}
+	return "", errors.New("TM_KUBECONFIG_PATH is not defined")
 }
 
-func HostConfigFilePath() string {
-	return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json")
+func HostConfigFilePath() (string, error) {
+	if tmKubeconfigPath := os.Getenv("TM_SHARED_PATH"); len(tmKubeconfigPath) != 0 {
+		return filepath.Join(os.Getenv("TM_SHARED_PATH"), "host", "config.json"), nil
+	}
+	return "", errors.New("TM_SHARED_PATH is not defined")
 }

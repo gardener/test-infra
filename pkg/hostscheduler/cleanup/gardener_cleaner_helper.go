@@ -15,11 +15,11 @@ package cleanup
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-logr/logr"
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/gardener/gardener/pkg/operation/common"
 	"k8s.io/apimachinery/pkg/labels"
@@ -68,7 +68,7 @@ var (
 	ConfigMapCleanOptions = botanist.ListOptions(client.UseListOptions(&botanist.NoCleanupPreventionListOptions))
 )
 
-func cleanResourceFn(logger *logrus.Logger, c client.Client, list runtime.Object, t string, finalize bool, opts ...botanist.CleanOptionFunc) flow.TaskFn {
+func cleanResourceFn(logger logr.Logger, c client.Client, list runtime.Object, t string, finalize bool, opts ...botanist.CleanOptionFunc) flow.TaskFn {
 	timeout := 3 * time.Minute
 	logCleaner(logger, c, list, t, opts...)
 	mkCleaner := func(finalize bool) flow.TaskFn {
@@ -95,7 +95,7 @@ func cleanResourceFn(logger *logrus.Logger, c client.Client, list runtime.Object
 }
 
 // CleanWebhooks deletes all Webhooks in the Shoot cluster that are not being managed by the addon manager.
-func CleanWebhooks(ctx context.Context, l *logrus.Logger, c client.Client) error {
+func CleanWebhooks(ctx context.Context, l logr.Logger, c client.Client) error {
 	return flow.Parallel(
 		cleanResourceFn(l, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, "MutationsWebhook", true, addMonitoringOrAddonListOptions(botanist.MutatingWebhookConfigurationCleanOptions)),
 		cleanResourceFn(l, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, "ValidationWebhook", true, addMonitoringOrAddonListOptions(botanist.ValidatingWebhookConfigurationCleanOptions)),
@@ -103,7 +103,7 @@ func CleanWebhooks(ctx context.Context, l *logrus.Logger, c client.Client) error
 }
 
 // CleanExtendedAPIs removes API extensions like CRDs and API services from the Shoot cluster.
-func CleanExtendedAPIs(ctx context.Context, l *logrus.Logger, c client.Client) error {
+func CleanExtendedAPIs(ctx context.Context, l logr.Logger, c client.Client) error {
 	return flow.Parallel(
 		cleanResourceFn(l, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, "CRD", true, addMonitoringOrAddonListOptions(botanist.CustomResourceDefinitionCleanOptions)),
 	)(ctx)
@@ -115,7 +115,7 @@ func CleanExtendedAPIs(ctx context.Context, l *logrus.Logger, c client.Client) e
 // other than those stored in the exceptions map. It will check whether all the Kubernetes resources
 // in the Shoot cluster other than those stored in the exceptions map have been deleted.
 // It will return an error in case it has not finished yet, and nil if all resources are gone.
-func CleanKubernetesResources(ctx context.Context, l *logrus.Logger, c client.Client) error {
+func CleanKubernetesResources(ctx context.Context, l logr.Logger, c client.Client) error {
 	return flow.Parallel(
 		cleanResourceFn(l, c, &batchv1beta1.CronJobList{}, "CronJob", false, addMonitoringOrAddonListOptions(botanist.CronJobCleanOptions)),
 		cleanResourceFn(l, c, &appsv1.DaemonSetList{}, "DaemonSet", false, addMonitoringOrAddonListOptions(botanist.DaemonSetCleanOptions)),
@@ -144,28 +144,28 @@ func addMonitoringOrAddonListOptions(f botanist.CleanOptionFunc) botanist.CleanO
 	return botanist.ListOptions(client.UseListOptions(listOpts))
 }
 
-func logCleaner(logger *logrus.Logger, c client.Client, list runtime.Object, t string, opts ...botanist.CleanOptionFunc) {
+func logCleaner(logger logr.Logger, c client.Client, list runtime.Object, t string, opts ...botanist.CleanOptionFunc) {
 	cleanOptions := &botanist.CleanOptions{}
 	cleanOptions.ApplyOptions(opts)
 	err := c.List(context.TODO(), list, cleanOptions.ListOpts...)
 	if err != nil {
-		logger.Warnf("unable to list objects: %s", err.Error())
+		logger.Error(err, "unable to list objects: %s")
 		return
 	}
 
-	logger.Debugf("found %d list items", meta.LenList(list))
+	logger.Info(fmt.Sprintf("found %d list items", meta.LenList(list)))
 
 	err = meta.EachListItem(list, func(obj runtime.Object) error {
 		o, err := meta.Accessor(obj)
 		if err != nil {
-			logger.Debug(err)
+			logger.V(3).Info(err.Error())
 			return nil
 		}
-		logger.Infof("Found Type: %s Name: %s, Namespace: %s to delete", t, o.GetName(), o.GetNamespace())
+		logger.Info(fmt.Sprintf("Found Type: %s Name: %s, Namespace: %s to delete", t, o.GetName(), o.GetNamespace()))
 		return nil
 	})
 	if err != nil {
-		logger.Warnf("unable to list objects: %s", err.Error())
+		logger.Error(err, "unable to list objects")
 		return
 	}
 }

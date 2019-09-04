@@ -18,26 +18,20 @@ import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/util/secrets"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func IsFlagsetError(err error) error {
-	if err != nil {
-		if !strings.HasPrefix(err.Error(), "flag provided but not defined") {
-			return err
-		}
-	}
-	return nil
-}
-
 // WriteHostKubeconfig writes a kubeconfig from a restclient to the kubeconfig host path
-func WriteHostKubeconfig(k8sClient kubernetes.Interface) error {
+func WriteHostKubeconfig(log logr.Logger, k8sClient kubernetes.Interface) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
-	log.Infof("Writing host kubeconfig to %s", HostKubeconfigPath())
+	kubeconfigPath, err := HostKubeconfigPath()
+	if err != nil {
+		return nil
+	}
+	log.Info(fmt.Sprintf("Writing host kubeconfig to %s", kubeconfigPath))
 
 	// Generate kubeconfig from restclient
 	kubeconfig, err := secrets.GenerateKubeconfigFromRestConfig(k8sClient.RESTConfig(), "gke-host")
@@ -45,13 +39,13 @@ func WriteHostKubeconfig(k8sClient kubernetes.Interface) error {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Dir(HostKubeconfigPath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(kubeconfigPath), os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(HostKubeconfigPath()), err.Error())
+		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(kubeconfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(HostKubeconfigPath(), kubeconfig, os.ModePerm)
+	err = ioutil.WriteFile(kubeconfigPath, kubeconfig, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot write kubeconfig to %s: %s", HostKubeconfigPath(), err.Error())
+		return fmt.Errorf("cannot write kubeconfig to %s: %s", kubeconfigPath, err.Error())
 	}
 
 	return nil

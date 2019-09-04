@@ -17,7 +17,7 @@ package testflow_test
 import (
 	"context"
 	"encoding/base64"
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -97,7 +97,7 @@ var _ = Describe("Testflow execution tests", func() {
 				err := operation.Client().Client().Delete(ctx, secret)
 				Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 			}()
-			log.Debugf("created secret %s", secret.Name)
+			operation.Log().Info(fmt.Sprintf("created secret %s", secret.Name))
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromConfig(strconf.ConfigSource{

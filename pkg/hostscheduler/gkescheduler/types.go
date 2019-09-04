@@ -15,8 +15,7 @@ package gkescheduler
 
 import (
 	"cloud.google.com/go/container/apiv1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
 )
 
 const (
@@ -32,18 +31,18 @@ const (
 	GKEDefaultNodePoolName = "default-pool"
 )
 
-type hostCluster struct {
-	Name   string
-	Client kubernetes.Interface
+type registration struct {
+	gcloudkeyFile string
+	scheduler     *gkescheduler
 }
 
 type gkescheduler struct {
 	client *container.ClusterManagerClient
-	logger *logrus.Logger
-	id     string
+	log    logr.Logger
 
-	project string
-	zone    string
+	hostname string
+	project  string
+	zone     string
 }
 
 type config struct {

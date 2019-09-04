@@ -14,25 +14,30 @@
 package hostscheduler
 
 import (
-	"context"
-	"flag"
-	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
-func (r Registrations) GetInterface(name string, ctx context.Context, logger *logrus.Logger, flagset *flag.FlagSet, args []string) (Interface, error) {
-	s, ok := r[name]
-	if !ok {
-		return nil, fmt.Errorf("no hostscheduler of type %s found", name)
+// Apply registers all Scheduler Registrations as cobra commands to the rootCmd.
+func (r *Registrations) Apply(rootCmd *cobra.Command) error {
+	for _, registration := range r.list {
+		cmd, err := CommandFromRegistration(registration)
+		if err != nil {
+			return errors.Wrapf(err, "unable to register %s", registration.Name())
+		}
+		if err := AddSchedulerCommandsFromScheduler(cmd, registration.Interface()); err != nil {
+			return errors.Wrapf(err, "unable to add scheduler commands to %s", registration.Name())
+		}
+
+		rootCmd.AddCommand(cmd)
 	}
-	return s.Interface(ctx, logger)
+	return nil
 }
 
-func (r Registrations) ApplyFlags(name string, fs *flag.FlagSet) error {
-	s, ok := r[name]
-	if !ok {
-		return fmt.Errorf("no hostscheduler of type %s found", name)
+// Add adds a scheduler registration to the registrations list
+func (r *Registrations) Add(registration Registration) {
+	if r.list == nil {
+		r.list = make([]Registration, 0)
 	}
-	s.Flags(fs)
-	return nil
+	r.list = append(r.list, registration)
 }
