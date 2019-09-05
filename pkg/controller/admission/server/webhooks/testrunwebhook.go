@@ -18,18 +18,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-logr/logr"
-	"io/ioutil"
-	"net/http"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
+	"io/ioutil"
 	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -74,7 +72,7 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	if contentType := r.Header.Get("Content-Type"); contentType != wantedContentType {
 		wh.log.V(3).Info(fmt.Sprintf("contentType=%s, expect %s", contentType, wantedContentType))
 		res := admission.Errored(http.StatusConflict, fmt.Errorf("expect %s", wantedContentType))
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
@@ -82,7 +80,7 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	if _, _, err := deserializer.Decode(body, nil, &receivedReview); err != nil {
 		wh.log.V(3).Info("unable to decode http request: %s", err.Error())
 		res := admission.Errored(http.StatusConflict, err)
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
@@ -90,13 +88,13 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 		err := errors.New("invalid request body (missing admission request)")
 		wh.log.V(3).Info(err.Error())
 		res := admission.Errored(http.StatusConflict, err)
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
 	if receivedReview.Request.Operation != v1beta1.Create {
 		res := admission.ValidationResponse(true, "No validation needed")
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
@@ -104,23 +102,23 @@ func (wh *TestrunWebhook) Validate(w http.ResponseWriter, r *http.Request) {
 	if err := wh.d.Decode(admission.Request{AdmissionRequest: *receivedReview.Request}, tr); err != nil {
 		wh.log.V(3).Info("unable to decode admission request: %s", err.Error())
 		res := admission.Errored(http.StatusConflict, err)
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
 	if err := testrun.Validate(wh.log.WithValues("testrun", tr.Name), tr); err != nil {
 		wh.log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
 		res := admission.ValidationResponse(false, err.Error())
-		respond(w, &res.AdmissionResponse)
+		respond(wh.log, w, &res.AdmissionResponse)
 		return
 	}
 
 	wh.log.V(5).Info("Successfully validated Testrun %s", tr.Name)
 	res := admission.ValidationResponse(true, "No reason")
-	respond(w, &res.AdmissionResponse)
+	respond(wh.log, w, &res.AdmissionResponse)
 }
 
-func respond(w http.ResponseWriter, response *v1beta1.AdmissionResponse) {
+func respond(log logr.Logger, w http.ResponseWriter, response *v1beta1.AdmissionResponse) {
 	responseObj := v1beta1.AdmissionReview{}
 	if response != nil {
 		responseObj.Response = response
@@ -128,9 +126,9 @@ func respond(w http.ResponseWriter, response *v1beta1.AdmissionResponse) {
 
 	jsonResponse, err := json.Marshal(responseObj)
 	if err != nil {
-		log.Error(err)
+		log.Error(err, "cannot unmashal reponse object")
 	}
 	if _, err := w.Write(jsonResponse); err != nil {
-		log.Error(err)
+		log.Error(err, "cannot write reponse")
 	}
 }

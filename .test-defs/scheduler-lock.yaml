@@ -36,13 +36,13 @@ spec:
         name: tm-hosts-gcloud
         key: gcloud.json
   - type: env
-    name: PROJECT
+    name: GKE_PROJECT
     valueFrom:
       secretKeyRef:
         name: tm-hosts-gcloud
         key: project
   - type: env
-    name: ZONE
+    name: GKE_ZONE
     valueFrom:
       secretKeyRef:
         name: tm-hosts-gcloud
@@ -51,5 +51,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/hostscheduler lock gke --id=$TM_TESTRUN_ID  --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE
+    go run -mod=vendor ./cmd/hostscheduler gke lock --id=$TM_TESTRUN_ID  --key=/tmp/secrets/gcloud.json --project=$GKE_PROJECT --zone=$GKE_ZONE
   image: golang:1.12.9

@@ -15,10 +15,10 @@ package gardenerscheduler
 
 import (
 	"fmt"
+	"github.com/go-logr/logr"
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -36,11 +36,17 @@ func ShootKubeconfigSecretName(shootName string) string {
 	return fmt.Sprintf("%s.kubeconfig", shootName)
 }
 
+type registration struct {
+	kubeconfigPath string
+	cloudprovider  string
+	scheduler      *gardenerscheduler
+}
+
 type gardenerscheduler struct {
 	client kubernetes.Interface
-	logger *logrus.Logger
-	id     string
+	log    logr.Logger
 
+	shootName     string
 	namespace     string
 	cloudprovider gardenv1beta1.CloudProvider
 }

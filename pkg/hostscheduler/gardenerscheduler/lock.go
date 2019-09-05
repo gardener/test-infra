@@ -17,58 +17,88 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/go-logr/logr"
+
+	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
+	flag "github.com/spf13/pflag"
+
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (s *gardenerscheduler) Lock(ctx context.Context) error {
+func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
+	id := flagset.String("id", "", "Unique id to identify the cluster")
+	return func(ctx context.Context) error {
+		shoot := &v1beta1.Shoot{}
+		interval := 90 * time.Second
+		timeout := 120 * time.Minute
 
-	shoot := &v1beta1.Shoot{}
-	interval := 90 * time.Second
-	timeout := 120 * time.Minute
+		// try to get an available host until the timeout is reached
+		return retry.UntilTimeout(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
+			var err error
 
-	// try to get an available until the timeout is reached
-	return retry.UntilTimeout(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
-		var err error
-		shoot, err = s.getAvailableHost(ctx)
-		if err != nil {
-			s.logger.Info("No host available. Trying again...")
-			s.logger.Debug(err.Error())
-			return retry.MinorError(err)
-		}
+			if s.shootName == "" {
+				shoot, err = s.getAvailableHost(ctx)
+				if err != nil {
+					s.log.Info("No host available. Trying again...")
+					s.log.V(3).Info(err.Error())
+					return retry.MinorError(err)
+				}
+			} else {
+				err := s.client.Client().Get(ctx, client.ObjectKey{Name: s.shootName, Namespace: s.namespace}, shoot)
+				if err != nil {
+					s.log.V(3).Info(err.Error())
+					if apierrors.IsNotFound(err) {
+						return retry.SevereError(err)
+					}
+					s.log.Info("No host available. Trying again...")
+					return retry.MinorError(err)
+				}
+			}
 
-		s.logger.Infof("shoot %s selected", shoot.Name)
+			if err := s.lockShoot(ctx, shoot, *id); err != nil {
+				// shoot could not be updated, maybe it was concurrently updated by another test.
+				// therefore we try the next shoot
+				s.log.V(3).Info("Shoot cannot be updated. Skipping...", "shoot", shoot.Name)
+				s.log.V(3).Info(err.Error())
+				return retry.MinorError(err)
+			}
 
-		shoot, err := WaitUntilShootIsReconciled(ctx, s.logger, s.client, shoot)
-		if err != nil {
-			return retry.SevereError(err)
-		}
+			s.log.Info(fmt.Sprintf("shoot %s selected", shoot.Name))
+			s.log = s.log.WithValues("shoot", shoot.Name, "namespace", shoot.Namespace)
 
-		s.logger.Infof("Shoot %s was selected as host and will be woken up", shoot.Name)
+			shoot, err := WaitUntilShootIsReconciled(ctx, s.log, s.client, shoot)
+			if err != nil {
+				return retry.SevereError(err)
+			}
 
-		if err := downloadHostKubeconfig(ctx, s.logger, s.client, shoot); err != nil {
-			s.logger.Error(err.Error())
-			return retry.MinorError(err)
-		}
+			s.log.Info("Shoot was selected as host and will be woken up", shoot.Name)
 
-		if err := writeHostInformationToFile(s.logger, shoot); err != nil {
-			s.logger.Error(err.Error())
-			return retry.MinorError(err)
-		}
-		return true, nil
-	})
+			if err := downloadHostKubeconfig(ctx, s.log, s.client, shoot); err != nil {
+				s.log.Error(err, "unable to download kubeconfig")
+				return retry.MinorError(err)
+			}
+
+			if err := writeHostInformationToFile(s.log, shoot); err != nil {
+				s.log.Error(err, "unable to write host information to file")
+				return retry.MinorError(err)
+			}
+			return true, nil
+		})
+	}, nil
 }
 
 func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1beta1.Shoot, error) {
@@ -90,85 +120,96 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1beta1.Shoo
 		// check if the cloudprovider matches
 		if s.cloudprovider != CloudProviderAll {
 			if cp, err := helper.GetShootCloudProvider(&shoot); err != nil || cp != s.cloudprovider {
-				s.logger.Debugf("Shoot %s is from cloudprovider %s but want cloudprovider %s", shoot.Name, cp, s.cloudprovider)
+				s.log.V(3).Info(fmt.Sprintf("found shoot from cloudprovider %s but want cloudprovider %s", cp, s.cloudprovider), "shoot", shoot.Name)
 				continue
 			}
 		}
 
 		// Try to use the next shoot if the current shoot is not ready.
 		if shootReady(&shoot) != nil {
-			s.logger.Debugf("Shoot %s not ready. Skipping...", shoot.Name)
+			s.log.V(3).Info("Shoot is not ready. Skipping...", "shoot", shoot.Name)
 			continue
 		}
 
 		if !isHibernated(&shoot) {
-			s.logger.Debugf("Shoot %s not hibernated. Skipping...", shoot.Name)
+			s.log.V(3).Info("Shoot not hibernated. Skipping...", "shoot", shoot.Name)
 			continue
 		}
 
-		// if shoot is hibernated it is ready to be used as host for a test.
-		// then the hibernated shoot is woken up and the gardener tests can start
-		shoot.Spec.Hibernation.Enabled = false
-
-		shoot.Labels[ShootLabelStatus] = ShootStatusLocked
-		shoot.Annotations[ShootAnnotationLockedAt] = time.Now().String()
-		if s.id != "" {
-			shoot.Annotations[ShootAnnotationID] = s.id
-		}
-
-		err = s.client.Client().Update(ctx, &shoot)
-		if err != nil {
-			// shoot could not be updated, maybe it was concurrently updated by another test.
-			// therefore we try the next shoot
-			s.logger.Debugf("Shoot %s cannot be updated. Skipping...", shoot.Name)
-			s.logger.Debug(err.Error())
-			continue
-		}
 		return &shoot, nil
 	}
 	return nil, fmt.Errorf("cannot find available shoots")
 }
 
-func downloadHostKubeconfig(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) error {
+func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *v1beta1.Shoot, id string) error {
+	// if shoot is hibernated it is ready to be used as host for a test.
+	// then the hibernated shoot is woken up and the gardener tests can start
+	shoot.Spec.Hibernation.Enabled = false
+
+	shoot.Labels[ShootLabelStatus] = ShootStatusLocked
+	shoot.Annotations[ShootAnnotationLockedAt] = time.Now().Format(time.RFC3339)
+	if id != "" {
+		shoot.Annotations[ShootAnnotationID] = id
+	}
+
+	err := s.client.Client().Update(ctx, shoot)
+	if err != nil {
+		return errors.Wrapf(err, "shoot cannot be updated")
+	}
+	return nil
+}
+
+func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
-	logger.Infof("Downloading host kubeconfig to %s", hostscheduler.HostKubeconfigPath())
+	kubeconfigPath, err := hostscheduler.HostKubeconfigPath()
+	if err != nil {
+		logger.V(3).Info(fmt.Sprintf("kubeconfig is not downloaded: %s", err.Error()))
+		return nil
+	}
+	logger.Info(fmt.Sprintf("Downloading host kubeconfig to %s", kubeconfigPath))
 
 	// Download kubeconfigPath secret from gardener
 	secret := &corev1.Secret{}
-	err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: ShootKubeconfigSecretName(shoot.Name)}, secret)
+	err = k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: ShootKubeconfigSecretName(shoot.Name)}, secret)
 	if err != nil {
 		return fmt.Errorf("cannot download kubeconfig for shoot %s: %s", shoot.Name, err.Error())
 	}
 
-	err = os.MkdirAll(filepath.Dir(hostscheduler.HostKubeconfigPath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(kubeconfigPath), os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(hostscheduler.HostKubeconfigPath()), err.Error())
+		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(kubeconfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(hostscheduler.HostKubeconfigPath(), secret.Data["kubeconfig"], os.ModePerm)
+	err = ioutil.WriteFile(kubeconfigPath, secret.Data["kubeconfig"], os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("cannot write kubeconfig to %s: %s", hostscheduler.HostKubeconfigPath(), err.Error())
+		return fmt.Errorf("cannot write kubeconfig to %s: %s", kubeconfigPath, err.Error())
 	}
 
 	return nil
 }
 
-func writeHostInformationToFile(logger *logrus.Logger, shoot *v1beta1.Shoot) error {
+func writeHostInformationToFile(log logr.Logger, shoot *v1beta1.Shoot) error {
+	hostConfigPath, err := hostscheduler.HostConfigFilePath()
+	if err != nil {
+		log.V(3).Info("hostconfig is not written: %s", err.Error())
+		return nil
+	}
+
 	hostConfig := client.ObjectKey{
 		Name:      shoot.Name,
 		Namespace: shoot.Namespace,
 	}
 	data, err := json.Marshal(hostConfig)
 	if err != nil {
-		logger.Fatalf("cannot unmarshal hostconfig: %s", err.Error())
+		return fmt.Errorf("cannot unmarshal hostconfig: %s", err.Error())
 	}
 
-	err = os.MkdirAll(filepath.Dir(hostscheduler.HostConfigFilePath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(hostConfigPath), os.ModePerm)
 	if err != nil {
-		logger.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(hostscheduler.HostConfigFilePath()), err.Error())
+		return fmt.Errorf("cannot create folder %s for host config: %s", filepath.Dir(hostConfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(hostscheduler.HostConfigFilePath(), data, os.ModePerm)
+	err = ioutil.WriteFile(hostConfigPath, data, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("cannot write host config to %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
+		return fmt.Errorf("cannot write host config to %s: %s", hostConfigPath, err.Error())
 	}
 
 	return nil

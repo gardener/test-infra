@@ -17,10 +17,10 @@ package cleanup
 import (
 	"context"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
 )
 
-func CleanResources(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface) error {
+func CleanResources(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface) error {
 	if err := CleanWebhooks(ctx, logger, k8sClient.Client()); err != nil {
 		return err
 	}

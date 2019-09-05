@@ -16,10 +16,13 @@ package gkescheduler
 import (
 	container "cloud.google.com/go/container/apiv1"
 	"context"
-	"errors"
+	"fmt"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	"strconv"
 	"time"
@@ -29,102 +32,116 @@ const (
 	SelectHostTimeout = 2 * time.Hour
 )
 
-func (s gkescheduler) Lock(ctx context.Context) error {
+func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
+	id := flagset.String("id", "", "Metadata representing a unique identifier for the cluster")
 
-	host, err := s.selectAvailableHost(ctx)
-	if err != nil {
-		return err
-	}
+	return func(ctx context.Context) error {
+		var (
+			cluster   *containerpb.Cluster
+			k8sClient kubernetes.Interface
+			err       error
+		)
+		if s.hostname == "" {
+			cluster, k8sClient, err = s.selectAvailableHost(ctx)
+			if err != nil {
+				return errors.Wrap(err, "unable to select host cluster")
+			}
+		} else {
+			req := &containerpb.GetClusterRequest{
+				Name: s.getClusterName(s.hostname),
+			}
+			cluster, err = s.client.GetCluster(ctx, req)
+			if err != nil {
+				return errors.Wrap(err, "unable to get gke clusters")
+			}
+			k8sClient, err = clientFromCluster(cluster)
+			if err != nil {
+				return errors.Wrap(err, "unable to build k8s client from cluster")
+			}
+		}
+		s.log.Info(fmt.Sprintf("Selected %s", s.getClusterName(cluster.GetName())))
+		s.log = s.log.WithValues("host", s.getClusterName(cluster.GetName()))
 
-	req := &containerpb.GetClusterRequest{
-		Name: s.getClusterName(host.Name),
-	}
+		s.log.Info("update labels of cluster")
+		labels := cluster.GetResourceLabels()
+		labels[ClusterStatusLabel] = ClusterStatusLocked
+		labels[ClusterLockedAtLabel] = strconv.FormatInt(time.Now().Unix(), 10)
+		if *id != "" {
+			labels[ClusterLabelID] = *id
+		}
 
-	cluster, err := s.client.GetCluster(ctx, req)
-	if err != nil {
-		return err
-	}
+		labelsRequest := &containerpb.SetLabelsRequest{
+			Name:           s.getClusterName(cluster.GetName()),
+			ResourceLabels: labels,
+		}
+		o, err := s.client.SetLabels(ctx, labelsRequest)
+		if err != nil {
+			return errors.Wrap(err, "labels cannot be set")
+		}
 
-	labels := cluster.GetResourceLabels()
-	labels[ClusterStatusLabel] = ClusterStatusLocked
-	labels[ClusterLockedAtLabel] = strconv.FormatInt(time.Now().Unix(), 10)
-	if s.id != "" {
-		labels[ClusterLabelID] = s.id
-	}
+		if err := s.waitUntilOperationFinishedSuccessfully(ctx, o); err != nil {
+			return errors.Wrap(err, "labels cannot be set")
+		}
 
-	labelsRequest := &containerpb.SetLabelsRequest{
-		Name:           s.getClusterName(host.Name),
-		ResourceLabels: labels,
-	}
-	o, err := s.client.SetLabels(ctx, labelsRequest)
-	if err != nil {
-		return err
-	}
+		if err := hostscheduler.WriteHostKubeconfig(s.log, k8sClient); err != nil {
+			return errors.Wrap(err, "unable to write host kubeconfig")
+		}
 
-	if err := s.waitUntilOperationFinishedSuccessfully(ctx, o); err != nil {
-		return err
-	}
-
-	if err := hostscheduler.WriteHostKubeconfig(host.Client); err != nil {
-		return err
-	}
-
-	return writeHostInformationToFile(host)
+		return writeHostInformationToFile(cluster.GetName())
+	}, nil
 }
 
-func (s gkescheduler) selectAvailableHost(ctx context.Context) (*hostCluster, error) {
+func (s *gkescheduler) selectAvailableHost(ctx context.Context) (*containerpb.Cluster, kubernetes.Interface, error) {
 	var (
-		host *hostCluster
-		err  error
+		cluster   *containerpb.Cluster
+		k8sClient kubernetes.Interface
+		err       error
 	)
 	err = retry.UntilTimeout(ctx, 1*time.Minute, SelectHostTimeout, func(ctx context.Context) (bool, error) {
-		host, err = tryAvailableHost(ctx, s.logger, s.client, s.getParentName())
+		cluster, k8sClient, err = tryAvailableHost(ctx, s.log, s.client, s.getParentName())
 		if err != nil {
-			s.logger.Debug(err.Error())
-			s.logger.Info("Unable to select host cluster. Trying again..")
+			s.log.Info("Unable to select host cluster. Trying again..")
+			s.log.V(3).Info(err.Error())
 			return retry.MinorError(err)
 		}
 		return retry.Ok()
 	})
-	return host, err
+	return cluster, k8sClient, err
 }
 
-func tryAvailableHost(ctx context.Context, logger *logrus.Logger, client *container.ClusterManagerClient, parent string) (*hostCluster, error) {
+func tryAvailableHost(ctx context.Context, logger logr.Logger, client *container.ClusterManagerClient, parent string) (*containerpb.Cluster, kubernetes.Interface, error) {
 	req := &containerpb.ListClustersRequest{
 		Parent: parent,
 	}
 	resp, err := client.ListClusters(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, cluster := range resp.Clusters {
 		if cluster.GetStatus() != containerpb.Cluster_RUNNING {
-			logger.Debugf("found %s but cluster state is %s", cluster.Name, containerpb.Cluster_Status_name[int32(cluster.GetStatus())])
+			logger.V(3).Info("found cluster but is unavailable", "host", cluster.Name, "state", containerpb.Cluster_Status_name[int32(cluster.GetStatus())])
 			continue
 		}
 		labels := cluster.GetResourceLabels()
 		if !isHost(labels) {
-			logger.Debugf("found %s but cluster is no host cluster with label %s", cluster.GetName(), ClusterLabel)
+			logger.V(3).Info(fmt.Sprintf("found cluster but it has no host cluster with label %s", ClusterLabel), "host", cluster.GetName())
 			continue
 		}
 		if isLocked(labels) {
-			logger.Debugf("found %s but cluster is locked", cluster.GetName())
+			logger.V(3).Info("found cluster but it is locked", "host", cluster.GetName())
 			continue
 		}
 
-		logger.Infof("Use gke cluster %s", cluster.GetName())
+		logger.Info(fmt.Sprintf("use gke cluster %s", cluster.GetName()))
 		k8sClient, err := clientFromCluster(cluster)
 		if err != nil {
-			logger.Debug(err.Error())
+			logger.V(3).Info(err.Error())
 			continue
 		}
 
-		return &hostCluster{
-			Name:   cluster.GetName(),
-			Client: k8sClient,
-		}, nil
+		return cluster, k8sClient, nil
 
 	}
-	return nil, errors.New("no clusters found")
+	return nil, nil, errors.New("no clusters found")
 }

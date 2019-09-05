@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/go-logr/logr"
 	"io/ioutil"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,20 +56,20 @@ func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
 }
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
-func WaitUntilShootIsReconciled(ctx context.Context, logger *logrus.Logger, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) (*v1beta1.Shoot, error) {
+func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) (*v1beta1.Shoot, error) {
 	interval := 1 * time.Minute
 	timeout := 30 * time.Minute
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &v1beta1.Shoot{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
 		if err != nil {
-			logger.Infof("Wait for shoot to be reconciled...")
-			logger.Debug(err.Error())
+			logger.Info("Wait for shoot to be reconciled...")
+			logger.V(3).Info(err.Error())
 			return false, nil
 		}
 		shoot = shootObject
 		if err := shootReady(shoot); err != nil {
-			logger.Infof("%s. Wait for shoot to be reconciled...", err.Error())
+			logger.Info("Wait for shoot to be reconciled...", "status", err.Error())
 			return false, nil
 		}
 		return true, nil
@@ -100,7 +100,7 @@ func shootReady(newShoot *v1beta1.Shoot) error {
 		if newStatus.LastOperation.Type == gardencorev1alpha1.LastOperationTypeCreate ||
 			newStatus.LastOperation.Type == gardencorev1alpha1.LastOperationTypeReconcile {
 			if newStatus.LastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded {
-				return fmt.Errorf("last operation %s is %s", newStatus.LastOperation.Type, newStatus.LastOperation.State)
+				return fmt.Errorf("%d%%: last operation %s is %s", newStatus.LastOperation.Progress, newStatus.LastOperation.Type, newStatus.LastOperation.State)
 			}
 		}
 	}
@@ -109,9 +109,13 @@ func shootReady(newShoot *v1beta1.Shoot) error {
 }
 
 func readHostInformationFromFile() (*client.ObjectKey, error) {
-	data, err := ioutil.ReadFile(hostscheduler.HostConfigFilePath())
+	hostConfigPath, err := hostscheduler.HostConfigFilePath()
 	if err != nil {
-		return nil, fmt.Errorf("cannot read file %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
+		return nil, err
+	}
+	data, err := ioutil.ReadFile(hostConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read file %s: %s", hostConfigPath, err.Error())
 	}
 
 	var hostConfig client.ObjectKey

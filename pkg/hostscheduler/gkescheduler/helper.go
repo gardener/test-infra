@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
@@ -30,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/utils/retry"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"cloud.google.com/go/container/apiv1"
@@ -38,7 +38,7 @@ import (
 )
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
-func waitUntilOperationFinished(ctx context.Context, client *container.ClusterManagerClient, name string) (*containerpb.Operation, error) {
+func waitUntilOperationFinished(log logr.Logger, ctx context.Context, client *container.ClusterManagerClient, name string) (*containerpb.Operation, error) {
 	newOperation := &containerpb.Operation{}
 	interval := 15 * time.Second
 	timeout := 30 * time.Minute
@@ -52,7 +52,7 @@ func waitUntilOperationFinished(ctx context.Context, client *container.ClusterMa
 			return retry.MinorError(err)
 		}
 
-		log.Debugf("Operation %s is %s...", newOperation.GetName(), containerpb.Operation_Status_name[int32(newOperation.GetStatus())])
+		log.Info(fmt.Sprintf("Operation %s is %s...", newOperation.GetName(), containerpb.Operation_Status_name[int32(newOperation.GetStatus())]))
 
 		if newOperation.Status == containerpb.Operation_DONE || newOperation.Status == containerpb.Operation_ABORTING {
 			return retry.Ok()
@@ -98,8 +98,8 @@ func clientFromCluster(cluster *containerpb.Cluster) (kubernetes.Interface, erro
 	})
 }
 
-func (s gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context, operation *containerpb.Operation) error {
-	operation, err := waitUntilOperationFinished(ctx, s.client, s.getOperationName(operation.GetName()))
+func (s *gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context, operation *containerpb.Operation) error {
+	operation, err := waitUntilOperationFinished(s.log, ctx, s.client, s.getOperationName(operation.GetName()))
 	if err != nil {
 		return err
 	}
@@ -109,29 +109,38 @@ func (s gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context
 	return nil
 }
 
-func writeHostInformationToFile(host *hostCluster) error {
+func writeHostInformationToFile(hostName string) error {
+	hostConfigPath, err := hostscheduler.HostConfigFilePath()
+	if err != nil {
+		return nil
+	}
+
 	hostConfig := config{
-		Name: host.Name,
+		Name: hostName,
 	}
 	data, err := json.Marshal(hostConfig)
 	if err != nil {
-		log.Fatalf("cannot unmashal hostconfig: %s", err.Error())
+		return errors.Wrapf(err, "cannot unmashal hostconfig")
 	}
 
-	err = os.MkdirAll(filepath.Dir(hostscheduler.HostConfigFilePath()), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(hostConfigPath), os.ModePerm)
 	if err != nil {
-		log.Fatalf("cannot create folder %s for host config: %s", filepath.Dir(hostscheduler.HostConfigFilePath()), err.Error())
+		return fmt.Errorf("cannot create folder %s for host config: %s", filepath.Dir(hostConfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(hostscheduler.HostConfigFilePath(), data, os.ModePerm)
+	err = ioutil.WriteFile(hostConfigPath, data, os.ModePerm)
 	if err != nil {
-		log.Fatalf("cannot write host config to %s: %s", hostscheduler.HostConfigFilePath(), err.Error())
+		return fmt.Errorf("cannot write host config to %s: %s", hostConfigPath, err.Error())
 	}
 
 	return nil
 }
 
 func readHostInformationFromFile() (string, error) {
-	dat, err := ioutil.ReadFile(hostscheduler.HostConfigFilePath())
+	hostConfigPath, err := hostscheduler.HostConfigFilePath()
+	if err != nil {
+		return "", err
+	}
+	dat, err := ioutil.ReadFile(hostConfigPath)
 	if err != nil {
 		return "", err
 	}

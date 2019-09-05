@@ -51,5 +51,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/hostscheduler release gke --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE --clean=$CLEAN
+    go run -mod=vendor ./cmd/hostscheduler gke release --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE --clean=$CLEAN
   image: golang:1.12.9

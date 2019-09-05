@@ -18,10 +18,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/go-logr/logr"
 
 	"github.com/gardener/test-infra/pkg/util"
-
-	log "github.com/sirupsen/logrus"
 )
 
 //var newLine = []byte("\n")
@@ -33,7 +32,7 @@ const maxBufferSize = 50 * 1024 * 1024
 func (b *Bulk) Marshal() ([]byte, error) {
 	meta, err := util.MarshalNoHTMLEscape(b.Metadata)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot marshal ElasticsearchBulk %s", err.Error())
+		return nil, fmt.Errorf("cannot marshal ElasticsearchBulk %s", err.Error())
 	}
 
 	buf := bytes.NewBuffer([]byte{})
@@ -78,8 +77,7 @@ func (l BulkList) Marshal() ([][]byte, error) {
 }
 
 // ParseExportedFiles reads jsondocuments line by line from an expected file where multiple jsons are separated by newline.
-func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) BulkList {
-
+func ParseExportedFiles(log logr.Logger, name string, stepMeta interface{}, docs []byte) BulkList {
 	// first try to parse document as normal json.
 	var jsonBody map[string]interface{}
 	err := json.Unmarshal(docs, &jsonBody)
@@ -87,7 +85,7 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) BulkList
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody)
 		if err != nil {
-			log.Warnf("Cannot marshal exported json with metadata from %s", name)
+			log.Info("cannot marshal exported json with metadata", "file", name)
 			return make(BulkList, 0)
 		}
 		bulk := &Bulk{
@@ -103,10 +101,10 @@ func ParseExportedFiles(name string, stepMeta interface{}, docs []byte) BulkList
 	}
 
 	// if the document is not in json format try to parse it as bulk format
-	return parseExportedBulkFormat(name, stepMeta, docs)
+	return parseExportedBulkFormat(log, name, stepMeta, docs)
 }
 
-func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) BulkList {
+func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{}, docs []byte) BulkList {
 	bulks := make(BulkList, 0)
 	var meta map[string]interface{}
 
@@ -114,7 +112,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
 		if err != nil {
-			log.Debugf("cannot unmarshal document %s", err.Error())
+			log.V(3).Info(fmt.Sprintf("cannot unmarshal document %s", err.Error()))
 			continue
 		}
 
@@ -127,7 +125,7 @@ func parseExportedBulkFormat(name string, stepMeta interface{}, docs []byte) Bul
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
 		if err != nil {
-			log.Debugf("cannot marshal artifact %s", err.Error())
+			log.V(3).Info(fmt.Sprintf("cannot marshal artifact %s", err.Error()))
 			continue
 		}
 

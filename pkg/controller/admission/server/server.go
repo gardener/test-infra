@@ -42,7 +42,7 @@ func Serve(ctx context.Context, log logr.Logger) {
 	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: serverMuxHTTP}
 	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: serverMuxHTTPS}
 
-	serverMuxHTTP.HandleFunc("/healthz", healthz)
+	serverMuxHTTP.HandleFunc("/healthz", healthz(log.WithName("heatlh")))
 
 	go func() {
 		log.Info("starting HTTP server", "port", listenAddressHTTP)

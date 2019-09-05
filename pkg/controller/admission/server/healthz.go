@@ -16,10 +16,9 @@ package server
 
 import (
 	"github.com/gardener/test-infra/pkg/version"
+	"github.com/go-logr/logr"
 	"net/http"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,18 +32,20 @@ func UpdateHealth(isHealthy bool) {
 	mutex.Unlock()
 }
 
-func healthz(w http.ResponseWriter, r *http.Request) {
-	mutex.Lock()
-	isHealthy := healthy
-	mutex.Unlock()
+func healthz(log logr.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		mutex.Lock()
+		isHealthy := healthy
+		mutex.Unlock()
 
-	if isHealthy {
-		_, err := w.Write([]byte(version.Get().String()))
-		if err != nil {
-			log.Debug(err.Error())
-			w.WriteHeader(http.StatusOK)
+		if isHealthy {
+			_, err := w.Write([]byte(version.Get().String()))
+			if err != nil {
+				log.V(5).Info(err.Error())
+				w.WriteHeader(http.StatusOK)
+			}
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
 		}
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

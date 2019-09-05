@@ -19,4 +19,5 @@ type Config struct {
 	Verbosity         int
 	DisableStacktrace bool
 	DisableCaller     bool
+	DisableTimestamp  bool
 }
