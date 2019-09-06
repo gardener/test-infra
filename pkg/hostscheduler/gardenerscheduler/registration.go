@@ -19,7 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util/cmdutil"
 	"os"
 
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/pkg/errors"
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"

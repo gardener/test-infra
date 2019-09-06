@@ -16,7 +16,7 @@ package rungardenertemplate
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util"
 	"os"
 
@@ -27,7 +27,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -75,10 +74,6 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
-		err := godotenv.Load()
-		if err != nil {
-			logger.Log.Error(err, "Error loading .env file")
-		}
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,

@@ -51,7 +51,7 @@ spec:
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - --base-image={{ .Values.controller.steps.baseImage }}
         - --prepare-image={{ .Values.controller.steps.prepareImage }}
-        - --v={{ .Values.controller.verbosity }}
+        - -v={{ .Values.controller.verbosity }}
         {{- if .Values.secrets.github.data }}
         - --github-secrets-path={{ .Values.secrets.github.path }}/github-secrets.yaml
         {{- end }}

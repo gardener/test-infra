@@ -17,7 +17,7 @@ package collectcmd
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"os"
 

@@ -22,7 +22,7 @@ import (
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtestrun"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -33,7 +33,7 @@ var rootCmd = &cobra.Command{
 	Short: "Testrunner for Test Machinery",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		_, err = logger.New(nil)
+		_, err = logger.NewCliLogger()
 		if err != nil {
 			return err
 		}

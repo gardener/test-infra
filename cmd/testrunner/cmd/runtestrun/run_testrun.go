@@ -16,7 +16,7 @@ package runtestrun
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/pkg/errors"
 	"os"
 
