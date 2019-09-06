@@ -1,4 +1,4 @@
-FROM golang:1.12.9 AS ginkgo
+FROM golang:1.13.0 AS ginkgo
 
 RUN  \
   apt-get update \
