@@ -92,10 +92,9 @@ func clientFromCluster(cluster *containerpb.Cluster) (kubernetes.Interface, erro
 		Username: auth.GetUsername(),
 		Password: auth.GetPassword(),
 	}
-
-	return kubernetes.NewForConfig(cfg, client.Options{
+	return kubernetes.NewWithConfig(kubernetes.WithRESTConfig(cfg), kubernetes.WithClientOptions(client.Options{
 		Scheme: kubernetes.ShootScheme,
-	})
+	}))
 }
 
 func (s *gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context, operation *containerpb.Operation) error {

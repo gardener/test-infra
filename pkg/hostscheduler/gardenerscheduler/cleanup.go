@@ -16,7 +16,11 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/operation/botanist"
+	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -24,6 +28,14 @@ import (
 	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
 	flag "github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
+	NotMonitoringComponent = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleMonitoring)
+
+	// NotKubernetesClusterService is a requirement that something doesnt have the GardenRole GardenRoleOptionalAddon
+	NotGardenerAddon = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleOptionalAddon)
 )
 
 func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -51,9 +63,9 @@ func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 		}
 
-		hostClient, err := kubernetes.NewClientFromSecret(s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), client.Options{
+		hostClient, err := kubernetes.NewClientFromSecret(s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), kubernetes.WithClientOptions(client.Options{
 			Scheme: kubernetes.ShootScheme,
-		})
+		}))
 		if err != nil {
 			return fmt.Errorf("cannot build shoot client: %s", err.Error())
 		}
@@ -63,12 +75,12 @@ func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot reconcile shoot %s: %s", shoot.Name, err.Error())
 		}
 
-		if shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled {
+		if shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled {
 			s.log.WithValues("shoot", shoot.Name, "namespace", shoot.Namespace).Info("cluster is already free. No need to cleanup.")
 			return nil
 		}
 
-		if err := cleanup.CleanResources(ctx, s.log, hostClient); err != nil {
+		if err := cleanup.CleanResources(ctx, s.log, hostClient, labels.Requirements{NotMonitoringComponent, NotGardenerAddon}); err != nil {
 			return err
 		}
 

@@ -19,6 +19,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const (
+	// EventSchedulingSuccessful is an event reason for successful scheduling.
+	EventSchedulingSuccessful = "SchedulingSuccessful"
+	// EventSchedulingFailed is an event reason for failed scheduling.
+	EventSchedulingFailed = "SchedulingFailed"
+)
+
 // ProviderConfig is a workaround for missing OpenAPI functions on runtime.RawExtension struct.
 // https://github.com/kubernetes/kubernetes/issues/55890
 // https://github.com/kubernetes-sigs/cluster-api/issues/137
@@ -87,10 +94,3 @@ type K8SNetworks struct {
 	// +optional
 	Services *CIDR `json:"services,omitempty"`
 }
-
-const (
-	// DefaultPodNetworkCIDR is a constant for the default pod network CIDR of a Shoot cluster.
-	DefaultPodNetworkCIDR = CIDR("100.96.0.0/11")
-	// DefaultServiceNetworkCIDR is a constant for the default service network CIDR of a Shoot cluster.
-	DefaultServiceNetworkCIDR = CIDR("100.64.0.0/13")
-)

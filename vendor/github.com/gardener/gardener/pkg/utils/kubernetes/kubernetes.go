@@ -16,30 +16,63 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gardener/gardener/pkg/utils/retry"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SetMetaDataLabel sets the key value pair in the labels section of the given ObjectMeta.
-// If the given ObjectMeta did not yet have labels, they are initialized.
-func SetMetaDataLabel(meta *metav1.ObjectMeta, key, value string) {
-	if meta.Labels == nil {
-		meta.Labels = make(map[string]string)
+// TruncateLabelValue truncates a string at 63 characters so it's suitable for a label value.
+func TruncateLabelValue(s string) string {
+	if len(s) > 63 {
+		return s[:63]
 	}
-	meta.Labels[key] = value
+	return s
+}
+
+// SetMetaDataLabel sets the key value pair in the labels section of the given Object.
+// If the given Object did not yet have labels, they are initialized.
+func SetMetaDataLabel(meta metav1.Object, key, value string) {
+	labels := meta.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[key] = value
+	meta.SetLabels(labels)
+}
+
+// SetMetaDataAnnotation sets the annotation on the given object.
+// If the given Object did not yet have annotations, they are initialized.
+func SetMetaDataAnnotation(meta metav1.Object, key, value string) {
+	annotations := meta.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[key] = value
+	meta.SetAnnotations(annotations)
 }
 
 // HasMetaDataAnnotation checks if the passed meta object has the given key, value set in the annotations section.
-func HasMetaDataAnnotation(meta *metav1.ObjectMeta, key, value string) bool {
-	val, ok := meta.Annotations[key]
+func HasMetaDataAnnotation(meta metav1.Object, key, value string) bool {
+	val, ok := meta.GetAnnotations()[key]
 	return ok && val == value
+}
+
+// HasDeletionTimestamp checks if an object has a deletion timestamp
+func HasDeletionTimestamp(obj runtime.Object) (bool, error) {
+	metadata, err := meta.Accessor(obj)
+	if err != nil {
+		return false, err
+	}
+	return metadata.GetDeletionTimestamp() != nil, nil
 }
 
 // CreateOrUpdate creates or updates the object. Optionally, it executes a transformation function before the
@@ -100,6 +133,11 @@ func Key(namespaceOrName string, nameOpt ...string) client.ObjectKey {
 	return client.ObjectKey{Namespace: namespace, Name: name}
 }
 
+// KeyFromObject obtains the client.ObjectKey from the given metav1.Object.
+func KeyFromObject(obj metav1.Object) client.ObjectKey {
+	return Key(obj.GetNamespace(), obj.GetName())
+}
+
 // ObjectMeta creates a new metav1.ObjectMeta from the given parameters.
 // There are only two ways to call this function:
 // - If only namespaceOrName is set, then a metav1.ObjectMeta with name set to namespaceOrName is returned.
@@ -109,6 +147,11 @@ func Key(namespaceOrName string, nameOpt ...string) client.ObjectKey {
 func ObjectMeta(namespaceOrName string, nameOpt ...string) metav1.ObjectMeta {
 	namespace, name := nameAndNamespace(namespaceOrName, nameOpt...)
 	return metav1.ObjectMeta{Namespace: namespace, Name: name}
+}
+
+// ObjectMetaFromKey returns an ObjectMeta with the namespace and name set to the values from the key.
+func ObjectMetaFromKey(key client.ObjectKey) metav1.ObjectMeta {
+	return ObjectMeta(key.Namespace, key.Name)
 }
 
 // WaitUntilResourceDeleted deletes the given resource and then waits until it has been deleted. It respects the
@@ -137,4 +180,30 @@ func WaitUntilResourceDeletedWithDefaults(ctx context.Context, c client.Client, 
 	defer cancel()
 
 	return WaitUntilResourceDeleted(ctx, c, obj, 5*time.Second)
+}
+
+// GetLoadBalancerIngress takes a context, a client, a namespace and a service name. It queries for a load balancer's technical name
+// (ip address or hostname). It returns the value of the technical name whereby it always prefers the IP address (if given)
+// over the hostname. It also returns the list of all load balancer ingresses.
+func GetLoadBalancerIngress(ctx context.Context, client client.Client, namespace, name string) (string, error) {
+	service := &corev1.Service{}
+	if err := client.Get(ctx, Key(namespace, name), service); err != nil {
+		return "", err
+	}
+
+	var (
+		serviceStatusIngress = service.Status.LoadBalancer.Ingress
+		length               = len(serviceStatusIngress)
+	)
+
+	switch {
+	case length == 0:
+		return "", errors.New("`.status.loadBalancer.ingress[]` has no elements yet, i.e. external load balancer has not been created (is your quota limit exceeded/reached?)")
+	case serviceStatusIngress[length-1].IP != "":
+		return serviceStatusIngress[length-1].IP, nil
+	case serviceStatusIngress[length-1].Hostname != "":
+		return serviceStatusIngress[length-1].Hostname, nil
+	}
+
+	return "", errors.New("`.status.loadBalancer.ingress[]` has an element which does neither contain `.ip` nor `.hostname`")
 }

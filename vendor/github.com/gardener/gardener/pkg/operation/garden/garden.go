@@ -15,6 +15,7 @@
 package garden
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -23,8 +24,11 @@ import (
 	"github.com/gardener/gardener/pkg/logger"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils"
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kubeinformers "k8s.io/client-go/informers"
 )
@@ -55,21 +59,16 @@ func New(projectLister gardenlisters.ProjectLister, namespace string, secrets ma
 
 // GetDefaultDomains finds all the default domain secrets within the given map and returns a list of
 // objects that contains all relevant information about the default domains.
-func GetDefaultDomains(secrets map[string]*corev1.Secret) ([]*DefaultDomain, error) {
-	var defaultDomains []*DefaultDomain
+func GetDefaultDomains(secrets map[string]*corev1.Secret) ([]*Domain, error) {
+	var defaultDomains []*Domain
 
 	for key, secret := range secrets {
 		if strings.HasPrefix(key, common.GardenRoleDefaultDomain) {
-			provider, domain, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
+			domain, err := constructDomainFromSecret(secret)
 			if err != nil {
 				return nil, fmt.Errorf("error getting information out of default domain secret: %+v", err)
 			}
-
-			defaultDomains = append(defaultDomains, &DefaultDomain{
-				Domain:     domain,
-				Provider:   provider,
-				SecretData: secret.Data,
-			})
+			defaultDomains = append(defaultDomains, domain)
 		}
 	}
 
@@ -78,26 +77,32 @@ func GetDefaultDomains(secrets map[string]*corev1.Secret) ([]*DefaultDomain, err
 
 // GetInternalDomain finds the internal domain secret within the given map and returns the object
 // that contains all relevant information about the internal domain.
-func GetInternalDomain(secrets map[string]*corev1.Secret) (*InternalDomain, error) {
+func GetInternalDomain(secrets map[string]*corev1.Secret) (*Domain, error) {
 	internalDomainSecret, ok := secrets[common.GardenRoleInternalDomain]
 	if !ok {
 		return nil, fmt.Errorf("missing secret with key %s", common.GardenRoleInternalDomain)
 	}
 
-	provider, domain, err := common.GetDomainInfoFromAnnotations(internalDomainSecret.Annotations)
+	return constructDomainFromSecret(internalDomainSecret)
+}
+
+func constructDomainFromSecret(secret *corev1.Secret) (*Domain, error) {
+	provider, domain, includeZones, excludeZones, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
 	if err != nil {
-		return nil, fmt.Errorf("error getting information out of internal domain secret: %+v", err)
+		return nil, err
 	}
 
-	return &InternalDomain{
-		Domain:     domain,
-		Provider:   provider,
-		SecretData: internalDomainSecret.Data,
+	return &Domain{
+		Domain:       domain,
+		Provider:     provider,
+		SecretData:   secret.Data,
+		IncludeZones: includeZones,
+		ExcludeZones: excludeZones,
 	}, nil
 }
 
-// DomainIsDefaultDomain identifies whether a the given domain is a default domain.
-func DomainIsDefaultDomain(domain string, defaultDomains []*DefaultDomain) *DefaultDomain {
+// DomainIsDefaultDomain identifies whether the given domain is a default domain.
+func DomainIsDefaultDomain(domain string, defaultDomains []*Domain) *Domain {
 	for _, defaultDomain := range defaultDomains {
 		if strings.HasSuffix(domain, defaultDomain.Domain) {
 			return defaultDomain
@@ -128,7 +133,7 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 		// Retrieving default domain secrets based on all secrets in the Garden namespace which have
 		// a label indicating the Garden role default-domain.
 		if secret.Labels[common.GardenRole] == common.GardenRoleDefaultDomain {
-			_, domain, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
+			_, domain, _, _, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
 			if err != nil {
 				logger.Logger.Warnf("error getting information out of default domain secret %s: %+v", secret.Name, err)
 				continue
@@ -141,7 +146,7 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 		// Retrieving internal domain secrets based on all secrets in the Garden namespace which have
 		// a label indicating the Garden role internal-domain.
 		if secret.Labels[common.GardenRole] == common.GardenRoleInternalDomain {
-			_, domain, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
+			_, domain, _, _, err := common.GetDomainInfoFromAnnotations(secret.Annotations)
 			if err != nil {
 				logger.Logger.Warnf("error getting information out of internal domain secret %s: %+v", secret.Name, err)
 				continue
@@ -202,19 +207,26 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 // VerifyInternalDomainSecret verifies that the internal domain secret matches to the internal domain secret used for
 // existing Shoot clusters. It is not allowed to change the internal domain secret if there are existing Shoot clusters.
 func VerifyInternalDomainSecret(k8sGardenClient kubernetes.Interface, numberOfShoots int, internalDomainSecret *corev1.Secret) error {
-	_, currentDomain, err := common.GetDomainInfoFromAnnotations(internalDomainSecret.Annotations)
+	_, currentDomain, _, _, err := common.GetDomainInfoFromAnnotations(internalDomainSecret.Annotations)
 	if err != nil {
 		return fmt.Errorf("error getting information out of current internal domain secret: %+v", err)
 	}
 
-	internalConfigMap, err := k8sGardenClient.GetConfigMap(common.GardenNamespace, common.ControllerManagerInternalConfigMapName)
+	internalConfigMap := &corev1.ConfigMap{}
+	err = k8sGardenClient.Client().Get(context.TODO(), kutil.Key(common.GardenNamespace, common.ControllerManagerInternalConfigMapName), internalConfigMap)
 	if apierrors.IsNotFound(err) || numberOfShoots == 0 {
-		if _, err := k8sGardenClient.CreateConfigMap(common.GardenNamespace, common.ControllerManagerInternalConfigMapName, map[string]string{
-			common.GardenRoleInternalDomain: currentDomain,
-		}, true); err != nil {
-			return err
+		configMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      common.ControllerManagerInternalConfigMapName,
+				Namespace: common.GardenNamespace,
+			},
 		}
-		return nil
+		return kutil.CreateOrUpdate(context.TODO(), k8sGardenClient.Client(), configMap, func() error {
+			configMap.Data = map[string]string{
+				common.GardenRoleInternalDomain: currentDomain,
+			}
+			return nil
+		})
 	}
 	if err != nil {
 		return err

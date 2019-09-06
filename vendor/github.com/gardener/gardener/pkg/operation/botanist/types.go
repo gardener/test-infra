@@ -25,5 +25,5 @@ import (
 type Botanist struct {
 	*operation.Operation
 	DefaultDomainSecret *corev1.Secret
-	mutex               sync.Mutex
+	mutex               sync.RWMutex
 }

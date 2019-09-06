@@ -144,7 +144,7 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1beta1.Shoo
 func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *v1beta1.Shoot, id string) error {
 	// if shoot is hibernated it is ready to be used as host for a test.
 	// then the hibernated shoot is woken up and the gardener tests can start
-	shoot.Spec.Hibernation.Enabled = false
+	shoot.Spec.Hibernation.Enabled = &hibernationFalse
 
 	shoot.Labels[ShootLabelStatus] = ShootStatusLocked
 	shoot.Annotations[ShootAnnotationLockedAt] = time.Now().Format(time.RFC3339)

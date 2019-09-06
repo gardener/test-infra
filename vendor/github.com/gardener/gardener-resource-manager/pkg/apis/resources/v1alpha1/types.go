@@ -45,11 +45,24 @@ type ManagedResourceList struct {
 }
 
 type ManagedResourceSpec struct {
+	// Class holds the resource class used to control the responsibility for multiple resource manager instances
+	// +optional
+	Class *string `json:"class,omitempty"`
 	// SecretRefs is a list of secret references.
 	SecretRefs []corev1.LocalObjectReference `json:"secretRefs"`
 	// InjectLabels injects the provided labels into every resource that is part of the referenced secrets.
 	// +optional
 	InjectLabels map[string]string `json:"injectLabels,omitempty"`
+	// ForceOverwriteLabels specifies that all existing labels should be overwritten. Defaults to false.
+	// +optional
+	ForceOverwriteLabels *bool `json:"forceOverwriteLabels,omitempty"`
+	// ForceOverwriteAnnotations specifies that all existing annotations should be overwritten. Defaults to false.
+	// +optional
+	ForceOverwriteAnnotations *bool `json:"forceOverwriteAnnotations,omitempty"`
+	// KeepObjects specifies whether the objects should be kept although the managed resource has already been deleted.
+	// Defaults to false.
+	// +optional
+	KeepObjects *bool `json:"keepObjects,omitempty"`
 }
 
 // ManagedResourceStatus is the status of a managed resource.
@@ -58,5 +71,13 @@ type ManagedResourceStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// Resources is a list of objects that have been created.
 	// +optional
-	Resources []corev1.ObjectReference `json:"resources,omitempty"`
+	Resources []ObjectReference `json:"resources,omitempty"`
+}
+
+type ObjectReference struct {
+	corev1.ObjectReference `json:",inline"`
+	// Labels is a map of labels that were used during last update of the resource.
+	Labels map[string]string `json:"labels,omitempty"`
+	// Annotations is a map of annotations that were used during last update of the resource.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

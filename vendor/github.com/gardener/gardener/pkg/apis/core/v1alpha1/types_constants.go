@@ -46,6 +46,50 @@ const (
 	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
 	// the cluster-autoscaler pod.
 	DeploymentNameClusterAutoscaler = "cluster-autoscaler"
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
+	// the dependency-watchdog pod.
+	DeploymentNameDependencyWatchdog = "dependency-watchdog"
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
+	// the kube-apiserver pod.
+	DeploymentNameKubeAPIServer = "kube-apiserver"
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
+	// the kube-controller-manager pod.
+	DeploymentNameKubeControllerManager = "kube-controller-manager"
+
+	// DeploymentNameKubeScheduler is a constant for the name of a Kubernetes deployment object that contains
+	// the kube-scheduler pod.
+	DeploymentNameKubeScheduler = "kube-scheduler"
+	// DeploymentNameGardenerResourceManager is a constant for the name of a Kubernetes deployment object that contains
+	// the gardener-resource-manager pod.
+	DeploymentNameGardenerResourceManager = "gardener-resource-manager"
+	// DeploymentNameGrafanaOperators is a constant for the name of a Kubernetes deployment object that contains
+	// the grafana-operators pod.
+	DeploymentNameGrafanaOperators = "grafana-operators"
+	// DeploymentNameGrafanaUsers is a constant for the name of a Kubernetes deployment object that contains
+	// the grafana-users pod.
+	DeploymentNameGrafanaUsers = "grafana-users"
+	// DeploymentNameKubeStateMetricsShoot is a constant for the name of a Kubernetes deployment object that contains
+	// the kube-state-metrics pod.
+	DeploymentNameKubeStateMetricsShoot = "kube-state-metrics"
+	// DeploymentNameKubeStateMetricsSeed is a constant for the name of a Kubernetes deployment object that contains
+	// the kube-state-metrics-seed pod.
+	DeploymentNameKubeStateMetricsSeed = "kube-state-metrics-seed"
+	// DeploymentNameKibana is a constant for the name of a Kubernetes deployment object that contains
+	// the kibana-logging pod.
+	DeploymentNameKibana = "kibana-logging"
+
+	// StatefulSetNameETCDMain is a constant for the name of a Kubernetes stateful set object that contains
+	// the etcd-main pod.
+	StatefulSetNameETCDMain = "etcd-main"
+	// StatefulSetNameETCDEvents is a constant for the name of a Kubernetes stateful set object that contains
+	// the etcd-events pod.
+	StatefulSetNameETCDEvents = "etcd-events"
+	// StatefulSetNameElasticSearch is a constant for the name of a Kubernetes stateful set object that contains
+	// the elasticsearch-logging pod.
+	StatefulSetNameElasticSearch = "elasticsearch-logging"
+	// StatefulSetNamePrometheus is a constant for the name of a Kubernetes stateful set object that contains
+	// the prometheus pod.
+	StatefulSetNamePrometheus = "prometheus"
 
 	// GardenPurpose is a constant for the key in a label describing the purpose of the respective object.
 	GardenPurpose = "garden.sapcloud.io/purpose"
@@ -59,11 +103,89 @@ const (
 	// GardenerOperationReconcile is a constant for the value of the operation annotation describing a reconcile
 	// operation.
 	GardenerOperationReconcile = "reconcile"
+	// GardenerOperationMigrate is a constant for the value of the operation annotation describing a migration
+	// operation.
+	GardenerOperationMigrate = "migrate"
 
-	// BackupProvider is used to identify the backup provider.
-	BackupProvider = "backup.gardener.cloud/provider"
-	// SeedProvider is used to identify the seed provider.
-	SeedProvider = "seed.gardener.cloud/provider"
-	// ShootProvider is used to identify the shoot provider.
-	ShootProvider = "shoot.gardener.cloud/provider"
+	// GardenRole is a constant for a label that describes a role.
+	GardenRole = "gardener.cloud/role"
+	// GardenRoleExtension is a constant for a label that describes the 'extensions' role.
+	GardenRoleExtension = "extension"
+
+	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
+	// instance in the garden namespace on the seeds.
+	SeedResourceManagerClass = "seed"
+	// LabelBackupProvider is used to identify the backup provider.
+	LabelBackupProvider = "backup.gardener.cloud/provider"
+	// LabelSeedProvider is used to identify the seed provider.
+	LabelSeedProvider = "seed.gardener.cloud/provider"
+	// LabelShootProvider is used to identify the shoot provider.
+	LabelShootProvider = "shoot.gardener.cloud/provider"
+	// LabelNetworkingProvider is used to identify the networking provider for the cni plugin.
+	LabelNetworkingProvider = "networking.shoot.gardener.cloud/provider"
+	// LabelExtensionConfiguration is used to identify the provider's configuration which will be added to Gardener configuration
+	LabelExtensionConfiguration = "extensions.gardener.cloud/configuration"
+	// LabelLogging is a constant for a label for logging stack configurations
+	LabelLogging = "logging"
+
+	// LabelNetworkPolicyToBlockedCIDRs allows Egress from pods labeled with 'networking.gardener.cloud/to-blocked-cidrs=allowed'.
+	LabelNetworkPolicyToBlockedCIDRs = "networking.gardener.cloud/to-blocked-cidrs"
+	// LabelNetworkPolicyToDNS allows Egress from pods labeled with 'networking.gardener.cloud/to-dns=allowed' to DNS running in 'kube-system'.
+	// In practice, most of the Pods which require network Egress need this label.
+	LabelNetworkPolicyToDNS = "networking.gardener.cloud/to-dns"
+	// LabelNetworkPolicyToPrivateNetworks allows Egress from pods labeled with 'networking.gardener.cloud/to-private-networks=allowed' to the
+	// private networks (RFC1918), Carrier-grade NAT (RFC6598) except for cloudProvider's specific metadata service IP, seed networks,
+	// shoot networks.
+	LabelNetworkPolicyToPrivateNetworks = "networking.gardener.cloud/to-private-networks"
+	// LabelNetworkPolicyToPublicNetworks allows Egress from pods labeled with 'networking.gardener.cloud/to-public-networks=allowed' to all public
+	// network IPs, except for private networks (RFC1918), carrier-grade NAT (RFC6598), cloudProvider's specific metadata service IP.
+	// In practice, this blocks Egress traffic to all networks in the Seed cluster and only traffic to public IPv4 addresses.
+	LabelNetworkPolicyToPublicNetworks = "networking.gardener.cloud/to-public-networks"
+	// LabelNetworkPolicyToSeedAPIServer allows Egress from pods labeled with 'networking.gardener.cloud/to-seed-apiserver=allowed' to Seed's Kubernetes
+	// API Server.
+	LabelNetworkPolicyToSeedAPIServer = "networking.gardener.cloud/to-seed-apiserver"
+	// LabelNetworkPolicyToShootAPIServer allows Egress from pods labeled with 'networking.gardener.cloud/to-shoot-apiserver=allowed' to talk to Shoot's
+	// Kubernetes API Server.
+	LabelNetworkPolicyToShootAPIServer = "networking.gardener.cloud/to-shoot-apiserver"
+	// LabelNetworkPolicyToAll disables all Ingress and Egress traffic into/from this namespace when set to "disallowed".
+	LabelNetworkPolicyToAll = "networking.gardener.cloud/to-all"
+	// LabelNetworkPolicyToElasticSearch allows Ingress to the ElasticSearch API pods labeled with 'networking.gardener.cloud/to-elasticsearch=allowed',
+	// and fluentd in 'garden' namespace.
+	LabelNetworkPolicyToElasticSearch = "networking.gardener.cloud/to-elasticsearch"
+	// LabelNetworkPolicyFromPrometheus allows Ingress from Prometheus to pods labeled with 'networking.gardener.cloud/from-prometheus=allowed' and ports
+	// named 'metrics' in the PodSpecification.
+	LabelNetworkPolicyFromPrometheus = "networking.gardener.cloud/from-prometheus"
+	// LabelNetworkPolicyAllowed is a constant for allowing a network policy.
+	LabelNetworkPolicyAllowed = "allowed"
+	// LabelNetworkPolicyDisallowed is a constant for disallowing a network policy.
+	LabelNetworkPolicyDisallowed = "disallowed"
+
+	// LabelApp is a constant for a label key.
+	LabelApp = "app"
+	// LabelRole is a constant for a label key.
+	LabelRole = "role"
+	// LabelKubernetes is a constant for a label for Kubernetes workload.
+	LabelKubernetes = "kubernetes"
+	// LabelAPIServer is a constant for a label for the kube-apiserver.
+	LabelAPIServer = "apiserver"
+	// LabelAPIServer is a constant for a label for the kube-controller-manager.
+	LabelControllerManager = "controller-manager"
+	// LabelAPIServer is a constant for a label for the kube-scheduler.
+	LabelScheduler = "scheduler"
+
+	// OperatingSystemConfigUnitNameKubeletService is a constant for a unit in the operating system config that contains the kubelet service.
+	OperatingSystemConfigUnitNameKubeletService = "kubelet.service"
+	// OperatingSystemConfigFilePathKernelSettings is a constant for a path to a file in the operating system config that contains some general kernel settings.
+	OperatingSystemConfigFilePathKernelSettings = "/etc/sysctl.d/99-k8s-general.conf"
+	// OperatingSystemConfigFilePathKubeletConfig is a constant for a path to a file in the operating system config that contains the kubelet configuration.
+	OperatingSystemConfigFilePathKubeletConfig = "/var/lib/kubelet/config/kubelet"
+
+
+	// FluentBitConfigMapKubernetesFilterConfig is a constant for the Fluent Bit ConfigMap's section regarding Kubernetes filters
+	FluentBitConfigMapKubernetesFilter = "filter-kubernetes.conf"
+	// FluentBitConfigMapParserConfig is a constant for the Fluent Bit ConfigMap's section regarding Parses for common container types
+	FluentBitConfigMapParser = "parsers.conf"
+
+	// ControllerRegistrationName is the key of a label on extension namespaces that indicates the controller registration name.
+	LabelControllerRegistrationName = "controllerregistration.core.gardener.cloud/name"
 )

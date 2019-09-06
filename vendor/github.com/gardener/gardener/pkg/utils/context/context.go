@@ -21,7 +21,7 @@ import (
 
 type ops struct{}
 
-// WithTimeout
+// WithTimeout returns the context with the given timeout and a CancelFunc to cleanup its resources.
 func (ops) WithTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, timeout)
 }

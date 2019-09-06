@@ -109,6 +109,11 @@ func (in *BackupBucketSpec) DeepCopy() *BackupBucketSpec {
 func (in *BackupBucketStatus) DeepCopyInto(out *BackupBucketStatus) {
 	*out = *in
 	in.DefaultStatus.DeepCopyInto(&out.DefaultStatus)
+	if in.GeneratedSecretRef != nil {
+		in, out := &in.GeneratedSecretRef, &out.GeneratedSecretRef
+		*out = new(v1.SecretReference)
+		**out = **in
+	}
 	return
 }
 
@@ -379,6 +384,11 @@ func (in *ControlPlaneList) DeepCopyObject() runtime.Object {
 func (in *ControlPlaneSpec) DeepCopyInto(out *ControlPlaneSpec) {
 	*out = *in
 	out.DefaultSpec = in.DefaultSpec
+	if in.Purpose != nil {
+		in, out := &in.Purpose, &out.Purpose
+		*out = new(Purpose)
+		**out = **in
+	}
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
 		*out = new(runtime.RawExtension)
@@ -1007,6 +1017,11 @@ func (in *OperatingSystemConfigSpec) DeepCopyInto(out *OperatingSystemConfigSpec
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ProviderConfig != nil {
+		in, out := &in.ProviderConfig, &out.ProviderConfig
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -1268,6 +1283,11 @@ func (in *WorkerStatus) DeepCopyInto(out *WorkerStatus) {
 		in, out := &in.MachineDeployments, &out.MachineDeployments
 		*out = make([]MachineDeployment, len(*in))
 		copy(*out, *in)
+	}
+	if in.ProviderStatus != nil {
+		in, out := &in.ProviderStatus, &out.ProviderStatus
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }
