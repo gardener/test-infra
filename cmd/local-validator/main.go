@@ -21,7 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	flag "github.com/spf13/pflag"
 
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	"github.com/gardener/test-infra/pkg/util"

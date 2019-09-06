@@ -21,7 +21,7 @@ import (
 
 	flag "github.com/spf13/pflag"
 
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/gardener/test-infra/pkg/version"
 

@@ -17,7 +17,7 @@ package versioncmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/controller/logger"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/version"
 	"github.com/spf13/cobra"
 	"os"
@@ -32,9 +32,10 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "GetInterface testrunner version",
 	Run: func(cmd *cobra.Command, args []string) {
+		logger.Log.V(3).Info("version")
 		v, err := json.Marshal(version.Get())
 		if err != nil {
-			logger.Log.Error(err, "unable to mashal version")
+			logger.Log.Error(err, "unable to marshal version")
 			os.Exit(1)
 		}
 		fmt.Print(string(v))

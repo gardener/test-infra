@@ -17,7 +17,6 @@ package logger
 import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	flag "github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -41,7 +40,21 @@ var encoderConfig = zapcore.EncoderConfig{
 	EncodeCaller:   zapcore.ShortCallerEncoder,
 }
 
-var developmentConfig = zap.Config{
+var cliEncoderConfig = zapcore.EncoderConfig{
+	TimeKey:        "",
+	LevelKey:       "level",
+	NameKey:        "logger",
+	CallerKey:      "caller",
+	MessageKey:     "msg",
+	StacktraceKey:  "stacktrace",
+	LineEnding:     zapcore.DefaultLineEnding,
+	EncodeLevel:    zapcore.LowercaseColorLevelEncoder,
+	EncodeTime:     zapcore.ISO8601TimeEncoder,
+	EncodeDuration: zapcore.SecondsDurationEncoder,
+	EncodeCaller:   zapcore.ShortCallerEncoder,
+}
+
+var defaultConfig = zap.Config{
 	Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
 	Development:       true,
 	Encoding:          "console",
@@ -80,40 +93,32 @@ func New(config *Config) (logr.Logger, error) {
 	return Log, nil
 }
 
-// NewWithoutTimestamp creates a new Logger without logging the timestamp
-func NewWithoutTimestamp(config *Config) (logr.Logger, error) {
-	if config == nil {
-		config = &configFromFlags
-	}
-	config.DisableTimestamp = true
+// NewCliLogger creates a new logger for cli usage.
+// CLI usage means that by default:
+// - the default dev config
+// - encoding is console
+// - timestamps are disabled (can be still activated by the cli flag)
+// - level are color encoded
+func NewCliLogger() (logr.Logger, error) {
+	config := &configFromFlags
+	config.Cli = true
 	return New(config)
 }
 
-func determineZapConfig(config *Config) zap.Config {
-	var cfg zap.Config
-	if config.Development {
-		cfg = developmentConfig
+func determineZapConfig(loggerConfig *Config) zap.Config {
+	var zapConfig zap.Config
+	if loggerConfig.Development {
+		zapConfig = defaultConfig
+	} else if loggerConfig.Cli {
+		zapConfig = defaultConfig
+		zapConfig.EncoderConfig = cliEncoderConfig
 	} else {
-		cfg = productionConfig
+		zapConfig = productionConfig
 	}
 
-	cfg.DisableStacktrace = config.DisableStacktrace
-	cfg.DisableCaller = config.DisableCaller
+	loggerConfig.SetDisableCaller(&zapConfig)
+	loggerConfig.SetDisableStacktrace(&zapConfig)
+	loggerConfig.SetTimestamp(&zapConfig)
 
-	if config.DisableTimestamp {
-		cfg.EncoderConfig.TimeKey = ""
-	}
-
-	return cfg
-}
-
-func InitFlags(flagset *flag.FlagSet) {
-	if flagset == nil {
-		flagset = flag.CommandLine
-	}
-
-	flag.BoolVar(&configFromFlags.Development, "dev", false, "enable development logging which result in console encoding, enabled stacktrace and enabled caller")
-	flag.IntVar(&configFromFlags.Verbosity, "v", 1, "number for the log level verbosity")
-	flag.BoolVar(&configFromFlags.DisableStacktrace, "disable-stacktrace", true, "disable the stacktrace of error logs")
-	flag.BoolVar(&configFromFlags.DisableCaller, "disable-caller", true, "disable the caller of logs")
+	return zapConfig
 }

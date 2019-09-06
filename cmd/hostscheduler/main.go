@@ -17,10 +17,10 @@ package main
 import (
 	"fmt"
 	"github.com/gardener/test-infra/cmd/hostscheduler/completion"
-	"github.com/gardener/test-infra/pkg/controller/logger"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util/cmdutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,7 +37,7 @@ var hostschedulerCmd = &cobra.Command{
 	Short:   "Manage gardener host cluster for gardener tests",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var err error
-		_, err = logger.NewWithoutTimestamp(nil)
+		_, err = logger.NewCliLogger()
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
