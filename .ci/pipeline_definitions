@@ -29,9 +29,9 @@ test-infra:
               tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:
-        image: 'golang:1.12.9'
+        image: 'golang:1.13.0'
       test:
-        image: 'golang:1.12.9'
+        image: 'golang:1.13.0'
 
   jobs:
     head-update:
