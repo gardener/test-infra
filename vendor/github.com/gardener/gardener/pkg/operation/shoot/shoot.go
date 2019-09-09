@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
-
 	corev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
@@ -35,15 +33,15 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
+	"github.com/Masterminds/semver"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // New takes a <k8sGardenClient>, the <k8sGardenInformers> and a <shoot> manifest, and creates a new Shoot representation.
 // It will add the CloudProfile, the cloud provider secret, compute the internal cluster domain and identify the cloud provider.
-func New(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, shoot *gardenv1beta1.Shoot, projectName, internalDomain string, defaultDomains []*garden.DefaultDomain) (*Shoot, error) {
+func New(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, shoot *gardenv1beta1.Shoot, projectName, internalDomain string, defaultDomains []*garden.Domain) (*Shoot, error) {
 	var (
 		secret *corev1.Secret
 		err    error
@@ -80,16 +78,16 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformer
 		InternalClusterDomain: ConstructInternalClusterDomain(shoot.Name, projectName, internalDomain),
 		ExternalClusterDomain: ConstructExternalClusterDomain(shoot),
 
-		IsHibernated:           helper.IsShootHibernated(shoot),
+		HibernationEnabled:     helper.HibernationIsEnabled(shoot),
 		WantsClusterAutoscaler: false,
 
 		Extensions: extensions,
 	}
-	shootObj.CloudConfigMap = make(map[string]CloudConfig, len(shootObj.GetWorkerNames()))
+	shootObj.OperatingSystemConfigsMap = make(map[string]OperatingSystemConfigs, len(shootObj.GetWorkerNames()))
 
 	// Determine information about external domain for shoot cluster.
 	externalDomain, err := ConstructExternalDomain(context.TODO(), k8sGardenClient.Client(), shoot, secret, defaultDomains)
-	if err != nil {
+	if err != nil && !(IsIncompleteDNSConfigError(err) && shoot.DeletionTimestamp != nil && len(shoot.Status.UID) == 0) {
 		return nil, err
 	}
 	shootObj.ExternalDomain = externalDomain
@@ -266,9 +264,14 @@ func (s *Shoot) GetNodeNetwork() gardencorev1alpha1.CIDR {
 	return *k8sNetworks.Nodes
 }
 
-// GetMachineImage returns the name of the used machine image.
-func (s *Shoot) GetMachineImage() *gardenv1beta1.MachineImage {
-	return helper.GetMachineImageFromShoot(s.CloudProvider, s.Info)
+// GetDefaultMachineImage returns the name of the used machine image.
+func (s *Shoot) GetDefaultMachineImage() *gardenv1beta1.ShootMachineImage {
+	return helper.GetDefaultMachineImageFromShoot(s.CloudProvider, s.Info)
+}
+
+// GetMachineImages returns the name of the used machine image.
+func (s *Shoot) GetMachineImages() []*gardenv1beta1.ShootMachineImage {
+	return helper.GetMachineImagesFromShootForCloudProvider(s.CloudProvider, s.Info)
 }
 
 // ClusterAutoscalerEnabled returns true if the cluster-autoscaler addon is enabled in the Shoot manifest.
@@ -305,7 +308,7 @@ func (s *Shoot) ComputeCloudConfigSecretName(workerName string) string {
 
 // GetReplicas returns the given <wokenUp> number if the shoot is not hibernated, or zero otherwise.
 func (s *Shoot) GetReplicas(wokenUp int) int {
-	if s.IsHibernated {
+	if s.HibernationEnabled {
 		return 0
 	}
 	return wokenUp
@@ -316,18 +319,18 @@ func (s *Shoot) GetReplicas(wokenUp int) int {
 // internal or the external cluster domain should be used.
 func (s *Shoot) ComputeAPIServerURL(runsInSeed, useInternalClusterDomain bool) string {
 	if runsInSeed {
-		return common.KubeAPIServerDeploymentName
+		return gardencorev1alpha1.DeploymentNameKubeAPIServer
 	}
 
 	if dnsProvider := s.Info.Spec.DNS.Provider; dnsProvider != nil && *dnsProvider == gardenv1beta1.DNSUnmanaged {
-		return s.InternalClusterDomain
+		return common.GetAPIServerDomain(s.InternalClusterDomain)
 	}
 
 	if useInternalClusterDomain {
-		return s.InternalClusterDomain
+		return common.GetAPIServerDomain(s.InternalClusterDomain)
 	}
 
-	return *(s.ExternalClusterDomain)
+	return common.GetAPIServerDomain(*s.ExternalClusterDomain)
 }
 
 // IPVSEnabled returns true if IPVS is enabled for the shoot.
@@ -351,17 +354,17 @@ func ComputeTechnicalID(projectName string, shoot *gardenv1beta1.Shoot) string {
 	return fmt.Sprintf("shoot--%s--%s", projectName, shoot.Name)
 }
 
-// ConstructInternalClusterDomain constructs the domain pointing to the kube-apiserver of a Shoot cluster
-// which is only used for internal purposes (all kubeconfigs except the one which is received by the
-// user will only talk with the kube-apiserver via this domain). In case the given <internalDomain>
-// already contains "internal", the result is constructed as "api.<shootName>.<shootProject>.<internalDomain>."
+// ConstructInternalClusterDomain constructs the internal base domain pof this shoot cluster.
+// It is only used for internal purposes (all kubeconfigs except the one which is received by the
+// user will only talk with the kube-apiserver via a DNS record of domain). In case the given <internalDomain>
+// already contains "internal", the result is constructed as "<shootName>.<shootProject>.<internalDomain>."
 // In case it does not, the word "internal" will be appended, resulting in
-// "api.<shootName>.<shootProject>.internal.<internalDomain>".
+// "<shootName>.<shootProject>.internal.<internalDomain>".
 func ConstructInternalClusterDomain(shootName, shootProject, internalDomain string) string {
 	if strings.Contains(internalDomain, common.InternalDomainKey) {
-		return fmt.Sprintf("api.%s.%s.%s", shootName, shootProject, internalDomain)
+		return fmt.Sprintf("%s.%s.%s", shootName, shootProject, internalDomain)
 	}
-	return fmt.Sprintf("api.%s.%s.%s.%s", shootName, shootProject, common.InternalDomainKey, internalDomain)
+	return fmt.Sprintf("%s.%s.%s.%s", shootName, shootProject, common.InternalDomainKey, internalDomain)
 }
 
 // ConstructExternalClusterDomain constructs the external Shoot cluster domain, i.e. the domain which will be put
@@ -370,21 +373,19 @@ func ConstructExternalClusterDomain(shoot *gardenv1beta1.Shoot) *string {
 	if shoot.Spec.DNS.Domain == nil {
 		return nil
 	}
-
-	domain := fmt.Sprintf("api.%s", *(shoot.Spec.DNS.Domain))
-	return &domain
+	return shoot.Spec.DNS.Domain
 }
 
 // ConstructExternalDomain constructs an object containing all relevant information of the external domain that
 // shall be used for a shoot cluster - based on the configuration of the Garden cluster and the shoot itself.
-func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *gardenv1beta1.Shoot, shootSecret *corev1.Secret, defaultDomains []*garden.DefaultDomain) (*ExternalDomain, error) {
+func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *gardenv1beta1.Shoot, shootSecret *corev1.Secret, defaultDomains []*garden.Domain) (*garden.Domain, error) {
 	externalClusterDomain := ConstructExternalClusterDomain(shoot)
 	if externalClusterDomain == nil {
 		return nil, nil
 	}
 
 	var (
-		externalDomain = &ExternalDomain{Domain: *shoot.Spec.DNS.Domain}
+		externalDomain = &garden.Domain{Domain: *shoot.Spec.DNS.Domain}
 		defaultDomain  = garden.DomainIsDefaultDomain(*externalClusterDomain, defaultDomains)
 	)
 
@@ -396,17 +397,23 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 		}
 		externalDomain.SecretData = secret.Data
 		externalDomain.Provider = *shoot.Spec.DNS.Provider
+		externalDomain.IncludeZones = shoot.Spec.DNS.IncludeZones
+		externalDomain.ExcludeZones = shoot.Spec.DNS.ExcludeZones
 
 	case defaultDomain != nil:
 		externalDomain.SecretData = defaultDomain.SecretData
 		externalDomain.Provider = defaultDomain.Provider
+		externalDomain.IncludeZones = defaultDomain.IncludeZones
+		externalDomain.ExcludeZones = defaultDomain.ExcludeZones
 
 	case shoot.Spec.DNS.Provider != nil && shoot.Spec.DNS.SecretName == nil:
 		externalDomain.SecretData = shootSecret.Data
 		externalDomain.Provider = *shoot.Spec.DNS.Provider
+		externalDomain.IncludeZones = shoot.Spec.DNS.IncludeZones
+		externalDomain.ExcludeZones = shoot.Spec.DNS.ExcludeZones
 
 	default:
-		return nil, fmt.Errorf("unable to figure out which secret should be used for dns")
+		return nil, &IncompleteDNSConfigError{}
 	}
 
 	return externalDomain, nil
@@ -414,7 +421,7 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 
 // ExtensionDefaultTimeout is the default timeout and defines how long Gardener should wait
 // for a successful reconciliation of this extension resource.
-const ExtensionDefaultTimeout = 10 * time.Minute
+const ExtensionDefaultTimeout = 3 * time.Minute
 
 // MergeExtensions merges the given controller registrations with the given extensions, expecting that each type in extensions is also represented in the registration.
 func MergeExtensions(registrations []corev1alpha1.ControllerRegistration, extensions []gardenv1beta1.Extension, namespace string) (map[string]Extension, error) {

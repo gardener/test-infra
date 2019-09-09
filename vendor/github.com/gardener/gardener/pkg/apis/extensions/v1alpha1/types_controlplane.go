@@ -20,6 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var _ Object = (*ControlPlane)(nil)
+
 // ControlPlaneResource is a constant for the name of the ControlPlane resource.
 const ControlPlaneResource = "ControlPlane"
 
@@ -33,6 +35,16 @@ type ControlPlane struct {
 
 	Spec   ControlPlaneSpec   `json:"spec"`
 	Status ControlPlaneStatus `json:"status"`
+}
+
+// GetExtensionSpec implements Object.
+func (i *ControlPlane) GetExtensionSpec() Spec {
+	return &i.Spec
+}
+
+// GetExtensionStatus implements Object.
+func (i *ControlPlane) GetExtensionStatus() Status {
+	return &i.Status
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -51,6 +63,9 @@ type ControlPlaneSpec struct {
 	// DefaultSpec is a structure containing common fields used by all extension resources.
 	DefaultSpec `json:",inline"`
 
+	// Purpose contains the data if a cloud provider needs additional components in order to expose the control plane.
+	// +optional
+	Purpose *Purpose `json:"purpose,omitempty"`
 	// ProviderConfig contains provider-specific configuration for this control plane.
 	// +optional
 	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty"`
@@ -73,3 +88,13 @@ type ControlPlaneStatus struct {
 	// +optional
 	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 }
+
+// Purpose is a string alias.
+type Purpose string
+
+const (
+	// Normal triggers the ControlPlane controllers for the shoot provider.
+	Normal Purpose = "normal"
+	// Exposure triggers the ControlPlane controllers for the exposure settings.
+	Exposure Purpose = "exposure"
+)

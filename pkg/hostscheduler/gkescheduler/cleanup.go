@@ -15,11 +15,22 @@ package gkescheduler
 
 import (
 	"context"
+	"github.com/gardener/gardener/pkg/operation/botanist"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+)
+
+var (
+	NotHeapster          = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "heapster")
+	NotKubeDNS           = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns")
+	NotKubeDNSAutoscaler = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns-autoscaler")
+	NotMetricsServer     = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "metrics-server")
+	NotKubeProxy         = botanist.MustNewRequirement("component", selection.NotEquals, "kube-proxy")
 )
 
 func (s *gkescheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -46,18 +57,12 @@ func (s *gkescheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFu
 		}
 		s.log.Info("starting to cleanup cluster")
 
-		// do not cleanup if cluster is already freed
-		if isFree(cluster.GetResourceLabels()) {
-			s.log.Info("Cluster is already free. No need to cleanup.")
-			return nil
-		}
-
 		k8sClient, err := clientFromCluster(cluster)
 		if err != nil {
 			return errors.Wrap(err, "unable to build kubernetes client")
 		}
 
-		if err := cleanup.CleanResources(ctx, s.log, k8sClient); err != nil {
+		if err := cleanup.CleanResources(ctx, s.log, k8sClient, labels.Requirements{NotHeapster, NotKubeDNS, NotKubeDNSAutoscaler, NotMetricsServer, NotKubeProxy}); err != nil {
 			return errors.Wrap(err, "unable to cleanup cluster")
 		}
 		return nil

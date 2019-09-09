@@ -59,9 +59,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, client.Options{
+	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
 		Scheme: kubernetes.GardenScheme,
-	})
+	}))
 	if err != nil {
 		log.Fatalf("cannot build config from path %s: %s", kubeconfigPath, err.Error())
 	}

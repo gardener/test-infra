@@ -70,7 +70,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 
-		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: true}
+		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: &hibernationTrue}
 		shoot.Labels[ShootLabelStatus] = ShootStatusFree
 		delete(shoot.Annotations, ShootAnnotationLockedAt)
 		delete(shoot.Annotations, ShootAnnotationID)

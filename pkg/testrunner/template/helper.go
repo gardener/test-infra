@@ -58,9 +58,9 @@ func getK8sVersions(parameters *ShootTestrunParameters) ([]string, error) {
 func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider string) ([]string, error) {
 	ctx := context.Background()
 	defer ctx.Done()
-	k8sGardenClient, err := kubernetes.NewClientFromFile("", gardenerKubeconfigPath, client.Options{
+	k8sGardenClient, err := kubernetes.NewClientFromFile("", gardenerKubeconfigPath, kubernetes.WithClientOptions(client.Options{
 		Scheme: kubernetes.GardenScheme,
-	})
+	}))
 	if err != nil {
 		return nil, err
 	}

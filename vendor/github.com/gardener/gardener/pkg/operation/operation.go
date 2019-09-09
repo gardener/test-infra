@@ -22,12 +22,7 @@ import (
 	"strings"
 	"time"
 
-	utilretry "github.com/gardener/gardener/pkg/utils/retry"
-
-	"github.com/gardener/gardener/pkg/utils/chart"
-
-	"github.com/gardener/gardener/pkg/operation/terraformer"
-
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
@@ -39,16 +34,18 @@ import (
 	"github.com/gardener/gardener/pkg/operation/garden"
 	"github.com/gardener/gardener/pkg/operation/seed"
 	shootpkg "github.com/gardener/gardener/pkg/operation/shoot"
+	"github.com/gardener/gardener/pkg/operation/terraformer"
 	"github.com/gardener/gardener/pkg/utils"
+	"github.com/gardener/gardener/pkg/utils/chart"
 	"github.com/gardener/gardener/pkg/utils/flow"
 	"github.com/gardener/gardener/pkg/utils/imagevector"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	utilretry "github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/pkg/utils/secrets"
 
 	prometheusapi "github.com/prometheus/client_golang/api"
 	prometheusclient "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/sirupsen/logrus"
-
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,16 +55,17 @@ import (
 )
 
 // New creates a new operation object with a Shoot resource object.
-func New(shoot *gardenv1beta1.Shoot, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector, shootBackup *config.ShootBackup) (*Operation, error) {
-	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, shoot.Spec.Cloud.Seed, shoot, nil, shootBackup)
+func New(shoot *gardenv1beta1.Shoot, config *config.ControllerManagerConfiguration, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector, shootBackup *config.ShootBackup) (*Operation, error) {
+	return newOperation(config, logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, shoot.Spec.Cloud.Seed, shoot, nil, shootBackup)
 }
 
 // NewWithBackupInfrastructure creates a new operation object without a Shoot resource object but the BackupInfrastructure resource.
-func NewWithBackupInfrastructure(backupInfrastructure *gardenv1beta1.BackupInfrastructure, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector) (*Operation, error) {
-	return newOperation(logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, backupInfrastructure.Namespace, &backupInfrastructure.Spec.Seed, nil, backupInfrastructure, nil)
+func NewWithBackupInfrastructure(backupInfrastructure *gardenv1beta1.BackupInfrastructure, config *config.ControllerManagerConfiguration, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector) (*Operation, error) {
+	return newOperation(config, logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, backupInfrastructure.Namespace, &backupInfrastructure.Spec.Seed, nil, backupInfrastructure, nil)
 }
 
 func newOperation(
+	config *config.ControllerManagerConfiguration,
 	logger *logrus.Entry,
 	k8sGardenClient kubernetes.Interface,
 	k8sGardenInformers gardeninformers.Interface,
@@ -109,6 +107,7 @@ func newOperation(
 	}
 
 	operation := &Operation{
+		Config:               config,
 		Logger:               logger,
 		GardenerInfo:         gardenerInfo,
 		Secrets:              secrets,
@@ -152,12 +151,16 @@ func (o *Operation) InitializeSeedClients() error {
 		return nil
 	}
 
-	k8sSeedClient, err := kubernetes.NewClientFromSecretObject(o.Seed.Secret, client.Options{
-		Scheme: kubernetes.SeedScheme,
-	})
+	k8sSeedClient, err := kubernetes.NewClientFromSecretObject(o.Seed.Secret,
+		kubernetes.WithClientConnectionOptions(o.Config.SeedClientConnection),
+		kubernetes.WithClientOptions(client.Options{
+			Scheme: kubernetes.SeedScheme,
+		}),
+	)
 	if err != nil {
 		return err
 	}
+
 	o.K8sSeedClient = k8sSeedClient
 
 	renderer, err := chartrenderer.NewForConfig(k8sSeedClient.RESTConfig())
@@ -182,7 +185,7 @@ func (o *Operation) InitializeShootClients() error {
 		return nil
 	}
 
-	if o.Shoot.IsHibernated {
+	if o.Shoot.HibernationEnabled {
 		controlPlaneHibernated, err := o.controlPlaneHibernated()
 		if err != nil {
 			return err
@@ -193,9 +196,12 @@ func (o *Operation) InitializeShootClients() error {
 		}
 	}
 
-	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, gardenv1beta1.GardenerName, client.Options{
-		Scheme: kubernetes.ShootScheme,
-	})
+	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, gardenv1beta1.GardenerName,
+		kubernetes.WithClientConnectionOptions(o.Config.ShootClientConnection),
+		kubernetes.WithClientOptions(client.Options{
+			Scheme: kubernetes.ShootScheme,
+		}),
+	)
 	if err != nil {
 		return err
 	}
@@ -215,7 +221,7 @@ func (o *Operation) InitializeShootClients() error {
 }
 
 func (o *Operation) controlPlaneHibernated() (bool, error) {
-	replicaCount, err := common.CurrentReplicaCount(o.K8sSeedClient.Client(), o.Shoot.SeedNamespace, common.KubeAPIServerDeploymentName)
+	replicaCount, err := common.CurrentReplicaCount(o.K8sSeedClient.Client(), o.Shoot.SeedNamespace, gardencorev1alpha1.DeploymentNameKubeAPIServer)
 	if err != nil {
 		return false, err
 	}
@@ -236,8 +242,8 @@ func (o *Operation) InitializeMonitoringClient() error {
 	}
 
 	// Read the CA.
-	tlsSecret, err := o.K8sSeedClient.GetSecret(o.Shoot.SeedNamespace, "prometheus-tls")
-	if err != nil {
+	tlsSecret := &corev1.Secret{}
+	if err := o.K8sSeedClient.Client().Get(context.TODO(), kutil.Key(o.Shoot.SeedNamespace, "prometheus-tls"), tlsSecret); err != nil {
 		return err
 	}
 
@@ -245,8 +251,8 @@ func (o *Operation) InitializeMonitoringClient() error {
 	ca.AppendCertsFromPEM(tlsSecret.Data[secrets.DataKeyCertificateCA])
 
 	// Read the basic auth credentials.
-	credentials, err := o.K8sSeedClient.GetSecret(o.Shoot.SeedNamespace, "monitoring-ingress-credentials")
-	if err != nil {
+	credentials := &corev1.Secret{}
+	if err := o.K8sSeedClient.Client().Get(context.TODO(), kutil.Key(o.Shoot.SeedNamespace, "monitoring-ingress-credentials"), credentials); err != nil {
 		return err
 	}
 
@@ -294,7 +300,7 @@ func makeDescription(stats *flow.Stats) string {
 
 // ReportShootProgress will update the last operation object in the Shoot manifest `status` section
 // by the current progress of the Flow execution.
-func (o *Operation) ReportShootProgress(stats *flow.Stats) {
+func (o *Operation) ReportShootProgress(ctx context.Context, stats *flow.Stats) {
 	var (
 		description    = makeDescription(stats)
 		progress       = stats.ProgressPercent()
@@ -324,7 +330,7 @@ func (o *Operation) ReportShootProgress(stats *flow.Stats) {
 
 // ReportBackupInfrastructureProgress will update the phase and error in the BackupInfrastructure manifest `status` section
 // by the current progress of the Flow execution.
-func (o *Operation) ReportBackupInfrastructureProgress(stats *flow.Stats) {
+func (o *Operation) ReportBackupInfrastructureProgress(ctx context.Context, stats *flow.Stats) {
 	o.BackupInfrastructure.Status.LastOperation.Description = makeDescription(stats)
 	o.BackupInfrastructure.Status.LastOperation.Progress = stats.ProgressPercent()
 	o.BackupInfrastructure.Status.LastOperation.LastUpdateTime = metav1.Now()

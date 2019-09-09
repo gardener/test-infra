@@ -17,19 +17,27 @@ package botanist
 import (
 	"context"
 	"fmt"
-	"time"
 
-	corev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
+
+	"github.com/gardener/gardener/pkg/utils/retry"
+
+	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
+
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/operation/shoot"
 	"github.com/gardener/gardener/pkg/utils/flow"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -51,11 +59,43 @@ func (b *Botanist) DeployExtensionResources(ctx context.Context) error {
 
 		fns = append(fns, func(ctx context.Context) error {
 			return kutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), &toApply, func() error {
+				metav1.SetMetaDataAnnotation(&toApply.ObjectMeta, gardencorev1alpha1.GardenerOperation, gardencorev1alpha1.GardenerOperationReconcile)
+
 				toApply.Spec.Type = extensionType
 				toApply.Spec.ProviderConfig = providerConfig
 				return nil
 			})
 		})
+	}
+
+	return flow.Parallel(fns...)(ctx)
+}
+
+// DeleteStaleExtensionResources deletes unused extensions from the shoot namespace in the seed.
+func (b *Botanist) DeleteStaleExtensionResources(ctx context.Context) error {
+	wantedExtensions := sets.NewString()
+	for _, extension := range b.Shoot.Extensions {
+		wantedExtensions.Insert(extension.Spec.Type)
+	}
+
+	deployedExtensions := &extensionsv1alpha1.ExtensionList{}
+	if err := b.K8sSeedClient.Client().List(ctx, deployedExtensions, client.InNamespace(b.Shoot.SeedNamespace)); err != nil {
+		return err
+	}
+
+	fns := make([]flow.TaskFn, 0, meta.LenList(deployedExtensions))
+	for _, deployedExtension := range deployedExtensions.Items {
+		if !wantedExtensions.Has(deployedExtension.Spec.Type) {
+			fns = append(fns, func(ctx context.Context) error {
+				toDelete := &extensionsv1alpha1.Extension{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      deployedExtension.Name,
+						Namespace: deployedExtension.Namespace,
+					},
+				}
+				return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, toDelete, kubernetes.DefaultDeleteOptionFuncs...))
+			})
+		}
 	}
 
 	return flow.Parallel(fns...)(ctx)
@@ -68,40 +108,24 @@ func (b *Botanist) WaitUntilExtensionResourcesReady(ctx context.Context) error {
 	fns := make([]flow.TaskFn, 0, len(b.Shoot.Extensions))
 	for _, extension := range b.Shoot.Extensions {
 		var (
-			name                 = extension.Name
-			namespace            = extension.Namespace
-			timedContext, cancel = context.WithTimeout(ctx, extension.Timeout)
+			name      = extension.Name
+			namespace = extension.Namespace
 		)
 		fns = append(fns, func(ctx context.Context) error {
-			defer cancel()
-
-			var lastError *gardencorev1alpha1.LastError
-
-			if err := wait.PollUntil(5*time.Second, func() (bool, error) {
+			if err := retry.UntilTimeout(ctx, DefaultInterval, shoot.ExtensionDefaultTimeout, func(ctx context.Context) (bool, error) {
 				req := &extensionsv1alpha1.Extension{}
 				if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(namespace, name), req); err != nil {
-					return false, err
+					return retry.SevereError(err)
 				}
 
-				if lastErr := req.Status.LastError; lastErr != nil {
-					b.Logger.Errorf("Extension %s/%s did not get ready yet, lastError is: %s", namespace, name, lastErr.Description)
-					lastError = lastErr
+				if err := health.CheckExtensionObject(req); err != nil {
+					b.Logger.WithError(err).Errorf("Extension %s/%s did not get ready yet", namespace, name)
+					return retry.MinorError(err)
 				}
 
-				if req.Status.LastOperation != nil &&
-					req.Status.LastOperation.State == corev1alpha1.LastOperationStateSucceeded &&
-					req.Status.ObservedGeneration == req.Generation {
-					return true, nil
-				}
-
-				b.Logger.Infof("Waiting for extension %s/%s to be ready...", namespace, name)
-				return false, nil
-			}, timedContext.Done()); err != nil {
-				message := fmt.Sprintf("Failed waiting for extension %s is ready", name)
-				if lastError != nil {
-					return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
-				}
-				return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("%s: %s", message, err.Error()))
+				return retry.Ok()
+			}); err != nil {
+				return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("failed waiting for extension %s to be ready: %v", name, err))
 			}
 			return nil
 		})
@@ -112,18 +136,15 @@ func (b *Botanist) WaitUntilExtensionResourcesReady(ctx context.Context) error {
 
 // DeleteExtensionResources deletes all extension resources from the Shoot namespace in the Seed.
 func (b *Botanist) DeleteExtensionResources(ctx context.Context) error {
-	return DeleteMatching(ctx, b.K8sSeedClient.Client(), &extensionsv1alpha1.ExtensionList{}, ListOptions(client.InNamespace(b.Shoot.SeedNamespace)))
+	return utilclient.Delete(ctx, b.K8sSeedClient.Client(), &extensionsv1alpha1.ExtensionList{}, utilclient.CollectionMatching(client.InNamespace(b.Shoot.SeedNamespace)))
 }
 
 // WaitUntilExtensionResourcesDeleted waits until all extension resources are gone or the context is cancelled.
 func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error {
 	var (
-		lastError *gardencorev1alpha1.LastError
-
-		extensions           = &extensionsv1alpha1.ExtensionList{}
-		timedContext, cancel = context.WithTimeout(ctx, shoot.ExtensionDefaultTimeout)
+		lastError  *gardencorev1alpha1.LastError
+		extensions = &extensionsv1alpha1.ExtensionList{}
 	)
-	defer cancel()
 
 	if err := b.K8sSeedClient.Client().List(ctx, extensions, client.InNamespace(b.Shoot.SeedNamespace)); err != nil {
 		return err
@@ -131,6 +152,10 @@ func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error
 
 	fns := make([]flow.TaskFn, 0, len(extensions.Items))
 	for _, extension := range extensions.Items {
+		if extension.GetDeletionTimestamp() == nil {
+			continue
+		}
+
 		var (
 			name      = extension.Name
 			namespace = extension.Namespace
@@ -138,12 +163,12 @@ func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error
 		)
 
 		fns = append(fns, func(ctx context.Context) error {
-			if err := wait.PollUntil(5*time.Second, func() (bool, error) {
+			if err := retry.UntilTimeout(ctx, DefaultInterval, shoot.ExtensionDefaultTimeout, func(ctx context.Context) (bool, error) {
 				if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(namespace, name), &extensionsv1alpha1.Extension{}); err != nil {
 					if apierrors.IsNotFound(err) {
-						return true, nil
+						return retry.Ok()
 					}
-					return false, err
+					return retry.SevereError(err)
 				}
 
 				if lastErr := status.LastError; lastErr != nil {
@@ -151,8 +176,8 @@ func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error
 					lastError = lastErr
 				}
 
-				return false, nil
-			}, ctx.Done()); err != nil {
+				return retry.MinorError(common.WrapWithLastError(fmt.Errorf("extension %s is still present", name), lastError))
+			}); err != nil {
 				message := fmt.Sprintf("Failed waiting for extension delete")
 				if lastError != nil {
 					return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
@@ -163,5 +188,5 @@ func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error
 		})
 	}
 
-	return flow.Parallel(fns...)(timedContext)
+	return flow.Parallel(fns...)(ctx)
 }

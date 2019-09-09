@@ -67,9 +67,9 @@ func (r *registration) PreRun(cmd *cobra.Command, args []string) error {
 	if _, err := os.Stat(r.kubeconfigPath); err != nil {
 		return fmt.Errorf("kubeconfig at %s cannot be found", r.kubeconfigPath)
 	}
-	k8sClient, err := kubernetes.NewClientFromFile("", r.kubeconfigPath, client.Options{
+	k8sClient, err := kubernetes.NewClientFromFile("", r.kubeconfigPath, kubernetes.WithClientOptions(client.Options{
 		Scheme: kubernetes.GardenScheme,
-	})
+	}))
 	if err != nil {
 		return err
 	}

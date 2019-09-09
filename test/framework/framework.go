@@ -35,9 +35,9 @@ func New(log logr.Logger, config *Config) (*Operation, error) {
 		return nil, err
 	}
 
-	tmClient, err := kubernetes.NewClientFromFile("", config.TmKubeconfigPath, client.Options{
+	tmClient, err := kubernetes.NewClientFromFile("", config.TmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
 		Scheme: testmachinery.TestMachineryScheme,
-	})
+	}))
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create client from %s", config.TmKubeconfigPath)
 	}

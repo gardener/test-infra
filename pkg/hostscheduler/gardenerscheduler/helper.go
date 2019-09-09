@@ -35,7 +35,7 @@ func isHibernated(shoot *v1beta1.Shoot) bool {
 	if shoot.Spec.Hibernation == nil {
 		return false
 	}
-	return shoot.Spec.Hibernation.Enabled
+	return *shoot.Spec.Hibernation.Enabled
 }
 
 func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {

@@ -19,6 +19,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var _ Object = (*Network)(nil)
+
+// NetworkResource is a constant for the name of the Network resource.
+const NetworkResource = "Network"
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -30,6 +35,16 @@ type Network struct {
 
 	Spec   NetworkSpec   `json:"spec"`
 	Status NetworkStatus `json:"status"`
+}
+
+// GetExtensionSpec implements Object.
+func (i *Network) GetExtensionSpec() Spec {
+	return &i.Spec
+}
+
+// GetExtensionStatus implements Object.
+func (i *Network) GetExtensionStatus() Status {
+	return &i.Status
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -48,12 +63,10 @@ type NetworkList struct {
 type NetworkSpec struct {
 	// DefaultSpec is a structure containing common fields used by all extension resources.
 	DefaultSpec `json:",inline"`
-	// CloudProvider is the type of the cloud provider (e.g., aws, azure, gcp,...)
-	CloudProvider string `json:"cloudProvider,omitempty"`
-	// ClusterCIDR defines the CIDR that will be used for pods.
-	ClusterCIDR string `json:"clusterCIDR"`
+	// PodCIDR defines the CIDR that will be used for pods.
+	PodCIDR string `json:"podCIDR"`
 	// ServiceCIDR defines the CIDR that will be used for services.
-	ServiceCIDR string `json:"serviceNetworkCIDR"`
+	ServiceCIDR string `json:"serviceCIDR"`
 	// ProviderConfig contains plugin-specific configuration.
 	// +optional
 	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty"`

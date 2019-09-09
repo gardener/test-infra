@@ -37,21 +37,23 @@ PACKAGES=("pkg" "cmd" "test")
 
 # Execute static code checks.
 echo "Running go vet..."
-for pkg in ${PACKAGES}; do
+for pkg in ${PACKAGES[@]}; do
+  echo "go vet $pkg"
   go vet -mod=vendor ./${pkg}/...
 done
 echo "go vet successful"
 
 # Execute automatic code formatting directive.
 echo "Running gofmt..."
-for pkg in ${PACKAGES}; do
+for pkg in ${PACKAGES[@]}; do
+  echo "go fmt $pkg"
   go fmt ./${pkg}/...
 done
 echo "go fmt successful"
 
 # Execute lint checks.
 echo "Running golint..."
-for dir in ${PACKAGES}; do
+for dir in ${PACKAGES[@]}; do
   golint -set_exit_status $(find $dir -maxdepth 1 -name "*.go" | grep -vE 'zz_generated|_test.go')
 done
 echo "golint successfull"

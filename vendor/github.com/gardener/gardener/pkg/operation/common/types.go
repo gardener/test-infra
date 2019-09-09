@@ -15,8 +15,9 @@
 package common
 
 import (
-	"fmt"
 	"path/filepath"
+
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -33,6 +34,7 @@ const (
 	BackupSecretName = "etcd-backup"
 
 	// BackupInfrastructureForceDeletion is a constant for an annotation on a Backupinfrastructure indicating that it should be force deleted.
+	// TOREMOVE: remove this with backupinfra controller.
 	BackupInfrastructureForceDeletion = "backupinfrastructure.garden.sapcloud.io/force-deletion"
 
 	// BackupInfrastructureOperation is a constant for an annotation on a Backupinfrastructure indicating that an operation shall be performed.
@@ -40,6 +42,9 @@ const (
 
 	// BackupInfrastructureReconcile is a constant for an annotation on a Backupinfrastructure indicating that a Backupinfrastructure reconciliation shall be triggered.
 	BackupInfrastructureReconcile = "reconcile"
+
+	// BasicAuthSecretName is the name of the secret containing basic authentication credentials for the kube-apiserver.
+	BasicAuthSecretName = "kube-apiserver-basic-auth"
 
 	// ChartPath is the path to the Helm charts.
 	ChartPath = "charts"
@@ -72,9 +77,6 @@ const (
 	// manager stores its configuration.
 	ControllerManagerInternalConfigMapName = "gardener-controller-manager-internal-config"
 
-	// ControllerRegistrationName is the key of a label on extension namespaces that indicates the controller registration name.
-	ControllerRegistrationName = "controllerregistration.core.gardener.cloud/name"
-
 	// DNSProviderDeprecated is the key for an annotation on a Kubernetes Secret object whose value must point to a valid
 	// DNS provider.
 	// deprecated
@@ -93,17 +95,53 @@ const (
 	// domain name.
 	DNSDomain = "dns.gardener.cloud/domain"
 
+	// DNSIncludeZones is the key for an annotation on a Kubernetes Secret object whose value must point to a list
+	// of zones that shall be included.
+	DNSIncludeZones = "dns.gardener.cloud/include-zones"
+
+	// DNSExcludeZones is the key for an annotation on a Kubernetes Secret object whose value must point to a list
+	// of zones that shall be excluded.
+	DNSExcludeZones = "dns.gardener.cloud/exclude-zones"
+
 	// EtcdRoleMain is the constant defining the role for main etcd storing data about objects in Shoot.
 	EtcdRoleMain = "main"
-
-	// EtcdMainStatefulSetName is the constant defining the statefulset name for the main etcd.
-	EtcdMainStatefulSetName = "etcd-main"
 
 	// EtcdRoleEvents is the constant defining the role for etcd storing events in Shoot.
 	EtcdRoleEvents = "events"
 
-	// EtcdEventsStatefulSetName is the constant defining the statefulset name for the events etcd.
-	EtcdEventsStatefulSetName = "etcd-events"
+	// EtcdEncryptionSecretName is the name of the shoot-specific secret which contains
+	// that shoot's EncryptionConfiguration. The EncryptionConfiguration contains a key
+	// which the shoot's apiserver uses for encrypting selected etcd content.
+	// Should match charts/seed-controlplane/charts/kube-apiserver/templates/kube-apiserver.yaml
+	EtcdEncryptionSecretName = "etcd-encryption-secret"
+
+	// EtcdEncryptionSecretFileName is the name of the file within the EncryptionConfiguration
+	// which is made available as volume mount to the shoot's apiserver.
+	// Should match charts/seed-controlplane/charts/kube-apiserver/templates/kube-apiserver.yaml
+	EtcdEncryptionSecretFileName = "encryption-configuration.yaml"
+
+	// EtcdEncryptionChecksumAnnotationName is the name of the annotation with which to annotate
+	// the EncryptionConfiguration secret to denote the checksum of the EncryptionConfiguration
+	// that was used when last rewriting secrets.
+	EtcdEncryptionChecksumAnnotationName = "shoot.gardener.cloud/etcd-encryption-configuration-checksum"
+
+	// EtcdEncryptionChecksumLabelName is the name of the label which is added to the shoot
+	// secrets after rewriting them to ensure that successfully rewritten secrets are not
+	// (unnecessarily) rewritten during each reconciliation.
+	EtcdEncryptionChecksumLabelName = "shoot.gardener.cloud/etcd-encryption-configuration-checksum"
+
+	// EtcdEncryptionForcePlaintextAnnotationName is the name of the annotation with which to annotate
+	// the EncryptionConfiguration secret to force the decryption of shoot secrets
+	EtcdEncryptionForcePlaintextAnnotationName = "shoot.gardener.cloud/etcd-encryption-force-plaintext-secrets"
+
+	// EtcdEncryptionEncryptedResourceSecrets is the name of the secret resource to be encrypted
+	EtcdEncryptionEncryptedResourceSecrets = "secrets"
+
+	// EtcdEncryptionKeyPrefix is the prefix for the key name of the EncryptionConfiguration's key
+	EtcdEncryptionKeyPrefix = "key"
+
+	// EtcdEncryptionKeySecretLen is the expected length in bytes of the EncryptionConfiguration's key
+	EtcdEncryptionKeySecretLen = 32
 
 	// GardenNamespace is the namespace in which the configuration and secrets for
 	// the Gardener controller manager will be stored (e.g., secrets for the Seed clusters).
@@ -113,18 +151,11 @@ const (
 	// GardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
 	GardenRole = "garden.sapcloud.io/role"
 
-	// GardenerRole is the key for an annotation on a Kubernetes object indicating what it is used for with the new
-	// naming scheme.
-	GardenerRole = "gardener.cloud/role"
-
 	// GardenRoleShoot is the value of the GardenRole key indicating type 'shoot'.
 	GardenRoleShoot = "shoot"
 
 	// GardenRoleSeed is the value of the GardenRole key indicating type 'seed'.
 	GardenRoleSeed = "seed"
-
-	// GardenRoleExtension is the value of the GardenRole key indicating type 'extension'.
-	GardenRoleExtension = "extension"
 
 	// GardenRoleControlPlane is the value of the GardenRole key indicating type 'controlplane'.
 	GardenRoleControlPlane = "controlplane"
@@ -162,9 +193,6 @@ const (
 	// GardenRoleBackup is the value of GardenRole key indicating type 'backup'.
 	GardenRoleBackup = "backup"
 
-	// GardenRoleVpa is the value of GardenRole key indicating type 'vpa'.
-	GardenRoleVpa = "vpa"
-
 	// GardenCreatedBy is the key for an annotation of a Shoot cluster whose value indicates contains the username
 	// of the user that created the resource.
 	GardenCreatedBy = "garden.sapcloud.io/createdBy"
@@ -188,19 +216,15 @@ const (
 	// '*.<IngressPrefix>.cluster.example.com'.
 	IngressPrefix = "ingress"
 
+	// APIServerPrefix is the part of a FQDN which will be used to construct the domain name for the kube-apiserver of
+	// a Shoot cluster. For example, when a Shoot specifies domain 'cluster.example.com', the apiserver domain would be
+	// 'api.cluster.example.com'.
+	APIServerPrefix = "api"
+
 	// InternalDomainKey is a key which must be present in an internal domain constructed for a Shoot cluster. If the
 	// configured internal domain already contains it, it won't be added twice. If it does not contain it, it will be
 	// appended.
 	InternalDomainKey = "internal"
-
-	// KubeAPIServerDeploymentName is the name of the kube-apiserver deployment.
-	KubeAPIServerDeploymentName = "kube-apiserver"
-
-	// AWSLBReadvertiserDeploymentName is the name for the aws-lb-readvertiser
-	AWSLBReadvertiserDeploymentName = "aws-lb-readvertiser"
-
-	// KubeControllerManagerDeploymentName is the name of the kube-controller-manager deployment.
-	KubeControllerManagerDeploymentName = "kube-controller-manager"
 
 	// KubeControllerManagerServerName is the name of the kube-controller-manager server.
 	KubeControllerManagerServerName = "kube-controller-manager-server"
@@ -208,14 +232,11 @@ const (
 	// MachineControllerManagerDeploymentName is the name of the machine-controller-manager deployment.
 	MachineControllerManagerDeploymentName = "machine-controller-manager"
 
-	// KubeSchedulerDeploymentName is the name of the kube-scheduler deployment.
-	KubeSchedulerDeploymentName = "kube-scheduler"
-
 	// KubeSchedulerServerName is the name of the kube-scheduler server.
 	KubeSchedulerServerName = "kube-scheduler-server"
 
-	// GardenerResourceManagerDeploymentName is the name of the gardener-resource-manager deployment.
-	GardenerResourceManagerDeploymentName = "gardener-resource-manager"
+	// CalicoKubeControllersDeploymentName is the name of calico-kube-controllers deployment.
+	CalicoKubeControllersDeploymentName = "calico-kube-controllers"
 
 	// CalicoTyphaDeploymentName is the name of the calico-typha deployment.
 	CalicoTyphaDeploymentName = "calico-typha"
@@ -235,29 +256,23 @@ const (
 	// KubeProxyDaemonSetName is the name of the kube-proxy daemon set.
 	KubeProxyDaemonSetName = "kube-proxy"
 
-	// GrafanaOperatorsDeploymentName is the name of the grafana deployment.
-	GrafanaOperatorsDeploymentName = "grafana-operators"
-
-	// GrafanaUsersDeploymentName is the name of the grafana deployment for the user-facing grafana.
-	GrafanaUsersDeploymentName = "grafana-users"
-
-	// KubeStateMetricsShootDeploymentName is the name of the kube-state-metrics deployment.
-	KubeStateMetricsShootDeploymentName = "kube-state-metrics"
-
-	// KubeStateMetricsSeedDeploymentName is the name of the kube-state-metrics-shoot deployment.
-	KubeStateMetricsSeedDeploymentName = "kube-state-metrics-seed"
-
 	// NodeExporterDaemonSetName is the name of the node-exporter daemon set.
 	NodeExporterDaemonSetName = "node-exporter"
 
-	// ElasticSearchStatefulSetName is the name of the elasticsearch-logging stateful set.
-	ElasticSearchStatefulSetName = "elasticsearch-logging"
-
-	// KibanaDeploymentName is the name of the kibana-logging deployment.
-	KibanaDeploymentName = "kibana-logging"
-
 	// KibanaAdminIngressCredentialsSecretName is the name of the secret which holds admin credentials.
 	KibanaAdminIngressCredentialsSecretName = "logging-ingress-credentials"
+
+	// KubecfgUsername is the username for the token used for the kubeconfig the shoot.
+	KubecfgUsername = "system:cluster-admin"
+
+	// KubecfgSecretName is the name of the kubecfg secret.
+	KubecfgSecretName = "kubecfg"
+
+	// KubeAPIServerHealthCheck is a key for the kube-apiserver-health-check user.
+	KubeAPIServerHealthCheck = "kube-apiserver-health-check"
+
+	// StaticTokenSecretName is the name of the secret containing static tokens for the kube-apiserver.
+	StaticTokenSecretName = "static-token"
 
 	// FluentBitDaemonSetName is the name of the fluent-bit daemon set.
 	FluentBitDaemonSetName = "fluent-bit"
@@ -275,8 +290,8 @@ const (
 	// NamespaceProject is they key of a label on namespace whose value holds the project uid.
 	NamespaceProject = "namespace.garden.sapcloud.io/project"
 
-	// PrometheusStatefulSetName is the name of the Prometheus stateful set.
-	PrometheusStatefulSetName = "prometheus"
+	// SecretRefChecksumAnnotation is the annotation key for checksum of referred secret in resource spec.
+	SecretRefChecksumAnnotation = "checksum/secret.data"
 
 	// TerraformerConfigSuffix is the suffix used for the ConfigMap which stores the Terraform configuration and variables declaration.
 	TerraformerConfigSuffix = ".tf-config"
@@ -312,9 +327,6 @@ const (
 	// TerraformerPurposeBackup is a constant for the complete Terraform setup with purpose 'etcd backup'.
 	TerraformerPurposeBackup = "backup"
 
-	// TerraformerPurposeKube2IAM is a constant for the complete Terraform setup with purpose 'kube2iam roles'.
-	TerraformerPurposeKube2IAM = "kube2iam"
-
 	// ShootExpirationTimestamp is an annotation on a Shoot resource whose value represents the time when the Shoot lifetime
 	// is expired. The lifetime can be extended, but at most by the minimal value of the 'clusterLifetimeDays' property
 	// of referenced quotas.
@@ -347,6 +359,10 @@ const (
 	// ShootOperationMaintain is a constant for an annotation on a Shoot indicating that the Shoot maintenance shall be executed as soon as
 	// possible.
 	ShootOperationMaintain = "maintain"
+
+	// ShootOperationRotateKubeconfigCredentials is a constant for an annotation on a Shoot indicating that the credentials contained in the
+	// kubeconfig that is handed out to the user shall be rotated.
+	ShootOperationRotateKubeconfigCredentials = "rotate-kubeconfig-credentials"
 
 	// ShootTasks is a constant for an annotation on a Shoot which states that certain tasks should be done.
 	ShootTasks = "shoot.garden.sapcloud.io/tasks"
@@ -396,18 +412,6 @@ const (
 	// GardenerResourceManagerImageName is the name of the GardenerResourceManager image.
 	GardenerResourceManagerImageName = "gardener-resource-manager"
 
-	// CalicoNodeImageName is the name of the CalicoNode image.
-	CalicoNodeImageName = "calico-node"
-
-	// CalicoCNIImageName is the name of the CalicoCNI image.
-	CalicoCNIImageName = "calico-cni"
-
-	// CalicoTyphaImageName is the name of the CalicoTypha image.
-	CalicoTyphaImageName = "calico-typha"
-
-	// CalicoKubeControllersImageName is the name of the CalicoKubeControllers image.
-	CalicoKubeControllersImageName = "calico-kube-controllers"
-
 	// CoreDNSImageName is the name of the CoreDNS image.
 	CoreDNSImageName = "coredns"
 
@@ -428,9 +432,6 @@ const (
 
 	// KubeLegoImageName is the name of the KubeLego image.
 	KubeLegoImageName = "kube-lego"
-
-	// Kube2IAMImageName is the name of the Kube2IAM image.
-	Kube2IAMImageName = "kube2iam"
 
 	// KubernetesDashboardImageName is the name of the KubernetesDashboard image.
 	KubernetesDashboardImageName = "kubernetes-dashboard"
@@ -477,9 +478,6 @@ const (
 	// CSIPluginPacketImageName is the name of csi plugin for Packet - https://github.com/packethost/csi-packet
 	CSIPluginPacketImageName = "packet-storage-interface"
 
-	// AWSLBReadvertiserImageName is the name of the AWSLBReadvertiser image.
-	AWSLBReadvertiserImageName = "aws-lb-readvertiser"
-
 	// PauseContainerImageName is the name of the PauseContainer image.
 	PauseContainerImageName = "pause-container"
 
@@ -516,9 +514,6 @@ const (
 	// AlpineIptablesImageName is the name of the alpine image with pre-installed iptable rules
 	AlpineIptablesImageName = "alpine-iptables"
 
-	// DependencyWatchdogDeploymentName is the name of the dependency controller resources.
-	DependencyWatchdogDeploymentName = "dependency-watchdog"
-
 	// SeedSpecHash is a constant for a label on `ControllerInstallation`s (similar to `pod-template-hash` on `Pod`s).
 	SeedSpecHash = "seed-spec-hash"
 
@@ -536,37 +531,36 @@ const (
 
 	// VpaExporterImageName is the name of the vpa-exporter image
 	VpaExporterImageName = "vpa-exporter"
+
+	// ServiceAccountSigningKeySecretDataKey is the data key of a signing key Kubernetes secret.
+	ServiceAccountSigningKeySecretDataKey = "signing-key"
 )
 
 var (
 	// TerraformerChartPath is the path where the seed-terraformer charts reside.
 	TerraformerChartPath = filepath.Join(ChartPath, "seed-terraformer", "charts")
 
-	// ETCDMainStatefulSetName is the name of the etcd-main stateful set.
-	ETCDMainStatefulSetName = fmt.Sprintf("etcd-%s", EtcdRoleMain)
-	// ETCDEventsStatefulSetName is the name of the etcd-events stateful set.
-	ETCDEventsStatefulSetName = fmt.Sprintf("etcd-%s", EtcdRoleEvents)
-
 	// RequiredControlPlaneDeployments is a set of the required shoot control plane deployments
 	// running in the seed.
 	RequiredControlPlaneDeployments = sets.NewString(
-		GardenerResourceManagerDeploymentName,
-		KubeAPIServerDeploymentName,
-		KubeControllerManagerDeploymentName,
-		KubeSchedulerDeploymentName,
+		gardencorev1alpha1.DeploymentNameGardenerResourceManager,
+		gardencorev1alpha1.DeploymentNameKubeAPIServer,
+		gardencorev1alpha1.DeploymentNameKubeControllerManager,
+		gardencorev1alpha1.DeploymentNameKubeScheduler,
+		gardencorev1alpha1.DeploymentNameDependencyWatchdog,
 		MachineControllerManagerDeploymentName,
-		DependencyWatchdogDeploymentName,
 	)
 
 	// RequiredControlPlaneStatefulSets is a set of the required shoot control plane stateful
 	// sets running in the seed.
 	RequiredControlPlaneStatefulSets = sets.NewString(
-		ETCDMainStatefulSetName,
-		ETCDEventsStatefulSetName,
+		gardencorev1alpha1.StatefulSetNameETCDMain,
+		gardencorev1alpha1.StatefulSetNameETCDEvents,
 	)
 
 	// RequiredSystemComponentDeployments is a set of the required system components.
 	RequiredSystemComponentDeployments = sets.NewString(
+		CalicoKubeControllersDeploymentName,
 		CalicoTyphaDeploymentName,
 		CoreDNSDeploymentName,
 		VPNShootDeploymentName,
@@ -581,10 +575,10 @@ var (
 
 	// RequiredMonitoringSeedDeployments is a set of the required seed monitoring deployments.
 	RequiredMonitoringSeedDeployments = sets.NewString(
-		GrafanaOperatorsDeploymentName,
-		GrafanaUsersDeploymentName,
-		KubeStateMetricsSeedDeploymentName,
-		KubeStateMetricsShootDeploymentName,
+		gardencorev1alpha1.DeploymentNameGrafanaOperators,
+		gardencorev1alpha1.DeploymentNameGrafanaUsers,
+		gardencorev1alpha1.DeploymentNameKubeStateMetricsSeed,
+		gardencorev1alpha1.DeploymentNameKubeStateMetricsShoot,
 	)
 
 	// RequiredMonitoringShootDaemonSets is a set of the required shoot monitoring daemon sets.
@@ -594,11 +588,11 @@ var (
 
 	// RequiredLoggingStatefulSets is a set of the required logging stateful sets.
 	RequiredLoggingStatefulSets = sets.NewString(
-		ElasticSearchStatefulSetName,
+		gardencorev1alpha1.StatefulSetNameElasticSearch,
 	)
 
 	// RequiredLoggingDeployments is a set of the required logging deployments.
 	RequiredLoggingDeployments = sets.NewString(
-		KibanaDeploymentName,
+		gardencorev1alpha1.DeploymentNameKibana,
 	)
 )

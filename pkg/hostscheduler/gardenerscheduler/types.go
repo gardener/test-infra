@@ -32,6 +32,11 @@ const (
 	ShootAnnotationID       = "testmachinery.sapcloud.io/id"
 )
 
+var (
+	hibernationTrue  = true
+	hibernationFalse = false
+)
+
 func ShootKubeconfigSecretName(shootName string) string {
 	return fmt.Sprintf("%s.kubeconfig", shootName)
 }

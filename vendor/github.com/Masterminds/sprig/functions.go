@@ -10,7 +10,7 @@ import (
 	ttemplate "text/template"
 	"time"
 
-	util "github.com/aokoli/goutils"
+	util "github.com/Masterminds/goutils"
 	"github.com/huandu/xstrings"
 )
 
@@ -24,7 +24,7 @@ func FuncMap() template.FuncMap {
 	return HtmlFuncMap()
 }
 
-// HermeticTextFuncMap returns a 'text/template'.FuncMap with only repeatable functions.
+// HermeticTxtFuncMap returns a 'text/template'.FuncMap with only repeatable functions.
 func HermeticTxtFuncMap() ttemplate.FuncMap {
 	r := TxtFuncMap()
 	for _, name := range nonhermeticFunctions {
@@ -42,7 +42,7 @@ func HermeticHtmlFuncMap() template.FuncMap {
 	return r
 }
 
-// TextFuncMap returns a 'text/template'.FuncMap
+// TxtFuncMap returns a 'text/template'.FuncMap
 func TxtFuncMap() ttemplate.FuncMap {
 	return ttemplate.FuncMap(GenericFuncMap())
 }
@@ -100,6 +100,7 @@ var genericMap = map[string]interface{}{
 	"dateModify":     dateModify,
 	"ago":            dateAgo,
 	"toDate":         toDate,
+	"unixEpoch":      unixEpoch,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -245,6 +246,7 @@ var genericMap = map[string]interface{}{
 	"pick":   pick,
 	"omit":   omit,
 	"merge":  merge,
+	"mergeOverwrite": mergeOverwrite,
 	"values": values,
 
 	"append": push, "push": push,

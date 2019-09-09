@@ -20,11 +20,10 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gardener/gardener/pkg/version"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -32,11 +31,12 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/gardener/pkg/version"
+	errors2 "github.com/pkg/errors"
 
 	jsoniter "github.com/json-iterator/go"
-
 	appsv1 "k8s.io/api/apps/v1"
-	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -48,7 +48,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -88,32 +87,6 @@ func GenerateAddonConfig(values map[string]interface{}, enabled bool) map[string
 	return v
 }
 
-// GetLoadBalancerIngress takes a context, a client, a namespace and a service name. It queries for a load balancer's technical name
-// (ip address or hostname). It returns the value of the technical name whereby it always prefers the IP address (if given)
-// over the hostname. It also returns the list of all load balancer ingresses.
-func GetLoadBalancerIngress(ctx context.Context, client client.Client, namespace, name string) (string, error) {
-	service := &corev1.Service{}
-	if err := client.Get(ctx, kutil.Key(namespace, name), service); err != nil {
-		return "", err
-	}
-
-	var (
-		serviceStatusIngress = service.Status.LoadBalancer.Ingress
-		length               = len(serviceStatusIngress)
-	)
-
-	switch {
-	case length == 0:
-		return "", errors.New("`.status.loadBalancer.ingress[]` has no elements yet, i.e. external load balancer has not been created (is your quota limit exceeded/reached?)")
-	case serviceStatusIngress[length-1].IP != "":
-		return serviceStatusIngress[length-1].IP, nil
-	case serviceStatusIngress[length-1].Hostname != "":
-		return serviceStatusIngress[length-1].Hostname, nil
-	}
-
-	return "", errors.New("`.status.loadBalancer.ingress[]` has an element which does neither contain `.ip` nor `.hostname`")
-}
-
 // GenerateTerraformVariablesEnvironment takes a <secret> and a <keyValueMap> and builds an environment which
 // can be injected into the Terraformer job/pod manifest. The keys of the <keyValueMap> will be prefixed with
 // 'TF_VAR_' and the value will be used to extract the respective data from the <secret>.
@@ -143,6 +116,20 @@ func GenerateBackupInfrastructureName(seedNamespace string, shootUID types.UID) 
 // GenerateBackupNamespaceName returns Backup namespace name created from provided <backupInfrastructureName>.
 func GenerateBackupNamespaceName(backupInfrastructureName string) string {
 	return fmt.Sprintf("%s--%s", BackupNamespacePrefix, backupInfrastructureName)
+}
+
+// GenerateBackupEntryName returns BackupEntry resource name created from provided <seedNamespace> and <shootUID>.
+func GenerateBackupEntryName(seedNamespace string, shootUID types.UID) string {
+	return fmt.Sprintf("%s--%s", seedNamespace, shootUID)
+}
+
+// ExtractShootDetailsFromBackupEntryName returns Shoot resource technicalID its UID from provided <backupEntryName>.
+func ExtractShootDetailsFromBackupEntryName(backupEntryName string) (shootTechnicalID, shootUID string) {
+	tokens := strings.Split(backupEntryName, "--")
+	shootUID = tokens[len(tokens)-1]
+	shootTechnicalID = strings.TrimSuffix(backupEntryName, shootUID)
+	shootTechnicalID = strings.TrimSuffix(shootTechnicalID, "--")
+	return shootTechnicalID, shootUID
 }
 
 // IsFollowingNewNamingConvention determines whether the new naming convention followed for shoot resources.
@@ -265,66 +252,23 @@ func ShouldObjectBeRemoved(obj metav1.Object, gracePeriod time.Duration) bool {
 	return deletionTimestamp.Time.Before(time.Now().Add(-gracePeriod))
 }
 
-// DeleteVpa delete all resources required for the vertical pod autoscaler in the given namespace.
-func DeleteVpa(k8sClient kubernetes.Interface, namespace string) error {
-	if k8sClient == nil {
-		return fmt.Errorf("require kubernetes client")
+// ComputeSecretCheckSum computes the sha256 checksum of secret data.
+func ComputeSecretCheckSum(m map[string][]byte) string {
+	var (
+		hash string
+		keys []string
+	)
+
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		hash += utils.ComputeSHA256Hex(m[k])
 	}
 
-	listOptions := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", GardenRole, GardenRoleVpa),
-	}
-
-	// Delete all Crds with label "garden.sapcloud.io/role=vpa"
-	if err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete all Deployments with label "garden.sapcloud.io/role=vpa"
-	deletePropagation := metav1.DeletePropagationForeground
-	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(
-		&metav1.DeleteOptions{
-			PropagationPolicy: &deletePropagation,
-		}, listOptions); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete all ClusterRoles with label "garden.sapcloud.io/role=vpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoles().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete all ClusterRoleBindings with label "garden.sapcloud.io/role=vpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoleBindings().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete all ServiceAccounts with label "garden.sapcloud.io/role=vpa"
-	if err := k8sClient.Kubernetes().CoreV1().ServiceAccounts(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete vpa-exporter service
-	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete("vpa-exporter",
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete Service
-	if err := k8sClient.Client().Delete(context.TODO(), &corev1.Service{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "vpa-webhook"}}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// Delete Secret
-	if err := k8sClient.Client().Delete(context.TODO(), &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "vpa-tls-certs"}}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	return nil
+	return utils.ComputeSHA256Hex([]byte(hash))
 }
 
 // DeleteLoggingStack deletes all resource of the EFK logging stack in the given namespace.
@@ -341,7 +285,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		&rbacv1.ClusterRoleBindingList{},
 		&appsv1.DaemonSetList{},
 		&appsv1.DeploymentList{},
-		&autoscalingv1.HorizontalPodAutoscalerList{},
+		&autoscalingv2beta1.HorizontalPodAutoscalerList{},
 		&extensionsv1beta1.IngressList{},
 		&corev1.SecretList{},
 		&corev1.ServiceAccountList{},
@@ -465,50 +409,10 @@ func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string)
 	return nil
 }
 
-// TODO: Remove later
-
-// DeleteOldGrafanaStack deletes all left over grafana objects.
-func DeleteOldGrafanaStack(k8sClient kubernetes.Interface, namespace string) error {
-	if k8sClient == nil {
-		return fmt.Errorf("require kubernetes client")
-	}
-
-	configMaps := []string{"grafana-dashboards", "grafana-dashboard-providers", "grafana-datasources"}
-
-	for _, configMap := range configMaps {
-		if err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).Delete(configMap,
-			&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).Delete("grafana",
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	if err := k8sClient.Kubernetes().CoreV1().Secrets(namespace).Delete("grafana-basic-auth",
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	if err := k8sClient.Kubernetes().ExtensionsV1beta1().Ingresses(namespace).Delete("grafana",
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete("grafana",
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	return nil
-}
-
 // GetDomainInfoFromAnnotations returns the provider and the domain that is specified in the give annotations.
-func GetDomainInfoFromAnnotations(annotations map[string]string) (provider string, domain string, err error) {
+func GetDomainInfoFromAnnotations(annotations map[string]string) (provider string, domain string, includeZones, excludeZones []string, err error) {
 	if annotations == nil {
-		return "", "", fmt.Errorf("domain secret has no annotations")
+		return "", "", nil, nil, fmt.Errorf("domain secret has no annotations")
 	}
 
 	if providerAnnotation, ok := annotations[DNSProviderDeprecated]; ok {
@@ -525,11 +429,18 @@ func GetDomainInfoFromAnnotations(annotations map[string]string) (provider strin
 		domain = domainAnnotation
 	}
 
+	if includeZonesAnnotation, ok := annotations[DNSIncludeZones]; ok {
+		includeZones = strings.Split(includeZonesAnnotation, ",")
+	}
+	if excludeZonesAnnotation, ok := annotations[DNSExcludeZones]; ok {
+		excludeZones = strings.Split(excludeZonesAnnotation, ",")
+	}
+
 	if len(domain) == 0 {
-		return "", "", fmt.Errorf("missing dns domain annotation on domain secret")
+		return "", "", nil, nil, fmt.Errorf("missing dns domain annotation on domain secret")
 	}
 	if len(provider) == 0 {
-		return "", "", fmt.Errorf("missing dns provider annotation on domain secret")
+		return "", "", nil, nil, fmt.Errorf("missing dns provider annotation on domain secret")
 	}
 
 	return
@@ -582,12 +493,12 @@ func IsNowInEffectiveShootMaintenanceTimeWindow(shoot *gardenv1beta1.Shoot) bool
 	return EffectiveShootMaintenanceTimeWindow(shoot).Contains(time.Now())
 }
 
-// IsUpToDate checks whether the Shoot's generation has changed or if the LastOperation status
-// is not Succeeded.
-func IsUpToDate(shoot *gardenv1beta1.Shoot) bool {
+// IsObservedAtLatestGenerationAndSucceeded checks whether the Shoot's generation has changed or if the LastOperation status
+// is Succeeded.
+func IsObservedAtLatestGenerationAndSucceeded(shoot *gardenv1beta1.Shoot) bool {
 	lastOperation := shoot.Status.LastOperation
-	return shoot.Generation != shoot.Status.ObservedGeneration ||
-		(lastOperation != nil && lastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded)
+	return shoot.Generation == shoot.Status.ObservedGeneration &&
+		(lastOperation != nil && lastOperation.State == gardencorev1alpha1.LastOperationStateSucceeded)
 }
 
 // SyncPeriodOfShoot determines the sync period of the given shoot.
@@ -637,4 +548,61 @@ func EffectiveShootMaintenanceTimeWindow(shoot *gardenv1beta1.Shoot) *utils.Main
 	}
 
 	return EffectiveMaintenanceTimeWindow(timeWindow)
+}
+
+// GetPersistentVolumeProvider gets the Persistent Volume Provider of seed cluster. If it is not specified, return ""
+func GetPersistentVolumeProvider(seed *gardenv1beta1.Seed) string {
+	if seed.Annotations == nil {
+		return ""
+	}
+	return seed.Annotations[AnnotatePersistentVolumeProvider]
+}
+
+// GardenEtcdEncryptionSecretKey is the key to the 'backup' of the etcd encryption secret in the Garden cluster.
+func GardenEtcdEncryptionSecretKey(shootNamespace, shootName string) client.ObjectKey {
+	return kutil.Key(shootNamespace, fmt.Sprintf("%s.%s", shootName, EtcdEncryptionSecretName))
+}
+
+// ReadServiceAccountSigningKeySecret reads the signing key secret to extract the signing key.
+// It errors if there is no value at ServiceAccountSigningKeySecretDataKey.
+func ReadServiceAccountSigningKeySecret(secret *corev1.Secret) (string, error) {
+	data, ok := secret.Data[ServiceAccountSigningKeySecretDataKey]
+	if !ok {
+		return "", fmt.Errorf("no signing key secret in secret %s/%s at .Data.%s", secret.Namespace, secret.Name, ServiceAccountSigningKeySecretDataKey)
+	}
+
+	return string(data), nil
+}
+
+// GetServiceAccountSigningKeySecret gets the signing key from the secret with the given name and namespace.
+func GetServiceAccountSigningKeySecret(ctx context.Context, c client.Client, shootNamespace, secretName string) (string, error) {
+	secret := &corev1.Secret{}
+	if err := c.Get(ctx, kutil.Key(shootNamespace, secretName), secret); err != nil {
+		return "", err
+	}
+
+	return ReadServiceAccountSigningKeySecret(secret)
+}
+
+// GetAPIServerDomain returns the fully qualified domain name of for the api-server for the Shoot cluster. The
+// end result is 'api.<domain>'.
+func GetAPIServerDomain(domain string) string {
+	return fmt.Sprintf("%s.%s", APIServerPrefix, domain)
+}
+
+// GetSecretFromSecretRef gets the Secret object from <secretRef>.
+func GetSecretFromSecretRef(ctx context.Context, c client.Client, secretRef *corev1.SecretReference) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
+	if err := c.Get(ctx, kutil.Key(secretRef.Namespace, secretRef.Name), secret); err != nil {
+		return nil, err
+	}
+	return secret, nil
+}
+
+// WrapWithLastError is wrapper function for gardencorev1alpha1.LastError
+func WrapWithLastError(err error, lastError *gardencorev1alpha1.LastError) error {
+	if err == nil || lastError == nil {
+		return err
+	}
+	return errors2.Wrapf(err, "last error: %s", lastError.Description)
 }

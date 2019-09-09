@@ -61,9 +61,9 @@ var runTestrunCmd = &cobra.Command{
 			logger.Log.Error(err, "Error loading .env file")
 		}
 
-		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, client.Options{
+		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
 			Scheme: testmachinery.TestMachineryScheme,
-		})
+		}))
 		if err != nil {
 			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
 			os.Exit(1)

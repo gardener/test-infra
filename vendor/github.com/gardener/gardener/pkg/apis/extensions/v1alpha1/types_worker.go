@@ -21,6 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+var _ Object = (*Worker)(nil)
+
 // WorkerResource is a constant for the name of the Worker resource.
 const WorkerResource = "Worker"
 
@@ -37,9 +39,14 @@ type Worker struct {
 	Status WorkerStatus `json:"status"`
 }
 
-// GetExtensionType returns the type of this Worker resource.
-func (w *Worker) GetExtensionType() string {
-	return w.Spec.Type
+// GetExtensionSpec implements Object.
+func (i *Worker) GetExtensionSpec() Spec {
+	return &i.Spec
+}
+
+// GetExtensionStatus implements Object.
+func (i *Worker) GetExtensionStatus() Status {
+	return &i.Status
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -141,6 +148,9 @@ type WorkerStatus struct {
 	// MachineDeployments is a list of created machine deployments. It will be used to e.g. configure
 	// the cluster-autoscaler properly.
 	MachineDeployments []MachineDeployment `json:"machineDeployments,omitempty"`
+	// ProviderStatus contains provider-specific output for this worker.
+	// +optional
+	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 }
 
 // MachineDeployment is a created machine deployment.

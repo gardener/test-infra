@@ -21,17 +21,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gardener/gardener/pkg/utils/retry"
-
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/gardener/pkg/utils/retry"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -46,10 +43,10 @@ const (
 
 // DeployInternalDomainDNSRecord deploys the DNS record for the internal cluster domain.
 func (b *Botanist) DeployInternalDomainDNSRecord(ctx context.Context) error {
-	if err := b.deployDNSProvider(ctx, DNSPurposeInternal, b.Garden.InternalDomain.Provider, b.Garden.InternalDomain.SecretData, b.Shoot.InternalClusterDomain); err != nil {
+	if err := b.deployDNSProvider(ctx, DNSPurposeInternal, b.Garden.InternalDomain.Provider, b.Garden.InternalDomain.SecretData, []string{b.Shoot.InternalClusterDomain}, nil, b.Garden.InternalDomain.IncludeZones, b.Garden.InternalDomain.ExcludeZones); err != nil {
 		return err
 	}
-	if err := b.deployDNSEntry(ctx, DNSPurposeInternal, b.Shoot.InternalClusterDomain, b.APIServerAddress); err != nil {
+	if err := b.deployDNSEntry(ctx, DNSPurposeInternal, common.GetAPIServerDomain(b.Shoot.InternalClusterDomain), b.APIServerAddress); err != nil {
 		return err
 	}
 	return b.deleteLegacyTerraformDNSResources(ctx, common.TerraformerPurposeInternalDNSDeprecated)
@@ -69,10 +66,10 @@ func (b *Botanist) DeployExternalDomainDNSRecord(ctx context.Context) error {
 		return nil
 	}
 
-	if err := b.deployDNSProvider(ctx, DNSPurposeExternal, b.Shoot.ExternalDomain.Provider, b.Shoot.ExternalDomain.SecretData, *b.Shoot.Info.Spec.DNS.Domain); err != nil {
+	if err := b.deployDNSProvider(ctx, DNSPurposeExternal, b.Shoot.ExternalDomain.Provider, b.Shoot.ExternalDomain.SecretData, []string{*b.Shoot.ExternalClusterDomain}, nil, b.Shoot.ExternalDomain.IncludeZones, b.Shoot.ExternalDomain.ExcludeZones); err != nil {
 		return err
 	}
-	if err := b.deployDNSEntry(ctx, DNSPurposeExternal, *b.Shoot.ExternalClusterDomain, b.Shoot.InternalClusterDomain); err != nil {
+	if err := b.deployDNSEntry(ctx, DNSPurposeExternal, common.GetAPIServerDomain(*b.Shoot.ExternalClusterDomain), common.GetAPIServerDomain(b.Shoot.InternalClusterDomain)); err != nil {
 		return err
 	}
 	return b.deleteLegacyTerraformDNSResources(ctx, common.TerraformerPurposeExternalDNSDeprecated)
@@ -86,13 +83,19 @@ func (b *Botanist) DestroyExternalDomainDNSRecord(ctx context.Context) error {
 	return b.deleteDNSProvider(ctx, DNSPurposeExternal)
 }
 
-func (b *Botanist) deployDNSProvider(ctx context.Context, name, provider string, secretData map[string][]byte, includedDomains ...string) error {
+func (b *Botanist) deployDNSProvider(ctx context.Context, name, provider string, secretData map[string][]byte, includeDomains, excludeDomains, includeZones, excludeZones []string) error {
 	values := map[string]interface{}{
 		"name":       name,
+		"purpose":    name,
 		"provider":   provider,
 		"secretData": secretData,
 		"domains": map[string]interface{}{
-			"include": includedDomains,
+			"include": includeDomains,
+			"exclude": excludeDomains,
+		},
+		"zones": map[string]interface{}{
+			"include": includeZones,
+			"exclude": excludeZones,
 		},
 	}
 

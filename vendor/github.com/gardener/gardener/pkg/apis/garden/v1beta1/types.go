@@ -107,12 +107,27 @@ type AWSConstraints struct {
 	Zones []Zone `json:"zones"`
 }
 
-// MachineImage defines the name and the version of the machine image in any environment.
+// MachineImage defines the name and multiple versions of the machine image in any environment.
 type MachineImage struct {
 	// Name is the name of the image.
 	Name string `json:"name"`
+	// DEPRECATED: This field will be removed in a future version.
+	// +optional
+	Version string `json:"version,omitempty"`
+	// Versions contains versions and expiration dates of the machine image
+	// +optional
+	Versions []MachineImageVersion `json:"versions,omitempty"`
+}
+
+// MachineImageVersion contains a version and an expiration date of a machine image
+type MachineImageVersion struct {
 	// Version is the version of the image.
 	Version string `json:"version"`
+	// ExpirationDate defines the time at which a shoot that opted out of automatic operating system updates and
+	// that is running this image version will be forcefully updated to the latest version specified in the referenced
+	// cloud profile.
+	// +optional
+	ExpirationDate *metav1.Time `json:"expirationDate,omitempty"`
 }
 
 // AzureProfile defines certain constraints and definitions for the Azure cloud.
@@ -205,13 +220,16 @@ type OpenStackConstraints struct {
 	Zones []Zone `json:"zones"`
 }
 
-// FloatingPools contains constraints regarding allowed values of the 'floatingPoolName' block in the Shoot specification.
+// OpenStackFloatingPool contains constraints regarding allowed values of the 'floatingPoolName' block in the Shoot specification.
 type OpenStackFloatingPool struct {
 	// Name is the name of the floating pool.
 	Name string `json:"name"`
+	// LoadBalancerClasses contains a list of supported labeled load balancer network settings.
+	// +optional
+	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty"`
 }
 
-// LoadBalancerProviders contains constraints regarding allowed values of the 'loadBalancerProvider' block in the Shoot specification.
+// OpenStackLoadBalancerProvider contains constraints regarding allowed values of the 'loadBalancerProvider' block in the Shoot specification.
 type OpenStackLoadBalancerProvider struct {
 	// Name is the name of the load balancer provider.
 	Name string `json:"name"`
@@ -282,7 +300,22 @@ type DNSProviderConstraint struct {
 // KubernetesConstraints contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 type KubernetesConstraints struct {
 	// Versions is the list of allowed Kubernetes versions for Shoot clusters (e.g., 1.13.1).
-	Versions []string `json:"versions"`
+	// +optional
+	Versions []string `json:"versions,omitempty"`
+	// OfferedVersions is the list of allowed Kubernetes versions with optional expiration dates for Shoot clusters.
+	// +optional
+	OfferedVersions []KubernetesVersion `json:"offeredVersions,omitempty"`
+}
+
+// KubernetesVersion contains the version code and optional expiration date for a kubernetes version
+type KubernetesVersion struct {
+	// Version is the kubernetes version
+	Version string `json:"version"`
+	// ExpirationDate defines the time at which this kubernetes version is not supported any more. This has the following implications:
+	// 1) A shoot that opted out of automatic kubernetes system updates and that is running this kubernetes version will be forcefully updated to the latest kubernetes patch version for the current minor version
+	// 2) Shoot's with this kubernetes version cannot be created
+	// +optional
+	ExpirationDate *metav1.Time `json:"expirationDate,omitempty"`
 }
 
 // MachineType contains certain properties of a machine type.
@@ -326,6 +359,19 @@ type Zone struct {
 	Region string `json:"region"`
 	// Names is a list of availability zone names in this region.
 	Names []string `json:"names"`
+}
+
+// BackupProfile contains the object store configuration for backups for shoot(currently only etcd).
+type BackupProfile struct {
+	// Provider is a provider name.
+	Provider CloudProvider `json:"provider"`
+	// Region is a region name.
+	// +optional
+	Region *string `json:"region,omitempty"`
+	// SecretRef is a reference to a Secret object containing the cloud provider credentials for
+	// the object store where backups should be stored. It should have enough privileges to manipulate
+	// the objects as well as buckets.
+	SecretRef corev1.SecretReference `json:"secretRef"`
 }
 
 ////////////////////////////////////////////////////
@@ -472,6 +518,12 @@ type SeedSpec struct {
 	// Protected prevent that the Seed Cluster can be used for regular Shoot cluster control planes.
 	// +optional
 	Protected *bool `json:"protected,omitempty"`
+	// Backup holds the object store configuration for the backups of shoot(currently only etcd).
+	// If it is not specified, then there won't be any backups taken for Shoots associated with this Seed.
+	// If backup field is present in Seed, then backups of the etcd from Shoot controlplane will be stored under the
+	// configured object store.
+	// +optional
+	Backup *BackupProfile `json:"backup,omitempty"`
 }
 
 // SeedStatus holds the most recently observed status of the Seed cluster.
@@ -504,6 +556,19 @@ type SeedNetworks struct {
 	Pods gardencorev1alpha1.CIDR `json:"pods"`
 	// Services is the CIDR of the service network.
 	Services gardencorev1alpha1.CIDR `json:"services"`
+	// ShootDefaults contains the default networks CIDRs for shoots.
+	// +optional
+	ShootDefaults *ShootNetworks `json:"shootDefaults,omitempty"`
+}
+
+// ShootNetworks contains the default networks CIDRs for shoots.
+type ShootNetworks struct {
+	// Pods is the CIDR of the pod network.
+	// +optional
+	Pods *gardencorev1alpha1.CIDR `json:"pods,omitempty"`
+	// Services is the CIDR of the service network.
+	// +optional
+	Services *gardencorev1alpha1.CIDR `json:"services,omitempty"`
 }
 
 ////////////////////////////////////////////////////
@@ -640,10 +705,11 @@ type ShootSpec struct {
 	Hibernation *Hibernation `json:"hibernation,omitempty"`
 	// Kubernetes contains the version and configuration settings of the control plane components.
 	Kubernetes Kubernetes `json:"kubernetes"`
+	// Networking contains information about cluster networking such as CNI Plugin type, CIDRs, ...etc.
+	Networking *Networking `json:"networking,omitempty"`
 	// Maintenance contains information about the time window for maintenance operations and which
 	// operations should be performed.
 	// +optional
-
 	Maintenance *Maintenance `json:"maintenance,omitempty"`
 }
 
@@ -671,6 +737,9 @@ type ShootStatus struct {
 	// Seed is the name of the seed cluster that runs the control plane of the Shoot. This value is only written
 	// after a successful create/reconcile operation. It will be used when control planes are moved between Seeds.
 	Seed string `json:"seed,omitempty"`
+	// IsHibernated indicates whether the Shoot is currently hibernated.
+	// +optional
+	IsHibernated *bool `json:"hibernated,omitempty"`
 	// TechnicalID is the name that is used for creating the Seed namespace, the infrastructure resources, and
 	// basically everything that is related to this particular Shoot.
 	TechnicalID string `json:"technicalID"`
@@ -682,6 +751,19 @@ type ShootStatus struct {
 ///////////////////////////////
 // Shoot Specification Types //
 ///////////////////////////////
+
+// CalicoNetworkType is a constant for the calico network type.
+const CalicoNetworkType = "calico"
+
+// Networking defines networking parameters for the shoot cluster.
+type Networking struct {
+	gardencorev1alpha1.K8SNetworks `json:",inline"`
+	// Type identifies the type of the networking plugin
+	Type string `json:"type"`
+	// ProviderConfig is the configuration passed to network resource.
+	// +optional
+	ProviderConfig *gardencorev1alpha1.ProviderConfig `json:"providerConfig,omitempty"`
+}
 
 // Cloud contains information about the cloud environment and their specific settings.
 // It must contain exactly one key of the below cloud providers.
@@ -716,13 +798,12 @@ type Cloud struct {
 }
 
 // AWSCloud contains the Shoot specification for AWS.
-
 type AWSCloud struct {
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks AWSNetworks `json:"networks"`
 	// Workers is a list of worker groups.
@@ -765,11 +846,11 @@ type AWSWorker struct {
 
 // Alicloud contains the Shoot specification for Alibaba cloud
 type Alicloud struct {
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks AlicloudNetworks `json:"networks"`
 	// Workers is a list of worker groups.
@@ -808,11 +889,11 @@ type AlicloudWorker struct {
 
 // PacketCloud contains the Shoot specification for Packet cloud
 type PacketCloud struct {
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks PacketNetworks `json:"networks"`
 	// Workers is a list of worker groups.
@@ -837,11 +918,11 @@ type PacketWorker struct {
 
 // AzureCloud contains the Shoot specification for Azure.
 type AzureCloud struct {
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks AzureNetworks `json:"networks"`
 	// ResourceGroup indicates whether to use an existing resource group or create a new one.
@@ -887,11 +968,11 @@ type AzureWorker struct {
 
 // GCPCloud contains the Shoot specification for GCP.
 type GCPCloud struct {
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks GCPNetworks `json:"networks"`
 	// Workers is a list of worker groups.
@@ -934,17 +1015,36 @@ type OpenStackCloud struct {
 	FloatingPoolName string `json:"floatingPoolName"`
 	// LoadBalancerProvider is the name of the load balancer provider in the OpenStack environment.
 	LoadBalancerProvider string `json:"loadBalancerProvider"`
-	// MachineImage holds information about the machine image to use for all workers.
-	// It will default to the first image stated in the referenced CloudProfile if no
+	// LoadBalancerClasses available for a dedicated Shoot.
+	// +optional
+	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty"`
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
 	// +optional
-	MachineImage *MachineImage `json:"machineImage,omitempty"`
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks OpenStackNetworks `json:"networks"`
 	// Workers is a list of worker groups.
 	Workers []OpenStackWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to.
 	Zones []string `json:"zones"`
+}
+
+// OpenStackLoadBalancerClass defines a restricted network setting for generic LoadBalancer classes usable in CloudProfiles.
+type OpenStackLoadBalancerClass struct {
+	// Name is the name of the LB class
+	Name string `json:"name"`
+	// FloatingSubnetID is the subnetwork ID of a dedicated subnet in floating network pool.
+	// +optional
+	FloatingSubnetID *string `json:"floatingSubnetID,omitempty"`
+	// FloatingNetworkID is the network ID of the floating network pool.
+	// +optional
+	FloatingNetworkID *string `json:"floatingNetworkID,omitempty"`
+	// SubnetID is the ID of a local subnet used for LoadBalancer provisioning. Only usable if no FloatingPool
+	// configuration is done.
+	// +optional
+	SubnetID *string `json:"subnetID,omitempty"`
 }
 
 // OpenStackNetworks holds information about the Kubernetes and infrastructure networks.
@@ -974,6 +1074,11 @@ type Worker struct {
 	Name string `json:"name"`
 	// MachineType is the machine type of the worker group.
 	MachineType string `json:"machineType"`
+	// ShootMachineImage holds information about the machine image to use for all workers.
+	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
+	// value has been provided.
+	// +optional
+	MachineImage *ShootMachineImage `json:"machineImage,omitempty"`
 	// AutoScalerMin is the minimum number of VMs to create.
 	AutoScalerMin int `json:"autoScalerMin"`
 	// AutoScalerMin is the maximum number of VMs to create.
@@ -993,6 +1098,9 @@ type Worker struct {
 	// Taints is a list of taints for all the `Node` objects in this worker pool.
 	// +optional
 	Taints []corev1.Taint `json:"taints,omitempty"`
+	// Kubelet contains configuration settings for the kubelet.
+	// +optional
+	Kubelet *KubeletConfig `json:"kubelet,omitempty"`
 }
 
 var (
@@ -1068,6 +1176,13 @@ type KubernetesDashboard struct {
 	AuthenticationMode *string `json:"authenticationMode,omitempty"`
 }
 
+const (
+	// KubernetesDashboardAuthModeBasic uses basic authentication mode for auth.
+	KubernetesDashboardAuthModeBasic = "basic"
+	// KubernetesDashboardAuthModeToken uses token-based mode for auth.
+	KubernetesDashboardAuthModeToken = "token"
+)
+
 // ClusterAutoscaler describes configuration values for the cluster-autoscaler addon.
 type AddonClusterAutoscaler struct {
 	Addon `json:",inline"`
@@ -1122,13 +1237,6 @@ type Backup struct {
 
 // DNS holds information about the provider, the hosted zone id and the domain.
 type DNS struct {
-	// Provider is the DNS provider type for the Shoot.
-	// +optional
-	Provider *string `json:"provider,omitempty"`
-	// HostedZoneID is the ID of an existing DNS Hosted Zone used to create the DNS records in.
-	// +optional
-	// deprecated
-	HostedZoneID *string `json:"hostedZoneID,omitempty"`
 	// Domain is the external available domain of the Shoot cluster.
 	// +optional
 	Domain *string `json:"domain,omitempty"`
@@ -1138,6 +1246,18 @@ type DNS struct {
 	// this behavior, i.e. forcing the Gardener to only look into the given secret.
 	// +optional
 	SecretName *string `json:"secretName,omitempty"`
+	// Provider is the DNS provider type for the Shoot.  Only relevant if not the default
+	// domain is used for this shoot.
+	// +optional
+	Provider *string `json:"provider,omitempty"`
+	// IncludeZones is a list of hosted zone IDs that shall be included. Only relevant if not the default
+	// domain is used for this shoot.
+	// +optional
+	IncludeZones []string `json:"includeZones,omitempty"`
+	// ExcludeZones is a list of hosted zone IDs that shall be excluded. Only relevant if not the default
+	// domain is used for this shoot.
+	// +optional
+	ExcludeZones []string `json:"excludeZones,omitempty"`
 }
 
 // DNSUnmanaged is a constant for the 'unmanaged' DNS provider.
@@ -1163,8 +1283,9 @@ const (
 
 // Hibernation contains information whether the Shoot is suspended or not.
 type Hibernation struct {
-	// Enabled is true if Shoot is hibernated, false otherwise.
-	Enabled bool `json:"enabled"`
+	// Enabled is true if the Shoot's desired state is hibernated, false otherwise.
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
 	// Schedules determine the hibernation schedules.
 	// +optional
 	Schedules []HibernationSchedule `json:"schedules,omitempty"`
@@ -1246,19 +1367,45 @@ type KubernetesConfig struct {
 // KubeAPIServerConfig contains configuration settings for the kube-apiserver.
 type KubeAPIServerConfig struct {
 	KubernetesConfig `json:",inline"`
-	// RuntimeConfig contains information about enabled or disabled APIs.
-	// +optional
-	RuntimeConfig map[string]bool `json:"runtimeConfig,omitempty"`
-	// OIDCConfig contains configuration settings for the OIDC provider.
-	// +optional
-	OIDCConfig *OIDCConfig `json:"oidcConfig,omitempty"`
 	// AdmissionPlugins contains the list of user-defined admission plugins (additional to those managed by Gardener), and, if desired, the corresponding
 	// configuration.
 	// +optional
 	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty"`
+	// APIAudiences are the identifiers of the API. The service account token authenticator will
+	// validate that tokens used against the API are bound to at least one of these audiences.
+	// If `serviceAccountConfig.issuer` is configured and this is not, this defaults to a single
+	// element list containing the issuer URL.
+	// +optional
+	APIAudiences []string `json:"apiAudiences,omitempty"`
 	// AuditConfig contains configuration settings for the audit of the kube-apiserver.
 	// +optional
 	AuditConfig *AuditConfig `json:"auditConfig,omitempty"`
+	// EnableBasicAuthentication defines whether basic authentication should be enabled for this cluster or not.
+	// +optional
+	EnableBasicAuthentication *bool `json:"enableBasicAuthentication,omitempty"`
+	// OIDCConfig contains configuration settings for the OIDC provider.
+	// +optional
+	OIDCConfig *OIDCConfig `json:"oidcConfig,omitempty"`
+	// RuntimeConfig contains information about enabled or disabled APIs.
+	// +optional
+	RuntimeConfig map[string]bool `json:"runtimeConfig,omitempty"`
+	// ServiceAccountConfig contains configuration settings for the service account handling
+	// of the kube-apiserver.
+	// +optional
+	ServiceAccountConfig *ServiceAccountConfig `json:"serviceAccountConfig,omitempty"`
+}
+
+// ServiceAccountConfig is the kube-apiserver configuration for service accounts.
+type ServiceAccountConfig struct {
+	// Issuer is the identifier of the service account token issuer. The issuer will assert this
+	// identifier in "iss" claim of issued tokens. This value is a string or URI.
+	// +optional
+	Issuer *string `json:"issuer,omitempty"`
+	// SigningKeySecret is a reference to a secret that contains the current private key of the
+	// service account token issuer. The issuer will sign issued ID tokens with this private key.
+	// (Requires the 'TokenRequest' feature gate.)
+	// +optional
+	SigningKeySecret *corev1.LocalObjectReference `json:"signingKeySecretName,omitempty"`
 }
 
 // AuditConfig contains settings for audit of the api server
@@ -1334,6 +1481,9 @@ type KubeControllerManagerConfig struct {
 	// HorizontalPodAutoscalerConfig contains horizontal pod autoscaler configuration settings for the kube-controller-manager.
 	// +optional
 	HorizontalPodAutoscalerConfig *HorizontalPodAutoscalerConfig `json:"horizontalPodAutoscaler,omitempty"`
+	// NodeCIDRMaskSize defines the mask size for node cidr in cluster (default is 24)
+	// +optional
+	NodeCIDRMaskSize *int `json:"nodeCIDRMaskSize,omitempty"`
 }
 
 // GardenerDuration is a workaround for missing OpenAPI functions on metav1.Duration struct.
@@ -1458,6 +1608,106 @@ type KubeletConfig struct {
 	// CPUManagerPolicy allows to set alternative CPU management policies (default: none).
 	// +optional
 	CPUManagerPolicy *string `json:"cpuManagerPolicy,omitempty"`
+	// MaxPods is the maximum number of Pods that are allowed by the Kubelet.
+	// +optional
+	// Default: 110
+	MaxPods *int32 `json:"maxPods,omitempty"`
+	// EvictionHard describes a set of eviction thresholds (e.g. memory.available<1Gi) that if met would trigger a Pod eviction.
+	// +optional
+	// Default:
+	//   memory.available:   "100Mi/1Gi/5%"
+	//   nodefs.available:   "5%"
+	//   nodefs.inodesFree:  "5%"
+	//   imagefs.available:  "5%"
+	//   imagefs.inodesFree: "5%"
+	EvictionHard *KubeletConfigEviction `json:"evictionHard,omitempty"`
+	// EvictionSoft describes a set of eviction thresholds (e.g. memory.available<1.5Gi) that if met over a corresponding grace period would trigger a Pod eviction.
+	// +optional
+	// Default:
+	//   memory.available:   "200Mi/1.5Gi/10%"
+	//   nodefs.available:   "10%"
+	//   nodefs.inodesFree:  "10%"
+	//   imagefs.available:  "10%"
+	//   imagefs.inodesFree: "10%"
+	EvictionSoft *KubeletConfigEviction `json:"evictionSoft,omitempty"`
+	// EvictionSoftGracePeriod describes a set of eviction grace periods (e.g. memory.available=1m30s) that correspond to how long a soft eviction threshold must hold before triggering a Pod eviction.
+	// +optional
+	// Default:
+	//   memory.available:   1m30s
+	//   nodefs.available:   1m30s
+	//   nodefs.inodesFree:  1m30s
+	//   imagefs.available:  1m30s
+	//   imagefs.inodesFree: 1m30s
+	EvictionSoftGracePeriod *KubeletConfigEvictionSoftGracePeriod `json:"evictionSoftGracePeriod,omitempty"`
+	// EvictionMinimumReclaim configures the amount of resources below the configured eviction threshold that the kubelet attempts to reclaim whenever the kubelet observes resource pressure.
+	// +optional
+	// Default: 0 for each resource
+	EvictionMinimumReclaim *KubeletConfigEvictionMinimumReclaim `json:"evictionMinimumReclaim,omitempty"`
+	// EvictionPressureTransitionPeriod is the duration for which the kubelet has to wait before transitioning out of an eviction pressure condition.
+	// +optional
+	// Default: 4m0s
+	EvictionPressureTransitionPeriod *metav1.Duration `json:"evictionPressureTransitionPeriod,omitempty"`
+	// EvictionMaxPodGracePeriod describes the maximum allowed grace period (in seconds) to use when terminating pods in response to a soft eviction threshold being met.
+	// +optional
+	// Default: 90
+	EvictionMaxPodGracePeriod *int32 `json:"evictionMaxPodGracePeriod,omitempty"`
+}
+
+// KubeletConfigEviction contains kubelet eviction thresholds supporting either a resource.Quantity or a percentage based value.
+type KubeletConfigEviction struct {
+	// MemoryAvailable is the threshold for the free memory on the host server.
+	// +optional
+	MemoryAvailable *string `json:"memoryAvailable,omitempty"`
+	// ImageFSAvailable is the threshold for the free disk space in the imagefs filesystem (docker images and container writable layers).
+	// +optional
+	ImageFSAvailable *string `json:"imageFSAvailable,omitempty"`
+	// ImageFSInodesFree is the threshold for the available inodes in the imagefs filesystem.
+	// +optional
+	ImageFSInodesFree *string `json:"imageFSInodesFree,omitempty"`
+	// NodeFSAvailable is the threshold for the free disk space in the nodefs filesystem (docker volumes, logs, etc).
+	// +optional
+	NodeFSAvailable *string `json:"nodeFSAvailable,omitempty"`
+	// NodeFSInodesFree is the threshold for the available inodes in the nodefs filesystem.
+	// +optional
+	NodeFSInodesFree *string `json:"nodeFSInodesFree,omitempty"`
+}
+
+// KubeletConfigEviction contains configuration for the kubelet eviction minimum reclaim.
+type KubeletConfigEvictionMinimumReclaim struct {
+	// MemoryAvailable is the threshold for the memory reclaim on the host server.
+	// +optional
+	MemoryAvailable *resource.Quantity `json:"memoryAvailable,omitempty"`
+	// ImageFSAvailable is the threshold for the disk space reclaim in the imagefs filesystem (docker images and container writable layers).
+	// +optional
+	ImageFSAvailable *resource.Quantity `json:"imageFSAvailable,omitempty"`
+	// ImageFSInodesFree is the threshold for the inodes reclaim in the imagefs filesystem.
+	// +optional
+	ImageFSInodesFree *resource.Quantity `json:"imageFSInodesFree,omitempty"`
+	// NodeFSAvailable is the threshold for the disk space reclaim in the nodefs filesystem (docker volumes, logs, etc).
+	// +optional
+	NodeFSAvailable *resource.Quantity `json:"nodeFSAvailable,omitempty"`
+	// NodeFSInodesFree is the threshold for the inodes reclaim in the nodefs filesystem.
+	// +optional
+	NodeFSInodesFree *resource.Quantity `json:"nodeFSInodesFree,omitempty"`
+}
+
+// KubeletConfigEvictionSoftGracePeriod contains grace periods for kubelet eviction thresholds.
+type KubeletConfigEvictionSoftGracePeriod struct {
+	// MemoryAvailable is the grace period for the MemoryAvailable eviction threshold.
+	// +optional
+	MemoryAvailable *metav1.Duration `json:"memoryAvailable,omitempty"`
+	// ImageFSAvailable is the grace period for the ImageFSAvailable eviction threshold.
+	// +optional
+	ImageFSAvailable *metav1.Duration `json:"imageFSAvailable,omitempty"`
+	// ImageFSInodesFree is the grace period for the ImageFSInodesFree eviction threshold.
+	// +optional
+	ImageFSInodesFree *metav1.Duration `json:"imageFSInodesFree,omitempty"`
+	// NodeFSAvailable is the grace period for the NodeFSAvailable eviction threshold.
+	// +optional
+	NodeFSAvailable *metav1.Duration `json:"nodeFSAvailable,omitempty"`
+	// NodeFSInodesFree is the grace period for the NodeFSInodesFree eviction threshold.
+	// +optional
+	NodeFSInodesFree *metav1.Duration `json:"nodeFSInodesFree,omitempty"`
 }
 
 // Maintenance contains information about the time window for maintenance operations and which
@@ -1475,6 +1725,9 @@ type Maintenance struct {
 type MaintenanceAutoUpdate struct {
 	// KubernetesVersion indicates whether the patch Kubernetes version may be automatically updated.
 	KubernetesVersion bool `json:"kubernetesVersion"`
+	// MachineImageVersion indicates whether the machine image version may be automatically updated (default: true).
+	// +optional
+	MachineImageVersion *bool `json:"machineImageVersion,omitempty"`
 }
 
 // MaintenanceTimeWindow contains information about the time window for maintenance operations.
@@ -1485,6 +1738,17 @@ type MaintenanceTimeWindow struct {
 	// End is the end of the time window in the format HHMMSS+ZONE, e.g. "220000+0100".
 	// If not present, the value will be computed based on the "Begin" value.
 	End string `json:"end"`
+}
+
+// MachineImage defines the name and the version of the shoot's machine image in any environment. Has to be defined in the respective CloudProfile.
+type ShootMachineImage struct {
+	// Name is the name of the image.
+	Name string `json:"name"`
+	// Version is the version of the shoot's image.
+	Version string `json:"version"`
+	// ProviderConfig is the shoot's individual configuration passed to an extension resource.
+	// +optional
+	ProviderConfig *gardencorev1alpha1.ProviderConfig `json:"providerConfig,omitempty"`
 }
 
 ////////////////////////
@@ -1619,3 +1883,14 @@ type BackupInfrastructureStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
+
+const (
+	// DefaultPodNetworkCIDR is a constant for the default pod network CIDR of a Shoot cluster.
+	DefaultPodNetworkCIDR = gardencorev1alpha1.CIDR("100.96.0.0/11")
+	// DefaultServiceNetworkCIDR is a constant for the default service network CIDR of a Shoot cluster.
+	DefaultServiceNetworkCIDR = gardencorev1alpha1.CIDR("100.64.0.0/13")
+	// DefaultPodNetworkCIDRAlicloud is a constant for the default pod network CIDR of a Alicloud Shoot cluster.
+	DefaultPodNetworkCIDRAlicloud = gardencorev1alpha1.CIDR("100.64.0.0/11")
+	// DefaultServiceNetworkCIDRAlicloud is a constant for the default service network CIDR of a Alicloud Shoot cluster.
+	DefaultServiceNetworkCIDRAlicloud = gardencorev1alpha1.CIDR("100.104.0.0/13")
+)
