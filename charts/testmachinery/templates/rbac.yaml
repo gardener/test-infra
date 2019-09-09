@@ -47,6 +47,14 @@ rules:
   - testruns/finalizers
   verbs:
   - "*"
+{{if .Values.cleanup.enabled }}
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - "*"
+{{ end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
