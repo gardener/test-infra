@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -67,6 +68,9 @@ func ParseTestrunFromFile(filePath string) (tmv1beta1.Testrun, error) {
 
 // ParseTestrun parses testrun.
 func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
+	if len(data) == 0 {
+		return tmv1beta1.Testrun{}, errors.New("empty data")
+	}
 	jsonBody, err := yaml.YAMLToJSON(data)
 	if err != nil {
 		return tmv1beta1.Testrun{}, err
