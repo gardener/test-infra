@@ -63,7 +63,6 @@ func Run(descFile string) (resultsPath string) {
 	// print readable file contents
 	fmt.Print(getFileContent(descFile))
 
-
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
 	if parallelTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)

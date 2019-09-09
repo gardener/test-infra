@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	errors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 )
@@ -76,6 +77,7 @@ func RenderGardenerTestrun(log logr.Logger, tmClient kubernetes.Interface, param
 		tr, err := util.ParseTestrun([]byte(file.File))
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
+			continue
 		}
 
 		testrunMetadata := *metadata
@@ -95,7 +97,7 @@ func RenderGardenerTestrun(log logr.Logger, tmClient kubernetes.Interface, param
 	}
 
 	if len(testruns) == 0 {
-		return nil, fmt.Errorf("no testruns in the helm chart at %s", parameters.TestrunChartPath)
+		return nil, errors.NewNotRenderedError(fmt.Sprintf("no testruns in the helm chart at %s", parameters.TestrunChartPath))
 	}
 
 	return testruns, nil

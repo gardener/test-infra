@@ -26,6 +26,9 @@ const (
 
 	// testrunner was unable to create the testrun
 	TestrunnerReasonNotCreated = "NotCreated"
+
+	// testrunner was unable to render any testruns
+	TestrunnerReasonNotRendered = "NotRendered"
 )
 
 type TestrunnerError struct {
@@ -59,6 +62,11 @@ func NewNotCreatedError(message string) error {
 	return New(TestrunnerReasonNotCreated, message)
 }
 
+// NewNotCreatedError returns an error indicating that a testrun could not be created
+func NewNotRenderedError(message string) error {
+	return New(TestrunnerReasonNotRendered, message)
+}
+
 // IsTimeout determines if the error indicates a timeout
 func IsTimeout(err error) bool {
 	return reasonForError(err) == TestrunnerReasonTimeout
@@ -67,6 +75,12 @@ func IsTimeout(err error) bool {
 // IsNotCreated indicates if the error indicates that
 // a testrun could not be created.
 func IsNotCreated(err error) bool {
+	return reasonForError(err) == TestrunnerReasonNotCreated
+}
+
+// IsNotRendered indicates if the error indicates that
+// no testrun could be rendered.
+func IsNotRendered(err error) bool {
 	return reasonForError(err) == TestrunnerReasonNotCreated
 }
 

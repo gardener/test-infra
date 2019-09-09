@@ -17,6 +17,7 @@ package template
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	errors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/go-logr/logr"
 	"os"
 
@@ -73,7 +74,7 @@ func RenderShootTestrun(log logr.Logger, tmClient kubernetes.Interface, paramete
 	}
 
 	if len(testruns) == 0 {
-		return nil, fmt.Errorf("no testruns in the helm chart at %s", parameters.TestrunChartPath)
+		return nil, errors.NewNotRenderedError(fmt.Sprintf("no testruns in the helm chart at %s", parameters.TestrunChartPath))
 	}
 
 	return testruns, nil
