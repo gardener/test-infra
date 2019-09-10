@@ -60,6 +60,7 @@ var (
 )
 
 const (
+	// points to a commit in https://github.com/kubernetes/test-infra/commits/master
 	TestInfraVersion = "466f8ffd615df63e539e96c4c713959958f620e5"
 )
 
