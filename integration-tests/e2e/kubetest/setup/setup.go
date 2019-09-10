@@ -39,7 +39,7 @@ func Setup() error {
 func getKubetestAndUtilities() error {
 	goModuleOriginValue := os.Getenv("GO111MODULE")
 	_ = os.Setenv("GO111MODULE", "on")
-	if _, err := util.RunCmd("go get k8s.io/test-infra/kubetest", ""); err != nil {
+	if _, err := util.RunCmd(fmt.Sprintf("go get k8s.io/test-infra/kubetest@%s", config.TestInfraVersion), ""); err != nil {
 		return err
 	}
 	_ = os.Setenv("GO111MODULE", goModuleOriginValue)
