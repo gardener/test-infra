@@ -59,6 +59,10 @@ var (
 	RunCleanUpAfterTest      bool
 )
 
+const (
+	TestInfraVersion = "466f8ffd615df63e539e96c4c713959958f620e5"
+)
+
 var Debug bool
 
 const (
