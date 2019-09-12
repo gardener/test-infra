@@ -123,6 +123,8 @@ github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned/typed/garden/v1beta1
+github.com/gardener/gardener/pkg/client/garden/informers/externalversions
+github.com/gardener/gardener/pkg/client/garden/informers/externalversions/garden
 github.com/gardener/gardener/pkg/client/garden/informers/externalversions/garden/v1beta1
 github.com/gardener/gardener/pkg/client/garden/informers/externalversions/internalinterfaces
 github.com/gardener/gardener/pkg/client/garden/listers/garden/v1beta1
