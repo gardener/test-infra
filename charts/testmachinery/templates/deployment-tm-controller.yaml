@@ -56,7 +56,7 @@ spec:
         - --github-secrets-path={{ .Values.secrets.github.path }}/github-secrets.yaml
         {{- end }}
         {{- if .Values.local.enabled }}
-        - -insecure=true
+        - --insecure=true
         {{- end}}
         {{- if .Values.controller.testDefPath }}
         - --testdef-path={{ .Values.controller.testDefPath }}
