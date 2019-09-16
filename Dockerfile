@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install \
   ./cmd/...
 
 ############# tm-controller #############
-FROM alpine:3.9 AS tm-controller
+FROM alpine:3.10 AS tm-controller
 
 RUN apk add --update bash curl
 
