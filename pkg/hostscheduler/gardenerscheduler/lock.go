@@ -85,7 +85,7 @@ func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.Scheduler
 				return retry.SevereError(err)
 			}
 
-			s.log.Info("Shoot was selected as host and will be woken up", shoot.Name)
+			s.log.Info("Shoot was selected as host and woken up")
 
 			if err := downloadHostKubeconfig(ctx, s.log, s.client, shoot); err != nil {
 				s.log.Error(err, "unable to download kubeconfig")
