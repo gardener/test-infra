@@ -13,6 +13,7 @@ require (
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.2
 	github.com/google/go-github/v27 v27.0.4
+	github.com/gorilla/mux v1.6.2
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/mattn/go-runewidth v0.0.4 // indirect
