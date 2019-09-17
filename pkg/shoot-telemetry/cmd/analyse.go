@@ -15,7 +15,8 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/logger"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
@@ -35,15 +36,21 @@ func GetAnalyseCommand() *cobra.Command {
 			Short: helpText,
 			Long:  helpText,
 			Run: func(cmd *cobra.Command, args []string) {
-				cfg.SetupLogger(logLevel)
+				log, err := logger.NewCliLogger()
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
 
 				// Check if only a data analysis is required.
 				if inputPath != "" {
 					if err := cfg.ValidateAnalyse(inputPath, outputFormat); err != nil {
-						log.Fatal(err.Error())
+						log.Error(err, "invalid flag input")
+						os.Exit(1)
 					}
 					if err := analyse.Analyse(inputPath, outputPath, outputFormat); err != nil {
-						log.Fatalf("Error while analysing data (%s)", err.Error())
+						log.Error(err, "Error while analysing data")
+						os.Exit(1)
 					}
 					os.Exit(0)
 				}
@@ -54,5 +61,6 @@ func GetAnalyseCommand() *cobra.Command {
 	cmd.Flags().StringVar(&outputFormat, common.CliFlagReportFormat, common.ReportOutputFormatText, common.CliFlagHelpTextReportFormat)
 	cmd.Flags().StringVar(&outputPath, common.CliFlagReportOutput, "", common.CliFlagHelpTextReportFile)
 	cmd.Flags().StringVar(&logLevel, common.CliFlagLogLevel, common.DefaultLogLevel, common.CliFlagHelpLogLevel)
+	logger.InitFlags(cmd.PersistentFlags())
 	return cmd
 }

@@ -28,12 +28,17 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// GetShootKey return a key for a Shoot in the format <shoot-namespace>/<shoot-name>
-func GetShootKey(shoot *gardenv1beta1.Shoot) string {
+// GetShootKeyFromShoot return a key for a Shoot in the format <shoot-namespace>/<shoot-name>
+func GetShootKeyFromShoot(shoot *gardenv1beta1.Shoot) string {
 	if shoot == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s/%s", shoot.ObjectMeta.Namespace, shoot.ObjectMeta.Name)
+	return GetShootKey(shoot.ObjectMeta.Name, shoot.ObjectMeta.Namespace)
+}
+
+// GetShootKeyFromShoot return a key for a Shoot name and namespace in the format <shoot-namespace>/<shoot-name>
+func GetShootKey(name, namespace string) string {
+	return fmt.Sprintf("%s/%s", namespace, name)
 }
 
 // Waiter runs the passed function <f> periodically in the given interval <interval>.

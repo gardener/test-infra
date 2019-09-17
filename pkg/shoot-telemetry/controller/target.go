@@ -15,8 +15,10 @@
 package controller
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"net/http"
 	"time"
 
@@ -41,10 +43,7 @@ type target struct {
 }
 
 func (c *controller) addTarget(shoot *gardenv1beta1.Shoot) {
-	if c.filterShoot(shoot) {
-		return
-	}
-	var key = common.GetShootKey(shoot)
+	var key = common.GetShootKeyFromShoot(shoot)
 
 	// Check if a target for the Shoot alrady exists
 	t, exists := c.targets[key]
@@ -90,7 +89,7 @@ func (c *controller) addTarget(shoot *gardenv1beta1.Shoot) {
 }
 
 func (c *controller) removeTarget(shoot *gardenv1beta1.Shoot) {
-	var key = common.GetShootKey(shoot)
+	var key = common.GetShootKeyFromShoot(shoot)
 	c.targetsMutex.Lock()
 	if t, exists := c.targets[key]; exists {
 		t.archived = true
@@ -125,17 +124,27 @@ func (c *controller) observeTarget(t *target, stopCh <-chan struct{}) {
 	}, c.config.CheckInterval, false, stopCh)
 }
 
+// initTargets initiliazes the targets with all available shoots
+func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
+	shoots := &gardenv1beta1.ShootList{}
+	if err := k8sClient.Client().List(context.TODO(), shoots); err != nil {
+		return err
+	}
+
+	for _, shoot := range shoots.Items {
+		c.addShoot(&shoot)
+	}
+
+	return nil
+}
+
 // filterShoot returns if a shoot should be watched based on the controller configuration
 func (c *controller) filterShoot(shoot *gardenv1beta1.Shoot) bool {
-	if c.config.ShootName != "" {
-		if shoot.Name != c.config.ShootName || shoot.Namespace != c.config.ShootNamespace {
-			return true
-		}
+	if c.config.ShootsFilter == nil || len(c.config.ShootsFilter) == 0 {
+		return false
 	}
-	if c.config.ShootNamespace != "" {
-		if shoot.Namespace != c.config.ShootNamespace {
-			return true
-		}
+	if _, ok := c.config.ShootsFilter[common.GetShootKeyFromShoot(shoot)]; ok {
+		return false
 	}
-	return false
+	return true
 }

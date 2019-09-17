@@ -69,6 +69,16 @@ func (c ComponentList) JSON() map[string]ComponentJSON {
 	return components
 }
 
+// Get returns the component by its name
+func (c ComponentList) Get(name string) *Component {
+	for _, component := range c {
+		if component.Name == name {
+			return component
+		}
+	}
+	return nil
+}
+
 func (c *components) add(newComponents ...Component) {
 	for _, item := range newComponents {
 		component := item

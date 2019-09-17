@@ -20,15 +20,20 @@ testrunner collect [flags]
   -o, --output-dir-path string         The filepath where the summary should be written to. (default "./testout")
       --s3-endpoint string             S3 endpoint of the testmachinery cluster.
       --s3-ssl                         S3 has SSL enabled.
-      --tm-kubeconfig-path string      Path to the testmachinery cluster kubeconfig
+      --tm-kubeconfig-path string      Path to the testmachinery cluster kubeconfig (default "/Users/d064999/.kubeconfigs/dev/.virtual")
   -t, --tr-name string                 Name of the testrun to collect results.
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -d, --debug     Set debug mode for additional output
-      --dry-run   Dry run will print the rendered template
+      --cli                  logger runs as cli logger. enables cli logging
+      --dev                  enable development logging which result in console encoding, enabled stacktrace and enabled caller
+      --disable-caller       disable the caller of logs (default true)
+      --disable-stacktrace   disable the stacktrace of error logs (default true)
+      --disable-timestamp    disable timestamp output (default true)
+      --dry-run              Dry run will print the rendered template
+  -v, --verbosity int        number for the log level verbosity (default 1)
 ```
 
 ### SEE ALSO

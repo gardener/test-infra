@@ -14,6 +14,11 @@
 
 package result
 
+import (
+	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
+	"github.com/go-logr/logr"
+)
+
 // Config represents the configuration for collecting and storing results from a testrun.
 type Config struct {
 	// OutputDir is the path where the testresults are written to.
@@ -28,14 +33,17 @@ type Config struct {
 	// S3SSL indicates whether the S3 instance is SSL secured or not.
 	S3SSL bool
 
-	// Endpoint of the argo ui of the testmachinery.
-	ArgoUIEndpoint string
-
-	// Endpoint of kibana for the logs of the testmachinery.
-	KibanaEndpoint string
-
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
+
+	// EnableTelemetry enbales the measurement of shoot downtimes during execution
+	EnableTelemetry bool
+}
+
+type Collector struct {
+	log       logr.Logger
+	config    Config
+	telemetry *telemetryCtrl.Telemetry
 }
 
 // notificationConfig is the configuration that is used by concourse to send notifications.
@@ -47,10 +55,4 @@ type email struct {
 	Subject    string   `yaml:"subject"`
 	Recipients []string `yaml:"recipients"`
 	MailBody   string   `yaml:"mail_body"`
-}
-
-type kibanaFilter struct {
-	IndexPatternID string
-	WorkflowID     string
-	TestDefName    string
 }

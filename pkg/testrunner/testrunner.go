@@ -39,7 +39,7 @@ func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNameP
 	maxWaitTime = config.Timeout
 	pollInterval = config.Interval
 
-	runs.Run(log.WithValues("namespace", config.Namespace), config.TmClient, config.Namespace, testrunNamePrefix)
+	runs.Run(log.WithValues("namespace", config.Namespace), config.Client, config.Namespace, testrunNamePrefix)
 }
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion

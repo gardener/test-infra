@@ -17,6 +17,7 @@ package analyse
 import (
 	"encoding/csv"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"os"
 	"strconv"
@@ -31,6 +32,9 @@ import (
 // The <outputPath> parameter specifies the file to store the analysis. Empty string means stdout.
 // The <outputFormat> parameter specifies how the analysis results should be formatted.
 func Analyse(inputFilePath, outputPath, outputFormat string) error {
+	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
+		return errors.New("input file does not exist")
+	}
 	inputFile, err := os.Open(inputFilePath)
 	if err != nil {
 		return err

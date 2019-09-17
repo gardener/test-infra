@@ -16,14 +16,15 @@ package controller
 
 import (
 	"errors"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"os"
 	"os/signal"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
-	"syscall"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	v1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -47,10 +48,9 @@ type controller struct {
 }
 
 // StartController initialize the telemetry controller.
-func StartController(config *config.Config) error {
+func StartController(config *config.Config, signalCh chan os.Signal) error {
 	var (
-		stopCh   = make(chan struct{})
-		signalCh = make(chan os.Signal, 2)
+		stopCh = make(chan struct{})
 
 		controller = controller{
 			config:  config,
@@ -58,17 +58,21 @@ func StartController(config *config.Config) error {
 		}
 	)
 
-	// React on OS signals and init the shut down steps.
-	signal.Notify(signalCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-signalCh
-		log.Info("Received interrupt signal.")
+		logger.Log.Info("Received interrupt signal.")
 		signal.Stop(signalCh)
 		close(stopCh)
 	}()
 
 	// Setup the necessary informer factories to initialize the required informers.
 	k8sinformersFactory, gardenInformerFactory, err := common.SetupInformerFactory(config.KubeConfigPath)
+	if err != nil {
+		return err
+	}
+	k8sClient, err := kubernetes.NewClientFromFile("", config.KubeConfigPath, kubernetes.WithClientOptions(client.Options{
+		Scheme: kubernetes.GardenScheme,
+	}))
 	if err != nil {
 		return err
 	}
@@ -94,14 +98,19 @@ func StartController(config *config.Config) error {
 		return err
 	}
 
-	// Start job to write the measurments constantly to disk.
+	// Start job to write the measurements constantly to disk.
 	go common.Waiter(func() {
 		if err := controller.generateOutput(); err != nil {
-			log.Error(err.Error())
+			logger.Log.Error(err, "error generating output")
 		}
 	}, time.Second*30, true, stopCh)
 
-	log.Info("Start Shoot telemetry controller.")
+	logger.Log.Info("Start Shoot telemetry controller.")
+
+	// add initially all shoots
+	if err := controller.initTargets(k8sClient); err != nil {
+		return err
+	}
 
 	// Register event handlers for new Shoots and Shoot updates.
 	controller.shootInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -131,7 +140,7 @@ func StartController(config *config.Config) error {
 			return err
 		}
 		if controller.config.AnalyseOutput != "" {
-			log.Infof("Write report to %s", controller.config.AnalyseOutput)
+			logger.Logf(logger.Log.Info, "Write report to %s", controller.config.AnalyseOutput)
 		}
 	}
 
@@ -143,15 +152,19 @@ func (c *controller) addShoot(obj interface{}) {
 	if shoot == nil || shoot.Status.LastOperation == nil {
 		return
 	}
-
-	// Reject Shoots which are configured to be hibernated or Shoots which should wake up are still hibernated.
-	if (shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled) || (shoot.Status.IsHibernated != nil && *shoot.Status.IsHibernated) {
-		log.Debugf("%s Reject hibernated shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+	if c.filterShoot(shoot) {
+		logger.Logf(logger.Log.V(5).Info, "%s Filter shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		return
 	}
 
-	if shoot != nil && shoot.Status.LastOperation != nil && shoot.Status.LastOperation.Type == "Reconcile" {
-		log.Debugf("%s Add shoot to queue: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+	// Reject Shoots which are configured to be hibernated or Shoots which should wake up are still hibernated.
+	if (shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled) || (shoot.Status.IsHibernated != nil && *shoot.Status.IsHibernated) {
+		logger.Logf(logger.Log.Info, "%s Reject hibernated shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+		return
+	}
+
+	if shoot.Status.LastOperation != nil && shoot.Status.LastOperation.Type == "Reconcile" {
+		logger.Logf(logger.Log.V(3).Info, "%s Add shoot to queue: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		c.addTarget(shoot)
 	}
 }
@@ -164,32 +177,44 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	if oldShoot == nil || newShoot == nil || oldShoot.Status.LastOperation == nil || newShoot.Status.LastOperation == nil {
 		return
 	}
+	if c.filterShoot(newShoot) {
+		logger.Logf(logger.Log.V(5).Info, "%s Filter shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+		return
+	}
 
 	// Remove shoots which are hibernated.
 	if (newShoot.Spec.Hibernation != nil && newShoot.Spec.Hibernation.Enabled != nil && *newShoot.Spec.Hibernation.Enabled) || (newShoot.Status.IsHibernated != nil && *newShoot.Status.IsHibernated) {
-		log.Debugf("%s Ignore hibernated shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+		logger.Logf(logger.Log.V(3).Info, "%s Ignore hibernated shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 		c.removeTarget(oldShoot)
+		return
+	}
+
+	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate && newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate {
+		if oldShoot.Status.LastOperation.Progress != newShoot.Status.LastOperation.Progress && newShoot.Status.LastOperation.Progress == 100 {
+			logger.Logf(logger.Log.V(3).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+			c.addTarget(newShoot)
+		}
 		return
 	}
 
 	// Remove shoot from queue if it move from reconcile to create/delete.
-	if oldShoot.Status.LastOperation.Type == "Reconcile" && newShoot.Status.LastOperation.Type != "Reconcile" {
-		log.Debugf("%s Remove shoot %s/%s from queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile && newShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
+		logger.Logf(logger.Log.V(3).Info, "%s Remove shoot %s/%s from queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 		c.removeTarget(oldShoot)
 		return
 	}
 
-	if newShoot.Status.LastOperation.Type == "Reconcile" {
+	if newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile {
 		// Add Shoot again if it was hibernated before and woke up again.
 		if oldShoot.Status.IsHibernated != nil && *oldShoot.Status.IsHibernated {
-			log.Debugf("%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+			logger.Logf(logger.Log.V(3).Info, "%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 			c.addTarget(newShoot)
 			return
 		}
 
 		// Add Shoot if it moves from other State(Create) into Reconcile state.
-		if oldShoot.Status.LastOperation.Type != "Reconcile" {
-			log.Debugf("%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+		if oldShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
+			logger.Logf(logger.Log.V(3).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 			c.addTarget(newShoot)
 			return
 		}

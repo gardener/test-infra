@@ -26,7 +26,7 @@ import (
 // where the testrunner executes the testrun.
 type Config struct {
 	// Kubernetes client for the testmachinery k8s cluster
-	TmClient kubernetes.Interface
+	Client kubernetes.Interface
 
 	// Namespace where the testrun is deployed.
 	Namespace string
