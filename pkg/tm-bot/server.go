@@ -16,10 +16,13 @@ package tm_bot
 
 import (
 	"context"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"net/http"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -37,17 +40,28 @@ var (
 	githubAppID        int
 	githubKeyFile      string
 	webhookSecretToken string
+	repoConfigFile     string
+
+	kubeconfigPath string
 )
 
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
 
-	ghClient, err := github.New(log.WithName("github"), githubAppID, githubKeyFile)
+	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
+		Scheme: testmachinery.TestMachineryScheme,
+	}))
+	if err != nil {
+		log.Error(err, "unable to initialize kubernetes client")
+		os.Exit(1)
+	}
+
+	ghClient, err := github.NewManager(log.WithName("github"), githubAppID, githubKeyFile, repoConfigFile)
 	if err != nil {
 		log.Error(err, "unable to initialize github client")
 		os.Exit(1)
 	}
-	hooks := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken)
+	hooks := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken, k8sClient)
 
 	serverMuxHTTP := http.NewServeMux()
 	serverMuxHTTPS := http.NewServeMux()
@@ -105,4 +119,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")
 	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
+	flagset.StringVar(&repoConfigFile, "config-file-path", ".ci/tm-bot", "Path the bot configuration in the repository")
+
+	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
 }
