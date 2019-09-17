@@ -12,29 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package plugins_test
 
 import (
-	"context"
-	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
-	tm_bot "github.com/gardener/test-infra/pkg/tm-bot"
-	flag "github.com/spf13/pflag"
-	"os"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"testing"
 )
 
-func init() {
-	tm_bot.InitFlags(nil)
-	logger.InitFlags(nil)
-}
-
-func main() {
-	flag.Parse()
-	ctx := context.Background()
-	log, err := logger.New(nil)
-	if err != nil {
-		fmt.Printf(err.Error())
-		os.Exit(1)
-	}
-	tm_bot.Serve(ctx, log)
+func TestPlugins(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "GitHub TM bot plugins Test Suite")
 }

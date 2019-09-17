@@ -16,14 +16,15 @@ package tm_bot
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/tm-bot/events"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-logr/logr"
-	flag "github.com/spf13/pflag"
 	"github.com/gorilla/mux"
+	flag "github.com/spf13/pflag"
 )
 
 var (
@@ -32,19 +33,30 @@ var (
 
 	serverCertFile string
 	serverKeyFile  string
+
+	githubAppID        int
+	githubKeyFile      string
+	webhookSecretToken string
 )
 
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
+
+	ghClient, err := github.New(log.WithName("github"), githubAppID, githubKeyFile)
+	if err != nil {
+		log.Error(err, "unable to initialize github client")
+		os.Exit(1)
+	}
+	hooks := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken)
+
 	serverMuxHTTP := http.NewServeMux()
 	serverMuxHTTPS := http.NewServeMux()
-
 	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: serverMuxHTTP}
 	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: serverMuxHTTPS}
 	r := mux.NewRouter()
 
-	r.HandleFunc("/healthz", healthz(log.WithName("heatlh"))).Methods(http.MethodGet)
-	r.HandleFunc("/event/handler", events.HandleWebhook(log.WithName("events"))).Methods(http.MethodPost)
+	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
+	r.HandleFunc("/event/handler", hooks.HandleWebhook).Methods(http.MethodPost)
 
 	serverMuxHTTP.Handle("/", r)
 	serverMuxHTTPS.Handle("/", r)
@@ -89,4 +101,8 @@ func InitFlags(flagset *flag.FlagSet) {
 		"Path to server certificate")
 	flagset.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
 		"Path to private key")
+
+	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")
+	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
+	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
 }

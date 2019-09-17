@@ -11,30 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-package events
 
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
-	"net/http"
-)
+package github
 
-func HandleWebhook(log logr.Logger) func(w http.ResponseWriter, r *http.Request) {
-	return func (w http.ResponseWriter, r *http.Request) {
+func (e *GenericRequestEvent) GetRepositoryName() string {
+	return e.Repository.GetName()
+}
 
-		decoder := json.NewDecoder(r.Body)
-		var gh_webhook github.PullRequestReviewCommentEvent
-		if err := decoder.Decode(&gh_webhook); err != nil {
-			log.Error(err, "unable to decode json payload")
-			http.Error(w, "unable to read body", http.StatusInternalServerError)
-			return
-		}
+func (e *GenericRequestEvent) GetOwnerName() string {
+	return e.Repository.GetOwner().GetLogin()
+}
 
-		fmt.Println(util.PrettyPrintStruct(gh_webhook))
-		w.Write([]byte{})
-	}
+func (e *GenericRequestEvent) GetMessage() string {
+	return e.Body
+}
+
+func (e *GenericRequestEvent) GetAuthorName() string {
+	return e.Author.GetLogin()
 }
