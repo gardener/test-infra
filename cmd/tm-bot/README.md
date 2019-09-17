@@ -2,7 +2,7 @@
 
 The Testmachinery GitHub bot is a [GitHub app](https://developer.github.com/apps/about-apps/) that listens on Pull Request events/webhooks and reacts on them.
 
-It also checks if a user is authorized (currently is member of the organization) to perform the command.
+It also checks if a user is authorized (currently is member of the organization) to perform teh command.
 
 The bot is mainly build to run integration tests in PR's and report back the correct status.
 

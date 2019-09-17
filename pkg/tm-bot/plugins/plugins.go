@@ -15,12 +15,13 @@
 package plugins
 
 import (
-	"bufio"
 	"fmt"
+	"sync"
+
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
-	"io"
-	"strings"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 )
@@ -36,96 +37,139 @@ type Plugin interface {
 	// Run runs the command with the parsed flags (flag.Parse()) and the event that triggered the command
 	Run(fs *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error
 
+	// resume the plugin execution from a persisted state
+	ResumeFromState(client github.Client, event *github.GenericRequestEvent, state string) error
+
 	// Description returns a short description of the plugin
 	Description() string
 
 	// Example returns an example for the command
 	Example() string
+
+	// Create a deep copy of the plugin
+	New(runID string) Plugin
 }
 
-var Plugins = make(plugins, 0)
+// Persistence describes the interface for persisting plugin states
+type Persistence interface {
+	Save(map[string]map[string]*State) error
+	Load() (map[string]map[string]*State, error)
+}
 
-type plugins map[string]Plugin
+var Plugins = &plugins{
+	registered: make(map[string]Plugin),
+	stateMutex: sync.Mutex{},
+	states:     make(map[string]map[string]*State),
+}
 
+type plugins struct {
+	log         logr.Logger
+	persistence Persistence
+	registered  map[string]Plugin
+	stateMutex  sync.Mutex
+	states      map[string]map[string]*State
+}
+
+// State describes the configuration of a running plugin that is can resume at any time
+type State struct {
+	Event  *github.GenericRequestEvent
+	Custom string
+}
+
+// Register registers a plugin with its command to be executed on a event
 func Register(plugin Plugin) {
-	Plugins[plugin.Command()] = plugin
+	Plugins.registered[plugin.Command()] = plugin
 }
 
-func (p *plugins) Get(name string) (Plugin, error) {
-	plugin, ok := Plugins[name]
+// Setup sets up the plugins with a logger and a persistent storage
+func Setup(log logr.Logger, persistence Persistence) {
+	Plugins.log = log
+	Plugins.persistence = persistence
+}
+
+// ResumePlugins resumes all states that can be found in the persistent storage
+func ResumePlugins(ghMgr github.Manager) error {
+	return Plugins.resumePlugins(ghMgr)
+}
+
+func (p *plugins) Get(name string) (string, Plugin, error) {
+	plugin, ok := Plugins.registered[name]
 	if !ok {
-		return nil, pluginerr.New(fmt.Sprintf("no plugin found for %s", name), fmt.Sprintf("no plugin found for %s", name))
+		return "", nil, pluginerr.New(fmt.Sprintf("no plugin found for %s", name), fmt.Sprintf("no plugin found for %s", name))
 	}
-	return plugin, nil
+	runID := util.RandomString(5)
+	return runID, plugin.New(runID), nil
 }
 
-func HandleRequest(client github.Client, event *github.GenericRequestEvent) error {
-	commands, err := ParseCommands(event.GetMessage())
+func (p *plugins) resumePlugins(ghMgr github.Manager) error {
+	if p.persistence == nil {
+		return nil
+	}
+	states, err := p.persistence.Load()
 	if err != nil {
-		return pluginerr.Wrap(err, "Internal parse error")
-	}
-
-	for _, args := range commands {
-		plugin, err := Plugins.Get(args[0])
-		if err != nil {
-			return Error(client, event, err)
-		}
-
-		fs := plugin.Flags()
-		if err := fs.Parse(args[1:]); err != nil {
-			return Error(client, event, pluginerr.New(err.Error(), FormatUsageError(args[0], plugin.Description(), plugin.Example(), fs.FlagUsages())))
-		}
-		if err := plugin.Run(fs, client, event); err != nil {
-			return Error(client, event, pluginerr.New(err.Error(), FormatUsageError(args[0], plugin.Description(), plugin.Example(), fs.FlagUsages())))
-		}
-	}
-
-	return nil
-}
-
-// Error responds to the client if an error occurs
-func Error(client github.Client, event *github.GenericRequestEvent, err error) error {
-	if err := client.Respond(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), err.Error())); err != nil {
 		return err
 	}
+
+	for name, pluginStates := range states {
+		for runID, state := range pluginStates {
+			go p.resumePlugin(ghMgr, name, runID, state)
+		}
+	}
+
+	p.states = states
 	return nil
 }
 
-// ParseCommands parses a message and returns a string of commands and arguments
-func ParseCommands(message string) ([][]string, error) {
-	r := bufio.NewReader(strings.NewReader(message))
-	var (
-		commands = make([][]string, 0)
-		args     []string
-		line     string
-		err      error
-	)
-	for {
-		line, err = r.ReadString('\n')
+// initState initializes the default state of a running plugin consisting of the plugins runID and the event
+func (p *plugins) initState(pl Plugin, runID string, event *github.GenericRequestEvent) {
+	p.stateMutex.Lock()
+	defer p.stateMutex.Unlock()
 
-		trimmedLine := strings.Trim(line, " \n\t")
-		if strings.HasPrefix(trimmedLine, "/") {
-			if len(args) != 0 {
-				commands = append(commands, args)
-			}
-
-			args = strings.Split(trimmedLine, " ")
-			args[0] = strings.TrimPrefix(args[0], "/")
-		} else if trimmedLine != "" {
-			args = append(args, strings.Split(trimmedLine, " ")...)
-		}
-
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
-			break
-		}
+	if p.states == nil {
+		p.states = make(map[string]map[string]*State)
 	}
 
-	if len(args) != 0 {
-		commands = append(commands, args)
+	if len(p.states[pl.Command()]) == 0 {
+		p.states[pl.Command()] = make(map[string]*State)
 	}
 
-	return commands, nil
+	p.states[pl.Command()][runID] = &State{
+		Event: event,
+	}
+}
+
+// UpdateState updates the state of a running plugin and persists the changes
+func (p *plugins) UpdateState(pl Plugin, runID string, customState string) error {
+	p.stateMutex.Lock()
+	defer p.stateMutex.Unlock()
+
+	state, ok := p.states[pl.Command()][runID]
+	if !ok {
+		return fmt.Errorf("unknown state for plugin %s with id %s", pl.Command(), runID)
+	}
+	state.Custom = customState
+
+	if p.persistence != nil {
+		if err := p.persistence.Save(p.states); err != nil {
+			p.log.Error(err, "unable to persist states")
+		}
+		p.log.V(3).Info("state persisted")
+	}
+	return nil
+}
+
+// RemoveState removes the state of a running plugin from the persistence
+func (p *plugins) RemoveState(pl Plugin, runID string) {
+	p.stateMutex.Lock()
+	defer p.stateMutex.Unlock()
+	if _, ok := p.states[pl.Command()]; !ok {
+		return
+	}
+	delete(p.states[pl.Command()], runID)
+	if p.persistence != nil {
+		if err := p.persistence.Save(p.states); err != nil {
+			p.log.Error(err, "unable to persist states")
+		}
+		p.log.V(3).Info("state persisted")
+	}
 }
