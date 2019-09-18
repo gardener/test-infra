@@ -101,6 +101,10 @@ When your test is running as part of the gardener test suite to test a shoot, th
 
 ### Export Contract
 
+Tests are executed by argo. It expects a test to exit with RC=0 in case of success and RC!=0 in case of failures at which point the testrun execution is stopped and considered failed.
+
+> (There is no distinction between a failed test (i.e. asserts are violated) and a test that crashed / exited unexpectedly as in both cases the test subject could contain a regression and a developer needs to asses the reason for RC!=0)
+
 Some installations of the TestMachinery contain a connection to an elasticsearch installation for persistence and evaluation of test results.
 
 The TestMachinery writes some metadata into elasticsearch upon each TestRun completion. It consists of the following attributes:
