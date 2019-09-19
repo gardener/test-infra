@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util"
 	"os"
+	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -68,7 +69,6 @@ var runCmd = &cobra.Command{
 	Short: "Run the testrunner with a helm template containing testruns",
 	Aliases: []string{
 		"run-full",
-		"run-gardener",
 		"run-tmpl-full",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -87,8 +87,8 @@ var runCmd = &cobra.Command{
 		config := &testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
-			Timeout:   timeout,
-			Interval:  interval,
+			Timeout:   time.Duration(timeout) * time.Second,
+			Interval:  time.Duration(interval) * time.Second,
 		}
 
 		rsConfig := &result.Config{

@@ -31,3 +31,5 @@ See [here](docs/testmachinery/GetStarted.md) how new tests can be easily added.
   When the cluster is not needed anymore, the host scheduler cleans and releases the cluster.
 - [**Shoot Telemetry**](cmd/shoot-telemetry)<br>
   A telemetry controller to get granular insights of Shoot apiserver and etcd availability.
+- [**Tests**](docs/tests)
+  Testruns that are rendered by the testrunner or github app
