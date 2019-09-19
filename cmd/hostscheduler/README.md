@@ -41,7 +41,7 @@ type Interface interface {
 ```
 * `lock`: selects an available cluster, locks the cluster to not be used by other tests and writes the cluster's kubeconfigs `$TM_KUBECONFIG_PATH/host.config`
 * `release`: releases the cluster, so it can be used by other tests
-* `clean`: cleans all k8s resources that are not system componenets of the corresponding provider
+* `clean`: cleans all k8s resources that are not system components of the corresponding provider
 * `list`: only used for cli usage to get an overview of locked clusters
 
 Configuration can be provided via commandline (get help by running `hostscheduler <provider> --help`) or via a config file that should be provided at `$HOME/.tm/hostscheduler.yaml`.

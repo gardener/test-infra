@@ -8,8 +8,8 @@ The Test Machinery is the test infrastructure for the gardener project.
 Gardener uses the Test Machinery to automatically qualify releases and run every sort of integration test.<br>
 These tests include periodically executed shoot integration tests and Kubernetes e2e tests ([e2e runner](integration-tests/e2e)) as well as Gardener Lifecycle tests (validate dev versions of gardener).
 
-Gardener offers managed Kuberentes clusters in different flavors including cloud providers (Alicloud, AWS, GCP, Azure, Openstack), K8s versions, Operating Systems and more.
-Therrefore, the Test Machinery is designed to test and validate this huge variety of clusters in a scalable and efficient way.
+Gardener offers managed Kubernetes clusters in different flavors including cloud providers (Alicloud, AWS, GCP, Azure, Openstack), K8s versions, Operating Systems and more.
+Therefore, the Test Machinery is designed to test and validate this huge variety of clusters in a scalable and efficient way.
 
 The executed tests are uploaded to the Kubernetes testgrid:
 * [Conformance](https://testgrid.k8s.io/conformance-gardener)
@@ -25,7 +25,7 @@ See [here](docs/testmachinery/GetStarted.md) how new tests can be easily added.
 - [**Testrunner**](docs/testrunner)<br>
   Testrunner is an additional component of the Test Machinery that abstracts templating, deploying and watching of Testruns and provide additional functionality like storing test results or notifying test-owners.
 - [**Kubernetes e2e Testrunner**](integration-tests/e2e)<br>
-  Executes the Kubernetes e2e/Conformance tests and uploads them for further analysis to testgrid or elastic search.
+  Executes the Kubernetes e2e/Conformance tests and uploads them for further analysis to testgrid or elasticsearch.
 - [**Host Scheduler**](cmd/hostscheduler)<br>
   The hostscheduler selects available cluster from specific providers and locks the selected cluster so that a fresh gardener can be installed.
   When the cluster is not needed anymore, the host scheduler cleans and releases the cluster.
