@@ -92,7 +92,7 @@ func ParseExportedFiles(log logr.Logger, name string, stepMeta interface{}, docs
 			Source: patchedDoc,
 			Metadata: ESMetadata{
 				Index: ESIndex{
-					Index: name,
+					Index: fmt.Sprintf("tm-%s", name),
 					Type:  "_doc",
 				},
 			},
@@ -100,7 +100,7 @@ func ParseExportedFiles(log logr.Logger, name string, stepMeta interface{}, docs
 		return []*Bulk{bulk}
 	}
 
-	// if the document is not in json format try to parse it as bulk format
+	// if the document is not in json format try to parse it as newline delimited json
 	return parseExportedBulkFormat(log, name, stepMeta, docs)
 }
 
@@ -116,19 +116,20 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 			continue
 		}
 
+		// if a bulk is defined we preifx the index with tm- to ensure it does not collide with any other index
 		if jsonBody["index"] != nil {
 			meta = jsonBody
 			meta["index"].(map[string]interface{})["_index"] = fmt.Sprintf("tm-%s", meta["index"].(map[string]interface{})["_index"])
 			continue
 		}
 
+		// construct own bulk with index = tm-<testdef name>
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
 		if err != nil {
 			log.V(3).Info(fmt.Sprintf("cannot marshal artifact %s", err.Error()))
 			continue
 		}
-
 		bulk := &Bulk{
 			Source:   patchedDoc,
 			Metadata: meta,
@@ -136,7 +137,7 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 		if meta == nil {
 			bulk.Metadata = ESMetadata{
 				Index: ESIndex{
-					Index: name,
+					Index: fmt.Sprintf("tm-%s", name),
 					Type:  "_doc",
 				},
 			}
