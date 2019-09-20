@@ -1,2 +1,2 @@
-{"index":{"_index":"TestDef","_type":"_doc"}}
+{"index":{"_index":"tm-TestDef","_type":"_doc"}}
 {"tm":{"tm_id":"testId"},"test":"json"}

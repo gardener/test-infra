@@ -42,7 +42,7 @@ test-infra:
       steps:
         <<: *ti_test_steps
         integration:
-          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.8.0'
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - publish
     pull-request:
@@ -59,7 +59,7 @@ test-infra:
           execute:
           - ./it-prepare.py
         integration:
-          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.8.0'
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - prepare-test
           - publish
