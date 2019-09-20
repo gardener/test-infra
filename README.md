@@ -1,7 +1,7 @@
 # Test Machinery
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/test-infra)](https://goreportcard.com/report/github.com/gardener/test-infra)
 
-![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/test_machinary_overview.png)
+![testmachinery diagram overview](docs/testmachinery/test_machinary_overview.png)
 
 
 The Test Machinery is the test infrastructure for the gardener project.

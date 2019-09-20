@@ -12,7 +12,7 @@
   - [Testrunner](#testrunner)
 - [Local TestMachinery development](#local-testmachinery-development)
 
-![testmachinery diagram overview](https://github.com/gardener/test-infra/raw/master/docs/test_machinary_overview.png)
+![testmachinery diagram overview](test_machinary_overview.png)
 
 
 ## Concept
