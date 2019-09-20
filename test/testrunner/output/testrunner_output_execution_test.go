@@ -136,7 +136,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(jsonBody["tm"]).ToNot(BeNil())
 		Expect(jsonBody["tm"].(map[string]interface{})["tr"].(map[string]interface{})["id"]).To(Equal(tr.Name))
 
-		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
+		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("tm-integration-testdef"))
 	})
 
 	It("should add environment configuration to step metadata", func() {
@@ -185,7 +185,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		Expect(jsonBody["tm"]).ToNot(BeNil())
 		Expect(jsonBody["tm"].(map[string]interface{})["tr"].(map[string]interface{})["id"]).To(Equal(tr.Name))
 
-		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("integration-testdef"))
+		Expect(documents[len(documents)-2]["index"].(map[string]interface{})["_index"]).To(Equal("tm-integration-testdef"))
 	})
 
 })
