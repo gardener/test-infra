@@ -17,8 +17,11 @@ package testmachinery
 type TestLabel string
 
 const (
-	// TestLabelDefault are tests that are graduated to GA but are not a release blocker
+	// TestLabelShoot are tests that are meant to test a shoot
 	TestLabelShoot TestLabel = "shoot"
+
+	// TestLabelGardener are tests that are meant to test gardener and do not rely on a shoot.
+	TestLabelGardener TestLabel = "gardener"
 
 	// TestLabelDefault are tests that are graduated to GA but are not a release blocker
 	TestLabelDefault TestLabel = "default"
