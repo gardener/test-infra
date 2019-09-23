@@ -62,19 +62,19 @@ type Config struct {
 // - shoot tests for all specified cloudproviders for all specified tests
 type ShootsConfig struct {
 	// Shoot/Project namespace where the shoots are created
-	Namespace          string
+	Namespace string
 
 	// Default test that is used for all cloudprovider and kubernetes flavors.
-	DefaultTest        renderer.TestsFunc
+	DefaultTest renderer.TestsFunc
 
 	// Specific tests that get their own shoot per cloudprovider and run in parallel to the default tests
-	Tests              []renderer.TestsFunc
+	Tests []renderer.TestsFunc
 
 	// Kubernetes versions to test
 	KubernetesVersions []string
 
 	// Cloiudproviders to test
-	CloudProviders     []gardenv1beta1.CloudProvider
+	CloudProviders []gardenv1beta1.CloudProvider
 }
 
 // Render renders a gardener default test which consists of

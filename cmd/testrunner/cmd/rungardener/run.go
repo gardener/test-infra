@@ -61,7 +61,7 @@ func AddCommand(cmd *cobra.Command) {
 
 var runCmd = &cobra.Command{
 	Use:   "run-gardener",
-	Short: "Run the testrunner with a helm template containing testruns",
+	Short: "Run the testrunner with the default gardener test",
 	Aliases: []string{
 		"gardener",
 	},
