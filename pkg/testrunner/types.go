@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // Config are configuration of the evironment like the testmachinery cluster or S3 store
@@ -31,10 +32,10 @@ type Config struct {
 	Namespace string
 
 	// Max wait time for a testrun to finish.
-	Timeout int64
+	Timeout time.Duration
 
 	// Poll intervall to check the testrun status
-	Interval int64
+	Interval time.Duration
 }
 
 // Run describes a testrun that is executed by the testrunner.

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"sync"
+	"time"
 
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 
@@ -28,15 +29,15 @@ import (
 )
 
 var (
-	maxWaitTimeSeconds  int64 = 3600
-	pollIntervalSeconds int64 = 60
+	maxWaitTime  = 1 * time.Hour
+	pollInterval = 1 * time.Minute
 )
 
 // ExecuteTestruns deploys it to a testmachinery cluster and waits for the testruns results
 func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNamePrefix string) {
 	log.V(3).Info(fmt.Sprintf("Config: %+v", util.PrettyPrintStruct(config)))
-	maxWaitTimeSeconds = config.Timeout
-	pollIntervalSeconds = config.Interval
+	maxWaitTime = config.Timeout
+	pollInterval = config.Interval
 
 	runs.Run(log.WithValues("namespace", config.Namespace), config.TmClient, config.Namespace, testrunNamePrefix)
 }

@@ -25,8 +25,6 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 	"net/url"
 	"path"
-	"time"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -86,9 +84,7 @@ func runTestrun(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Te
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
-	interval := time.Duration(pollIntervalSeconds) * time.Second
-	timeout := time.Duration(maxWaitTimeSeconds) * time.Second
-	err = wait.PollImmediate(interval, timeout, func() (bool, error) {
+	err = wait.PollImmediate(pollInterval, maxWaitTime, func() (bool, error) {
 		testrun := &tmv1beta1.Testrun{}
 		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, testrun)
 		if err != nil {
@@ -106,7 +102,7 @@ func runTestrun(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Te
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		return nil, trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTimeSeconds, name))
+		return nil, trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTime, name))
 	}
 
 	return tr, nil

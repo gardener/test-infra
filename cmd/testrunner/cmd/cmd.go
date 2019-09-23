@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardener"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardenertemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtemplate"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtestrun"
@@ -57,6 +58,7 @@ func init() {
 	runtemplate.AddCommand(rootCmd)
 	runtestrun.AddCommand(rootCmd)
 	rungardenertemplate.AddCommand(rootCmd)
+	rungardener.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)

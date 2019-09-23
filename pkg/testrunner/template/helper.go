@@ -17,12 +17,10 @@ package template
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"sort"
-	"strings"
-
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/pkg/errors"
+	"io/ioutil"
+	"sort"
 
 	"github.com/Masterminds/semver"
 
@@ -139,53 +137,6 @@ func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider
 	default:
 		return nil, fmt.Errorf("Unsupported cloudprovider %s", cloudprovider)
 	}
-}
-
-func addBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, components []*componentdescriptor.Component) {
-	if tr == nil || components == nil {
-		return
-	}
-
-	bomLocations := make([]tmv1beta1.TestLocation, 0)
-	for _, component := range components {
-		bomLocations = append(bomLocations, tmv1beta1.TestLocation{
-			Type:     tmv1beta1.LocationTypeGit,
-			Repo:     fmt.Sprintf("https://%s", component.Name),
-			Revision: getRevisionFromVersion(component.Version),
-		})
-	}
-
-	// check if the locationSet already exists
-	for i, set := range tr.Spec.LocationSets {
-		if set.Name == locationSetName {
-			set.Locations = append(bomLocations, set.Locations...)
-			tr.Spec.LocationSets[i] = set
-			tr.Spec.TestLocations = nil
-			return
-		}
-	}
-
-	// if old locations exist we migrate them to the new locationSet form
-	if len(tr.Spec.TestLocations) == 0 {
-		return
-	}
-	existingLocations := tr.Spec.TestLocations
-	tr.Spec.LocationSets = []tmv1beta1.LocationSet{
-		{
-			Name:      locationSetName,
-			Locations: append(bomLocations, existingLocations...),
-		},
-	}
-	tr.Spec.TestLocations = nil
-}
-
-// getRevisionFromVersion parses the version of a component and returns its revision if applicable.
-func getRevisionFromVersion(version string) string {
-	if strings.Contains(version, "dev") {
-		splitVersion := strings.Split(version, "-")
-		return splitVersion[len(splitVersion)-1]
-	}
-	return version
 }
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {

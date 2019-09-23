@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/pkg/errors"
 	"os"
+	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -72,8 +73,8 @@ var runTestrunCmd = &cobra.Command{
 		config := &testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
-			Timeout:   timeout,
-			Interval:  interval,
+			Timeout:   time.Duration(timeout) * time.Second,
+			Interval:  time.Duration(interval) * time.Second,
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)

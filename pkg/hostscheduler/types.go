@@ -19,6 +19,8 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+type Provider string
+
 // Interface is the hostscheduler interface.
 // Hostscheduler functions are designed to register their function scoped flags
 // and return a SchedulerFunc that is executed with corresponding subcommand.
@@ -36,7 +38,7 @@ type SchedulerFunc = func(ctx context.Context) error
 
 // Registration represents the registration with metadata of a hostscheduler
 type Registration interface {
-	Name() string
+	Name() Provider
 	Description() string
 	PreRun(cmd *cobra.Command, args []string) error
 	RegisterFlags(flagset *flag.FlagSet)
