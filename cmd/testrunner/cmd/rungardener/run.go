@@ -54,7 +54,7 @@ var (
 	hibernation             bool
 )
 
-// AddCommand adds run-testrun to a command.
+// AddCommand adds run-gardener to a command.
 func AddCommand(cmd *cobra.Command) {
 	cmd.AddCommand(runCmd)
 }

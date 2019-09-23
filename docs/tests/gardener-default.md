@@ -1,12 +1,12 @@
 # Default Gardener Test
 
-The default gardener tests a new gardener release or specifc commit.
+The default gardener test tests a new gardener release or specifc commit.
 
 The Testrun is generated in Golang by this [render function](../../pkg/testrunner/renderer/default/default.go).
 This function is used by the testrunner and the github bot to create and run the test.
 
-Th default test consists of the following steps:
-- select a host cluster
+The default test consists of the following steps:
+- select and lock a host cluster
 - create a gardener
 - test shoots
   - create shoot
@@ -16,7 +16,7 @@ Th default test consists of the following steps:
 - release host cluster
 
 This tesflow can be configured to test different shoot flavors and test scenarios.
-The configuration is wrapped by the testrunner and github bot to ease the configuration and set necessecary defaults for specific instlaltions and use cases.
+The configuration is wrapped by the testrunner and github bot to ease the configuration and set necessecary defaults for specific installations and use cases.
 ```golang
 // Config is used to render a default gardener test
 type Config struct {
@@ -62,7 +62,7 @@ type ShootsConfig struct {
 	// Kubernetes versions to test
 	KubernetesVersions []string
 
-	// Cloiudproviders to test
+	// Cloudproviders to test
 	CloudProviders     []gardenv1beta1.CloudProvider
 }
 ```
