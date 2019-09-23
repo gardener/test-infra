@@ -64,7 +64,7 @@ type ShootsConfig struct {
 	// Shoot/Project namespace where the shoots are created
 	Namespace string
 
-	// Default test that is used for all cloudprovider and kubernetes flavors.
+	// Default test that is used for all cloudproviders and kubernetes flavors.
 	DefaultTest renderer.TestsFunc
 
 	// Specific tests that get their own shoot per cloudprovider and run in parallel to the default tests

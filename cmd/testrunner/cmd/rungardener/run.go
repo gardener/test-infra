@@ -168,7 +168,7 @@ func init() {
 	runCmd.Flags().StringArrayVar(&defaultConfig.Shoots.KubernetesVersions, "kubernetes-version", []string{}, "Specify the kubernetes version to test")
 	runCmd.Flags().VarP(cmdvalues.NewCloudProviderArrayValue(&defaultConfig.Shoots.CloudProviders), "cloudprovider", "p", "Specify the cloudproviders to test. Must be one of xxx")
 
-	runCmd.Flags().StringVarP(&testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label tht should be fetched by the testmachinery")
+	runCmd.Flags().StringVarP(&testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	runCmd.Flags().BoolVar(&hibernation, "hibernation", false, "test hibernation")
 
 }
