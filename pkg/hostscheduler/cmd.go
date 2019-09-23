@@ -59,7 +59,7 @@ func copyCommand(cmd cobra.Command) *cobra.Command {
 // CommandFromRegistration generates the command of a scheduler registration with all its subcommands.
 func CommandFromRegistration(r Registration) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   r.Name(),
+		Use:   string(r.Name()),
 		Short: r.Description(),
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Parent() != nil && cmd.Parent().PersistentPreRun != nil {

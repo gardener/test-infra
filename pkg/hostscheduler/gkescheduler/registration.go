@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	Name = "gke"
+	Name hostscheduler.Provider = "gke"
 )
 
 var Register hostscheduler.Register = func(m *hostscheduler.Registrations) {
@@ -38,7 +38,7 @@ var Register hostscheduler.Register = func(m *hostscheduler.Registrations) {
 	})
 }
 
-func (r *registration) Name() string {
+func (r *registration) Name() hostscheduler.Provider {
 	return Name
 }
 func (r *registration) Description() string {
@@ -59,7 +59,7 @@ func (r *registration) RegisterFlags(flagset *flag.FlagSet) {
 }
 
 func (r *registration) PreRun(cmd *cobra.Command, args []string) error {
-	r.scheduler.log = logger.Log.WithName(r.Name())
+	r.scheduler.log = logger.Log.WithName(string(r.Name()))
 
 	if r.gcloudkeyFile == "" {
 		return errors.New("No gcloud key file defined")

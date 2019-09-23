@@ -17,6 +17,7 @@ package runtemplate
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gardener/test-infra/pkg/logger"
 
@@ -100,8 +101,8 @@ var runCmd = &cobra.Command{
 		config := &testrunner.Config{
 			TmClient:  tmClient,
 			Namespace: namespace,
-			Timeout:   timeout,
-			Interval:  interval,
+			Timeout:   time.Duration(timeout) * time.Second,
+			Interval:  time.Duration(interval) * time.Second,
 		}
 
 		rsConfig := &result.Config{
@@ -251,7 +252,7 @@ func init() {
 	runCmd.Flags().StringVar(&autoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
 	runCmd.Flags().StringVar(&autoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
 	runCmd.Flags().StringVar(&floatingPoolName, "floating-pool-name", "", "Floating pool name where the cluster is created. Only needed for Openstack.")
-	runCmd.Flags().StringVar(&loadbalancerProvider, "loadbalancer-provider", "", "LoadBalancer Provider like haproxy. Only applicable for Openstack.")
+	runCmd.Flags().StringVar(&loadbalancerProvider, "loadbalancer-provider", "", "LoadBalancer provider like haproxy. Only applicable for Openstack.")
 	runCmd.Flags().StringVar(&componenetDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&landscape, "landscape", "", "Current gardener landscape.")
 

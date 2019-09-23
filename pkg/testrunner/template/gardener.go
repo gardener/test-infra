@@ -21,6 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	errors "github.com/gardener/test-infra/pkg/testrunner/error"
+	"github.com/gardener/test-infra/pkg/testrunner/renderer"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 )
@@ -84,8 +85,14 @@ func RenderGardenerTestrun(log logr.Logger, tmClient kubernetes.Interface, param
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
-		addBOMLocationsToTestrun(&tr, "default", componentDescriptor)
-		addBOMLocationsToTestrun(&tr, "upgraded", upgradedComponentDescriptor)
+		if err := renderer.AddBOMLocationsToTestrun(&tr, "default", componentDescriptor, true); err != nil {
+			log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
+			continue
+		}
+		if err := renderer.AddBOMLocationsToTestrun(&tr, "upgraded", upgradedComponentDescriptor, false); err != nil {
+			log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
+			continue
+		}
 
 		// Add runtime annotations to the testrun
 		addAnnotationsToTestrun(&tr, metadata.CreateAnnotations())

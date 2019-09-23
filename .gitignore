@@ -5,9 +5,6 @@ temp/
 tmp/
 venv
 
-# Generated testlogs
-tests
-
 # Generated secrets
 assets
 
