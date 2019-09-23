@@ -39,6 +39,8 @@ func NewCloudProviderArrayValue(value *[]v1beta1.CloudProvider, allowed ...v1bet
 }
 
 func (v *CloudProviderArrayValue) String() string {
+	// won't be implemented as we cannot user strings.Join() and
+	// would need to construct the csv of casted cloudproviders ourselves
 	return ""
 }
 

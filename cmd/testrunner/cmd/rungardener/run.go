@@ -166,7 +166,7 @@ func init() {
 
 	runCmd.Flags().StringVar(&defaultConfig.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	runCmd.Flags().StringArrayVar(&defaultConfig.Shoots.KubernetesVersions, "kubernetes-version", []string{}, "Specify the kubernetes version to test")
-	runCmd.Flags().VarP(cmdvalues.NewCloudProviderArrayValue(&defaultConfig.Shoots.CloudProviders), "cloudprovider", "p", "Specify the cloudproviders to test. Must be one of xxx")
+	runCmd.Flags().VarP(cmdvalues.NewCloudProviderArrayValue(&defaultConfig.Shoots.CloudProviders, v1beta1.CloudProviderGCP, v1beta1.CloudProviderGCP, v1beta1.CloudProviderAWS, v1beta1.CloudProviderAzure), "cloudprovider", "p", "Specify the cloudproviders to test. Must be one of xxx")
 
 	runCmd.Flags().StringVarP(&testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	runCmd.Flags().BoolVar(&hibernation, "hibernation", false, "test hibernation")
