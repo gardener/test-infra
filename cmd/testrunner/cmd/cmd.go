@@ -16,15 +16,17 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardener"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/rungardenertemplate"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtemplate"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/runtestrun"
+	gardener_telemetry "github.com/gardener/test-infra/cmd/testrunner/cmd/gardener_telemetry"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_gardener"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_gardener_template"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_template"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_testrun"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
 	"github.com/gardener/test-infra/pkg/logger"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -55,11 +57,12 @@ func init() {
 	logger.InitFlags(rootCmd.PersistentFlags())
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 
-	runtemplate.AddCommand(rootCmd)
-	runtestrun.AddCommand(rootCmd)
-	rungardenertemplate.AddCommand(rootCmd)
-	rungardener.AddCommand(rootCmd)
+	run_template.AddCommand(rootCmd)
+	run_testrun.AddCommand(rootCmd)
+	run_gardener_template.AddCommand(rootCmd)
+	run_gardener.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
+	gardener_telemetry.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)
 }

@@ -58,7 +58,7 @@ var collectCmd = &cobra.Command{
 		defer ctx.Done()
 		logger.Log.Info("Start testmachinery testrunner")
 
-		collectConfig := &result.Config{
+		collectConfig := result.Config{
 			OutputDir:           outputDirPath,
 			ESConfigName:        elasticSearchConfigName,
 			S3Endpoint:          s3Endpoint,
@@ -87,7 +87,12 @@ var collectCmd = &cobra.Command{
 			Metadata: testrunner.MetadataFromTestrun(tr),
 		}
 
-		_, err = result.Collect(logger.Log.WithName("Collect"), collectConfig, tmClient, namespace, []*testrunner.Run{run})
+		collector, err := result.New(logger.Log.WithName("collector"), collectConfig)
+		if err != nil {
+			logger.Log.Error(err, "unable to initialize collector")
+			os.Exit(1)
+		}
+		_, err = collector.Collect(logger.Log.WithName("Collect"), tmClient, namespace, []*testrunner.Run{run})
 		if err != nil {
 			logger.Log.Error(err, "unable to collect result", "testrun", testrunName)
 			os.Exit(1)

@@ -16,20 +16,19 @@ package result
 
 import (
 	"fmt"
-	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
-	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
-	"path/filepath"
-
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
+	"path/filepath"
 )
 
 // Collect collects results of all testruns and writes them to a file.
 // It returns whether there are failed testruns or not.
-func Collect(log logr.Logger, config *Config, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
+func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
 	var (
 		testrunsFailed = false
 		result         *multierror.Error
@@ -42,18 +41,18 @@ func Collect(log logr.Logger, config *Config, tmClient kubernetes.Interface, nam
 			continue
 		}
 
-		cfg := *config
-		cfg.OutputDir = filepath.Join(config.OutputDir, util.RandomString(3))
+		cfg := c.config
+		cfg.OutputDir = filepath.Join(c.config.OutputDir, util.RandomString(3))
 		err := Output(runLogger, &cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
 
-		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
-			err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
+		if c.config.OutputDir != "" && c.config.ESConfigName != "" {
+			err = IngestDir(runLogger, c.config.OutputDir, c.config.ESConfigName)
 			if err != nil {
-				runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
+				runLogger.Error(err, "cannot persist file", "file", c.config.OutputDir)
 			} else {
 				err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 				if err != nil {
@@ -72,5 +71,18 @@ func Collect(log logr.Logger, config *Config, tmClient kubernetes.Interface, nam
 		printStatusTable(run.Testrun.Status.Steps)
 	}
 
+	c.fetchTelemetryResults()
+
 	return testrunsFailed, util.ReturnMultiError(result)
+}
+
+func (c *Collector) fetchTelemetryResults() {
+	if c.telemetry != nil {
+		c.log.Info("fetch telemetry controller summaryPath")
+		_, err := c.telemetry.StopAndAnalyze("", "text")
+		if err != nil {
+			c.log.Error(err, "unable to fetch telemetry measurements")
+			return
+		}
+	}
 }

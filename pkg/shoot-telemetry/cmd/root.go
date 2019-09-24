@@ -16,10 +16,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/logger"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	cfg "github.com/gardener/test-infra/pkg/shoot-telemetry/config"
@@ -36,26 +37,42 @@ func GetRootCommand() *cobra.Command {
 			Use:  "garden-shoot-telemetry",
 			Long: "A telemetry controller to get granular insights of Shoot apiserver and etcd availability",
 			Run: func(cmd *cobra.Command, args []string) {
-				cfg.SetupLogger(config.LogLevel)
+				log, err := logger.NewCliLogger()
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
 
 				// Parse the check interval duration.
 				duration, err := time.ParseDuration(config.CheckIntervalInput)
 				if err != nil {
-					log.Fatal(err.Error())
+					log.Error(err, "unable to parse duration")
+					os.Exit(1)
 				}
 				config.CheckInterval = duration
 
+				config.ShootsFilter = make(map[string]bool, len(config.ShootNames))
+				for _, shoot := range config.ShootNames {
+					config.ShootsFilter[shoot] = true
+				}
+
 				// Validate the passed flag inputs.
 				if err := config.Validate(); err != nil {
-					log.Fatalf("Invalid flag input (%s)", err.Error())
+					log.Error(err, "invalid flag input")
+					os.Exit(1)
 				}
 
 				// Create the output file.
 				config.OutputFile = fmt.Sprintf("%s/results.csv", config.OutputDir)
 
+				// React on OS signals and init the shut down steps.
+				signalCh := make(chan os.Signal, 2)
+				signal.Notify(signalCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
 				// Start the controller.
-				if err := controller.StartController(&config); err != nil {
-					log.Fatal(err.Error())
+				if err := controller.StartController(&config, signalCh); err != nil {
+					log.Error(err, "error while executing controller")
+					os.Exit(1)
 				}
 			},
 		}
@@ -67,8 +84,8 @@ func GetRootCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&config.DisableAnalyse, "disable-analyse", false, "disable the analysis of the measured values")
 	cmd.Flags().StringVar(&config.AnalyseFormat, common.CliFlagReportFormat, common.ReportOutputFormatText, common.CliFlagHelpTextReportFormat)
 	cmd.Flags().StringVar(&config.AnalyseOutput, common.CliFlagReportOutput, "", common.CliFlagHelpTextReportFile)
-	cmd.Flags().StringVar(&config.ShootName, "shoot-name", "", "target shoot name to watch")
-	cmd.Flags().StringVar(&config.ShootNamespace, "shoot-namespace", "", "target shoot namespace to watch")
-	cmd.Flags().StringVar(&config.LogLevel, common.CliFlagLogLevel, common.DefaultLogLevel, common.CliFlagHelpLogLevel)
+	cmd.Flags().StringArrayVar(&config.ShootNames, "shoot", []string{}, "target shoots to watch. Must be of form <shoot-namespace>/<shoot-name>")
+
+	logger.InitFlags(cmd.PersistentFlags())
 	return cmd
 }

@@ -24,12 +24,11 @@ import (
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/util"
 )
 
-// RenderShootTestrun renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
+// RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func RenderShootTestrun(log logr.Logger, tmClient kubernetes.Interface, parameters *ShootTestrunParameters, metadata *testrunner.Metadata) (testrunner.RunList, error) {
+func RenderShootTestruns(log logr.Logger, tmClient kubernetes.Interface, parameters *ShootTestrunParameters, metadata *testrunner.Metadata) (ShootRunList, error) {
 
 	versions, err := getK8sVersions(parameters)
 	if err != nil {
@@ -44,36 +43,33 @@ func RenderShootTestrun(log logr.Logger, tmClient kubernetes.Interface, paramete
 	metadata.ComponentDescriptor = componentDescriptor.JSON()
 	exposeGardenerVersionToParameters(componentDescriptor, parameters)
 
-	files, err := RenderChart(log, tmClient, parameters, versions)
+	renderedTestruns, err := RenderChart(log, tmClient, parameters, versions)
 	if err != nil {
 		return nil, err
 	}
 
 	// parse the rendered testruns and add locations from BOM of a bom was provided.
-	testruns := make([]*testrunner.Run, 0)
-	for _, file := range files {
-		tr, err := util.ParseTestrun([]byte(file.File))
-		if err != nil {
-			log.V(3).Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
-			continue
-		}
-
+	testruns := make(ShootRunList, 0)
+	for _, rendered := range renderedTestruns {
 		testrunMetadata := *metadata
-		testrunMetadata.KubernetesVersion = file.Metadata.KubernetesVersion
+		testrunMetadata.KubernetesVersion = rendered.Metadata.KubernetesVersion
 
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
-		if err := renderer.AddBOMLocationsToTestrun(&tr, "default", componentDescriptor, true); err != nil {
+		if err := renderer.AddBOMLocationsToTestrun(rendered.testrun, "default", componentDescriptor, true); err != nil {
 			log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
 			continue
 		}
 
 		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(&tr, metadata.CreateAnnotations())
+		addAnnotationsToTestrun(rendered.testrun, metadata.CreateAnnotations())
 
-		testruns = append(testruns, &testrunner.Run{
-			Testrun:  &tr,
-			Metadata: &testrunMetadata,
+		testruns = append(testruns, &ShootRun{
+			Parameters: rendered.Parameters,
+			Run: &testrunner.Run{
+				Testrun:  rendered.testrun,
+				Metadata: &testrunMetadata,
+			},
 		})
 	}
 

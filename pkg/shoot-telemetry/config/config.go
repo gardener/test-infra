@@ -16,12 +16,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"time"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	log "github.com/sirupsen/logrus"
 )
 
 // Config is an app config
@@ -34,8 +32,8 @@ type Config struct {
 	DisableAnalyse     bool
 	AnalyseFormat      string
 	AnalyseOutput      string
-	ShootName          string
-	ShootNamespace     string
+	ShootNames         []string
+	ShootsFilter       map[string]bool
 	LogLevel           string
 }
 
@@ -55,10 +53,6 @@ func (c *Config) Validate() error {
 
 	if err := validateOutputFormat(c.AnalyseFormat); err != nil {
 		return err
-	}
-
-	if c.ShootName != "" && c.ShootNamespace == "" {
-		return errors.New("project has to be defined if a shoot is targeted")
 	}
 
 	return nil
@@ -86,26 +80,4 @@ func validateOutputFormat(format string) error {
 		return nil
 	}
 	return fmt.Errorf("given format %s is invalid", format)
-}
-
-// SetupLogger configures the logger. The info log level will be ensured.
-func SetupLogger(logLevel string) {
-	// Format log output.
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-		DisableColors: true,
-	})
-
-	// Set the log level.
-	switch logLevel {
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-	case "info":
-		log.SetLevel(log.InfoLevel)
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-	default:
-		log.Infof("Log level %s can't be applied. Use info log level.", logLevel)
-		log.SetLevel(log.InfoLevel)
-	}
 }

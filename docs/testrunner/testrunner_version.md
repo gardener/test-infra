@@ -1,10 +1,10 @@
 ## testrunner version
 
-Get testrunner version
+GetInterface testrunner version
 
 ### Synopsis
 
-Get testrunner version
+GetInterface testrunner version
 
 ```
 testrunner version [flags]
@@ -19,8 +19,13 @@ testrunner version [flags]
 ### Options inherited from parent commands
 
 ```
-  -d, --debug     Set debug mode for additional output
-      --dry-run   Dry run will print the rendered template
+      --cli                  logger runs as cli logger. enables cli logging
+      --dev                  enable development logging which result in console encoding, enabled stacktrace and enabled caller
+      --disable-caller       disable the caller of logs (default true)
+      --disable-stacktrace   disable the stacktrace of error logs (default true)
+      --disable-timestamp    disable timestamp output (default true)
+      --dry-run              Dry run will print the rendered template
+  -v, --verbosity int        number for the log level verbosity (default 1)
 ```
 
 ### SEE ALSO

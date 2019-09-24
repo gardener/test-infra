@@ -20,9 +20,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gardener/test-infra/pkg/logger"
+
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"
-	log "github.com/sirupsen/logrus"
 )
 
 func (c *controller) generateOutput() error {
@@ -36,7 +37,7 @@ func (c *controller) generateOutput() error {
 		doc    = csv.NewWriter(outputFile)
 		record = []string{common.MeasurementsHeadCluster, common.MeasurementsHeadProvider, common.MeasurementsHeadSeed, common.MeasurementsHeadTimestamp, common.MeasurementsHeadStatusCode, common.MeasurementsHeadResponseTime}
 	)
-	log.Debugf("Write measurements to file")
+	logger.Log.V(3).Info("Write measurements to file")
 
 	outputFileStat, err := outputFile.Stat()
 	if err != nil {
