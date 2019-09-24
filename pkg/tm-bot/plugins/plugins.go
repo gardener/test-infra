@@ -39,7 +39,7 @@ type Plugin interface {
 	// Description returns a short description of the plugin
 	Description() string
 
-	// Exmaple returns an exmaple for the command
+	// Example returns an example for the command
 	Example() string
 }
 

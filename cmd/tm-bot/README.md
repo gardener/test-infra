@@ -2,7 +2,7 @@
 
 The Testmachinery GitHub bot is a [GitHub app](https://developer.github.com/apps/about-apps/) that listens on Pull Request events/webhooks and reacts on them.
 
-It also checks if a user is authorized (currently is member of the organization) to perform teh command.
+It also checks if a user is authorized (currently is member of the organization) to perform the command.
 
 The bot is mainly build to run integration tests in PR's and report back the correct status.
 
@@ -54,8 +54,8 @@ go run ./cmd/tm-bot
 
 ### plugins
 
-Plugins are the commands that are executed by the github when someones is writing a `/<cmd>` as Pull Request comment.
-Therefore plugins consist of th following interface and can be added to the bot by registering it [here](../../pkg/tm-bot/hok/handler.go).
+Plugins are the commands that are executed by github when someone is writing a `/<cmd>` as Pull Request comment.
+Therefore plugins consist of the following interface and can be added to the bot by registering it [here](../../pkg/tm-bot/hok/handler.go).
 ```golang
 // Plugin specifies a tm github bot plugin/command that can be triggered by a user
 type Plugin interface {
@@ -71,7 +71,7 @@ type Plugin interface {
 	// Description returns a short description of the plugin
 	Description() string
 
-	// Exmaple returns an exmaple for the command
+	// Example returns an example for the command
 	Example() string
 }
 ```
