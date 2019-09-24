@@ -16,6 +16,9 @@ package result
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -23,7 +26,6 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
-	"path/filepath"
 )
 
 // Collect collects results of all testruns and writes them to a file.
@@ -68,7 +70,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 			runLogger.Error(fmt.Errorf("Testrun failed with phase %s", run.Testrun.Status.Phase), "")
 		}
 		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
-		printStatusTable(run.Testrun.Status.Steps)
+		util.RenderStatusTable(os.Stdout, run.Testrun.Status.Steps)
 	}
 
 	c.fetchTelemetryResults()

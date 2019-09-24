@@ -34,6 +34,9 @@ type Config struct {
 	// Namespace of the testrun
 	Namespace string
 
+	// Testrun annotations
+	Annotations map[string]string
+
 	// Provider where the host clusters are selected from
 	HostProvider hostscheduler.Provider
 

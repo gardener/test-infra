@@ -36,6 +36,7 @@ type xkcdInfo struct {
 
 type xkcd struct {
 	URL *url.URL
+	num int
 }
 
 func New() (plugins.Plugin, error) {
@@ -44,6 +45,11 @@ func New() (plugins.Plugin, error) {
 		return nil, err
 	}
 	return &xkcd{URL: u}, nil
+}
+
+func (x *xkcd) New(_ string) plugins.Plugin {
+	p := *x
+	return &p
 }
 
 func (_ *xkcd) Command() string {
@@ -58,36 +64,36 @@ func (_ *xkcd) Example() string {
 	return "/xkcd --num 2"
 }
 
+func (_ *xkcd) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
+	return nil
+}
+
 func (x *xkcd) Flags() *pflag.FlagSet {
 	flagset := pflag.NewFlagSet(x.Command(), pflag.ContinueOnError)
-	flagset.Int("num", 0, "XKCD image number")
+	flagset.IntVar(&x.num, "num", 0, "XKCD image number")
 	return flagset
 }
 
 func (x *xkcd) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
-	var num int
 	max, err := x.getCurrentMax()
 	if err != nil {
 		return err
 	}
 	if flagset.Changed("num") {
-		num, err = flagset.GetInt("num")
-		if err != nil {
-			return err
-		}
-		if num > max {
-			return fmt.Errorf("xkcd %d does not exist. The maximum number is currently %d", num, max)
+		if x.num > max {
+			return fmt.Errorf("xkcd %d does not exist. The maximum number is currently %d", x.num, max)
 		}
 	} else {
-		num = rand.Intn(max)
+		x.num = rand.Intn(max)
 	}
 
-	info, err := x.GetImage(num)
+	info, err := x.GetImage(x.num)
 	if err != nil {
 		return nil
 	}
 
-	return client.Respond(event, formatResponse(info))
+	_, err = client.Comment(event, formatResponse(info))
+	return err
 }
 
 func (x *xkcd) GetImage(num int) (*xkcdInfo, error) {

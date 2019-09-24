@@ -41,11 +41,13 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 
 	tr := &v1beta1.Testrun{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: cfg.Namespace,
+			Namespace:   cfg.Namespace,
+			Annotations: cfg.Annotations,
 		},
 
 		Spec: v1beta1.TestrunSpec{
 			LocationSets: []v1beta1.LocationSet{
+				templates.GetDefaultLocationsSet(cfg.Gardener),
 				templates.TestInfraLocation,
 				templates.GetGardenSetupLocation(gsLocationName, cfg.GardenSetupRevision),
 			},
@@ -67,7 +69,7 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 		}
 
 		tr.Spec.TestFlow = append(tr.Spec.TestFlow, steps...)
-		deps[i] = steps[len(steps)-1].Name
+		deps[i] = steps[1].Name
 	}
 
 	// add gardener tests

@@ -16,6 +16,7 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"sigs.k8s.io/yaml"
 
@@ -49,7 +50,7 @@ func (m *manager) GetClient(event *GenericRequestEvent) (Client, error) {
 	return NewClient(m.log, ghClient, config)
 }
 
-func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map[string]interface{}, error) {
+func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map[string]json.RawMessage, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 	file, dir, _, err := c.Repositories.GetContents(ctx, repo, owner, m.configFile, &github.RepositoryContentGetOptions{Ref: revision})
@@ -67,7 +68,7 @@ func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map
 		return nil, err
 	}
 
-	var config map[string]interface{}
+	var config map[string]json.RawMessage
 	if err := yaml.Unmarshal([]byte(content), &config); err != nil {
 		return nil, err
 	}

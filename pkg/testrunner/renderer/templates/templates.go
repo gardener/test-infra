@@ -22,6 +22,7 @@ import (
 const (
 	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
 	GardenSetupRepo = "https://github.com/schrodit/garden-setup.git"
+	GardenerRepo    = "https://github.com/gardener/gardener.git"
 )
 
 var TestInfraLocationName = "tm"
@@ -37,6 +38,35 @@ var TestInfraLocation = v1beta1.LocationSet{
 			Revision: "master",
 		},
 	},
+}
+
+func GetDefaultLocationsSet(cfg GardenerConfig) v1beta1.LocationSet {
+	set := v1beta1.LocationSet{
+		Name:      DefaultLocationSetName,
+		Default:   true,
+		Locations: []v1beta1.TestLocation{},
+	}
+
+	if cfg.Version != "" {
+		set.Locations = []v1beta1.TestLocation{
+			{
+				Type:     v1beta1.LocationTypeGit,
+				Repo:     GardenerRepo,
+				Revision: cfg.Version,
+			},
+		}
+	}
+	if cfg.Commit != "" {
+		set.Locations = []v1beta1.TestLocation{
+			{
+				Type:     v1beta1.LocationTypeGit,
+				Repo:     GardenerRepo,
+				Revision: cfg.Commit,
+			},
+		}
+	}
+
+	return set
 }
 
 // GetGardenSetupLocation returns the location set for test machinery steps like lock and release the hostcluster, or fetching of logs, etc.

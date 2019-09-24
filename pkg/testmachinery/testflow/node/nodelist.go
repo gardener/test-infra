@@ -10,7 +10,7 @@ func NewSet(nodes ...*Node) *Set {
 	return &set
 }
 
-// Copy creates a deep copy of the set
+// New creates a deep copy of the set
 func (s *Set) Copy() *Set {
 	newSet := make(map[*Node]int, len(s.set))
 	for key, val := range s.set {
