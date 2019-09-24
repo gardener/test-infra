@@ -28,11 +28,11 @@ import (
 type Handler struct {
 	log logr.Logger
 
-	ghClient           ghutils.Client
+	ghMgr              ghutils.Manager
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghClient ghutils.Client, webhookSecretToken string) *Handler {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string) *Handler {
 
 	// register plugins.Plugin()
 	plugins.Register(echo.New())
@@ -44,7 +44,7 @@ func New(log logr.Logger, ghClient ghutils.Client, webhookSecretToken string) *H
 
 	return &Handler{
 		log:                log,
-		ghClient:           ghClient,
+		ghMgr:              ghMgr,
 		webhookSecretToken: []byte(webhookSecretToken),
 	}
 }
@@ -113,13 +113,20 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 		return
 	}
 
-	if !h.ghClient.IsAuthorized(event) {
+	client, err := h.ghMgr.GetClient(event)
+	if err != nil {
+		h.log.Error(err, "unable to build client", "user", event.GetAuthorName())
+		http.Error(w, "internal error", http.StatusUnauthorized)
+		return
+	}
+
+	if !client.IsAuthorized(event) {
 		h.log.V(3).Info("user not authorized", "user", event.GetAuthorName())
 		http.Error(w, "unauthorized user", http.StatusUnauthorized)
 		return
 	}
 
-	if err := plugins.HandleRequest(h.ghClient, event); err != nil {
+	if err := plugins.HandleRequest(client, event); err != nil {
 		h.log.Error(err, "")
 		http.Error(w, "unable to handle request", http.StatusInternalServerError)
 	}

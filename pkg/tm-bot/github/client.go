@@ -16,45 +16,23 @@ package github
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"net/http"
-
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v27/github"
 )
 
-func New(log logr.Logger, appID int, keyFile string) (Client, error) {
+func NewClient(log logr.Logger, ghClient *github.Client, config map[string]interface{}) (Client, error) {
 	return &client{
-		log:     log,
-		appId:   appID,
-		keyFile: keyFile,
-		clients: make(map[int64]*github.Client, 0),
+		log:    log,
+		config: config,
+		client: ghClient,
 	}, nil
-}
-
-func (c *client) GetClient(installationID int64) (*github.Client, error) {
-	if ghClient, ok := c.clients[installationID]; ok {
-		return ghClient, nil
-	}
-	itr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, c.appId, int(installationID), c.keyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	c.clients[installationID] = github.NewClient(&http.Client{Transport: itr})
-	return c.clients[installationID], nil
 }
 
 // Respond responds to an event
 func (c *client) Respond(event *GenericRequestEvent, message string) error {
-	ghClient, err := c.GetClient(event.InstallationID)
-	if err != nil {
-		return err
-	}
-
-	_, _, err = ghClient.Issues.CreateComment(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number, &github.IssueComment{
+	_, _, err := c.client.Issues.CreateComment(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number, &github.IssueComment{
 		Body: &message,
 	})
 	if err != nil {
@@ -70,13 +48,7 @@ func (c *client) IsAuthorized(event *GenericRequestEvent) bool {
 		return false
 	}
 
-	gh, err := c.GetClient(event.InstallationID)
-	if err != nil {
-		c.log.V(3).Info(err.Error())
-		return false
-	}
-
-	membership, _, err := gh.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.Repository.GetOwner().GetLogin())
+	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.Repository.GetOwner().GetLogin())
 	if err != nil {
 		c.log.V(3).Info(err.Error())
 		return false

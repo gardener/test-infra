@@ -19,6 +19,10 @@ import (
 	"github.com/google/go-github/v27/github"
 )
 
+type Manager interface {
+	GetClient(event *GenericRequestEvent) (Client, error)
+}
+
 // Client is the github client interface
 type Client interface {
 	IsAuthorized(event *GenericRequestEvent) bool
@@ -35,12 +39,19 @@ type GenericRequestEvent struct {
 	Author         *github.User
 }
 
-type client struct {
-	log logr.Logger
+type manager struct {
+	log        logr.Logger
+	configFile string
 
 	appId   int
 	keyFile string
 	clients map[int64]*github.Client
+}
+
+type client struct {
+	log    logr.Logger
+	config map[string]interface{}
+	client *github.Client
 }
 
 // EventActionType represents the action type of a github event
