@@ -74,5 +74,5 @@ func ShortForError(err error) string {
 	case *PluginError:
 		return t.short
 	}
-	return "Unkown error"
+	return "Unknown error"
 }

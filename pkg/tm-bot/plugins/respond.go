@@ -48,13 +48,14 @@ func FormatResponseWithReason(to, message, reason string) string {
 // FormatErrorResponse formats a response that does not warrant additional explanation in the
 // details section.
 func FormatErrorResponse(to, message, reason string) string {
-	format := `:fire: Oops, something went wrong
-@%s: %s
+	format := `:fire: Oops, something went wrong @%s
+%s
 <details>
 %s
 
-%s
-</details>`
+</details>
+
+>%s`
 
 	return fmt.Sprintf(format, to, message, reason, AboutThisBotWithoutCommands)
 }

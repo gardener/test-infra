@@ -40,7 +40,7 @@ func HandleRequest(client github.Client, event *github.GenericRequestEvent) erro
 func runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
 	runID, plugin, err := Plugins.Get(args[0])
 	if err != nil {
-		_ = Error(client, event, err)
+		_ = Error(client, event, nil, err)
 		return
 	}
 
@@ -49,13 +49,13 @@ func runPlugin(client github.Client, event *github.GenericRequestEvent, args []s
 	fs := plugin.Flags()
 	if err := fs.Parse(args[1:]); err != nil {
 		Plugins.RemoveState(plugin, runID)
-		_ = Error(client, event, pluginerr.New(err.Error(), FormatUsageError(args[0], plugin.Description(), plugin.Example(), fs.FlagUsages())))
+		_ = Error(client, event, plugin, err)
 		return
 	}
 	if err := plugin.Run(fs, client, event); err != nil {
 		if !pluginerr.IsRecoverable(err) {
 			Plugins.RemoveState(plugin, runID)
-			_ = Error(client, event, pluginerr.New(err.Error(), FormatUsageError(args[0], plugin.Description(), plugin.Example(), fs.FlagUsages())))
+			_ = Error(client, event, plugin, err)
 		}
 		return
 	}
@@ -81,7 +81,7 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 	if err := plugin.ResumeFromState(ghClient, state.Event, state.Custom); err != nil {
 		if !pluginerr.IsRecoverable(err) {
 			Plugins.RemoveState(plugin, runID)
-			_ = Error(ghClient, state.Event, pluginerr.New(err.Error(), FormatUsageError(name, plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))
+			_ = Error(ghClient, state.Event, plugin, err)
 		}
 		return
 	}
@@ -89,7 +89,16 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 }
 
 // Error responds to the client if an error occurs
-func Error(client github.Client, event *github.GenericRequestEvent, err error) error {
+func Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
+	switch err.(type) {
+	case *pluginerr.PluginError:
+		break
+	default:
+		if plugin != nil {
+			err = pluginerr.New(err.Error(), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages()))
+		}
+	}
+
 	if _, err := client.Comment(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), err.Error())); err != nil {
 		return err
 	}
