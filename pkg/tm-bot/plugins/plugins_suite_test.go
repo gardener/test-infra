@@ -52,7 +52,23 @@ var _ = Describe("Commands", func() {
 --args3		
 `
 		expect := [][]string{
-			{"test", "--arg1=asdf", "--args2", "2", "--args3"},
+			{"test", "--arg1=asdf"},
+		}
+
+		actual, err := plugins.ParseCommands(input)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(actual).To(Equal(expect))
+	})
+
+	It("should ignore non command text", func() {
+		input := `/test --arg1=asdf 
+/cmd2 --test
+this is a example text
+of multiple lines
+`
+		expect := [][]string{
+			{"test", "--arg1=asdf"},
+			{"cmd2", "--test"},
 		}
 
 		actual, err := plugins.ParseCommands(input)

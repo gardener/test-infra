@@ -17,8 +17,9 @@ package errors
 import "fmt"
 
 type PluginError struct {
-	short string
-	long  string
+	recoverable bool
+	short       string
+	long        string
 }
 
 var _ error = &PluginError{}
@@ -37,6 +38,17 @@ func New(short, long string) error {
 	}
 }
 
+// NewRecoverable creates new plugin error that does not delete the state so it can be resumed after a restart.
+// short error message is meant for the github output
+// whereas the long message is for the internal log
+func NewRecoverable(short, long string) error {
+	return &PluginError{
+		recoverable: true,
+		short:       short,
+		long:        long,
+	}
+}
+
 // Wrapf wraps an error as long and adds an additional short question
 func Wrapf(err error, shortMsg string, a ...interface{}) error {
 	return New(fmt.Sprintf(shortMsg, a...), err.Error())
@@ -45,6 +57,15 @@ func Wrapf(err error, shortMsg string, a ...interface{}) error {
 // Wrap wraps an error as long and adds an additional short question
 func Wrap(err error, shortMsg string) error {
 	return New(shortMsg, err.Error())
+}
+
+// IsRecoverable indicates if the error is recoverable
+func IsRecoverable(err error) bool {
+	switch t := err.(type) {
+	case *PluginError:
+		return t.recoverable
+	}
+	return false
 }
 
 // ShortForError returns short message for the error

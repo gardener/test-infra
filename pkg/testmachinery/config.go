@@ -169,7 +169,7 @@ func (c *TmConfiguration) String() string {
 	return util.PrettyPrintStruct(cc)
 }
 
-// Copy creates a deep copy of the configuration
+// New creates a deep copy of the configuration
 func (c *TmConfiguration) Copy() *TmConfiguration {
 	if c == nil {
 		return nil
@@ -184,7 +184,7 @@ func (c *TmConfiguration) Copy() *TmConfiguration {
 	}
 }
 
-// Copy creates a deep copy of the s3 config.
+// New creates a deep copy of the s3 config.
 func (c *S3Config) Copy() *S3Config {
 	if c == nil {
 		return nil

@@ -28,9 +28,10 @@ type CloudProviderArrayValue struct {
 
 func NewCloudProviderArrayValue(value *[]v1beta1.CloudProvider, allowed ...v1beta1.CloudProvider) pflag.Value {
 	cpvalue := &CloudProviderArrayValue{
-		cloudproviders: make(map[v1beta1.CloudProvider]bool),
-		value:          value,
-		changed:        false,
+		allowedProvider: make(map[v1beta1.CloudProvider]bool),
+		cloudproviders:  make(map[v1beta1.CloudProvider]bool),
+		value:           value,
+		changed:         false,
 	}
 	for _, cp := range allowed {
 		cpvalue.allowedProvider[cp] = true

@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package result
+package util
 
 import (
-	"os"
+	"fmt"
+	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/olekukonko/tablewriter"
@@ -24,11 +26,34 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
-func printStatusTable(steps []*tmv1beta1.StepStatus) {
+// RenderTestflowTable creates a human readable table of a testflow.
+func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
+	table := tablewriter.NewWriter(writer)
+	table.SetHeader([]string{"Step", "Definition", "Dependencies"})
+	table.SetAutoWrapText(true)
+	table.SetRowSeparator("-")
+	table.SetRowLine(true)
 
+	for _, s := range flow {
+		definition := ""
+		if s.Definition.Name != "" {
+			definition = fmt.Sprintf("Name: %s", s.Definition.Name)
+		}
+		if s.Definition.Label != "" {
+			definition = fmt.Sprintf("Label: %s", s.Definition.Label)
+		}
+
+		table.Append([]string{s.Name, definition, strings.Join(s.DependsOn, "\n")})
+	}
+	table.Render()
+}
+
+// RenderStatusTable creates a human readable table for testrun status steps.
+// The steps are ordered by starttime and step name.
+func RenderStatusTable(writer io.Writer, steps []*tmv1beta1.StepStatus) {
 	orderSteps(steps)
 
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Name", "Step", "Phase", "Duration"})
 
 	for _, s := range steps {

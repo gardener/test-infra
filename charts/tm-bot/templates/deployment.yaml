@@ -1,0 +1,88 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tm-bot
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: tm-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tm-bot
+  template:
+    metadata:
+      annotations:
+        checksum/tls-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/github-secret: {{ include (print $.Template.BasePath "/gh-secret.yaml") . | sha256sum }}
+      labels:
+        app: tm-bot
+    spec:
+{{ if .Values.bot.imagePullSecretName }}
+      imagePullSecrets:
+      - name: "{{.Values.bot.imagePullSecretName}}"
+{{end}}
+      serviceAccountName: {{ required ".Values.bot.serviceAccountName is required" .Values.bot.serviceAccountName }}
+      containers:
+      - name: tm-bot
+        image: "{{ .Values.bot.image }}:{{ .Values.bot.tag }}"
+        imagePullPolicy: {{ .Values.bot.pullPolicy }}
+        command: ["/tm-bot"]
+        args:
+        - --webhook-http-address=0.0.0.0:{{.Values.bot.http.port}}
+        - --webhook-https-address=0.0.0.0:{{.Values.controller.bot.https.port}}
+        - --cert-file=/etc/tm-bot/srv/tls.crt
+        - --key-file=/etc/tm-bot/srv/tls.key
+        - --namespace={{ .Release.Namespace }}
+        - --config-file-path={{ .Values.bot.configFilePath }}}
+        - --github-app-id=$GITHUB_APP_ID
+        - --github-key-file=/etc/tm-bot/srv/github/key.pem
+        env:
+        - name: GITHUB_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: tm-bot-github
+              key: appID
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{.Values.controller.webhook.http.port}}
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: {{.Values.controller.webhook.http.port}}
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        volumeMounts:
+        - name: certs
+          mountPath: /etc/tm-bot/srv
+          readOnly: true
+        - name: github-secrets
+          mountPath: /etc/tm-bot/srv/github
+          readOnly: true
+      volumes:
+      - name: certs
+        secret:
+          secretName: tm-bot-cert
+      - name: github-secrets
+        secret:
+          secretName: tm-bot-github
+          items:
+          - key: key
+            path: key.pem

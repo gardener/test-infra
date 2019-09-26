@@ -45,3 +45,14 @@ COPY --from=builder /go/bin/testrunner /testrunner
 WORKDIR /
 
 ENTRYPOINT ["/testrunner"]
+
+############# tm-bot #############
+FROM alpine:3.10 AS tm-bot
+
+RUN apk add --update bash curl
+
+COPY --from=builder /go/bin/tm-bot /tm-bot
+
+WORKDIR /
+
+ENTRYPOINT ["/tm-bot"]

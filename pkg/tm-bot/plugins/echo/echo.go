@@ -22,10 +22,16 @@ import (
 )
 
 type echo struct {
+	runID string
+	value string
 }
 
 func New() plugins.Plugin {
 	return &echo{}
+}
+
+func (e *echo) New(runID string) plugins.Plugin {
+	return &echo{runID: runID}
 }
 
 func (e *echo) Command() string {
@@ -40,16 +46,27 @@ func (e *echo) Example() string {
 	return "/echo --val \"text to echo\""
 }
 
+func (_ *echo) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
+	return nil
+}
+
 func (e *echo) Flags() *pflag.FlagSet {
 	flagset := pflag.NewFlagSet(e.Command(), pflag.ContinueOnError)
-	flagset.StringP("value", "v", "", "Echo value")
+	flagset.StringVarP(&e.value, "value", "v", "", "Echo value")
 	return flagset
 }
 
 func (e *echo) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
+
+	cfg, err := client.GetConfig(e.Command())
+	if err == nil {
+		fmt.Println(string(cfg))
+	}
+
 	val, err := flagset.GetString("value")
 	if err != nil {
 		return err
 	}
-	return client.Respond(event, fmt.Sprintf("@%s: %s", event.GetAuthorName(), val))
+	_, err = client.Comment(event, fmt.Sprintf("@%s: %s\n%s", event.GetAuthorName(), val, e.runID))
+	return err
 }

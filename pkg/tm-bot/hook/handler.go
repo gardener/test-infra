@@ -15,8 +15,10 @@
 package hook
 
 import (
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
 	"net/http"
 
@@ -28,11 +30,13 @@ import (
 type Handler struct {
 	log logr.Logger
 
-	ghClient           ghutils.Client
+	ghMgr              ghutils.Manager
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghClient ghutils.Client, webhookSecretToken string) *Handler {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient kubernetes.Interface) *Handler {
+
+	plugins.Setup(log.WithName("plugins"), plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot"))
 
 	// register plugins.Plugin()
 	plugins.Register(echo.New())
@@ -42,9 +46,15 @@ func New(log logr.Logger, ghClient ghutils.Client, webhookSecretToken string) *H
 	}
 	plugins.Register(xkcdPlugin)
 
+	plugins.Register(tests.New(log, k8sClient))
+
+	if err := plugins.ResumePlugins(ghMgr); err != nil {
+		log.Error(err, "unable to resume running plugins")
+	}
+
 	return &Handler{
 		log:                log,
-		ghClient:           ghClient,
+		ghMgr:              ghMgr,
 		webhookSecretToken: []byte(webhookSecretToken),
 	}
 }
@@ -65,26 +75,6 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch event := event.(type) {
-	case *github.PullRequestReviewCommentEvent:
-		if ghutils.EventActionType(event.GetAction()) == ghutils.EventActionTypeCreated {
-			h.handleGenericEvent(w, &ghutils.GenericRequestEvent{
-				InstallationID: event.GetInstallation().GetID(),
-				ID:             event.GetPullRequest().GetID(),
-				Number:         event.GetPullRequest().GetNumber(),
-				Repository:     event.GetRepo(),
-				Body:           event.GetComment().GetBody(),
-				Author:         event.GetComment().GetUser(),
-			})
-		}
-	case *github.PullRequestReviewEvent:
-		h.handleGenericEvent(w, &ghutils.GenericRequestEvent{
-			InstallationID: event.GetInstallation().GetID(),
-			ID:             event.GetPullRequest().GetID(),
-			Number:         event.GetPullRequest().GetNumber(),
-			Repository:     event.GetRepo(),
-			Body:           event.GetPullRequest().GetBody(),
-			Author:         event.GetSender(),
-		})
 	case *github.IssueCommentEvent:
 		if event.GetIssue().IsPullRequest() {
 			h.handleGenericEvent(w, &ghutils.GenericRequestEvent{
@@ -113,13 +103,20 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 		return
 	}
 
-	if !h.ghClient.IsAuthorized(event) {
+	client, err := h.ghMgr.GetClient(event)
+	if err != nil {
+		h.log.Error(err, "unable to build client", "user", event.GetAuthorName())
+		http.Error(w, "internal error", http.StatusUnauthorized)
+		return
+	}
+
+	if !client.IsAuthorized(event) {
 		h.log.V(3).Info("user not authorized", "user", event.GetAuthorName())
 		http.Error(w, "unauthorized user", http.StatusUnauthorized)
 		return
 	}
 
-	if err := plugins.HandleRequest(h.ghClient, event); err != nil {
+	if err := plugins.HandleRequest(client, event); err != nil {
 		h.log.Error(err, "")
 		http.Error(w, "unable to handle request", http.StatusInternalServerError)
 	}

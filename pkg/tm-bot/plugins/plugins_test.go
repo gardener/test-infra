@@ -23,5 +23,5 @@ import (
 
 func TestPlugins(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "GitHub TM bot plugins Test Suite")
+	RunSpecs(t, "GitHub TM bot registered Test Suite")
 }

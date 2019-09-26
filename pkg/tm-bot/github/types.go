@@ -15,14 +15,26 @@
 package github
 
 import (
+	"encoding/json"
+	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 )
 
+type Manager interface {
+	GetClient(event *GenericRequestEvent) (Client, error)
+}
+
 // Client is the github client interface
 type Client interface {
 	IsAuthorized(event *GenericRequestEvent) bool
-	Respond(event *GenericRequestEvent, message string) error
+
+	GetConfig(name string) (json.RawMessage, error)
+	ResolveConfigValue(event *GenericRequestEvent, value *ghval.GitHubValue) (string, error)
+
+	UpdateComment(event *GenericRequestEvent, commentID int64, message string) error
+	Comment(event *GenericRequestEvent, message string) (int64, error)
+	UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error
 }
 
 // GenericRequestEvent is the generic request from github triggering the tm bot
@@ -35,12 +47,19 @@ type GenericRequestEvent struct {
 	Author         *github.User
 }
 
-type client struct {
-	log logr.Logger
+type manager struct {
+	log        logr.Logger
+	configFile string
 
 	appId   int
 	keyFile string
 	clients map[int64]*github.Client
+}
+
+type client struct {
+	log    logr.Logger
+	config map[string]json.RawMessage
+	client *github.Client
 }
 
 // EventActionType represents the action type of a github event
@@ -59,4 +78,14 @@ const (
 	UserTypeUser         UserType = "User"
 	UserTypeBot          UserType = "Bot"
 	UserTypeOrganization UserType = "Organization"
+)
+
+// Status state of a commit
+type State string
+
+const (
+	StateError   State = "error"
+	StateFailure State = "failure"
+	StatePending State = "pending"
+	StateSuccess State = "success"
 )

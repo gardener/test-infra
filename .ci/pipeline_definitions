@@ -27,6 +27,12 @@ test-infra:
               dockerfile: 'Dockerfile'
               target: tm-run
               tag_as_latest: true
+            tm-bot:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/bot
+              dockerfile: 'Dockerfile'
+              target: tm-bot
+              tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:
         image: 'golang:1.13.0'
@@ -45,6 +51,10 @@ test-infra:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - publish
+        integration-bot:
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
+          depends:
+          - publish
     pull-request:
       traits:
         <<: *ti_default_traits
@@ -59,6 +69,11 @@ test-infra:
           execute:
           - ./it-prepare.py
         integration:
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
+          depends:
+          - prepare-test
+          - publish
+        integration-bot:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - prepare-test

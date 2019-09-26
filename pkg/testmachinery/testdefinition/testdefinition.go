@@ -129,7 +129,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 	return td, nil
 }
 
-// Copy returns a deep copy of the TestDefinition.
+// New returns a deep copy of the TestDefinition.
 func (td *TestDefinition) Copy() *TestDefinition {
 	template := td.Template.DeepCopy()
 	template.Name = fmt.Sprintf("%s-%s", td.Info.Metadata.Name, util.RandomString(5))

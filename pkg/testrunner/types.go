@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-// Config are configuration of the evironment like the testmachinery cluster or S3 store
+// Config are configuration of the environment like the testmachinery cluster or S3 store
 // where the testrunner executes the testrun.
 type Config struct {
 	// Kubernetes client for the testmachinery k8s cluster
