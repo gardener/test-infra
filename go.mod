@@ -6,6 +6,8 @@ require (
 	cloud.google.com/go v0.43.0
 	github.com/Masterminds/semver v1.4.2
 	github.com/argoproj/argo v2.3.0+incompatible
+	github.com/bradleyfalzon/ghinstallation v0.1.2
+	github.com/davecgh/go-spew v1.1.1
 	github.com/elazarl/goproxy v0.0.0-20190711103511-473e67f1d7d2 // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2 // indirect
 	github.com/gardener/gardener v0.0.0-20190906111529-f9ad04069615
@@ -13,6 +15,7 @@ require (
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.2
 	github.com/google/go-github/v27 v27.0.4
+	github.com/gorilla/mux v1.6.2
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/mattn/go-runewidth v0.0.4 // indirect
