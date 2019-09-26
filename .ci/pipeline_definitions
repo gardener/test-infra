@@ -51,6 +51,10 @@ test-infra:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - publish
+        integration-bot:
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
+          depends:
+          - publish
     pull-request:
       traits:
         <<: *ti_default_traits
@@ -65,6 +69,11 @@ test-infra:
           execute:
           - ./it-prepare.py
         integration:
+          image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
+          depends:
+          - prepare-test
+          - publish
+        integration-bot:
           image: 'eu.gcr.io/gardener-project/cc/job-image-golang:0.10.0'
           depends:
           - prepare-test
