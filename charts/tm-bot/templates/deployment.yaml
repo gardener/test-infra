@@ -44,7 +44,7 @@ spec:
         command: ["/tm-bot"]
         args:
         - --webhook-http-address=0.0.0.0:{{.Values.bot.http.port}}
-        - --webhook-https-address=0.0.0.0:{{.Values.controller.bot.https.port}}
+        - --webhook-https-address=0.0.0.0:{{.Values.bot.https.port}}
         - --cert-file=/etc/tm-bot/srv/tls.crt
         - --key-file=/etc/tm-bot/srv/tls.key
         - --namespace={{ .Release.Namespace }}

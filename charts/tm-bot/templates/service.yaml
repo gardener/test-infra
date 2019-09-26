@@ -26,8 +26,8 @@ spec:
   - name: http
     protocol: TCP
     port: 80
-    targetPort: {{.Values.controller.webhook.http.port}}
+    targetPort: {{.Values.bot.webhook.http.port}}
   - name: https
     protocol: TCP
     port: 443
-    targetPort: {{.Values.controller.webhook.https.port}}
+    targetPort: {{.Values.bot.webhook.https.port}}
