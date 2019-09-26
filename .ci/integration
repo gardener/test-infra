@@ -85,7 +85,8 @@ controller_chart="$(helm template --namespace ${NAMESPACE} \
 ################################
 set +e
 # remove zombies
-for ns in $(kubectl get ns --no-headers | awk '{ print $1 }'); do
+for ns in $(kubectl --kubeconfig=$TM_KUBECONFIG get ns --no-headers | awk '{ print $1 }'); do
+  echo "Cleanup $ns"
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete tr --all --wait=false
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns delete wf --all --wait=false
   # give the tm some time to delete tr's correctly
