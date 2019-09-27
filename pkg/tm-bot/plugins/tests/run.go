@@ -38,7 +38,12 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	ctx := context.Background()
 	defer ctx.Done()
 
-	t.ApplyDefaultConfig(client, event, flagset)
+	if err := t.ApplyDefaultConfig(client, event, flagset); err != nil {
+		return err
+	}
+	if err := t.ValidateConfig(); err != nil {
+		return err
+	}
 
 	t.config.Shoots.DefaultTest = templates.TestWithLabels(t.testLabel)
 	if t.hibernation {

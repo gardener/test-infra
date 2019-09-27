@@ -74,5 +74,14 @@ func ShortForError(err error) string {
 	case *PluginError:
 		return t.short
 	}
-	return "Unkown error"
+	return "Unknown error"
+}
+
+// LongForError returns long message for the error
+func LongForError(err error) string {
+	switch t := err.(type) {
+	case *PluginError:
+		return t.long
+	}
+	return "Unknown error"
 }

@@ -16,13 +16,8 @@ package templates
 
 import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
-)
-
-const (
-	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo = "https://github.com/schrodit/garden-setup.git"
-	GardenerRepo    = "https://github.com/gardener/gardener.git"
 )
 
 var TestInfraLocationName = "tm"
@@ -34,7 +29,7 @@ var TestInfraLocation = v1beta1.LocationSet{
 	Locations: []v1beta1.TestLocation{
 		{
 			Type:     v1beta1.LocationTypeGit,
-			Repo:     TestInfraRepo,
+			Repo:     common.TestInfraRepo,
 			Revision: "master",
 		},
 	},
@@ -51,7 +46,7 @@ func GetDefaultLocationsSet(cfg GardenerConfig) v1beta1.LocationSet {
 		set.Locations = []v1beta1.TestLocation{
 			{
 				Type:     v1beta1.LocationTypeGit,
-				Repo:     GardenerRepo,
+				Repo:     common.GardenerRepo,
 				Revision: cfg.Version,
 			},
 		}
@@ -60,7 +55,7 @@ func GetDefaultLocationsSet(cfg GardenerConfig) v1beta1.LocationSet {
 		set.Locations = []v1beta1.TestLocation{
 			{
 				Type:     v1beta1.LocationTypeGit,
-				Repo:     GardenerRepo,
+				Repo:     common.GardenerRepo,
 				Revision: cfg.Commit,
 			},
 		}
@@ -77,7 +72,7 @@ func GetGardenSetupLocation(name, revision string) v1beta1.LocationSet {
 		Locations: []v1beta1.TestLocation{
 			{
 				Type:     v1beta1.LocationTypeGit,
-				Repo:     GardenSetupRepo,
+				Repo:     common.GardenSetupRepo,
 				Revision: revision,
 			},
 		},

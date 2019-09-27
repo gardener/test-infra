@@ -15,10 +15,14 @@
 package tests
 
 import (
+	"fmt"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
@@ -34,7 +38,13 @@ const (
 	cloudprovider       = "cloudprovider"
 )
 
-func (t *test) ValidateFlags(flagset *pflag.FlagSet) error {
+func (t *test) ValidateConfig() error {
+	if t.config.Gardener.Version != "" {
+		if err := util.CheckDockerImageExists(common.DockerImageGardenerApiServer, t.config.Gardener.Version); err != nil {
+			return errors.New(fmt.Sprintf("I am unable to find gardener images of version %s.\n Have you specified the right version?", t.config.Gardener.Version),
+				"Maybe you should run the default gardener pipeline before trying to run the integration tests.")
+		}
+	}
 	return nil
 }
 
@@ -61,16 +71,16 @@ func (t *test) Flags() *pflag.FlagSet {
 	return flagset
 }
 
-func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericRequestEvent, flagset *pflag.FlagSet) {
+func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericRequestEvent, flagset *pflag.FlagSet) error {
 	raw, err := client.GetConfig(t.Command())
 	if err != nil {
 		t.log.Error(err, "cannot get default config")
-		return
+		return nil
 	}
 	var defaultConfig DefaultsConfig
 	if err := yaml.Unmarshal(raw, &defaultConfig); err != nil {
 		t.log.Error(err, "unable to parse default config")
-		return
+		return errors.New("unable to parse default config", err.Error())
 	}
 
 	if !flagset.Changed(hostprovider) && defaultConfig.HostProvider != nil {
@@ -82,7 +92,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 	if !flagset.Changed(gardensetupRevision) && defaultConfig.GardenSetup != nil && defaultConfig.GardenSetup.Revision != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.GardenSetup.Revision.Value())
 		if err != nil {
-			t.log.Error(err, "unable to resolve config value for garden setup revision")
+			return errors.New("unable to resolve default config value for garden setup revision", err.Error())
 		} else {
 			t.config.GardenSetupRevision = val
 		}
@@ -90,7 +100,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 	if !flagset.Changed(gardenerVersion) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Version != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Version.Value())
 		if err != nil {
-			t.log.Error(err, "unable to resolve config value for gardener version")
+			return errors.New("unable to resolve default config value for gardener version", err.Error())
 		} else {
 			t.config.Gardener.Version = val
 		}
@@ -98,7 +108,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 	if !flagset.Changed(gardenerCommit) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Commit != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Commit.Value())
 		if err != nil {
-			t.log.Error(err, "unable to resolve config value for gardener commit")
+			return errors.New("unable to resolve default config value for gardener commit", err.Error())
 		} else {
 			t.config.Gardener.Commit = val
 		}
@@ -110,4 +120,5 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 	if !flagset.Changed(cloudprovider) && defaultConfig.CloudProviders != nil {
 		t.config.Shoots.CloudProviders = *defaultConfig.CloudProviders
 	}
+	return nil
 }
