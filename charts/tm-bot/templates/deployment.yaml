@@ -47,7 +47,6 @@ spec:
         - --webhook-https-address=0.0.0.0:{{.Values.bot.webhook.https.port}}
         - --cert-file=/etc/tm-bot/srv/tls.crt
         - --key-file=/etc/tm-bot/srv/tls.key
-        - --namespace={{ .Release.Namespace }}
         - --config-file-path={{ .Values.bot.configFilePath }}}
         - --github-app-id=$GITHUB_APP_ID
         - --github-key-file=/etc/tm-bot/srv/github/key.pem
