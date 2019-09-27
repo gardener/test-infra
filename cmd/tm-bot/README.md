@@ -15,8 +15,8 @@ For detailed information about the plugins configuration see the resprective plu
 The configuration file has the following format:
 ```yaml
 <command name>:
-	custom_value1: xxx
-	custom_value2: xxx
+  custom_value1: xxx
+  custom_value2: xxx
 
 # Example
 
@@ -87,8 +87,8 @@ test:
     revision: # StringOrGitHubConfig
 
   gardener:
-	version: # StringOrGitHubConfig
-	commit: # StringOrGitHubConfig
+    version: # StringOrGitHubConfig
+    commit: # StringOrGitHubConfig
 
   kubernetes:
     versions: # []string
@@ -101,9 +101,9 @@ test:
 parameter: "string"
 
 parameter:
-	value: "string" # raw string value. Same as defining only a string
-	path: test/path # read the file in the default branch of the repo (repo root will used to define the path) and return its content as a string
-	prHead: true # use the commit sha of the current PR's head
+  value: "string" # raw string value. Same as defining only a string
+  path: test/path # read the file in the default branch of the repo (repo root will used to define the path) and return its content as a string
+  prHead: true # use the commit sha of the current PR's head
 ```
 
 ## Development
