@@ -30,32 +30,32 @@ func HandleRequest(client github.Client, event *github.GenericRequestEvent) erro
 	}
 
 	for _, args := range commands {
-		go runPlugin(client, event, args)
+		go Plugins.runPlugin(client, event, args)
 	}
 
 	return nil
 }
 
 // runPlugin runs a plugin with a event and its arguments
-func runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
-	runID, plugin, err := Plugins.Get(args[0])
+func (p *plugins) runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
+	runID, plugin, err := p.Get(args[0])
 	if err != nil {
-		_ = Error(client, event, nil, err)
+		_ = p.Error(client, event, nil, err)
 		return
 	}
 
-	Plugins.initState(plugin, runID, event)
+	p.initState(plugin, runID, event)
 
 	fs := plugin.Flags()
 	if err := fs.Parse(args[1:]); err != nil {
-		Plugins.RemoveState(plugin, runID)
-		_ = Error(client, event, plugin, err)
+		p.RemoveState(plugin, runID)
+		_ = p.Error(client, event, plugin, pluginerr.New(err.Error(), "unable to parse flags"))
 		return
 	}
 	if err := plugin.Run(fs, client, event); err != nil {
 		if !pluginerr.IsRecoverable(err) {
 			Plugins.RemoveState(plugin, runID)
-			_ = Error(client, event, plugin, err)
+			_ = p.Error(client, event, plugin, err)
 		}
 		return
 	}
@@ -71,7 +71,7 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 		return
 	}
 
-	_, plugin, err := Plugins.Get(name)
+	_, plugin, err := p.Get(name)
 	if err != nil {
 		p.log.Error(err, "unable to get plugin for state", "plugin", name)
 		return
@@ -80,8 +80,8 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 
 	if err := plugin.ResumeFromState(ghClient, state.Event, state.Custom); err != nil {
 		if !pluginerr.IsRecoverable(err) {
-			Plugins.RemoveState(plugin, runID)
-			_ = Error(ghClient, state.Event, plugin, err)
+			p.RemoveState(plugin, runID)
+			_ = p.Error(ghClient, state.Event, plugin, err)
 		}
 		return
 	}
@@ -89,20 +89,15 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 }
 
 // Error responds to the client if an error occurs
-func Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
-	switch err.(type) {
-	case *pluginerr.PluginError:
-		break
-	default:
-		if plugin != nil {
-			err = pluginerr.New(err.Error(), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages()))
-		}
-	}
+func (p *plugins) Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
+	p.log.Error(err, err.Error())
 
-	if _, err := client.Comment(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), err.Error())); err != nil {
+	if plugin != nil {
+		_, err := client.Comment(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))
 		return err
 	}
-	return nil
+	_, err = client.Comment(event, FormatSimpleErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err)))
+	return err
 }
 
 // ParseCommands parses a message and returns a string of commands and arguments

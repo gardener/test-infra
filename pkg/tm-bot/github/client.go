@@ -56,7 +56,11 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 		return pr.GetHead().GetSHA(), nil
 	}
 	if value.Path != nil {
-		file, dir, _, err := c.client.Repositories.GetContents(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), *value.Path, &github.RepositoryContentGetOptions{Ref: event.Repository.GetDefaultBranch()})
+		pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+		if err != nil {
+			return "", err
+		}
+		file, dir, _, err := c.client.Repositories.GetContents(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), *value.Path, &github.RepositoryContentGetOptions{Ref: pr.GetHead().GetSHA()})
 		if err != nil {
 			return "", err
 		}

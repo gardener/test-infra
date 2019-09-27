@@ -35,9 +35,9 @@ func CheckDockerImageExists(image, tag string) error {
 	reqPath := append(append([]string{"v2"}, tail...), "manifests", tag)
 
 	u := &url.URL{
-		Scheme:     "https",
-		Host:       splitImage[0],
-		Path:       strings.Join(reqPath, "/"),
+		Scheme: "https",
+		Host:   splitImage[0],
+		Path:   strings.Join(reqPath, "/"),
 	}
 	res, err := http.Get(u.String())
 	if err != nil {
@@ -51,6 +51,7 @@ func CheckDockerImageExists(image, tag string) error {
 
 // GetDockerImageFromCommit searches all tags of a image and try to matches the commit (e.g. .10.0-dev-<commit>).
 // The image tag is returned if an applicable tag can be found
+// todo: use pagination
 func GetDockerImageFromCommit(image, commit string) (string, error) {
 
 	// construct api call with the form hostname/v2/<image>/tags/list
@@ -59,9 +60,9 @@ func GetDockerImageFromCommit(image, commit string) (string, error) {
 	reqPath := append(append([]string{"v2"}, tail...), "tags", "list")
 
 	u := &url.URL{
-		Scheme:     "https",
-		Host:       splitImage[0],
-		Path:       strings.Join(reqPath, "/"),
+		Scheme: "https",
+		Host:   splitImage[0],
+		Path:   strings.Join(reqPath, "/"),
 	}
 	res, err := http.Get(u.String())
 	if err != nil {
