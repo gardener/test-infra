@@ -38,11 +38,15 @@ var (
 
 	testrunName string
 
-	outputDirPath           string
-	elasticSearchConfigName string
-	s3Endpoint              string
-	s3SSL                   bool
-	concourseOnErrorDir     string
+	outputDirPath            string
+	elasticSearchConfigName  string
+	s3Endpoint               string
+	s3SSL                    bool
+	concourseOnErrorDir      string
+	githubComponentForStatus string
+	componentDescriptorPath  string
+	githubUser               string
+	githubPassword           string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -59,11 +63,15 @@ var collectCmd = &cobra.Command{
 		logger.Log.Info("Start testmachinery testrunner")
 
 		collectConfig := result.Config{
-			OutputDir:           outputDirPath,
-			ESConfigName:        elasticSearchConfigName,
-			S3Endpoint:          s3Endpoint,
-			S3SSL:               s3SSL,
-			ConcourseOnErrorDir: concourseOnErrorDir,
+			OutputDir:               outputDirPath,
+			ESConfigName:            elasticSearchConfigName,
+			S3Endpoint:              s3Endpoint,
+			S3SSL:                   s3SSL,
+			ConcourseOnErrorDir:     concourseOnErrorDir,
+			ComponentDescriptorPath: componentDescriptorPath,
+			GithubUser:              githubUser,
+			GithubPassword:          githubPassword,
+			GithubComponentForStatus: githubComponentForStatus,
 		}
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
@@ -114,6 +122,7 @@ func init() {
 	if err := collectCmd.MarkFlagRequired("tr-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "tr-name")
 	}
+	collectCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	// parameter flags
 	collectCmd.Flags().StringVarP(&outputDirPath, "output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
@@ -121,5 +130,8 @@ func init() {
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
+	collectCmd.Flags().StringVar(&githubUser, "github-user", os.Getenv("GITHUB_USER"), "Github user to e.g. upload assets to given release.")
+	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	collectCmd.Flags().StringVar(&githubComponentForStatus, "github-component-for-status", "", "The github component to which the testrun status shall be attached as an asset.")
 
 }

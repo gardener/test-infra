@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
@@ -44,21 +45,40 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		}
 
 		cfg := c.config
-		cfg.OutputDir = filepath.Join(c.config.OutputDir, util.RandomString(3))
+		cfg.OutputDir = filepath.Join(cfg.OutputDir, util.RandomString(3))
 		err := Output(runLogger, &cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
 
-		if c.config.OutputDir != "" && c.config.ESConfigName != "" {
-			err = IngestDir(runLogger, c.config.OutputDir, c.config.ESConfigName)
+		// ingest into eleasticsearch
+		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
+			err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
 			if err != nil {
-				runLogger.Error(err, "cannot persist file", "file", c.config.OutputDir)
+				runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
 			} else {
 				err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 				if err != nil {
 					runLogger.Error(err, "unable to ingest testrun")
+				}
+			}
+		}
+
+		// upload testrun status to github component
+		if cfg.GithubComponentForStatus != "" {
+			components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+
+			if component := components.Get(cfg.GithubComponentForStatus); component == nil {
+				runLogger.Error(err, "can't find component %s", cfg.GithubComponentForStatus)
+			} else {
+				if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword); err != nil {
+					runLogger.Error(err, "unable to attach testrun status to github component")
+				} else {
+					err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
+					if err != nil {
+						runLogger.Error(err, "unable to mark testrun status as uploaded to github")
+					}
 				}
 			}
 		}
