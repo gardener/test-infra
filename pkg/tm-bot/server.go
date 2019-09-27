@@ -16,17 +16,11 @@ package tm_bot
 
 import (
 	"context"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"net/http"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
 	flag "github.com/spf13/pflag"
 )
 
@@ -47,30 +41,16 @@ var (
 
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
-
-	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: testmachinery.TestMachineryScheme,
-	}))
-	if err != nil {
-		log.Error(err, "unable to initialize kubernetes client")
-		os.Exit(1)
-	}
-
-	ghClient, err := github.NewManager(log.WithName("github"), githubAppID, githubKeyFile, repoConfigFile)
-	if err != nil {
-		log.Error(err, "unable to initialize github client")
-		os.Exit(1)
-	}
-	hooks := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken, k8sClient)
-
 	serverMuxHTTP := http.NewServeMux()
 	serverMuxHTTPS := http.NewServeMux()
 	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: serverMuxHTTP}
 	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: serverMuxHTTPS}
-	r := mux.NewRouter()
 
-	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
-	r.HandleFunc("/event/handler", hooks.HandleWebhook).Methods(http.MethodPost)
+	r, err := setup(log)
+	if err != nil {
+		log.Error(err, "unable to setup components")
+		os.Exit(1)
+	}
 
 	serverMuxHTTP.Handle("/", r)
 	serverMuxHTTPS.Handle("/", r)
@@ -89,6 +69,7 @@ func Serve(ctx context.Context, log logr.Logger) {
 		}
 	}()
 
+	UpdateHealth(true)
 	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

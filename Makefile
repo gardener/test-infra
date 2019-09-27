@@ -24,6 +24,7 @@ VERSION             := $(shell cat VERSION)
 IMAGE_TAG           := ${VERSION}
 
 TM_RUN_IMAGE := $(REGISTRY)/testmachinery-run
+TM_BOT_IMAGE := $(REGISTRY)/bot
 PREPARESTEP_IMAGE := $(REGISTRY)/testmachinery-prepare
 
 NS ?= default
@@ -162,6 +163,10 @@ docker-image-controller:
 .PHONY: docker-image-run
 docker-image-run:
 	@docker build -t $(TM_RUN_IMAGE):$(IMAGE_TAG) -t $(TM_RUN_IMAGE):latest --target tm-run .
+
+.PHONY: docker-image-bot
+docker-image-bot:
+	@docker build -t $(TM_BOT_IMAGE):$(IMAGE_TAG) -t $(TM_BOT_IMAGE):latest --target tm-bot .
 
 .PHONY: docker-image-prepare
 docker-image-prepare:

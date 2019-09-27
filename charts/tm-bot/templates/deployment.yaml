@@ -50,12 +50,18 @@ spec:
         - --config-file-path={{ .Values.bot.configFilePath }}}
         - --github-app-id=$(GITHUB_APP_ID)
         - --github-key-file=/etc/tm-bot/srv/github/key.pem
+        - --webhook-secret-token=$(WEBHOOK_SECRET_TOKEN)
         env:
         - name: GITHUB_APP_ID
           valueFrom:
             secretKeyRef:
               name: tm-bot-github
               key: appID
+        - name: WEBHOOK_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tm-bot-github
+              key: webhookSecretToken
         livenessProbe:
           httpGet:
             path: /healthz

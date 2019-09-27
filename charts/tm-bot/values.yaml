@@ -47,5 +47,6 @@ bot:
 
 secrets:
   github:
+    webhookSecretToken: "" # secret token configured for the github app
     appID: "" # app installation id
     key: "" # base64 encoded private key

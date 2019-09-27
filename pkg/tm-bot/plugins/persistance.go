@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -30,11 +31,28 @@ type kubernetesPersistence struct {
 	k8sClient kubernetes.Interface
 }
 
-func NewKubernetesPersistence(k8sClient kubernetes.Interface, name, namespace string) Persistence {
+func NewKubernetesPersistence(k8sClient kubernetes.Interface, name, namespace string) (Persistence, error) {
+	ctx := context.Background()
+	defer ctx.Done()
+
+	cmKey := client.ObjectKey{Name: name, Namespace: namespace}
+	cm := &corev1.ConfigMap{}
+	if err := k8sClient.Client().Get(ctx, cmKey, cm); err != nil {
+		if !errors.IsNotFound(err) {
+			return nil, err
+		}
+
+		cm.Name = name
+		cm.Namespace = namespace
+		if err := k8sClient.Client().Create(ctx, cm); err != nil {
+			return nil, err
+		}
+	}
+
 	return &kubernetesPersistence{
 		k8sClient: k8sClient,
-		cm:        client.ObjectKey{Name: name, Namespace: namespace},
-	}
+		cm:        cmKey,
+	}, nil
 }
 
 func (p *kubernetesPersistence) Save(states map[string]map[string]*State) error {

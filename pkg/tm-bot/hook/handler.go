@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
+	"github.com/pkg/errors"
 	"net/http"
 
 	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -34,29 +35,33 @@ type Handler struct {
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient kubernetes.Interface) *Handler {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient kubernetes.Interface) (*Handler, error) {
 
-	plugins.Setup(log.WithName("plugins"), plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot"))
+	persistence, err := plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to setup plugin persistence")
+	}
+	plugins.Setup(log.WithName("plugins"), persistence)
 
 	// register plugins.Plugin()
 	plugins.Register(echo.New())
 	xkcdPlugin, err := xkcd.New()
 	if err != nil {
-		log.Error(err, "unable to initialize xkcd plugin")
+		return nil, errors.Wrap(err, "unable to initialize xkcd plugin")
 	}
 	plugins.Register(xkcdPlugin)
 
 	plugins.Register(tests.New(log, k8sClient))
 
 	if err := plugins.ResumePlugins(ghMgr); err != nil {
-		log.Error(err, "unable to resume running plugins")
+		return nil, errors.Wrap(err, "unable to resume running plugins")
 	}
 
 	return &Handler{
 		log:                log,
 		ghMgr:              ghMgr,
 		webhookSecretToken: []byte(webhookSecretToken),
-	}
+	}, nil
 }
 
 func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
