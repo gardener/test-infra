@@ -35,7 +35,7 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 		return err
 	}
 
-	repoURL, err := url.Parse(component.Name)
+	repoURL, err := url.Parse(fmt.Sprintf("https://%s", component.Name))
 	if err != nil {
 		return err
 	}
@@ -45,29 +45,52 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 		return err
 	}
 
+	// get github release
 	release, response, err := githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, component.Version)
 	if err != nil {
 		return err
 	} else if response.StatusCode != 200 {
 		return errors.New(fmt.Sprintf("Github release GET failed with status code %d", response.StatusCode))
 	}
-	_, response, err = githubClient.Repositories.UploadReleaseAsset(context.Background(), repoOwner, repoName, *release.ID, &github.UploadOptions{Name: filename,}, file)
+
+	// check if asset exists and delete if so
+	releaseAssets, response, err := githubClient.Repositories.ListReleaseAssets(context.Background(), repoOwner, repoName, *release.ID, &github.ListOptions{Page: 1, PerPage: 200})
 	if err != nil {
 		return err
 	} else if response.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Github release GET failed with status code %d", response.StatusCode))
+		return errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
+	}
+	for _, releaseAsset := range releaseAssets {
+		if *releaseAsset.Name == filename {
+			response, err = githubClient.Repositories.DeleteReleaseAsset(context.Background(), repoOwner, repoName, *releaseAsset.ID)
+			if err != nil {
+				return err
+			} else if response.StatusCode != 204 {
+				return errors.New(fmt.Sprintf("Delete of github release asset %s failed with status code %d", *releaseAsset.Name, response.StatusCode))
+			}
+		}
+	}
+
+	// upload new asset
+	_, response, err = githubClient.Repositories.UploadReleaseAsset(context.Background(), repoOwner, repoName, *release.ID, &github.UploadOptions{Name: filename,}, file)
+	if err != nil {
+		return err
+	} else if response.StatusCode != 201 {
+		return errors.New(fmt.Sprintf("Failed to create a github asset with status code %d", response.StatusCode))
 	}
 	return nil
 }
 
 func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*github.Client, error) {
-	var apiURL string
+	var apiURL, uploadURL string
 	if repoURL.Hostname() == "github.com" {
 		apiURL = "https://api." + repoURL.Hostname()
+		uploadURL = "https://uploads." + repoURL.Hostname()
 	} else {
 		apiURL = "https://" + repoURL.Hostname() + "/api/v3"
+		uploadURL = "https://uploads." + repoURL.Hostname() + "/api/uploads"
 	}
-	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, true)
+	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, uploadURL, true)
 	if err != nil {
 		return nil, err
 	}

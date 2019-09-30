@@ -67,10 +67,13 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 
 		// upload testrun status to github component
 		if cfg.GithubComponentForStatus != "" {
+			if cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+				runLogger.Error(err, "missing github password / github user / component descriptor path argument")
+			}
 			components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
 
 			if component := components.Get(cfg.GithubComponentForStatus); component == nil {
-				runLogger.Error(err, "can't find component %s", cfg.GithubComponentForStatus)
+				runLogger.Error(err, "can't find component", "component", cfg.GithubComponentForStatus)
 			} else {
 				if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword); err != nil {
 					runLogger.Error(err, "unable to attach testrun status to github component")

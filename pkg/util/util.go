@@ -222,8 +222,8 @@ func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
 	return
 }
 
-func GetGitHubClient(apiURL, username, password string, skipTLS bool) (*github.Client, error) {
-	client, err := github.NewEnterpriseClient(apiURL, "", GetHTTPClient(username, password, skipTLS))
+func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool) (*github.Client, error) {
+	client, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
 	if err != nil {
 		return nil, err
 	}
