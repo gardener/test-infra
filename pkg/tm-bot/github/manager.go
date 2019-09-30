@@ -85,6 +85,7 @@ func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) 
 	if err != nil {
 		return nil, err
 	}
+	itr.BaseURL = m.apiURL
 
 	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: itr})
 	if err != nil {
