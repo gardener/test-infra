@@ -62,7 +62,7 @@ func RenderShootTestruns(log logr.Logger, tmClient kubernetes.Interface, paramet
 		}
 
 		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(rendered.testrun, metadata.CreateAnnotations())
+		addAnnotationsToTestrun(rendered.testrun, testrunMetadata.CreateAnnotations())
 
 		testruns = append(testruns, &ShootRun{
 			Parameters: rendered.Parameters,
