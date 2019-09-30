@@ -26,10 +26,11 @@ import (
 	"github.com/google/go-github/v27/github"
 )
 
-func NewManager(log logr.Logger, appID int, keyFile, configFile string) (Manager, error) {
+func NewManager(log logr.Logger, apiURL string, appID int, keyFile, configFile string) (Manager, error) {
 	return &manager{
 		log:        log,
 		configFile: configFile,
+		apiURL:     apiURL,
 		appId:      appID,
 		keyFile:    keyFile,
 		clients:    make(map[int64]*github.Client, 0),
@@ -85,7 +86,11 @@ func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) 
 		return nil, err
 	}
 
-	m.clients[installationID] = github.NewClient(&http.Client{Transport: itr})
+	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: itr})
+	if err != nil {
+		return nil, err
+	}
+	m.clients[installationID] = ghClient
 
 	return m.clients[installationID], nil
 }

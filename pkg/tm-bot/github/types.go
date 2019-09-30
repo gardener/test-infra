@@ -51,6 +51,7 @@ type manager struct {
 	log        logr.Logger
 	configFile string
 
+	apiURL  string
 	appId   int
 	keyFile string
 	clients map[int64]*github.Client

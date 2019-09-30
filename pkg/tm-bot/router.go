@@ -34,7 +34,7 @@ func setup(log logr.Logger) (*mux.Router, error) {
 		return nil, errors.Wrap(err, "unable to initialize kubernetes client")
 	}
 
-	ghClient, err := github.NewManager(log.WithName("github"), githubAppID, githubKeyFile, repoConfigFile)
+	ghClient, err := github.NewManager(log.WithName("github"), githubApiURL, githubAppID, githubKeyFile, repoConfigFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize github client")
 	}

@@ -31,6 +31,7 @@ var (
 	serverCertFile string
 	serverKeyFile  string
 
+	githubApiURL       string
 	githubAppID        int
 	githubKeyFile      string
 	webhookSecretToken string
@@ -97,6 +98,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
 		"Path to private key")
 
+	flagset.StringVar(&githubApiURL, "github-api-url", "https://api.github.com", "GitHub api endpoint url")
 	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")
 	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")

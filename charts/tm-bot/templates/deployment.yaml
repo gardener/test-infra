@@ -52,6 +52,9 @@ spec:
         - --github-key-file=/etc/tm-bot/srv/github/key.pem
         - --webhook-secret-token=$(WEBHOOK_SECRET_TOKEN)
         - -v=2
+        {{ if .Values.secrets.github.apiUrl }}
+        - --github-api-url={{ .Values.secrets.github.apiUrl }}
+        {{ end }}
         env:
         - name: GITHUB_APP_ID
           valueFrom:
