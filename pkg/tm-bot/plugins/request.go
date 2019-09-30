@@ -16,10 +16,12 @@ package plugins
 
 import (
 	"bufio"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"io"
 	"strings"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/kballard/go-shellquote"
 )
 
 // HandleRequest parses a github event and executes the found plugins
@@ -113,7 +115,10 @@ func ParseCommands(message string) ([][]string, error) {
 
 		trimmedLine := strings.Trim(line, " \n\t")
 		if strings.HasPrefix(trimmedLine, "/") {
-			args := strings.Split(trimmedLine, " ")
+			args, err := shellquote.Split(trimmedLine)
+			if err != nil {
+				continue
+			}
 			args[0] = strings.TrimPrefix(args[0], "/")
 			commands = append(commands, args)
 		}

@@ -32,6 +32,17 @@ var _ = Describe("Commands", func() {
 		Expect(actual).To(Equal(expect))
 	})
 
+	It("should parse command with string flag", func() {
+		input := "/test --arg1=\"hello world\" --args2 2"
+		expect := [][]string{
+			{"test", "--arg1=hello world", "--args2", "2"},
+		}
+
+		actual, err := plugins.ParseCommands(input)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(actual).To(Equal(expect))
+	})
+
 	It("should parse multiple commands", func() {
 		input := `/test --arg1=asdf 
 /cmd2 --test		
