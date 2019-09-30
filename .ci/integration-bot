@@ -72,6 +72,7 @@ key="$(cat $SOURCE_PATH/assets/tls.key)"
 
 GITHUB_APP_ID="$(/cc/utils/cli.py config attribute --cfg-type testmachinery --cfg-name $TESTMACHINERY_CONFIG_NAME --key bot.github.appID | base64 -w0)"
 GITHUB_KEY="$(/cc/utils/cli.py config attribute --cfg-type testmachinery --cfg-name $TESTMACHINERY_CONFIG_NAME --key bot.github.key | base64 -w0)"
+GITHUB_WEBHOOK_SECRET_TOKEN="$(/cc/utils/cli.py config attribute --cfg-type testmachinery --cfg-name $TESTMACHINERY_CONFIG_NAME --key bot.github.webhookSecretToken | tr -d '\n' | base64 -w0)"
 GITHUB_WEBHOOK_URL="$(/cc/utils/cli.py config attribute --cfg-type testmachinery --cfg-name $TESTMACHINERY_CONFIG_NAME --key bot.github.webhookUrl)"
 
 github_config=$($SOURCE_PATH/.ci/scripts/gh_config.py | base64 -w 0)
@@ -80,7 +81,7 @@ $SOURCE_PATH/.ci/scripts/pull_secrets.py > $pull_secrets_value_file_path
 
 
 bot_chart="$(helm template --namespace ${NAMESPACE} \
-  --set "secrets.github.appID=${GITHUB_APP_ID},secrets.github.key=${GITHUB_KEY},ingress.host=${GITHUB_WEBHOOK_URL},bot.verbosity=5,bot.tag=${VERSION},bot.tls.caBundle=${ca_bundle},bot.tls.crt=${crt},bot.tls.key=${key}" $SOURCE_PATH/charts/tm-bot)"
+  --set "secrets.github.appID=${GITHUB_APP_ID},secrets.github.key=${GITHUB_KEY},secrets.github.webhookSecretToken=${GITHUB_WEBHOOK_SECRET_TOKEN},ingress.host=${GITHUB_WEBHOOK_URL},bot.verbosity=5,bot.tag=${VERSION},bot.tls.caBundle=${ca_bundle},bot.tls.crt=${crt},bot.tls.key=${key}" $SOURCE_PATH/charts/tm-bot)"
 
 
 ################################
