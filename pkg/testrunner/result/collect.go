@@ -71,6 +71,9 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 				runLogger.Error(err, "missing github password / github user / component descriptor path argument")
 			}
 			components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+			if err != nil {
+				runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+			}
 
 			if component := components.Get(cfg.GithubComponentForStatus); component == nil {
 				runLogger.Error(err, "can't find component", "component", cfg.GithubComponentForStatus)
