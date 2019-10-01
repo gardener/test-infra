@@ -42,8 +42,8 @@ type Config struct {
 	// ComponentDescriptorPath path to the component descriptor file
 	ComponentDescriptorPath string
 
-	// GithubComponentForStatus indicates to upload the testrun status to the github component as an asset
-	GithubComponentForStatus string
+	// AssetComponent indicates to upload the testrun status to the github component as an asset
+	AssetComponent string
 
 	// GithubUser to allow getting a github client
 	GithubUser string

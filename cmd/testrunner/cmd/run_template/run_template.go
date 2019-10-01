@@ -149,6 +149,10 @@ func init() {
 	runCmd.Flags().StringVar(&collectConfig.S3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().BoolVar(&collectConfig.S3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
+	runCmd.Flags().StringVar(&collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "On error dir which is used by Concourse.")
+	runCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	runCmd.Flags().StringVar(&collectConfig.AssetComponent, "asset-component", "", "The github component to which the testrun status shall be attached as an asset.")
+	runCmd.Flags().BoolVar(&collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
 
 	// parameter flags
 	runCmd.Flags().StringVar(&shootParameters.TestrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
