@@ -146,7 +146,7 @@ type TestrunStatus struct {
 	Ingested         bool `json:"ingested"`
 
 	// UploadedToGithub states whether the status of a testrun is already uploaded to github component
-	UploadedToGithub bool `json:"uploadedToGithub"`
+	UploadedToGithub *bool `json:"uploadedToGithub"`
 }
 
 // StepStatus is the status of Testflow step

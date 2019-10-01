@@ -25,7 +25,7 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	md := run.Metadata
 	tableString := strings.Builder{}
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
-	statusOutput := fmt.Sprintf("Testrun: %s\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
+	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
 	filename := fmt.Sprintf("%s-%s-%s.txt", md.Landscape, md.CloudProvider, md.KubernetesVersion)
 	if err := ioutil.WriteFile(filename, []byte(statusOutput), 0644); err != nil {
 		return err
