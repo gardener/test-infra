@@ -62,12 +62,8 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	}
 	for _, releaseAsset := range releaseAssets {
 		if *releaseAsset.Name == filename {
-			response, err = githubClient.Repositories.DeleteReleaseAsset(context.Background(), repoOwner, repoName, *releaseAsset.ID)
-			if err != nil {
-				return err
-			} else if response.StatusCode != 204 {
-				return errors.New(fmt.Sprintf("Delete of github release asset %s failed with status code %d", *releaseAsset.Name, response.StatusCode))
-			}
+			// do not overwrite existing asset to ensure consistent reporting
+			return nil
 		}
 	}
 
