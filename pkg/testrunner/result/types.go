@@ -48,7 +48,10 @@ type Config struct {
 	// GithubUser to allow getting a github client
 	GithubUser string
 
-	GithubPassword string
+	GithubPassword    string
+
+	// UploadStatusAsset states whether the testrun status should be uploaded as a github release asset
+	UploadStatusAsset bool
 }
 
 type Collector struct {

@@ -66,8 +66,8 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		}
 
 		// upload testrun status to github component
-		if cfg.GithubComponentForStatus != "" {
-			if cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+		if cfg.UploadStatusAsset {
+			if cfg.GithubComponentForStatus == "" || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
 				runLogger.Error(err, "missing github password / github user / component descriptor path argument")
 			}
 			components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)

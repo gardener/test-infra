@@ -47,6 +47,7 @@ var (
 	componentDescriptorPath  string
 	githubUser               string
 	githubPassword           string
+	uploadStatusAsset        bool
 )
 
 // AddCommand adds run-testrun to a command.
@@ -63,15 +64,16 @@ var collectCmd = &cobra.Command{
 		logger.Log.Info("Start testmachinery testrunner")
 
 		collectConfig := result.Config{
-			OutputDir:               outputDirPath,
-			ESConfigName:            elasticSearchConfigName,
-			S3Endpoint:              s3Endpoint,
-			S3SSL:                   s3SSL,
-			ConcourseOnErrorDir:     concourseOnErrorDir,
-			ComponentDescriptorPath: componentDescriptorPath,
-			GithubUser:              githubUser,
-			GithubPassword:          githubPassword,
+			OutputDir:                outputDirPath,
+			ESConfigName:             elasticSearchConfigName,
+			S3Endpoint:               s3Endpoint,
+			S3SSL:                    s3SSL,
+			ConcourseOnErrorDir:      concourseOnErrorDir,
+			ComponentDescriptorPath:  componentDescriptorPath,
+			GithubUser:               githubUser,
+			GithubPassword:           githubPassword,
 			GithubComponentForStatus: githubComponentForStatus,
+			UploadStatusAsset:        uploadStatusAsset,
 		}
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
@@ -133,5 +135,6 @@ func init() {
 	collectCmd.Flags().StringVar(&githubUser, "github-user", os.Getenv("GITHUB_USER"), "Github user to e.g. upload assets to given release.")
 	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
 	collectCmd.Flags().StringVar(&githubComponentForStatus, "github-component-for-status", "", "The github component to which the testrun status shall be attached as an asset.")
+	collectCmd.Flags().BoolVar(&uploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
 
 }
