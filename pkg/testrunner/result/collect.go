@@ -52,42 +52,8 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 			continue
 		}
 
-		// ingest into eleasticsearch
-		if cfg.OutputDir != "" && cfg.ESConfigName != "" {
-			err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
-			if err != nil {
-				runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
-			} else {
-				err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
-				if err != nil {
-					runLogger.Error(err, "unable to ingest testrun")
-				}
-			}
-		}
-
-		// upload testrun status to github component
-		if cfg.UploadStatusAsset {
-			if cfg.GithubComponentForStatus == "" || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
-				runLogger.Error(err, "missing github password / github user / component descriptor path argument")
-			}
-			components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
-			if err != nil {
-				runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
-			}
-
-			if component := components.Get(cfg.GithubComponentForStatus); component == nil {
-				runLogger.Error(err, "can't find component", "component", cfg.GithubComponentForStatus)
-			} else {
-				if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword); err != nil {
-					runLogger.Error(err, "unable to attach testrun status to github component")
-				} else {
-					err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
-					if err != nil {
-						runLogger.Error(err, "unable to mark testrun status as uploaded to github")
-					}
-				}
-			}
-		}
+		c.ingestIntoElasticsearch(cfg, err, runLogger, tmClient, run)
+		c.uploadStatusAsset(cfg, runLogger, err, run, tmClient)
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			runLogger.Info("Testrun finished successfully")
@@ -102,6 +68,45 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 	c.fetchTelemetryResults()
 
 	return testrunsFailed, util.ReturnMultiError(result)
+}
+
+func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger logr.Logger, tmClient kubernetes.Interface, run *testrunner.Run) {
+	if cfg.OutputDir != "" && cfg.ESConfigName != "" {
+		err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
+		if err != nil {
+			runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
+		} else {
+			err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
+			if err != nil {
+				runLogger.Error(err, "unable to ingest testrun")
+			}
+		}
+	}
+}
+
+func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
+	if cfg.UploadStatusAsset {
+		if cfg.GithubComponentForStatus == "" || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+			runLogger.Error(err, "missing github password / github user / component descriptor path argument")
+		}
+		components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+		if err != nil {
+			runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+		}
+
+		if component := components.Get(cfg.GithubComponentForStatus); component == nil {
+			runLogger.Error(err, "can't find component", "component", cfg.GithubComponentForStatus)
+		} else {
+			if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword); err != nil {
+				runLogger.Error(err, "unable to attach testrun status to github component")
+			} else {
+				err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
+				if err != nil {
+					runLogger.Error(err, "unable to mark testrun status as uploaded to github")
+				}
+			}
+		}
+	}
 }
 
 func (c *Collector) fetchTelemetryResults() {
