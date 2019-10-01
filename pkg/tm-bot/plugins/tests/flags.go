@@ -86,7 +86,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 	if !flagset.Changed(hostprovider) && defaultConfig.HostProvider != nil {
 		t.config.HostProvider = *defaultConfig.HostProvider
 	}
-	if !flagset.Changed(hostprovider) && defaultConfig.BaseClusterCloudProvider != nil {
+	if !flagset.Changed(hostCloudprovider) && defaultConfig.BaseClusterCloudProvider != nil {
 		t.config.BaseClusterCloudprovider = *defaultConfig.BaseClusterCloudProvider
 	}
 	if !flagset.Changed(gardensetupRevision) && defaultConfig.GardenSetup != nil && defaultConfig.GardenSetup.Revision != nil {

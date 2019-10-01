@@ -19,9 +19,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 func NewClient(log logr.Logger, ghClient *github.Client, config map[string]json.RawMessage) (Client, error) {
@@ -51,30 +53,33 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 	if value.PRHead != nil && *value.PRHead {
 		pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
 		if err != nil {
-			return "", err
+			return "", pluginerr.New("unable to get pr", err.Error())
 		}
 		return pr.GetHead().GetSHA(), nil
 	}
 	if value.Path != nil {
 		pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
 		if err != nil {
-			return "", err
+			return "", pluginerr.New(fmt.Sprintf("unable to get pr for config in path %s", *value.Path), err.Error())
 		}
-		file, dir, _, err := c.client.Repositories.GetContents(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), *value.Path, &github.RepositoryContentGetOptions{Ref: pr.GetHead().GetSHA()})
+		file, dir, req, err := c.client.Repositories.GetContents(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), *value.Path, &github.RepositoryContentGetOptions{Ref: pr.GetHead().GetSHA()})
 		if err != nil {
-			return "", err
+			if req != nil && req.StatusCode == http.StatusNotFound {
+				return "nil", pluginerr.New(fmt.Sprintf("config path %s cannot be found in %s", *value.Path, pr.GetHead().GetSHA()), err.Error())
+			}
+			return "", pluginerr.New(fmt.Sprintf("unable to get config in path %s", *value.Path), err.Error())
 		}
 		if len(dir) != 0 {
-			return "", errors.New("config path is a directory not a file")
+			return "", pluginerr.New(fmt.Sprintf("config path %s is a directory not a file", *value.Path), "config path is a directory not a file")
 		}
 
 		content, err := file.GetContent()
 		if err != nil {
-			return "", err
+			return "", pluginerr.New(fmt.Sprintf("unable to get config in path %s", *value.Path), err.Error())
 		}
 		return content, nil
 	}
-	return "", errors.New("no value is defined")
+	return "", pluginerr.New("no value is defined", "no value is defined")
 }
 
 // UpdateComment edits specific comment and overwrites its message

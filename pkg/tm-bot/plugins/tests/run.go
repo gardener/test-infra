@@ -51,7 +51,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 
 	if err := _default.Validate(&t.config); err != nil {
-		return err
+		return pluginerr.New(err.Error(), "error while validating testrun")
 	}
 
 	tr, err := _default.Render(&t.config)
