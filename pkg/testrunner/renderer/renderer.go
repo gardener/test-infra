@@ -24,7 +24,7 @@ import (
 
 // AddBOMLocationsToTestrun adds component descriptor repositories as location to location sets
 func AddBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, components []*componentdescriptor.Component, useAsDefault bool) error {
-	if tr == nil || components == nil {
+	if tr == nil || len(components) == 0 {
 		return nil
 	}
 

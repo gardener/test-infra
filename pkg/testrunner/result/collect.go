@@ -52,7 +52,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		}
 
 		if c.config.OutputDir != "" && c.config.ESConfigName != "" {
-			err = IngestDir(runLogger, c.config.OutputDir, c.config.ESConfigName)
+			err = IngestDir(runLogger, cfg.OutputDir, c.config.ESConfigName)
 			if err != nil {
 				runLogger.Error(err, "cannot persist file", "file", c.config.OutputDir)
 			} else {
