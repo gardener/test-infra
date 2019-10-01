@@ -46,6 +46,11 @@ func (p *plugins) runPlugin(client github.Client, event *github.GenericRequestEv
 		return
 	}
 
+	if !client.IsAuthorized(plugin.Authorization(), event) {
+		p.log.V(3).Info("user not authorized", "user", event.GetAuthorName(), "plugin", plugin.Command())
+		return
+	}
+
 	p.initState(plugin, runID, event)
 
 	fs := plugin.Flags()

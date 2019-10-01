@@ -51,14 +51,14 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 		return *value.Value, nil
 	}
 	if value.PRHead != nil && *value.PRHead {
-		pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+		pr, err := c.getPullRequest(event)
 		if err != nil {
 			return "", pluginerr.New("unable to get pr", err.Error())
 		}
 		return pr.GetHead().GetSHA(), nil
 	}
 	if value.Path != nil {
-		pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+		pr, err := c.getPullRequest(event)
 		if err != nil {
 			return "", pluginerr.New(fmt.Sprintf("unable to get pr for config in path %s", *value.Path), err.Error())
 		}
@@ -108,7 +108,7 @@ func (c *client) Comment(event *GenericRequestEvent, message string) (int64, err
 
 // UpdateStatus updates the status check for a pull request
 func (c *client) UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error {
-	pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+	pr, err := c.getPullRequest(event)
 	if err != nil {
 		return err
 	}
@@ -123,18 +123,79 @@ func (c *client) UpdateStatus(event *GenericRequestEvent, state State, statusCon
 }
 
 // IsAuthorized checks if the author of the event is authorized to perform actions on the service
-func (c *client) IsAuthorized(event *GenericRequestEvent) bool {
+func (c *client) IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool {
 	if UserType(*event.Author.Type) == UserTypeBot {
 		return false
 	}
 
-	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.Repository.GetOwner().GetLogin())
+	if c.isOrgAdmin(event) {
+		return true
+	}
+
+	switch authorizationType {
+	case AuthorizationAll:
+		return true
+	case AuthorizationOrg:
+		return c.isInOrganization(event)
+	case AuthorizationTeam:
+		return c.isInRequestedTeam(event)
+	}
+	return false
+}
+
+// isOrgAdmin checks if the author is organization admin
+func (c *client) isOrgAdmin(event *GenericRequestEvent) bool {
+	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
 	if err != nil {
 		c.log.V(3).Info(err.Error())
 		return false
 	}
-	if *membership.State != "active" {
+	if MembershipStatus(membership.GetState()) != MembershipStatusActive {
+		return false
+	}
+	if MembershipRole(membership.GetRole()) == MembershipRoleAdmin {
+		return true
+	}
+	return false
+}
+
+// isInRequestedTeam checks if the author is in the organization
+func (c *client) isInOrganization(event *GenericRequestEvent) bool {
+	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
+	if err != nil {
+		c.log.V(3).Info(err.Error())
+		return false
+	}
+	if MembershipStatus(membership.GetState()) != MembershipStatusActive {
 		return false
 	}
 	return true
+}
+
+// isInRequestedTeam checks if the author is in the requested PR team
+func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
+	pr, err := c.getPullRequest(event)
+	if err != nil {
+		return false
+	}
+
+	for _, team := range pr.RequestedTeams {
+		membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), team.GetID(), event.GetAuthorName())
+		if err != nil {
+			c.log.V(3).Info(err.Error(), "team", team.GetName())
+			return false
+		}
+		if MembershipStatus(membership.GetState()) != MembershipStatusActive {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *client) getPullRequest(event *GenericRequestEvent) (*github.PullRequest, error) {
+	pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
 }

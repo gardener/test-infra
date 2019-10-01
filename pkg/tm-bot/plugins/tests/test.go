@@ -17,6 +17,7 @@ package tests
 import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/go-logr/logr"
 	"time"
@@ -57,6 +58,10 @@ func (t *test) New(runID string) plugins.Plugin {
 
 func (t *test) Command() string {
 	return "test"
+}
+
+func (_ *test) Authorization() github.AuthorizationType {
+	return github.AuthorizationOrg
 }
 
 func (t *test) Description() string {

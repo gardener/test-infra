@@ -115,12 +115,6 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 		return
 	}
 
-	if !client.IsAuthorized(event) {
-		h.log.V(3).Info("user not authorized", "user", event.GetAuthorName())
-		http.Error(w, "unauthorized user", http.StatusUnauthorized)
-		return
-	}
-
 	if err := plugins.HandleRequest(client, event); err != nil {
 		h.log.Error(err, "")
 		http.Error(w, "unable to handle request", http.StatusInternalServerError)

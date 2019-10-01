@@ -56,6 +56,10 @@ func (_ *xkcd) Command() string {
 	return "xkcd"
 }
 
+func (_ *xkcd) Authorization() github.AuthorizationType {
+	return github.AuthorizationAll
+}
+
 func (_ *xkcd) Description() string {
 	return "Adds an random image of xkcd"
 }

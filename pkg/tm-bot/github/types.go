@@ -27,7 +27,7 @@ type Manager interface {
 
 // Client is the github client interface
 type Client interface {
-	IsAuthorized(event *GenericRequestEvent) bool
+	IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool
 
 	GetConfig(name string) (json.RawMessage, error)
 	ResolveConfigValue(event *GenericRequestEvent, value *ghval.GitHubValue) (string, error)
@@ -63,6 +63,15 @@ type client struct {
 	client *github.Client
 }
 
+// AuthorizationType represents the usergroup that is allowed to do the action
+type AuthorizationType string
+
+const (
+	AuthorizationAll  AuthorizationType = "all"
+	AuthorizationOrg  AuthorizationType = "org"
+	AuthorizationTeam AuthorizationType = "team"
+)
+
 // EventActionType represents the action type of a github event
 type EventActionType string
 
@@ -89,4 +98,20 @@ const (
 	StateFailure State = "failure"
 	StatePending State = "pending"
 	StateSuccess State = "success"
+)
+
+// MembershipRole represents the membership role of organizations and teams
+type MembershipRole string
+
+const (
+	MembershipRoleAdmin      MembershipRole = "admin"
+	MembershipRoleMember     MembershipRole = "member"
+	MembershipRoleMaintainer MembershipRole = "maintainer"
+)
+
+// MembershipStatus represents the current membership status of a user
+type MembershipStatus string
+
+const (
+	MembershipStatusActive MembershipStatus = "active"
 )
