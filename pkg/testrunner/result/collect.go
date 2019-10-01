@@ -85,7 +85,8 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger log
 }
 
 func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
-	if cfg.UploadStatusAsset {
+	// upload asset only if testrun was successful
+	if cfg.UploadStatusAsset && run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 		if cfg.AssetComponent == "" || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
 			runLogger.Error(err, "missing github password / github user / component descriptor path argument")
 		}
