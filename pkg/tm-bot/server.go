@@ -102,7 +102,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")
 	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
-	flagset.StringVar(&repoConfigFile, "config-file-path", ".ci/tm-bot", "Path the bot configuration in the repository")
+	flagset.StringVar(&repoConfigFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
 
 	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
 }

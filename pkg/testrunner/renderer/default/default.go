@@ -76,7 +76,7 @@ type ShootsConfig struct {
 	// Kubernetes versions to test
 	KubernetesVersions []string
 
-	// Cloiudproviders to test
+	// Cloudproviders to test
 	CloudProviders []gardenv1beta1.CloudProvider
 }
 
