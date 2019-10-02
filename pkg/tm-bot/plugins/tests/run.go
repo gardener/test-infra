@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/ghodss/yaml"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,7 +71,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 
 	tr.GenerateName = fmt.Sprintf("bot-%s-", t.Command())
-	tr, updater, err := CreateTestrun(logger, ctx, t.k8sClient, client, event, tr)
+	tr, updater, err := tests.CreateTestrun(logger, ctx, t.k8sClient, client, event, tr)
 	if err != nil {
 		return err
 	}
@@ -78,14 +79,14 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	var state interface{} = State{
 		TestrunID: tr.Name,
 		Namespace: tr.Namespace,
-		CommentID: updater.commentID,
+		CommentID: updater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
 	if err := plugins.Plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
 		logger.Error(err, "unable to persist state")
 	}
 
-	_, err = Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
+	_, err = tests.Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
@@ -109,9 +110,9 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 			Namespace: state.Namespace,
 		},
 	}
-	updater := NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
+	updater := tests.NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
 
-	_, err := Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
+	_, err := tests.Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}

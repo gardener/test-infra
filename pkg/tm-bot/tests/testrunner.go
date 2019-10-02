@@ -18,13 +18,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
-	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -33,15 +33,11 @@ import (
 func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, ghClient github.Client, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) (*tmv1beta1.Testrun, *StatusUpdater, error) {
 	err := k8sClient.Client().Create(ctx, tr)
 	if err != nil {
-		return nil, nil, trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
+		return nil, nil, pluginerr.New("unable to create testrun", err.Error())
 	}
 	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
 
 	statusUpdater := NewStatusUpdater(log, ghClient, event)
-	argoUrl, err := testrunner.GetArgoURL(k8sClient, tr)
-	if err == nil {
-		log.WithValues("testrun", tr.Name).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
-	}
 
 	if err := statusUpdater.Init(tr); err != nil {
 		log.Error(err, "unable to create comment", "testrun", tr.Name)
@@ -52,8 +48,8 @@ func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.In
 
 func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, statusUpdater *StatusUpdater, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
 	argoUrl, err := testrunner.GetArgoURL(k8sClient, tr)
-	if err == nil {
-		log.WithValues("testrun", tr.Name).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
+	if err != nil {
+		log.WithValues("testrun", tr.Name).Error(err, "unable to construct argourl")
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
@@ -82,7 +78,10 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		return nil, trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %s is exceeded by Testrun %s", maxWaitTime.String(), tr.Name))
+		if err := statusUpdater.UpdateStatus(github.StateFailure, "timeout"); err != nil {
+			log.Error(err, "unable to update comment", "testrun", tr.Name)
+		}
+		return nil, pluginerr.New(fmt.Sprintf("maximum wait time of %s is exceeded", maxWaitTime.String()), "")
 	}
 	return tr, nil
 }

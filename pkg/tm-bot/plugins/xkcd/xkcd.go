@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"math/rand"
@@ -81,11 +82,11 @@ func (x *xkcd) Flags() *pflag.FlagSet {
 func (x *xkcd) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
 	max, err := x.getCurrentMax()
 	if err != nil {
-		return err
+		return pluginerr.New("unable to get maximum xkcd number", err.Error())
 	}
 	if flagset.Changed("num") {
 		if x.num > max {
-			return fmt.Errorf("xkcd %d does not exist. The maximum number is currently %d", x.num, max)
+			return pluginerr.New(fmt.Sprintf("xkcd %d does not exist. The maximum number is currently %d", x.num, max), "")
 		}
 	} else {
 		x.num = rand.Intn(max)

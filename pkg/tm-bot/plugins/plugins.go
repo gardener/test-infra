@@ -83,6 +83,7 @@ type State struct {
 // Register registers a plugin with its command to be executed on a event
 func Register(plugin Plugin) {
 	Plugins.registered[plugin.Command()] = plugin
+	Plugins.log.Info("registered plugin", "name", plugin.Command())
 }
 
 // Setup sets up the plugins with a logger and a persistent storage
