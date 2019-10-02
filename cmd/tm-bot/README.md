@@ -52,7 +52,7 @@ Flags: --num int
 ```
 
 #### skip
-Skipped all required testmachinery github status by setting it to success with the description `skipped`.
+Skips all required testmachinery github status by setting it to success with the description `skipped`.
 ```
 Command: skip
 ```
