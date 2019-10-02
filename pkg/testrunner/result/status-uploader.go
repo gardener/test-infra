@@ -10,9 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -28,13 +26,6 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
 	filename := fmt.Sprintf("%s%s-%s-%s.txt", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
-	if err := ioutil.WriteFile(filename, []byte(statusOutput), 0644); err != nil {
-		return err
-	}
-	file, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
 
 	repoURL, err := url.Parse(fmt.Sprintf("https://%s", component.Name))
 	if err != nil {
@@ -46,34 +37,55 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 		return err
 	}
 
-	// get github release
 	release, err := getRelease(githubClient, repoOwner, repoName, component.Version)
 	if err != nil {
 		return err
 	}
 
-	// check if asset exists and delete if so
-	releaseAssets, response, err := githubClient.Repositories.ListReleaseAssets(context.Background(), repoOwner, repoName, *release.ID, &github.ListOptions{Page: 1, PerPage: 200})
+	assetExists, err := assetWithNameExists(githubClient, *release.ID, repoOwner, repoName, filename)
 	if err != nil {
 		return err
+	}
+	if assetExists {
+		// do not overwrite existing asset to ensure consistent reporting
+		return nil
+	}
+
+	if err = uploadAsset(githubClient, *release.ID, repoOwner, repoName, filename, statusOutput); err != nil {
+		return err
+	}
+	return nil
+}
+
+func assetWithNameExists(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename string) (bool, error) {
+	releaseAssets, response, err := githubClient.Repositories.ListReleaseAssets(context.Background(), repoOwner, repoName, releaseID, &github.ListOptions{})
+	if err != nil {
+		return false, err
 	} else if response.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
+		return false, errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
 	}
 	for _, releaseAsset := range releaseAssets {
 		if *releaseAsset.Name == filename {
-			// do not overwrite existing asset to ensure consistent reporting
-			return nil
+			return true, nil
 		}
 	}
+	return false, nil
+}
 
-	// upload new asset
-	_, response, err = githubClient.Repositories.UploadReleaseAsset(context.Background(), repoOwner, repoName, *release.ID, &github.UploadOptions{Name: filename,}, file)
+func uploadAsset(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename, statusOutput string) error {
+	uploadUrl := fmt.Sprintf("repos/%s/%s/releases/%d/assets?name=%s", repoOwner, repoName, releaseID, filename)
+	mediaType := "text/plain; charset=utf-8"
+	request, err := githubClient.NewUploadRequest(uploadUrl, strings.NewReader(statusOutput), int64(len(statusOutput)), mediaType)
 	if err != nil {
 		return err
-	} else if response.StatusCode != 201 {
-		return errors.New(fmt.Sprintf("Failed to create a github asset with status code %d", response.StatusCode))
 	}
-	return nil
+	asset := new(github.ReleaseAsset)
+	response, err := githubClient.Do(context.Background(), request, asset)
+	if err != nil {
+		return err
+	} else if response.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
+	}
 }
 
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
