@@ -21,6 +21,6 @@ const (
 // Repositories
 const (
 	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo = "https://github.com/schrodit/garden-setup.git"
+	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
 	GardenerRepo    = "https://github.com/gardener/gardener.git"
 )
