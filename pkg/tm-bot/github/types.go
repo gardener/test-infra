@@ -51,16 +51,20 @@ type manager struct {
 	log        logr.Logger
 	configFile string
 
-	apiURL  string
-	appId   int
-	keyFile string
-	clients map[int64]*github.Client
+	apiURL      string
+	appId       int
+	keyFile     string
+	clients     map[int64]*github.Client
+	defaultTeam string
 }
 
 type client struct {
 	log    logr.Logger
 	config map[string]json.RawMessage
 	client *github.Client
+
+	owner       string
+	defaultTeam *github.Team
 }
 
 // AuthorizationType represents the usergroup that is allowed to do the action

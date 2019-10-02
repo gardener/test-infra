@@ -31,11 +31,12 @@ var (
 	serverCertFile string
 	serverKeyFile  string
 
-	githubApiURL       string
-	githubAppID        int
-	githubKeyFile      string
-	webhookSecretToken string
-	repoConfigFile     string
+	githubApiURL          string
+	githubAppID           int
+	githubKeyFile         string
+	webhookSecretToken    string
+	repoConfigFile        string
+	githubDefaultTeamName string
 
 	kubeconfigPath string
 )
@@ -103,6 +104,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
 	flagset.StringVar(&repoConfigFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
+	flagset.StringVar(&githubDefaultTeamName, "github-default-team", "", "Slug name of the default team to grant access")
 
 	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
 }

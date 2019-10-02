@@ -22,6 +22,7 @@ bot:
   imagePullSecretName: ""
 
   configFilePath: ""
+  defaultTeamName: "core"
   verbosity: 2
 
   serviceAccountName: tm-bot

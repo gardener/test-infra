@@ -26,7 +26,7 @@ import (
 	"github.com/google/go-github/v27/github"
 )
 
-func NewManager(log logr.Logger, apiURL string, appID int, keyFile, configFile string) (Manager, error) {
+func NewManager(log logr.Logger, apiURL string, appID int, keyFile, configFile, defaultTeam string) (Manager, error) {
 	return &manager{
 		log:        log,
 		configFile: configFile,
@@ -48,7 +48,7 @@ func (m *manager) GetClient(event *GenericRequestEvent) (Client, error) {
 		return nil, err
 	}
 
-	return NewClient(m.log, ghClient, config)
+	return NewClient(m.log, ghClient, event.GetOwnerName(), m.defaultTeam, config)
 }
 
 func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map[string]json.RawMessage, error) {

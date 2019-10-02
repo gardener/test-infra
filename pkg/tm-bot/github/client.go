@@ -26,11 +26,19 @@ import (
 	"net/http"
 )
 
-func NewClient(log logr.Logger, ghClient *github.Client, config map[string]json.RawMessage) (Client, error) {
+func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
+
+	team, _, err := ghClient.Teams.GetTeamBySlug(context.TODO(), owner, defaultTeamName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
-		log:    log,
-		config: config,
-		client: ghClient,
+		log:         log,
+		config:      config,
+		client:      ghClient,
+		owner:       owner,
+		defaultTeam: team,
 	}, nil
 }
 
@@ -128,10 +136,6 @@ func (c *client) IsAuthorized(authorizationType AuthorizationType, event *Generi
 		return false
 	}
 
-	if c.isOrgAdmin(event) {
-		return true
-	}
-
 	switch authorizationType {
 	case AuthorizationAll:
 		return true
@@ -176,6 +180,19 @@ func (c *client) isInOrganization(event *GenericRequestEvent) bool {
 func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
 	pr, err := c.getPullRequest(event)
 	if err != nil {
+		return false
+	}
+
+	// use default team if there is no requested team
+	if len(pr.RequestedTeams) == 0 {
+		membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), c.defaultTeam.GetID(), event.GetAuthorName())
+		if err != nil {
+			c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
+			return false
+		}
+		if MembershipStatus(membership.GetState()) != MembershipStatusActive {
+			return true
+		}
 		return false
 	}
 
