@@ -159,7 +159,7 @@ func (c *client) isOrgAdmin(event *GenericRequestEvent) bool {
 	return false
 }
 
-// isInRequestedTeam checks if the author is in the organization
+// isInOrganization checks if the author is in the organization
 func (c *client) isInOrganization(event *GenericRequestEvent) bool {
 	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
 	if err != nil {
