@@ -31,14 +31,9 @@ type Plugin interface {
 	// Command returns the unique matching command for the plugin
 	Command() string
 
-	// Flags return command line style flags for the command
-	Flags() *pflag.FlagSet
-
-	// Run runs the command with the parsed flags (flag.Parse()) and the event that triggered the command
-	Run(fs *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error
-
-	// resume the plugin execution from a persisted state
-	ResumeFromState(client github.Client, event *github.GenericRequestEvent, state string) error
+	// Authorization returns the authorization type of the plugin.
+	// Defines who is allowed to call the plugin
+	Authorization() github.AuthorizationType
 
 	// Description returns a short description of the plugin
 	Description() string
@@ -46,8 +41,17 @@ type Plugin interface {
 	// Example returns an example for the command
 	Example() string
 
+	// Flags return command line style flags for the command
+	Flags() *pflag.FlagSet
+
 	// Create a deep copy of the plugin
 	New(runID string) Plugin
+
+	// Run runs the command with the parsed flags (flag.Parse()) and the event that triggered the command
+	Run(fs *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error
+
+	// resume the plugin execution from a persisted state
+	ResumeFromState(client github.Client, event *github.GenericRequestEvent, state string) error
 }
 
 // Persistence describes the interface for persisting plugin states
@@ -79,6 +83,7 @@ type State struct {
 // Register registers a plugin with its command to be executed on a event
 func Register(plugin Plugin) {
 	Plugins.registered[plugin.Command()] = plugin
+	Plugins.log.Info("registered plugin", "name", plugin.Command())
 }
 
 // Setup sets up the plugins with a logger and a persistent storage

@@ -51,6 +51,12 @@ Command: xkcd
 Flags: --num int
 ```
 
+#### skip
+Skips all required testmachinery github status by setting it to success with the description `skipped`.
+```
+Command: skip
+```
+
 #### test
 Runs a default testrun with the given default configuration and provided flags.<br>
 Detailed testrun information can be found [here](../../docs/tests/gardener-default.md).
@@ -75,6 +81,7 @@ Usage:
       --namespace string                   Testrun namespace (default "default")
       --project-namespace string           Specify the shoot namespace where the shoots should be created (default "garden-core")
 ```
+
 
 **Default Configuration**<br>
 Note: all values are optional and can be manually overwritten by specifying the according flag.

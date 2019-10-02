@@ -18,6 +18,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/skip"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
 	"github.com/pkg/errors"
@@ -52,6 +53,7 @@ func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sC
 	plugins.Register(xkcdPlugin)
 
 	plugins.Register(tests.New(log, k8sClient))
+	plugins.Register(skip.New(log))
 
 	if err := plugins.ResumePlugins(ghMgr); err != nil {
 		return nil, errors.Wrap(err, "unable to resume running plugins")
@@ -112,12 +114,6 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 	if err != nil {
 		h.log.Error(err, "unable to build client", "user", event.GetAuthorName())
 		http.Error(w, "internal error", http.StatusUnauthorized)
-		return
-	}
-
-	if !client.IsAuthorized(event) {
-		h.log.V(3).Info("user not authorized", "user", event.GetAuthorName())
-		http.Error(w, "unauthorized user", http.StatusUnauthorized)
 		return
 	}
 

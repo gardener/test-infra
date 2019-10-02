@@ -46,6 +46,11 @@ func (p *plugins) runPlugin(client github.Client, event *github.GenericRequestEv
 		return
 	}
 
+	if !client.IsAuthorized(plugin.Authorization(), event) {
+		p.log.V(3).Info("user not authorized", "user", event.GetAuthorName(), "plugin", plugin.Command())
+		return
+	}
+
 	p.initState(plugin, runID, event)
 
 	fs := plugin.Flags()
@@ -93,6 +98,12 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 // Error responds to the client if an error occurs
 func (p *plugins) Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
 	p.log.Error(err, err.Error())
+	switch err.(type) {
+	case *pluginerr.PluginError:
+		break
+	default:
+		return nil
+	}
 
 	if plugin != nil {
 		_, err := client.Comment(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))

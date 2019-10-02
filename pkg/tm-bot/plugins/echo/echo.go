@@ -34,15 +34,19 @@ func (e *echo) New(runID string) plugins.Plugin {
 	return &echo{runID: runID}
 }
 
-func (e *echo) Command() string {
+func (_ *echo) Command() string {
 	return "echo"
 }
 
-func (e *echo) Description() string {
+func (_ *echo) Authorization() github.AuthorizationType {
+	return github.AuthorizationAll
+}
+
+func (_ *echo) Description() string {
 	return "Prints the provided value"
 }
 
-func (e *echo) Example() string {
+func (_ *echo) Example() string {
 	return "/echo --val \"text to echo\""
 }
 

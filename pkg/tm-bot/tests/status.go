@@ -87,29 +87,49 @@ func (u *StatusUpdater) GetCommentID() int64 {
 	return u.commentID
 }
 
+// Update updates the comment and the github state of the current PR
 func (u *StatusUpdater) Update(tr *tmv1beta1.Testrun, argoUrl string) error {
-
 	comment := FormatStatus(tr, argoUrl)
+	if err := u.UpdateComment(comment); err != nil {
+		return err
+	}
+
+	state := GitHubState[tr.Status.Phase]
+	if err := u.UpdateStatus(state, tr.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateComment updates the current comment of the status updater
+func (u *StatusUpdater) UpdateComment(comment string) error {
+	if u.commentID == 0 {
+		return nil
+	}
 	h := sha1.New()
 	h.Write([]byte(comment))
 	commentHash := h.Sum([]byte{})
 
 	if bytes.Compare(commentHash, u.lastCommentHash) != 0 {
-		if err := u.client.UpdateComment(u.event, u.commentID, FormatStatus(tr, argoUrl)); err != nil {
+		if err := u.client.UpdateComment(u.event, u.commentID, comment); err != nil {
 			return err
 		}
 		u.log.V(3).Info("updated status comment")
 		u.lastCommentHash = commentHash
 	}
-	state := GitHubState[tr.Status.Phase]
+	return nil
+}
+
+// UpdateStatus updates the GitHub status of the current PR
+func (u *StatusUpdater) UpdateStatus(state github.State, description string) error {
 	if state != u.lastState {
-		if err := u.client.UpdateStatus(u.event, state, githubContext, tr.Name); err != nil {
+		if err := u.client.UpdateStatus(u.event, state, githubContext, description); err != nil {
 			return err
 		}
 		u.log.V(3).Info("updated commit status")
 		u.lastState = state
 	}
-
 	return nil
 }
 
