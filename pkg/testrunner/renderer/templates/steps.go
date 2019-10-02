@@ -16,6 +16,7 @@ package templates
 
 import (
 	"fmt"
+	"strconv"
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -45,17 +46,15 @@ func GetStepReleaseHost(provider hostscheduler.Provider, dependencies []string, 
 		Definition: v1beta1.StepDefinition{
 			Name:        fmt.Sprintf("tm-scheduler-release-%s", provider),
 			LocationSet: &TestInfraLocationName,
+			Config: []v1beta1.ConfigElement{
+				{
+					Type:  v1beta1.ConfigTypeEnv,
+					Name:  "CLEAN",
+					Value: strconv.FormatBool(clean),
+				},
+			},
 		},
 		DependsOn: dependencies,
-	}
-	if clean {
-		step.Definition.Config = []v1beta1.ConfigElement{
-			{
-				Type:  v1beta1.ConfigTypeEnv,
-				Name:  "CLEAN",
-				Value: "true",
-			},
-		}
 	}
 	return step
 }
