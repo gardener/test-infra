@@ -3,6 +3,7 @@ package result
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
@@ -20,13 +21,13 @@ import (
 )
 
 // uploads status results as asset to the component
-func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword string) error {
+func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	tr := run.Testrun
 	md := run.Metadata
 	tableString := strings.Builder{}
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
-	filename := fmt.Sprintf("%s-%s-%s.txt", md.Landscape, md.CloudProvider, md.KubernetesVersion)
+	filename := fmt.Sprintf("%s%s-%s-%s.txt", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
 	if err := ioutil.WriteFile(filename, []byte(statusOutput), 0644); err != nil {
 		return err
 	}
@@ -46,11 +47,9 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	}
 
 	// get github release
-	release, response, err := githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, component.Version)
+	release, err := getRelease(githubClient, repoOwner, repoName, component.Version)
 	if err != nil {
 		return err
-	} else if response.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Github release GET failed with status code %d", response.StatusCode))
 	}
 
 	// check if asset exists and delete if so
@@ -77,6 +76,44 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	return nil
 }
 
+func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
+	version, err := semver.NewVersion(componentVersion)
+	if err != nil {
+		return nil, err
+	}
+	var foundRelease *github.RepositoryRelease
+	var releases []*github.RepositoryRelease
+	var response *github.Response
+	draft := version.Prerelease() != "" // assumption is that draft versions have always a prerelease e.g. 0.100.0-dev-s5d4f6sdf45s65df4sdf4s4sf
+	if !draft {
+		foundRelease, response, err = githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, componentVersion)
+		if err != nil {
+			return nil, err
+		} else if response.StatusCode != 200 {
+			return nil, errors.New(fmt.Sprintf("Github foundRelease GET failed with status code %d", response.StatusCode))
+		}
+	} else {
+		releaseName, err := version.SetPrerelease("")
+		if err != nil {
+			return nil, err
+		}
+		var opt *github.ListOptions
+		releases, response, err = githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, opt)
+		if err != nil {
+			return nil, err
+		} else if response.StatusCode != 200 {
+			return nil, errors.New(fmt.Sprintf("Github releases GET failed with status code %d", response.StatusCode))
+		}
+		for _, release := range releases {
+			if *release.Draft && *release.Name == releaseName.String() {
+				foundRelease = release
+				break
+			}
+		}
+	}
+	return foundRelease, nil
+}
+
 func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*github.Client, error) {
 	var apiURL, uploadURL string
 	if repoURL.Hostname() == "github.com" {
@@ -98,7 +135,8 @@ func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interfa
 	ctx := context.Background()
 	defer ctx.Done()
 
-	tr.Status.UploadedToGithub = true
+	enabled := true
+	tr.Status.UploadedToGithub = &enabled
 	err := tmClient.Client().Update(ctx, tr)
 	if err != nil {
 		return fmt.Errorf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
