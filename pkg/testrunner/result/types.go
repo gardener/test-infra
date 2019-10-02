@@ -42,16 +42,19 @@ type Config struct {
 	// ComponentDescriptorPath path to the component descriptor file
 	ComponentDescriptorPath string
 
-	// AssetComponent indicates to upload the testrun status to the github component as an asset
-	AssetComponent string
+	// AssetComponents indicates to upload the testrun status to the github component as an asset
+	AssetComponents []string
 
 	// GithubUser to allow getting a github client
 	GithubUser string
 
-	GithubPassword    string
+	GithubPassword string
 
 	// UploadStatusAsset states whether the testrun status should be uploaded as a github release asset
 	UploadStatusAsset bool
+
+	// AssetPrefix defines the asset name prefix
+	AssetPrefix       string
 }
 
 type Collector struct {

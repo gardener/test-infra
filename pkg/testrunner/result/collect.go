@@ -87,24 +87,33 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger log
 func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
 	// upload asset only if testrun was successful
 	if cfg.UploadStatusAsset && run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-		if cfg.AssetComponent == "" || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+		if len(cfg.AssetComponents)  == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
 			runLogger.Error(err, "missing github password / github user / component descriptor path argument")
 		}
-		components, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+		componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
 		if err != nil {
 			runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
 		}
 
-		if component := components.Get(cfg.AssetComponent); component == nil {
-			runLogger.Error(err, "can't find component", "component", cfg.AssetComponent)
-		} else {
+		var componentsForUpload []*componentdescriptor.Component
+		for _, componentName := range cfg.AssetComponents {
+			if component := componentsFromFile.Get(componentName); component == nil {
+				runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
+			} else {
+				componentsForUpload = append(componentsForUpload, component)
+			}
+		}
+		assetUploadSuccessful := true
+		for _, component := range componentsForUpload {
 			if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword); err != nil {
 				runLogger.Error(err, "unable to attach testrun status to github component")
-			} else {
-				err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
-				if err != nil {
-					runLogger.Error(err, "unable to mark testrun status as uploaded to github")
-				}
+				assetUploadSuccessful = false
+			}
+		}
+		if assetUploadSuccessful {
+			err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
+			if err != nil {
+				runLogger.Error(err, "unable to mark testrun status as uploaded to github")
 			}
 		}
 	}
