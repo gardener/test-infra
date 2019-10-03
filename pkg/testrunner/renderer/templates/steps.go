@@ -16,6 +16,7 @@ package templates
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
 	"strconv"
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -26,6 +27,9 @@ import (
 func GetStepLockHost(provider hostscheduler.Provider, cloudprovider gardenv1beta1.CloudProvider) v1beta1.DAGStep {
 	return v1beta1.DAGStep{
 		Name: "prepare-host",
+		Annotations: map[string]string{
+			common.AnnotationSystemStep: "true",
+		},
 		Definition: v1beta1.StepDefinition{
 			Name:        fmt.Sprintf("tm-scheduler-lock-%s", provider),
 			LocationSet: &TestInfraLocationName,
@@ -43,6 +47,9 @@ func GetStepLockHost(provider hostscheduler.Provider, cloudprovider gardenv1beta
 func GetStepReleaseHost(provider hostscheduler.Provider, dependencies []string, clean bool) v1beta1.DAGStep {
 	step := v1beta1.DAGStep{
 		Name: "release-host",
+		Annotations: map[string]string{
+			common.AnnotationSystemStep: "true",
+		},
 		Definition: v1beta1.StepDefinition{
 			Name:        fmt.Sprintf("tm-scheduler-release-%s", provider),
 			LocationSet: &TestInfraLocationName,

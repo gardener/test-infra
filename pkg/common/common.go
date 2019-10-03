@@ -15,6 +15,11 @@
 package common
 
 const (
+	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
+)
+
+// images
+const (
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
 )
 

@@ -94,7 +94,7 @@ func (u *StatusUpdater) Update(tr *tmv1beta1.Testrun, argoUrl string) error {
 		return err
 	}
 
-	state := GitHubState[tr.Status.Phase]
+	state := GitHubState[util.TestrunStatusPhase(tr)]
 	if err := u.UpdateStatus(state, tr.Name); err != nil {
 		return err
 	}
@@ -159,5 +159,5 @@ Phase: %s
 %s
 </pre>
 `
-	return fmt.Sprintf(format, tr.Name, argo, tr.Status.Phase, statusTable.String())
+	return fmt.Sprintf(format, tr.Name, argo, util.TestrunStatusPhase(tr), statusTable.String())
 }
