@@ -38,6 +38,7 @@ Example usage:
 | E2E_KUBECONFIG_PATH | kubeconfig | $E2E_EXPORT_PATH/shoot.config | File path of kubeconfig file |
 | - | debug | false | Runs application in debug mode |
 | - | testcase |  | List of explicit testcases to test. If used, `TESTCASE_GROUPS` and `TESTCASE_GROUPS` are ignored.  |
+| - | cleanUpAfterwards | false | Removes downloaded or existings kubernetes files to reduce memory footprint. |
 
 ### Description Files
 Example:
