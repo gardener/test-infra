@@ -86,6 +86,7 @@ func uploadAsset(githubClient *github.Client, releaseID int64, repoOwner, repoNa
 	} else if response.StatusCode != 200 {
 		return errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
 	}
+	return nil
 }
 
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
