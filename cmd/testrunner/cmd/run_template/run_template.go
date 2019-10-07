@@ -44,8 +44,6 @@ var (
 
 	timeout  int64
 	interval int64
-
-	componentsListString string
 )
 
 // AddCommand adds run-testrun to a command.

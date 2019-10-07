@@ -85,7 +85,6 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger log
 }
 
 func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
-	// upload asset only if testrun was successful
 	if !cfg.UploadStatusAsset {
 		return
 	}
