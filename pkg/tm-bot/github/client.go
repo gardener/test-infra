@@ -42,6 +42,11 @@ func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName 
 	}, nil
 }
 
+// Client returns the current github client
+func (c *client) Client() *github.Client {
+	return c.client
+}
+
 // GetConfig returns the repository configuration for a specific command
 func (c *client) GetConfig(name string) (json.RawMessage, error) {
 	config, ok := c.config[name]
@@ -59,14 +64,14 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 		return *value.Value, nil
 	}
 	if value.PRHead != nil && *value.PRHead {
-		pr, err := c.getPullRequest(event)
+		pr, err := c.GetPullRequest(event)
 		if err != nil {
 			return "", pluginerr.New("unable to get pr", err.Error())
 		}
 		return pr.GetHead().GetSHA(), nil
 	}
 	if value.Path != nil {
-		pr, err := c.getPullRequest(event)
+		pr, err := c.GetPullRequest(event)
 		if err != nil {
 			return "", pluginerr.New(fmt.Sprintf("unable to get pr for config in path %s", *value.Path), err.Error())
 		}
@@ -116,7 +121,7 @@ func (c *client) Comment(event *GenericRequestEvent, message string) (int64, err
 
 // UpdateStatus updates the status check for a pull request
 func (c *client) UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error {
-	pr, err := c.getPullRequest(event)
+	pr, err := c.GetPullRequest(event)
 	if err != nil {
 		return err
 	}
@@ -178,7 +183,7 @@ func (c *client) isInOrganization(event *GenericRequestEvent) bool {
 
 // isInRequestedTeam checks if the author is in the requested PR team
 func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
-	pr, err := c.getPullRequest(event)
+	pr, err := c.GetPullRequest(event)
 	if err != nil {
 		return false
 	}
@@ -209,10 +214,20 @@ func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
 	return false
 }
 
-func (c *client) getPullRequest(event *GenericRequestEvent) (*github.PullRequest, error) {
+// GetPullRequest fetches the pull request for a event
+func (c *client) GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error) {
 	pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
 	if err != nil {
 		return nil, err
 	}
 	return pr, nil
+}
+
+// GetPullRequest fetches the issue for a event
+func (c *client) GetIssue(event *GenericRequestEvent) (*github.Issue, error) {
+	issue, _, err := c.client.Issues.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
 }
