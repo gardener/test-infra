@@ -27,6 +27,11 @@ type Manager interface {
 
 // Client is the github client interface
 type Client interface {
+	Client() *github.Client
+
+	GetIssue(event *GenericRequestEvent) (*github.Issue, error)
+	GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error)
+
 	IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool
 
 	GetConfig(name string) (json.RawMessage, error)
@@ -35,6 +40,8 @@ type Client interface {
 	UpdateComment(event *GenericRequestEvent, commentID int64, message string) error
 	Comment(event *GenericRequestEvent, message string) (int64, error)
 	UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error
+
+
 }
 
 // GenericRequestEvent is the generic request from github triggering the tm bot

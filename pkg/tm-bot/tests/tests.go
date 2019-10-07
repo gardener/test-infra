@@ -1,0 +1,58 @@
+// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package tests
+
+import (
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/pkg/errors"
+	"sync"
+)
+
+var runs = struct {
+	m sync.Mutex
+	tests map[int]*run
+}{
+	m: sync.Mutex{},
+	tests: make(map[int]*run),
+}
+
+type run struct {
+	testrun v1beta1.Testrun
+	event *github.GenericRequestEvent
+}
+
+func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
+	runs.m.Lock()
+	defer runs.m.Unlock()
+
+	if runs.tests[event.Number] != nil {
+		return errors.New("A test is already running for this PR.")
+	}
+
+	runs.tests[event.Number] = &run{
+		testrun: tr,
+		event: event,
+	}
+
+	return nil
+}
+
+func Remove(event *github.GenericRequestEvent) {
+	runs.m.Lock()
+	defer runs.m.Unlock()
+
+	delete(runs.tests, event.Number)
+}

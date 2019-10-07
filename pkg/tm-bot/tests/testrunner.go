@@ -31,8 +31,12 @@ import (
 )
 
 func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, ghClient github.Client, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) (*tmv1beta1.Testrun, *StatusUpdater, error) {
-	err := k8sClient.Client().Create(ctx, tr)
-	if err != nil {
+	if err := Add(event, *tr); err != nil {
+		return nil, nil, err
+	}
+	defer Remove(event)
+
+	if err := k8sClient.Client().Create(ctx, tr); err != nil {
 		return nil, nil, pluginerr.New("unable to create testrun", err.Error())
 	}
 	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))

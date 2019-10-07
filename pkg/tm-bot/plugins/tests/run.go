@@ -110,6 +110,9 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 			Namespace: state.Namespace,
 		},
 	}
+	if err := tests.Add(event, *tr); err != nil {
+		return err
+	}
 	updater := tests.NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
 
 	_, err := tests.Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
