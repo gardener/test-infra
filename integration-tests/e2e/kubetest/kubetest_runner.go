@@ -197,7 +197,7 @@ func escapeAndConcat(descFilePath string) (concatenatedParallelTests, concatenat
 			if testcase == "" {
 				continue
 			}
-			if strings.Contains(testcase, "[Serial]") {
+			if strings.Contains(testcase, "[Serial]") || strings.Contains(testcase, "[Disruptive]") {
 				if serialTestsBuffer.Len() > 0 {
 					serialTestsBuffer.WriteString("|")
 				}
