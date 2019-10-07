@@ -1,5 +1,4 @@
-[{ "testcase": "[Disruptive]"},
-  { "testcase": "[Flaky]"},
+[{ "testcase": "[Flaky]"},
   { "testcase": "Alpha"},
   { "testcase": "[Experimental]"},
   { "testcase": "[Driver: vSphere]"},
