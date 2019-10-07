@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
@@ -44,24 +45,15 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		}
 
 		cfg := c.config
-		cfg.OutputDir = filepath.Join(c.config.OutputDir, util.RandomString(3))
+		cfg.OutputDir = filepath.Join(cfg.OutputDir, util.RandomString(3))
 		err := Output(runLogger, &cfg, tmClient, namespace, run.Testrun, run.Metadata)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
 
-		if c.config.OutputDir != "" && c.config.ESConfigName != "" {
-			err = IngestDir(runLogger, cfg.OutputDir, c.config.ESConfigName)
-			if err != nil {
-				runLogger.Error(err, "cannot persist file", "file", c.config.OutputDir)
-			} else {
-				err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
-				if err != nil {
-					runLogger.Error(err, "unable to ingest testrun")
-				}
-			}
-		}
+		c.ingestIntoElasticsearch(cfg, err, runLogger, tmClient, run)
+		c.uploadStatusAsset(cfg, runLogger, err, run, tmClient)
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			runLogger.Info("Testrun finished successfully")
@@ -76,6 +68,60 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 	c.fetchTelemetryResults()
 
 	return testrunsFailed, util.ReturnMultiError(result)
+}
+
+func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger logr.Logger, tmClient kubernetes.Interface, run *testrunner.Run) {
+	if cfg.OutputDir != "" && cfg.ESConfigName != "" {
+		err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
+		if err != nil {
+			runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
+		} else {
+			err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
+			if err != nil {
+				runLogger.Error(err, "unable to ingest testrun")
+			}
+		}
+	}
+}
+
+func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
+	if !cfg.UploadStatusAsset {
+		return
+	}
+	if run.Testrun.Status.Phase != tmv1beta1.PhaseStatusSuccess {
+		runLogger.Info("testrun failed, therefore will not upload release asset")
+		return
+	}
+
+	if len(cfg.AssetComponents)  == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+		runLogger.Error(err, "missing github password / github user / component descriptor path argument")
+	}
+	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+	if err != nil {
+		runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+	}
+
+	var componentsForUpload []*componentdescriptor.Component
+	for _, componentName := range cfg.AssetComponents {
+		if component := componentsFromFile.Get(componentName); component == nil {
+			runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
+		} else {
+			componentsForUpload = append(componentsForUpload, component)
+		}
+	}
+	assetUploadSuccessful := true
+	for _, component := range componentsForUpload {
+		if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
+			runLogger.Error(err, "unable to attach testrun status to github component")
+			assetUploadSuccessful = false
+		}
+	}
+	if assetUploadSuccessful {
+		err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
+		if err != nil {
+			runLogger.Error(err, "unable to mark testrun status as uploaded to github")
+		}
+	}
 }
 
 func (c *Collector) fetchTelemetryResults() {

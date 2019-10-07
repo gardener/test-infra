@@ -17,12 +17,11 @@ package collectcmd
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"os"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -43,6 +42,12 @@ var (
 	s3Endpoint              string
 	s3SSL                   bool
 	concourseOnErrorDir     string
+	assetComponents         []string
+	componentDescriptorPath string
+	githubUser              string
+	githubPassword          string
+	uploadStatusAsset       bool
+	assetPrefix             string
 )
 
 // AddCommand adds run-testrun to a command.
@@ -59,11 +64,17 @@ var collectCmd = &cobra.Command{
 		logger.Log.Info("Start testmachinery testrunner")
 
 		collectConfig := result.Config{
-			OutputDir:           outputDirPath,
-			ESConfigName:        elasticSearchConfigName,
-			S3Endpoint:          s3Endpoint,
-			S3SSL:               s3SSL,
-			ConcourseOnErrorDir: concourseOnErrorDir,
+			OutputDir:               outputDirPath,
+			ESConfigName:            elasticSearchConfigName,
+			S3Endpoint:              s3Endpoint,
+			S3SSL:                   s3SSL,
+			ConcourseOnErrorDir:     concourseOnErrorDir,
+			ComponentDescriptorPath: componentDescriptorPath,
+			GithubUser:              githubUser,
+			GithubPassword:          githubPassword,
+			AssetComponents:         assetComponents,
+			UploadStatusAsset:       uploadStatusAsset,
+			AssetPrefix:             assetPrefix,
 		}
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
@@ -114,6 +125,7 @@ func init() {
 	if err := collectCmd.MarkFlagRequired("tr-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "tr-name")
 	}
+	collectCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	// parameter flags
 	collectCmd.Flags().StringVarP(&outputDirPath, "output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
@@ -122,4 +134,9 @@ func init() {
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
+	collectCmd.Flags().BoolVar(&uploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
+	collectCmd.Flags().StringVar(&githubUser, "github-user", os.Getenv("GITHUB_USER"), "On error dir which is used by Concourse.")
+	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	collectCmd.Flags().StringArrayVar(&assetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
+	collectCmd.Flags().StringVar(&assetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 }

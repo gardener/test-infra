@@ -38,6 +38,23 @@ type Config struct {
 
 	// EnableTelemetry enbales the measurement of shoot downtimes during execution
 	EnableTelemetry bool
+
+	// ComponentDescriptorPath path to the component descriptor file
+	ComponentDescriptorPath string
+
+	// AssetComponents indicates to upload the testrun status to the github component as an asset
+	AssetComponents []string
+
+	// GithubUser to allow getting a github client
+	GithubUser string
+
+	GithubPassword string
+
+	// UploadStatusAsset states whether the testrun status should be uploaded as a github release asset
+	UploadStatusAsset bool
+
+	// AssetPrefix defines the asset name prefix
+	AssetPrefix       string
 }
 
 type Collector struct {

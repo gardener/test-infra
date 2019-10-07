@@ -16,21 +16,25 @@ package util
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	yaml "sigs.k8s.io/yaml"
+	"sigs.k8s.io/yaml"
 )
 
 func init() {
@@ -208,4 +212,39 @@ func StringDefault(value, def string) string {
 		return def
 	}
 	return value
+}
+
+// GitHub helper functions
+func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
+	repoNameComponents := strings.Split(url.Path, "/")
+	repoOwner = repoNameComponents[1]
+	repoName = strings.Replace(repoNameComponents[2], ".git", "", 1)
+	return
+}
+
+func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool) (*github.Client, error) {
+	client, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
+	if username != "" && password != "" {
+		basicAuth := github.BasicAuthTransport{
+			Username: username,
+			Password: password,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: skipTLS},
+			},
+		}
+		return basicAuth.Client()
+	}
+
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 }

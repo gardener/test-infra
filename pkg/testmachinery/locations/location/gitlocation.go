@@ -22,7 +22,6 @@ import (
 	"github.com/go-logr/logr"
 	"net/http"
 	"net/url"
-	"strings"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -52,7 +51,7 @@ func NewGitLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) (t
 		return nil, fmt.Errorf("unable to parse url %s", testDefLocation.Repo)
 	}
 	config := getGitConfig(log, repoURL)
-	repoOwner, repoName := parseRepoURL(repoURL)
+	repoOwner, repoName := util.ParseRepoURL(repoURL)
 
 	return &GitLocation{
 		Info:      testDefLocation,
@@ -167,14 +166,6 @@ func (l *GitLocation) getHTTPClient() *http.Client {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
-}
-
-// GitHub helper functions
-func parseRepoURL(url *url.URL) (repoOwner, repoName string) {
-	repoNameComponents := strings.Split(url.Path, "/")
-	repoOwner = repoNameComponents[1]
-	repoName = strings.Replace(repoNameComponents[2], ".git", "", 1)
-	return
 }
 
 // Legacy function. Maybe can be removed in the future when git config is necessary.
