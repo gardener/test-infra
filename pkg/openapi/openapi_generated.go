@@ -149,10 +149,17 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 							Format: "",
 						},
 					},
+					"suspend": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"annotations": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
@@ -301,6 +308,7 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
@@ -387,7 +395,6 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref common.Referen
 				},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
 
@@ -472,7 +479,6 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref common.ReferenceC
 				Required: []string{"name"},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
 
@@ -662,7 +668,6 @@ func schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref common.ReferenceCall
 				Required: []string{"type"},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
 

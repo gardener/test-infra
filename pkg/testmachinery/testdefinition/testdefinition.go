@@ -153,6 +153,10 @@ func (td *TestDefinition) GetName() string {
 	return td.Template.Name
 }
 
+func (td *TestDefinition) SetSuspend() {
+	td.Template.Suspend = &argov1.SuspendTemplate{}
+}
+
 func (td *TestDefinition) GetTemplate() (*argov1.Template, error) {
 	for _, cfg := range td.config {
 		switch cfg.Info.Type {

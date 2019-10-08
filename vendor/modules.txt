@@ -893,7 +893,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cluster-bootstrap v0.0.0-20190314002537-50662da99b70 => k8s.io/cluster-bootstrap v0.0.0-20190314002537-50662da99b70
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
-# k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd => k8s.io/code-generator v0.0.0-20190311093542-50b561225d70
+# k8s.io/code-generator v0.0.0-20190713022532-93d7507fc8ff => k8s.io/code-generator v0.0.0-20190311093542-50b561225d70
 k8s.io/code-generator/cmd/client-gen
 k8s.io/code-generator/cmd/client-gen/args
 k8s.io/code-generator/cmd/client-gen/generators
