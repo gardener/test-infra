@@ -5,7 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.43.0
 	github.com/Masterminds/semver v1.4.2
-	github.com/argoproj/argo v2.3.0+incompatible
+	github.com/argoproj/argo v2.4.0+incompatible
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/gardener/gardener v0.0.0-20191008200222-fba2a791e4a7
 	github.com/ghodss/yaml v1.0.0
@@ -37,7 +37,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/code-generator v0.0.0-20190713022532-93d7507fc8ff
+	k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
 	k8s.io/component-base v0.0.0-20190617074208-2b0aae80ca81 // indirect
 	k8s.io/helm v2.14.2+incompatible
 	k8s.io/kube-openapi v0.0.0-20190722073852-5e22f3d471e6
