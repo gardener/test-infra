@@ -75,6 +75,7 @@ func CreateTask(taskName, templateName, phase string, continueOnError bool, depe
 			Error:  continueOnError,
 			Failed: continueOnError,
 		},
+
 		Arguments: argov1.Arguments{
 			Artifacts: artifacts,
 			Parameters: []argov1.Parameter{

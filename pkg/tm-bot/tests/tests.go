@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/pkg/errors"
@@ -23,10 +24,10 @@ import (
 
 var runs = struct {
 	m sync.Mutex
-	tests map[int]*run
+	tests map[string]*run
 }{
 	m: sync.Mutex{},
-	tests: make(map[int]*run),
+	tests: make(map[string]*run),
 }
 
 type run struct {
@@ -38,11 +39,11 @@ func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
 	runs.m.Lock()
 	defer runs.m.Unlock()
 
-	if runs.tests[event.Number] != nil {
+	if runs.tests[uniqueEventString(event)] != nil {
 		return errors.New("A test is already running for this PR.")
 	}
 
-	runs.tests[event.Number] = &run{
+	runs.tests[uniqueEventString(event)] = &run{
 		testrun: tr,
 		event: event,
 	}
@@ -54,5 +55,9 @@ func Remove(event *github.GenericRequestEvent) {
 	runs.m.Lock()
 	defer runs.m.Unlock()
 
-	delete(runs.tests, event.Number)
+	delete(runs.tests, uniqueEventString(event))
+}
+
+func uniqueEventString(event *github.GenericRequestEvent) string {
+	return fmt.Sprintf("%s/%s/%d", event.GetOwnerName(), event.GetRepositoryName(), event.Number)
 }
