@@ -37,7 +37,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
+	k8s.io/code-generator v0.0.0-20190713022532-93d7507fc8ff
 	k8s.io/component-base v0.0.0-20190617074208-2b0aae80ca81 // indirect
 	k8s.io/helm v2.14.2+incompatible
 	k8s.io/kube-openapi v0.0.0-20190722073852-5e22f3d471e6

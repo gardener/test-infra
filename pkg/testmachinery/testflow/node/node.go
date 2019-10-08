@@ -48,6 +48,11 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	// create hash or unique name for testdefinition + step + flow
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
+
+	if step.Suspend {
+		td.SetSuspend()
+	}
+
 	node := &Node{
 		name:           name,
 		TestDefinition: td,

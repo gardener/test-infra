@@ -23,16 +23,16 @@ import (
 )
 
 var runs = struct {
-	m sync.Mutex
+	m     sync.Mutex
 	tests map[string]*run
 }{
-	m: sync.Mutex{},
+	m:     sync.Mutex{},
 	tests: make(map[string]*run),
 }
 
 type run struct {
 	testrun v1beta1.Testrun
-	event *github.GenericRequestEvent
+	event   *github.GenericRequestEvent
 }
 
 func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
@@ -45,7 +45,7 @@ func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
 
 	runs.tests[uniqueEventString(event)] = &run{
 		testrun: tr,
-		event: event,
+		event:   event,
 	}
 
 	return nil
