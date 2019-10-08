@@ -54,7 +54,7 @@ type Config struct {
 	UploadStatusAsset bool
 
 	// AssetPrefix defines the asset name prefix
-	AssetPrefix       string
+	AssetPrefix string
 }
 
 type Collector struct {
