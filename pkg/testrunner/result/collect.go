@@ -93,7 +93,7 @@ func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err err
 		return
 	}
 
-	if len(cfg.AssetComponents)  == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+	if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
 		runLogger.Error(err, "missing github password / github user / component descriptor path argument")
 	}
 	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)

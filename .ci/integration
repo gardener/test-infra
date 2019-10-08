@@ -94,6 +94,10 @@ for ns in $(kubectl --kubeconfig=$TM_KUBECONFIG get ns --no-headers | awk '{ pri
 
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns get tr -oname | xargs kubectl --kubeconfig=$TM_KUBECONFIG -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
   kubectl --kubeconfig=$TM_KUBECONFIG -n $ns get wf -oname | xargs kubectl --kubeconfig=$TM_KUBECONFIG -n $ns patch -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+  if [[ $ns == tm-it* ]]; then
+    kubectl --kubeconfig=$TM_KUBECONFIG delete ns $ns
+  fi
 done
 echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
 echo "$prerequisites_chart" | kubectl --kubeconfig=$TM_KUBECONFIG delete -f -
