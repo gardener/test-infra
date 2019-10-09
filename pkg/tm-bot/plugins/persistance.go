@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// kubernetesPersistence implements the plugins persitence interface to store states in a configmap inside the cluster
+// kubernetesPersistence implements the Plugins persitence interface to store states in a configmap inside the cluster
 type kubernetesPersistence struct {
 	cm client.ObjectKey
 
@@ -67,7 +67,7 @@ func (p *kubernetesPersistence) Save(states map[string]map[string]*State) error 
 			Namespace: p.cm.Namespace,
 		},
 		Data: map[string]string{
-			"plugins": string(data),
+			"Plugins": string(data),
 		},
 	}
 
@@ -84,7 +84,7 @@ func (p *kubernetesPersistence) Load() (map[string]map[string]*State, error) {
 	}
 
 	states := map[string]map[string]*State{}
-	if err := yaml.Unmarshal([]byte(cm.Data["plugins"]), &states); err != nil {
+	if err := yaml.Unmarshal([]byte(cm.Data["Plugins"]), &states); err != nil {
 		return nil, err
 	}
 

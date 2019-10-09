@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package plugins_test
+package tests_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -23,5 +23,5 @@ import (
 
 func TestPlugins(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "GitHub TM bot registered Test Suite")
+	RunSpecs(t, "GitHub TM bot tests Test Suite")
 }

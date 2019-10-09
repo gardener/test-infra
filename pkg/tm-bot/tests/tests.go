@@ -22,28 +22,44 @@ import (
 	"sync"
 )
 
-var runs = struct {
-	m     sync.Mutex
-	tests map[string]*run
-}{
+var runs = &Runs{
 	m:     sync.Mutex{},
-	tests: make(map[string]*run),
+	tests: make(map[string]*Run),
 }
 
-type run struct {
+type Runs struct {
+	m     sync.Mutex
+	tests map[string]*Run
+}
+
+type Run struct {
 	testrun v1beta1.Testrun
 	event   *github.GenericRequestEvent
 }
 
-func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
+func NewRuns() *Runs {
+	r := Runs{
+		m:     sync.Mutex{},
+		tests: make(map[string]*Run),
+	}
+	runs = &r
+	return &r
+}
+
+func (r *Runs) IsRunning(event *github.GenericRequestEvent) bool {
+	_, ok := r.tests[uniqueEventString(event)]
+	return ok
+}
+
+func (r *Runs) Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
 	runs.m.Lock()
 	defer runs.m.Unlock()
 
-	if runs.tests[uniqueEventString(event)] != nil {
+	if r.tests[uniqueEventString(event)] != nil {
 		return errors.New("A test is already running for this PR.")
 	}
 
-	runs.tests[uniqueEventString(event)] = &run{
+	r.tests[uniqueEventString(event)] = &Run{
 		testrun: tr,
 		event:   event,
 	}
@@ -51,11 +67,11 @@ func Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
 	return nil
 }
 
-func Remove(event *github.GenericRequestEvent) {
-	runs.m.Lock()
-	defer runs.m.Unlock()
+func (r *Runs) Remove(event *github.GenericRequestEvent) {
+	r.m.Lock()
+	defer r.m.Unlock()
 
-	delete(runs.tests, uniqueEventString(event))
+	delete(r.tests, uniqueEventString(event))
 }
 
 func uniqueEventString(event *github.GenericRequestEvent) string {

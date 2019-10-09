@@ -60,13 +60,13 @@ type Persistence interface {
 	Load() (map[string]map[string]*State, error)
 }
 
-var Plugins = &plugins{
+var plugins = &Plugins{
 	registered: make(map[string]Plugin),
 	stateMutex: sync.Mutex{},
 	states:     make(map[string]map[string]*State),
 }
 
-type plugins struct {
+type Plugins struct {
 	log         logr.Logger
 	persistence Persistence
 	registered  map[string]Plugin
@@ -80,25 +80,35 @@ type State struct {
 	Custom string
 }
 
+func New(log logr.Logger, persistence Persistence) *Plugins {
+	return &Plugins{
+		log:         log,
+		persistence: persistence,
+		registered:  make(map[string]Plugin),
+		stateMutex:  sync.Mutex{},
+		states:      make(map[string]map[string]*State),
+	}
+}
+
+// Setup sets up the Plugins with a logger and a persistent storage
+func Setup(log logr.Logger, persistence Persistence) {
+	plugins.log = log
+	plugins.persistence = persistence
+}
+
 // Register registers a plugin with its command to be executed on a event
 func Register(plugin Plugin) {
-	Plugins.registered[plugin.Command()] = plugin
-	Plugins.log.Info("registered plugin", "name", plugin.Command())
+	plugins.Register(plugin)
 }
 
-// Setup sets up the plugins with a logger and a persistent storage
-func Setup(log logr.Logger, persistence Persistence) {
-	Plugins.log = log
-	Plugins.persistence = persistence
+// Register registers a plugin with its command to be executed on a event
+func (p *Plugins) Register(plugin Plugin) {
+	p.registered[plugin.Command()] = plugin
+	p.log.Info("registered plugin", "name", plugin.Command())
 }
 
-// ResumePlugins resumes all states that can be found in the persistent storage
-func ResumePlugins(ghMgr github.Manager) error {
-	return Plugins.resumePlugins(ghMgr)
-}
-
-func (p *plugins) Get(name string) (string, Plugin, error) {
-	plugin, ok := Plugins.registered[name]
+func (p *Plugins) Get(name string) (string, Plugin, error) {
+	plugin, ok := p.registered[name]
 	if !ok {
 		return "", nil, pluginerr.New(fmt.Sprintf("no plugin found for %s", name), fmt.Sprintf("no plugin found for %s", name))
 	}
@@ -106,27 +116,32 @@ func (p *plugins) Get(name string) (string, Plugin, error) {
 	return runID, plugin.New(runID), nil
 }
 
-func (p *plugins) resumePlugins(ghMgr github.Manager) error {
+// ResumePlugins resumes all states that can be found in the persistent storage
+func ResumePlugins(ghMgr github.Manager) error {
+	return plugins.ResumePlugins(ghMgr)
+}
+
+// ResumePlugins resumes all states that can be found in the persistent storage
+func (p *Plugins) ResumePlugins(ghMgr github.Manager) error {
+	var err error
 	if p.persistence == nil {
 		return nil
 	}
-	states, err := p.persistence.Load()
+	p.states, err = p.persistence.Load()
 	if err != nil {
 		return err
 	}
 
-	for name, pluginStates := range states {
+	for name, pluginStates := range p.states {
 		for runID, state := range pluginStates {
 			go p.resumePlugin(ghMgr, name, runID, state)
 		}
 	}
-
-	p.states = states
 	return nil
 }
 
-// initState initializes the default state of a running plugin consisting of the plugins runID and the event
-func (p *plugins) initState(pl Plugin, runID string, event *github.GenericRequestEvent) {
+// initState initializes the default state of a running plugin consisting of the Plugins runID and the event
+func (p *Plugins) initState(pl Plugin, runID string, event *github.GenericRequestEvent) {
 	p.stateMutex.Lock()
 	defer p.stateMutex.Unlock()
 
@@ -143,8 +158,12 @@ func (p *plugins) initState(pl Plugin, runID string, event *github.GenericReques
 	}
 }
 
+func UpdateState(pl Plugin, runID string, customState string) error {
+	return plugins.UpdateState(pl, runID, customState)
+}
+
 // UpdateState updates the state of a running plugin and persists the changes
-func (p *plugins) UpdateState(pl Plugin, runID string, customState string) error {
+func (p *Plugins) UpdateState(pl Plugin, runID string, customState string) error {
 	p.stateMutex.Lock()
 	defer p.stateMutex.Unlock()
 
@@ -164,7 +183,7 @@ func (p *plugins) UpdateState(pl Plugin, runID string, customState string) error
 }
 
 // RemoveState removes the state of a running plugin from the persistence
-func (p *plugins) RemoveState(pl Plugin, runID string) {
+func (p *Plugins) RemoveState(pl Plugin, runID string) {
 	p.stateMutex.Lock()
 	defer p.stateMutex.Unlock()
 	if _, ok := p.states[pl.Command()]; !ok {

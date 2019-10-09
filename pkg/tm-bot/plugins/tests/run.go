@@ -82,11 +82,11 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		CommentID: updater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
-	if err := plugins.Plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
+	if err := plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
 		logger.Error(err, "unable to persist state")
 	}
 
-	_, err = tests.Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
+	_, err = tests.Watch(logger, ctx, t.k8sClient, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
@@ -110,12 +110,9 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 			Namespace: state.Namespace,
 		},
 	}
-	if err := tests.Add(event, *tr); err != nil {
-		return err
-	}
 	updater := tests.NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
 
-	_, err := tests.Watch(logger, ctx, t.k8sClient, updater, tr, t.interval, t.timeout)
+	_, err := tests.Watch(logger, ctx, t.k8sClient, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
