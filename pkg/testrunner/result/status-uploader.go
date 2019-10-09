@@ -83,7 +83,7 @@ func uploadAsset(githubClient *github.Client, releaseID int64, repoOwner, repoNa
 	response, err := githubClient.Do(context.Background(), request, asset)
 	if err != nil {
 		return err
-	} else if response.StatusCode != 200 {
+	} else if response.StatusCode != 201 {
 		return errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
 	}
 	return nil
@@ -134,7 +134,7 @@ func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*gith
 		uploadURL = "https://uploads." + repoURL.Hostname()
 	} else {
 		apiURL = "https://" + repoURL.Hostname() + "/api/v3"
-		uploadURL = "https://uploads." + repoURL.Hostname() + "/api/uploads"
+		uploadURL = "https://" + repoURL.Hostname() + "/api/uploads"
 	}
 	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, uploadURL, true)
 	if err != nil {
