@@ -42,7 +42,7 @@ data:
               name: {{.Values.objectStorage.secret.name}}
               key: secretKey
         metricsConfig:
-          enabled: true
+          enabled: false # because metrics are broken since v2.4.0: https://github.com/argoproj/argo/issues/1634
           path: /metrics
           port: 80
 ---
