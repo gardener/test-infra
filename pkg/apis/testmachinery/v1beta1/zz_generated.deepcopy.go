@@ -526,6 +526,11 @@ func (in *TestrunStatus) DeepCopyInto(out *TestrunStatus) {
 			}
 		}
 	}
+	if in.UploadedToGithub != nil {
+		in, out := &in.UploadedToGithub, &out.UploadedToGithub
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

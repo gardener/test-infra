@@ -57,6 +57,9 @@ type Config struct {
 
 	// Shoot test flavor configuration
 	Shoots ShootsConfig
+
+	// Pause pauses the gardener deletion step so that gardener is cleaned up after it is manually resumed.
+	Pause bool
 }
 
 // ShootsConfig describes the flavors of the shoots that are created by the test.

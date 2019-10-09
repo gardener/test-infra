@@ -37,14 +37,14 @@ func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.In
 	}
 
 	if err := k8sClient.Client().Create(ctx, tr); err != nil {
-		return nil, nil, pluginerr.New("unable to create testrun", err.Error())
+		return nil, nil, pluginerr.New("unable to create Testrun", err.Error())
 	}
 	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
 
 	statusUpdater := NewStatusUpdater(log, ghClient, event)
 
 	if err := statusUpdater.Init(tr); err != nil {
-		log.Error(err, "unable to create comment", "testrun", tr.Name)
+		log.Error(err, "unable to create comment", "Testrun", tr.Name)
 	}
 
 	return tr, statusUpdater, nil
@@ -57,7 +57,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 	defer runs.Remove(event)
 	argoUrl, err := testrunner.GetArgoURL(k8sClient, tr)
 	if err != nil {
-		log.WithValues("testrun", tr.Name).Error(err, "unable to construct argourl")
+		log.WithValues("Testrun", tr.Name).Error(err, "unable to construct argourl")
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
@@ -65,7 +65,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 		testrun := &tmv1beta1.Testrun{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, testrun)
 		if err != nil {
-			log.Error(err, "cannot get testrun")
+			log.Error(err, "cannot get Testrun")
 			return false, nil
 		}
 		tr = testrun
@@ -79,7 +79,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 
 		if testrunPhase != tmv1beta1.PhaseStatusInit {
 			if err := statusUpdater.Update(tr, argoUrl); err != nil {
-				log.Error(err, "unable to update comment", "testrun", tr.Name)
+				log.Error(err, "unable to update comment", "Testrun", tr.Name)
 			}
 		}
 
@@ -87,7 +87,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 	})
 	if err != nil {
 		if err := statusUpdater.UpdateStatus(github.StateFailure, "timeout"); err != nil {
-			log.Error(err, "unable to update comment", "testrun", tr.Name)
+			log.Error(err, "unable to update comment", "Testrun", tr.Name)
 		}
 		return nil, pluginerr.New(fmt.Sprintf("maximum wait time of %s is exceeded", maxWaitTime.String()), "")
 	}

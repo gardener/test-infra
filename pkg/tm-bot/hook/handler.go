@@ -99,7 +99,9 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte{})
+	if _, err := w.Write([]byte{}); err != nil {
+		h.log.Error(err, "unable to send response to github")
+	}
 }
 
 func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.GenericRequestEvent) {

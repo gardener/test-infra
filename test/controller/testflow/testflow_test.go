@@ -215,6 +215,43 @@ var _ = Describe("Testflow execution tests", func() {
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
+
+		It("should run a test with a paused step that finishes after it is resumed", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+			tr.Spec.TestFlow = append(tr.Spec.TestFlow, &tmv1beta1.DAGStep{
+				Name: "pause-testdef",
+				Definition: tmv1beta1.StepDefinition{
+					Label: "tm-integration",
+				},
+				Pause: true,
+			})
+
+			err := operation.Client().Client().Create(ctx, tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			time.Sleep(20)
+
+			err = util.ResumeTestrun(ctx, operation.Client(), tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 5*time.Minute)
+			Expect(err).ToNot(HaveOccurred())
+
+			wf := &argov1.Workflow{}
+			err = operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf)
+			Expect(err).ToNot(HaveOccurred())
+
+			numExecutedTestDefs := 0
+			for _, node := range wf.Status.Nodes {
+				if strings.HasPrefix(node.TemplateName, "integration-testdef") && node.Phase == argov1.NodeSucceeded {
+					numExecutedTestDefs++
+				}
+			}
+
+			Expect(numExecutedTestDefs).To(Equal(2), "Testrun: %s", tr.Name)
+		})
 	})
 
 	Context("File created in shared folder", func() {

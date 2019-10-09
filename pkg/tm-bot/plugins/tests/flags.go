@@ -66,6 +66,7 @@ func (t *test) Flags() *pflag.FlagSet {
 
 	flagset.StringVarP(&t.testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	flagset.BoolVar(&t.hibernation, "hibernation", false, "test hibernation")
+	flagset.BoolVar(&t.config.Pause, "pause", false, "Pauses the test before gardener is deleted and cleaned up. Resume with /resume")
 	flagset.BoolVar(&t.dryRun, "dry-run", false, "Print the rendered testrun")
 
 	return flagset

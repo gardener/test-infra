@@ -15,7 +15,9 @@
 package util
 
 import (
+	"context"
 	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 )
@@ -36,4 +38,17 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 	}
 
 	return v1beta1.PhaseStatusSuccess
+}
+
+// Resume testruns resumes a testrun by adding the appropriate annotation to it
+func ResumeTestrun(ctx context.Context, k8sClient kubernetes.Interface, tr *v1beta1.Testrun) error {
+	if tr.Annotations == nil {
+		tr.Annotations = make(map[string]string, 0)
+	}
+	tr.Annotations[common.ResumeTestrunAnnotation] = "true"
+	if err := k8sClient.Client().Update(ctx, tr); err != nil {
+		return err
+	}
+
+	return nil
 }

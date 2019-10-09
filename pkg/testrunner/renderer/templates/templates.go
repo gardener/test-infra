@@ -86,7 +86,7 @@ func GetGardenSetupLocation(name, revision string) v1beta1.LocationSet {
 // - delete gardener
 // - cleanup and release the host cluster
 func GetExitTestFlow(hostprovider hostscheduler.Provider, gsLocationSet string, createGardenerStep *v1beta1.DAGStep) v1beta1.TestFlow {
-	deleteGardener := GetStepDeleteGardener(createGardenerStep, gsLocationSet, []string{"clean-gardener"})
+	deleteGardener := GetStepDeleteGardener(createGardenerStep, gsLocationSet, []string{"clean-gardener"}, false)
 	deleteGardener.ArtifactsFrom = ""
 	deleteGardener.UseGlobalArtifacts = true
 	deleteGardener.Definition.Condition = v1beta1.ConditionTypeError

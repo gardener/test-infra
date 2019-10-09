@@ -72,6 +72,9 @@ const (
 
 	// the label and taint of the nodes in the worker pool which are preferably used for workflow pods
 	WorkerPoolTaintLabelName = "testload"
+
+	// Name of the argo suspend template name
+	SuspendTemplateName = "suspend"
 )
 
 var (

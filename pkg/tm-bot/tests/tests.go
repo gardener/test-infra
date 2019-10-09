@@ -33,8 +33,8 @@ type Runs struct {
 }
 
 type Run struct {
-	testrun v1beta1.Testrun
-	event   *github.GenericRequestEvent
+	Testrun v1beta1.Testrun
+	Event   *github.GenericRequestEvent
 }
 
 func NewRuns() *Runs {
@@ -46,9 +46,21 @@ func NewRuns() *Runs {
 	return &r
 }
 
+// IsRunning indicates if a test is running for a Event (org, repo, pr)
 func (r *Runs) IsRunning(event *github.GenericRequestEvent) bool {
 	_, ok := r.tests[uniqueEventString(event)]
 	return ok
+}
+
+// GetRunning returns the currently running Testrun for a Event (org, repo, pr)
+func GetRunning(event *github.GenericRequestEvent) (*Run, bool) {
+	return runs.GetRunning(event)
+}
+
+// GetRunning returns the currently running Testrun for a Event (org, repo, pr)
+func (r *Runs) GetRunning(event *github.GenericRequestEvent) (*Run, bool) {
+	run, ok := r.tests[uniqueEventString(event)]
+	return run, ok
 }
 
 func (r *Runs) Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
@@ -60,8 +72,8 @@ func (r *Runs) Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error 
 	}
 
 	r.tests[uniqueEventString(event)] = &Run{
-		testrun: tr,
-		event:   event,
+		Testrun: tr,
+		Event:   event,
 	}
 
 	return nil

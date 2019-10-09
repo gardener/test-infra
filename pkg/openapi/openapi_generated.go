@@ -957,8 +957,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"uploadedToGithub": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UploadedToGithub states whether the status of a testrun is already uploaded to github component",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"ingested"},
+				Required: []string{"ingested", "uploadedToGithub"},
 			},
 		},
 		Dependencies: []string{

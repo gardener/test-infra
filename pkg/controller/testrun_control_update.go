@@ -15,8 +15,9 @@
 package controller
 
 import (
-	"context"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"time"
@@ -37,32 +38,52 @@ import (
 // Needs to maintained on our own for now until message is exposed.
 var ErrDeadlineExceeded = "Pod was active on the node longer than the specified deadline"
 
-func (r *TestrunReconciler) updateStatus(ctx context.Context, tr *tmv1beta1.Testrun, wf *argov1.Workflow) (reconcile.Result, error) {
-	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
+// handleActions handles any changes that trigger actions on a running workflow like annotations to resume a workflow
+func (r *TestrunReconciler) handleActions(ctx *reconcileContext) error {
+	if b, ok := ctx.tr.Annotations[common.ResumeTestrunAnnotation]; ok && b == "true" {
+		// resume workflow
+		argo.ResumeWorkflow(ctx.wf)
+		if err := r.Client.Update(ctx.ctx, ctx.wf); err != nil {
+			return err
+		}
 
-	if !tr.Status.StartTime.Equal(&wf.Status.StartedAt) {
-		tr.Status.StartTime = &wf.Status.StartedAt
+		delete(ctx.tr.Annotations, common.ResumeTestrunAnnotation)
+		ctx.updated = true
 	}
-	if tr.Status.Phase == "" {
-		tr.Status.Phase = tmv1beta1.PhaseStatusPending
-	}
-	if !wf.Status.Completed() {
-		updateStepsStatuses(tr, wf)
-	}
-	if wf.Status.Completed() {
+	return nil
+}
 
-		err := r.completeTestrun(tr, wf)
+func (r *TestrunReconciler) updateStatus(ctx *reconcileContext) (reconcile.Result, error) {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: ctx.tr.Name, Namespace: ctx.tr.Namespace})
+
+	if !ctx.tr.Status.StartTime.Equal(&ctx.wf.Status.StartedAt) {
+		ctx.tr.Status.StartTime = &ctx.wf.Status.StartedAt
+		ctx.updated = true
+	}
+	if ctx.tr.Status.Phase == "" {
+		ctx.tr.Status.Phase = tmv1beta1.PhaseStatusPending
+		ctx.updated = true
+	}
+	if !ctx.wf.Status.Completed() {
+		updateStepsStatuses(ctx.tr, ctx.wf)
+		ctx.updated = true
+	}
+	if ctx.wf.Status.Completed() {
+
+		err := r.completeTestrun(ctx.tr, ctx.wf)
 		if err != nil {
 			return reconcile.Result{}, nil
 		}
-
+		ctx.updated = true
 		log.Info("testrun completed")
 	}
 
-	err := r.Update(ctx, tr)
-	if err != nil {
-		log.Error(err, "unable to update testrun status")
-		return reconcile.Result{}, err
+	if ctx.updated {
+		err := r.Update(ctx.ctx, ctx.tr)
+		if err != nil {
+			log.Error(err, "unable to update testrun status")
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil

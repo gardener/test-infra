@@ -43,6 +43,27 @@ var _ = Describe("Runs", func() {
 		Expect(runs.IsRunning(event)).To(BeTrue())
 	})
 
+	It("should return the currently running Testrun", func() {
+		runs := tests.NewRuns()
+
+		owner := "test"
+		repo := "repo"
+		event := &ghutil.GenericRequestEvent{
+			Number: 0,
+			Repository: &github.Repository{
+				Name: &repo,
+				Owner: &github.User{
+					Login: &owner,
+				},
+			},
+		}
+		Expect(runs.Add(event, v1beta1.Testrun{})).NotTo(HaveOccurred())
+
+		run, ok := runs.GetRunning(event)
+		Expect(ok).To(BeTrue())
+		Expect(run.Testrun).To(Equal(v1beta1.Testrun{}))
+	})
+
 	It("should reject another Run if one is already running", func() {
 		runs := tests.NewRuns()
 

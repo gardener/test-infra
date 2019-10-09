@@ -12,31 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package argo
 
 import (
-	"context"
-	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 )
 
-type TestmachineryController struct {
-	Controller controller.Controller
-}
-
-type TestrunReconciler struct {
-	client.Client
-	scheme *runtime.Scheme
-	Logger logr.Logger
-}
-
-type reconcileContext struct {
-	ctx     context.Context
-	tr      *v1beta1.Testrun
-	wf      *v1alpha1.Workflow
-	updated bool
+func ResumeWorkflow(wf *argov1.Workflow) {
+	for id, status := range wf.Status.Nodes {
+		if status.Type == argov1.NodeTypeSuspend && status.Phase == argov1.NodeRunning {
+			status.Phase = argov1.NodeSucceeded
+			wf.Status.Nodes[id] = status
+			return
+		}
+	}
 }

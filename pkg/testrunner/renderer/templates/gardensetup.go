@@ -57,7 +57,7 @@ func GetStepCreateGardener(locationSet string, dependencies []string, baseCluste
 	}, nil
 }
 
-func GetStepDeleteGardener(createGardenStep *v1beta1.DAGStep, locationSet string, dependencies []string) v1beta1.DAGStep {
+func GetStepDeleteGardener(createGardenStep *v1beta1.DAGStep, locationSet string, dependencies []string, pause bool) v1beta1.DAGStep {
 	return v1beta1.DAGStep{
 		Name: "delete-garden",
 		Definition: v1beta1.StepDefinition{
@@ -68,6 +68,7 @@ func GetStepDeleteGardener(createGardenStep *v1beta1.DAGStep, locationSet string
 		UseGlobalArtifacts: false,
 		ArtifactsFrom:      createGardenStep.Name,
 		DependsOn:          dependencies,
+		Pause:              pause,
 	}
 }
 

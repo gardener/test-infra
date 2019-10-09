@@ -1,3 +1,4 @@
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,DAGStep,Pause
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatus,TestDefinition
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,TestFlow
 API rule violation: names_match,github.com/gardener/test-infra/pkg/util/strconf,StringOrConfig,ConfigVal
