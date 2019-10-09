@@ -28,12 +28,13 @@ import (
 
 func NewManager(log logr.Logger, apiURL string, appID int, keyFile, configFile, defaultTeam string) (Manager, error) {
 	return &manager{
-		log:        log,
-		configFile: configFile,
-		apiURL:     apiURL,
-		appId:      appID,
-		keyFile:    keyFile,
-		clients:    make(map[int64]*github.Client, 0),
+		log:         log,
+		configFile:  configFile,
+		apiURL:      apiURL,
+		appId:       appID,
+		keyFile:     keyFile,
+		defaultTeam: defaultTeam,
+		clients:     make(map[int64]*github.Client, 0),
 	}, nil
 }
 
