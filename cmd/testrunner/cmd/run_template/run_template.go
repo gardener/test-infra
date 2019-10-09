@@ -73,6 +73,7 @@ var runCmd = &cobra.Command{
 
 		testrunnerConfig.Timeout = time.Duration(timeout) * time.Second
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
+		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
 		testrunComputedPrefix := fmt.Sprintf("%s-%s-", testrunNamePrefix, shootParameters.Cloudprovider)
 		metadata := &testrunner.Metadata{

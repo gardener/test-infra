@@ -101,15 +101,16 @@ func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err err
 		runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
 	}
 
+	assetUploadSuccessful := true
 	var componentsForUpload []*componentdescriptor.Component
 	for _, componentName := range cfg.AssetComponents {
 		if component := componentsFromFile.Get(componentName); component == nil {
 			runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
+			assetUploadSuccessful = false
 		} else {
 			componentsForUpload = append(componentsForUpload, component)
 		}
 	}
-	assetUploadSuccessful := true
 	for _, component := range componentsForUpload {
 		if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
 			runLogger.Error(err, "unable to attach testrun status to github component")
