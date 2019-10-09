@@ -24,22 +24,27 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-// HandleRequest parses a github event and executes the found plugins
+// HandleRequest parses a github event and executes the found Plugins
 func HandleRequest(client github.Client, event *github.GenericRequestEvent) error {
+	return plugins.HandleRequest(client, event)
+}
+
+// HandleRequest parses a github event and executes the found Plugins
+func (p *Plugins) HandleRequest(client github.Client, event *github.GenericRequestEvent) error {
 	commands, err := ParseCommands(event.GetMessage())
 	if err != nil {
 		return pluginerr.Wrap(err, "Internal parse error")
 	}
 
 	for _, args := range commands {
-		go Plugins.runPlugin(client, event, args)
+		p.runPlugin(client, event, args)
 	}
 
 	return nil
 }
 
 // runPlugin runs a plugin with a event and its arguments
-func (p *plugins) runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
+func (p *Plugins) runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
 	runID, plugin, err := p.Get(args[0])
 	if err != nil {
 		_ = p.Error(client, event, nil, err)
@@ -61,17 +66,17 @@ func (p *plugins) runPlugin(client github.Client, event *github.GenericRequestEv
 	}
 	if err := plugin.Run(fs, client, event); err != nil {
 		if !pluginerr.IsRecoverable(err) {
-			Plugins.RemoveState(plugin, runID)
+			plugins.RemoveState(plugin, runID)
 			_ = p.Error(client, event, plugin, err)
 		}
 		return
 	}
 
-	Plugins.RemoveState(plugin, runID)
+	plugins.RemoveState(plugin, runID)
 }
 
 // resumePlugin resumes a plugin from its previously written state
-func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *State) {
+func (p *Plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *State) {
 	ghClient, err := ghMgr.GetClient(state.Event)
 	if err != nil {
 		p.log.Error(err, "unable to get github client for state", "plugin", name)
@@ -92,11 +97,11 @@ func (p *plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 		}
 		return
 	}
-	Plugins.RemoveState(plugin, runID)
+	p.RemoveState(plugin, runID)
 }
 
 // Error responds to the client if an error occurs
-func (p *plugins) Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
+func (p *Plugins) Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
 	p.log.Error(err, err.Error())
 	switch err.(type) {
 	case *pluginerr.PluginError:
