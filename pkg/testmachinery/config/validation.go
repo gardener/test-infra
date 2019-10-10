@@ -58,8 +58,10 @@ func Validate(identifier string, config tmv1beta1.ConfigElement) error {
 		}
 
 		// check if value is base64 encoded
-		if _, err := base64.StdEncoding.DecodeString(config.Value); err != nil {
-			return fmt.Errorf("%s.value: Invalid value: Value must be base64 encoded", identifier)
+		if config.Value != "" {
+			if _, err := base64.StdEncoding.DecodeString(config.Value); err != nil {
+				return fmt.Errorf("%s.value: Invalid value: Value must be base64 encoded", identifier)
+			}
 		}
 
 		return nil

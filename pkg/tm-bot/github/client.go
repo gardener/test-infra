@@ -28,10 +28,10 @@ import (
 
 func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
 	c := &client{
-		log:         log,
-		config:      config,
-		client:      ghClient,
-		owner:       owner,
+		log:    log,
+		config: config,
+		client: ghClient,
+		owner:  owner,
 	}
 
 	if defaultTeamName != "" {

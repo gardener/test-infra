@@ -119,7 +119,7 @@ func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, versions 
 	if err != nil {
 		return nil, err
 	}
-	b64Versions := base64.RawStdEncoding.EncodeToString(rawVersions)
+	b64Versions := base64.StdEncoding.EncodeToString(rawVersions)
 
 	return append(stepConfig, v1beta1.ConfigElement{
 		Type:    v1beta1.ConfigTypeFile,
