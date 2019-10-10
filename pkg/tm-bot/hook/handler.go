@@ -117,8 +117,9 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 		return
 	}
 
-	if err := plugins.HandleRequest(client, event); err != nil {
-		h.log.Error(err, "")
-		http.Error(w, "unable to handle request", http.StatusInternalServerError)
-	}
+	go func() {
+		if err := plugins.HandleRequest(client, event); err != nil {
+			h.log.Error(err, "")
+		}
+	}()
 }
