@@ -17,6 +17,7 @@ package testflow_test
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"strings"
 	"time"
@@ -223,20 +224,42 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.TestFlow = append(tr.Spec.TestFlow, &tmv1beta1.DAGStep{
 				Name: "pause-testdef",
 				Definition: tmv1beta1.StepDefinition{
-					Label: "tm-integration",
+					Name: "integration-testdef",
 				},
 				Pause: true,
 			})
 
 			err := operation.Client().Client().Create(ctx, tr)
+			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			time.Sleep(20)
+			err = utils.WatchTestrun(ctx, operation.Client(), tr, 2*time.Minute, func(tr *tmv1beta1.Testrun) (bool, error) {
+				testrun := &tmv1beta1.Testrun{}
+				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.GetName(), Namespace: tr.GetNamespace()}, testrun); err != nil {
+					operation.Log().Error(err, "unable to get testrun")
+					return false, nil
+				}
+				tr = testrun
+				wf := &argov1.Workflow{}
+				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf); err != nil {
+					operation.Log().Error(err, "unable to get workflow")
+					return false, nil
+				}
+
+				for _, node := range wf.Status.Nodes {
+					if node.TemplateName == testmachinery.SuspendTemplateName && node.Phase == tmv1beta1.PhaseStatusRunning {
+						return retry.Ok()
+					}
+				}
+
+				return retry.NotOk()
+			})
+			Expect(err).ToNot(HaveOccurred())
 
 			err = util.ResumeTestrun(ctx, operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
-			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 5*time.Minute)
+			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 2*time.Minute)
 			Expect(err).ToNot(HaveOccurred())
 
 			wf := &argov1.Workflow{}

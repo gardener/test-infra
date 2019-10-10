@@ -83,7 +83,7 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	switch event := event.(type) {
 	case *github.IssueCommentEvent:
-		if event.GetIssue().IsPullRequest() {
+		if event.GetIssue().IsPullRequest() && ghutils.EventActionType(event.GetAction()) == ghutils.EventActionTypeCreated {
 			h.handleGenericEvent(w, &ghutils.GenericRequestEvent{
 				InstallationID: event.GetInstallation().GetID(),
 				ID:             event.GetIssue().GetID(),

@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // TestrunStatusPhase determines the real testrun phase of a testrun by ignoring exit handler failures and system component failures if all other tests passed.
@@ -37,11 +38,18 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 		}
 	}
 
-	return v1beta1.PhaseStatusSuccess
+	return v1beta1.PhaseStatusInit
 }
 
 // Resume testruns resumes a testrun by adding the appropriate annotation to it
 func ResumeTestrun(ctx context.Context, k8sClient kubernetes.Interface, tr *v1beta1.Testrun) error {
+	obj, err := client.ObjectKeyFromObject(tr)
+	if err != nil {
+		return err
+	}
+	if err := k8sClient.Client().Get(ctx, obj, tr); err != nil {
+		return err
+	}
 	if tr.Annotations == nil {
 		tr.Annotations = make(map[string]string, 0)
 	}
