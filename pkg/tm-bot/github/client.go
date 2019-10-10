@@ -27,19 +27,22 @@ import (
 )
 
 func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
-
-	team, _, err := ghClient.Teams.GetTeamBySlug(context.TODO(), owner, defaultTeamName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &client{
+	c := &client{
 		log:         log,
 		config:      config,
 		client:      ghClient,
 		owner:       owner,
-		defaultTeam: team,
-	}, nil
+	}
+
+	if defaultTeamName != "" {
+		var err error
+		c.defaultTeam, _, err = ghClient.Teams.GetTeamBySlug(context.TODO(), owner, defaultTeamName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
 
 // GetConfig returns the repository configuration for a specific command
@@ -184,7 +187,7 @@ func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
 	}
 
 	// use default team if there is no requested team
-	if len(pr.RequestedTeams) == 0 {
+	if c.defaultTeam != nil && len(pr.RequestedTeams) == 0 {
 		membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), c.defaultTeam.GetID(), event.GetAuthorName())
 		if err != nil {
 			c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
