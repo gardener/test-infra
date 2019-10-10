@@ -7,9 +7,7 @@ require (
 	github.com/Masterminds/semver v1.4.2
 	github.com/argoproj/argo v2.3.0+incompatible
 	github.com/bradleyfalzon/ghinstallation v0.1.2
-	github.com/elazarl/goproxy v0.0.0-20190711103511-473e67f1d7d2 // indirect
-	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2 // indirect
-	github.com/gardener/gardener v0.0.0-20190906111529-f9ad04069615
+	github.com/gardener/gardener v0.0.0-20191008200222-fba2a791e4a7
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1

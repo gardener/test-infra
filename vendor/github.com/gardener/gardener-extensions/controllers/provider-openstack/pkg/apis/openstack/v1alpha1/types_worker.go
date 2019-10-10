@@ -39,8 +39,6 @@ type MachineImage struct {
 	Name string `json:"name"`
 	// Version is the logical version of the machine image.
 	Version string `json:"version"`
-	// CloudProfile is the name of the cloud profile for this image.
-	CloudProfile string `json:"cloudProfile"`
 	// Image is the name of the image.
 	Image string `json:"image"`
 }

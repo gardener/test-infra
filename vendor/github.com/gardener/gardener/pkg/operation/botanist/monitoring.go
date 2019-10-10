@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	controllermanagerfeatures "github.com/gardener/gardener/pkg/controllermanager/features"
 	"github.com/gardener/gardener/pkg/features"
@@ -162,8 +162,8 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 
 		alertManagerValues, err := b.InjectSeedShootImages(map[string]interface{}{
 			"ingress": map[string]interface{}{
-				"basicAuthSecret": basicAuth,
-				"host":            b.Seed.GetIngressFQDN("a", b.Shoot.Info.Name, b.Garden.Project.Name),
+				"basicAuthSecret": basicAuthUsers,
+				"host":            b.Seed.GetIngressFQDN("au", b.Shoot.Info.Name, b.Garden.Project.Name),
 			},
 			"replicas":     b.Shoot.GetReplicas(1),
 			"storage":      b.Seed.GetValidVolumeSize("1Gi"),
@@ -215,7 +215,7 @@ func (b *Botanist) DeleteSeedMonitoring(ctx context.Context) error {
 
 	prometheusStatefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      gardencorev1alpha1.StatefulSetNamePrometheus,
+			Name:      v1alpha1constants.StatefulSetNamePrometheus,
 			Namespace: b.Shoot.SeedNamespace,
 		},
 	}

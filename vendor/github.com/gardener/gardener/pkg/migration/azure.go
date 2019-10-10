@@ -20,7 +20,6 @@ import (
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 
 	azurev1alpha1 "github.com/gardener/gardener-extensions/controllers/provider-azure/pkg/apis/azure/v1alpha1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,8 +39,8 @@ func GardenV1beta1ShootToAzureV1alpha1InfrastructureConfig(shoot *gardenv1beta1.
 	}
 
 	var vnet azurev1alpha1.VNet
-	if shoot.Spec.Cloud.Azure.Networks.VNet.CIDR != nil {
-		vnet.CIDR = shoot.Spec.Cloud.Azure.Networks.VNet.CIDR
+	if c := shoot.Spec.Cloud.Azure.Networks.VNet.CIDR; c != nil {
+		vnet.CIDR = c
 	}
 	if shoot.Spec.Cloud.Azure.Networks.VNet.Name != nil {
 		vnet.Name = shoot.Spec.Cloud.Azure.Networks.VNet.Name
@@ -71,7 +70,7 @@ func GardenV1beta1ShootToAzureV1alpha1ControlPlaneConfig(shoot *gardenv1beta1.Sh
 	var cloudControllerManager *azurev1alpha1.CloudControllerManagerConfig
 	if shoot.Spec.Kubernetes.CloudControllerManager != nil {
 		cloudControllerManager = &azurev1alpha1.CloudControllerManagerConfig{
-			KubernetesConfig: shoot.Spec.Kubernetes.CloudControllerManager.KubernetesConfig,
+			FeatureGates: shoot.Spec.Kubernetes.CloudControllerManager.KubernetesConfig.FeatureGates,
 		}
 	}
 

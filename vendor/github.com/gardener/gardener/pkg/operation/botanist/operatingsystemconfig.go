@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
@@ -123,11 +123,7 @@ func (b *Botanist) ComputeShootOperatingSystemConfig(ctx context.Context) error 
 	}
 
 	// Delete all old operating system configs (i.e. those which were previously computed but now are unused).
-	if err := b.CleanupOperatingSystemConfigs(ctx, usedOscNames); err != nil {
-		return err
-	}
-
-	return nil
+	return b.CleanupOperatingSystemConfigs(ctx, usedOscNames)
 }
 
 func (b *Botanist) generateDownloaderConfig(machineImageName string) map[string]interface{} {
@@ -177,6 +173,14 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenv1
 		"reloadConfigFilePath": common.CloudConfigFilePath,
 		"secretName":           secretName,
 		"customization":        customization,
+	}
+
+	if data := worker.CABundle; data != nil {
+		if existingCABundle, ok := originalConfig["caBundle"]; ok {
+			originalConfig["caBundle"] = fmt.Sprintf("%s\n%s", existingCABundle, *data)
+		} else {
+			originalConfig["caBundle"] = *data
+		}
 	}
 
 	var (
@@ -274,7 +278,7 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenv1
 	}
 
 	var kubelet = map[string]interface{}{
-		"caCert":                  string(b.Secrets[gardencorev1alpha1.SecretNameCAKubelet].Data[secrets.DataKeyCertificateCA]),
+		"caCert":                  string(b.Secrets[v1alpha1constants.SecretNameCAKubelet].Data[secrets.DataKeyCertificateCA]),
 		"evictionHard":            evictionHard,
 		"evictionSoft":            evictionSoft,
 		"evictionSoftGracePeriod": evictionSoftGracePeriod,

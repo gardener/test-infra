@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 )
 
@@ -83,7 +84,7 @@ var (
 		appsv1.DeploymentProgressing,
 	}
 
-	falseDeploymentConditionTypes = []appsv1.DeploymentConditionType{
+	falseOptionalDeploymentConditionTypes = []appsv1.DeploymentConditionType{
 		appsv1.DeploymentReplicaFailure,
 	}
 )
@@ -118,9 +119,9 @@ func CheckDeployment(deployment *appsv1.Deployment) error {
 		}
 	}
 
-	for _, falseConditionType := range falseDeploymentConditionTypes {
-		conditionType := string(falseConditionType)
-		condition := getDeploymentCondition(deployment.Status.Conditions, falseConditionType)
+	for _, falseOptionalConditionType := range falseOptionalDeploymentConditionTypes {
+		conditionType := string(falseOptionalConditionType)
+		condition := getDeploymentCondition(deployment.Status.Conditions, falseOptionalConditionType)
 		if condition == nil {
 			continue
 		}
@@ -329,7 +330,7 @@ func CheckExtensionObject(obj extensionsv1alpha1.Object) error {
 		return fmt.Errorf("observed generation outdated (%d/%d)", status.GetObservedGeneration(), obj.GetGeneration())
 	}
 
-	op, ok := obj.GetAnnotations()[gardencorev1alpha1.GardenerOperation]
+	op, ok := obj.GetAnnotations()[v1alpha1constants.GardenerOperation]
 	if ok {
 		return fmt.Errorf("gardener operation %q is not yet picked up by extension controller", op)
 	}
@@ -361,7 +362,7 @@ func CheckBackupBucket(obj *gardencorev1alpha1.BackupBucket) error {
 		return fmt.Errorf("observed generation outdated (%d/%d)", status.ObservedGeneration, obj.Generation)
 	}
 
-	op, ok := obj.GetAnnotations()[gardencorev1alpha1.GardenerOperation]
+	op, ok := obj.GetAnnotations()[v1alpha1constants.GardenerOperation]
 	if ok {
 		return fmt.Errorf("gardener operation %q is not yet picked up by controller", op)
 	}

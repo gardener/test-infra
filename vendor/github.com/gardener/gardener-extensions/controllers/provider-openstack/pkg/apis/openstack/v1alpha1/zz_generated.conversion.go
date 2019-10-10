@@ -24,7 +24,6 @@ import (
 	unsafe "unsafe"
 
 	openstack "github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/openstack"
-	corev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -46,6 +45,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*CloudProfileConfig)(nil), (*openstack.CloudProfileConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_CloudProfileConfig_To_openstack_CloudProfileConfig(a.(*CloudProfileConfig), b.(*openstack.CloudProfileConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.CloudProfileConfig)(nil), (*CloudProfileConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(a.(*openstack.CloudProfileConfig), b.(*CloudProfileConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*Constraints)(nil), (*openstack.Constraints)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_Constraints_To_openstack_Constraints(a.(*Constraints), b.(*openstack.Constraints), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.Constraints)(nil), (*Constraints)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_Constraints_To_v1alpha1_Constraints(a.(*openstack.Constraints), b.(*Constraints), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ControlPlaneConfig)(nil), (*openstack.ControlPlaneConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_ControlPlaneConfig_To_openstack_ControlPlaneConfig(a.(*ControlPlaneConfig), b.(*openstack.ControlPlaneConfig), scope)
 	}); err != nil {
@@ -53,6 +72,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*openstack.ControlPlaneConfig)(nil), (*ControlPlaneConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_openstack_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(a.(*openstack.ControlPlaneConfig), b.(*ControlPlaneConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*FloatingPool)(nil), (*openstack.FloatingPool)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FloatingPool_To_openstack_FloatingPool(a.(*FloatingPool), b.(*openstack.FloatingPool), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.FloatingPool)(nil), (*FloatingPool)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_FloatingPool_To_v1alpha1_FloatingPool(a.(*openstack.FloatingPool), b.(*FloatingPool), scope)
 	}); err != nil {
 		return err
 	}
@@ -96,6 +125,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*LoadBalancerProvider)(nil), (*openstack.LoadBalancerProvider)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_LoadBalancerProvider_To_openstack_LoadBalancerProvider(a.(*LoadBalancerProvider), b.(*openstack.LoadBalancerProvider), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.LoadBalancerProvider)(nil), (*LoadBalancerProvider)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_LoadBalancerProvider_To_v1alpha1_LoadBalancerProvider(a.(*openstack.LoadBalancerProvider), b.(*LoadBalancerProvider), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*MachineImage)(nil), (*openstack.MachineImage)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_MachineImage_To_openstack_MachineImage(a.(*MachineImage), b.(*openstack.MachineImage), scope)
 	}); err != nil {
@@ -103,6 +142,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*openstack.MachineImage)(nil), (*MachineImage)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_openstack_MachineImage_To_v1alpha1_MachineImage(a.(*openstack.MachineImage), b.(*MachineImage), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*MachineImageVersion)(nil), (*openstack.MachineImageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_MachineImageVersion_To_openstack_MachineImageVersion(a.(*MachineImageVersion), b.(*openstack.MachineImageVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.MachineImageVersion)(nil), (*MachineImageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_MachineImageVersion_To_v1alpha1_MachineImageVersion(a.(*openstack.MachineImageVersion), b.(*MachineImageVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*MachineImages)(nil), (*openstack.MachineImages)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_MachineImages_To_openstack_MachineImages(a.(*MachineImages), b.(*openstack.MachineImages), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*openstack.MachineImages)(nil), (*MachineImages)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_openstack_MachineImages_To_v1alpha1_MachineImages(a.(*openstack.MachineImages), b.(*MachineImages), scope)
 	}); err != nil {
 		return err
 	}
@@ -190,7 +249,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1alpha1_CloudControllerManagerConfig_To_openstack_CloudControllerManagerConfig(in *CloudControllerManagerConfig, out *openstack.CloudControllerManagerConfig, s conversion.Scope) error {
-	out.KubernetesConfig = in.KubernetesConfig
+	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 
@@ -200,13 +259,69 @@ func Convert_v1alpha1_CloudControllerManagerConfig_To_openstack_CloudControllerM
 }
 
 func autoConvert_openstack_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in *openstack.CloudControllerManagerConfig, out *CloudControllerManagerConfig, s conversion.Scope) error {
-	out.KubernetesConfig = in.KubernetesConfig
+	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 
 // Convert_openstack_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig is an autogenerated conversion function.
 func Convert_openstack_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in *openstack.CloudControllerManagerConfig, out *CloudControllerManagerConfig, s conversion.Scope) error {
 	return autoConvert_openstack_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in, out, s)
+}
+
+func autoConvert_v1alpha1_CloudProfileConfig_To_openstack_CloudProfileConfig(in *CloudProfileConfig, out *openstack.CloudProfileConfig, s conversion.Scope) error {
+	if err := Convert_v1alpha1_Constraints_To_openstack_Constraints(&in.Constraints, &out.Constraints, s); err != nil {
+		return err
+	}
+	out.DNSServers = *(*[]string)(unsafe.Pointer(&in.DNSServers))
+	out.DHCPDomain = (*string)(unsafe.Pointer(in.DHCPDomain))
+	out.KeyStoneURL = in.KeyStoneURL
+	out.MachineImages = *(*[]openstack.MachineImages)(unsafe.Pointer(&in.MachineImages))
+	out.RequestTimeout = (*string)(unsafe.Pointer(in.RequestTimeout))
+	return nil
+}
+
+// Convert_v1alpha1_CloudProfileConfig_To_openstack_CloudProfileConfig is an autogenerated conversion function.
+func Convert_v1alpha1_CloudProfileConfig_To_openstack_CloudProfileConfig(in *CloudProfileConfig, out *openstack.CloudProfileConfig, s conversion.Scope) error {
+	return autoConvert_v1alpha1_CloudProfileConfig_To_openstack_CloudProfileConfig(in, out, s)
+}
+
+func autoConvert_openstack_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in *openstack.CloudProfileConfig, out *CloudProfileConfig, s conversion.Scope) error {
+	if err := Convert_openstack_Constraints_To_v1alpha1_Constraints(&in.Constraints, &out.Constraints, s); err != nil {
+		return err
+	}
+	out.DNSServers = *(*[]string)(unsafe.Pointer(&in.DNSServers))
+	out.DHCPDomain = (*string)(unsafe.Pointer(in.DHCPDomain))
+	out.KeyStoneURL = in.KeyStoneURL
+	out.MachineImages = *(*[]MachineImages)(unsafe.Pointer(&in.MachineImages))
+	out.RequestTimeout = (*string)(unsafe.Pointer(in.RequestTimeout))
+	return nil
+}
+
+// Convert_openstack_CloudProfileConfig_To_v1alpha1_CloudProfileConfig is an autogenerated conversion function.
+func Convert_openstack_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in *openstack.CloudProfileConfig, out *CloudProfileConfig, s conversion.Scope) error {
+	return autoConvert_openstack_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in, out, s)
+}
+
+func autoConvert_v1alpha1_Constraints_To_openstack_Constraints(in *Constraints, out *openstack.Constraints, s conversion.Scope) error {
+	out.FloatingPools = *(*[]openstack.FloatingPool)(unsafe.Pointer(&in.FloatingPools))
+	out.LoadBalancerProviders = *(*[]openstack.LoadBalancerProvider)(unsafe.Pointer(&in.LoadBalancerProviders))
+	return nil
+}
+
+// Convert_v1alpha1_Constraints_To_openstack_Constraints is an autogenerated conversion function.
+func Convert_v1alpha1_Constraints_To_openstack_Constraints(in *Constraints, out *openstack.Constraints, s conversion.Scope) error {
+	return autoConvert_v1alpha1_Constraints_To_openstack_Constraints(in, out, s)
+}
+
+func autoConvert_openstack_Constraints_To_v1alpha1_Constraints(in *openstack.Constraints, out *Constraints, s conversion.Scope) error {
+	out.FloatingPools = *(*[]FloatingPool)(unsafe.Pointer(&in.FloatingPools))
+	out.LoadBalancerProviders = *(*[]LoadBalancerProvider)(unsafe.Pointer(&in.LoadBalancerProviders))
+	return nil
+}
+
+// Convert_openstack_Constraints_To_v1alpha1_Constraints is an autogenerated conversion function.
+func Convert_openstack_Constraints_To_v1alpha1_Constraints(in *openstack.Constraints, out *Constraints, s conversion.Scope) error {
+	return autoConvert_openstack_Constraints_To_v1alpha1_Constraints(in, out, s)
 }
 
 func autoConvert_v1alpha1_ControlPlaneConfig_To_openstack_ControlPlaneConfig(in *ControlPlaneConfig, out *openstack.ControlPlaneConfig, s conversion.Scope) error {
@@ -233,6 +348,28 @@ func autoConvert_openstack_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in 
 // Convert_openstack_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig is an autogenerated conversion function.
 func Convert_openstack_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in *openstack.ControlPlaneConfig, out *ControlPlaneConfig, s conversion.Scope) error {
 	return autoConvert_openstack_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in, out, s)
+}
+
+func autoConvert_v1alpha1_FloatingPool_To_openstack_FloatingPool(in *FloatingPool, out *openstack.FloatingPool, s conversion.Scope) error {
+	out.Name = in.Name
+	out.LoadBalancerClasses = *(*[]openstack.LoadBalancerClass)(unsafe.Pointer(&in.LoadBalancerClasses))
+	return nil
+}
+
+// Convert_v1alpha1_FloatingPool_To_openstack_FloatingPool is an autogenerated conversion function.
+func Convert_v1alpha1_FloatingPool_To_openstack_FloatingPool(in *FloatingPool, out *openstack.FloatingPool, s conversion.Scope) error {
+	return autoConvert_v1alpha1_FloatingPool_To_openstack_FloatingPool(in, out, s)
+}
+
+func autoConvert_openstack_FloatingPool_To_v1alpha1_FloatingPool(in *openstack.FloatingPool, out *FloatingPool, s conversion.Scope) error {
+	out.Name = in.Name
+	out.LoadBalancerClasses = *(*[]LoadBalancerClass)(unsafe.Pointer(&in.LoadBalancerClasses))
+	return nil
+}
+
+// Convert_openstack_FloatingPool_To_v1alpha1_FloatingPool is an autogenerated conversion function.
+func Convert_openstack_FloatingPool_To_v1alpha1_FloatingPool(in *openstack.FloatingPool, out *FloatingPool, s conversion.Scope) error {
+	return autoConvert_openstack_FloatingPool_To_v1alpha1_FloatingPool(in, out, s)
 }
 
 func autoConvert_v1alpha1_FloatingPoolStatus_To_openstack_FloatingPoolStatus(in *FloatingPoolStatus, out *openstack.FloatingPoolStatus, s conversion.Scope) error {
@@ -339,10 +476,29 @@ func Convert_openstack_LoadBalancerClass_To_v1alpha1_LoadBalancerClass(in *opens
 	return autoConvert_openstack_LoadBalancerClass_To_v1alpha1_LoadBalancerClass(in, out, s)
 }
 
+func autoConvert_v1alpha1_LoadBalancerProvider_To_openstack_LoadBalancerProvider(in *LoadBalancerProvider, out *openstack.LoadBalancerProvider, s conversion.Scope) error {
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_v1alpha1_LoadBalancerProvider_To_openstack_LoadBalancerProvider is an autogenerated conversion function.
+func Convert_v1alpha1_LoadBalancerProvider_To_openstack_LoadBalancerProvider(in *LoadBalancerProvider, out *openstack.LoadBalancerProvider, s conversion.Scope) error {
+	return autoConvert_v1alpha1_LoadBalancerProvider_To_openstack_LoadBalancerProvider(in, out, s)
+}
+
+func autoConvert_openstack_LoadBalancerProvider_To_v1alpha1_LoadBalancerProvider(in *openstack.LoadBalancerProvider, out *LoadBalancerProvider, s conversion.Scope) error {
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_openstack_LoadBalancerProvider_To_v1alpha1_LoadBalancerProvider is an autogenerated conversion function.
+func Convert_openstack_LoadBalancerProvider_To_v1alpha1_LoadBalancerProvider(in *openstack.LoadBalancerProvider, out *LoadBalancerProvider, s conversion.Scope) error {
+	return autoConvert_openstack_LoadBalancerProvider_To_v1alpha1_LoadBalancerProvider(in, out, s)
+}
+
 func autoConvert_v1alpha1_MachineImage_To_openstack_MachineImage(in *MachineImage, out *openstack.MachineImage, s conversion.Scope) error {
 	out.Name = in.Name
 	out.Version = in.Version
-	out.CloudProfile = in.CloudProfile
 	out.Image = in.Image
 	return nil
 }
@@ -355,7 +511,6 @@ func Convert_v1alpha1_MachineImage_To_openstack_MachineImage(in *MachineImage, o
 func autoConvert_openstack_MachineImage_To_v1alpha1_MachineImage(in *openstack.MachineImage, out *MachineImage, s conversion.Scope) error {
 	out.Name = in.Name
 	out.Version = in.Version
-	out.CloudProfile = in.CloudProfile
 	out.Image = in.Image
 	return nil
 }
@@ -363,6 +518,50 @@ func autoConvert_openstack_MachineImage_To_v1alpha1_MachineImage(in *openstack.M
 // Convert_openstack_MachineImage_To_v1alpha1_MachineImage is an autogenerated conversion function.
 func Convert_openstack_MachineImage_To_v1alpha1_MachineImage(in *openstack.MachineImage, out *MachineImage, s conversion.Scope) error {
 	return autoConvert_openstack_MachineImage_To_v1alpha1_MachineImage(in, out, s)
+}
+
+func autoConvert_v1alpha1_MachineImageVersion_To_openstack_MachineImageVersion(in *MachineImageVersion, out *openstack.MachineImageVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Image = in.Image
+	return nil
+}
+
+// Convert_v1alpha1_MachineImageVersion_To_openstack_MachineImageVersion is an autogenerated conversion function.
+func Convert_v1alpha1_MachineImageVersion_To_openstack_MachineImageVersion(in *MachineImageVersion, out *openstack.MachineImageVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha1_MachineImageVersion_To_openstack_MachineImageVersion(in, out, s)
+}
+
+func autoConvert_openstack_MachineImageVersion_To_v1alpha1_MachineImageVersion(in *openstack.MachineImageVersion, out *MachineImageVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Image = in.Image
+	return nil
+}
+
+// Convert_openstack_MachineImageVersion_To_v1alpha1_MachineImageVersion is an autogenerated conversion function.
+func Convert_openstack_MachineImageVersion_To_v1alpha1_MachineImageVersion(in *openstack.MachineImageVersion, out *MachineImageVersion, s conversion.Scope) error {
+	return autoConvert_openstack_MachineImageVersion_To_v1alpha1_MachineImageVersion(in, out, s)
+}
+
+func autoConvert_v1alpha1_MachineImages_To_openstack_MachineImages(in *MachineImages, out *openstack.MachineImages, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]openstack.MachineImageVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_v1alpha1_MachineImages_To_openstack_MachineImages is an autogenerated conversion function.
+func Convert_v1alpha1_MachineImages_To_openstack_MachineImages(in *MachineImages, out *openstack.MachineImages, s conversion.Scope) error {
+	return autoConvert_v1alpha1_MachineImages_To_openstack_MachineImages(in, out, s)
+}
+
+func autoConvert_openstack_MachineImages_To_v1alpha1_MachineImages(in *openstack.MachineImages, out *MachineImages, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]MachineImageVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_openstack_MachineImages_To_v1alpha1_MachineImages is an autogenerated conversion function.
+func Convert_openstack_MachineImages_To_v1alpha1_MachineImages(in *openstack.MachineImages, out *MachineImages, s conversion.Scope) error {
+	return autoConvert_openstack_MachineImages_To_v1alpha1_MachineImages(in, out, s)
 }
 
 func autoConvert_v1alpha1_NetworkStatus_To_openstack_NetworkStatus(in *NetworkStatus, out *openstack.NetworkStatus, s conversion.Scope) error {
@@ -401,7 +600,7 @@ func Convert_openstack_NetworkStatus_To_v1alpha1_NetworkStatus(in *openstack.Net
 
 func autoConvert_v1alpha1_Networks_To_openstack_Networks(in *Networks, out *openstack.Networks, s conversion.Scope) error {
 	out.Router = (*openstack.Router)(unsafe.Pointer(in.Router))
-	out.Worker = corev1alpha1.CIDR(in.Worker)
+	out.Worker = in.Worker
 	return nil
 }
 
@@ -412,7 +611,7 @@ func Convert_v1alpha1_Networks_To_openstack_Networks(in *Networks, out *openstac
 
 func autoConvert_openstack_Networks_To_v1alpha1_Networks(in *openstack.Networks, out *Networks, s conversion.Scope) error {
 	out.Router = (*Router)(unsafe.Pointer(in.Router))
-	out.Worker = corev1alpha1.CIDR(in.Worker)
+	out.Worker = in.Worker
 	return nil
 }
 

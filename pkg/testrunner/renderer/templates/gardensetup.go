@@ -17,6 +17,7 @@ package templates
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util/strconf"
@@ -105,11 +106,11 @@ func AppendGardenerConfig(stepConfig []v1beta1.ConfigElement, cfg GardenerConfig
 
 func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, versions []string) ([]v1beta1.ConfigElement, error) {
 	private := true
-	kubernetesConstraint := gardenv1beta1.KubernetesConstraints{
-		OfferedVersions: make([]gardenv1beta1.KubernetesVersion, len(versions)),
+	kubernetesConstraint := v1alpha1.KubernetesSettings{
+		Versions: make([]v1alpha1.ExpirableVersion, len(versions)),
 	}
 	for i, version := range versions {
-		kubernetesConstraint.OfferedVersions[i] = gardenv1beta1.KubernetesVersion{
+		kubernetesConstraint.Versions[i] = v1alpha1.ExpirableVersion{
 			Version: version,
 		}
 	}

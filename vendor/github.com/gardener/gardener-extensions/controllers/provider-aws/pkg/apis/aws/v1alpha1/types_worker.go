@@ -39,8 +39,6 @@ type MachineImage struct {
 	Name string `json:"name"`
 	// Version is the logical version of the machine image.
 	Version string `json:"version"`
-	// Region is the region for this image.
-	Region string `json:"region"`
 	// AMI is the AMI for the machine image.
 	AMI string `json:"ami"`
 }

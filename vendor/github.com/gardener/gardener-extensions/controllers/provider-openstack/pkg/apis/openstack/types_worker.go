@@ -38,8 +38,6 @@ type MachineImage struct {
 	Name string
 	// Version is the logical version of the machine image.
 	Version string
-	// CloudProfile is the name of the cloud profile for this image.
-	CloudProfile string
 	// Image is the name of the image.
 	Image string
 }

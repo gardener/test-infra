@@ -22,6 +22,8 @@ import (
 	"time"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
@@ -41,7 +43,7 @@ func (b *Botanist) WaitUntilKubeAPIServerServiceIsReady(ctx context.Context) err
 	defer cancel()
 
 	return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
-		loadBalancerIngress, err := kutil.GetLoadBalancerIngress(ctx, b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, gardencorev1alpha1.DeploymentNameKubeAPIServer)
+		loadBalancerIngress, err := kutil.GetLoadBalancerIngress(ctx, b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeAPIServer)
 		if err != nil {
 			b.Logger.Info("Waiting until the kube-apiserver service is ready...")
 			// TODO(AC): This is a quite optimistic check / we should differentiate here
@@ -88,12 +90,30 @@ func (b *Botanist) WaitUntilEtcdReady(ctx context.Context) error {
 	})
 }
 
+// WaitUntilEtcdMainReady waits until the etcd-main statefulsets indicate readiness in its status.
+func (b *Botanist) WaitUntilEtcdMainReady(ctx context.Context) error {
+	return retry.UntilTimeout(ctx, 5*time.Second, 300*time.Second, func(ctx context.Context) (done bool, err error) {
+		b.Logger.Info("Waiting until the etcd-main statefulset is ready...")
+		sts := &appsv1.StatefulSet{}
+		err = b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, "etcd-main"), sts)
+		if err != nil {
+			return retry.SevereError(err)
+		}
+
+		if sts.Generation == sts.Status.ObservedGeneration && sts.DeletionTimestamp == nil && sts.Status.ReadyReplicas == 1 {
+			return retry.Ok()
+		}
+
+		return retry.MinorError(fmt.Errorf("etcd-main stateful set is not ready"))
+	})
+}
+
 // WaitUntilKubeAPIServerReady waits until the kube-apiserver pod(s) indicate readiness in their statuses.
 func (b *Botanist) WaitUntilKubeAPIServerReady(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 300*time.Second, func(ctx context.Context) (done bool, err error) {
 
 		deploy := &appsv1.Deployment{}
-		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, gardencorev1alpha1.DeploymentNameKubeAPIServer), deploy); err != nil {
+		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeAPIServer), deploy); err != nil {
 			return retry.SevereError(err)
 		}
 		if deploy.Generation != deploy.Status.ObservedGeneration {
@@ -182,14 +202,14 @@ func (b *Botanist) waitUntilNamespaceDeleted(ctx context.Context, namespace stri
 // been deleted.
 func (b *Botanist) WaitUntilClusterAutoscalerDeleted(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 600*time.Second, func(ctx context.Context) (done bool, err error) {
-		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, gardencorev1alpha1.DeploymentNameClusterAutoscaler), &appsv1.Deployment{}); err != nil {
+		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameClusterAutoscaler), &appsv1.Deployment{}); err != nil {
 			if apierrors.IsNotFound(err) {
 				return retry.Ok()
 			}
 			return retry.SevereError(err)
 		}
-		b.Logger.Infof("Waiting until the %s has been deleted in the Seed cluster...", gardencorev1alpha1.DeploymentNameClusterAutoscaler)
-		return retry.MinorError(fmt.Errorf("deployment %q is still present", gardencorev1alpha1.DeploymentNameClusterAutoscaler))
+		b.Logger.Infof("Waiting until the %s has been deleted in the Seed cluster...", v1alpha1constants.DeploymentNameClusterAutoscaler)
+		return retry.MinorError(fmt.Errorf("deployment %q is still present", v1alpha1constants.DeploymentNameClusterAutoscaler))
 	})
 }
 
@@ -213,9 +233,9 @@ func (b *Botanist) WaitForControllersToBeActive(ctx context.Context) error {
 	)
 
 	// Check whether the kube-controller-manager deployment exists
-	if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, gardencorev1alpha1.DeploymentNameKubeControllerManager), &appsv1.Deployment{}); err == nil {
+	if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeControllerManager), &appsv1.Deployment{}); err == nil {
 		controllers = append(controllers, controllerInfo{
-			name: gardencorev1alpha1.DeploymentNameKubeControllerManager,
+			name: v1alpha1constants.DeploymentNameKubeControllerManager,
 			labels: map[string]string{
 				"app":  "kubernetes",
 				"role": "controller-manager",
@@ -331,5 +351,22 @@ func (b *Botanist) WaitUntilBackupEntryInGardenReconciled(ctx context.Context) e
 		}
 		b.Logger.Info("Waiting until the backup entry has been reconciled in the Garden cluster...")
 		return retry.MinorError(fmt.Errorf("backup entry %q has not yet been reconciled", be.Name))
+	})
+}
+
+// WaitUntilBackupInfrastructureDeleted waits until the backup infrastructure within the garden cluster has
+// been deleted.
+func (b *Botanist) WaitUntilBackupInfrastructureDeleted(ctx context.Context) error {
+	return retry.UntilTimeout(ctx, 5*time.Second, 600*time.Second, func(ctx context.Context) (done bool, err error) {
+		backupInfrastructure := &gardenv1beta1.BackupInfrastructure{}
+		if err := b.K8sGardenClient.Client().Get(ctx, kutil.Key(b.Shoot.Info.Namespace, common.GenerateBackupInfrastructureName(b.Shoot.SeedNamespace, b.Shoot.Info.Status.UID)), backupInfrastructure); err != nil {
+			if apierrors.IsNotFound(err) {
+				b.Logger.Info("Backup infrastructure has been successfully deleted.")
+				return retry.Ok()
+			}
+			return retry.SevereError(err)
+		}
+		b.Logger.Info("Waiting until the backup infrastructure has been deleted in the Garden cluster...")
+		return retry.MinorError(fmt.Errorf("backup infrastructure %q has not yet been deleted", backupInfrastructure.Name))
 	})
 }

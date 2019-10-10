@@ -33,7 +33,7 @@ type WorkerStatus struct {
 	MachineImages []MachineImage `json:"machineImages,omitempty"`
 }
 
-// MachineImage is a mapping from logical names and versions to provider-specific machine image data.
+// MachineImage is a mapping from logical names and versions to GCP-specific identifiers.
 type MachineImage struct {
 	// Name is the logical name of the machine image.
 	Name string `json:"name"`

@@ -38,8 +38,6 @@ type MachineImage struct {
 	Name string
 	// Version is the logical version of the machine image.
 	Version string
-	// Region is the region for this image.
-	Region string
 	// AMI is the AMI for the machine image.
 	AMI string
 }

@@ -138,6 +138,12 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 		return errors.Wrap(err, "could not construct Seed client")
 	}
 
+	o.SeedClient = seedClient
+	o.Shoot = shoot
+	o.Seed = seed
+	o.SeedCloudProfile = seedCloudProfile
+	o.Project = project
+
 	shootScheme := runtime.NewScheme()
 	shootSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
@@ -156,13 +162,7 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 		return errors.Wrap(err, "could not construct Shoot client")
 	}
 
-	o.SeedClient = seedClient
 	o.ShootClient = shootClient
-
-	o.Shoot = shoot
-	o.Seed = seed
-	o.SeedCloudProfile = seedCloudProfile
-	o.Project = project
 
 	return nil
 }
@@ -193,12 +193,12 @@ func (o *GardenerTestOperation) DownloadKubeconfig(ctx context.Context, client k
 // DashboardAvailable checks if the kubernetes dashboard is available
 func (o *GardenerTestOperation) DashboardAvailable(ctx context.Context) error {
 	url := fmt.Sprintf("https://api.%s/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy", *o.Shoot.Spec.DNS.Domain)
-	dashboardPassword, err := o.getAdminPassword(ctx)
+	dashboardToken, err := o.getAdminToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	return o.dashboardAvailable(ctx, url, dashboardUserName, dashboardPassword)
+	return o.dashboardAvailableWithToken(ctx, url, dashboardToken)
 }
 
 // KibanaDashboardAvailable checks if Kibana instance in shoot seed namespace is available
@@ -209,7 +209,7 @@ func (o *GardenerTestOperation) KibanaDashboardAvailable(ctx context.Context) er
 		return err
 	}
 
-	return o.dashboardAvailable(ctx, url, dashboardUserName, loggingPassword)
+	return o.dashboardAvailableWithBasicAuth(ctx, url, dashboardUserName, loggingPassword)
 }
 
 // HTTPGet performs an HTTP GET request with context
@@ -433,12 +433,12 @@ func (o *GardenerTestOperation) DumpState(ctx context.Context) {
 		if err := o.dumpNodes(ctx, ctxIdentifier, o.ShootClient); err != nil {
 			o.Logger.Errorf("unable to dump information of nodes from shoot %s: %s", o.Shoot.Name, err.Error())
 		}
+	}
 
-		// dump controlplane in the shootnamespace
-		if o.Seed != nil && o.SeedClient != nil {
-			if err := o.dumpControlplaneInSeed(ctx, o.SeedClient, o.Seed, o.ShootSeedNamespace()); err != nil {
-				o.Logger.Errorf("unable to dump controlplane of %s in seed %s: %v", o.Shoot.Name, o.Seed.Name, err)
-			}
+	// dump controlplane in the shootnamespace
+	if o.Seed != nil && o.SeedClient != nil {
+		if err := o.dumpControlplaneInSeed(ctx, o.SeedClient, o.Seed, o.ShootSeedNamespace()); err != nil {
+			o.Logger.Errorf("unable to dump controlplane of %s in seed %s: %v", o.Shoot.Name, o.Seed.Name, err)
 		}
 	}
 

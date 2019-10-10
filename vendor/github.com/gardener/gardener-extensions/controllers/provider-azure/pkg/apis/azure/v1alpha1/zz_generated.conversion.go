@@ -24,7 +24,6 @@ import (
 	unsafe "unsafe"
 
 	azure "github.com/gardener/gardener-extensions/controllers/provider-azure/pkg/apis/azure"
-	corev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -56,6 +55,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*CloudProfileConfig)(nil), (*azure.CloudProfileConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_CloudProfileConfig_To_azure_CloudProfileConfig(a.(*CloudProfileConfig), b.(*azure.CloudProfileConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*azure.CloudProfileConfig)(nil), (*CloudProfileConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_azure_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(a.(*azure.CloudProfileConfig), b.(*CloudProfileConfig), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ControlPlaneConfig)(nil), (*azure.ControlPlaneConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_ControlPlaneConfig_To_azure_ControlPlaneConfig(a.(*ControlPlaneConfig), b.(*azure.ControlPlaneConfig), scope)
 	}); err != nil {
@@ -63,6 +72,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*azure.ControlPlaneConfig)(nil), (*ControlPlaneConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_azure_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(a.(*azure.ControlPlaneConfig), b.(*ControlPlaneConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*DomainCount)(nil), (*azure.DomainCount)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_DomainCount_To_azure_DomainCount(a.(*DomainCount), b.(*azure.DomainCount), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*azure.DomainCount)(nil), (*DomainCount)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_azure_DomainCount_To_v1alpha1_DomainCount(a.(*azure.DomainCount), b.(*DomainCount), scope)
 	}); err != nil {
 		return err
 	}
@@ -93,6 +112,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*azure.MachineImage)(nil), (*MachineImage)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_azure_MachineImage_To_v1alpha1_MachineImage(a.(*azure.MachineImage), b.(*MachineImage), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*MachineImageVersion)(nil), (*azure.MachineImageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_MachineImageVersion_To_azure_MachineImageVersion(a.(*MachineImageVersion), b.(*azure.MachineImageVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*azure.MachineImageVersion)(nil), (*MachineImageVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_azure_MachineImageVersion_To_v1alpha1_MachineImageVersion(a.(*azure.MachineImageVersion), b.(*MachineImageVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*MachineImages)(nil), (*azure.MachineImages)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_MachineImages_To_azure_MachineImages(a.(*MachineImages), b.(*azure.MachineImages), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*azure.MachineImages)(nil), (*MachineImages)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_azure_MachineImages_To_v1alpha1_MachineImages(a.(*azure.MachineImages), b.(*MachineImages), scope)
 	}); err != nil {
 		return err
 	}
@@ -214,7 +253,7 @@ func Convert_azure_AvailabilitySet_To_v1alpha1_AvailabilitySet(in *azure.Availab
 }
 
 func autoConvert_v1alpha1_CloudControllerManagerConfig_To_azure_CloudControllerManagerConfig(in *CloudControllerManagerConfig, out *azure.CloudControllerManagerConfig, s conversion.Scope) error {
-	out.KubernetesConfig = in.KubernetesConfig
+	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 
@@ -224,13 +263,37 @@ func Convert_v1alpha1_CloudControllerManagerConfig_To_azure_CloudControllerManag
 }
 
 func autoConvert_azure_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in *azure.CloudControllerManagerConfig, out *CloudControllerManagerConfig, s conversion.Scope) error {
-	out.KubernetesConfig = in.KubernetesConfig
+	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 
 // Convert_azure_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig is an autogenerated conversion function.
 func Convert_azure_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in *azure.CloudControllerManagerConfig, out *CloudControllerManagerConfig, s conversion.Scope) error {
 	return autoConvert_azure_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in, out, s)
+}
+
+func autoConvert_v1alpha1_CloudProfileConfig_To_azure_CloudProfileConfig(in *CloudProfileConfig, out *azure.CloudProfileConfig, s conversion.Scope) error {
+	out.CountUpdateDomains = *(*[]azure.DomainCount)(unsafe.Pointer(&in.CountUpdateDomains))
+	out.CountFaultDomains = *(*[]azure.DomainCount)(unsafe.Pointer(&in.CountFaultDomains))
+	out.MachineImages = *(*[]azure.MachineImages)(unsafe.Pointer(&in.MachineImages))
+	return nil
+}
+
+// Convert_v1alpha1_CloudProfileConfig_To_azure_CloudProfileConfig is an autogenerated conversion function.
+func Convert_v1alpha1_CloudProfileConfig_To_azure_CloudProfileConfig(in *CloudProfileConfig, out *azure.CloudProfileConfig, s conversion.Scope) error {
+	return autoConvert_v1alpha1_CloudProfileConfig_To_azure_CloudProfileConfig(in, out, s)
+}
+
+func autoConvert_azure_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in *azure.CloudProfileConfig, out *CloudProfileConfig, s conversion.Scope) error {
+	out.CountUpdateDomains = *(*[]DomainCount)(unsafe.Pointer(&in.CountUpdateDomains))
+	out.CountFaultDomains = *(*[]DomainCount)(unsafe.Pointer(&in.CountFaultDomains))
+	out.MachineImages = *(*[]MachineImages)(unsafe.Pointer(&in.MachineImages))
+	return nil
+}
+
+// Convert_azure_CloudProfileConfig_To_v1alpha1_CloudProfileConfig is an autogenerated conversion function.
+func Convert_azure_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in *azure.CloudProfileConfig, out *CloudProfileConfig, s conversion.Scope) error {
+	return autoConvert_azure_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in, out, s)
 }
 
 func autoConvert_v1alpha1_ControlPlaneConfig_To_azure_ControlPlaneConfig(in *ControlPlaneConfig, out *azure.ControlPlaneConfig, s conversion.Scope) error {
@@ -251,6 +314,28 @@ func autoConvert_azure_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in *azu
 // Convert_azure_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig is an autogenerated conversion function.
 func Convert_azure_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in *azure.ControlPlaneConfig, out *ControlPlaneConfig, s conversion.Scope) error {
 	return autoConvert_azure_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in, out, s)
+}
+
+func autoConvert_v1alpha1_DomainCount_To_azure_DomainCount(in *DomainCount, out *azure.DomainCount, s conversion.Scope) error {
+	out.Region = in.Region
+	out.Count = in.Count
+	return nil
+}
+
+// Convert_v1alpha1_DomainCount_To_azure_DomainCount is an autogenerated conversion function.
+func Convert_v1alpha1_DomainCount_To_azure_DomainCount(in *DomainCount, out *azure.DomainCount, s conversion.Scope) error {
+	return autoConvert_v1alpha1_DomainCount_To_azure_DomainCount(in, out, s)
+}
+
+func autoConvert_azure_DomainCount_To_v1alpha1_DomainCount(in *azure.DomainCount, out *DomainCount, s conversion.Scope) error {
+	out.Region = in.Region
+	out.Count = in.Count
+	return nil
+}
+
+// Convert_azure_DomainCount_To_v1alpha1_DomainCount is an autogenerated conversion function.
+func Convert_azure_DomainCount_To_v1alpha1_DomainCount(in *azure.DomainCount, out *DomainCount, s conversion.Scope) error {
+	return autoConvert_azure_DomainCount_To_v1alpha1_DomainCount(in, out, s)
 }
 
 func autoConvert_v1alpha1_InfrastructureConfig_To_azure_InfrastructureConfig(in *InfrastructureConfig, out *azure.InfrastructureConfig, s conversion.Scope) error {
@@ -343,11 +428,55 @@ func Convert_azure_MachineImage_To_v1alpha1_MachineImage(in *azure.MachineImage,
 	return autoConvert_azure_MachineImage_To_v1alpha1_MachineImage(in, out, s)
 }
 
+func autoConvert_v1alpha1_MachineImageVersion_To_azure_MachineImageVersion(in *MachineImageVersion, out *azure.MachineImageVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.URN = in.URN
+	return nil
+}
+
+// Convert_v1alpha1_MachineImageVersion_To_azure_MachineImageVersion is an autogenerated conversion function.
+func Convert_v1alpha1_MachineImageVersion_To_azure_MachineImageVersion(in *MachineImageVersion, out *azure.MachineImageVersion, s conversion.Scope) error {
+	return autoConvert_v1alpha1_MachineImageVersion_To_azure_MachineImageVersion(in, out, s)
+}
+
+func autoConvert_azure_MachineImageVersion_To_v1alpha1_MachineImageVersion(in *azure.MachineImageVersion, out *MachineImageVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.URN = in.URN
+	return nil
+}
+
+// Convert_azure_MachineImageVersion_To_v1alpha1_MachineImageVersion is an autogenerated conversion function.
+func Convert_azure_MachineImageVersion_To_v1alpha1_MachineImageVersion(in *azure.MachineImageVersion, out *MachineImageVersion, s conversion.Scope) error {
+	return autoConvert_azure_MachineImageVersion_To_v1alpha1_MachineImageVersion(in, out, s)
+}
+
+func autoConvert_v1alpha1_MachineImages_To_azure_MachineImages(in *MachineImages, out *azure.MachineImages, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]azure.MachineImageVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_v1alpha1_MachineImages_To_azure_MachineImages is an autogenerated conversion function.
+func Convert_v1alpha1_MachineImages_To_azure_MachineImages(in *MachineImages, out *azure.MachineImages, s conversion.Scope) error {
+	return autoConvert_v1alpha1_MachineImages_To_azure_MachineImages(in, out, s)
+}
+
+func autoConvert_azure_MachineImages_To_v1alpha1_MachineImages(in *azure.MachineImages, out *MachineImages, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Versions = *(*[]MachineImageVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_azure_MachineImages_To_v1alpha1_MachineImages is an autogenerated conversion function.
+func Convert_azure_MachineImages_To_v1alpha1_MachineImages(in *azure.MachineImages, out *MachineImages, s conversion.Scope) error {
+	return autoConvert_azure_MachineImages_To_v1alpha1_MachineImages(in, out, s)
+}
+
 func autoConvert_v1alpha1_NetworkConfig_To_azure_NetworkConfig(in *NetworkConfig, out *azure.NetworkConfig, s conversion.Scope) error {
 	if err := Convert_v1alpha1_VNet_To_azure_VNet(&in.VNet, &out.VNet, s); err != nil {
 		return err
 	}
-	out.Workers = corev1alpha1.CIDR(in.Workers)
+	out.Workers = in.Workers
 	return nil
 }
 
@@ -360,7 +489,7 @@ func autoConvert_azure_NetworkConfig_To_v1alpha1_NetworkConfig(in *azure.Network
 	if err := Convert_azure_VNet_To_v1alpha1_VNet(&in.VNet, &out.VNet, s); err != nil {
 		return err
 	}
-	out.Workers = corev1alpha1.CIDR(in.Workers)
+	out.Workers = in.Workers
 	return nil
 }
 
@@ -483,7 +612,7 @@ func Convert_azure_Subnet_To_v1alpha1_Subnet(in *azure.Subnet, out *Subnet, s co
 
 func autoConvert_v1alpha1_VNet_To_azure_VNet(in *VNet, out *azure.VNet, s conversion.Scope) error {
 	out.Name = (*string)(unsafe.Pointer(in.Name))
-	out.CIDR = (*corev1alpha1.CIDR)(unsafe.Pointer(in.CIDR))
+	out.CIDR = (*string)(unsafe.Pointer(in.CIDR))
 	return nil
 }
 
@@ -494,7 +623,7 @@ func Convert_v1alpha1_VNet_To_azure_VNet(in *VNet, out *azure.VNet, s conversion
 
 func autoConvert_azure_VNet_To_v1alpha1_VNet(in *azure.VNet, out *VNet, s conversion.Scope) error {
 	out.Name = (*string)(unsafe.Pointer(in.Name))
-	out.CIDR = (*corev1alpha1.CIDR)(unsafe.Pointer(in.CIDR))
+	out.CIDR = (*string)(unsafe.Pointer(in.CIDR))
 	return nil
 }
 

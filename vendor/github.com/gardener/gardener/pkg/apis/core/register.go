@@ -50,6 +50,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&BackupBucketList{},
 		&BackupEntry{},
 		&BackupEntryList{},
+		&garden.CloudProfile{},
+		&garden.CloudProfileList{},
 		&ControllerRegistration{},
 		&ControllerRegistrationList{},
 		&ControllerInstallation{},
@@ -64,6 +66,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&garden.SecretBindingList{},
 		&garden.Seed{},
 		&garden.SeedList{},
+		&garden.Shoot{},
+		&garden.ShootList{},
 	)
 	return nil
 }

@@ -51,6 +51,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&BackupBucketList{},
 		&BackupEntry{},
 		&BackupEntryList{},
+		&CloudProfile{},
+		&CloudProfileList{},
 		&ControllerRegistration{},
 		&ControllerRegistrationList{},
 		&ControllerInstallation{},
@@ -65,6 +67,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SecretBindingList{},
 		&Seed{},
 		&SeedList{},
+		&Shoot{},
+		&ShootList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

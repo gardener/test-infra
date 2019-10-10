@@ -100,7 +100,7 @@ github.com/emicklei/go-restful/log
 github.com/evanphx/json-patch
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/gardener/controller-manager-library v0.0.0-20190715130150-315e86b01963
+# github.com/gardener/controller-manager-library v0.0.0-20190830161011-2626c078acef
 github.com/gardener/controller-manager-library/pkg/ctxutil
 github.com/gardener/controller-manager-library/pkg/fieldpath
 github.com/gardener/controller-manager-library/pkg/informerfactories
@@ -115,9 +115,10 @@ github.com/gardener/etcd-backup-restore/pkg/snapstore/gcs
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
 github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme
-# github.com/gardener/gardener v0.0.0-20190906111529-f9ad04069615
+# github.com/gardener/gardener v0.0.0-20191008200222-fba2a791e4a7
 github.com/gardener/gardener/pkg/apis/core
 github.com/gardener/gardener/pkg/apis/core/v1alpha1
+github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants
 github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper
 github.com/gardener/gardener/pkg/apis/extensions
 github.com/gardener/gardener/pkg/apis/extensions/v1alpha1
@@ -130,6 +131,11 @@ github.com/gardener/gardener/pkg/client/aws
 github.com/gardener/gardener/pkg/client/core/clientset/versioned
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1alpha1
+github.com/gardener/gardener/pkg/client/core/informers/externalversions
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/core
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/internalinterfaces
+github.com/gardener/gardener/pkg/client/core/listers/core/v1alpha1
 github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned/scheme
@@ -177,16 +183,21 @@ github.com/gardener/gardener/pkg/utils/secrets
 github.com/gardener/gardener/pkg/utils/time
 github.com/gardener/gardener/pkg/version
 github.com/gardener/gardener/test/integration/framework
-# github.com/gardener/gardener-extensions v0.0.0-20190820050625-a15de8a82f6b
+# github.com/gardener/gardener-extensions v0.0.0-20190906160200-5c329d46ae81
 github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud
+github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud/install
 github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-aws/pkg/apis/aws
+github.com/gardener/gardener-extensions/controllers/provider-aws/pkg/apis/aws/install
 github.com/gardener/gardener-extensions/controllers/provider-aws/pkg/apis/aws/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-azure/pkg/apis/azure
+github.com/gardener/gardener-extensions/controllers/provider-azure/pkg/apis/azure/install
 github.com/gardener/gardener-extensions/controllers/provider-azure/pkg/apis/azure/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-gcp/pkg/apis/gcp
+github.com/gardener/gardener-extensions/controllers/provider-gcp/pkg/apis/gcp/install
 github.com/gardener/gardener-extensions/controllers/provider-gcp/pkg/apis/gcp/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/openstack
+github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/openstack/install
 github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/openstack/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-packet/pkg/apis/packet
 github.com/gardener/gardener-extensions/controllers/provider-packet/pkg/apis/packet/v1alpha1
@@ -199,7 +210,7 @@ github.com/gardener/machine-controller-manager/pkg/apis/machine
 github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
-# github.com/go-ini/ini v1.44.0
+# github.com/go-ini/ini v1.46.0
 github.com/go-ini/ini
 # github.com/go-logr/logr v0.1.0
 github.com/go-logr/logr
@@ -384,7 +395,7 @@ github.com/onsi/gomega/types
 github.com/pborman/uuid
 # github.com/pelletier/go-toml v1.2.0
 github.com/pelletier/go-toml
-# github.com/pierrec/lz4 v2.0.5+incompatible
+# github.com/pierrec/lz4 v2.3.0+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/errors v0.8.1
@@ -484,7 +495,7 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 golang.org/x/lint
 golang.org/x/lint/golint
-# golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
+# golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html

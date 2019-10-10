@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 
 	"github.com/gardener/gardener/pkg/apis/garden"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -164,12 +164,16 @@ func generateWantedSecrets(seed *Seed, certificateAuthorities map[string]*utilse
 			CertType:  utilsecrets.ServerCert,
 			SigningCA: certificateAuthorities[caSeed],
 		},
-		&utilsecrets.BasicAuthSecretConfig{
-			Name:   "seed-monitoring-ingress-credentials",
-			Format: utilsecrets.BasicAuthFormatNormal,
+		&utilsecrets.CertificateSecretConfig{
+			Name: "aggregate-prometheus-tls",
 
-			Username:       "admin",
-			PasswordLength: 32,
+			CommonName:   "prometheus",
+			Organization: []string{fmt.Sprintf("%s:monitoring:ingress", garden.GroupName)},
+			DNSNames:     []string{seed.GetIngressFQDN("p-seed", "", "garden")},
+			IPAddresses:  nil,
+
+			CertType:  utilsecrets.ServerCert,
+			SigningCA: certificateAuthorities[caSeed],
 		},
 	}
 
@@ -262,6 +266,26 @@ func BootstrapCluster(seed *Seed, config *config.ControllerManagerConfiguration,
 		return err
 	}
 
+	if monitoringSecrets := common.GetSecretKeysWithPrefix(common.GardenRoleGlobalMonitoring, secrets); len(monitoringSecrets) > 0 {
+		for _, key := range monitoringSecrets {
+			secret := secrets[key]
+			secretObj := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%s", "seed", secret.Name),
+					Namespace: "garden",
+				},
+			}
+
+			if err := kutils.CreateOrUpdate(context.TODO(), k8sSeedClient.Client(), secretObj, func() error {
+				secretObj.Type = corev1.SecretTypeOpaque
+				secretObj.Data = secret.Data
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+	}
+
 	images, err := imagevector.FindImages(imageVector,
 		[]string{
 			common.AlertManagerImageName,
@@ -334,14 +358,14 @@ func BootstrapCluster(seed *Seed, config *config.ControllerManagerConfiguration,
 		existingConfigMaps := &corev1.ConfigMapList{}
 		if err = k8sSeedClient.Client().List(context.TODO(), existingConfigMaps,
 			client.InNamespace(common.GardenNamespace),
-			client.MatchingLabels(map[string]string{v1alpha1.LabelExtensionConfiguration: v1alpha1.LabelLogging})); err != nil {
+			client.MatchingLabels(map[string]string{v1alpha1constants.LabelExtensionConfiguration: v1alpha1constants.LabelLogging})); err != nil {
 			return err
 		}
 
 		// Read all filters and parsers coming from the extension provider configurations
 		for _, cm := range existingConfigMaps.Items {
-			filters.WriteString(fmt.Sprintln(cm.Data[v1alpha1.FluentBitConfigMapKubernetesFilter]))
-			parsers.WriteString(fmt.Sprintln(cm.Data[v1alpha1.FluentBitConfigMapParser]))
+			filters.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.FluentBitConfigMapKubernetesFilter]))
+			parsers.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.FluentBitConfigMapParser]))
 		}
 	} else {
 		if err := common.DeleteLoggingStack(context.TODO(), k8sSeedClient.Client(), common.GardenNamespace); err != nil && !apierrors.IsNotFound(err) {
@@ -429,13 +453,17 @@ func BootstrapCluster(seed *Seed, config *config.ControllerManagerConfiguration,
 			// Apply status from old Object to retain status information
 			new.Object["status"] = old.Object["status"]
 		}
-		vpaGK              = schema.GroupKind{Group: "autoscaling.k8s.io", Kind: "VerticalPodAutoscaler"}
-		issuerGK           = schema.GroupKind{Group: "certmanager.k8s.io", Kind: "ClusterIssuer"}
-		grafanaHost        = seed.GetIngressFQDN("g-seed", "", "garden")
-		grafanaCredentials = existingSecretsMap["seed-monitoring-ingress-credentials"]
-		grafanaBasicAuth   = utils.CreateSHA1Secret(grafanaCredentials.Data[utilsecrets.DataKeyUserName], grafanaCredentials.Data[utilsecrets.DataKeyPassword])
+		vpaGK                 = schema.GroupKind{Group: "autoscaling.k8s.io", Kind: "VerticalPodAutoscaler"}
+		issuerGK              = schema.GroupKind{Group: "certmanager.k8s.io", Kind: "ClusterIssuer"}
+		grafanaHost           = seed.GetIngressFQDN("g-seed", "", "garden")
+		prometheusHost        = seed.GetIngressFQDN("p-seed", "", "garden")
+		monitoringCredentials = existingSecretsMap["seed-monitoring-ingress-credentials"]
+		monitoringBasicAuth   string
 	)
 
+	if monitoringCredentials != nil {
+		monitoringBasicAuth = utils.CreateSHA1Secret(monitoringCredentials.Data[utilsecrets.DataKeyUserName], monitoringCredentials.Data[utilsecrets.DataKeyPassword])
+	}
 	applierOptions.MergeFuncs[vpaGK] = retainStatusInformation
 	applierOptions.MergeFuncs[issuerGK] = retainStatusInformation
 
@@ -463,6 +491,10 @@ func BootstrapCluster(seed *Seed, config *config.ControllerManagerConfiguration,
 		"aggregatePrometheus": map[string]interface{}{
 			"storage": seed.GetValidVolumeSize("20Gi"),
 			"seed":    seed.Info.Name,
+			"host":    prometheusHost,
+		},
+		"grafana": map[string]interface{}{
+			"host": grafanaHost,
 		},
 		"elastic-kibana-curator": map[string]interface{}{
 			"enabled": loggingEnabled,
@@ -515,11 +547,10 @@ func BootstrapCluster(seed *Seed, config *config.ControllerManagerConfiguration,
 			"privateNetworks": privateNetworks,
 		},
 		"gardenerResourceManager": map[string]interface{}{
-			"resourceClass": v1alpha1.SeedResourceManagerClass,
+			"resourceClass": v1alpha1constants.SeedResourceManagerClass,
 		},
 		"ingress": map[string]interface{}{
-			"basicAuthSecret": grafanaBasicAuth,
-			"host":            grafanaHost,
+			"basicAuthSecret": monitoringBasicAuth,
 		},
 	}, applierOptions)
 }
