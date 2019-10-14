@@ -94,24 +94,28 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	if err != nil {
 		return nil, err
 	}
-	var foundRelease *github.RepositoryRelease
-	var releases []*github.RepositoryRelease
-	var response *github.Response
+
 	draft := version.Prerelease() != "" // assumption is that draft versions have always a prerelease e.g. 0.100.0-dev-s5d4f6sdf45s65df4sdf4s4sf
 	if !draft {
-		foundRelease, response, err = githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, componentVersion)
+		release, response, err := githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, componentVersion)
 		if err != nil {
 			return nil, err
 		} else if response.StatusCode != 200 {
-			return nil, errors.New(fmt.Sprintf("Github foundRelease GET failed with status code %d", response.StatusCode))
+			return nil, errors.New(fmt.Sprintf("Github release GET failed with status code %d", response.StatusCode))
 		}
-	} else {
-		releaseName, err := version.SetPrerelease("")
-		if err != nil {
-			return nil, err
-		}
-		var opt *github.ListOptions
-		releases, response, err = githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, opt)
+		return release, nil
+	}
+
+	releaseName, err := version.SetPrerelease("")
+	if err != nil {
+		return nil, err
+	}
+
+	opt := &github.ListOptions{
+		PerPage: 50,
+	}
+	for {
+		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, opt)
 		if err != nil {
 			return nil, err
 		} else if response.StatusCode != 200 {
@@ -119,12 +123,15 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 		}
 		for _, release := range releases {
 			if *release.Draft && *release.Name == releaseName.String() {
-				foundRelease = release
-				break
+				return release, nil
 			}
 		}
+		if response.NextPage == 0 {
+			break
+		}
+		opt.Page = response.NextPage
 	}
-	return foundRelease, nil
+	return nil, errors.New("no releases found")
 }
 
 func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*github.Client, error) {
