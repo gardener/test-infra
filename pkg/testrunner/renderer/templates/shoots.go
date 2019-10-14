@@ -15,23 +15,34 @@
 package templates
 
 import (
-	"fmt"
+	"github.com/Masterminds/semver"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"path"
 )
 
 const (
 	ConfigSeedName  = "SEED"
 	ConfigSeedValue = "base"
 
+	ConfigControlplaneProviderPathName   = "CONTROLPLANE_PROVIDER_CONFIG_FILEPATH"
+	ConfigInfrastructureProviderPathName = "INFRASTRUCTURE_PROVIDER_CONFIG_FILEPATH"
+
 	ConfigShootName            = "SHOOT_NAME"
 	ConfigProjectNamespaceName = "PROJECT_NAMESPACE"
 	ConfigK8sVersionName       = "K8S_VERSION"
 	ConfigCloudproviderName    = "CLOUDPROVIDER"
+	ConfigProviderTypeName     = "PROVIDER_TYPE"
 	ConfigCloudprofileName     = "CLOUDPROFILE"
 	ConfigSecretBindingName    = "SECRET_BINDING"
 	ConfigRegionName           = "REGION"
 	ConfigZoneName             = "ZONE"
+)
+
+var (
+	ConfigControlplaneProviderPath   = path.Join(testmachinery.TM_SHARED_PATH, "generators/controlplane.yaml")
+	ConfigInfrastructureProviderPath = path.Join(testmachinery.TM_SHARED_PATH, "generators/infra.yaml")
 )
 
 // CreateShootConfig describes the configuration for a create-shoot step
@@ -42,152 +53,26 @@ type CreateShootConfig struct {
 }
 
 // GetStepCreateShoot generates the shoot creation step for a specific cloudprovider
-func GetStepCreateShoot(cloudprovider gardenv1beta1.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) (v1beta1.DAGStep, error) {
-	stepConfig := defaultShootConfig(cfg)
-	switch cloudprovider {
-	case gardenv1beta1.CloudProviderAWS:
-		if name == "" {
-			name = "create-shoot-aws"
+// A shoot in a specific version is created depending on the gardener configuration whereas
+// the default for commits is the new api.
+func GetStepCreateShoot(gardenerConfig GardenerConfig, cloudprovider gardenv1beta1.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
+	if gardenerConfig.Version != "" {
+		// all tests before gardener 0.31.0 have to use the old shoot test structure
+		// tests afterwards use the new gardener v1alpha1 api which also results in a different tm structure
+		oldShootVersion, err := semver.NewVersion("0.31.0")
+		if err != nil {
+			return nil, "", err
 		}
-		stepConfig = AWSShootConfig(stepConfig)
-		break
-	case gardenv1beta1.CloudProviderGCP:
-		if name == "" {
-			name = "create-shoot-gcp"
+
+		v, err := semver.NewVersion(gardenerConfig.Version)
+		if err != nil {
+			return nil, "", err
 		}
-		stepConfig = GCPShootConfig(stepConfig)
-		break
-	case gardenv1beta1.CloudProviderAzure:
-		if name == "" {
-			name = "create-shoot-azure"
+		if v.LessThan(oldShootVersion) {
+			return stepCreateShootV1beta1(cloudprovider, name, dependencies, cfg)
 		}
-		stepConfig = AzureShootConfig(stepConfig)
-		break
-	default:
-		return v1beta1.DAGStep{}, fmt.Errorf("unsupported cloudprovider %s", cloudprovider)
 	}
-
-	return v1beta1.DAGStep{
-		Name: name,
-		Definition: v1beta1.StepDefinition{
-			Name:   "create-shoot",
-			Config: stepConfig,
-		},
-		UseGlobalArtifacts: false,
-		DependsOn:          dependencies,
-		ArtifactsFrom:      "",
-		Annotations:        nil,
-	}, nil
-}
-
-func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
-	return []v1beta1.ConfigElement{
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigShootName,
-			Value: cfg.ShootName,
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigProjectNamespaceName,
-			Value: cfg.Namespace,
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigK8sVersionName,
-			Value: cfg.K8sVersion,
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigSeedName,
-			Value: ConfigSeedValue,
-		},
-	}
-}
-
-func GCPShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudproviderName,
-			Value: "gcp",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudprofileName,
-			Value: "gcp",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigSecretBindingName,
-			Value: "core-gcp-gcp",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigRegionName,
-			Value: "europe-west1",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigZoneName,
-			Value: "europe-west1-b",
-		},
-	}...)
-}
-
-func AWSShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudproviderName,
-			Value: "aws",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudprofileName,
-			Value: "aws",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigSecretBindingName,
-			Value: "core-aws-aws",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigRegionName,
-			Value: "eu-west-1",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigZoneName,
-			Value: "eu-west-1b",
-		},
-	}...)
-}
-
-func AzureShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudproviderName,
-			Value: "azure",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigCloudprofileName,
-			Value: "azure",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigSecretBindingName,
-			Value: "core-azure-azure",
-		},
-		{
-			Type:  v1beta1.ConfigTypeEnv,
-			Name:  ConfigRegionName,
-			Value: "westeurope",
-		},
-	}...)
+	return stepCreateShootV1alpha1(cloudprovider, name, dependencies, cfg)
 }
 
 func GetStepDeleteShoot(name, createShootStepName, shootName string, dependencies []string) v1beta1.DAGStep {
