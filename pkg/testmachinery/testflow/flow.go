@@ -128,7 +128,7 @@ func (f *Flow) GetDAGTemplate(phase testmachinery.Phase) *argov1.DAGTemplate {
 	dag := &argov1.DAGTemplate{}
 
 	for n := range f.Iterate() {
-		dag.Tasks = append(dag.Tasks, n.Task(phase))
+		dag.Tasks = append(dag.Tasks, n.Task(phase)...)
 	}
 
 	return dag

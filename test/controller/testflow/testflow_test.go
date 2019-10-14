@@ -17,6 +17,7 @@ package testflow_test
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"strings"
 	"time"
@@ -214,6 +215,65 @@ var _ = Describe("Testflow execution tests", func() {
 			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should run a test with a paused step that finishes after it is resumed", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+			tr.Spec.TestFlow = append(tr.Spec.TestFlow, &tmv1beta1.DAGStep{
+				Name: "pause-testdef",
+				Definition: tmv1beta1.StepDefinition{
+					Name: "integration-testdef",
+				},
+				Pause: true,
+			})
+
+			err := operation.Client().Client().Create(ctx, tr)
+			defer utils.DeleteTestrun(operation.Client(), tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = utils.WatchTestrun(ctx, operation.Client(), tr, 2*time.Minute, func(tr *tmv1beta1.Testrun) (bool, error) {
+				testrun := &tmv1beta1.Testrun{}
+				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.GetName(), Namespace: tr.GetNamespace()}, testrun); err != nil {
+					operation.Log().Error(err, "unable to get testrun")
+					return false, nil
+				}
+				tr = testrun
+				wf := &argov1.Workflow{}
+				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf); err != nil {
+					operation.Log().Error(err, "unable to get workflow")
+					return false, nil
+				}
+
+				for _, node := range wf.Status.Nodes {
+					if node.TemplateName == testmachinery.SuspendTemplateName && node.Phase == tmv1beta1.PhaseStatusRunning {
+						return retry.Ok()
+					}
+				}
+
+				return retry.NotOk()
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			err = util.ResumeTestrun(ctx, operation.Client(), tr)
+			Expect(err).ToNot(HaveOccurred())
+
+			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 2*time.Minute)
+			Expect(err).ToNot(HaveOccurred())
+
+			wf := &argov1.Workflow{}
+			err = operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf)
+			Expect(err).ToNot(HaveOccurred())
+
+			numExecutedTestDefs := 0
+			for _, node := range wf.Status.Nodes {
+				if strings.HasPrefix(node.TemplateName, "integration-testdef") && node.Phase == argov1.NodeSucceeded {
+					numExecutedTestDefs++
+				}
+			}
+
+			Expect(numExecutedTestDefs).To(Equal(2), "Testrun: %s", tr.Name)
 		})
 	})
 

@@ -15,6 +15,9 @@
 package controller
 
 import (
+	"context"
+	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,4 +32,11 @@ type TestrunReconciler struct {
 	client.Client
 	scheme *runtime.Scheme
 	Logger logr.Logger
+}
+
+type reconcileContext struct {
+	ctx     context.Context
+	tr      *v1beta1.Testrun
+	wf      *v1alpha1.Workflow
+	updated bool
 }

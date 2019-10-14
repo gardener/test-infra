@@ -5,13 +5,14 @@ go 1.13
 require (
 	cloud.google.com/go v0.43.0
 	github.com/Masterminds/semver v1.4.2
-	github.com/argoproj/argo v2.3.0+incompatible
+	github.com/argoproj/argo v2.4.0+incompatible
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/gardener/gardener v0.0.0-20191008200222-fba2a791e4a7
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.2
+	github.com/golang/mock v1.3.1
 	github.com/google/go-github/v27 v27.0.4
 	github.com/gorilla/mux v1.6.2
 	github.com/hashicorp/go-multierror v1.0.0

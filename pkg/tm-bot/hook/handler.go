@@ -83,7 +83,7 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	switch event := event.(type) {
 	case *github.IssueCommentEvent:
-		if event.GetIssue().IsPullRequest() {
+		if event.GetIssue().IsPullRequest() && ghutils.EventActionType(event.GetAction()) == ghutils.EventActionTypeCreated {
 			h.handleGenericEvent(w, &ghutils.GenericRequestEvent{
 				InstallationID: event.GetInstallation().GetID(),
 				ID:             event.GetIssue().GetID(),
@@ -99,7 +99,9 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte{})
+	if _, err := w.Write([]byte{}); err != nil {
+		h.log.Error(err, "unable to send response to github")
+	}
 }
 
 func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.GenericRequestEvent) {

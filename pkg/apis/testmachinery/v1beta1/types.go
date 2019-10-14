@@ -245,6 +245,7 @@ type DAGStep struct {
 	UseGlobalArtifacts bool              `json:"useGlobalArtifacts,omitempty"`
 	DependsOn          []string          `json:"dependsOn,omitempty"`
 	ArtifactsFrom      string            `json:"artifactsFrom,omitempty"`
+	Pause              bool              `json:"suspend,omitempty"`
 	Annotations        map[string]string `json:"annotations,omitempty"`
 }
 

@@ -94,11 +94,11 @@ mount-local:
 
 .PHONY: run-local
 run-local:
-	@TM_NAMESPACE=${NS} go run cmd/testmachinery-controller/main.go --kubeconfig=${KUBECONFIG} --insecure=true --local=true --dev -v=3
+	@TM_NAMESPACE=${NS} go run cmd/testmachinery-controller/main.go --insecure=true --local=true --dev -v=3
 
 .PHONY: run-controller
 run-controller:
-	@TM_NAMESPACE=${NS} TESTDEF_PATH=test/.test-defs go run cmd/testmachinery-controller/main.go --kubeconfig=${KUBECONFIG} --insecure=true --dev -v=3
+	@TM_NAMESPACE=${NS} TESTDEF_PATH=test/.test-defs go run cmd/testmachinery-controller/main.go --insecure=true --dev -v=3
 
 .PHONY: install-controller-local
 install-controller-local:

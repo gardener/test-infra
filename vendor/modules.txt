@@ -27,7 +27,7 @@ github.com/PuerkitoBio/urlesc
 github.com/aliyun/aliyun-oss-go-sdk/oss
 # github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30
 github.com/appscode/jsonpatch
-# github.com/argoproj/argo v2.3.0+incompatible
+# github.com/argoproj/argo v2.4.0+incompatible
 github.com/argoproj/argo/pkg/apis/workflow
 github.com/argoproj/argo/pkg/apis/workflow/v1alpha1
 github.com/argoproj/argo/pkg/client/clientset/versioned
@@ -238,6 +238,8 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
 github.com/golang/groupcache/lru
+# github.com/golang/mock v1.3.1
+github.com/golang/mock/gomock
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor

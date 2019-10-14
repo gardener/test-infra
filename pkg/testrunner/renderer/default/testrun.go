@@ -82,7 +82,7 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 		tr.Spec.TestFlow = append(tr.Spec.TestFlow, gardenerIntegrationTests...)
 	}
 
-	deleteGardener := templates.GetStepDeleteGardener(&createGardener, gsLocationName, deps)
+	deleteGardener := templates.GetStepDeleteGardener(&createGardener, gsLocationName, deps, cfg.Pause)
 	releaseHostCluster := templates.GetStepReleaseHost(cfg.HostProvider, []string{deleteGardener.Name}, false)
 	tr.Spec.TestFlow = append(tr.Spec.TestFlow, &deleteGardener, &releaseHostCluster)
 

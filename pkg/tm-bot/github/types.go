@@ -27,6 +27,11 @@ type Manager interface {
 
 // Client is the github client interface
 type Client interface {
+	Client() *github.Client
+
+	GetIssue(event *GenericRequestEvent) (*github.Issue, error)
+	GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error)
+
 	IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool
 
 	GetConfig(name string) (json.RawMessage, error)

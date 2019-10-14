@@ -48,6 +48,7 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	// create hash or unique name for testdefinition + step + flow
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
+
 	node := &Node{
 		name:           name,
 		TestDefinition: td,
@@ -124,8 +125,16 @@ func (n *Node) SetStep(step *tmv1beta1.DAGStep) {
 }
 
 // Task returns the argo task definition for the node.
-func (n *Node) Task(phase testmachinery.Phase) argov1.DAGTask {
-	task := argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
+func (n *Node) Task(phase testmachinery.Phase) []argov1.DAGTask {
+	tasks := make([]argov1.DAGTask, 0)
+	var task argov1.DAGTask
+	if n.step.Pause {
+		suspendTask := argo.CreateSuspendTask(fmt.Sprintf("%s-pause", n.TestDefinition.GetName()), n.ParentNames())
+		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, []string{suspendTask.Name}, n.GetOrDetermineArtifacts())
+		tasks = append(tasks, suspendTask)
+	} else {
+		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
+	}
 
 	switch n.step.Definition.Condition {
 	case tmv1beta1.ConditionTypeSuccess:
@@ -134,7 +143,7 @@ func (n *Node) Task(phase testmachinery.Phase) argov1.DAGTask {
 		task.When = fmt.Sprintf("{{workflow.status}} != Succeeded")
 	}
 
-	return task
+	return append(tasks, task)
 }
 
 // Status returns the status for the test step based in the node.

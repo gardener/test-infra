@@ -70,6 +70,8 @@ github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 h1:Kn3rqvbUFqSe
 github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30/go.mod h1:4AJxUpXUhv4N+ziTvIcWWXgeorXpxPZOfk9HdEVr96M=
 github.com/argoproj/argo v2.3.0+incompatible h1:L1OYZ86Q7NK19ahdl/eJOq78Mlf52wUKGmp7VDNQVz8=
 github.com/argoproj/argo v2.3.0+incompatible/go.mod h1:KJ0MB+tuhtAklR4jkPM10mIZXfRA0peTYJ1sLUnFLVU=
+github.com/argoproj/argo v2.4.0+incompatible h1:g/k3moKxvBTwERgqdGASKdDZBi9xMxc06xcmhz+iUVg=
+github.com/argoproj/argo v2.4.0+incompatible/go.mod h1:KJ0MB+tuhtAklR4jkPM10mIZXfRA0peTYJ1sLUnFLVU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/aws/aws-sdk-go v1.12.79/go.mod h1:ZRmQr0FajVIyZ4ZzBYKG5P3ZqPz9IHG41ZoMu1ADI3k=
 github.com/aws/aws-sdk-go v1.21.10 h1:lTRdgyxraKbnNhx7kWeoW/Uow1TKnSNDpQGTtEXJQgk=
@@ -144,6 +146,7 @@ github.com/gardener/etcd-backup-restore v0.0.0-20190807103447-4c8bc2972b60/go.mo
 github.com/gardener/external-dns-management v0.0.0-20190220100540-b4bbb5832a03/go.mod h1:Y3om11E865x4aQ7cmcHjknb8RMgCO153huRb/SvP+9o=
 github.com/gardener/external-dns-management v0.0.0-20190722114702-f6b12f6e4b43 h1:WzBYkDAOSMd8D6fNnN1eiaWXnSJuB6QytoENi4Np/iY=
 github.com/gardener/external-dns-management v0.0.0-20190722114702-f6b12f6e4b43/go.mod h1:Y3om11E865x4aQ7cmcHjknb8RMgCO153huRb/SvP+9o=
+github.com/gardener/gardener v0.0.0-20190812144748-dec8f3c7f288 h1:lyL25E+B1NfhRHo8+p/PcdGOZ7E8TLs2wgogPJDscus=
 github.com/gardener/gardener v0.0.0-20190812144748-dec8f3c7f288/go.mod h1:ioI69PbfNBUp10k2OtIED7u0l6u1NePBw/wgox9uayQ=
 github.com/gardener/gardener v0.0.0-20190830053951-194cf8abb797/go.mod h1:UjyQiGrjIRJQ82t2PTqtdMXzJxqH/ftQ36jbpFxAWXw=
 github.com/gardener/gardener v0.0.0-20190906111529-f9ad04069615 h1:P31O/FLxDGEv3SrMCgrYE5wo028niSt5TLpJS3Q3uqc=
@@ -156,6 +159,7 @@ github.com/gardener/gardener-extensions v0.0.0-20190820050625-a15de8a82f6b/go.mo
 github.com/gardener/gardener-extensions v0.0.0-20190906160200-5c329d46ae81 h1:VVYqOXGTTlm/peoLWTpYi/X2CkQUWB7petN6rv0XAOw=
 github.com/gardener/gardener-extensions v0.0.0-20190906160200-5c329d46ae81/go.mod h1:OBUAbab8OMm8pvzr/1/cdwIQnQYuMoGDTNR2c+i9nYo=
 github.com/gardener/gardener-resource-manager v0.0.0-20190802142246-6b2029430332/go.mod h1:kIPm1DlE5jChb4moAseumj1qr+IITKXPJcqyIKJp14Y=
+github.com/gardener/gardener-resource-manager v0.0.0-20190802153254-ea0dc5872b6a h1:8JeTMvqNg9PhDsvSDPnNNpYx4inYbtAAxpL8BJlFHME=
 github.com/gardener/gardener-resource-manager v0.0.0-20190802153254-ea0dc5872b6a/go.mod h1:kIPm1DlE5jChb4moAseumj1qr+IITKXPJcqyIKJp14Y=
 github.com/gardener/gardener-resource-manager v0.0.0-20190828115855-7ceeb3021993 h1:HoOo1rfm4n/T23886/Yj2yCVC81cVuXMbzdMo6PzTOs=
 github.com/gardener/gardener-resource-manager v0.0.0-20190828115855-7ceeb3021993/go.mod h1:l18ykpXeMDrrrtiA99YTdvZPW2TOaHIR/LrtbVELIiU=

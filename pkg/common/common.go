@@ -14,6 +14,11 @@
 
 package common
 
+// Annotations
+const (
+	ResumeTestrunAnnotation = "testmachinery.sapcloud.io/resume"
+)
+
 const (
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
 )

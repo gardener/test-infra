@@ -32,7 +32,7 @@ func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []
 			Entrypoint:              entrypoint,
 			ImagePullSecrets:        getImagePullSecrets(pullImageSecretNames),
 			Volumes:                 volumes,
-			Templates:               templates,
+			Templates:               append(templates, SuspendTemplate()),
 			TTLSecondsAfterFinished: ttl,
 		},
 	}
@@ -75,6 +75,7 @@ func CreateTask(taskName, templateName, phase string, continueOnError bool, depe
 			Error:  continueOnError,
 			Failed: continueOnError,
 		},
+
 		Arguments: argov1.Arguments{
 			Artifacts: artifacts,
 			Parameters: []argov1.Parameter{
@@ -84,6 +85,24 @@ func CreateTask(taskName, templateName, phase string, continueOnError bool, depe
 				},
 			},
 		},
+	}
+}
+
+// CreateSuspendTask creates a suspend task with a name and dependencies.
+// This task is used to pause before a specific step
+func CreateSuspendTask(name string, dependencies []string) argov1.DAGTask {
+	return argov1.DAGTask{
+		Name:         name,
+		Template:     testmachinery.SuspendTemplateName,
+		Dependencies: dependencies,
+	}
+}
+
+// SuspendTemplate resturn the shared template for suspended tasks
+func SuspendTemplate() argov1.Template {
+	return argov1.Template{
+		Name:    testmachinery.SuspendTemplateName,
+		Suspend: &argov1.SuspendTemplate{},
 	}
 }
 

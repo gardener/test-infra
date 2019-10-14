@@ -15,7 +15,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/go-logr/logr"
@@ -31,15 +30,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Testrun) (reconcile.Result, error) {
-	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
+func (r *TestrunReconciler) deleteTestrun(ctx *reconcileContext) (reconcile.Result, error) {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: ctx.tr.Name, Namespace: ctx.tr.Namespace})
 
-	if finalizers := sets.NewString(tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
+	if finalizers := sets.NewString(ctx.tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		return reconcile.Result{}, nil
 	}
 
 	foundWf := &argov1.Workflow{}
-	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(tr), Namespace: tr.Namespace}, foundWf)
+	err := r.Get(ctx.ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(ctx.tr), Namespace: ctx.tr.Namespace}, foundWf)
 	if err != nil && !errors.IsNotFound(err) {
 		return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 	}
@@ -52,17 +51,17 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 
 		log.Info("deleting", "workflow", foundWf.Name)
 		if removeFinalizer(foundWf, tmv1beta1.SchemeGroupVersion.Group) {
-			err = r.Update(ctx, foundWf)
+			err = r.Update(ctx.ctx, foundWf)
 			if err != nil {
 				log.Error(err, "unable to remove finalizer from workflow", "workflow", foundWf.Name)
 				return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
 			}
 		}
 
-		if tr.DeletionTimestamp == nil {
-			log.Info("deleting", "testrun", tr.Name)
-			removeFinalizer(tr, tmv1beta1.SchemeGroupVersion.Group)
-			err = r.Delete(ctx, tr)
+		if ctx.tr.DeletionTimestamp == nil {
+			log.Info("deleting", "testrun", ctx.tr.Name)
+			removeFinalizer(ctx.tr, tmv1beta1.SchemeGroupVersion.Group)
+			err = r.Delete(ctx.ctx, ctx.tr)
 			if err != nil {
 				log.Error(err, "unable to delete workflow", "workflow", foundWf.Name)
 				return reconcile.Result{}, err
@@ -72,8 +71,8 @@ func (r *TestrunReconciler) deleteTestrun(ctx context.Context, tr *tmv1beta1.Tes
 	}
 
 	//remove finalizers
-	if removeFinalizer(tr, tmv1beta1.SchemeGroupVersion.Group) {
-		err := r.Update(ctx, tr)
+	if removeFinalizer(ctx.tr, tmv1beta1.SchemeGroupVersion.Group) {
+		err := r.Update(ctx.ctx, ctx.tr)
 		if err != nil {
 			log.Error(err, "unable to remove finalizer from testrun")
 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
