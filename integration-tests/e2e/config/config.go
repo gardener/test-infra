@@ -80,7 +80,7 @@ func init() {
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 2, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
 	flag.Var(&ExplicitTestcases, "testcase", "List of testcases. If used description file and execution group are ingored.")
-	flag.BoolVar(&RetryFailedTestcases, "retryFailedTestcases", false, "List of testcases. If used description file and execution group are ingored.")
+	flag.BoolVar(&RetryFailedTestcases, "retryFailedTestcases", false, "runs an additional kubetest run for failed tests only")
 	flag.Parse()
 	if Debug {
 		log.SetLevel(log.DebugLevel)
