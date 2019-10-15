@@ -122,7 +122,7 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 			return nil, errors.New(fmt.Sprintf("Github releases GET failed with status code %d", response.StatusCode))
 		}
 		for _, release := range releases {
-			if *release.Draft && *release.Name == releaseName.String() {
+			if *release.Draft && strings.Contains(*release.Name, releaseName.String()) {
 				return release, nil
 			}
 		}
