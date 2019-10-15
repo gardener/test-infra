@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 
+	goflag "flag"
 	flag "github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/logger"
@@ -91,6 +92,7 @@ func init() {
 	logger.InitFlags(nil)
 	testmachinery.InitFlags(nil)
 	server.InitFlags(nil)
+	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 	flag.Parse()
 
 	log, err := logger.New(nil)
