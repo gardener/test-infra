@@ -24,7 +24,7 @@ func main() {
 			log.Fatalf("failed to clean dir '%s': %s", config.ExportPath, err)
 		}
 		if err := os.MkdirAll(config.ExportPath, os.FileMode(0777)); err != nil {
-			log.Fatalf("failed to clean dir '%s': %s", config.ExportPath, err)
+			log.Fatalf("failed to create dir '%s': %s", config.ExportPath, err)
 		}
 		desc = createDescFileOfFailedTestcases(resultSummary.FailedTestcaseNames)
 		kubetestResultsPath = kubetest.Run(desc)
