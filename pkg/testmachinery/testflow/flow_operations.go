@@ -212,7 +212,7 @@ func getNextSerialParent(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 		branches[i] = node.NewSet()
 	}
 
-	for len(lastParents) != 0 {
+	for !emptyNodeList(lastParents) {
 		parent, lastParents = getJointNodes(lastParents, branches, getNextSerialParent)
 		if parent != nil && checkFilter(parent, filters...) {
 			return parent
@@ -240,7 +240,7 @@ func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 		branches[i] = node.NewSet()
 	}
 
-	for len(lastChildren) != 0 {
+	for !emptyNodeList(lastChildren) {
 		child, lastChildren = getJointNodes(lastChildren, branches, getNextSerialChild)
 		if child != nil && checkFilter(child, filters...) {
 			return child
@@ -251,10 +251,13 @@ func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 }
 
 func getJointNodes(nodes []*node.Node, branches []*node.Set, getNext func(*node.Node, ...nodeFilterFunc) *node.Node) (*node.Node, []*node.Node) {
-	lastNodes := make([]*node.Node, 0)
+	lastNodes := make([]*node.Node, len(nodes))
 	for i, n := range nodes {
+		if n == nil {
+			continue
+		}
 		if nextNode := getNext(n); nextNode != nil {
-			lastNodes = append(lastNodes, nextNode)
+			lastNodes[i] = nextNode
 			branches[i].Add(nextNode)
 		}
 	}
@@ -287,6 +290,16 @@ func findJointNode(nodeSets []*node.Set) *node.Node {
 		}
 	}
 	return nil
+}
+
+// emptyNodeList checks if all nodes of a node list are nil
+func emptyNodeList(nodes []*node.Node) bool {
+	for _, n := range nodes {
+		if n != nil {
+			return false
+		}
+	}
+	return true
 }
 
 func checkFilter(node *node.Node, filters ...nodeFilterFunc) bool {

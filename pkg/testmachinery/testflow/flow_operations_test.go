@@ -204,24 +204,7 @@ var _ = Describe("flow operations", func() {
 			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
 			C := testNode("C", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
 			D := testNode("D", node.NewSet(B, C), defaultTestDef, testDAGStep([]string{"B", "C"}))
-			steps := map[string]*testflow.Step{
-				"A": {
-					Info:  A.Step(),
-					Nodes: node.NewSet(A),
-				},
-				"B": {
-					Info:  B.Step(),
-					Nodes: node.NewSet(B),
-				},
-				"C": {
-					Info:  C.Step(),
-					Nodes: node.NewSet(C),
-				},
-				"D": {
-					Info:  D.Step(),
-					Nodes: node.NewSet(D),
-				},
-			}
+			steps := createStepsFromNodes(A, B, C, D)
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
@@ -245,24 +228,7 @@ var _ = Describe("flow operations", func() {
 			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
 			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStep([]string{"B"}))
 			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStep([]string{"C"}))
-			steps := map[string]*testflow.Step{
-				"A": {
-					Info:  A.Step(),
-					Nodes: node.NewSet(A),
-				},
-				"B": {
-					Info:  B.Step(),
-					Nodes: node.NewSet(B),
-				},
-				"C": {
-					Info:  C.Step(),
-					Nodes: node.NewSet(C),
-				},
-				"D": {
-					Info:  D.Step(),
-					Nodes: node.NewSet(D),
-				},
-			}
+			steps := createStepsFromNodes(A, B, C, D)
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
@@ -282,24 +248,7 @@ var _ = Describe("flow operations", func() {
 			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
 			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStep([]string{"B"}))
 			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStep([]string{"C"}))
-			steps := map[string]*testflow.Step{
-				"A": {
-					Info:  A.Step(),
-					Nodes: node.NewSet(A),
-				},
-				"B": {
-					Info:  B.Step(),
-					Nodes: node.NewSet(B),
-				},
-				"C": {
-					Info:  C.Step(),
-					Nodes: node.NewSet(C),
-				},
-				"D": {
-					Info:  D.Step(),
-					Nodes: node.NewSet(D),
-				},
-			}
+			steps := createStepsFromNodes(A, B, C, D)
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
@@ -320,20 +269,7 @@ var _ = Describe("flow operations", func() {
 			A := testNode("ZA", node.NewSet(rootNode), defaultTestDef, testDAGStepA)
 			C := testNode("ZC", node.NewSet(A), defaultTestDef, testDAGStepC)
 			B := testNode("ZB", node.NewSet(C), defaultTestDef, testDAGStep([]string{"ZC"}))
-			steps := map[string]*testflow.Step{
-				"A": {
-					Info:  A.Step(),
-					Nodes: node.NewSet(A),
-				},
-				"B": {
-					Info:  B.Step(),
-					Nodes: node.NewSet(B),
-				},
-				"C": {
-					Info:  C.Step(),
-					Nodes: node.NewSet(C),
-				},
-			}
+			steps := createStepsFromNodes(A, B, C)
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
@@ -363,36 +299,7 @@ var _ = Describe("flow operations", func() {
 			E := testNode("E", node.NewSet(C), defaultTestDef, testDAGStepE)
 			F := testNode("F", node.NewSet(C), defaultTestDef, testDAGStepF)
 			G := testNode("G", node.NewSet(D, E, F), defaultTestDef, testDAGStep([]string{"D", "E", "F"}))
-			steps := map[string]*testflow.Step{
-				"A": {
-					Info:  A.Step(),
-					Nodes: node.NewSet(A),
-				},
-				"B": {
-					Info:  B.Step(),
-					Nodes: node.NewSet(B),
-				},
-				"C": {
-					Info:  C.Step(),
-					Nodes: node.NewSet(C),
-				},
-				"D": {
-					Info:  D.Step(),
-					Nodes: node.NewSet(D),
-				},
-				"E": {
-					Info:  E.Step(),
-					Nodes: node.NewSet(E),
-				},
-				"F": {
-					Info:  F.Step(),
-					Nodes: node.NewSet(F),
-				},
-				"G": {
-					Info:  G.Step(),
-					Nodes: node.NewSet(G),
-				},
-			}
+			steps := createStepsFromNodes(A, B, C, D, E, F, G)
 
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 
@@ -402,6 +309,22 @@ var _ = Describe("flow operations", func() {
 			Expect(D.GetInputSource()).To(Equal(A))
 			Expect(E.GetInputSource()).To(Equal(A))
 			Expect(F.GetInputSource()).To(Equal(A))
+			Expect(G.GetInputSource()).To(Equal(A))
+		})
+
+		It("should set the last serial parent as artifact source", func() {
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, nil)
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
+			C := testNode("C", node.NewSet(A), defaultTestDef, testDAGStepWitContinueOnError([]string{"B"}))
+			D := testNode("D", node.NewSet(B), defaultTestDef, testDAGStepWitContinueOnError([]string{"B"}))
+			E := testNode("E", node.NewSet(D), defaultTestDef, testDAGStepWitContinueOnError([]string{"D"}))
+			F := testNode("F", node.NewSet(E), defaultTestDef, testDAGStepWitContinueOnError([]string{"E"}))
+			G := testNode("G", node.NewSet(C, F), defaultTestDef, testDAGStep([]string{"C", "F"}))
+			steps := createStepsFromNodes(A, B, C, D, E, F, G)
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+			Expect(rootNode.HasOutput()).To(BeTrue())
 			Expect(G.GetInputSource()).To(Equal(A))
 		})
 
@@ -720,6 +643,13 @@ func testDAGStepWithConfig(dependencies []string, elements []v1beta1.ConfigEleme
 	return step
 }
 
+func testDAGStepWitContinueOnError(dependencies []string) *v1beta1.DAGStep {
+	step := testDAGStep(dependencies)
+	step.Definition.ContinueOnError = true
+
+	return step
+}
+
 var serialTestDef = func() testdefinition.TestDefinition {
 	return testdefinition.TestDefinition{
 		Info: &v1beta1.TestDefinition{
@@ -736,4 +666,15 @@ func testDefWithConfig(cfgs []v1beta1.ConfigElement) *testdefinition.TestDefinit
 	td := testdefinition.NewEmpty()
 	td.AddConfig(config.New(cfgs, config.LevelTestDefinition))
 	return td
+}
+
+func createStepsFromNodes(nodes ...*node.Node) map[string]*testflow.Step {
+	steps := make(map[string]*testflow.Step)
+	for _, n := range nodes {
+		steps[n.Name()] = &testflow.Step{
+			Info:  n.Step(),
+			Nodes: node.NewSet(n),
+		}
+	}
+	return steps
 }
