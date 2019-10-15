@@ -122,7 +122,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 
 func addFlakynessInfoToSummary(summary *Summary, failureOccurrences *map[string]int) {
 	for testcaseName, failureOccurrence := range *failureOccurrences {
-		if failureOccurrence != config.FlakeAttempts {
+		if failureOccurrence < config.FlakeAttempts {
 			// testcase had failures and successes
 			summary.FlakedTestcases++
 		} else {
@@ -130,6 +130,8 @@ func addFlakynessInfoToSummary(summary *Summary, failureOccurrences *map[string]
 			summary.FailedTestcaseNames = append(summary.FailedTestcaseNames, testcaseName)
 		}
 	}
+	summary.FailedTestcases = len(summary.FailedTestcaseNames)
+	summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 	if summary.FlakedTestcases != 0 {
 		summary.Flaked = true
 	}
@@ -183,8 +185,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpPassedFailed.String())
 				}
 				summary.SuccessfulTestcases += groupToValueInt["Passed"]
-				summary.FailedTestcases += groupToValueInt["Failed"]
-				summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 			}
 			if regexpGinkgoRanIn.MatchString(lineString) {
 				log.Info(lineString)
