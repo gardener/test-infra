@@ -21,7 +21,7 @@ The configuration file has the following format:
 # Example
 
 echo:
-  value: hallo
+  value: hello
 
 test:
   hostprovider: gardener
