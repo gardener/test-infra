@@ -1,4 +1,7 @@
 # Test Machinery
+
+<img src="docs/images/gardener-test-machinery.svg" width="150px"></img>
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/test-infra)](https://goreportcard.com/report/github.com/gardener/test-infra)
 
 ![testmachinery diagram overview](docs/testmachinery/test_machinary_overview.png)
