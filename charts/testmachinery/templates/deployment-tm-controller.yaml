@@ -49,8 +49,6 @@ spec:
         - --key-file=/etc/testmachinery-controller/srv/tls.key
         - --namespace={{ .Release.Namespace }}
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
-        - --base-image={{ .Values.controller.steps.baseImage }}
-        - --prepare-image={{ .Values.controller.steps.prepareImage }}
         - -v={{ .Values.controller.verbosity }}
         {{- if .Values.secrets.github.data }}
         - --github-secrets-path={{ .Values.secrets.github.path }}/github-secrets.yaml
