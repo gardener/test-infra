@@ -33,6 +33,18 @@ test-infra:
               dockerfile: 'Dockerfile'
               target: tm-bot
               tag_as_latest: true
+            tm-base-image:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
+              dockerfile: 'Dockerfile'
+              dir: 'hack/images/base'
+              tag_as_latest: true
+            tm-prepare-image:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step
+              dockerfile: 'Dockerfile'
+              dir: 'hack/images/prepare'
+              tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:
         image: 'golang:1.13.0'
