@@ -34,8 +34,9 @@ type resume struct {
 	k8sClient kubernetes.Interface
 }
 
-func New(k8sClient kubernetes.Interface) plugins.Plugin {
+func New(log logr.Logger, k8sClient kubernetes.Interface) plugins.Plugin {
 	return &resume{
+		log: log,
 		k8sClient: k8sClient,
 	}
 }
