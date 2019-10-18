@@ -73,7 +73,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 	skippedTestcases := make(map[string]TestcaseResult)
 
 	for _, junitXMLPath := range junitXMLFilePaths {
-		junitXml, err := unmarshalJUnitXMLResult(junitXMLPath)
+		junitXml, err := unmashalJUnitFromFile(junitXMLPath)
 		if err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ func junitXMLTestcasesToJSON(junitXMLTestcases []TestcaseResult) error {
 	return nil
 }
 
-func unmarshalJUnitXMLResult(junitXMLPath string) (JunitXMLResult, error) {
+func unmashalJUnitFromFile(junitXMLPath string) (JunitXMLResult, error) {
 	file, err := os.Open(junitXMLPath)
 	if err != nil {
 		return JunitXMLResult{}, err
