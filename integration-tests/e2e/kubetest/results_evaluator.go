@@ -66,70 +66,111 @@ func writeSummaryToFile(summary Summary) {
 }
 
 func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary) error {
-	var mergedJunitXmlResult = &JunitXMLResult{FailedTests: 0, ExecutedTests: 0, DurationFloat: 0, SuccessfulTests: 0, DurationInt: summary.TestsuiteDuration}
-	testcaseNameToTestcase := make(map[string]TestcaseResult)
-	failureOccurrences := make(map[string]int)
+	mergedJunitXmlResult := &JunitXMLResult{DurationInt: summary.TestsuiteDuration}
+	var testcases []TestcaseResult
+	failureOccurrences := make(map[string]int) // map of testcases that failed at least once
+	succeededTestcases := make(map[string]bool) // map of testcases that succeeded at east once
+	skippedTestcases := make(map[string]TestcaseResult)
+
 	for _, junitXMLPath := range junitXMLFilePaths {
-		file, err := os.Open(junitXMLPath)
+		junitXml, err := unmashalJUnitFromFile(junitXMLPath)
 		if err != nil {
 			return err
-		}
-		defer file.Close()
-		junitXml, err := UnmarshalJunitXMLResult(file.Name())
-		if err != nil {
-			return errors.Wrapf(err, "Couldn't unmarshal %s", file.Name())
 		}
 		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
 		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
 		mergedJunitXmlResult.SuccessfulTests += junitXml.SuccessfulTests
-		for _, testcase := range junitXml.Testcases {
-			if testcase.Skipped {
-				if _, ok := testcaseNameToTestcase[testcase.Name]; !ok {
-					testcaseNameToTestcase[testcase.Name] = testcase
+		if err = junitXMLTestcasesToJSON(junitXml.Testcases); err != nil {
+			return err
+		}
+		for _, newTestcase := range junitXml.Testcases {
+			_, existsInFailureOccurences := failureOccurrences[newTestcase.Name]
+			_, existsInSucceededTestcases := succeededTestcases[newTestcase.Name]
+			if newTestcase.Skipped {
+				if !existsInFailureOccurences && !existsInSucceededTestcases {
+					skippedTestcases[newTestcase.Name] = newTestcase
 				}
+				// skipped testcases are appended later, to avoid duplicates. Therefore continue with next testcase
 				continue
 			}
-			if !testcase.Successful && !testcase.Skipped {
-				if _, ok := failureOccurrences[testcase.Name]; ok {
-					failureOccurrences[testcase.Name]++
+			testcases = append(testcases, newTestcase) // collect testcases that are either failed or succeeded
+			delete(skippedTestcases, newTestcase.Name)// if testcase was indexed as skipped from previous junit xml files, remove element
+			if newTestcase.Successful {
+				succeededTestcases[newTestcase.Name] = true
+			} else {
+				if existsInFailureOccurences {
+					failureOccurrences[newTestcase.Name]++
 				} else {
-					failureOccurrences[testcase.Name] = 1
+					failureOccurrences[newTestcase.Name] = 1
 				}
-			}
-			testcaseNameToTestcase[testcase.Name] = testcase
-			testcaseJSON, err := json.Marshal(testcase)
-			if err != nil {
-				return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
-			}
-			testcaseJSON = append([]byte("{\"index\": {\"_index\": \"e2e_testcase\", \"_type\": \"_doc\"}}\n"), testcaseJSON...)
-
-			jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
-			testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
-			if err := ioutil.WriteFile(testcaseJsonFilePath, testcaseJSON, 0644); err != nil {
-				return errors.Wrapf(err, "Couldn't write %s to file", testcaseJsonFilePath)
 			}
 		}
 	}
-	for _, testcase := range testcaseNameToTestcase {
+	for _, testcase := range testcases {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
-	addFlakynessInfoToSummary(summary, &failureOccurrences)
+	for _, testcase := range skippedTestcases {
+		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
+	}
+	addAdditionalInfoToSummary(summary, &failureOccurrences, &succeededTestcases)
 	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
 		return err
 	}
 	return nil
 }
 
-func addFlakynessInfoToSummary(summary *Summary, failureOccurrences *map[string]int) {
+func junitXMLTestcasesToJSON(junitXMLTestcases []TestcaseResult) error {
+	for _, newTestcase := range junitXMLTestcases {
+		if !newTestcase.Skipped {
+			// write only not skipped testcases to json file
+			if err := writeTestcaseToJSONFile(newTestcase); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func unmashalJUnitFromFile(junitXMLPath string) (JunitXMLResult, error) {
+	file, err := os.Open(junitXMLPath)
+	if err != nil {
+		return JunitXMLResult{}, err
+	}
+	defer file.Close()
+	junitXml, err := UnmarshalJunitXMLResult(file.Name())
+	if err != nil {
+		return JunitXMLResult{}, errors.Wrapf(err, "Couldn't unmarshal %s", file.Name())
+	}
+	return junitXml, nil
+}
+
+func writeTestcaseToJSONFile(testcase TestcaseResult) error {
+	testcaseJSON, err := json.Marshal(testcase)
+	if err != nil {
+		return errors.Wrapf(err, "Couldn't marshal testsuite summary %s", testcaseJSON)
+	}
+	testcaseJSON = append([]byte("{\"index\": {\"_index\": \"e2e_testcase\", \"_type\": \"_doc\"}}\n"), testcaseJSON...)
+
+	jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
+	testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
+	if err := ioutil.WriteFile(testcaseJsonFilePath, testcaseJSON, 0644); err != nil {
+		return errors.Wrapf(err, "Couldn't write %s to file", testcaseJsonFilePath)
+	}
+	return nil
+}
+
+func addAdditionalInfoToSummary(summary *Summary, failureOccurrences *map[string]int, succeededTestcases *map[string]bool) {
 	for testcaseName, failureOccurrence := range *failureOccurrences {
-		if failureOccurrence < config.FlakeAttempts {
-			// testcase had failures and successes
-			summary.FlakedTestcases++
+		if (*succeededTestcases)[testcaseName] {
+			// testcase succeeded at least once
+			summary.FlakedTestcases += failureOccurrence
 		} else {
 			// testcase has failed in all attempts
 			summary.FailedTestcaseNames = append(summary.FailedTestcaseNames, testcaseName)
 		}
 	}
+	summary.ExecutedTestcases = len(summary.FailedTestcaseNames) + len(*succeededTestcases)
+	summary.SuccessfulTestcases = len(*succeededTestcases)
 	summary.FailedTestcases = len(summary.FailedTestcaseNames)
 	summary.TestsuiteSuccessful = summary.FailedTestcases == 0
 	if summary.FlakedTestcases != 0 {
@@ -157,8 +198,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 
 	emptySummary := Summary{DescriptionFile: config.DescriptionFile}
 	summary := emptySummary
-	regexpRanSpecs := regexp.MustCompile(`Ran (?P<TestcasesRan>\d+).*Specs.in`)
-	regexpPassedFailed := regexp.MustCompile(`(?P<Passed>\d+) Passed.*?(?P<Failed>\d+) Failed.*Pending`)
 	regexpGinkgoRanIn := regexp.MustCompile(`Ginkgo ran \d+ suite in (?P<TestSuiteDuration>.+)`)
 
 	for _, e2eLogPath := range e2eLogFilePaths {
@@ -170,22 +209,6 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 
 		for lineByte := range util.ReadLinesFromFile(file) {
 			lineString := string(lineByte)
-			if regexpRanSpecs.MatchString(lineString) {
-				groupToValue := util.GetGroupMapOfRegexMatches(regexpRanSpecs, lineString)
-				groupToValueInt, err := convertValuesToInt(groupToValue)
-				if err != nil {
-					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpRanSpecs.String())
-				}
-				summary.ExecutedTestcases += groupToValueInt["TestcasesRan"]
-			}
-			if regexpPassedFailed.MatchString(lineString) {
-				groupToValue := util.GetGroupMapOfRegexMatches(regexpPassedFailed, lineString)
-				groupToValueInt, err := convertValuesToInt(groupToValue)
-				if err != nil {
-					return summary, errors.Wrapf(err, "Empty or non integer values in map, for regexp '%s'", regexpPassedFailed.String())
-				}
-				summary.SuccessfulTestcases += groupToValueInt["Passed"]
-			}
 			if regexpGinkgoRanIn.MatchString(lineString) {
 				log.Info(lineString)
 				groupToValue := util.GetGroupMapOfRegexMatches(regexpGinkgoRanIn, lineString)
@@ -196,7 +219,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 				summary.TestsuiteDuration += int(duration.Seconds())
 			}
 		}
-		if summary.isEmpty() {
+		if summary.TestsuiteDuration == 0 {
 			contentBytes, err := ioutil.ReadFile(e2eLogPath)
 			if err != nil {
 				log.Fatal(err)
@@ -260,14 +283,4 @@ type Summary struct {
 	FinishedTime        time.Time `json:"-"`
 	ExecutionGroup      string    `json:"execution_group"`
 	FailedTestcaseNames []string  `json:"failed_testcase_names"`
-}
-
-func (summary Summary) isEmpty() bool {
-	return summary.ExecutedTestcases == 0 &&
-		summary.SuccessfulTestcases == 0 &&
-		summary.FailedTestcases == 0 &&
-		summary.FlakedTestcases == 0 &&
-		summary.Flaked == false &&
-		summary.TestsuiteSuccessful == false &&
-		len(summary.FailedTestcaseNames) == 0
 }

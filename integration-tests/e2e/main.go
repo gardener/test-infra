@@ -19,7 +19,8 @@ func main() {
 	kubetestResultsPath := kubetest.Run(desc)
 	resultSummary := kubetest.Analyze(kubetestResultsPath)
 
-	if config.RetryFailedTestcases {
+	if config.RetryFailedTestcases && len(resultSummary.FailedTestcaseNames) > 0 {
+		log.Infof("retry kubetest run for %d testcases", len(resultSummary.FailedTestcaseNames))
 		if err := os.RemoveAll(config.ExportPath); err != nil {
 			log.Fatalf("failed to clean dir '%s': %s", config.ExportPath, err)
 		}
@@ -45,7 +46,10 @@ func main() {
 
 func createDescFileOfFailedTestcases(failedTestcases []string) string {
 	generatedRunDescPath := filepath.Join(config.TmpDir, "failedTestcasesDescription.txt")
-	file, err := os.OpenFile(generatedRunDescPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err := os.Remove(kubetest.GeneratedRunDescPath); err != nil {
+		log.Error(err)
+	}
+	file, err := os.OpenFile(generatedRunDescPath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		log.Fatalf("failed creating file: %s", err)
