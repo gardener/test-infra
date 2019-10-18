@@ -80,6 +80,9 @@ var runCmd = &cobra.Command{
 			Landscape:         shootParameters.Landscape,
 			CloudProvider:     shootParameters.Cloudprovider,
 			KubernetesVersion: shootParameters.K8sVersion,
+			Region:            shootParameters.Region,
+			Zone:              shootParameters.Zone,
+			OperatingSystem:   shootParameters.MachineImage,
 		}
 		shootRuns, err := testrunnerTemplate.RenderShootTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, metadata)
 		if err != nil {

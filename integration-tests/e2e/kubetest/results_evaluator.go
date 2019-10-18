@@ -68,7 +68,7 @@ func writeSummaryToFile(summary Summary) {
 func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary) error {
 	mergedJunitXmlResult := &JunitXMLResult{DurationInt: summary.TestsuiteDuration}
 	var testcases []TestcaseResult
-	failureOccurrences := make(map[string]int) // map of testcases that failed at least once
+	failureOccurrences := make(map[string]int)  // map of testcases that failed at least once
 	succeededTestcases := make(map[string]bool) // map of testcases that succeeded at east once
 	skippedTestcases := make(map[string]TestcaseResult)
 
@@ -94,7 +94,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 				continue
 			}
 			testcases = append(testcases, newTestcase) // collect testcases that are either failed or succeeded
-			delete(skippedTestcases, newTestcase.Name)// if testcase was indexed as skipped from previous junit xml files, remove element
+			delete(skippedTestcases, newTestcase.Name) // if testcase was indexed as skipped from previous junit xml files, remove element
 			if newTestcase.Successful {
 				succeededTestcases[newTestcase.Name] = true
 			} else {

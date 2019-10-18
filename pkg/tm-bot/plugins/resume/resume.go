@@ -36,7 +36,7 @@ type resume struct {
 
 func New(log logr.Logger, k8sClient kubernetes.Interface) plugins.Plugin {
 	return &resume{
-		log: log,
+		log:       log,
 		k8sClient: k8sClient,
 	}
 }
