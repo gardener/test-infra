@@ -66,7 +66,7 @@ func writeSummaryToFile(summary Summary) {
 }
 
 func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary) error {
-	var mergedJunitXmlResult = &JunitXMLResult{DurationInt: summary.TestsuiteDuration}
+	mergedJunitXmlResult := &JunitXMLResult{DurationInt: summary.TestsuiteDuration}
 	var testcases []TestcaseResult
 	failureOccurrences := make(map[string]int) // map of testcases that failed at least once
 	succeededTestcases := make(map[string]bool) // map of testcases that succeeded at east once
