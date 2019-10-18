@@ -16,6 +16,7 @@ package testmachinery
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/version"
 	"io/ioutil"
 	"os"
 
@@ -69,9 +70,9 @@ func InitFlags(flagset *flag.FlagSet) {
 
 	flagset.StringVar(&TESTDEF_PATH, "testdef-path", util.Getenv("TESTDEF_PATH", ".test-defs"),
 		"Set repository path where the Test Machinery should search for testdefinition")
-	flagset.StringVar(&PREPARE_IMAGE, "prepare-image", util.Getenv("PREPARE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:latest"),
+	flagset.StringVar(&PREPARE_IMAGE, "prepare-image", util.Getenv("PREPARE_IMAGE", fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:%s", version.Get().GitVersion)),
 		"Set the prepare image that is used in the prepare and postprepare step")
-	flagset.StringVar(&BASE_IMAGE, "base-image", util.Getenv("BASE_IMAGE", "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest"),
+	flagset.StringVar(&BASE_IMAGE, "base-image", util.Getenv("BASE_IMAGE", fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/base-step:%s", version.Get().GitVersion)),
 		"Set the base image that is used as the default image if a TestDefinition does not define a image")
 
 	flag.BoolVar(&tmConfig.Local, "local", false, "The controller runs outside of a cluster.")

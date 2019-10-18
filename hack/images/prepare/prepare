@@ -15,7 +15,11 @@
 # limitations under the License.
 FILEPATH="$1"
 
-for repo in $(cat "$FILEPATH" | jq -c '.[]' ); do
+for d in $(cat "$FILEPATH" | jq -c '.directories[]' ); do
+    mkdir -p $d
+done
+
+for repo in $(cat "$FILEPATH" | jq -c '.repositories[]' ); do
     url=$( echo $repo | jq -r '.url')
     revision=$( echo $repo | jq -r '.revision')
     name=$( echo $repo | jq -r '.name')

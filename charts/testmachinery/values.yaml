@@ -24,10 +24,6 @@ controller:
   testDefPath: ""
   verbosity: 2
 
-  steps:
-    baseImage: eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.69.0
-    prepareImage: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:0.69.0
-
   serviceAccountName: testmachinery-controller
   webhook:
     http:
