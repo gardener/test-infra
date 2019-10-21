@@ -15,6 +15,12 @@ test-infra:
     ti_docker_images: &ti_docker_images
       publish:
         dockerimages:
+            tm-base-image:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
+              dockerfile: 'Dockerfile'
+              dir: 'hack/images/base'
+              tag_as_latest: true
             tm-controller:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
@@ -33,17 +39,11 @@ test-infra:
               dockerfile: 'Dockerfile'
               target: tm-bot
               tag_as_latest: true
-            tm-base-image:
-              registry: 'gcr-readwrite'
-              image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
-              dockerfile: 'Dockerfile'
-              dir: 'hack/images/base'
-              tag_as_latest: true
             tm-prepare-image:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step
               dockerfile: 'Dockerfile'
-              dir: 'hack/images/prepare'
+              target: tm-prepare
               tag_as_latest: true
     ti_test_steps: &ti_test_steps
       check:

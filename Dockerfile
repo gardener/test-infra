@@ -56,3 +56,10 @@ COPY --from=builder /go/bin/tm-bot /tm-bot
 WORKDIR /
 
 ENTRYPOINT ["/tm-bot"]
+
+############# tm-prepare #############
+FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-prepare
+
+COPY --from=builder /go/bin/prepare /tm/prepare
+
+CMD [ "/tm/prepare" ]
