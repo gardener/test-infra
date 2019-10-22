@@ -170,7 +170,7 @@ docker-image-bot:
 
 .PHONY: docker-image-prepare
 docker-image-prepare:
-	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/prepare/Dockerfile ./hack/images/prepare
+	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target tm-prepare .
 
 .PHONY: docker-image-base
 docker-image-base:
