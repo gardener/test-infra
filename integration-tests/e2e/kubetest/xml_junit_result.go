@@ -58,4 +58,5 @@ type TestcaseResult struct {
 	TestDesc       string    `xml:"-" json:"test_desc_file"`  // calculated
 	ExecutionGroup string    `xml:"-" json:"execution_group"` // calculated
 	Successful     bool      `xml:"-" json:"successful"`      // calculated
+	Flaked         int       `xml:"-" json:"flaked"`          // calculated
 }
