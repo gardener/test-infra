@@ -22,7 +22,6 @@ import (
 	"os"
 )
 
-
 func init() {
 	logger.InitFlags(nil)
 }
