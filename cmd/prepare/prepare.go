@@ -36,7 +36,7 @@ for repo in $(cat "$FILEPATH" | jq -c '.repositories[]' ); do
     rm -rf .git
     popd
 done
- */
+*/
 
 import (
 	"encoding/json"
@@ -70,7 +70,7 @@ func runPrepare(log logr.Logger, cfg *prepare.Config, repoBasePath string) error
 		repoPath := path.Join(repoBasePath, repo.Name)
 		log.Info("Clone repo", "repo", repo.URL, "revision", repo.Revision, "path", repoPath)
 
-		if err := runGit(cwd, "clone", "-v",  repo.URL, repoPath); err != nil {
+		if err := runGit(cwd, "clone", "-v", repo.URL, repoPath); err != nil {
 			return err
 		}
 
@@ -111,7 +111,7 @@ func runGit(pwd string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if err :=  cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Command: %s", strings.Join(args, " ")))
 	}
 	return nil
