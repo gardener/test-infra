@@ -79,7 +79,17 @@ Usage:
       --kubernetes-version stringArray     Specify the kubernetes version to test
   -l, --label string                       Specify test label that should be fetched by the testmachinery (default "default")
       --namespace string                   Testrun namespace (default "default")
+      --pause                              Pauses the testrun before gardener is deleted
       --project-namespace string           Specify the shoot namespace where the shoots should be created (default "garden-core")
+```
+
+#### Resume
+Resumes a paused testrun.
+```
+Command resume
+Resumes the last paused testrun
+
+Example: /resume
 ```
 
 
@@ -97,10 +107,9 @@ test:
     version: # StringOrGitHubConfig
     commit: # StringOrGitHubConfig
 
-  kubernetes:
-    versions: # []string
-
-  cloudproviders: # []CloudProvider
+  shootFlavors:
+  - cloudprovider: # cloudprovider e.g. aws
+    kubernetesVersions: # []string
 ```
 
 ```yaml

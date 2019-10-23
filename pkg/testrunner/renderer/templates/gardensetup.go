@@ -36,12 +36,21 @@ type GardenerConfig struct {
 	Commit   string
 }
 
-func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, kubernetesVersions []string, cfg GardenerConfig) (v1beta1.DAGStep, error) {
+// ShootFlavor describes the shoot flavors that should be tested.
+// Will be extended in the future by operating system, etc..
+type ShootFlavor struct {
+	CloudProvider gardenv1beta1.CloudProvider `json:"cloudprovider"`
+
+	// Kubernetes versions to test
+	KubernetesVersions []v1alpha1.ExpirableVersion `json:"kubernetesVersions"`
+}
+
+func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, shootFlavors []ShootFlavor, cfg GardenerConfig) (v1beta1.DAGStep, error) {
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), cfg)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
-	stepConfig, err = AppendKubernetesVersionConfig(stepConfig, kubernetesVersions)
+	stepConfig, err = AppendKubernetesVersionConfig(stepConfig, shootFlavors)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
@@ -105,18 +114,18 @@ func AppendGardenerConfig(stepConfig []v1beta1.ConfigElement, cfg GardenerConfig
 
 }
 
-func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, versions []string) ([]v1beta1.ConfigElement, error) {
-	private := true
-	kubernetesConstraint := v1alpha1.KubernetesSettings{
-		Versions: make([]v1alpha1.ExpirableVersion, len(versions)),
-	}
-	for i, version := range versions {
-		kubernetesConstraint.Versions[i] = v1alpha1.ExpirableVersion{
-			Version: version,
-		}
-	}
+func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, shootFlavors []ShootFlavor) ([]v1beta1.ConfigElement, error) {
+	trueVar := true
+	//kubernetesConstraint := v1alpha1.KubernetesSettings{
+	//	Versions: make([]v1alpha1.ExpirableVersion, len(versions)),
+	//}
+	//for i, version := range versions {
+	//	kubernetesConstraint.Versions[i] = v1alpha1.ExpirableVersion{
+	//		Version: version,
+	//	}
+	//}
 
-	rawVersions, err := json.Marshal(kubernetesConstraint)
+	rawVersions, err := json.Marshal(shootFlavors)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +136,7 @@ func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, versions 
 		Name:    "K8S_VERSIONS",
 		Path:    "/tm/gs/kubernetes_versions.json",
 		Value:   b64Versions,
-		Private: &private,
+		Private: &trueVar,
 	}), nil
 }
 

@@ -17,6 +17,7 @@ package tests
 import (
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 )
 
@@ -33,11 +34,7 @@ type DefaultsConfig struct {
 		Commit  *ghval.StringOrGitHubValue `json:"commit"`
 	} `json:"gardener"`
 
-	Kubernetes *struct {
-		Versions *[]string `json:"versions"`
-	} `json:"kubernetes"`
-
-	CloudProviders *[]v1beta1.CloudProvider `json:"cloudproviders"`
+	ShootFlavors *[]templates.ShootFlavor `json:"shootFlavors"`
 }
 
 type State struct {

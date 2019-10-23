@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -31,10 +32,12 @@ type test struct {
 	timeout   time.Duration
 	interval  time.Duration
 
-	config      _default.Config
-	testLabel   string
-	hibernation bool
-	dryRun      bool
+	config             _default.Config
+	kubernetesVersions []string
+	cloudproviders     []v1beta1.CloudProvider
+	testLabel          string
+	hibernation        bool
+	dryRun             bool
 }
 
 func New(log logr.Logger, k8sClient kubernetes.Interface) plugins.Plugin {
