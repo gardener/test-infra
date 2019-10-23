@@ -18,14 +18,26 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
+const (
+	success = "SUCCESS"
+	fail = "FAIL"
+)
+
 // uploads status results as asset to the component
-func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
+func UploadStatusToGithub(log logr.Logger, run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	tr := run.Testrun
 	md := run.Metadata
+	var testrunStatusTag string
+	if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+		testrunStatusTag = success
+	} else {
+		testrunStatusTag = fail
+	}
 	tableString := strings.Builder{}
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
-	filename := fmt.Sprintf("%s%s-%s-%s.txt", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
+	filenameWithoutStatus := fmt.Sprintf("%s%s-%s-%s", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
+	filename := fmt.Sprintf("%s-%s.txt", filenameWithoutStatus, testrunStatusTag)
 
 	repoURL, err := url.Parse(fmt.Sprintf("https://%s", component.Name))
 	if err != nil {
@@ -42,13 +54,22 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 		return err
 	}
 
-	assetExists, err := assetWithNameExists(githubClient, *release.ID, repoOwner, repoName, filename)
+	remoteAssetID, isRemoteAssetSuccessful, err := getAssetIDByName(githubClient, *release.ID, repoOwner, repoName, filenameWithoutStatus)
 	if err != nil {
 		return err
 	}
-	if assetExists {
-		// do not overwrite existing asset to ensure consistent reporting
-		return nil
+	if remoteAssetID != 0 {
+		if isRemoteAssetSuccessful {
+			// do not overwrite existing successful asset to ensure consistent reporting
+			log.V(3).Info(fmt.Sprintf("Skip asset upload, since asset of a a succeeded testrun '%s*' already exists", filenameWithoutStatus))
+			return nil
+		} else {
+			// delete failed remote asset, since a new one will be uploaded
+			log.V(3).Info(fmt.Sprintf("Delete remote asset '%s*', so that a newer version can be uploaded", filenameWithoutStatus))
+			if err := deleteAsset(githubClient, repoOwner, repoName, remoteAssetID); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err = uploadAsset(githubClient, *release.ID, repoOwner, repoName, filename, statusOutput); err != nil {
@@ -57,19 +78,33 @@ func UploadStatusToGithub(run *testrunner.Run, component *componentdescriptor.Co
 	return nil
 }
 
-func assetWithNameExists(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename string) (bool, error) {
+func deleteAsset(githubClient *github.Client, repoOwner string, repoName string, assetID int64) error {
+	response, err := githubClient.Repositories.DeleteReleaseAsset(context.Background(), repoOwner, repoName, assetID)
+	if err != nil {
+		return err
+	} else if response.StatusCode != 204 {
+		return errors.New(fmt.Sprintf("Delete github release asset failed with status code %d", response.StatusCode))
+	}
+	return nil
+}
+
+func getAssetIDByName(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename string) (int64, bool, error) {
 	releaseAssets, response, err := githubClient.Repositories.ListReleaseAssets(context.Background(), repoOwner, repoName, releaseID, &github.ListOptions{})
 	if err != nil {
-		return false, err
+		return 0, false, err
 	} else if response.StatusCode != 200 {
-		return false, errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
+		return 0, false, errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
 	}
 	for _, releaseAsset := range releaseAssets {
-		if *releaseAsset.Name == filename {
-			return true, nil
+		if strings.Contains(*releaseAsset.Name, filename) {
+			if strings.Contains(*releaseAsset.Name, fail) {
+				return *releaseAsset.ID, false, nil
+			} else if strings.Contains(*releaseAsset.Name, success) {
+				return *releaseAsset.ID, true, nil
+			}
 		}
 	}
-	return false, nil
+	return 0, false, nil
 }
 
 func uploadAsset(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename, statusOutput string) error {
