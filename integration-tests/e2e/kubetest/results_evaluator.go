@@ -73,16 +73,15 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 	skippedTestcases := make(map[string]TestcaseResult)
 
 	for _, junitXMLPath := range junitXMLFilePaths {
-		junitXml, err := unmashalJUnitFromFile(junitXMLPath)
+		junitXml, err := unmarshalJUnitFromFile(junitXMLPath)
 		if err != nil {
 			return err
 		}
 		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
 		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
 		mergedJunitXmlResult.SuccessfulTests += junitXml.SuccessfulTests
-		if err = junitXMLTestcasesToJSON(junitXml.Testcases); err != nil {
-			return err
-		}
+
+		// scatter testcases in groups succeeded, failed, skipped
 		for _, newTestcase := range junitXml.Testcases {
 			_, existsInFailureOccurences := failureOccurrences[newTestcase.Name]
 			_, existsInSucceededTestcases := succeededTestcases[newTestcase.Name]
@@ -106,6 +105,12 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 			}
 		}
 	}
+
+	if err := junitXMLTestcasesToJSON(&testcases, &failureOccurrences, &succeededTestcases); err != nil {
+		return err
+	}
+
+	// unify all junit files in one single file
 	for _, testcase := range testcases {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
@@ -119,19 +124,41 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 	return nil
 }
 
-func junitXMLTestcasesToJSON(junitXMLTestcases []TestcaseResult) error {
-	for _, newTestcase := range junitXMLTestcases {
-		if !newTestcase.Skipped {
-			// write only not skipped testcases to json file
-			if err := writeTestcaseToJSONFile(newTestcase); err != nil {
-				return err
-			}
+func junitXMLTestcasesToJSON(testcases *[]TestcaseResult, failureOccurrences *map[string]int, succeededTestcases *map[string]bool) error {
+	uniqueTestcases := make(map[string]TestcaseResult)
+	for _, testcase := range *testcases {
+		if testcase.Skipped {
+			// skipped testcases are not saved as json files
+			continue
+		}
+		if _, ok := uniqueTestcases[testcase.Name]; ok {
+			// continue if testcase has been already registered
+			continue
+		}
+		failuresCount, everFailed := (*failureOccurrences)[testcase.Name]
+		if everFailed && testcase.Successful {
+			// since we need the failure description, we skip the successful testcase execution and only save the failed one later
+			continue
+		}
+		_, everSucceeded := (*succeededTestcases)[testcase.Name]
+		if !testcase.Successful && everSucceeded {
+			// if testcase failed but was successful at some point in time, then it flaked
+			testcase.Flaked = failuresCount
+			uniqueTestcases[testcase.Name] = testcase
+		} else {
+			// successful or failed testcase
+			uniqueTestcases[testcase.Name] = testcase
+		}
+	}
+	for _, newTestcase := range uniqueTestcases {
+		if err := writeTestcaseToJSONFile(newTestcase); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func unmashalJUnitFromFile(junitXMLPath string) (JunitXMLResult, error) {
+func unmarshalJUnitFromFile(junitXMLPath string) (JunitXMLResult, error) {
 	file, err := os.Open(junitXMLPath)
 	if err != nil {
 		return JunitXMLResult{}, err
