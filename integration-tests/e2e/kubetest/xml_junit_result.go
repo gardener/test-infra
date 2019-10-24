@@ -2,6 +2,7 @@ package kubetest
 
 import (
 	"encoding/xml"
+	"fmt"
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"regexp"
 	"strings"
@@ -19,15 +20,21 @@ func (result *JunitXMLResult) CalculateAdditionalFields() {
 
 func (testcase *TestcaseResult) calculateAdditionalFields(regexpSigGroup *regexp.Regexp) {
 	testcase.SigGroup = regexpSigGroup.FindString(testcase.Name)
+
+	testcase.ContextedName = fmt.Sprintf("%s_v%s_%s", config.CloudProvider, config.K8sReleaseMajorMinor, testcase.Name)
 	if testcase.SkippedRaw != nil {
 		testcase.Skipped = true
 	}
 	if testcase.FailureText == "" {
 		testcase.Status = Success
 		testcase.Successful = true
+		testcase.StatusShort = "S"
+		testcase.SuccessRate = 100
 	} else {
 		testcase.Status = Failure
 		testcase.Successful = false
+		testcase.StatusShort = "F"
+		testcase.SuccessRate = 0
 	}
 	testcase.DurationInt = int(testcase.DurationFloat)
 	testcase.TestDesc = config.DescriptionFile
@@ -59,4 +66,7 @@ type TestcaseResult struct {
 	ExecutionGroup string    `xml:"-" json:"execution_group"` // calculated
 	Successful     bool      `xml:"-" json:"successful"`      // calculated
 	Flaked         int       `xml:"-" json:"flaked"`          // calculated
+	StatusShort    string    `xml:"-" json:"status_short"`    // calculated
+	ContextedName  string    `xml:"-" json:"contexted_name"`  // calculated
+	SuccessRate    int       `xml:"-" json:"success_rate"`    // calculated
 }

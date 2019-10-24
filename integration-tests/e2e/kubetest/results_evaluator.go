@@ -74,6 +74,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 
 	for _, junitXMLPath := range junitXMLFilePaths {
 		junitXml, err := unmarshalJUnitFromFile(junitXMLPath)
+		junitXml.CalculateAdditionalFields()
 		if err != nil {
 			return err
 		}
