@@ -372,6 +372,7 @@
   { "testcase": "[k8s.io] Probing container should have monotonically increasing restart count [NodeConformance] [Conformance]", "groups": ["slow", "conformance"] },
   { "testcase": "[sig-cli] Kubectl client [k8s.io] Guestbook application should create and stop a working application  [Conformance]", "groups": ["slow", "conformance"] },
   { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform canary updates and phased rolling updates of template modifications [Conformance]", "groups": ["slow", "conformance"] },
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a exec \",cat /tmp/health\" liveness probe [NodeConformance] [Conformance]", "groups": ["slow", "conformance"] },
   { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should not deadlock when a pod's predecessor fails", "groups": ["slow"], "exclude": ["alicloud"] },
   { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications with PVCs", "groups": ["slow"], "exclude": ["alicloud"] },
   { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should provide basic identity", "groups": ["slow"], "exclude": ["alicloud"] },
