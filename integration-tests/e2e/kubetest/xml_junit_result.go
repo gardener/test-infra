@@ -39,6 +39,7 @@ func (testcase *TestcaseResult) calculateAdditionalFields(regexpSigGroup *regexp
 	testcase.DurationInt = int(testcase.DurationFloat)
 	testcase.TestDesc = config.DescriptionFile
 	testcase.ExecutionGroup = strings.Join(config.TestcaseGroup, ",")
+	testcase.K8sMajor = config.K8sReleaseMajorMinor
 }
 
 type JunitXMLResult struct {
@@ -69,4 +70,6 @@ type TestcaseResult struct {
 	StatusShort    string    `xml:"-" json:"status_short"`    // calculated
 	ContextedName  string    `xml:"-" json:"contexted_name"`  // calculated
 	SuccessRate    int       `xml:"-" json:"success_rate"`    // calculated
+	K8sMajor       string    `xml:"-" json:"k8s_major"`       // calculated
+
 }
