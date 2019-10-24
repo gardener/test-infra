@@ -27,12 +27,10 @@ const (
 func UploadStatusToGithub(log logr.Logger, run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	tr := run.Testrun
 	md := run.Metadata
-	var testrunStatusTag string
+	testrunStatusTag := fail
 	if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 		testrunStatusTag = success
-	} else {
-		testrunStatusTag = fail
-	}
+	} 
 	tableString := strings.Builder{}
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
