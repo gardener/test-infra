@@ -144,6 +144,8 @@ func junitXMLTestcasesToJSON(testcases *[]TestcaseResult, failureOccurrences *ma
 		if !testcase.Successful && everSucceeded {
 			// if testcase failed but was successful at some point in time, then it flaked
 			testcase.Flaked = failuresCount
+			testcase.Successful = true
+			testcase.Status = "success"
 			uniqueTestcases[testcase.Name] = testcase
 		} else {
 			// successful or failed testcase
