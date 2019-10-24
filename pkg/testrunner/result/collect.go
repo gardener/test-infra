@@ -88,10 +88,6 @@ func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err err
 	if !cfg.UploadStatusAsset {
 		return
 	}
-	if run.Testrun.Status.Phase != tmv1beta1.PhaseStatusSuccess {
-		runLogger.Info("testrun failed, therefore will not upload release asset")
-		return
-	}
 
 	if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
 		runLogger.Error(err, "missing github password / github user / component descriptor path argument")
@@ -112,7 +108,7 @@ func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err err
 		}
 	}
 	for _, component := range componentsForUpload {
-		if err := UploadStatusToGithub(run, component, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
+		if err := UploadStatusToGithub(runLogger, run, component, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
 			runLogger.Error(err, "unable to attach testrun status to github component")
 			assetUploadSuccessful = false
 		}
