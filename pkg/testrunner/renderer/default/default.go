@@ -64,7 +64,7 @@ type Config struct {
 
 // ShootsConfig describes the flavors of the shoots that are created by the test.
 // The resulting shoot test matrix consists of
-// - shoot tests for all specified cloudproviders with all specified kubernets with the default test
+// - shoot tests for all specified cloudproviders with all specified kubernetes with the default test
 // - shoot tests for all specified cloudproviders for all specified tests
 type ShootsConfig struct {
 	// Shoot/Project namespace where the shoots are created
@@ -76,11 +76,8 @@ type ShootsConfig struct {
 	// Specific tests that get their own shoot per cloudprovider and run in parallel to the default tests
 	Tests []renderer.TestsFunc
 
-	// Kubernetes versions to test
-	KubernetesVersions []string
-
-	// Cloudproviders to test
-	CloudProviders []gardenv1beta1.CloudProvider
+	// shoot test configurations
+	Flavors []templates.ShootFlavor
 }
 
 // Render renders a gardener default test which consists of
@@ -97,32 +94,32 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 	}
 
 	shoots := make([]*shoot, 0)
-	for _, cp := range cfg.Shoots.CloudProviders {
-		for _, v := range cfg.Shoots.KubernetesVersions {
-			version, err := semver.NewVersion(v)
+	for _, flavor := range cfg.Shoots.Flavors {
+		for _, v := range flavor.KubernetesVersions {
+			version, err := semver.NewVersion(v.Version)
 			if err != nil {
 				return nil, err
 			}
 			shoots = append(shoots, &shoot{
-				Type:      cp,
-				Suffix:    fmt.Sprintf("%s-%d", cp, version.Minor()),
+				Type:      flavor.CloudProvider,
+				Suffix:    fmt.Sprintf("%s-%d", flavor, version.Minor()),
 				TestsFunc: cfg.Shoots.DefaultTest,
 				Config: &templates.CreateShootConfig{
-					ShootName:  fmt.Sprintf("%s-%s", cp, util.RandomString(3)),
+					ShootName:  fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
 					Namespace:  cfg.Shoots.Namespace,
-					K8sVersion: v,
+					K8sVersion: v.Version,
 				},
 			})
 		}
 		for _, test := range cfg.Shoots.Tests {
 			shoots = append(shoots, &shoot{
-				Type:      cp,
-				Suffix:    fmt.Sprintf("%s-%s", cp, util.RandomString(3)),
+				Type:      flavor.CloudProvider,
+				Suffix:    fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
 				TestsFunc: test,
 				Config: &templates.CreateShootConfig{
-					ShootName:  fmt.Sprintf("%s-%s", cp, util.RandomString(3)),
+					ShootName:  fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
 					Namespace:  cfg.Shoots.Namespace,
-					K8sVersion: cfg.Shoots.KubernetesVersions[0],
+					K8sVersion: flavor.KubernetesVersions[0].Version,
 				},
 			})
 		}
@@ -155,9 +152,13 @@ func Validate(cfg *Config) error {
 	if cfg.Shoots.DefaultTest == nil {
 		result = multierror.Append(result, errors.New("a default test needs to be defined"))
 	}
-	if len(cfg.Shoots.KubernetesVersions) == 0 {
-		result = multierror.Append(result, errors.New("at least one kubernetes version has to be defined"))
+
+	for _, flavor := range cfg.Shoots.Flavors {
+		if len(flavor.KubernetesVersions) == 0 {
+			result = multierror.Append(result, errors.New("at least one kubernetes version has to be defined"))
+		}
 	}
+
 	if cfg.Shoots.Namespace == "" {
 		result = multierror.Append(result, errors.New("the shoot project namespace has to be defined"))
 	}
