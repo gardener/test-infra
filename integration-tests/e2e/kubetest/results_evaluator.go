@@ -147,6 +147,8 @@ func junitXMLTestcasesToJSON(testcases *[]TestcaseResult, failureOccurrences *ma
 			testcase.Flaked = failuresCount
 			testcase.Successful = true
 			testcase.Status = "success"
+			testcase.StatusShort = "S"
+			testcase.SuccessRate = 100
 			uniqueTestcases[testcase.Name] = testcase
 		} else {
 			// successful or failed testcase
