@@ -34,3 +34,8 @@ const (
 	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
 	GardenerRepo    = "https://github.com/gardener/gardener.git"
 )
+
+var (
+	// Default timeout of 4 hours to wait before resuming the testrun
+	DefaultPauseTimeout = 14400
+)

@@ -65,7 +65,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err = operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -124,7 +124,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err = operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})

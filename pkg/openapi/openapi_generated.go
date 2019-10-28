@@ -32,6 +32,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement":            schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.DAGStep":                  schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet":              schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Pause":                    schema_pkg_apis_testmachinery_v1beta1_Pause(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition":           schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus":               schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition":       schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref),
@@ -149,10 +150,9 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 							Format: "",
 						},
 					},
-					"suspend": {
+					"pause": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Pause"),
 						},
 					},
 					"annotations": {
@@ -173,7 +173,7 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Pause", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"},
 	}
 }
 
@@ -217,6 +217,32 @@ func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_Pause(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "pauses before this step is executed",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"resumeTimeoutSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resumes the workflow after specified time if it is not manually resumed",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

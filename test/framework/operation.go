@@ -81,8 +81,12 @@ func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*te
 	return utils.WaitForMinioService(o.Client(), o.config.S3Endpoint, o.config.TmNamespace, maxWaitTime)
 }
 
-func (o *Operation) RunTestrun(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
-	return utils.RunTestrun(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout)
+func (o *Operation) RunTestrunUntilCompleted(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+	return utils.RunTestrunUntilCompleted(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout)
+}
+
+func (o *Operation) RunTestrun(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, watchFunc utils.WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+	return utils.RunTestrun(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout, watchFunc)
 }
 
 // AppendObject adds a kubernetes objects to the start of the state's objects.

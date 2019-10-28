@@ -32,7 +32,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -65,7 +65,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -98,7 +98,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -135,7 +135,7 @@ var _ = Describe("Locations LocationSets tests", func() {
 			}
 			tr.Spec.TestFlow[0].Definition.LocationSet = &setName
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})

@@ -112,6 +112,11 @@ func GetWorkflowName(tr *v1beta1.Testrun) string {
 	return fmt.Sprintf("%s-wf", tr.Name)
 }
 
+// GetPauseTaskName returns the name of the pause step to a corresponding step.
+func GetPauseTaskName(name string) string {
+	return fmt.Sprintf("%s-pause", name)
+}
+
 func readSecretsFromFile(path string) ([]GitConfig, error) {
 	if len(path) == 0 {
 		return make([]GitConfig, 0), nil

@@ -92,8 +92,8 @@ func CreateTask(taskName, templateName, phase string, continueOnError bool, depe
 // This task is used to pause before a specific step
 func CreateSuspendTask(name string, dependencies []string) argov1.DAGTask {
 	return argov1.DAGTask{
-		Name:         name,
-		Template:     testmachinery.SuspendTemplateName,
+		Name:         testmachinery.GetPauseTaskName(name),
+		Template:     testmachinery.PauseTemplateName,
 		Dependencies: dependencies,
 	}
 }
@@ -101,7 +101,7 @@ func CreateSuspendTask(name string, dependencies []string) argov1.DAGTask {
 // SuspendTemplate resturn the shared template for suspended tasks
 func SuspendTemplate() argov1.Template {
 	return argov1.Template{
-		Name:    testmachinery.SuspendTemplateName,
+		Name:    testmachinery.PauseTemplateName,
 		Suspend: &argov1.SuspendTemplate{},
 	}
 }

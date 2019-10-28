@@ -29,10 +29,6 @@ import (
 	"github.com/gardener/test-infra/test/utils"
 )
 
-var (
-	maxWaitTime = 10 * time.Minute
-)
-
 var _ = Describe("Result collection tests", func() {
 
 	Context("step status", func() {
@@ -61,7 +57,7 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -87,7 +83,7 @@ var _ = Describe("Result collection tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -123,7 +119,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -167,7 +163,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -206,8 +202,8 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
-			defer utils.DeleteTestrun(operation.Client(), tr)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			//defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")

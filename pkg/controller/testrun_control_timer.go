@@ -15,28 +15,30 @@
 package controller
 
 import (
-	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"fmt"
 	"time"
 )
 
-type TestmachineryController struct {
-	Controller controller.Controller
+func (r *TestrunReconciler) addTimer(key string, t time.Duration, f func()) error {
+	r.Logger.V(5).Info("add timer", "duration", t.String(), "key", key)
+	if t := r.timers[key]; t != nil {
+		return fmt.Errorf("a timer is already defined for %s", key)
+	}
+	timer := time.NewTimer(t)
+	go func() {
+		<-timer.C
+		delete(r.timers, key)
+		f()
+	}()
+	r.timers[key] = timer
+	return nil
 }
 
-type TestrunReconciler struct {
-	client.Client
-	scheme *runtime.Scheme
-	Logger logr.Logger
-	timers map[string]*time.Timer
-}
-
-type reconcileContext struct {
-	tr      *v1beta1.Testrun
-	wf      *v1alpha1.Workflow
-	updated bool
+func (r *TestrunReconciler) stopTimer(key string) error {
+	if t := r.timers[key]; t == nil {
+		return nil
+	}
+	r.timers[key].Stop()
+	delete(r.timers, key)
+	return nil
 }

@@ -56,7 +56,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer ctx.Done()
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
-		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -103,7 +103,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer ctx.Done()
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
-		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -152,7 +152,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 		tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
-		tr, _, err := operation.RunTestrun(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 

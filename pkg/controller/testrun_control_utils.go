@@ -17,11 +17,10 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"strings"
 )
 
 func (r *TestrunReconciler) getImagePullSecrets(ctx context.Context) []string {

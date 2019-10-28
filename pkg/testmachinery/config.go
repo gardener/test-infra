@@ -74,7 +74,7 @@ const (
 	WorkerPoolTaintLabelName = "testload"
 
 	// Name of the argo suspend template name
-	SuspendTemplateName = "suspend"
+	PauseTemplateName = "suspend"
 )
 
 var (

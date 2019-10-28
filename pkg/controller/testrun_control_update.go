@@ -15,9 +15,8 @@
 package controller
 
 import (
+	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testmachinery/argo"
 	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"time"
@@ -39,47 +38,35 @@ import (
 var ErrDeadlineExceeded = "Pod was active on the node longer than the specified deadline"
 
 // handleActions handles any changes that trigger actions on a running workflow like annotations to resume a workflow
-func (r *TestrunReconciler) handleActions(ctx *reconcileContext) error {
-	if b, ok := ctx.tr.Annotations[common.ResumeTestrunAnnotation]; ok && b == "true" {
-		// resume workflow
-		argo.ResumeWorkflow(ctx.wf)
-		if err := r.Client.Update(ctx.ctx, ctx.wf); err != nil {
-			return err
-		}
-
-		delete(ctx.tr.Annotations, common.ResumeTestrunAnnotation)
-		ctx.updated = true
-	}
-	return nil
+func (r *TestrunReconciler) handleActions(ctx context.Context, rCtx *reconcileContext) error {
+	return r.resumeAction(ctx, rCtx)
 }
 
-func (r *TestrunReconciler) updateStatus(ctx *reconcileContext) (reconcile.Result, error) {
-	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: ctx.tr.Name, Namespace: ctx.tr.Namespace})
+func (r *TestrunReconciler) updateStatus(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 
-	if !ctx.tr.Status.StartTime.Equal(&ctx.wf.Status.StartedAt) {
-		ctx.tr.Status.StartTime = &ctx.wf.Status.StartedAt
-		ctx.updated = true
+	if !rCtx.tr.Status.StartTime.Equal(&rCtx.wf.Status.StartedAt) {
+		rCtx.tr.Status.StartTime = &rCtx.wf.Status.StartedAt
+		rCtx.updated = true
 	}
-	if ctx.tr.Status.Phase == "" {
-		ctx.tr.Status.Phase = tmv1beta1.PhaseStatusPending
-		ctx.updated = true
+	if rCtx.tr.Status.Phase == "" {
+		rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusPending
+		rCtx.updated = true
 	}
-	if !ctx.wf.Status.Completed() {
-		updateStepsStatuses(ctx.tr, ctx.wf)
-		ctx.updated = true
-	}
-	if ctx.wf.Status.Completed() {
-
-		err := r.completeTestrun(ctx.tr, ctx.wf)
+	if !rCtx.wf.Status.Completed() {
+		r.updateStepsStatus(rCtx)
+		rCtx.updated = true
+	} else {
+		err := r.completeTestrun(rCtx)
 		if err != nil {
 			return reconcile.Result{}, nil
 		}
-		ctx.updated = true
+		rCtx.updated = true
 		log.Info("testrun completed")
 	}
 
-	if ctx.updated {
-		err := r.Update(ctx.ctx, ctx.tr)
+	if rCtx.updated {
+		err := r.Update(ctx, rCtx.tr)
 		if err != nil {
 			log.Error(err, "unable to update testrun status")
 			return reconcile.Result{}, err
@@ -89,19 +76,19 @@ func (r *TestrunReconciler) updateStatus(ctx *reconcileContext) (reconcile.Resul
 	return reconcile.Result{}, nil
 }
 
-func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Workflow) error {
-	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: tr.Name, Namespace: tr.Namespace})
+func (r *TestrunReconciler) completeTestrun(rCtx *reconcileContext) error {
+	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 	log.Info("start collecting node status of Testrun")
 
-	tr.Status.Phase = wf.Status.Phase
-	tr.Status.CompletionTime = &wf.Status.FinishedAt
-	trDuration := tr.Status.CompletionTime.Sub(tr.Status.StartTime.Time)
-	tr.Status.Duration = int64(trDuration.Seconds())
+	rCtx.tr.Status.Phase = rCtx.wf.Status.Phase
+	rCtx.tr.Status.CompletionTime = &rCtx.wf.Status.FinishedAt
+	trDuration := rCtx.tr.Status.CompletionTime.Sub(rCtx.tr.Status.StartTime.Time)
+	rCtx.tr.Status.Duration = int64(trDuration.Seconds())
 
-	updateStepsStatuses(tr, wf)
+	r.updateStepsStatus(rCtx)
 
 	// Set all init steps to skipped if testrun is completed.
-	for _, step := range tr.Status.Steps {
+	for _, step := range rCtx.tr.Status.Steps {
 		if step.Phase == tmv1beta1.PhaseStatusInit {
 			step.Phase = argov1.NodeSkipped
 		}
@@ -109,29 +96,40 @@ func (r *TestrunReconciler) completeTestrun(tr *tmv1beta1.Testrun, wf *argov1.Wo
 
 	// cleanup pods to remove workload from the api server
 	// logs are still accessible through "archiveLogs" option in argo
-	if err := garbagecollection.CleanWorkflowPods(r.Client, wf); err != nil {
+	if err := garbagecollection.CleanWorkflowPods(r.Client, rCtx.wf); err != nil {
 		log.Error(err, "error while trying to cleanup pods")
 	}
 
 	return nil
 }
 
-func updateStepsStatuses(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
+func (r *TestrunReconciler) updateStepsStatus(rCtx *reconcileContext) {
+	r.Logger.V(3).Info("update step status")
 	completedSteps := 0
-	numSteps := len(tr.Status.Steps)
+	numSteps := len(rCtx.tr.Status.Steps)
+	stepSpecs := getStepsSpecs(rCtx.tr)
 
-	for _, step := range tr.Status.Steps {
+	for _, step := range rCtx.tr.Status.Steps {
 		if util.Completed(step.Phase) {
 			completedSteps++
 			continue
 		}
-		argoNodeStatus := getNodeStatusByName(wf, step.Name)
+		r.Logger.V(5).Info("update status", "step", step.Name)
+
+		r.checkResume(rCtx, stepSpecs[step.Position.Step], step.Name)
+
+		argoNodeStatus := getNodeStatusByName(rCtx.wf, step.Name)
 		// continue with the next status if no corresponding argo status can be found yet.
 		if argoNodeStatus == nil {
 			continue
 		}
 
 		if strings.Contains(argoNodeStatus.Message, ErrDeadlineExceeded) {
+			r.Logger.V(5).Info("update timeout step status", "step", step.Name)
+			if step.StartTime == nil {
+				step.StartTime = &argoNodeStatus.StartedAt
+			}
+
 			testDuration := time.Duration(*step.TestDefinition.ActiveDeadlineSeconds) * time.Second
 			completionTime := metav1.NewTime(step.StartTime.Add(testDuration))
 
@@ -162,12 +160,21 @@ func updateStepsStatuses(tr *tmv1beta1.Testrun, wf *argov1.Workflow) {
 		}
 	}
 
-	tr.Status.State = fmt.Sprintf("Testmachinery executed %d/%d Steps", completedSteps, numSteps)
+	rCtx.tr.Status.State = fmt.Sprintf("Testmachinery executed %d/%d Steps", completedSteps, numSteps)
+}
+
+func getStepsSpecs(tr *tmv1beta1.Testrun) map[string]*tmv1beta1.DAGStep {
+	steps := make(map[string]*tmv1beta1.DAGStep, len(tr.Spec.TestFlow))
+	for _, step := range tr.Spec.TestFlow {
+		steps[step.Name] = step
+	}
+	return steps
 }
 
 func getNodeStatusByName(wf *argov1.Workflow, templateName string) *argov1.NodeStatus {
 	for _, nodeStatus := range wf.Status.Nodes {
-		if nodeStatus.TemplateName == templateName {
+		// need to check the prefix as argo appends the name of the testflow to the nodes name: <templateName>.<testflow-name>
+		if nodeStatus.DisplayName == templateName {
 			return &nodeStatus
 		}
 	}

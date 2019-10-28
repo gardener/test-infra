@@ -245,7 +245,7 @@ type DAGStep struct {
 	UseGlobalArtifacts bool              `json:"useGlobalArtifacts,omitempty"`
 	DependsOn          []string          `json:"dependsOn,omitempty"`
 	ArtifactsFrom      string            `json:"artifactsFrom,omitempty"`
-	Pause              bool              `json:"suspend,omitempty"`
+	Pause              *Pause            `json:"pause,omitempty"`
 	Annotations        map[string]string `json:"annotations,omitempty"`
 }
 
@@ -269,6 +269,15 @@ type StepDefinition struct {
 	// If this is empty the default location set is used
 	// +optional
 	LocationSet *string `json:"locationSet,omitempty"`
+}
+
+type Pause struct {
+	// pauses before this step is executed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Resumes the workflow after specified time if it is not manually resumed
+	// +optional
+	ResumeTimeoutSeconds *int `json:"resumeTimeoutSeconds,omitempty"`
 }
 
 ////////////////////////////////////////////////////
