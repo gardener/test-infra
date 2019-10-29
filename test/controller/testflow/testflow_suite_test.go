@@ -35,7 +35,7 @@ const (
 	InitializationTimeout = 10 * time.Minute
 	CleanupTimeout        = 1 * time.Minute
 
-	TestrunDurationTimeout = 3 * time.Minute
+	TestrunDurationTimeout = 7 * time.Minute
 )
 
 var (

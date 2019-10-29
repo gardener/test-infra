@@ -17,6 +17,7 @@ package controller
 import (
 	"github.com/go-logr/logr"
 	"reflect"
+	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -41,6 +42,7 @@ func New(mgr manager.Manager, logger logr.Logger) (*TestmachineryController, err
 		Client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		Logger: logger,
+		timers: make(map[string]*time.Timer),
 	}
 	c, err := controller.New("testmachinery-controller", mgr, controller.Options{Reconciler: reconciler})
 	if err != nil {

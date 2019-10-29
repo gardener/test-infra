@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -77,7 +78,10 @@ func GetStepDeleteGardener(createGardenStep *v1beta1.DAGStep, locationSet string
 		UseGlobalArtifacts: false,
 		ArtifactsFrom:      createGardenStep.Name,
 		DependsOn:          dependencies,
-		Pause:              pause,
+		Pause: &v1beta1.Pause{
+			Enabled:              pause,
+			ResumeTimeoutSeconds: &common.DefaultPauseTimeout,
+		},
 	}
 }
 

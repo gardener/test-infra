@@ -45,15 +45,23 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// RunTestrun executes a testrun on a cluster and returns the corresponding executed testrun and workflow.
+// RunTestrunUntilCompleted executes a testrun on a cluster until it is finished and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, maxWaitTime time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+// DEPRECATED: this is just a wrapper function to keep functionality across tests. In the future the RunTestrun should be directly used.
+func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+	return RunTestrun(ctx, log, tmClient, tr, phase, timeout, WatchUntilCompletedFunc)
+}
+
+// RunTestrunUntilCompleted executes a testrun on a cluster until a specific state has been reached and returns the corresponding executed testrun and workflow.
+// Note: Deletion of the workflow on error should be handled by the calling test.
+func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, f WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	err := tmClient.Client().Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	foundTestrun, err := WatchTestrunUntilCompleted(ctx, tmClient, tr, maxWaitTime)
+	foundTestrun := tr.DeepCopy()
+	err = WatchTestrun(ctx, tmClient, foundTestrun, timeout, f)
 	if err != nil {
 		fmt.Println("Testrun:")
 		fmt.Println(util.PrettyPrintStruct(tr))
@@ -103,33 +111,52 @@ func GetWorkflow(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1bet
 	return wf, nil
 }
 
-// WatchTestrunUntilCompleted watches a testrun to finish and returns the newest testrun object.
-func WatchTestrunUntilCompleted(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
-	foundTestrun := &tmv1beta1.Testrun{}
-	var testrunPhase argov1.NodePhase
-
-	err := WatchTestrun(ctx, tmClient, tr, maxWaitTime, func(newTestrun *tmv1beta1.Testrun) (bool, error) {
-		foundTestrun = newTestrun
-		testrunPhase = foundTestrun.Status.Phase
-		if util.Completed(testrunPhase) {
-			return retry.Ok()
-		}
-		return retry.NotOk()
-	})
-
-	return foundTestrun, err
-}
+// WatchFunc is the function to check if the testrun has a specific state
+type WatchFunc = func(*tmv1beta1.Testrun) (bool, error)
 
 // WatchTestrun watches a testrun until the maxwait is reached.
 // Every time a testrun can be found without a problem the function f is called.
-func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, maxWaitTime time.Duration, f func(*tmv1beta1.Testrun) (bool, error)) error {
-	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
+func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, timeout time.Duration, f WatchFunc) error {
+	return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
 		updatedTestrun := &tmv1beta1.Testrun{}
 		if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, updatedTestrun); err != nil {
 			return retry.MinorError(err)
 		}
+		*tr = *updatedTestrun
 		return f(updatedTestrun)
 	})
+}
+
+// WatchUntilCompletedFunc waits until the testrun is completed
+func WatchUntilCompletedFunc(tr *tmv1beta1.Testrun) (bool, error) {
+	testrunPhase := tr.Status.Phase
+	if util.Completed(testrunPhase) {
+		return retry.Ok()
+	}
+	return retry.NotOk()
+}
+
+// WatchUntil waits a certain timeout before the testrun watch is canceled.
+func WatchUntil(timeout time.Duration) WatchFunc {
+	finished := false
+	timer := time.NewTimer(timeout)
+	go func() {
+		<-timer.C
+		finished = true
+	}()
+	return func(tr *tmv1beta1.Testrun) (bool, error) {
+		if finished {
+			return retry.Ok()
+		}
+		return retry.NotOk()
+	}
+}
+
+// WatchTestrunUntilCompleted watches a testrun to finish and returns the newest testrun object.
+func WatchTestrunUntilCompleted(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, timeout time.Duration) (*tmv1beta1.Testrun, error) {
+	foundTestrun := tr.DeepCopy()
+	err := WatchTestrun(ctx, tmClient, tr, timeout, WatchUntilCompletedFunc)
+	return foundTestrun, err
 }
 
 // DeleteTestrun deletes a testrun and expects to be successful.

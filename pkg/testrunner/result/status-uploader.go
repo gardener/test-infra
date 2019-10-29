@@ -20,7 +20,7 @@ import (
 
 const (
 	success = "SUCCESS"
-	fail = "FAIL"
+	fail    = "FAIL"
 )
 
 // uploads status results as asset to the component
@@ -30,7 +30,7 @@ func UploadStatusToGithub(log logr.Logger, run *testrunner.Run, component *compo
 	testrunStatusTag := fail
 	if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 		testrunStatusTag = success
-	} 
+	}
 	tableString := strings.Builder{}
 	util.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))

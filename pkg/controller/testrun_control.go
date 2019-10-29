@@ -33,16 +33,16 @@ import (
 
 // Reconcile handles various testrun events like crete, update and delete.
 func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := &reconcileContext{
-		ctx: context.Background(),
-		tr:  &tmv1beta1.Testrun{},
+	ctx := context.Background()
+	rCtx := &reconcileContext{
+		tr: &tmv1beta1.Testrun{},
 	}
-	defer ctx.ctx.Done()
+	defer ctx.Done()
 	log := r.Logger.WithValues("testrun", request.NamespacedName)
 
 	log.V(3).Info("start reconcile")
 
-	err := r.Get(ctx.ctx, request.NamespacedName, ctx.tr)
+	err := r.Get(ctx, request.NamespacedName, rCtx.tr)
 	if err != nil {
 		log.Error(err, "unable to find testrun")
 		if errors.IsNotFound(err) {
@@ -51,77 +51,77 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	if ctx.tr.DeletionTimestamp != nil {
+	if rCtx.tr.DeletionTimestamp != nil {
 		log.Info("deletion caused by testrun")
-		return r.deleteTestrun(ctx)
+		return r.deleteTestrun(ctx, rCtx)
 	}
 
 	///////////////
 	// RECONCILE //
 	///////////////
 
-	ctx.wf = &argov1.Workflow{}
-	err = r.Get(ctx.ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(ctx.tr), Namespace: ctx.tr.Namespace}, ctx.wf)
+	rCtx.wf = &argov1.Workflow{}
+	err = r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(rCtx.tr), Namespace: rCtx.tr.Namespace}, rCtx.wf)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			log.Error(err, "unable to get workflow", "workflow", testmachinery.GetWorkflowName(ctx.tr), "namespace", ctx.tr.Namespace)
+			log.Error(err, "unable to get workflow", "workflow", testmachinery.GetWorkflowName(rCtx.tr), "namespace", rCtx.tr.Namespace)
 			return reconcile.Result{}, err
 		}
-		if ctx.tr.Status.CompletionTime != nil {
-			log.Error(err, "unable to get workflow but testrun is already finished", "workflow", testmachinery.GetWorkflowName(ctx.tr), "namespace", ctx.tr.Namespace)
+		if rCtx.tr.Status.CompletionTime != nil {
+			log.Error(err, "unable to get workflow but testrun is already finished", "workflow", testmachinery.GetWorkflowName(rCtx.tr), "namespace", rCtx.tr.Namespace)
 			return reconcile.Result{}, err
 		}
 
-		if res, err := r.createWorkflow(ctx, log); err != nil {
+		if res, err := r.createWorkflow(ctx, rCtx, log); err != nil {
 			return res, err
 		}
 	}
 
-	if ctx.tr.Status.CompletionTime != nil {
-		if ctx.wf.DeletionTimestamp != nil {
+	if rCtx.tr.Status.CompletionTime != nil {
+		if rCtx.wf.DeletionTimestamp != nil {
 			log.V(2).Info("Deletion: cause workflow")
-			return r.deleteTestrun(ctx)
+			return r.deleteTestrun(ctx, rCtx)
 		}
 		return reconcile.Result{}, err
 	}
 
-	if err := r.handleActions(ctx); err != nil {
+	if err := r.handleActions(ctx, rCtx); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return r.updateStatus(ctx)
+	return r.updateStatus(ctx, rCtx)
 
 }
 
-func (r *TestrunReconciler) createWorkflow(ctx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
+func (r *TestrunReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
 	log.V(5).Info("generate workflow")
 	var err error
-	ctx.wf, err = r.generateWorkflow(ctx.ctx, ctx.tr)
+	rCtx.wf, err = r.generateWorkflow(ctx, rCtx.tr)
 	if err != nil {
 		log.Error(err, "unable to setup workflow")
 		return reconcile.Result{}, err
 	}
-	log.Info("creating workflow", "workflow", ctx.wf.Name, "namespace", ctx.wf.Namespace)
-	err = r.Create(ctx.ctx, ctx.wf)
+	log.Info("creating workflow", "workflow", rCtx.wf.Name, "namespace", rCtx.wf.Namespace)
+	err = r.Create(ctx, rCtx.wf)
 	if err != nil {
-		r.Logger.Error(err, "unable to create workflow", "workflow", ctx.wf.Name, "namespace", ctx.wf.Namespace)
+		r.Logger.Error(err, "unable to create workflow", "workflow", rCtx.wf.Name, "namespace", rCtx.wf.Namespace)
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	ctx.tr.Status.Workflow = ctx.wf.Name
-	ctx.tr.Status.Phase = tmv1beta1.PhaseStatusRunning
+	rCtx.tr.Status.Workflow = rCtx.wf.Name
+	rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusRunning
 
 	// add finalizers for testrun
-	trFinalizers := sets.NewString(ctx.tr.Finalizers...)
+	trFinalizers := sets.NewString(rCtx.tr.Finalizers...)
 	if !trFinalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		trFinalizers.Insert(tmv1beta1.SchemeGroupVersion.Group)
 	}
 	if !trFinalizers.Has(metav1.FinalizerDeleteDependents) {
 		trFinalizers.Insert(metav1.FinalizerDeleteDependents)
 	}
-	ctx.tr.Finalizers = trFinalizers.UnsortedList()
+	rCtx.tr.Finalizers = trFinalizers.UnsortedList()
 
-	ctx.updated = true
+	rCtx.updated = true
 	return reconcile.Result{}, nil
 }
 

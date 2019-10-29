@@ -15,12 +15,13 @@
 package controller
 
 import (
-	"testing"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"testing"
+	"time"
 )
 
 func TestConfig(t *testing.T) {
@@ -31,6 +32,7 @@ func TestConfig(t *testing.T) {
 var (
 	workflowTmpl argov1.Workflow
 	testrunTmpl  tmv1beta1.Testrun
+	reconciler   *TestrunReconciler
 )
 
 var _ = Describe("Testmachinery controller update", func() {
@@ -60,11 +62,18 @@ var _ = Describe("Testmachinery controller update", func() {
 			Status: argov1.WorkflowStatus{
 				Nodes: map[string]argov1.NodeStatus{
 					"node1": {
-						TemplateName: "template1",
-						Phase:        argov1.NodeRunning,
+						DisplayName: "template1",
+						Phase:       argov1.NodeRunning,
 					},
 				},
 			},
+		}
+	})
+
+	BeforeEach(func() {
+		reconciler = &TestrunReconciler{
+			Logger: log.NullLogger{},
+			timers: make(map[string]*time.Timer),
 		}
 	})
 
@@ -72,7 +81,11 @@ var _ = Describe("Testmachinery controller update", func() {
 		It("should update the status of 1 step and 1 template", func() {
 			tr := testrunTmpl
 			wf := workflowTmpl
-			updateStepsStatuses(&tr, &wf)
+			reconciler.updateStepsStatus(&reconcileContext{
+				tr:      &tr,
+				wf:      &wf,
+				updated: false,
+			})
 			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
 					Name:  "template1",
@@ -120,23 +133,27 @@ var _ = Describe("Testmachinery controller update", func() {
 
 			wf.Status.Nodes = map[string]argov1.NodeStatus{
 				"node1": {
-					TemplateName: "template1",
-					Phase:        argov1.NodeSucceeded,
+					DisplayName: "template1",
+					Phase:       argov1.NodeSucceeded,
 				},
 				"node2": {
-					TemplateName: "template2",
-					Phase:        argov1.NodeFailed,
+					DisplayName: "template2",
+					Phase:       argov1.NodeFailed,
 				},
 				"node3": {
-					TemplateName: "template4",
-					Phase:        argov1.NodeSucceeded,
+					DisplayName: "template4",
+					Phase:       argov1.NodeSucceeded,
 				},
 				"node4": {
-					TemplateName: "template3",
-					Phase:        argov1.NodeRunning,
+					DisplayName: "template3",
+					Phase:       argov1.NodeRunning,
 				},
 			}
-			updateStepsStatuses(&tr, &wf)
+			reconciler.updateStepsStatus(&reconcileContext{
+				tr:      &tr,
+				wf:      &wf,
+				updated: false,
+			})
 			Expect(tr.Status.Steps).To(Equal([]*tmv1beta1.StepStatus{
 				{
 					Name:  "template1",
@@ -168,6 +185,5 @@ var _ = Describe("Testmachinery controller update", func() {
 				},
 			}))
 		})
-
 	})
 })

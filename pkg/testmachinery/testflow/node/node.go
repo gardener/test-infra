@@ -128,8 +128,8 @@ func (n *Node) SetStep(step *tmv1beta1.DAGStep) {
 func (n *Node) Task(phase testmachinery.Phase) []argov1.DAGTask {
 	tasks := make([]argov1.DAGTask, 0)
 	var task argov1.DAGTask
-	if n.step.Pause {
-		suspendTask := argo.CreateSuspendTask(fmt.Sprintf("%s-pause", n.TestDefinition.GetName()), n.ParentNames())
+	if n.step.Pause != nil && n.step.Pause.Enabled {
+		suspendTask := argo.CreateSuspendTask(n.TestDefinition.GetName(), n.ParentNames())
 		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, []string{suspendTask.Name}, n.GetOrDetermineArtifacts())
 		tasks = append(tasks, suspendTask)
 	} else {
