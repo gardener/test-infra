@@ -139,10 +139,10 @@ func init() {
 		log.Fatal("TESTCASE_GROUP environment variable not found")
 	}
 	if CloudProvider == "" {
-		CloudProvider = os.Getenv("CLOUDPROVIDER")
+		CloudProvider = os.Getenv("PROVIDER_TYPE")
 	}
 	if CloudProvider == "" {
-		log.Fatal("CLOUDPROVIDER environment variable not found")
+		log.Fatal("PROVIDER_TYPE environment variable not found")
 	}
 	IgnoreFalsePositiveList = tiutil.GetenvBool("IGNORE_FALSE_POSITIVE_LIST", false)
 	IncludeUntrackedTests = tiutil.GetenvBool("INCLUDE_UNTRACKED_TESTS", false)
