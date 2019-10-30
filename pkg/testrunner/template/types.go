@@ -22,47 +22,17 @@ import (
 // ShootTestrunParameters are the parameters which describe the test that is executed by the testrunner.
 type ShootTestrunParameters struct {
 	// Path to the kubeconfig where the gardener is running.
-	GardenKubeconfigPath string
-	Namespace            string
-	TestrunChartPath     string
-	// Ignore K8sVersion and generate a testrun for every valid version that is defined in the cloudprofile
-	MakeVersionMatrix bool
+	GardenKubeconfigPath  string
+	Namespace             string
+	ShootTestrunChartPath string
+	TestrunChartPath      string
 
-	ProjectName             string
-	ShootName               string
+	ShootName string
+
+	// metadata
 	Landscape               string
-	Cloudprovider           string
-	Cloudprofile            string
-	SecretBinding           string
-	Region                  string
-	Zone                    string
-	K8sVersion              string
-	MachineType             string
-	MachineImage            string
-	MachineImageVersion     string
-	AutoscalerMin           string
-	AutoscalerMax           string
-	FloatingPoolName        string
-	LoadBalancerProvider    string
 	ComponentDescriptorPath string
-
-	GardenerVersion string
-	SetValues       string
-	FileValues      []string
-}
-
-type GardenerTestrunParameters struct {
-	Namespace        string
-	TestrunChartPath string
-
-	ComponentDescriptorPath         string
-	UpgradedComponentDescriptorPath string
-
-	Landscape                string
-	GardenerCurrentVersion   string
-	GardenerCurrentRevision  string
-	GardenerUpgradedVersion  string
-	GardenerUpgradedRevision string
+	GardenerVersion         string
 
 	SetValues  string
 	FileValues []string
@@ -72,7 +42,7 @@ type GardenerTestrunParameters struct {
 type RenderedTestrun struct {
 	testrun    *v1beta1.Testrun
 	Parameters ShootTestrunParameters
-	Metadata   TestrunFileMetadata
+	Metadata   testrunner.Metadata
 }
 
 // TestrunFileMetadata represents the metadata of a rendered testrun.
@@ -87,11 +57,3 @@ type ShootRun struct {
 	Parameters ShootTestrunParameters
 }
 type ShootRunList []*ShootRun
-
-// GardenerRun represents a testrun where multiple shoots and a gardener is tested
-// with its rendered testrun and configuration
-type GardenerRun struct {
-	Run        *testrunner.Run
-	Parameters GardenerTestrunParameters
-}
-type GardenerRunList []*GardenerRun

@@ -15,11 +15,12 @@
 package templates
 
 import (
-	"github.com/Masterminds/semver"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"path"
+
+	"github.com/Masterminds/semver"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 const (
@@ -55,7 +56,7 @@ type CreateShootConfig struct {
 // GetStepCreateShoot generates the shoot creation step for a specific cloudprovider
 // A shoot in a specific version is created depending on the gardener configuration whereas
 // the default for commits is the new api.
-func GetStepCreateShoot(gardenerConfig GardenerConfig, cloudprovider gardenv1beta1.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
+func GetStepCreateShoot(gardenerConfig GardenerConfig, cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
 	if gardenerConfig.Version != "" {
 		// all tests before gardener 0.31.0 have to use the old shoot test structure
 		// tests afterwards use the new gardener v1alpha1 api which also results in a different tm structure

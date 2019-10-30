@@ -16,11 +16,11 @@ package _default
 
 import (
 	"fmt"
-	"github.com/Masterminds/semver"
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/testrunner/renderer"
 	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
@@ -77,7 +77,7 @@ type ShootsConfig struct {
 	Tests []renderer.TestsFunc
 
 	// shoot test configurations
-	Flavors []templates.ShootFlavor
+	Flavors *shootflavors.Flavors
 }
 
 // Render renders a gardener default test which consists of
@@ -94,32 +94,17 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 	}
 
 	shoots := make([]*shoot, 0)
-	for _, flavor := range cfg.Shoots.Flavors {
-		for _, v := range flavor.KubernetesVersions {
-			version, err := semver.NewVersion(v.Version)
-			if err != nil {
-				return nil, err
-			}
-			shoots = append(shoots, &shoot{
-				Type:      flavor.CloudProvider,
-				Suffix:    fmt.Sprintf("%s-%d", flavor, version.Minor()),
-				TestsFunc: cfg.Shoots.DefaultTest,
-				Config: &templates.CreateShootConfig{
-					ShootName:  fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
-					Namespace:  cfg.Shoots.Namespace,
-					K8sVersion: v.Version,
-				},
-			})
-		}
+
+	for _, flavor := range cfg.Shoots.Flavors.GetShoots() {
 		for _, test := range cfg.Shoots.Tests {
 			shoots = append(shoots, &shoot{
-				Type:      flavor.CloudProvider,
-				Suffix:    fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
+				Type:      flavor.Provider,
+				Suffix:    fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
 				TestsFunc: test,
 				Config: &templates.CreateShootConfig{
-					ShootName:  fmt.Sprintf("%s-%s", flavor, util.RandomString(3)),
+					ShootName:  fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
 					Namespace:  cfg.Shoots.Namespace,
-					K8sVersion: flavor.KubernetesVersions[0].Version,
+					K8sVersion: flavor.KubernetesVersion.Version,
 				},
 			})
 		}
@@ -151,12 +136,6 @@ func Validate(cfg *Config) error {
 	}
 	if cfg.Shoots.DefaultTest == nil {
 		result = multierror.Append(result, errors.New("a default test needs to be defined"))
-	}
-
-	for _, flavor := range cfg.Shoots.Flavors {
-		if len(flavor.KubernetesVersions) == 0 {
-			result = multierror.Append(result, errors.New("at least one kubernetes version has to be defined"))
-		}
 	}
 
 	if cfg.Shoots.Namespace == "" {

@@ -16,26 +16,26 @@ package templates
 
 import (
 	"fmt"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 )
 
-func stepCreateShootV1beta1(cloudprovider gardenv1beta1.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
+func stepCreateShootV1beta1(cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
 	stepConfig := defaultShootConfig(cfg)
 	switch cloudprovider {
-	case gardenv1beta1.CloudProviderAWS:
+	case common.CloudProviderAWS:
 		if name == "" {
 			name = "create-shoot-aws"
 		}
 		stepConfig = V1beta1AWSShootConfig(stepConfig)
 		break
-	case gardenv1beta1.CloudProviderGCP:
+	case common.CloudProviderGCP:
 		if name == "" {
 			name = "create-shoot-gcp"
 		}
 		stepConfig = V1beta1GCPShootConfig(stepConfig)
 		break
-	case gardenv1beta1.CloudProviderAzure:
+	case common.CloudProviderAzure:
 		if name == "" {
 			name = "create-shoot-azure"
 		}

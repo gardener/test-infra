@@ -15,21 +15,21 @@ package cmdvalues
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/spf13/pflag"
 )
 
 type CloudProviderArrayValue struct {
-	allowedProvider map[v1beta1.CloudProvider]bool
-	cloudproviders  map[v1beta1.CloudProvider]bool
-	value           *[]v1beta1.CloudProvider
+	allowedProvider map[common.CloudProvider]bool
+	cloudproviders  map[common.CloudProvider]bool
+	value           *[]common.CloudProvider
 	changed         bool
 }
 
-func NewCloudProviderArrayValue(value *[]v1beta1.CloudProvider, allowed ...v1beta1.CloudProvider) pflag.Value {
+func NewCloudProviderArrayValue(value *[]common.CloudProvider, allowed ...common.CloudProvider) pflag.Value {
 	cpvalue := &CloudProviderArrayValue{
-		allowedProvider: make(map[v1beta1.CloudProvider]bool),
-		cloudproviders:  make(map[v1beta1.CloudProvider]bool),
+		allowedProvider: make(map[common.CloudProvider]bool),
+		cloudproviders:  make(map[common.CloudProvider]bool),
 		value:           value,
 		changed:         false,
 	}
@@ -50,7 +50,7 @@ func (v *CloudProviderArrayValue) Type() string {
 }
 
 func (v *CloudProviderArrayValue) Set(value string) error {
-	provider := v1beta1.CloudProvider(value)
+	provider := common.CloudProvider(value)
 	if _, ok := v.allowedProvider[provider]; len(v.allowedProvider) != 0 && !ok {
 		return fmt.Errorf("unsupported cloudprovider %s", provider)
 	}
@@ -60,7 +60,7 @@ func (v *CloudProviderArrayValue) Set(value string) error {
 	}
 
 	if !v.changed {
-		*v.value = []v1beta1.CloudProvider{provider}
+		*v.value = []common.CloudProvider{provider}
 		v.changed = true
 	} else {
 		*v.value = append(*v.value, provider)

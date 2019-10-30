@@ -15,21 +15,23 @@
 package util
 
 import (
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/Masterminds/semver"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/pkg/errors"
 )
 
 // ConvertStringToVersion converts a string to gardener experable versions
-func ConvertStringToVersion(v string) v1alpha1.ExpirableVersion {
-	return v1alpha1.ExpirableVersion{
+func ConvertStringToVersion(v string) gardenv1alpha1.ExpirableVersion {
+	return gardenv1alpha1.ExpirableVersion{
 		Version:        v,
 		ExpirationDate: nil,
 	}
 }
 
 // ConvertStringArrayToVersions converts a string array of versions to gardener experable versions
-func ConvertStringArrayToVersions(versions []string) []v1alpha1.ExpirableVersion {
-	expVersions := make([]v1alpha1.ExpirableVersion, len(versions))
+func ConvertStringArrayToVersions(versions []string) []gardenv1alpha1.ExpirableVersion {
+	expVersions := make([]gardenv1alpha1.ExpirableVersion, len(versions))
 	for i, v := range versions {
 		expVersions[i] = ConvertStringToVersion(v)
 	}
@@ -37,11 +39,35 @@ func ConvertStringArrayToVersions(versions []string) []v1alpha1.ExpirableVersion
 }
 
 // ContainsCloudprovider checks whether a cloudprovier is part of an array of cloudproviders
-func ContainsCloudprovider(cloudproviders []v1beta1.CloudProvider, cloudprovider v1beta1.CloudProvider) bool {
+func ContainsCloudprovider(cloudproviders []common.CloudProvider, cloudprovider common.CloudProvider) bool {
 	for _, cp := range cloudproviders {
 		if cp == cloudprovider {
 			return true
 		}
 	}
 	return false
+}
+
+// GetLatestVersion returns the latest image from a list of expirable versions
+func GetLatestVersion(rawVersions []gardenv1alpha1.ExpirableVersion) (gardenv1alpha1.ExpirableVersion, error) {
+	if len(rawVersions) == 0 {
+		return gardenv1alpha1.ExpirableVersion{}, errors.New("no kubernetes versions found")
+	}
+
+	var (
+		latestExpVersion gardenv1alpha1.ExpirableVersion
+		latestVersion    *semver.Version
+	)
+
+	for _, rawVersion := range rawVersions {
+		v, err := semver.NewVersion(rawVersion.Version)
+		if err != nil {
+			return gardenv1alpha1.ExpirableVersion{}, err
+		}
+		if latestVersion == nil || v.GreaterThan(latestVersion) {
+			latestVersion = v
+			latestExpVersion = rawVersion
+		}
+	}
+	return latestExpVersion, nil
 }

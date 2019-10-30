@@ -44,7 +44,7 @@ var _ = Describe("Testmachinery controller resume", func() {
 			)
 
 			actual := calculateTimer(timeout, metav1.NewTime(now.Add(elapsed)))
-			Expect(actual.Seconds()).To(BeNumerically("~", expected.Seconds(), 1e-5))
+			Expect(actual.Seconds()).To(BeNumerically("~", expected.Seconds(), 1e-3))
 		})
 
 		It("should add a timer if a step is paused", func() {

@@ -37,21 +37,12 @@ type GardenerConfig struct {
 	Commit   string
 }
 
-// ShootFlavor describes the shoot flavors that should be tested.
-// Will be extended in the future by operating system, etc..
-type ShootFlavor struct {
-	CloudProvider gardenv1beta1.CloudProvider `json:"cloudprovider"`
-
-	// Kubernetes versions to test
-	KubernetesVersions []v1alpha1.ExpirableVersion `json:"kubernetesVersions"`
-}
-
-func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, shootFlavors []ShootFlavor, cfg GardenerConfig) (v1beta1.DAGStep, error) {
+func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, cfg GardenerConfig) (v1beta1.DAGStep, error) {
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), cfg)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
-	stepConfig, err = AppendKubernetesVersionConfig(stepConfig, shootFlavors)
+	stepConfig, err = AppendKubernetesVersionConfig(stepConfig, kubernetesVersions)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
@@ -118,18 +109,10 @@ func AppendGardenerConfig(stepConfig []v1beta1.ConfigElement, cfg GardenerConfig
 
 }
 
-func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, shootFlavors []ShootFlavor) ([]v1beta1.ConfigElement, error) {
+func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion) ([]v1beta1.ConfigElement, error) {
 	trueVar := true
-	//kubernetesConstraint := v1alpha1.KubernetesSettings{
-	//	Versions: make([]v1alpha1.ExpirableVersion, len(versions)),
-	//}
-	//for i, version := range versions {
-	//	kubernetesConstraint.Versions[i] = v1alpha1.ExpirableVersion{
-	//		Version: version,
-	//	}
-	//}
 
-	rawVersions, err := json.Marshal(shootFlavors)
+	rawVersions, err := json.Marshal(kubernetesVersions)
 	if err != nil {
 		return nil, err
 	}

@@ -14,24 +14,20 @@
 
 package common
 
-// Annotations
+// CloudProvider is a string alias.
+type CloudProvider string
+
 const (
-	ResumeTestrunAnnotation = "testmachinery.sapcloud.io/resume"
-
-	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
-
-	// images
-	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
-
-	// Repositories
-	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
-	GardenerRepo    = "https://github.com/gardener/gardener.git"
-
-	PatternLatest = "latest"
-)
-
-var (
-	// Default timeout of 4 hours to wait before resuming the testrun
-	DefaultPauseTimeout = 14400
+	// CloudProviderAWS is a constant for the AWS cloud provider.
+	CloudProviderAWS CloudProvider = "aws"
+	// CloudProviderAzure is a constant for the Azure cloud provider.
+	CloudProviderAzure CloudProvider = "azure"
+	// CloudProviderGCP is a constant for the GCP cloud provider.
+	CloudProviderGCP CloudProvider = "gcp"
+	// CloudProviderOpenStack is a constant for the OpenStack cloud provider.
+	CloudProviderOpenStack CloudProvider = "openstack"
+	// CloudProviderAlicloud is a constant for the Alibaba cloud provider.
+	CloudProviderAlicloud CloudProvider = "alicloud"
+	// CloudProviderPacket is a constant for the Packet cloud provider.
+	CloudProviderPacket CloudProvider = "packet"
 )

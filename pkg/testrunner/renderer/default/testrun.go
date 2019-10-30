@@ -16,8 +16,8 @@ package _default
 
 import (
 	"fmt"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner/renderer"
 	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/util"
@@ -25,7 +25,7 @@ import (
 )
 
 type shoot struct {
-	Type      gardenv1beta1.CloudProvider
+	Type      common.CloudProvider
 	Suffix    string
 	Config    *templates.CreateShootConfig
 	TestsFunc renderer.TestsFunc
@@ -34,7 +34,7 @@ type shoot struct {
 func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 	gsLocationName := "gs"
 	prepareHostCluster := templates.GetStepLockHost(cfg.HostProvider, cfg.BaseClusterCloudprovider)
-	createGardener, err := templates.GetStepCreateGardener(gsLocationName, []string{prepareHostCluster.Name}, cfg.BaseClusterCloudprovider, cfg.Shoots.Flavors, cfg.Gardener)
+	createGardener, err := templates.GetStepCreateGardener(gsLocationName, []string{prepareHostCluster.Name}, cfg.BaseClusterCloudprovider, cfg.Shoots.Flavors.GetUsedKubernetesVersions(), cfg.Gardener)
 	if err != nil {
 		return nil, err
 	}

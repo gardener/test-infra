@@ -12,14 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package shootflavors
 
-import "github.com/gardener/test-infra/pkg/testrunner"
+import (
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/test-infra/pkg/common"
+)
 
-func (sl ShootRunList) Runs() testrunner.RunList {
-	runs := make(testrunner.RunList, len(sl))
-	for i, run := range sl {
-		runs[i] = run.Run
-	}
-	return runs
+// Flavors represents the internal versions of a shoot flavor.
+// Has be to be initiated by New
+type Flavors struct {
+	Info   []*common.ShootFlavor
+	shoots []*common.Shoot
+
+	usedKubernetesVersions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion
+}
+
+// Flavors represents the internal versions of a extended shoot flavor.
+// Has be to be initiated by NewExtended
+type ExtendedFlavors struct {
+	Info   []*common.ExtendedShootFlavor
+	shoots []*common.ExtendedShoot
+
+	usedKubernetesVersions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion
 }

@@ -38,9 +38,10 @@ var collectConfig = result.Config{}
 var shootParameters = testrunnerTemplate.ShootTestrunParameters{}
 
 var (
-	testrunNamePrefix string
-	tmKubeconfigPath  string
-	failOnError       bool
+	testShootConfigPath string
+	testrunNamePrefix   string
+	tmKubeconfigPath    string
+	failOnError         bool
 
 	timeout  int64
 	interval int64
@@ -67,7 +68,15 @@ var runCmd = &cobra.Command{
 			Scheme: testmachinery.TestMachineryScheme,
 		}))
 		if err != nil {
-			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
+			logger.Log.Error(err, "unable to build testmachinery kubernetes client", "file", tmKubeconfigPath)
+			os.Exit(1)
+		}
+
+		gardenK8sClient, err := kubernetes.NewClientFromFile("", shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
+			Scheme: kubernetes.GardenScheme,
+		}))
+		if err != nil {
+			logger.Log.Error(err, "unable to build garden kubernetes client", "file", tmKubeconfigPath)
 			os.Exit(1)
 		}
 
@@ -75,16 +84,13 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
-		testrunComputedPrefix := fmt.Sprintf("%s-%s-", testrunNamePrefix, shootParameters.Cloudprovider)
-		metadata := &testrunner.Metadata{
-			Landscape:         shootParameters.Landscape,
-			CloudProvider:     shootParameters.Cloudprovider,
-			KubernetesVersion: shootParameters.K8sVersion,
-			Region:            shootParameters.Region,
-			Zone:              shootParameters.Zone,
-			OperatingSystem:   shootParameters.MachineImage,
+		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient)
+		if err != nil {
+			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
+			os.Exit(1)
 		}
-		shootRuns, err := testrunnerTemplate.RenderShootTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, metadata)
+
+		shootRuns, err := testrunnerTemplate.RenderShootTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, shootFlavors)
 		if err != nil {
 			logger.Log.Error(err, "unable to render testrun")
 			os.Exit(1)
@@ -106,7 +112,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunComputedPrefix)
+		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix)
 
 		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Client, testrunnerConfig.Namespace, runs)
 		if err != nil {
@@ -162,10 +168,11 @@ func init() {
 	runCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 
 	// parameter flags
-	runCmd.Flags().StringVar(&shootParameters.TestrunChartPath, "testruns-chart-path", "", "Path to the testruns chart.")
-	if err := runCmd.MarkFlagRequired("testruns-chart-path"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "testruns-chart-path")
+	runCmd.Flags().StringVar(&shootParameters.TestrunChartPath, "testruns-chart-path", "", "Path to the default testruns chart.")
+	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}
+	runCmd.Flags().StringVar(&shootParameters.ShootTestrunChartPath, "shoot-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}
@@ -176,41 +183,23 @@ func init() {
 	if err := runCmd.MarkFlagFilename("gardener-kubeconfig-path"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "gardener-kubeconfig-path")
 	}
-	runCmd.Flags().BoolVar(&shootParameters.MakeVersionMatrix, "all-k8s-versions", false, "Run the testrun with all available versions specified by the cloudprovider.")
-	runCmd.Flags().StringVar(&shootParameters.ProjectName, "project-name", "", "Gardener project name of the shoot")
 	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "gardener-kubeconfig-path")
 	}
+
+	runCmd.Flags().StringVar(&testShootConfigPath, "shoot-test-config", "", "Path to shoot test configuration.")
+	if err := runCmd.MarkFlagRequired("shoot-test-config"); err != nil {
+		logger.Log.Error(err, "mark flag required", "flag", "shoot-test-config")
+	}
+	if err := runCmd.MarkFlagFilename("shoot-test-config"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "shoot-test-config")
+	}
+
 	runCmd.Flags().StringVar(&shootParameters.ShootName, "shoot-name", "", "Shoot name which is used to run tests.")
 	if err := runCmd.MarkFlagRequired("shoot-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "shoot-name")
 	}
-	runCmd.Flags().StringVar(&shootParameters.Cloudprovider, "cloudprovider", "", "Cloudprovider where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("cloudprovider"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "cloudprovider")
-	}
-	runCmd.Flags().StringVar(&shootParameters.Cloudprofile, "cloudprofile", "", "Cloudprofile of shoot.")
-	if err := runCmd.MarkFlagRequired("cloudprofile"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "cloudprofile")
-	}
-	runCmd.Flags().StringVar(&shootParameters.SecretBinding, "secret-binding", "", "SecretBinding that should be used to create the shoot.")
-	if err := runCmd.MarkFlagRequired("secret-binding"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "secret-binding")
-	}
-	runCmd.Flags().StringVar(&shootParameters.Region, "region", "", "Region where the shoot is created.")
-	if err := runCmd.MarkFlagRequired("region"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "region")
-	}
 
-	runCmd.Flags().StringVar(&shootParameters.Zone, "zone", "", "Zone of the shoot worker nodes. Not required for azure shoots.")
-	runCmd.Flags().StringVar(&shootParameters.K8sVersion, "k8s-version", "", "Kubernetes version of the shoot.")
-	runCmd.Flags().StringVar(&shootParameters.MachineType, "machinetype", "", "Machinetype of the shoot's worker nodes.")
-	runCmd.Flags().StringVar(&shootParameters.MachineImage, "machine-image", "", "Image of the OS running on the machine")
-	runCmd.Flags().StringVar(&shootParameters.MachineImageVersion, "machine-image-version", "", "The version of the machine image")
-	runCmd.Flags().StringVar(&shootParameters.AutoscalerMin, "autoscaler-min", "", "Min number of worker nodes.")
-	runCmd.Flags().StringVar(&shootParameters.AutoscalerMax, "autoscaler-max", "", "Max number of worker nodes.")
-	runCmd.Flags().StringVar(&shootParameters.FloatingPoolName, "floating-pool-name", "", "Floating pool name where the cluster is created. Only needed for Openstack.")
-	runCmd.Flags().StringVar(&shootParameters.LoadBalancerProvider, "loadbalancer-provider", "", "LoadBalancer Provider like haproxy. Only applicable for Openstack.")
 	runCmd.Flags().StringVar(&shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
 
