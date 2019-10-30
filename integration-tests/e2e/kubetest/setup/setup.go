@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -48,6 +49,44 @@ func getKubetestAndUtilities() error {
 		return errors.Wrapf(err, "unable to create directories %s", config.K8sRoot)
 	}
 	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), config.K8sRoot); err != nil {
+		return err
+	}
+	if err := cleanUpLargeUnsedFiles(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func cleanUpLargeUnsedFiles() error {
+	// at this point all archive files should have been extracted and therefore are not needed anymore
+	unusedFiles := util.GetFilesByPattern(config.K8sRoot, "tar.gz$")
+	// in k8s < 1.14.* all platforms and archictures are downloaded, but we want to keep only the necessary one
+	platformsDir := filepath.Join(config.KubernetesPath, "platforms")
+	unusedFiles = append(unusedFiles, platformsDir)
+	currentPlatformArchitecture := filepath.Join(config.KubernetesPath, "platforms", runtime.GOOS, runtime.GOARCH)
+	backupOfCurrentPlatformArchitecture := filepath.Join(config.KubernetesPath, fmt.Sprintf("platforms_backup_%s_%s", runtime.GOOS, runtime.GOARCH))
+
+	// backup e2e platform binaries
+	// the backup is necessary, because only a subset of subfolders is needed and the rest is disposable
+	log.Infof("Backup '%s' in '%s'", currentPlatformArchitecture, backupOfCurrentPlatformArchitecture)
+	if err := os.Rename(currentPlatformArchitecture, backupOfCurrentPlatformArchitecture); err != nil {
+		return err
+	}
+
+	// delete unused files / directories
+	for _, unusedFile := range unusedFiles {
+		log.Infof("Removing unused directory/file: %s", unusedFile)
+		if err := os.RemoveAll(unusedFile); err != nil {
+			return err
+		}
+	}
+
+	// enable e2e platform binaries backup
+	log.Infof("Install backup '%s' in '%s'", backupOfCurrentPlatformArchitecture, currentPlatformArchitecture)
+	if err := os.MkdirAll(filepath.Dir(currentPlatformArchitecture), os.FileMode(int(0777))); err != nil {
+		return err
+	}
+	if err := os.Rename(backupOfCurrentPlatformArchitecture, currentPlatformArchitecture); err != nil {
 		return err
 	}
 	return nil
