@@ -10,10 +10,25 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 
 Ensure all required environment variables have been set. Create a `shoot.config` file in `EXPORT_PATH` directory and paste the kubeconfig of the kubernetes cluster to test in it. Run `e2e` in command line to execute the e2e tests.
 
-Example usage:
+### Example usage in container:
+```bash
+#first set KUBECONFIG to your cluster
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config golang:1.13 bash
+
+# run all commands below within container (check provider and k8s version)
+export E2E_EXPORT_PATH=/tmp/export; export KUBECONFIG=/mye2e/shoot.config
+export TESTCASE_GROUPS=conformance
+go get github.com/gardener/test-infra; cd /go/src/github.com/gardener/test-infra
+export GO111MODULE=on
+go run -mod=vendor ./integration-tests/e2e -debug=true -k8sVersion=1.16.2 -cloudprovider=gcp
+echo "testsuite finished"
+```
+
+### Example usage with existing test-infra project:
 `go run /path/e2e -kubeconfig=$KUBECONFIG -k8sVersion=1.15.1 -cloudprovider=gcp -testcase="[sig-apps] Job should delete a job" -testcase="[sig-apps] Job should exceed backoffLimit"`
 
-### Prerequisites:
+
+### Environment Prerequisites:
 
 - Go installed
 - Git installed
