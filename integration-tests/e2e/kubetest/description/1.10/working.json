@@ -1,6 +1,6 @@
 [
-  { "testcase": "[Conformance]", "focus": "Serial|Slow", "groups": ["slow", "conformance"]},
-  { "testcase": "[Conformance]", "skip": "Serial|Slow", "groups": ["fast", "conformance"]},
+  { "testcase": "[Conformance]", "is-substring": true, "focus": "Serial|Slow", "groups": ["slow", "conformance"]},
+  { "testcase": "[Conformance]", "is-substring": true, "skip": "Serial|Slow", "groups": ["fast", "conformance"]},
   { "testcase": "[k8s.io] [sig-node] kubelet [k8s.io] [sig-node] Clean up pods on node kubelet should be able to delete 10 pods per node in 1m0s.", "groups": ["fast"] },
   { "testcase": "[sig-cli] Kubectl client [k8s.io] Kubectl apply apply set/view last-applied", "groups": ["fast"] },
   { "testcase": "[sig-cli] Kubectl client [k8s.io] Kubectl apply should apply a new configuration to an existing RC", "groups": ["fast"] },

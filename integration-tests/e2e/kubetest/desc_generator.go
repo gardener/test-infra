@@ -44,18 +44,23 @@ func Generate() (desc string) {
 	} else {
 		testcasesFromDescFile = UnmarshalDescription(config.DescriptionFilePath)
 	}
-	for _, testcaseFromDesc := range testcasesFromDescFile {
-		matching := allE2eTestcases.GetMatchingForTestcase(testcaseFromDesc.Name, testcaseFromDesc.Skip, testcaseFromDesc.Focus)
-		if testcaseFromDesc.validForCurrentContext() {
-			if matching.Len() == 0 {
-				log.Warnf("Couldn't find testcase: '%s'", testcaseFromDesc.Name)
-				continue
+
+	if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
+		testcasesToRun = allE2eTestcases.GetMatchingForTestcase("[Conformance]", "", "", true)
+	} else {
+		for _, testcaseFromDesc := range testcasesFromDescFile {
+			matching := allE2eTestcases.GetMatchingForTestcase(testcaseFromDesc.Name, testcaseFromDesc.Skip, testcaseFromDesc.Focus, testcaseFromDesc.IsSubstring)
+			if testcaseFromDesc.validForCurrentContext() {
+				if matching.Len() == 0 {
+					log.Warnf("Couldn't find testcase: '%s'", testcaseFromDesc.Name)
+					continue
+				}
+				testcasesToRun = testcasesToRun.Union(matching)
+			} else {
+				// this is necessary since e.g. all conformance testcases are added by a wildcard, but there may still be
+				// additionally a conformance test excluded explicitly or assigned to a group
+				testcasesToRun = testcasesToRun.Difference(matching)
 			}
-			testcasesToRun = testcasesToRun.Union(matching)
-		} else {
-			// this is necessary since e.g. all conformance testcases are added by a wildcard, but there may still be
-			// additionally a conformance test excluded explicitly or assigned to a group
-			testcasesToRun = testcasesToRun.Difference(matching)
 		}
 	}
 
@@ -223,4 +228,5 @@ type TestcaseDesc struct {
 	TestcaseGroups    []string `json:"groups"`
 	Skip              string   `json:"skip,omitempty"`
 	Focus             string   `json:"focus,omitempty"`
+	IsSubstring       bool     `json:"is-substring,omitempty"`
 }
