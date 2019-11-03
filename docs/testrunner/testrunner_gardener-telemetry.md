@@ -15,9 +15,10 @@ testrunner gardener-telemetry [flags]
 ```
       --component-descriptor string   Path to component descriptor
   -h, --help                          help for gardener-telemetry
+      --initial-timeout string        Initial timeout to wait for the update to start. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'. (default "1m")
       --kubeconfig string             Path to the gardener kubeconfig (default "/Users/d064999/.kubeconfigs/dev/.virtual")
+      --reconcile-timeout string      Timeout to wait for all shoots to tbe reconciled. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'. (default "10m")
       --result-dir string             Path to write the metricss (default "/tmp/res")
-      --timeout string                Initial timeout to wait for the update to start. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'. (default "1m")
 ```
 
 ### Options inherited from parent commands
