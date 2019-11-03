@@ -35,11 +35,12 @@ import (
 
 var testrunnerConfig = testrunner.Config{}
 var collectConfig = result.Config{}
-var shootParameters = testrunnerTemplate.ShootTestrunParameters{}
+var shootParameters = testrunnerTemplate.Parameters{}
 
 var (
 	testShootConfigPath string
 	testrunNamePrefix   string
+	shootPrefix         string
 	tmKubeconfigPath    string
 	failOnError         bool
 
@@ -84,18 +85,17 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
-		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient)
+		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient, shootPrefix)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
 			os.Exit(1)
 		}
 
-		shootRuns, err := testrunnerTemplate.RenderShootTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, shootFlavors)
+		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, shootFlavors)
 		if err != nil {
 			logger.Log.Error(err, "unable to render testrun")
 			os.Exit(1)
 		}
-		runs := shootRuns.Runs()
 
 		if dryRun {
 			fmt.Print(util.PrettyPrintStruct(runs))
@@ -107,7 +107,7 @@ var runCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to initialize collector")
 			os.Exit(1)
 		}
-		if err := collector.PreRunShoots(shootParameters.GardenKubeconfigPath, shootRuns); err != nil {
+		if err := collector.PreRunShoots(shootParameters.GardenKubeconfigPath, runs); err != nil {
 			logger.Log.Error(err, "unable to setup collector")
 			os.Exit(1)
 		}
@@ -195,7 +195,7 @@ func init() {
 		logger.Log.Error(err, "mark flag filename", "flag", "shoot-test-config")
 	}
 
-	runCmd.Flags().StringVar(&shootParameters.ShootName, "shoot-name", "", "Shoot name which is used to run tests.")
+	runCmd.Flags().StringVar(&shootPrefix, "shoot-name", "", "Shoot name which is used to run tests.")
 	if err := runCmd.MarkFlagRequired("shoot-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "shoot-name")
 	}

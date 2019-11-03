@@ -26,7 +26,7 @@ type ExtendedShootFlavors struct {
 // ExtendedShoot is one instance that is generated from a extended shoot flavor
 type ExtendedShoot struct {
 	Shoot
-	ExtendedConfiguration
+	ExtendedShootConfiguration
 }
 
 // ExtendedShootFlavor is the shoot flavor with extended configuration
@@ -74,7 +74,7 @@ type ShootWorkerFlavor struct {
 	WorkerPools []gardenv1alpha1.Worker `json:"workerPools"`
 }
 
-// ExtendedConfiguration specifies extended configuration for shoots that are deployed into a preexisting landscape
+// ExtendedConfiguration specifies extended configuration for shoot flavors that are deployed into a preexisting landscape
 type ExtendedConfiguration struct {
 	Cloudprofile  string `json:"cloudprofile"`
 	ProjectName   string `json:"projectName"`
@@ -84,4 +84,11 @@ type ExtendedConfiguration struct {
 
 	FloatingPoolName     string `json:"floatingPoolName"`
 	LoadbalancerProvider string `json:"loadbalancerProvider"`
+}
+
+// ExtendedShootConfiguration specifies extended configuration for shoots that are deployed into a preexisting landscape
+type ExtendedShootConfiguration struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	ExtendedConfiguration
 }

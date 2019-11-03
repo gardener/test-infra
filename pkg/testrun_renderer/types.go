@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package renderer
+package testrun_renderer
 
 import "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 

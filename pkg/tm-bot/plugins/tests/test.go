@@ -17,7 +17,7 @@ package tests
 import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
-	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
+	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/go-logr/logr"

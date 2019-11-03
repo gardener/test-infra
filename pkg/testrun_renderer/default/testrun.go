@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,7 +28,7 @@ type shoot struct {
 	Type      common.CloudProvider
 	Suffix    string
 	Config    *templates.CreateShootConfig
-	TestsFunc renderer.TestsFunc
+	TestsFunc testrun_renderer.TestsFunc
 }
 
 func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {

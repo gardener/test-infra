@@ -12,14 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package testrun_renderer
 
-import "github.com/gardener/test-infra/pkg/testrunner"
+import "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
-func (sl ShootRunList) Runs() testrunner.RunList {
-	runs := make(testrunner.RunList, len(sl))
-	for i, run := range sl {
-		runs[i] = run.Run
+// WithTests connects mumtiple test functions to one
+func WithTests(funcs ...TestsFunc) TestsFunc {
+	return func(suffix string, parents []string) ([]*v1beta1.DAGStep, []string, error) {
+		steps := make([]*v1beta1.DAGStep, 0)
+		dependencies := parents
+		for _, f := range funcs {
+			var (
+				testSteps []*v1beta1.DAGStep
+				err       error
+			)
+			testSteps, dependencies, err = f(suffix, dependencies)
+			if err != nil {
+				return nil, nil, err
+			}
+			steps = append(steps, testSteps...)
+		}
+
+		return steps, dependencies, nil
 	}
-	return runs
 }

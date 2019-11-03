@@ -21,9 +21,9 @@ import (
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -53,7 +53,7 @@ type Config struct {
 	Gardener templates.GardenerConfig
 
 	// Gardener tests that do not depend on shoots and run after the shoot tests
-	Tests renderer.TestsFunc
+	Tests testrun_renderer.TestsFunc
 
 	// Shoot test flavor configuration
 	Shoots ShootsConfig
@@ -71,10 +71,10 @@ type ShootsConfig struct {
 	Namespace string
 
 	// Default test that is used for all cloudproviders and kubernetes flavors.
-	DefaultTest renderer.TestsFunc
+	DefaultTest testrun_renderer.TestsFunc
 
 	// Specific tests that get their own shoot per cloudprovider and run in parallel to the default tests
-	Tests []renderer.TestsFunc
+	Tests []testrun_renderer.TestsFunc
 
 	// shoot test configurations
 	Flavors *shootflavors.Flavors
@@ -115,7 +115,7 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 		return nil, err
 	}
 
-	if err := renderer.AddBOMLocationsToTestrun(tr, "default", cfg.Components, true); err != nil {
+	if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", cfg.Components, true); err != nil {
 		return nil, err
 	}
 	return tr, nil

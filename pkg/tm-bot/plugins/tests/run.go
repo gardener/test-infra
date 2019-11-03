@@ -27,9 +27,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
-	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/spf13/pflag"
 )
@@ -48,7 +48,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 
 	t.config.Shoots.DefaultTest = templates.TestWithLabels(t.testLabel)
 	if t.hibernation {
-		t.config.Shoots.Tests = []renderer.TestsFunc{templates.HibernationLifecycle}
+		t.config.Shoots.Tests = []testrun_renderer.TestsFunc{templates.HibernationLifecycle}
 	}
 
 	if err := _default.Validate(&t.config); err != nil {

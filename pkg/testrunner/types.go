@@ -41,6 +41,8 @@ type Config struct {
 // Run describes a testrun that is executed by the testrunner.
 // It consists of a testrun and its metadata
 type Run struct {
+	// Specify internal info for specific run types
+	Info     interface{}
 	Testrun  *tmv1beta1.Testrun
 	Metadata *Metadata
 	Error    error

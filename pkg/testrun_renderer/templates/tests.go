@@ -17,13 +17,13 @@ package templates
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	"github.com/gardener/test-infra/pkg/util"
 	"strings"
 )
 
 // TestWithLabels creates tests functions that render test steps executed in serial.
-func TestWithLabels(labels ...string) renderer.TestsFunc {
+func TestWithLabels(labels ...string) testrun_renderer.TestsFunc {
 	return func(suffix string, parents []string) ([]*v1beta1.DAGStep, []string, error) {
 		steps := make([]*v1beta1.DAGStep, len(labels))
 		previous := parents

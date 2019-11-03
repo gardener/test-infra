@@ -21,10 +21,10 @@ import (
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
-	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"os"
 	"time"
@@ -101,7 +101,7 @@ var runCmd = &cobra.Command{
 		defaultConfig.Namespace = testrunnerConfig.Namespace
 		defaultConfig.Shoots.DefaultTest = templates.TestWithLabels(testLabel)
 		if hibernation {
-			defaultConfig.Shoots.Tests = []renderer.TestsFunc{templates.HibernationLifecycle}
+			defaultConfig.Shoots.Tests = []testrun_renderer.TestsFunc{templates.HibernationLifecycle}
 		}
 
 		tr, err := _default.Render(&defaultConfig)

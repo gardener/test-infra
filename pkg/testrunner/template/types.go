@@ -15,45 +15,30 @@
 package template
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
-// ShootTestrunParameters are the parameters which describe the test that is executed by the testrunner.
-type ShootTestrunParameters struct {
+// Parameters are the parameters which describe the test that is executed by the testrunner.
+type Parameters struct {
 	// Path to the kubeconfig where the gardener is running.
 	GardenKubeconfigPath  string
 	Namespace             string
 	ShootTestrunChartPath string
 	TestrunChartPath      string
 
-	ShootName string
-
 	// metadata
 	Landscape               string
 	ComponentDescriptorPath string
-	GardenerVersion         string
 
 	SetValues  string
 	FileValues []string
 }
 
-// RenderedTestrun is the internal representation of a rendered testrun chart with metadata information
-type RenderedTestrun struct {
-	testrun    *v1beta1.Testrun
-	Parameters ShootTestrunParameters
-	Metadata   testrunner.Metadata
-}
+type internalParameters struct {
+	ComponentDescriptor componentdescriptor.ComponentList
+	ChartPath           string
 
-// TestrunFileMetadata represents the metadata of a rendered testrun.
-type TestrunFileMetadata struct {
-	KubernetesVersion string
+	GardenerKubeconfig []byte
+	GardenerVersion    string
+	Landscape          string
 }
-
-// ShootRun represents a testrun where one shoot is tested
-// with its rendered testrun and configuration
-type ShootRun struct {
-	Run        *testrunner.Run
-	Parameters ShootTestrunParameters
-}
-type ShootRunList []*ShootRun
