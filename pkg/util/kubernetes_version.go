@@ -12,7 +12,7 @@ import (
 )
 
 // GetK8sVersions returns all K8s version that should be rendered by the chart
-func GetK8sVersions(k8sClient kubernetes.Interface, config common.ShootKubernetesVersionFlavor, cloudprofile string) ([]gardenv1alpha1.ExpirableVersion, error) {
+func GetK8sVersions(k8sClient kubernetes.Interface, config common.ShootKubernetesVersionFlavor, cloudprofile string, filterPatchVersions bool) ([]gardenv1alpha1.ExpirableVersion, error) {
 	if config.Versions != nil && len(*config.Versions) != 0 {
 		return *config.Versions, nil
 	}
@@ -53,6 +53,10 @@ func GetK8sVersions(k8sClient kubernetes.Interface, config common.ShootKubernete
 
 	if len(filtered) == 0 {
 		return nil, fmt.Errorf("no K8s version can be specified")
+	}
+
+	if filterPatchVersions {
+		return FilterPatchVersions(filtered)
 	}
 
 	return filtered, nil

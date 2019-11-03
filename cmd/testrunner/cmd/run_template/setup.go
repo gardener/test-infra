@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix string) (*shootflavors.ExtendedFlavors, error) {
+func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
 	// read and parse test shoot configuration
 	dat, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
@@ -21,5 +21,5 @@ func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix
 		return nil, err
 	}
 
-	return shootflavors.NewExtended(k8sClient, flavors.Flavors, shootPrefix)
+	return shootflavors.NewExtended(k8sClient, flavors.Flavors, shootPrefix, filterPatchVersions)
 }

@@ -12,43 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package util_test
 
 import (
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("helper test", func() {
+var _ = Describe("gardener util", func() {
 
-	Context("kubernetes versions", func() {
+	Context("versions", func() {
 		It("should remove old 1.14 version and keep everything else", func() {
-			versions := []string{
-				"1.13.5",
-				"1.14.3",
-				"1.14.4",
-				"1.15.0",
+			versions := []gardenv1alpha1.ExpirableVersion{
+				newExpirableVersion("1.13.5"),
+				newExpirableVersion("1.14.3"),
+				newExpirableVersion("1.14.4"),
+				newExpirableVersion("1.15.0"),
 			}
 
-			Expect(filterPatchVersions(versions)).To(ConsistOf(
-				"1.13.5",
-				"1.14.4",
-				"1.15.0",
+			Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
+				newExpirableVersion("1.13.5"),
+				newExpirableVersion("1.14.4"),
+				newExpirableVersion("1.15.0"),
 			))
 		})
 
 		It("should remove old 1.14 and 1.13 version", func() {
-			versions := []string{
-				"1.13.0",
-				"1.13.5",
-				"1.14.3",
-				"1.14.4",
+			versions := []gardenv1alpha1.ExpirableVersion{
+				newExpirableVersion("1.13.0"),
+				newExpirableVersion("1.13.5"),
+				newExpirableVersion("1.14.3"),
+				newExpirableVersion("1.14.4"),
 			}
 
-			Expect(filterPatchVersions(versions)).To(ConsistOf(
-				"1.13.5",
-				"1.14.4",
+			Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
+				newExpirableVersion("1.13.5"),
+				newExpirableVersion("1.14.4"),
 			))
 		})
 	})
 })
+
+func newExpirableVersion(v string) gardenv1alpha1.ExpirableVersion {
+	return gardenv1alpha1.ExpirableVersion{Version: v}
+}

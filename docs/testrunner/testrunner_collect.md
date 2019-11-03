@@ -25,7 +25,7 @@ testrunner collect [flags]
   -o, --output-dir-path string             The filepath where the summary should be written to. (default "./testout")
       --s3-endpoint string                 S3 endpoint of the testmachinery cluster.
       --s3-ssl                             S3 has SSL enabled.
-      --tm-kubeconfig-path string          Path to the testmachinery cluster kubeconfig (default "/Users/d064999/.kubeconfigs/dev/.virtual")
+      --tm-kubeconfig-path string          Path to the testmachinery cluster kubeconfig
   -t, --tr-name string                     Name of the testrun to collect results.
       --upload-status-asset                Upload testrun status as a github release asset.
 ```

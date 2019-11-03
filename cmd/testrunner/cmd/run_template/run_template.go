@@ -42,6 +42,7 @@ var (
 	testrunNamePrefix   string
 	shootPrefix         string
 	tmKubeconfigPath    string
+	filterPatchVersions bool
 	failOnError         bool
 
 	timeout  int64
@@ -85,7 +86,7 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
-		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient, shootPrefix)
+		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
 			os.Exit(1)
@@ -199,6 +200,7 @@ func init() {
 	if err := runCmd.MarkFlagRequired("shoot-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "shoot-name")
 	}
+	runCmd.Flags().BoolVar(&filterPatchVersions, "filter-patch-versions", false, "Filters patch versions so that only the latest patch versions per minor versions is used.")
 
 	runCmd.Flags().StringVar(&shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&shootParameters.Landscape, "landscape", "", "Current gardener landscape.")

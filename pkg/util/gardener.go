@@ -15,6 +15,7 @@
 package util
 
 import (
+	"fmt"
 	"github.com/Masterminds/semver"
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/test-infra/pkg/common"
@@ -70,4 +71,32 @@ func GetLatestVersion(rawVersions []gardenv1alpha1.ExpirableVersion) (gardenv1al
 		}
 	}
 	return latestExpVersion, nil
+}
+
+// FilterPatchVersions keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
+func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion) ([]gardenv1alpha1.ExpirableVersion, error) {
+	type versionWrapper struct {
+		expirableVersion gardenv1alpha1.ExpirableVersion
+		semverVersion    *semver.Version
+	}
+	newestPatchVersionMap := make(map[string]versionWrapper)
+	for _, rawVersion := range cloudProfileVersions {
+		parsedVersion, err := semver.NewVersion(rawVersion.Version)
+		if err != nil {
+			return nil, err
+		}
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+		if newestPatch, ok := newestPatchVersionMap[majorMinor]; !ok || newestPatch.semverVersion.LessThan(parsedVersion) {
+			newestPatchVersionMap[majorMinor] = versionWrapper{
+				expirableVersion: rawVersion,
+				semverVersion:    parsedVersion,
+			}
+		}
+	}
+
+	newestPatchVersions := make([]gardenv1alpha1.ExpirableVersion, 0)
+	for _, version := range newestPatchVersionMap {
+		newestPatchVersions = append(newestPatchVersions, version.expirableVersion)
+	}
+	return newestPatchVersions, nil
 }

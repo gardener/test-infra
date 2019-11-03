@@ -15,8 +15,6 @@
 package template
 
 import (
-	"fmt"
-	"github.com/Masterminds/semver"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -25,27 +23,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"sigs.k8s.io/yaml"
 )
-
-// filterPatchVersions keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
-func filterPatchVersions(cloudProfileVersions []string) ([]string, error) {
-	newestPatchVersionMap := make(map[string]*semver.Version)
-	for _, rawVersion := range cloudProfileVersions {
-		parsedVersion, err := semver.NewVersion(rawVersion)
-		if err != nil {
-			return nil, err
-		}
-		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
-		if newestPatch, ok := newestPatchVersionMap[majorMinor]; !ok || newestPatch.LessThan(parsedVersion) {
-			newestPatchVersionMap[majorMinor] = parsedVersion
-		}
-	}
-
-	newestPatchVersions := make([]string, 0)
-	for _, version := range newestPatchVersionMap {
-		newestPatchVersions = append(newestPatchVersions, version.String())
-	}
-	return newestPatchVersions, nil
-}
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
 	if tr == nil {

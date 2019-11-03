@@ -20,6 +20,7 @@ testrunner run-template [flags]
       --enable-telemetry                   Enables the measurements of metrics during execution
       --es-config-name string              The elasticsearch secret-server config name. (default "sap_internal")
       --fail-on-error                      Testrunners exits with 1 if one testruns failed. (default true)
+      --filter-patch-versions              Filters patch versions so that only the latest patch versions per minor versions is used.
       --gardener-kubeconfig-path string    Path to the gardener kubeconfig.
       --github-password string             Github password.
       --github-user string                 On error dir which is used by Concourse.

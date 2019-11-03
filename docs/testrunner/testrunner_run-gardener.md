@@ -27,7 +27,7 @@ testrunner run-gardener [flags]
       --host-cloudprovider CloudProvider   Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster (default gcp)
       --hostprovider HostProvider          Specify the provider for selecting the base cluster (default gardener)
       --interval duration                  Poll interval of the testrunner to poll for the testrun status. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'. (default 20s)
-      --kubeconfig string                  Path to the testmachinery cluster kubeconfig (default "/Users/d064999/.kubeconfigs/dev/.virtual")
+      --kubeconfig string                  Path to the testmachinery cluster kubeconfig
       --kubernetes-version stringArray     Specify the kubernetes version to test
   -l, --label string                       Specify test label that should be fetched by the testmachinery (default "default")
   -n, --namespace string                   Namespace where the testrun should be deployed. (default "default")
