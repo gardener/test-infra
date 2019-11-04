@@ -15,12 +15,15 @@
 package template
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/pkg/errors"
-	"io/ioutil"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	"github.com/pkg/errors"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"sigs.k8s.io/yaml"
 )
 
@@ -57,4 +60,32 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 		values = utils.MergeMaps(values, newValues)
 	}
 	return values, nil
+}
+
+// determineShootChart returns the chart to redner for the specific shoot flavor
+func determineShootChart(defaultChart string, chart *string) (string, error) {
+	if chart == nil {
+		return defaultChart, nil
+	}
+	if filepath.IsAbs(*chart) {
+		return *chart, nil
+	}
+
+	cDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(cDir, *chart), nil
+}
+
+// encodeRawObject marshals an object into json and encodes it as base64
+func encodeRawObject(obj interface{}) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	raw, err := json.Marshal(obj)
+	if err != nil {
+		return "", nil
+	}
+	return base64.StdEncoding.EncodeToString(raw), nil
 }

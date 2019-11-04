@@ -36,8 +36,8 @@ func newRenderer(log logr.Logger, tmClient kubernetes.Interface, setValues strin
 	}, nil
 }
 
-func (r *templateRenderer) RenderChart(parameters *internalParameters, values map[string]interface{}, metadata *testrunner.Metadata, info interface{}) (testrunner.RunList, error) {
-	if parameters.ChartPath == "" {
+func (r *templateRenderer) RenderChart(parameters *internalParameters, chartPath string, values map[string]interface{}, metadata *testrunner.Metadata, info interface{}) (testrunner.RunList, error) {
+	if chartPath == "" {
 		return make(testrunner.RunList, 0), nil
 	}
 	var err error
@@ -48,7 +48,7 @@ func (r *templateRenderer) RenderChart(parameters *internalParameters, values ma
 	}
 	r.log.V(3).Info(fmt.Sprintf("Values: \n%s \n", util.PrettyPrintStruct(values)))
 
-	chart, err := r.renderer.Render(parameters.ChartPath, "", "", values)
+	chart, err := r.renderer.Render(chartPath, "", "", values)
 	if err != nil {
 		return nil, err
 	}

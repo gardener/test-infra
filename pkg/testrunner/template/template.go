@@ -15,8 +15,6 @@
 package template
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -102,7 +100,7 @@ func renderDefaultChart(renderer *templateRenderer, parameters *internalParamete
 		ComponentDescriptor: parameters.ComponentDescriptor.JSON(),
 	}
 
-	return renderer.RenderChart(parameters, values, metadata, nil)
+	return renderer.RenderChart(parameters, parameters.ChartPath, values, metadata, nil)
 }
 
 func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors *shootflavors.ExtendedFlavors) (testrunner.RunList, error) {
@@ -112,11 +110,27 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 	}
 
 	for _, shoot := range shootFlavors.GetShoots() {
-		workers, err := json.Marshal(shoot.Workers)
+		chartPath, err := determineShootChart(parameters.ChartPath, shoot.ChartPath)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to determine chart to render")
+		}
+		workers, err := encodeRawObject(shoot.Workers)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse worker config")
 		}
 		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(workers)))
+
+		infrastructure, err := encodeRawObject(shoot.InfrastructureConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse infrastructure config")
+		}
+		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(infrastructure)))
+
+		controlplane, err := encodeRawObject(shoot.ControlPlaneConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse infrastructure config")
+		}
+		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(controlplane)))
 
 		values := map[string]interface{}{
 			"shoot": map[string]interface{}{
@@ -128,9 +142,11 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 				"region":               shoot.Region,
 				"zone":                 shoot.Zone,
 				"k8sVersion":           shoot.KubernetesVersion.Version,
-				"workers":              base64.StdEncoding.EncodeToString(workers),
+				"workers":              workers,
 				"floatingPoolName":     shoot.FloatingPoolName,
 				"loadbalancerProvider": shoot.LoadbalancerProvider,
+				"infrastructureConfig": infrastructure,
+				"controlplaneConfig":   controlplane,
 			},
 			"gardener": map[string]interface{}{
 				"version": parameters.GardenerVersion,
@@ -150,7 +166,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 			OperatingSystem:     shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
 		}
 
-		shootRuns, err := renderer.RenderChart(parameters, values, metadata, shoot)
+		shootRuns, err := renderer.RenderChart(parameters, chartPath, values, metadata, shoot)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to render chart for shoot %v", shoot)
 		}
