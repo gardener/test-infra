@@ -60,6 +60,7 @@ func RenderStatusTableForTestruns(writer io.Writer, testruns []*tmv1beta1.Testru
 			table.Append([]string{"", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
 		}
 	}
+	table.SetAutoMergeCells(true)
 	table.Render()
 }
 

@@ -124,13 +124,13 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse infrastructure config")
 		}
-		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(infrastructure)))
+		log.V(3).Info(fmt.Sprintf("Infrastructure: \n%s \n", util.PrettyPrintStruct(infrastructure)))
 
 		controlplane, err := encodeRawObject(shoot.ControlPlaneConfig)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse infrastructure config")
 		}
-		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(controlplane)))
+		log.V(3).Info(fmt.Sprintf("Controlplane: \n%s \n", util.PrettyPrintStruct(controlplane)))
 
 		values := map[string]interface{}{
 			"shoot": map[string]interface{}{

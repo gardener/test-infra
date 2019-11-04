@@ -95,6 +95,9 @@ flavors:
   workers:
   - workerPools:
     - <raw gardener worker configuration>
+  infrastructureConfig: {} # optional, raw gardener infrastructure provider config
+  controlplaneConfig: {} # optional, raw gardener controlplane config
+  chartPath: "path/to/chart" # optional, absolute or relative path to the helm chart conatining testruns. Path is relativ to testrunner binary
 ```
 
 Example:
