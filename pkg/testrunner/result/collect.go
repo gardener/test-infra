@@ -65,6 +65,8 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		util.RenderStatusTable(os.Stdout, run.Testrun.Status.Steps)
 	}
 
+	util.RenderStatusTableForTestruns(os.Stdout, runs.GetTestruns())
+
 	c.fetchTelemetryResults()
 
 	return testrunsFailed, util.ReturnMultiError(result)

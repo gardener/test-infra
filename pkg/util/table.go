@@ -48,6 +48,21 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 	table.Render()
 }
 
+// RenderStatusTableForTestruns renders a status table for multiple testruns.
+func RenderStatusTableForTestruns(writer io.Writer, testruns []*tmv1beta1.Testrun) {
+	table := tablewriter.NewWriter(writer)
+	table.SetHeader([]string{"Testrun", "Test Name", "Step", "Phase", "Duration"})
+	for _, tr := range testruns {
+		trHeader := []string{tr.Name}
+		table.Append(trHeader)
+		for _, s := range tr.Status.Steps {
+			d := time.Duration(s.Duration) * time.Second
+			table.Append([]string{"", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
+		}
+	}
+	table.Render()
+}
+
 // RenderStatusTable creates a human readable table for testrun status steps.
 // The steps are ordered by starttime and step name.
 func RenderStatusTable(writer io.Writer, steps []*tmv1beta1.StepStatus) {
@@ -56,11 +71,17 @@ func RenderStatusTable(writer io.Writer, steps []*tmv1beta1.StepStatus) {
 	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Name", "Step", "Phase", "Duration"})
 
-	for _, s := range steps {
-		d := time.Duration(s.Duration) * time.Second
-		table.Append([]string{s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
-	}
+	table.AppendBulk(GetStatusTableRows(steps))
 	table.Render()
+}
+
+func GetStatusTableRows(steps []*tmv1beta1.StepStatus) [][]string {
+	rows := make([][]string, len(steps))
+	for i, s := range steps {
+		d := time.Duration(s.Duration) * time.Second
+		rows[i] = []string{s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()}
+	}
+	return rows
 }
 
 // orderSteps orders the steps by their finished date.
