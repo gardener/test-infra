@@ -448,5 +448,16 @@
   { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (default fs)(allowExpansion)] volume-expand should resize volume when PVC is edited while pod is using it", "groups": ["slow"]},
   { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (default fs)] provisioning should provision storage with pvc data source", "groups": ["slow"]},
   { "testcase": "[sig-apps] CronJob should delete successful/failed finished jobs with limit of one job", "groups": ["slow"]},
-  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: inline ephemeral CSI volume] ephemeral should support two pods which share the same volume", "groups": ["slow"]}
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: inline ephemeral CSI volume] ephemeral should support two pods which share the same volume", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: inline ephemeral CSI volume] ephemeral should support multiple inline ephemeral volumes", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: inline ephemeral CSI volume] ephemeral should create read/write inline ephemeral volume", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)] volumes should store data", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)] volumeMode should fail to use a volume in a pod with mismatched mode [Slow]", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)] volume-expand should not allow expansion of pvcs without AllowVolumeExpansion property", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)(allowExpansion)] volume-expand should resize volume when PVC is edited while pod is using it", "groups": ["slow"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)(allowExpansion)] volume-expand Verify if offline PVC expansion works", "groups": ["slow"]},
+  { "testcase": "[sig-network] Services should handle load balancer cleanup finalizer for service [Slow]   (not alicloud)", "groups": ["slow"]},
+  { "testcase": "[sig-instrumentation] Logging soak [Performance] [Slow] [Disruptive] should survive logging 1KB every 1s seconds, for a duration of 2m0s", "groups": ["slow"]},
+  { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide default limits.ephemeral-storage from node allocatable", "groups": ["slow"]},
+  { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide container's limits.ephemeral-storage and requests.ephemeral-storage as env vars", "groups": ["slow"]}
 ]
