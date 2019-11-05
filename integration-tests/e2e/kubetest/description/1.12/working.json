@@ -1,6 +1,6 @@
 [
-  { "testcase": "[Conformance]", "is-substring": true, "focus": "Serial|Slow", "groups": ["slow", "conformance"]},
-  { "testcase": "[Conformance]", "is-substring": true, "skip": "Serial|Slow", "groups": ["fast", "conformance"]},
+  { "testcase": "[Conformance]", "is-substring": true, "focus": "Serial|Slow", "groups": ["slow"]},
+  { "testcase": "[Conformance]", "is-substring": true, "skip": "Serial|Slow", "groups": ["fast"]},
   { "testcase": "[k8s.io] [sig-node] kubelet [k8s.io] [sig-node] Clean up pods on node kubelet should be able to delete 10 pods per node in 1m0s.", "groups": ["fast"] },
   { "testcase": "[k8s.io] Security Context When creating a pod with readOnlyRootFilesystem should run the container with readonly rootfs when readOnlyRootFilesystem=true [NodeConformance]", "groups": ["fast"] },
   { "testcase": "[k8s.io] Security Context When creating a pod with readOnlyRootFilesystem should run the container with writable rootfs when readOnlyRootFilesystem=false [NodeConformance]", "groups": ["fast"] },
@@ -364,12 +364,12 @@
   { "testcase": "[sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Pre-provisioned PV (default fs)] subPath should support restarting containers using file as subpath [Slow]", "only": [ "openstack" ], "groups": ["slow"] },
   { "testcase": "[sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Pre-provisioned PV (default fs)] volumeIO should write files of various sizes, verify size, validate content [Slow]", "only": [ "openstack" ], "groups": ["slow"] },
   { "testcase": "[sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Pre-provisioned PV (block volmode)] volumeMode should fail to create pod by failing to mount volume", "only": [ "openstack" ], "groups": ["slow"] },
-  { "testcase": "[k8s.io] Probing container should be restarted with a /healthz http liveness probe [NodeConformance] [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[k8s.io] Probing container should *not* be restarted with a /healthz http liveness probe [NodeConformance] [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[k8s.io] Probing container should have monotonically increasing restart count [Slow][NodeConformance] [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Burst scaling should run to completion even with unhealthy pods [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Scaling should happen in predictable order and halt if any stateful pod is unhealthy [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform canary updates and phased rolling updates of template modifications [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications [Conformance]", "groups": ["slow", "conformance"] },
-  { "testcase": "[sig-cli] Kubectl client [k8s.io] Guestbook application should create and stop a working application  [Conformance]", "groups": ["slow", "conformance"] }
+  { "testcase": "[k8s.io] Probing container should be restarted with a /healthz http liveness probe [NodeConformance] [Conformance]", "groups": ["slow"] },
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a /healthz http liveness probe [NodeConformance] [Conformance]", "groups": ["slow"] },
+  { "testcase": "[k8s.io] Probing container should have monotonically increasing restart count [Slow][NodeConformance] [Conformance]", "groups": ["slow"] },
+  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Burst scaling should run to completion even with unhealthy pods [Conformance]", "groups": ["slow"] },
+  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] Scaling should happen in predictable order and halt if any stateful pod is unhealthy [Conformance]", "groups": ["slow"] },
+  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform canary updates and phased rolling updates of template modifications [Conformance]", "groups": ["slow"] },
+  { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should perform rolling updates and roll backs of template modifications [Conformance]", "groups": ["slow"] },
+  { "testcase": "[sig-cli] Kubectl client [k8s.io] Guestbook application should create and stop a working application  [Conformance]", "groups": ["slow"] }
 ]
