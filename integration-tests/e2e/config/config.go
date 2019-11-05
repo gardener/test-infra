@@ -77,7 +77,7 @@ func init() {
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
-	flag.IntVar(&FlakeAttempts, "flakeAttempts", 2, "Testcase flake attempts. Will run testcase n times, until it is successful")
+	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
 	flag.Var(&ExplicitTestcases, "testcase", "List of testcases. If used description file and execution group are ingored.")
 	flag.BoolVar(&RetryFailedTestcases, "retryFailedTestcases", false, "runs an additional kubetest run for failed tests only")
