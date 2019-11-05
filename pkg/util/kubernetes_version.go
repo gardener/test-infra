@@ -33,7 +33,7 @@ func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.Shoo
 	}
 
 	filtered := make([]gardenv1alpha1.ExpirableVersion, 0)
-	for _, expirableVersion := range cloudprofile.Spec.Kubernetes.Versions {
+	for _, expirableVersion := range FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions) {
 		version, err := semver.NewVersion(expirableVersion.Version)
 		if err != nil {
 			return nil, err
@@ -84,7 +84,7 @@ func GetPreviousKubernetesVersions(cloudprofile gardenv1alpha1.CloudProfile, cur
 		}
 	)
 
-	for _, expirableVersion := range cloudprofile.Spec.Kubernetes.Versions {
+	for _, expirableVersion := range FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions) {
 		version, err := semver.NewVersion(expirableVersion.Version)
 		if err != nil {
 			return currentVersion, currentVersion, err
@@ -127,5 +127,5 @@ func GetLatestK8sVersion(cloudprofile gardenv1alpha1.CloudProfile) (gardenv1alph
 		return gardenv1alpha1.ExpirableVersion{}, fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile.Name)
 	}
 
-	return GetLatestVersion(cloudprofile.Spec.Kubernetes.Versions)
+	return GetLatestVersion(FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions))
 }

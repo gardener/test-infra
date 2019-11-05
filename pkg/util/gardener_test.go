@@ -19,6 +19,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 var _ = Describe("gardener util", func() {
@@ -65,6 +67,20 @@ var _ = Describe("gardener util", func() {
 					Expect(util.GetLatestVersion(versions)).To(Equal(newExpirableVersion("1.14.4")))
 				})
 			})
+
+			It("should remove expired versions", func() {
+				versions := []gardenv1alpha1.ExpirableVersion{
+					newExpirableVersion("1.13.5"),
+					newExpiredVersion("1.14.3"),
+					newExpiredVersion("1.14.4"),
+					newExpirableVersion("1.15.0"),
+				}
+
+				Expect(util.FilterExpiredVersions(versions)).To(ConsistOf(
+					newExpirableVersion("1.13.5"),
+					newExpirableVersion("1.15.0"),
+				))
+			})
 		})
 
 	})
@@ -72,4 +88,9 @@ var _ = Describe("gardener util", func() {
 
 func newExpirableVersion(v string) gardenv1alpha1.ExpirableVersion {
 	return gardenv1alpha1.ExpirableVersion{Version: v}
+}
+
+func newExpiredVersion(v string) gardenv1alpha1.ExpirableVersion {
+	pastTime := metav1.NewTime(time.Now().Add(-24 * time.Hour))
+	return gardenv1alpha1.ExpirableVersion{Version: v, ExpirationDate: &pastTime}
 }

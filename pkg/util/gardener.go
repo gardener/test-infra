@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 // ConvertStringToVersion converts a string to gardener experable versions
@@ -110,6 +111,17 @@ func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion)
 		newestPatchVersions = append(newestPatchVersions, version.expirableVersion)
 	}
 	return newestPatchVersions, nil
+}
+
+// FilterExpiredVersions removes all expired versions from the list.
+func FilterExpiredVersions(versions []gardenv1alpha1.ExpirableVersion) []gardenv1alpha1.ExpirableVersion {
+	filtered := make([]gardenv1alpha1.ExpirableVersion, 0)
+	for _, v := range versions {
+		if v.ExpirationDate == nil || v.ExpirationDate.Time.After(time.Now()) {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered
 }
 
 // DecMinorVersion decreases the minor version of 1 and sets the patch version to 0.

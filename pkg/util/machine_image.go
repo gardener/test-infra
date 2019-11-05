@@ -16,7 +16,7 @@ func GetLatestMachineImageVersion(cloudprofile gardenv1alpha1.CloudProfile, imag
 		return gardenv1alpha1.ExpirableVersion{}, fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile.GetName())
 	}
 
-	return GetLatestVersion(machineVersions)
+	return GetLatestVersion(FilterExpiredVersions(machineVersions))
 }
 
 func GetMachineImage(cloudprofile gardenv1alpha1.CloudProfile, imageName string) (gardenv1alpha1.MachineImage, error) {
