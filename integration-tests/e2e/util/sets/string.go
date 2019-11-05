@@ -51,7 +51,7 @@ func (s StringSet) GetMatching(substring string) StringSet {
 	return matches
 }
 
-func (s StringSet) GetMatchingForTestcase(testcaseName, skip, focus string) StringSet {
+func (s StringSet) GetMatchingForTestcase(testcaseName, skip, focus string, isSubstring bool) StringSet {
 	matches := NewStringSet()
 	var skipRegex *regexp.Regexp
 	var focusRegex *regexp.Regexp
@@ -62,7 +62,7 @@ func (s StringSet) GetMatchingForTestcase(testcaseName, skip, focus string) Stri
 		focusRegex = regexp.MustCompile(focus)
 	}
 	for mapItem := range s {
-		if strings.Contains(mapItem, testcaseName) {
+		if isSubstring && strings.Contains(mapItem, testcaseName) {
 			if skip == "" && focus == "" {
 				matches.Insert(mapItem)
 				continue
@@ -75,6 +75,8 @@ func (s StringSet) GetMatchingForTestcase(testcaseName, skip, focus string) Stri
 				matches.Insert(mapItem)
 				continue
 			}
+		} else if !isSubstring && mapItem == testcaseName {
+			matches.Insert(mapItem)
 		}
 	}
 	return matches
