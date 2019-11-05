@@ -39,7 +39,7 @@ func Generate() (desc string) {
 	var testcasesFromDescFile []TestcaseDesc
 	if len(config.ExplicitTestcases) != 0 {
 		for _, testcase := range config.ExplicitTestcases {
-			testcasesFromDescFile = append(testcasesFromDescFile, TestcaseDesc{Name: testcase, TestcaseGroups: config.TestcaseGroup})
+			testcasesFromDescFile = append(testcasesFromDescFile, TestcaseDesc{Name: testcase, TestcaseGroups: config.TestcaseGroup, IsSubstring: true})
 		}
 	} else {
 		testcasesFromDescFile = UnmarshalDescription(config.DescriptionFilePath)
