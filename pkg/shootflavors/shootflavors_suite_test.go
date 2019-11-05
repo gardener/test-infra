@@ -12,27 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package shootflavors
 
-// Annotations
-const (
-	PurposeTestrunAnnotation = "testmachinery.sapcloud.io/purpose"
-	ResumeTestrunAnnotation  = "testmachinery.sapcloud.io/resume"
+import (
+	"testing"
 
-	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
-
-	// images
-	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
-
-	// Repositories
-	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
-	GardenerRepo    = "https://github.com/gardener/gardener.git"
-
-	PatternLatest = "latest"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-var (
-	// Default timeout of 4 hours to wait before resuming the testrun
-	DefaultPauseTimeout = 14400
-)
+func TestTestrunnerTemplate(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Testrunner Template Test Suite")
+}

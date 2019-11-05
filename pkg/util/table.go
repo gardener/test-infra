@@ -16,6 +16,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
 	"io"
 	"sort"
 	"strings"
@@ -53,14 +54,17 @@ func RenderStatusTableForTestruns(writer io.Writer, testruns []*tmv1beta1.Testru
 	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Testrun", "Test Name", "Step", "Phase", "Duration"})
 	for _, tr := range testruns {
-		trHeader := []string{tr.Name}
+		name := tr.Name
+		if purpose, ok := tr.GetAnnotations()[common.PurposeTestrunAnnotation]; ok {
+			name = fmt.Sprintf("%s\n(%s)", name, purpose)
+		}
+		trHeader := []string{name}
 		table.Append(trHeader)
 		for _, s := range tr.Status.Steps {
 			d := time.Duration(s.Duration) * time.Second
 			table.Append([]string{"", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
 		}
 	}
-	table.SetAutoMergeCells(true)
 	table.Render()
 }
 

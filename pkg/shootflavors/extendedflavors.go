@@ -17,17 +17,20 @@ package shootflavors
 import (
 	"fmt"
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/hashicorp/go-multierror"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ValidateExtendedFlavor validates extended a shoot flavors.
 func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavor) error {
 	var allErrs *multierror.Error
 
+	if flavor.Provider == "" {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.provider: value has to be defined", identifier))
+	}
 	if flavor.CloudprofileName == "" {
 		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.cloudprovider: value has to be defined", identifier))
 	}
@@ -59,7 +62,7 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 
 // NewExtended creates an internal representation of raw extended shoot flavors.
 // It also parses the flavors and creates the resulting extended shoots.
-func NewExtended(k8sClient kubernetes.Interface, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
+func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
 	versions := make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 
@@ -81,7 +84,7 @@ func NewExtended(k8sClient kubernetes.Interface, rawFlavors []*common.ExtendedSh
 			addVersion(rawFlavor.Provider, k8sVersion)
 
 			for _, workers := range rawFlavor.Workers {
-				pools, err := SetupWorker(k8sClient, workers.WorkerPools, rawFlavor.CloudprofileName)
+				pools, err := SetupWorker(cloudprofile, workers.WorkerPools)
 				if err != nil {
 					return nil, err
 				}

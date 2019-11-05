@@ -21,5 +21,5 @@ func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix
 		return nil, err
 	}
 
-	return shootflavors.NewExtended(k8sClient, flavors.Flavors, shootPrefix, filterPatchVersions)
+	return shootflavors.NewExtended(k8sClient.Client(), flavors.Flavors, shootPrefix, filterPatchVersions)
 }

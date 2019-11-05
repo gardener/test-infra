@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,9 +52,9 @@ func ContainsCloudprovider(cloudproviders []common.CloudProvider, cloudprovider 
 }
 
 // GetCloudProfile returns the cloudprofile
-func GetCloudProfile(k8sClient kubernetes.Interface, profileName string) (gardenv1alpha1.CloudProfile, error) {
+func GetCloudProfile(k8sClient client.Client, profileName string) (gardenv1alpha1.CloudProfile, error) {
 	var cloudprofile gardenv1alpha1.CloudProfile
-	if err := k8sClient.Client().Get(context.TODO(), client.ObjectKey{Name: profileName}, &cloudprofile); err != nil {
+	if err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: profileName}, &cloudprofile); err != nil {
 		return cloudprofile, err
 	}
 	return cloudprofile, nil

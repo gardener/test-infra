@@ -156,6 +156,7 @@ github.com/gardener/gardener/pkg/controllermanager/metrics
 github.com/gardener/gardener/pkg/features
 github.com/gardener/gardener/pkg/logger
 github.com/gardener/gardener/pkg/migration
+github.com/gardener/gardener/pkg/mock/controller-runtime/client
 github.com/gardener/gardener/pkg/operation
 github.com/gardener/gardener/pkg/operation/botanist
 github.com/gardener/gardener/pkg/operation/cloudbotanist/awsbotanist

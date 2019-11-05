@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sigs.k8s.io/yaml"
 )
 
@@ -80,7 +81,7 @@ func determineShootChart(defaultChart string, chart *string) (string, error) {
 
 // encodeRawObject marshals an object into json and encodes it as base64
 func encodeRawObject(obj interface{}) (string, error) {
-	if obj == nil {
+	if reflect.ValueOf(obj).IsNil() {
 		return "", nil
 	}
 	raw, err := json.Marshal(obj)
