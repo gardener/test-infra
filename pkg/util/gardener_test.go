@@ -24,34 +24,49 @@ import (
 var _ = Describe("gardener util", func() {
 
 	Context("versions", func() {
-		It("should remove old 1.14 version and keep everything else", func() {
-			versions := []gardenv1alpha1.ExpirableVersion{
-				newExpirableVersion("1.13.5"),
-				newExpirableVersion("1.14.3"),
-				newExpirableVersion("1.14.4"),
-				newExpirableVersion("1.15.0"),
-			}
+		Context("filter", func() {
+			It("should remove old 1.14 version and keep everything else", func() {
+				versions := []gardenv1alpha1.ExpirableVersion{
+					newExpirableVersion("1.13.5"),
+					newExpirableVersion("1.14.3"),
+					newExpirableVersion("1.14.4"),
+					newExpirableVersion("1.15.0"),
+				}
 
-			Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
-				newExpirableVersion("1.13.5"),
-				newExpirableVersion("1.14.4"),
-				newExpirableVersion("1.15.0"),
-			))
+				Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
+					newExpirableVersion("1.13.5"),
+					newExpirableVersion("1.14.4"),
+					newExpirableVersion("1.15.0"),
+				))
+			})
+
+			It("should remove old 1.14 and 1.13 version", func() {
+				versions := []gardenv1alpha1.ExpirableVersion{
+					newExpirableVersion("1.13.0"),
+					newExpirableVersion("1.13.5"),
+					newExpirableVersion("1.14.3"),
+					newExpirableVersion("1.14.4"),
+				}
+
+				Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
+					newExpirableVersion("1.13.5"),
+					newExpirableVersion("1.14.4"),
+				))
+			})
+
+			Context("latest", func() {
+				It("should return the latest version", func() {
+					versions := []gardenv1alpha1.ExpirableVersion{
+						newExpirableVersion("1.13.0"),
+						newExpirableVersion("1.13.5"),
+						newExpirableVersion("1.14.3"),
+						newExpirableVersion("1.14.4"),
+					}
+					Expect(util.GetLatestVersion(versions)).To(Equal(newExpirableVersion("1.14.4")))
+				})
+			})
 		})
 
-		It("should remove old 1.14 and 1.13 version", func() {
-			versions := []gardenv1alpha1.ExpirableVersion{
-				newExpirableVersion("1.13.0"),
-				newExpirableVersion("1.13.5"),
-				newExpirableVersion("1.14.3"),
-				newExpirableVersion("1.14.4"),
-			}
-
-			Expect(util.FilterPatchVersions(versions)).To(ConsistOf(
-				newExpirableVersion("1.13.5"),
-				newExpirableVersion("1.14.4"),
-			))
-		})
 	})
 })
 

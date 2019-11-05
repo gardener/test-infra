@@ -19,6 +19,7 @@ import (
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/hashicorp/go-multierror"
 )
@@ -27,7 +28,7 @@ import (
 func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavor) error {
 	var allErrs *multierror.Error
 
-	if flavor.Cloudprofile == "" {
+	if flavor.CloudprofileName == "" {
 		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.cloudprovider: value has to be defined", identifier))
 	}
 	if flavor.ProjectName == "" {
@@ -68,7 +69,11 @@ func NewExtended(k8sClient kubernetes.Interface, rawFlavors []*common.ExtendedSh
 			return nil, err
 		}
 
-		versions, err := util.GetK8sVersions(k8sClient, rawFlavor.KubernetesVersions, rawFlavor.Cloudprofile, filterPatchVersions)
+		cloudprofile, err := util.GetCloudProfile(k8sClient, rawFlavor.CloudprofileName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to get cloudprofile %s", rawFlavor.CloudprofileName)
+		}
+		versions, err := util.GetK8sVersions(cloudprofile, rawFlavor.KubernetesVersions, filterPatchVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +81,7 @@ func NewExtended(k8sClient kubernetes.Interface, rawFlavors []*common.ExtendedSh
 			addVersion(rawFlavor.Provider, k8sVersion)
 
 			for _, workers := range rawFlavor.Workers {
-				pools, err := SetupWorker(k8sClient, workers.WorkerPools, rawFlavor.Cloudprofile)
+				pools, err := SetupWorker(k8sClient, workers.WorkerPools, rawFlavor.CloudprofileName)
 				if err != nil {
 					return nil, err
 				}
@@ -89,6 +94,7 @@ func NewExtended(k8sClient kubernetes.Interface, rawFlavors []*common.ExtendedSh
 					ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 						Name:                  fmt.Sprintf("%s%s", shootPrefix, util.RandomString(5)),
 						Namespace:             fmt.Sprintf("garden-%s", rawFlavor.ProjectName),
+						Cloudprofile:          cloudprofile,
 						ExtendedConfiguration: rawFlavor.ExtendedConfiguration,
 					},
 				})

@@ -132,21 +132,28 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 		}
 		log.V(3).Info(fmt.Sprintf("Controlplane: \n%s \n", util.PrettyPrintStruct(controlplane)))
 
+		prevPrePatchVersion, prevPatchVersion, err := util.GetPreviousKubernetesVersions(shoot.Cloudprofile, shoot.KubernetesVersion)
+		if err != nil {
+			log.Info("unable to get previous versions", "error", err.Error())
+		}
+
 		values := map[string]interface{}{
 			"shoot": map[string]interface{}{
-				"name":                 shoot.Name,
-				"projectNamespace":     shoot.Namespace,
-				"cloudprovider":        shoot.Provider,
-				"cloudprofile":         shoot.Cloudprofile,
-				"secretBinding":        shoot.SecretBinding,
-				"region":               shoot.Region,
-				"zone":                 shoot.Zone,
-				"k8sVersion":           shoot.KubernetesVersion.Version,
-				"workers":              workers,
-				"floatingPoolName":     shoot.FloatingPoolName,
-				"loadbalancerProvider": shoot.LoadbalancerProvider,
-				"infrastructureConfig": infrastructure,
-				"controlplaneConfig":   controlplane,
+				"name":                   shoot.Name,
+				"projectNamespace":       shoot.Namespace,
+				"cloudprovider":          shoot.Provider,
+				"cloudprofile":           shoot.CloudprofileName,
+				"secretBinding":          shoot.SecretBinding,
+				"region":                 shoot.Region,
+				"zone":                   shoot.Zone,
+				"workers":                workers,
+				"k8sVersion":             shoot.KubernetesVersion.Version,
+				"k8sPrevPrePatchVersion": prevPrePatchVersion,
+				"k8sPrevPatchVersion":    prevPatchVersion,
+				"floatingPoolName":       shoot.FloatingPoolName,
+				"loadbalancerProvider":   shoot.LoadbalancerProvider,
+				"infrastructureConfig":   infrastructure,
+				"controlplaneConfig":     controlplane,
 			},
 			"gardener": map[string]interface{}{
 				"version": parameters.GardenerVersion,

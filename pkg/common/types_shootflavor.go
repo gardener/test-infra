@@ -76,11 +76,11 @@ type ShootWorkerFlavor struct {
 
 // ExtendedConfiguration specifies extended configuration for shoot flavors that are deployed into a preexisting landscape
 type ExtendedConfiguration struct {
-	Cloudprofile  string `json:"cloudprofile"`
-	ProjectName   string `json:"projectName"`
-	SecretBinding string `json:"secretBinding"`
-	Region        string `json:"region"`
-	Zone          string `json:"zone"`
+	ProjectName      string `json:"projectName"`
+	CloudprofileName string `json:"cloudprofile"`
+	SecretBinding    string `json:"secretBinding"`
+	Region           string `json:"region"`
+	Zone             string `json:"zone"`
 
 	FloatingPoolName     string `json:"floatingPoolName"`
 	LoadbalancerProvider string `json:"loadbalancerProvider"`
@@ -99,7 +99,8 @@ type ExtendedConfiguration struct {
 
 // ExtendedShootConfiguration specifies extended configuration for shoots that are deployed into a preexisting landscape
 type ExtendedShootConfiguration struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Name         string                      `json:"name"`
+	Namespace    string                      `json:"namespace"`
+	Cloudprofile gardenv1alpha1.CloudProfile `json:"-"`
 	ExtendedConfiguration
 }

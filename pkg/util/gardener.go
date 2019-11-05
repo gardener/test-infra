@@ -15,11 +15,14 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"github.com/Masterminds/semver"
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ConvertStringToVersion converts a string to gardener experable versions
@@ -47,6 +50,15 @@ func ContainsCloudprovider(cloudproviders []common.CloudProvider, cloudprovider 
 		}
 	}
 	return false
+}
+
+// GetCloudProfile returns the cloudprofile
+func GetCloudProfile(k8sClient kubernetes.Interface, profileName string) (gardenv1alpha1.CloudProfile, error) {
+	var cloudprofile gardenv1alpha1.CloudProfile
+	if err := k8sClient.Client().Get(context.TODO(), client.ObjectKey{Name: profileName}, &cloudprofile); err != nil {
+		return cloudprofile, err
+	}
+	return cloudprofile, nil
 }
 
 // GetLatestVersion returns the latest image from a list of expirable versions
@@ -99,4 +111,14 @@ func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion)
 		newestPatchVersions = append(newestPatchVersions, version.expirableVersion)
 	}
 	return newestPatchVersions, nil
+}
+
+// DecMinorVersion decreases the minor version of 1 and sets the patch version to 0.
+func DecMinorVersion(v *semver.Version) (*semver.Version, error) {
+	minor := v.Minor() - 1
+	if minor < 0 {
+		minor = 0
+	}
+	vPrev := fmt.Sprintf("%d.%d.%d", v.Major(), minor, 0)
+	return semver.NewVersion(vPrev)
 }
