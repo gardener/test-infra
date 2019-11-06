@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package output
 
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"io"
 	"sort"
 	"strings"
@@ -50,22 +51,31 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 }
 
 // RenderStatusTableForTestruns renders a status table for multiple testruns.
-func RenderStatusTableForTestruns(writer io.Writer, testruns []*tmv1beta1.Testrun) {
+func RenderStatusTableForTestruns(writer io.Writer, runs testrunner.RunList) {
 	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Testrun", "Test Name", "Step", "Phase", "Duration"})
-	for _, tr := range testruns {
+	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
+	for _, run := range runs {
+		// dimension header
+		table.Append([]string{getDimensionFromMetadata(run.Metadata)})
+
+		// testrun header
+		tr := run.Testrun
 		name := tr.Name
 		if purpose, ok := tr.GetAnnotations()[common.PurposeTestrunAnnotation]; ok {
 			name = fmt.Sprintf("%s\n(%s)", name, purpose)
 		}
-		trHeader := []string{name}
-		table.Append(trHeader)
+		table.Append([]string{"", name})
+
 		for _, s := range tr.Status.Steps {
 			d := time.Duration(s.Duration) * time.Second
-			table.Append([]string{"", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
+			table.Append([]string{"", "", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
 		}
 	}
 	table.Render()
+}
+
+func getDimensionFromMetadata(meta *testrunner.Metadata) string {
+	return fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
 }
 
 // RenderStatusTable creates a human readable table for testrun status steps.

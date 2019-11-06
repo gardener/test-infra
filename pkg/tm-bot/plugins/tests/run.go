@@ -22,6 +22,7 @@ import (
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/output"
 	"github.com/ghodss/yaml"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -63,7 +64,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 
 	if t.dryRun {
 		stepsTable := &strings.Builder{}
-		util.RenderTestflowTable(stepsTable, tr.Spec.TestFlow)
+		output.RenderTestflowTable(stepsTable, tr.Spec.TestFlow)
 		_, err := client.Comment(event, plugins.FormatResponseWithReason(event.GetAuthorName(),
 			fmt.Sprintf("I rendered the testrun for you.\nView the full test in the details section.\n<pre>%s</pre>", stepsTable.String()),
 			fmt.Sprintf("<pre>%s</pre>", util.PrettyPrintStruct(tr))))

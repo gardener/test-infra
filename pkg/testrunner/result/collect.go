@@ -16,6 +16,7 @@ package result
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/output"
 	"os"
 	"path/filepath"
 
@@ -62,10 +63,11 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 			runLogger.Error(fmt.Errorf("Testrun failed with phase %s", run.Testrun.Status.Phase), "")
 		}
 		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
-		util.RenderStatusTable(os.Stdout, run.Testrun.Status.Steps)
+		output.RenderStatusTable(os.Stdout, run.Testrun.Status.Steps)
+		fmt.Println(":---------------------------------------------------------------------------------------------:")
 	}
 
-	util.RenderStatusTableForTestruns(os.Stdout, runs.GetTestruns())
+	output.RenderStatusTableForTestruns(os.Stdout, runs)
 
 	c.fetchTelemetryResults()
 
