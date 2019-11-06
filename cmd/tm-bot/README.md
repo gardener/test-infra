@@ -109,7 +109,11 @@ test:
 
   shootFlavors:
   - cloudprovider: # cloudprovider e.g. aws
-    kubernetesVersions: # []string
+    kubernetesVersions: 
+    - version: "" # expirable version
+    workers:
+    - workerPools: # gardener worker definitions
+      - name: "wp1" 
 ```
 
 ```yaml
