@@ -1,0 +1,25 @@
+apiVersion: testmachinery.sapcloud.io/v1beta1
+kind: Testrun
+metadata:
+    name: "test"
+    namespace: default
+    annotations:
+        "testmachinery.sapcloud.io/purpose": "default"
+spec:
+
+    ttlSecondsAfterFinished: 172800 # 2 days
+
+    # defines where to look for TestDefs
+    testLocations:
+    - type: git
+      repo: https://github.com/gardener/test-infra.git
+      revision: master
+
+    kubeconfigs:
+        gardener: {{ b64enc .Values.kubeconfigs.gardener }}
+
+    testflow:
+
+    - name: tests
+      definition:
+          label: default

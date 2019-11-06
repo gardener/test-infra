@@ -3,7 +3,6 @@ package template
 import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/chartrenderer"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
@@ -11,6 +10,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/strvals"
 )
 
@@ -23,11 +24,8 @@ type templateRenderer struct {
 	fileValues []string
 }
 
-func newRenderer(log logr.Logger, tmClient kubernetes.Interface, setValues string, fileValues []string) (*templateRenderer, error) {
-	chartRenderer, err := chartrenderer.NewForConfig(tmClient.RESTConfig())
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot create chartrenderer for gardener")
-	}
+func newRenderer(log logr.Logger, setValues string, fileValues []string) (*templateRenderer, error) {
+	chartRenderer := chartrenderer.New(engine.New(), &chartutil.Capabilities{})
 	return &templateRenderer{
 		log:        log,
 		renderer:   chartRenderer,

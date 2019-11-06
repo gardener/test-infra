@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: test-config
+    namespace: default
+data:
+    gardener-kubeconfig: {{ required "gardener kubeconfig is required" .Values.kubeconfigs.gardener }}
+    gardener-version: {{ required "gardener version is required" .Values.gardener.version }}

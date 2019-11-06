@@ -169,5 +169,23 @@ var _ = Describe("kubernetes version util", func() {
 			Expect(p.Version).To(Equal("1.15.2"))
 		})
 
+		It("should return 1.14.0 and 1.14.1", func() {
+			cp := gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
+				Kubernetes: gardenv1alpha1.KubernetesSettings{
+					Versions: []gardenv1alpha1.ExpirableVersion{
+						newExpirableVersion("1.15.2"),
+						newExpirableVersion("1.14.1"),
+						newExpirableVersion("1.14.0"),
+						newExpirableVersion("1.13.5"),
+					},
+				},
+			}}
+
+			m, p, err := util.GetPreviousKubernetesVersions(cp, newExpirableVersion("1.15.2"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(m.Version).To(Equal("1.14.0"))
+			Expect(p.Version).To(Equal("1.14.1"))
+		})
+
 	})
 })

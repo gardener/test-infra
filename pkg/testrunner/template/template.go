@@ -16,8 +16,7 @@ package template
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/shootflavors"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
@@ -29,7 +28,7 @@ import (
 
 // RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func RenderTestruns(log logr.Logger, tmClient kubernetes.Interface, parameters *Parameters, shootFlavors *shootflavors.ExtendedFlavors) (testrunner.RunList, error) {
+func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*common.ExtendedShoot) (testrunner.RunList, error) {
 	log.V(3).Info(fmt.Sprintf("Parameters: %+v", util.PrettyPrintStruct(parameters)))
 
 	getInternalParameters, err := getInternalParametersFunc(parameters)
@@ -37,7 +36,7 @@ func RenderTestruns(log logr.Logger, tmClient kubernetes.Interface, parameters *
 		return nil, err
 	}
 
-	tmplRenderer, err := newRenderer(log, tmClient, parameters.SetValues, parameters.FileValues)
+	tmplRenderer, err := newRenderer(log, parameters.SetValues, parameters.FileValues)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize template renderer")
 	}
@@ -103,13 +102,13 @@ func renderDefaultChart(renderer *templateRenderer, parameters *internalParamete
 	return renderer.RenderChart(parameters, parameters.ChartPath, values, metadata, nil)
 }
 
-func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors *shootflavors.ExtendedFlavors) (testrunner.RunList, error) {
+func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors []*common.ExtendedShoot) (testrunner.RunList, error) {
 	runs := make(testrunner.RunList, 0)
 	if parameters.ChartPath == "" {
 		return runs, nil
 	}
 
-	for _, shoot := range shootFlavors.GetShoots() {
+	for _, shoot := range shootFlavors {
 		chartPath, err := determineShootChart(parameters.ChartPath, shoot.ChartPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to determine chart to render")

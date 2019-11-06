@@ -21,7 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTestrunnerTemplate(t *testing.T) {
+func TestShootFlavorsTemplate(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrunner Template Test Suite")
+	RunSpecs(t, "Shoot flavors Test Suite")
 }

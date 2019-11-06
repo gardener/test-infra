@@ -92,7 +92,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), testrunnerConfig.Client, &shootParameters, shootFlavors)
+		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &shootParameters, shootFlavors.GetShoots())
 		if err != nil {
 			logger.Log.Error(err, "unable to render testrun")
 			os.Exit(1)

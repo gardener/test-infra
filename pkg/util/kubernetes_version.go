@@ -74,14 +74,8 @@ func GetPreviousKubernetesVersions(cloudprofile gardenv1alpha1.CloudProfile, cur
 	}
 
 	var (
-		prevPatch = versionWrapper{
-			expirableVersion: gardenv1alpha1.ExpirableVersion{Version: prevBaseVersion.String()},
-			semverVersion:    prevBaseVersion,
-		}
-		prevPrePatch = versionWrapper{
-			expirableVersion: gardenv1alpha1.ExpirableVersion{Version: prevBaseVersion.String()},
-			semverVersion:    prevBaseVersion,
-		}
+		prevPatch    *versionWrapper
+		prevPrePatch *versionWrapper
 	)
 
 	for _, expirableVersion := range FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions) {
@@ -92,29 +86,29 @@ func GetPreviousKubernetesVersions(cloudprofile gardenv1alpha1.CloudProfile, cur
 		if !prevMinorConstraint.Check(version) {
 			continue
 		}
-		if version.GreaterThan(prevPatch.semverVersion) {
+		if prevPatch == nil || version.GreaterThan(prevPatch.semverVersion) {
 			prevPrePatch = prevPatch
-			prevPatch = versionWrapper{
+			prevPatch = &versionWrapper{
 				expirableVersion: expirableVersion,
 				semverVersion:    version,
 			}
 			continue
 		}
-		if version.GreaterThan(prevPrePatch.semverVersion) {
-			prevPrePatch = versionWrapper{
+		if prevPrePatch == nil || version.GreaterThan(prevPrePatch.semverVersion) {
+			prevPrePatch = &versionWrapper{
 				expirableVersion: expirableVersion,
 				semverVersion:    version,
 			}
 		}
 	}
 
-	if prevPatch.semverVersion.Equal(prevBaseVersion) {
-		prevPatch = versionWrapper{
+	if prevPatch == nil {
+		prevPatch = &versionWrapper{
 			expirableVersion: currentVersion,
 			semverVersion:    currentSemver,
 		}
 	}
-	if prevPrePatch.semverVersion.Equal(prevBaseVersion) {
+	if prevPrePatch == nil {
 		prevPrePatch = prevPatch
 	}
 
