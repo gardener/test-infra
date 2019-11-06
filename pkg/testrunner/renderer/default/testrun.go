@@ -63,7 +63,7 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 
 	deps := make([]string, len(shoots))
 	for i, shootConfig := range shoots {
-		steps, err := GetShootTest(shootConfig, []string{createGardener.Name})
+		steps, err := GetShootTest(cfg.Gardener, shootConfig, []string{createGardener.Name})
 		if err != nil {
 			return nil, err
 		}
@@ -96,14 +96,14 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 // - create-shoot
 // - tests
 // - delete-shoot
-func GetShootTest(config *shoot, dependencies []string) ([]*v1beta1.DAGStep, error) {
-	createShootStep, err := templates.GetStepCreateShoot(config.Type, fmt.Sprintf("create-%s", config.Suffix), dependencies, config.Config)
+func GetShootTest(gardenerConfig templates.GardenerConfig, shootConfig *shoot, dependencies []string) ([]*v1beta1.DAGStep, error) {
+	createShootStep, createShootStepName, err := templates.GetStepCreateShoot(gardenerConfig, shootConfig.Type, fmt.Sprintf("create-%s", shootConfig.Suffix), dependencies, shootConfig.Config)
 	if err != nil {
 		return nil, err
 	}
-	//defaultTestStep := templates.GetTestStepWithLabels(fmt.Sprintf("tests-%s", config.Suffix), []string{createShootStep.Name}, config.TestLabel, string(testmachinery.TestLabelShoot))
-	tests, testDep, err := config.TestsFunc(fmt.Sprintf("tests-%s", config.Suffix), []string{createShootStep.Name})
-	deleteShootStep := templates.GetStepDeleteShoot(fmt.Sprintf("delete-%s", config.Suffix), createShootStep.Name, config.Config.ShootName, testDep)
+	//defaultTestStep := templates.GetTestStepWithLabels(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStep.Name}, shootConfig.TestLabel, string(testmachinery.TestLabelShoot))
+	tests, testDep, err := shootConfig.TestsFunc(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStepName})
+	deleteShootStep := templates.GetStepDeleteShoot(fmt.Sprintf("delete-%s", shootConfig.Suffix), createShootStepName, shootConfig.Config.ShootName, testDep)
 
-	return append([]*v1beta1.DAGStep{&createShootStep, &deleteShootStep}, tests...), nil
+	return append(append(createShootStep, &deleteShootStep), tests...), nil
 }
