@@ -54,9 +54,14 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 func RenderStatusTableForTestruns(writer io.Writer, runs testrunner.RunList) {
 	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
+
+	dimensions := make(map[string][][]string, 0)
 	for _, run := range runs {
 		// dimension header
-		table.Append([]string{getDimensionFromMetadata(run.Metadata)})
+		dimension := getDimensionFromMetadata(run.Metadata)
+		if _, ok := dimensions[dimension]; !ok {
+			dimensions[dimension] = make([][]string, 0)
+		}
 
 		// testrun header
 		tr := run.Testrun
@@ -64,13 +69,19 @@ func RenderStatusTableForTestruns(writer io.Writer, runs testrunner.RunList) {
 		if purpose, ok := tr.GetAnnotations()[common.PurposeTestrunAnnotation]; ok {
 			name = fmt.Sprintf("%s\n(%s)", name, purpose)
 		}
-		table.Append([]string{"", name})
+		dimensions[dimension] = append(dimensions[dimension], []string{"", name})
 
 		for _, s := range tr.Status.Steps {
 			d := time.Duration(s.Duration) * time.Second
-			table.Append([]string{"", "", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
+			dimensions[dimension] = append(dimensions[dimension], []string{"", "", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
 		}
 	}
+
+	for dim, value := range dimensions {
+		table.Append([]string{dim})
+		table.AppendBulk(value)
+	}
+
 	table.Render()
 }
 
