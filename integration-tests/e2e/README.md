@@ -8,24 +8,18 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 
 ## Usage
 
-Ensure all required environment variables have been set. Create a `shoot.config` file in `EXPORT_PATH` directory and paste the kubeconfig of the kubernetes cluster to test in it. Run `e2e` in command line to execute the e2e tests.
+### Example usage (Conformance tests)
+Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster (you can find the kubeconfig e.g. in the Gardener dashboard). Follow the instructions below to run the Kubernetes e2e conformance tests. Adjust values for arguments `k8sVersion` and `cloudprovider` respective to your new cluster.
 
-### Example usage in container:
 ```bash
 #first set KUBECONFIG to your cluster
 docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config golang:1.13 bash
 
-# run all commands below within container (check provider and k8s version)
-export E2E_EXPORT_PATH=/tmp/export; export KUBECONFIG=/mye2e/shoot.config
-export TESTCASE_GROUPS=conformance
+# run all commands below within container
 go get github.com/gardener/test-infra; cd /go/src/github.com/gardener/test-infra
-export GO111MODULE=on
-go run -mod=vendor ./integration-tests/e2e -debug=true -k8sVersion=1.16.2 -cloudprovider=gcp
-echo "testsuite finished"
+export GO111MODULE=on; export E2E_EXPORT_PATH=/tmp/export; export KUBECONFIG=/mye2e/shoot.config; export GINKGO_PARALLEL=false
+go run -mod=vendor ./integration-tests/e2e -k8sVersion=1.16.2 -cloudprovider=azure -testcasegroup="conformance"
 ```
-
-### Example usage with existing test-infra project:
-`go run /path/e2e -kubeconfig=$KUBECONFIG -k8sVersion=1.15.1 -cloudprovider=gcp -testcase="[sig-apps] Job should delete a job" -testcase="[sig-apps] Job should exceed backoffLimit"`
 
 
 ### Environment Prerequisites:
@@ -79,3 +73,5 @@ Existing description files:
 
 ### Output
 You find the kubetest dump results (like e2e.log and junit_*.xml files) in the `/tmp/e2e/artifacts` directory. These artifacts are evaluated and stored as *.json files in the `EXPORT_PATH` directory.
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
