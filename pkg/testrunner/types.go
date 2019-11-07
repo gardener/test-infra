@@ -62,6 +62,9 @@ const (
 
 // Metadata is the common metadata of all outputs and summaries.
 type Metadata struct {
+	// Short description of the flavor
+	FlavorDescription string `json:"flavor_description,omitempty"`
+
 	// Landscape describes the current dev,staging,canary,office or live.
 	Landscape         string `json:"landscape,omitempty"`
 	CloudProvider     string `json:"cloudprovider,omitempty"`

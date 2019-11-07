@@ -35,8 +35,12 @@ type ExtendedShootFlavor struct {
 	ExtendedConfiguration
 }
 
-// Shoot is one instance that is generated from a shoot flavor
+// Shoot is the internal representation of one instance that is generated from a shoot flavor
 type Shoot struct {
+	// Short description of the flavor
+	// +optional
+	Description string
+
 	// Cloudprovider of the shoot
 	Provider CloudProvider
 
@@ -49,6 +53,10 @@ type Shoot struct {
 
 // ShootFlavor describes the shoot flavors that should be tested.
 type ShootFlavor struct {
+	// Short description of the flavor
+	// +optional
+	Description string `json:"description"`
+
 	// Cloudprovider of the shoot
 	Provider CloudProvider `json:"provider"`
 

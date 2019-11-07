@@ -86,7 +86,11 @@ func RenderStatusTableForTestruns(writer io.Writer, runs testrunner.RunList) {
 }
 
 func getDimensionFromMetadata(meta *testrunner.Metadata) string {
-	return fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
+	d := fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
+	if meta.FlavorDescription != "" {
+		d = fmt.Sprintf("%s\n(%s)", d, meta.FlavorDescription)
+	}
+	return d
 }
 
 // RenderStatusTable creates a human readable table for testrun status steps.

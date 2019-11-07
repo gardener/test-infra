@@ -163,6 +163,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 		}
 
 		metadata := &testrunner.Metadata{
+			FlavorDescription:   shoot.Description,
 			Landscape:           parameters.Landscape,
 			ComponentDescriptor: parameters.ComponentDescriptor.JSON(),
 			CloudProvider:       string(shoot.Provider),

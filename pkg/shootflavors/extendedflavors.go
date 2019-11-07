@@ -90,6 +90,7 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 				}
 				shoots = append(shoots, &common.ExtendedShoot{
 					Shoot: common.Shoot{
+						Description:       rawFlavor.Description,
 						Provider:          rawFlavor.Provider,
 						KubernetesVersion: k8sVersion,
 						Workers:           pools,
