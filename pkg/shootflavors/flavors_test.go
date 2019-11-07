@@ -22,6 +22,15 @@ import (
 )
 
 var _ = Describe("flavor test", func() {
+	var (
+		defaultMachine v1alpha1.Machine
+	)
+	BeforeEach(func() {
+		defaultMachine = v1alpha1.Machine{
+			Type:  "test-machine",
+			Image: &v1alpha1.ShootMachineImage{Name: "coreos", Version: "0.0.1"},
+		}
+	})
 	It("should return no shoots if no flavors are defined", func() {
 		rawFlavors := []*common.ShootFlavor{}
 		flavors, err := New(rawFlavors)
@@ -113,10 +122,10 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 					},
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp2"}},
+						WorkerPools: []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
 					},
 				},
 			},
@@ -128,22 +137,22 @@ var _ = Describe("flavor test", func() {
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp2"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp2"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
 			},
 		))
 	})
@@ -164,7 +173,7 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 					},
 				},
 			},
@@ -179,7 +188,7 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}, {Name: "wp2"}},
+						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
 					},
 				},
 			},
@@ -191,17 +200,17 @@ var _ = Describe("flavor test", func() {
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.13"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1"}, {Name: "wp2"}},
+				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
 			},
 		))
 	})
@@ -250,4 +259,177 @@ var _ = Describe("flavor test", func() {
 			},
 		))
 	})
+
+	Context("used kubernetes version per cloudprovider", func() {
+		It("should add one version for gcp to used versions", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{
+								Version: "1.15",
+							},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			k8sVersions := flavors.GetUsedKubernetesVersions()
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}}))
+		})
+
+		It("should add different versions for gcp and aws", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+						},
+					},
+				},
+				{
+					Provider: common.CloudProviderAWS,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+							{Version: "1.14"},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			k8sVersions := flavors.GetUsedKubernetesVersions()
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderAWS, []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}))
+		})
+
+		It("should add 2 unique versions from different flavors to the same cloudprovider", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+						},
+					},
+				},
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+							{Version: "1.14"},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			k8sVersions := flavors.GetUsedKubernetesVersions()
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}))
+		})
+	})
+
+	Context("used machine images per cloudprovider", func() {
+		It("should add one image with one version for gcp to used images", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+						},
+					},
+					Workers: []common.ShootWorkerFlavor{
+						{
+							WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			images := flavors.GetUsedMachineImages()
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}}}))
+		})
+
+		It("should add 2 image from different pools to gcp's used images", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+						},
+					},
+					Workers: []common.ShootWorkerFlavor{
+						{
+							WorkerPools: []v1alpha1.Worker{
+								{Name: "wp1", Machine: defaultMachine},
+								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
+							},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			images := flavors.GetUsedMachineImages()
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{
+				{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}},
+				{Name: "jeos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.2"}}},
+			}))
+		})
+
+		It("should add 2 unique images from different pools to gcp's used images", func() {
+			rawFlavors := []*common.ShootFlavor{
+				{
+					Provider: common.CloudProviderGCP,
+					KubernetesVersions: common.ShootKubernetesVersionFlavor{
+						Versions: &[]v1alpha1.ExpirableVersion{
+							{Version: "1.15"},
+						},
+					},
+					Workers: []common.ShootWorkerFlavor{
+						{
+							WorkerPools: []v1alpha1.Worker{
+								{Name: "wp1", Machine: defaultMachine},
+								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
+							},
+						},
+						{
+							WorkerPools: []v1alpha1.Worker{
+								{Name: "wp1", Machine: defaultMachine},
+								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
+							},
+						},
+					},
+				},
+			}
+			flavors, err := New(rawFlavors)
+			Expect(err).ToNot(HaveOccurred())
+
+			images := flavors.GetUsedMachineImages()
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{
+				{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}},
+				{Name: "jeos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.2"}}},
+			}))
+		})
+	})
 })
+
+func newMachineImage(imageName, version string) v1alpha1.Machine {
+	return v1alpha1.Machine{
+		Type:  "test-machine",
+		Image: &v1alpha1.ShootMachineImage{Name: imageName, Version: version},
+	}
+}

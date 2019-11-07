@@ -37,12 +37,16 @@ type GardenerConfig struct {
 	Commit   string
 }
 
-func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, cfg GardenerConfig) (v1beta1.DAGStep, error) {
+func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, machineImages map[common.CloudProvider][]v1alpha1.MachineImage, cfg GardenerConfig) (v1beta1.DAGStep, error) {
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), cfg)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
 	stepConfig, err = AppendKubernetesVersionConfig(stepConfig, kubernetesVersions)
+	if err != nil {
+		return v1beta1.DAGStep{}, err
+	}
+	stepConfig, err = AppendMachineImagesConfig(stepConfig, machineImages)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
 	}
@@ -122,6 +126,24 @@ func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, kubernete
 		Type:    v1beta1.ConfigTypeFile,
 		Name:    "K8S_VERSIONS",
 		Path:    "/tm/gs/kubernetes_versions.json",
+		Value:   b64Versions,
+		Private: &trueVar,
+	}), nil
+}
+
+func AppendMachineImagesConfig(stepConfig []v1beta1.ConfigElement, images map[common.CloudProvider][]v1alpha1.MachineImage) ([]v1beta1.ConfigElement, error) {
+	trueVar := true
+
+	rawVersions, err := json.Marshal(images)
+	if err != nil {
+		return nil, err
+	}
+	b64Versions := base64.StdEncoding.EncodeToString(rawVersions)
+
+	return append(stepConfig, v1beta1.ConfigElement{
+		Type:    v1beta1.ConfigTypeFile,
+		Name:    "MACHINE_IMAGES",
+		Path:    "/tm/gs/machine_images.json",
 		Value:   b64Versions,
 		Private: &trueVar,
 	}), nil

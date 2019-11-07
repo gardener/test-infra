@@ -15,20 +15,59 @@
 package shootflavors
 
 import (
+	"fmt"
 	"github.com/Masterminds/semver"
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
+
+// Validate validates a shoot flavor and checks if all necessary attributes are set
+func Validate(identifier string, flavor *common.ShootFlavor) error {
+	var allErrs *multierror.Error
+
+	if flavor.Provider == "" {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.provider: value has to be defined", identifier))
+	}
+
+	if flavor.KubernetesVersions.Versions == nil && flavor.KubernetesVersions.Pattern == nil {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.kubernetes : Kubernetes versions or a pattern has to be defined", identifier))
+	}
+
+	if len(flavor.Workers) != 0 {
+		for i, pool := range flavor.Workers {
+			identifier := fmt.Sprintf("%s[%d].workerPools", identifier, i)
+			if len(pool.WorkerPools) == 0 {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s: at least one worker pool has to be defined", identifier))
+				continue
+			}
+			for j, workers := range pool.WorkerPools {
+				if workers.Machine.Image == nil {
+					allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].machine.image: value has to be defined", identifier, j))
+				}
+			}
+		}
+	}
+
+	return util.ReturnMultiError(allErrs)
+}
 
 // New creates an internal representation of raw shoot flavors.
 // It also parses the flavors and creates the resulting shoots.
 func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 	versions := make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
+	machineImages := make(map[common.CloudProvider][]gardenv1alpha1.MachineImage, 0)
 	addVersion := addKubernetesVersionFunc(versions)
+	addMachineImage := addMachineImagesFunc(machineImages)
 
 	shoots := make([]*common.Shoot, 0)
-	for _, rawFlavor := range rawFlavors {
+	for i, rawFlavor := range rawFlavors {
+		if err := Validate(fmt.Sprintf("flavor[%d]", i), rawFlavor); err != nil {
+			return nil, err
+		}
+
 		versions, err := ParseKubernetesVersions(rawFlavor.KubernetesVersions)
 		if err != nil {
 			return nil, err
@@ -38,6 +77,10 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 
 			if len(rawFlavor.Workers) != 0 {
 				for _, workers := range rawFlavor.Workers {
+					for _, pool := range workers.WorkerPools {
+						addMachineImage(rawFlavor.Provider, pool.Machine.Image.Name, pool.Machine.Image.Version)
+					}
+
 					shoots = append(shoots, &common.Shoot{
 						Provider:          rawFlavor.Provider,
 						KubernetesVersion: k8sVersion,
@@ -57,6 +100,7 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 		Info:                   rawFlavors,
 		shoots:                 shoots,
 		usedKubernetesVersions: versions,
+		usedMachineImages:      machineImages,
 	}, nil
 }
 
@@ -76,6 +120,13 @@ func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider][]gardenv
 	return f.usedKubernetesVersions
 }
 
+func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardenv1alpha1.MachineImage {
+	if f.usedMachineImages == nil {
+		return make(map[common.CloudProvider][]gardenv1alpha1.MachineImage, 0)
+	}
+	return f.usedMachineImages
+}
+
 // addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
 func addKubernetesVersionFunc(versions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion) func(common.CloudProvider, gardenv1alpha1.ExpirableVersion) {
 	used := make(map[common.CloudProvider]map[string]interface{}, 0)
@@ -90,6 +141,45 @@ func addKubernetesVersionFunc(versions map[common.CloudProvider][]gardenv1alpha1
 		if _, ok := used[provider][version.Version]; !ok {
 			used[provider][version.Version] = new(interface{})
 			versions[provider] = append(versions[provider], version)
+		}
+	}
+}
+
+// addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
+func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.MachineImage) func(common.CloudProvider, string, string) {
+	used := make(map[common.CloudProvider]map[string]map[string]interface{}, 0)
+	indexMapping := make(map[common.CloudProvider]map[string]int, 0)
+	return func(provider common.CloudProvider, name, version string) {
+		if _, ok := used[provider]; !ok {
+			used[provider] = map[string]map[string]interface{}{
+				name: {version: new(interface{})},
+			}
+			indexMapping[provider] = map[string]int{name: 0}
+
+			images[provider] = []gardenv1alpha1.MachineImage{
+				{
+					Name:     name,
+					Versions: []gardenv1alpha1.ExpirableVersion{{Version: version}},
+				},
+			}
+			return
+		}
+
+		if _, ok := used[provider][name]; !ok {
+			used[provider][name] = map[string]interface{}{version: new(interface{})}
+			indexMapping[provider][name] = len(images[provider]) - 1
+
+			images[provider] = append(images[provider], gardenv1alpha1.MachineImage{
+				Name:     name,
+				Versions: []gardenv1alpha1.ExpirableVersion{{Version: version}},
+			})
+			return
+		}
+
+		if _, ok := used[provider][name][version]; !ok {
+			used[provider][name][version] = new(interface{})
+			index := indexMapping[provider][name]
+			images[provider][index].Versions = append(images[provider][index].Versions, gardenv1alpha1.ExpirableVersion{Version: version})
 		}
 	}
 }

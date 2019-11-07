@@ -26,6 +26,7 @@ type Flavors struct {
 	shoots []*common.Shoot
 
 	usedKubernetesVersions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion
+	usedMachineImages      map[common.CloudProvider][]gardenv1alpha1.MachineImage
 }
 
 // Flavors represents the internal versions of a extended shoot flavor.
