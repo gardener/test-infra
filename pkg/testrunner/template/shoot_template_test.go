@@ -56,9 +56,9 @@ var _ = Describe("shoot templates", func() {
 	Context("shoot", func() {
 		It("should render the basic shoot chart with all its necessary parameters", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
 			}
 
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
@@ -79,10 +79,10 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render the basic shoot chart and write correct metadata", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
-				Landscape:               "test",
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
+				Landscape:                "test",
 			}
 
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
@@ -100,9 +100,9 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render the basic shoot chart and fetch all correct k8s versions", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
 			}
 			shoots[0].Cloudprofile = v1alpha1.CloudProfile{Spec: v1alpha1.CloudProfileSpec{
 				Kubernetes: v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{
@@ -126,9 +126,9 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render 2 basic shoot charts", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
 			}
 			shoots = append(shoots, &common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -158,10 +158,10 @@ var _ = Describe("shoot templates", func() {
 	Context("both", func() {
 		It("should render the basic shoot chart and the default testrun", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				TestrunChartPath:        filepath.Join(defaultTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
 			}
 
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
@@ -171,10 +171,10 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render 2 basic shoot charts and 1 default testrun", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:    gardenerKubeconfig,
-				ShootTestrunChartPath:   filepath.Join(shootTestdataDir, "basic"),
-				TestrunChartPath:        filepath.Join(defaultTestdataDir, "basic"),
-				ComponentDescriptorPath: componentDescriptorPath,
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
 			}
 			shoots = append(shoots, &common.ExtendedShoot{
 				Shoot: common.Shoot{

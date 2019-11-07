@@ -21,10 +21,10 @@ import (
 // Parameters are the parameters which describe the test that is executed by the testrunner.
 type Parameters struct {
 	// Path to the kubeconfig where the gardener is running.
-	GardenKubeconfigPath  string
-	Namespace             string
-	ShootTestrunChartPath string
-	TestrunChartPath      string
+	GardenKubeconfigPath     string
+	Namespace                string
+	FlavoredTestrunChartPath string
+	DefaultTestrunChartPath  string
 
 	// metadata
 	Landscape               string

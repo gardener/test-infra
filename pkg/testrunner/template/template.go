@@ -41,19 +41,19 @@ func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*com
 		return nil, errors.Wrap(err, "unable to initialize template renderer")
 	}
 
-	runs, err := renderDefaultChart(tmplRenderer, getInternalParameters(parameters.TestrunChartPath))
+	runs, err := renderDefaultChart(tmplRenderer, getInternalParameters(parameters.DefaultTestrunChartPath))
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to render default chart from %s", parameters.TestrunChartPath)
+		return nil, errors.Wrapf(err, "unable to render default chart from %s", parameters.DefaultTestrunChartPath)
 	}
 
-	shootRuns, err := renderChartWithShoot(log, tmplRenderer, getInternalParameters(parameters.ShootTestrunChartPath), shootFlavors)
+	shootRuns, err := renderChartWithShoot(log, tmplRenderer, getInternalParameters(parameters.FlavoredTestrunChartPath), shootFlavors)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to render shoot chart from %s", parameters.ShootTestrunChartPath)
+		return nil, errors.Wrapf(err, "unable to render shoot chart from %s", parameters.FlavoredTestrunChartPath)
 	}
 	runs = append(runs, shootRuns...)
 
 	if len(runs) == 0 {
-		return nil, trerrors.NewNotRenderedError(fmt.Sprintf("no testruns in the helm chart at %s or %s", parameters.TestrunChartPath, parameters.ShootTestrunChartPath))
+		return nil, trerrors.NewNotRenderedError(fmt.Sprintf("no testruns in the helm chart at %s or %s", parameters.DefaultTestrunChartPath, parameters.FlavoredTestrunChartPath))
 	}
 
 	return runs, nil
@@ -109,7 +109,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 	}
 
 	for _, shoot := range shootFlavors {
-		chartPath, err := determineShootChart(parameters.ChartPath, shoot.ChartPath)
+		chartPath, err := determineAbsoluteShootChartPath(parameters.ChartPath, shoot.ChartPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to determine chart to render")
 		}

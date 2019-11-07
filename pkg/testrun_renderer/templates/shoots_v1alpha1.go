@@ -59,7 +59,7 @@ func stepCreateShootV1alpha1(cloudprovider common.CloudProvider, name string, de
 			ArtifactsFrom:      "",
 			Annotations:        nil,
 		},
-	}, "create-shoot", nil
+	}, name, nil
 }
 
 var defaultProviderConfig = []v1beta1.ConfigElement{

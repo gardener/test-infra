@@ -169,11 +169,11 @@ func init() {
 	runCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 
 	// parameter flags
-	runCmd.Flags().StringVar(&shootParameters.TestrunChartPath, "testruns-chart-path", "", "Path to the default testruns chart.")
+	runCmd.Flags().StringVar(&shootParameters.DefaultTestrunChartPath, "testruns-chart-path", "", "Path to the default testruns chart.")
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}
-	runCmd.Flags().StringVar(&shootParameters.ShootTestrunChartPath, "shoot-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
+	runCmd.Flags().StringVar(&shootParameters.FlavoredTestrunChartPath, "shoot-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}

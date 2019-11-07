@@ -96,6 +96,16 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 	shoots := make([]*shoot, 0)
 
 	for _, flavor := range cfg.Shoots.Flavors.GetShoots() {
+		shoots = append(shoots, &shoot{
+			Type:      flavor.Provider,
+			Suffix:    fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
+			TestsFunc: cfg.Shoots.DefaultTest,
+			Config: &templates.CreateShootConfig{
+				ShootName:  fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
+				Namespace:  cfg.Shoots.Namespace,
+				K8sVersion: flavor.KubernetesVersion.Version,
+			},
+		})
 		for _, test := range cfg.Shoots.Tests {
 			shoots = append(shoots, &shoot{
 				Type:      flavor.Provider,

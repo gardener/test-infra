@@ -27,7 +27,7 @@ var _ = Describe("default templates", func() {
 	It("should render the basic chart with all its necessary parameters", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
-			TestrunChartPath:        filepath.Join(defaultTestdataDir, "basic"),
+			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
 			ComponentDescriptorPath: componentDescriptorPath,
 		}
 		runs, err := RenderTestruns(log.NullLogger{}, params, nil)
@@ -38,7 +38,7 @@ var _ = Describe("default templates", func() {
 	It("should render additional values to the chart", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
-			TestrunChartPath:        filepath.Join(defaultTestdataDir, "add-values"),
+			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
 			ComponentDescriptorPath: componentDescriptorPath,
 			SetValues:               "addValue1=test,addValue2=test2",
 		}
@@ -49,7 +49,7 @@ var _ = Describe("default templates", func() {
 	It("should add landscape and component descriptor as metadata", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
-			TestrunChartPath:        filepath.Join(defaultTestdataDir, "basic"),
+			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
 			Landscape:               "test-landscape",
 			ComponentDescriptorPath: componentDescriptorPath,
 		}

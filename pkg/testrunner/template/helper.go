@@ -63,8 +63,8 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 	return values, nil
 }
 
-// determineShootChart returns the chart to redner for the specific shoot flavor
-func determineShootChart(defaultChart string, chart *string) (string, error) {
+// determineAbsoluteShootChartPath returns the chart to render for the specific shoot flavor
+func determineAbsoluteShootChartPath(defaultChart string, chart *string) (string, error) {
 	if chart == nil {
 		return defaultChart, nil
 	}

@@ -139,7 +139,7 @@ func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *p
 		defaultConfig.ShootFlavors = &flavors
 		return nil
 	}
-	if !flagset.Changed(cloudprovider) && defaultConfig.ShootFlavors != nil {
+	if flagset.Changed(cloudprovider) && defaultConfig.ShootFlavors != nil {
 		flavors := make([]*common.ShootFlavor, 0)
 		for _, flavor := range *defaultConfig.ShootFlavors {
 			if util.ContainsCloudprovider(t.cloudproviders, flavor.Provider) {
@@ -153,7 +153,7 @@ func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *p
 		return nil
 	}
 
-	if !flagset.Changed(kubernetesVersion) && defaultConfig.ShootFlavors != nil {
+	if flagset.Changed(kubernetesVersion) && defaultConfig.ShootFlavors != nil {
 		flavors := *defaultConfig.ShootFlavors
 		for i := range flavors {
 			versions := util.ConvertStringArrayToVersions(t.kubernetesVersions)
@@ -162,6 +162,9 @@ func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *p
 			}
 		}
 		defaultConfig.ShootFlavors = &flavors
+		return nil
+	}
+	if defaultConfig.ShootFlavors != nil {
 		return nil
 	}
 	return errors.New("At least one cloudprovider and one kubernetes version has to be defined", "neither a default configuration nor cloudprovider and kubernetes flags are defined.")
