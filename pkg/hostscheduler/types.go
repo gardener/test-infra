@@ -30,6 +30,7 @@ type Interface interface {
 	Cleanup(*flag.FlagSet) (SchedulerFunc, error)
 
 	List(*flag.FlagSet) (SchedulerFunc, error)
+	Recreate(*flag.FlagSet) (SchedulerFunc, error)
 }
 
 // SchedulerFunc is the default hostscheduler functions which is called by the framework

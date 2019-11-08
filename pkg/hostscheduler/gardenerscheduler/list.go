@@ -16,10 +16,9 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"os"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/util/cmdutil"
 	flag "github.com/spf13/pflag"
@@ -30,7 +29,7 @@ import (
 func (s *gardenerscheduler) List(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 	return func(ctx context.Context) error {
 
-		shoots := &v1beta1.ShootList{}
+		shoots := &v1alpha1.ShootList{}
 		selector := labels.SelectorFromSet(labels.Set(map[string]string{
 			ShootLabel: "true",
 		}))
@@ -50,7 +49,7 @@ func (s *gardenerscheduler) List(flagset *flag.FlagSet) (hostscheduler.Scheduler
 				message string
 			)
 			if s.cloudprovider != CloudProviderAll {
-				if cp, err := helper.DetermineCloudProviderInShoot(shoot.Spec.Cloud); err != nil || cp != s.cloudprovider {
+				if shoot.Spec.Provider.Type != string(s.cloudprovider) {
 					continue
 				}
 			}

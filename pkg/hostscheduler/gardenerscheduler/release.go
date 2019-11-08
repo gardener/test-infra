@@ -16,9 +16,9 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/pkg/errors"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	flag "github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,9 +38,8 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			}
 		}
 
-		shoot := &v1beta1.Shoot{}
-		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot)
-		if err != nil {
+		shoot := &v1alpha1.Shoot{}
+		if err := s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot); err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 		}
 
@@ -70,7 +69,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 
-		shoot.Spec.Hibernation = &v1beta1.Hibernation{Enabled: &hibernationTrue}
+		shoot.Spec.Hibernation = &v1alpha1.Hibernation{Enabled: &hibernationTrue}
 		shoot.Labels[ShootLabelStatus] = ShootStatusFree
 		delete(shoot.Annotations, ShootAnnotationLockedAt)
 		delete(shoot.Annotations, ShootAnnotationID)
