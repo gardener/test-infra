@@ -51,6 +51,14 @@ var listCmd = cobra.Command{
 	Short:   "List host cluster",
 }
 
+var recreateCmd = cobra.Command{
+	Use:     "recreate",
+	Aliases: []string{"rc"},
+	Short:   "Recreate a given host cluster",
+	Long:    "Deletes the old cluster if it is not currently used and recreate it with the same spec",
+	Example: "recreate --name [cluster identifier]",
+}
+
 func copyCommand(cmd cobra.Command) *cobra.Command {
 	newCommand := cmd
 	return &newCommand
@@ -148,6 +156,20 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		}
 	}
 
-	rootCmd.AddCommand(lockCmd, releaseCmd, cleanupCmd, listCmd)
+	recreateCmd := copyCommand(recreateCmd)
+	recreateFunc, err := scheduler.Recreate(recreateCmd.Flags())
+	if err != nil {
+		return errors.Wrap(err, "unable to register recreate")
+	}
+	recreateCmd.Run = func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		defer ctx.Done()
+		if err := recreateFunc(ctx); err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+		}
+	}
+
+	rootCmd.AddCommand(lockCmd, releaseCmd, cleanupCmd, listCmd, recreateCmd)
 	return nil
 }

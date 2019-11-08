@@ -16,13 +16,13 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/botanist"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
@@ -57,7 +57,7 @@ func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.Schedu
 			}
 		}
 
-		shoot := &v1beta1.Shoot{}
+		shoot := &v1alpha1.Shoot{}
 		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot)
 		if err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())

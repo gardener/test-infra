@@ -15,6 +15,7 @@ package gardenerscheduler
 
 import (
 	"fmt"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/go-logr/logr"
 
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -56,7 +57,7 @@ type gardenerscheduler struct {
 	cloudprovider gardenv1beta1.CloudProvider
 }
 
-func isFree(shoot *gardenv1beta1.Shoot) bool {
+func isFree(shoot *v1alpha1.Shoot) bool {
 	val, ok := shoot.Labels[ShootLabelStatus]
 	if !ok {
 		return false
@@ -65,7 +66,7 @@ func isFree(shoot *gardenv1beta1.Shoot) bool {
 	return val == ShootStatusFree
 }
 
-func isLocked(shoot *gardenv1beta1.Shoot) bool {
+func isLocked(shoot *v1alpha1.Shoot) bool {
 	val, ok := shoot.Labels[ShootLabelStatus]
 	if !ok {
 		return false
