@@ -36,7 +36,7 @@ type GardenerConfig struct {
 	Commit   string
 }
 
-func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider common.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, machineImages map[common.CloudProvider][]v1alpha1.MachineImage, cfg GardenerConfig) (v1beta1.DAGStep, error) {
+func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider common.CloudProvider, kubernetesVersions map[common.CloudProvider]v1alpha1.KubernetesSettings, machineImages map[common.CloudProvider][]v1alpha1.MachineImage, cfg GardenerConfig) (v1beta1.DAGStep, error) {
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), cfg)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
@@ -112,7 +112,7 @@ func AppendGardenerConfig(stepConfig []v1beta1.ConfigElement, cfg GardenerConfig
 
 }
 
-func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion) ([]v1beta1.ConfigElement, error) {
+func AppendKubernetesVersionConfig(stepConfig []v1beta1.ConfigElement, kubernetesVersions map[common.CloudProvider]v1alpha1.KubernetesSettings) ([]v1beta1.ConfigElement, error) {
 	trueVar := true
 
 	rawVersions, err := json.Marshal(kubernetesVersions)

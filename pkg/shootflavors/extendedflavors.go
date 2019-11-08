@@ -63,7 +63,7 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 // NewExtended creates an internal representation of raw extended shoot flavors.
 // It also parses the flavors and creates the resulting extended shoots.
 func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
-	versions := make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
+	versions := make(map[common.CloudProvider]gardenv1alpha1.KubernetesSettings, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 
 	shoots := make([]*common.ExtendedShoot, 0)
@@ -122,9 +122,9 @@ func (f *ExtendedFlavors) GetShoots() []*common.ExtendedShoot {
 }
 
 // GetUsedKubernetesVersions returns a list of unique kubernetes versions used across all shoots.
-func (f *ExtendedFlavors) GetUsedKubernetesVersions() map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion {
+func (f *ExtendedFlavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardenv1alpha1.KubernetesSettings {
 	if f.usedKubernetesVersions == nil {
-		return make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
+		return map[common.CloudProvider]gardenv1alpha1.KubernetesSettings{}
 	}
 	return f.usedKubernetesVersions
 }

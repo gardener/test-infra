@@ -25,7 +25,7 @@ type Flavors struct {
 	Info   []*common.ShootFlavor
 	shoots []*common.Shoot
 
-	usedKubernetesVersions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion
+	usedKubernetesVersions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings
 	usedMachineImages      map[common.CloudProvider][]gardenv1alpha1.MachineImage
 }
 
@@ -35,5 +35,5 @@ type ExtendedFlavors struct {
 	Info   []*common.ExtendedShootFlavor
 	shoots []*common.ExtendedShoot
 
-	usedKubernetesVersions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion
+	usedKubernetesVersions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings
 }

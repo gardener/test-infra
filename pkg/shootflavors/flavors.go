@@ -57,7 +57,7 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 // New creates an internal representation of raw shoot flavors.
 // It also parses the flavors and creates the resulting shoots.
 func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
-	versions := make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
+	versions := make(map[common.CloudProvider]gardenv1alpha1.KubernetesSettings, 0)
 	machineImages := make(map[common.CloudProvider][]gardenv1alpha1.MachineImage, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 	addMachineImage := addMachineImagesFunc(machineImages)
@@ -113,9 +113,9 @@ func (f *Flavors) GetShoots() []*common.Shoot {
 }
 
 // GetUsedKubernetesVersions returns a list of unique kubernetes versions used across all shoots.
-func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion {
+func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardenv1alpha1.KubernetesSettings {
 	if f.usedKubernetesVersions == nil {
-		return make(map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion, 0)
+		return map[common.CloudProvider]gardenv1alpha1.KubernetesSettings{}
 	}
 	return f.usedKubernetesVersions
 }
@@ -128,19 +128,21 @@ func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardenv1alph
 }
 
 // addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
-func addKubernetesVersionFunc(versions map[common.CloudProvider][]gardenv1alpha1.ExpirableVersion) func(common.CloudProvider, gardenv1alpha1.ExpirableVersion) {
+func addKubernetesVersionFunc(versions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings) func(common.CloudProvider, gardenv1alpha1.ExpirableVersion) {
 	used := make(map[common.CloudProvider]map[string]interface{}, 0)
 	return func(provider common.CloudProvider, version gardenv1alpha1.ExpirableVersion) {
 
 		if _, ok := used[provider]; !ok {
 			used[provider] = map[string]interface{}{version.Version: new(interface{})}
-			versions[provider] = []gardenv1alpha1.ExpirableVersion{version}
+			versions[provider] = gardenv1alpha1.KubernetesSettings{Versions: []gardenv1alpha1.ExpirableVersion{version}}
 			return
 		}
 
 		if _, ok := used[provider][version.Version]; !ok {
 			used[provider][version.Version] = new(interface{})
-			versions[provider] = append(versions[provider], version)
+			versions[provider] = gardenv1alpha1.KubernetesSettings{
+				Versions: append(versions[provider].Versions, version),
+			}
 		}
 	}
 }
