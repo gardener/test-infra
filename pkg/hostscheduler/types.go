@@ -21,6 +21,10 @@ import (
 
 type Provider string
 
+const (
+	ProviderUnknown Provider = "Unknown"
+)
+
 // Interface is the hostscheduler interface.
 // Hostscheduler functions are designed to register their function scoped flags
 // and return a SchedulerFunc that is executed with corresponding subcommand.

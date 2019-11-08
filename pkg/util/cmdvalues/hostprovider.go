@@ -15,7 +15,6 @@ package cmdvalues
 
 import (
 	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/spf13/pflag"
 )
 
@@ -32,7 +31,7 @@ var _ pflag.Value = &HostProviderValue{}
 
 func (v *HostProviderValue) String() string {
 	if v.provider == nil {
-		return string(gardenerscheduler.Name)
+		return string(hostscheduler.ProviderUnknown)
 	}
 	return string(*v.provider)
 }

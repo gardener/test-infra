@@ -19,12 +19,11 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"strconv"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
-func GetStepLockHost(provider hostscheduler.Provider, cloudprovider gardenv1beta1.CloudProvider) v1beta1.DAGStep {
+func GetStepLockHost(provider hostscheduler.Provider, cloudprovider common.CloudProvider) v1beta1.DAGStep {
 	return v1beta1.DAGStep{
 		Name: "prepare-host",
 		Annotations: map[string]string{

@@ -18,7 +18,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/strconf"
@@ -37,7 +36,7 @@ type GardenerConfig struct {
 	Commit   string
 }
 
-func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider gardenv1beta1.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, machineImages map[common.CloudProvider][]v1alpha1.MachineImage, cfg GardenerConfig) (v1beta1.DAGStep, error) {
+func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider common.CloudProvider, kubernetesVersions map[common.CloudProvider][]v1alpha1.ExpirableVersion, machineImages map[common.CloudProvider][]v1alpha1.MachineImage, cfg GardenerConfig) (v1beta1.DAGStep, error) {
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), cfg)
 	if err != nil {
 		return v1beta1.DAGStep{}, err
@@ -149,7 +148,7 @@ func AppendMachineImagesConfig(stepConfig []v1beta1.ConfigElement, images map[co
 	}), nil
 }
 
-func GetCreateGardenerConfig(cloudprovider gardenv1beta1.CloudProvider) []v1beta1.ConfigElement {
+func GetCreateGardenerConfig(cloudprovider common.CloudProvider) []v1beta1.ConfigElement {
 	private := true
 	return []v1beta1.ConfigElement{
 		{

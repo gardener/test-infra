@@ -16,7 +16,9 @@ package gardenerscheduler
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/cmdutil"
+	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/logger"
@@ -31,8 +33,8 @@ import (
 )
 
 const (
-	Name             hostscheduler.Provider      = "gardener"
-	CloudProviderAll gardenv1beta1.CloudProvider = "all"
+	Name             hostscheduler.Provider = "gardener"
+	CloudProviderAll common.CloudProvider   = "all"
 )
 
 var Register hostscheduler.Register = func(m *hostscheduler.Registrations) {
@@ -52,8 +54,10 @@ func (r *registration) Interface() hostscheduler.Interface {
 }
 func (r *registration) RegisterFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&r.kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Path to the gardener cluster kubeconfigPath")
-	flagset.StringVar(&r.cloudprovider, "cloudprovider", string(CloudProviderAll), "Specify the cloudprovider of the shoot that should be taken from the pool")
 	flagset.StringVar(&r.scheduler.shootName, "name", "", "Name of the shoot")
+
+	cpVal := cmdvalues.NewCloudProviderValue(&r.cloudprovider, CloudProviderAll, CloudProviderAll, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure)
+	flagset.Var(cpVal, "cloudprovider", "Specify the cloudprovider of the shoot that should be taken from the pool")
 
 	cmdutil.ViperHelper.BindPFlag("gardener.kubeconfig", flagset.Lookup("kubeconfig"))
 }
@@ -84,7 +88,7 @@ func (r *registration) PreRun(cmd *cobra.Command, args []string) error {
 			gardenv1beta1.CloudProviderAWS, gardenv1beta1.CloudProviderGCP, gardenv1beta1.CloudProviderAzure, gardenv1beta1.CloudProviderAlicloud, gardenv1beta1.CloudProviderOpenStack, gardenv1beta1.CloudProviderPacket)
 	}
 
-	r.scheduler.cloudprovider = gardenv1beta1.CloudProvider(r.cloudprovider)
+	r.scheduler.cloudprovider = r.cloudprovider
 	r.scheduler.client = k8sClient
 	r.scheduler.namespace = namespace
 	return nil

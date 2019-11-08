@@ -15,7 +15,6 @@
 package tests
 
 import (
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
@@ -24,7 +23,7 @@ import (
 // DefaultsConfig is the defaults configuration that can be configured using the repository configuration for the tests command
 type DefaultsConfig struct {
 	HostProvider             *hostscheduler.Provider `json:"hostprovider"`
-	BaseClusterCloudProvider *v1beta1.CloudProvider  `json:"baseClusterCloudprovider"`
+	BaseClusterCloudProvider *common.CloudProvider   `json:"baseClusterCloudprovider"`
 
 	GardenSetup *struct {
 		Revision *ghval.StringOrGitHubValue `json:"revision"`

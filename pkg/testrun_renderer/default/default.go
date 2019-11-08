@@ -16,8 +16,8 @@ package _default
 
 import (
 	"fmt"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -41,7 +41,7 @@ type Config struct {
 	HostProvider hostscheduler.Provider
 
 	// CloudProvider of the base cluster (has to be specified to install the correct credentials and cloudprofiles for the soil/seeds)
-	BaseClusterCloudprovider gardenv1beta1.CloudProvider
+	BaseClusterCloudprovider common.CloudProvider
 
 	// Revision for the gardensetup repo that i sused to install gardener
 	GardenSetupRevision string
@@ -90,7 +90,7 @@ type ShootsConfig struct {
 // - release host
 func Render(cfg *Config) (*v1beta1.Testrun, error) {
 	if cfg.HostProvider == gkescheduler.Name {
-		cfg.BaseClusterCloudprovider = gardenv1beta1.CloudProviderGCP
+		cfg.BaseClusterCloudprovider = common.CloudProviderGCP
 	}
 
 	shoots := make([]*shoot, 0)

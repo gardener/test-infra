@@ -16,7 +16,6 @@ package run_gardener
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -185,7 +184,7 @@ func init() {
 
 	runCmd.Flags().Var(cmdvalues.NewHostProviderValue(&defaultConfig.HostProvider, gardenerscheduler.Name), "hostprovider", "Specify the provider for selecting the base cluster")
 	runCmd.Flags().StringVar(&defaultConfig.GardenSetupRevision, "garden-setup-version", "master", "Specify the garden setup version to setup gardener")
-	runCmd.Flags().Var(cmdvalues.NewCloudProviderValue(&defaultConfig.BaseClusterCloudprovider, v1beta1.CloudProviderGCP, v1beta1.CloudProviderGCP, v1beta1.CloudProviderAWS, v1beta1.CloudProviderAzure),
+	runCmd.Flags().Var(cmdvalues.NewCloudProviderValue(&defaultConfig.BaseClusterCloudprovider, common.CloudProviderGCP, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure),
 		"host-cloudprovider", "Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Version, "gardener-version", "", "Specify the gardener to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
