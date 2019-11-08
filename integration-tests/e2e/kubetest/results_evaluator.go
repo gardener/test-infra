@@ -119,7 +119,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
 	addAdditionalInfoToSummary(summary, &failureOccurrences, &succeededTestcases)
-	if err := saveJunitXmlToFile(mergedJunitXmlResult); err != nil {
+	if err := saveJunitXmlToFile(junitXMLFilePaths, mergedJunitXmlResult); err != nil {
 		return err
 	}
 	return nil
@@ -210,8 +210,16 @@ func addAdditionalInfoToSummary(summary *Summary, failureOccurrences *map[string
 	}
 }
 
-func saveJunitXmlToFile(mergedJunitXmlResult *JunitXMLResult) error {
-	output, err := xml.MarshalIndent(mergedJunitXmlResult, "  ", "    ")
+func saveJunitXmlToFile(junitXMLFilePaths []string, mergedJunitXmlResult *JunitXMLResult) error {
+	if len(junitXMLFilePaths) == 1 {
+		// if there is only one single junit xml file, we can use the original file as output
+		// this is especially the case if conformance tests are executed
+		if err := os.Rename(junitXMLFilePaths[0], mergedJunitXmlFilePath); err != nil {
+			return err
+		}
+		return nil
+	}
+		output, err := xml.MarshalIndent(mergedJunitXmlResult, "  ", "    ")
 	if err != nil {
 		return err
 	}
