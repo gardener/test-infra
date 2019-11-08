@@ -15,9 +15,10 @@
 package result
 
 import (
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryctrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
-	"github.com/gardener/test-infra/pkg/testrunner/template"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"os"
@@ -41,7 +42,7 @@ func New(log logr.Logger, config Config) (*Collector, error) {
 	return collector, nil
 }
 
-func (c *Collector) PreRunShoots(kubeconfigPath string, list template.ShootRunList) error {
+func (c *Collector) PreRunShoots(kubeconfigPath string, list testrunner.RunList) error {
 	if c.telemetry == nil {
 		return nil
 	}
@@ -50,14 +51,24 @@ func (c *Collector) PreRunShoots(kubeconfigPath string, list template.ShootRunLi
 		c.telemetry = nil
 		return nil
 	}
+
+	// check if run is a shoot run
+	var shoot common.ExtendedShoot
+	switch r := list[0].Info.(type) {
+	case common.ExtendedShoot:
+		shoot = r
+	default:
+		return nil
+	}
+
 	telemetryOutputDir := path.Join(c.config.OutputDir, "telemetry")
 	if err := os.MkdirAll(telemetryOutputDir, os.ModePerm); err != nil {
 		return err
 	}
-	if _, err := c.telemetry.StartForShoot(list[0].Parameters.ShootName, list[0].Parameters.Namespace, kubeconfigPath, telemetryOutputDir); err != nil {
+	if _, err := c.telemetry.StartForShoot(shoot.Name, shoot.ProjectName, kubeconfigPath, telemetryOutputDir); err != nil {
 		return errors.Wrap(err, "unable to start telemetry controller")
 	}
-	c.log.V(3).Info("registered shoot for telemetry measurement", "shoot", list[0].Parameters.ShootName, "namespace", list[0].Parameters.Namespace)
+	c.log.V(3).Info("registered shoot for telemetry measurement", "shoot", shoot.Name, "namespace", shoot.ProjectName)
 	return nil
 }
 

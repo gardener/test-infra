@@ -19,8 +19,8 @@ import (
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
@@ -63,7 +63,7 @@ func (t *test) Flags() *pflag.FlagSet {
 
 	flagset.StringVar(&t.config.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	flagset.StringArrayVar(&t.kubernetesVersions, kubernetesVersion, []string{}, "Specify the kubernetes version to test")
-	flagset.VarP(cmdvalues.NewCloudProviderArrayValue(&t.cloudproviders, v1beta1.CloudProviderGCP, v1beta1.CloudProviderGCP, v1beta1.CloudProviderAWS, v1beta1.CloudProviderAzure), cloudprovider, "p", "Specify the cloudproviders to test.")
+	flagset.VarP(cmdvalues.NewCloudProviderArrayValue(&t.cloudproviders, common.CloudProviderGCP, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure), cloudprovider, "p", "Specify the cloudproviders to test.")
 
 	flagset.StringVarP(&t.testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	flagset.BoolVar(&t.hibernation, "hibernation", false, "test hibernation")
@@ -116,70 +116,55 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		}
 	}
 
-	if flagset.Changed(cloudprovider) && flagset.Changed(kubernetesVersion) {
-		shootFlavors := make([]templates.ShootFlavor, len(t.cloudproviders))
-		for i, cp := range t.cloudproviders {
-			shootFlavors[i] = templates.ShootFlavor{
-				CloudProvider:      cp,
-				KubernetesVersions: util.ConvertStringArrayToVersions(t.kubernetesVersions),
-			}
-		}
-	} else if !flagset.Changed(cloudprovider) && defaultConfig.ShootFlavors != nil {
-		shootflavors := make([]templates.ShootFlavor, 0)
-		for _, flavor := range *defaultConfig.ShootFlavors {
-			if util.ContainsCloudprovider(t.cloudproviders, flavor.CloudProvider) {
-				shootflavors = append(shootflavors, flavor)
-			}
-		}
-		if len(shootflavors) != len(t.cloudproviders) {
-			return errors.New("a kubernetes version for cloudproviders is missing", "")
-		}
-		defaultConfig.ShootFlavors = &shootflavors
-	} else if !flagset.Changed(kubernetesVersion) && defaultConfig.ShootFlavors != nil {
-		shootflavors := *defaultConfig.ShootFlavors
-		for i := range shootflavors {
-			shootflavors[i].KubernetesVersions = util.ConvertStringArrayToVersions(t.kubernetesVersions)
-		}
-		defaultConfig.ShootFlavors = &shootflavors
-	} else if defaultConfig.ShootFlavors == nil || len(*defaultConfig.ShootFlavors) == 0 {
-		return errors.New("At least one cloudprovider and one kubernetes version has to be defined", "")
+	if err := t.applyDefaultShootFlavors(defaultConfig, flagset); err != nil {
+		return err
 	}
-
-	return nil
+	t.config.Shoots.Flavors, err = shootflavors.New(*defaultConfig.ShootFlavors)
+	return err
 }
 
 func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *pflag.FlagSet) error {
 
 	if flagset.Changed(cloudprovider) && flagset.Changed(kubernetesVersion) {
-		shootFlavors := make([]templates.ShootFlavor, len(t.cloudproviders))
+		flavors := make([]*common.ShootFlavor, len(t.cloudproviders))
 		for i, cp := range t.cloudproviders {
-			shootFlavors[i] = templates.ShootFlavor{
-				CloudProvider:      cp,
-				KubernetesVersions: util.ConvertStringArrayToVersions(t.kubernetesVersions),
+			versions := util.ConvertStringArrayToVersions(t.kubernetesVersions)
+			flavors[i] = &common.ShootFlavor{
+				Provider: cp,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &versions,
+				},
 			}
 		}
+		defaultConfig.ShootFlavors = &flavors
 		return nil
 	}
-	if !flagset.Changed(cloudprovider) && defaultConfig.ShootFlavors != nil {
-		shootflavors := make([]templates.ShootFlavor, 0)
+	if flagset.Changed(cloudprovider) && defaultConfig.ShootFlavors != nil {
+		flavors := make([]*common.ShootFlavor, 0)
 		for _, flavor := range *defaultConfig.ShootFlavors {
-			if util.ContainsCloudprovider(t.cloudproviders, flavor.CloudProvider) {
-				shootflavors = append(shootflavors, flavor)
+			if util.ContainsCloudprovider(t.cloudproviders, flavor.Provider) {
+				flavors = append(flavors, flavor)
 			}
 		}
-		if len(shootflavors) != len(t.cloudproviders) {
-			return errors.New("A cloudprovider is missing a kubernetes version configuration. Check the default config or your command", "")
+		if len(flavors) != len(t.cloudproviders) {
+			return errors.New("a kubernetes version for cloudproviders is missing", "")
 		}
-		defaultConfig.ShootFlavors = &shootflavors
+		defaultConfig.ShootFlavors = &flavors
 		return nil
 	}
 
-	if !flagset.Changed(kubernetesVersion) && defaultConfig.ShootFlavors != nil {
-		shootflavors := *defaultConfig.ShootFlavors
-		for i := range shootflavors {
-			shootflavors[i].KubernetesVersions = util.ConvertStringArrayToVersions(t.kubernetesVersions)
+	if flagset.Changed(kubernetesVersion) && defaultConfig.ShootFlavors != nil {
+		flavors := *defaultConfig.ShootFlavors
+		for i := range flavors {
+			versions := util.ConvertStringArrayToVersions(t.kubernetesVersions)
+			flavors[i].KubernetesVersions = common.ShootKubernetesVersionFlavor{
+				Versions: &versions,
+			}
 		}
-		defaultConfig.ShootFlavors = &shootflavors
+		defaultConfig.ShootFlavors = &flavors
+		return nil
+	}
+	if defaultConfig.ShootFlavors != nil {
 		return nil
 	}
 	return errors.New("At least one cloudprovider and one kubernetes version has to be defined", "neither a default configuration nor cloudprovider and kubernetes flags are defined.")

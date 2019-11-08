@@ -16,23 +16,20 @@ package common
 
 // Annotations
 const (
-	ResumeTestrunAnnotation = "testmachinery.sapcloud.io/resume"
-)
+	PurposeTestrunAnnotation = "testmachinery.sapcloud.io/purpose"
+	ResumeTestrunAnnotation  = "testmachinery.sapcloud.io/resume"
 
-const (
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
-)
 
-// images
-const (
+	// images
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
-)
 
-// Repositories
-const (
+	// Repositories
 	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
 	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
 	GardenerRepo    = "https://github.com/gardener/gardener.git"
+
+	PatternLatest = "latest"
 )
 
 var (

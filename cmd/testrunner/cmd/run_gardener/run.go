@@ -17,12 +17,14 @@ package run_gardener
 import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer"
-	_default "github.com/gardener/test-infra/pkg/testrunner/renderer/default"
-	"github.com/gardener/test-infra/pkg/testrunner/renderer/templates"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"os"
 	"time"
@@ -51,7 +53,7 @@ var (
 	testrunNamePrefix       string
 	componentDescriptorPath string
 	kubernetesVersions      []string
-	cloudproviders          []v1beta1.CloudProvider
+	cloudproviders          []common.CloudProvider
 	testLabel               string
 	hibernation             bool
 )
@@ -78,20 +80,28 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		shootFlavors := make([]templates.ShootFlavor, len(cloudproviders))
+		rawFlavors := make([]*common.ShootFlavor, len(cloudproviders))
 		for i, cp := range cloudproviders {
-			shootFlavors[i] = templates.ShootFlavor{
-				CloudProvider:      cp,
-				KubernetesVersions: util.ConvertStringArrayToVersions(kubernetesVersions),
+			versions := util.ConvertStringArrayToVersions(kubernetesVersions)
+			rawFlavors[i] = &common.ShootFlavor{
+				Provider: cp,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &versions,
+				},
 			}
 		}
+		flavors, err := shootflavors.New(rawFlavors)
+		if err != nil {
+			logger.Log.Error(err, "unable to render default testrun")
+			os.Exit(1)
+		}
 
-		defaultConfig.Shoots.Flavors = shootFlavors
+		defaultConfig.Shoots.Flavors = flavors
 		defaultConfig.Components = components
 		defaultConfig.Namespace = testrunnerConfig.Namespace
 		defaultConfig.Shoots.DefaultTest = templates.TestWithLabels(testLabel)
 		if hibernation {
-			defaultConfig.Shoots.Tests = []renderer.TestsFunc{templates.HibernationLifecycle}
+			defaultConfig.Shoots.Tests = []testrun_renderer.TestsFunc{templates.HibernationLifecycle}
 		}
 
 		tr, err := _default.Render(&defaultConfig)
@@ -183,7 +193,7 @@ func init() {
 
 	runCmd.Flags().StringVar(&defaultConfig.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	runCmd.Flags().StringArrayVar(&kubernetesVersions, "kubernetes-version", []string{}, "Specify the kubernetes version to test")
-	runCmd.Flags().VarP(cmdvalues.NewCloudProviderArrayValue(&cloudproviders, v1beta1.CloudProviderGCP, v1beta1.CloudProviderGCP, v1beta1.CloudProviderAWS, v1beta1.CloudProviderAzure), "cloudprovider", "p", "Specify the cloudproviders to test.")
+	runCmd.Flags().VarP(cmdvalues.NewCloudProviderArrayValue(&cloudproviders, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure), "cloudprovider", "p", "Specify the cloudproviders to test.")
 
 	runCmd.Flags().StringVarP(&testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	runCmd.Flags().BoolVar(&hibernation, "hibernation", false, "test hibernation")

@@ -41,6 +41,8 @@ type Config struct {
 // Run describes a testrun that is executed by the testrunner.
 // It consists of a testrun and its metadata
 type Run struct {
+	// Specify internal info for specific run types
+	Info     interface{}
 	Testrun  *tmv1beta1.Testrun
 	Metadata *Metadata
 	Error    error
@@ -60,6 +62,9 @@ const (
 
 // Metadata is the common metadata of all outputs and summaries.
 type Metadata struct {
+	// Short description of the flavor
+	FlavorDescription string `json:"flavor_description,omitempty"`
+
 	// Landscape describes the current dev,staging,canary,office or live.
 	Landscape         string `json:"landscape,omitempty"`
 	CloudProvider     string `json:"cloudprovider,omitempty"`

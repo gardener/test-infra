@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/output"
 	"strings"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -145,7 +146,7 @@ func FormatStatus(tr *tmv1beta1.Testrun, argoUrl string) string {
 	)
 
 	if len(tr.Status.Steps) != 0 {
-		util.RenderStatusTable(statusTable, tr.Status.Steps)
+		output.RenderStatusTable(statusTable, tr.Status.Steps)
 	}
 	if argoUrl != "" {
 		argo = fmt.Sprintf("[%s](%s)", argo, argoUrl)

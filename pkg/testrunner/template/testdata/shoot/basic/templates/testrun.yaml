@@ -1,0 +1,32 @@
+apiVersion: testmachinery.sapcloud.io/v1beta1
+kind: Testrun
+metadata:
+    name: "test"
+    namespace: default
+    annotations:
+        "testmachinery.sapcloud.io/purpose": "default"
+        shoot.name: {{ required "shoot name is required" .Values.shoot.name }}
+        shoot.projectNamespace: {{ required "projectNamespace is required" .Values.shoot.projectNamespace }}
+        shoot.cloudprovider: {{ required "cloudprovider is required" .Values.shoot.cloudprovider }}
+        shoot.cloudprofile: {{ required "cloudprofile is required" .Values.shoot.cloudprofile }}
+        shoot.secretBinding: {{ required "secretBinding is required" .Values.shoot.secretBinding }}
+        shoot.region: {{ required "region is required" .Values.shoot.region }}
+        shoot.zone: {{ required "zone is required" .Values.shoot.zone }}
+        shoot.workers: {{ required "workers is required" .Values.shoot.workers }}
+        shoot.k8sVersion: {{ required "k8sVersion is required" .Values.shoot.k8sVersion }}
+        shoot.k8sPrevPrePatchVersion: {{ required "k8sPrevPrePatchVersion is required" .Values.shoot.k8sPrevPrePatchVersion }}
+        shoot.k8sPrevPatchVersion: {{ required "k8sPrevPatchVersion is required" .Values.shoot.k8sPrevPatchVersion }}
+spec:
+    testLocations:
+    - type: git
+      repo: https://github.com/gardener/test-infra.git
+      revision: master
+
+    kubeconfigs:
+        gardener: {{ b64enc .Values.kubeconfigs.gardener }}
+
+    testflow:
+
+    - name: tests
+      definition:
+          label: default

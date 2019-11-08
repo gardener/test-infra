@@ -2,7 +2,7 @@
 
 The default gardener test tests a new gardener release or specifc commit.
 
-The Testrun is generated in Golang by this [render function](../../pkg/testrunner/renderer/default/default.go).
+The Testrun is generated in Golang by this [render function](../../pkg/testrun_renderer/default/default.go).
 This function is used by the testrunner and the github bot to create and run the test.
 
 The default test consists of the following steps:

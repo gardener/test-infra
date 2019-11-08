@@ -1,0 +1,5 @@
+components:
+- dependencies:
+  name: github.com/gardener/gardener
+  version: 0.30.0
+

@@ -15,129 +15,18 @@
 package template
 
 import (
-	"context"
-	"fmt"
+	"encoding/base64"
+	"encoding/json"
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	"sort"
-
-	"github.com/Masterminds/semver"
-
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/pkg/errors"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"reflect"
 	"sigs.k8s.io/yaml"
 )
-
-// getK8sVersions returns all K8s version that should be rendered by the chart
-func getK8sVersions(parameters *ShootTestrunParameters) ([]string, error) {
-	if !parameters.MakeVersionMatrix && parameters.K8sVersion != "" {
-		return []string{parameters.K8sVersion}, nil
-	}
-	// if the kubernetes version is not set, get the latest version defined by the cloudprofile
-	if !parameters.MakeVersionMatrix && parameters.K8sVersion == "" {
-		version, err := getLatestK8sVersion(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
-		if err != nil {
-			return nil, fmt.Errorf("'k8s-version' is not defined nor can it be read from the cloudprofile: %s", err.Error())
-		}
-		return []string{version}, nil
-	}
-	if parameters.MakeVersionMatrix {
-		return getK8sVersionsFromCloudprofile(parameters.GardenKubeconfigPath, parameters.Cloudprofile, parameters.Cloudprovider)
-	}
-
-	return nil, fmt.Errorf("no K8s version can be specified")
-}
-
-func getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider string) ([]string, error) {
-	ctx := context.Background()
-	defer ctx.Done()
-	k8sGardenClient, err := kubernetes.NewClientFromFile("", gardenerKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.GardenScheme,
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	profile := &gardenv1beta1.CloudProfile{}
-	err = k8sGardenClient.Client().Get(ctx, types.NamespacedName{Name: cloudprofile}, profile)
-	if err != nil {
-		return nil, err
-	}
-	cloudProfileVersions, err := getCloudproviderVersions(profile, cloudprovider)
-	if err != nil {
-		return nil, err
-	}
-	if len(cloudProfileVersions) == 0 {
-		return nil, fmt.Errorf("no kubernetes versions found for cloudprofile %s", cloudprofile)
-	}
-	return filterPatchVersions(cloudProfileVersions)
-}
-
-// filterPatchVersions keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
-func filterPatchVersions(cloudProfileVersions []string) ([]string, error) {
-	newestPatchVersionMap := make(map[string]*semver.Version)
-	for _, rawVersion := range cloudProfileVersions {
-		parsedVersion, err := semver.NewVersion(rawVersion)
-		if err != nil {
-			return nil, err
-		}
-		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
-		if newestPatch, ok := newestPatchVersionMap[majorMinor]; !ok || newestPatch.LessThan(parsedVersion) {
-			newestPatchVersionMap[majorMinor] = parsedVersion
-		}
-	}
-
-	newestPatchVersions := make([]string, 0)
-	for _, version := range newestPatchVersionMap {
-		newestPatchVersions = append(newestPatchVersions, version.String())
-	}
-	return newestPatchVersions, nil
-}
-
-func getLatestK8sVersion(gardenerKubeconfigPath, cloudprofile, cloudprovider string) (string, error) {
-	rawVersions, err := getK8sVersionsFromCloudprofile(gardenerKubeconfigPath, cloudprofile, cloudprovider)
-	if err != nil {
-		return "", err
-	}
-
-	if len(rawVersions) == 0 {
-		return "", fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile)
-	}
-
-	versions := make([]*semver.Version, len(rawVersions))
-	for i, rawVersion := range rawVersions {
-		v, err := semver.NewVersion(rawVersion)
-		if err == nil {
-			versions[i] = v
-		}
-	}
-	sort.Sort(semver.Collection(versions))
-
-	return versions[len(versions)-1].String(), nil
-}
-
-func getCloudproviderVersions(profile *gardenv1beta1.CloudProfile, cloudprovider string) ([]string, error) {
-
-	switch gardenv1beta1.CloudProvider(cloudprovider) {
-	case gardenv1beta1.CloudProviderAWS:
-		return profile.Spec.AWS.Constraints.Kubernetes.Versions, nil
-	case gardenv1beta1.CloudProviderGCP:
-		return profile.Spec.GCP.Constraints.Kubernetes.Versions, nil
-	case gardenv1beta1.CloudProviderAzure:
-		return profile.Spec.Azure.Constraints.Kubernetes.Versions, nil
-	case gardenv1beta1.CloudProviderOpenStack:
-		return profile.Spec.OpenStack.Constraints.Kubernetes.Versions, nil
-	case gardenv1beta1.CloudProviderAlicloud:
-		return profile.Spec.Alicloud.Constraints.Kubernetes.Versions, nil
-	default:
-		return nil, fmt.Errorf("Unsupported cloudprovider %s", cloudprovider)
-	}
-}
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {
 	if tr == nil {
@@ -172,4 +61,32 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 		values = utils.MergeMaps(values, newValues)
 	}
 	return values, nil
+}
+
+// determineAbsoluteShootChartPath returns the chart to render for the specific shoot flavor
+func determineAbsoluteShootChartPath(defaultChart string, chart *string) (string, error) {
+	if chart == nil {
+		return defaultChart, nil
+	}
+	if filepath.IsAbs(*chart) {
+		return *chart, nil
+	}
+
+	cDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(cDir, *chart), nil
+}
+
+// encodeRawObject marshals an object into json and encodes it as base64
+func encodeRawObject(obj interface{}) (string, error) {
+	if reflect.ValueOf(obj).IsNil() {
+		return "", nil
+	}
+	raw, err := json.Marshal(obj)
+	if err != nil {
+		return "", nil
+	}
+	return base64.StdEncoding.EncodeToString(raw), nil
 }

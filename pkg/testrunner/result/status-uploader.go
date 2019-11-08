@@ -7,6 +7,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/output"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ func UploadStatusToGithub(log logr.Logger, run *testrunner.Run, component *compo
 		testrunStatusTag = success
 	}
 	tableString := strings.Builder{}
-	util.RenderStatusTable(&tableString, tr.Status.Steps)
+	output.RenderStatusTable(&tableString, tr.Status.Steps)
 	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
 	filenameWithoutStatus := fmt.Sprintf("%s%s-%s-%s", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
 	filename := fmt.Sprintf("%s-%s.txt", filenameWithoutStatus, testrunStatusTag)
