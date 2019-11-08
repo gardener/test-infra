@@ -30,6 +30,7 @@ var (
 
 	serverCertFile string
 	serverKeyFile  string
+	uiBasePath     string
 
 	githubApiURL          string
 	githubAppID           int
@@ -43,20 +44,14 @@ var (
 
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
-	serverMuxHTTP := http.NewServeMux()
-	serverMuxHTTPS := http.NewServeMux()
-	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: serverMuxHTTP}
-	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: serverMuxHTTPS}
-
 	r, err := setup(log)
 	if err != nil {
 		log.Error(err, "unable to setup components")
 		os.Exit(1)
 	}
 
-	serverMuxHTTP.Handle("/", r)
-	serverMuxHTTPS.Handle("/", r)
-
+	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: r}
+	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: r}
 	go func() {
 		log.Info("starting HTTP server", "port", listenAddressHTTP)
 		if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -98,6 +93,7 @@ func InitFlags(flagset *flag.FlagSet) {
 		"Path to server certificate")
 	flagset.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
 		"Path to private key")
+	flagset.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
 
 	flagset.StringVar(&githubApiURL, "github-api-url", "https://api.github.com", "GitHub api endpoint url")
 	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")

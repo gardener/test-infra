@@ -1,0 +1,45 @@
+{{define "page"}}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Test Machinery</title>
+    <meta name="description" content="Test Machinery Bot Status page">
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-red.min.css" />
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+</head>
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+            <a href="/"
+               class="logo"><img src="/static/gardener-test-machinery.svg" alt="gardener testmachinery logo" class="logo"/></a>
+            <span class="mdl-layout-title header-title">{{block "pageTitle" .Arguments}}{{template "title" .}}{{end}}</span>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <span class="mdl-layout-title">Test Machinery</span>
+        <nav class="mdl-navigation">
+            <a class="mdl-navigation__link{{if eq .PageName "home"}} mdl-navigation__link--current{{end}}" href="/">Home</a>
+            <a class="mdl-navigation__link{{if eq .PageName "pr-status"}} mdl-navigation__link--current{{end}}" href="/pr-status">PR Status</a>
+            <a class="mdl-navigation__link{{if eq .PageName "command-help"}} mdl-navigation__link--current{{end}}" href="/command-help">Command Help</a>
+            <a class="mdl-navigation__link" href="https://github.com/gardener/test-infra/blob/master/README.md" target="_blank">Documentation <span class="material-icons">open_in_new</span></a>
+        </nav>
+        <footer>
+            {{version}}
+        </footer>
+    </div>
+    <div id="loading-progress" class="mdl-progress mdl-js-progress mdl-progress__indeterminate hidden"></div>
+    <main class="mdl-layout__content">
+        {{block "content" .Arguments}}{{end}}
+    </main>
+</div>
+</body>
+</html>
+
+{{end}}

@@ -51,6 +51,8 @@ FROM alpine:3.10 AS tm-bot
 
 RUN apk add --update bash curl
 
+COPY ./pkg/tm-bot/ui/static /app/static
+COPY ./pkg/tm-bot/ui/templates /app/templates
 COPY --from=builder /go/bin/tm-bot /tm-bot
 
 WORKDIR /

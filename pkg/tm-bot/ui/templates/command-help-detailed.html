@@ -1,0 +1,36 @@
+{{define "title"}}<a href="/command-help" >Command Help</a> > {{ .Command }}{{end}}
+{{define "content"}}
+    <div class="commandhelp-card-wide mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title">
+            <h2 class="mdl-card__title-text">Command: {{ .Command }}</h2>
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+            <ul class="demo-list-icon mdl-list">
+                <li class="mdl-list__item">
+                    <div class="mdl-list__item-primary-content">
+                        <i class="material-icons mdl-list__item-icon">short_text</i>
+                        {{ .Example }}
+                    </div>
+                </li>
+                <li class="mdl-list__item">
+                    <div class="mdl-list__item-primary-content">
+                        <i class="material-icons mdl-list__item-icon">info</i>
+                        {{ .Description }}
+                    </div>
+                </li>
+                <li class="mdl-list__item">
+                    <div class="mdl-list__item-primary-content">
+                    <i class="material-icons mdl-list__item-icon">perm_identity</i>
+                        <div id="auth">{{ .Authorization }}</div>
+                        <div class="mdl-tooltip" for="auth">{{ .AuthorizationTooltip }}</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="mdl-card__supporting-text">
+            <pre>{{ .Usage }}</pre>
+        </div>
+    </div>
+{{end}}
+
+{{template "page" (settings "command-help" .)}}

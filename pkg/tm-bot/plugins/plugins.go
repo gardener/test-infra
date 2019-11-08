@@ -107,6 +107,11 @@ func (p *Plugins) Register(plugin Plugin) {
 	p.log.Info("registered plugin", "name", plugin.Command())
 }
 
+// Get returns a specific plugin
+func Get(name string) (string, Plugin, error) {
+	return plugins.Get(name)
+}
+
 func (p *Plugins) Get(name string) (string, Plugin, error) {
 	plugin, ok := p.registered[name]
 	if !ok {
@@ -114,6 +119,15 @@ func (p *Plugins) Get(name string) (string, Plugin, error) {
 	}
 	runID := util.RandomString(5)
 	return runID, plugin.New(runID), nil
+}
+
+// GetAll returns all registered plugins
+func GetAll() []Plugin {
+	list := make([]Plugin, 0)
+	for _, plugin := range plugins.registered {
+		list = append(list, plugin)
+	}
+	return list
 }
 
 // ResumePlugins resumes all states that can be found in the persistent storage

@@ -56,8 +56,8 @@ func (r *registration) RegisterFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&r.kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Path to the gardener cluster kubeconfigPath")
 	flagset.StringVar(&r.scheduler.shootName, "name", "", "Name of the shoot")
 
-	cpVal := cmdvalues.NewCloudProviderValue(&r.cloudprovider, CloudProviderAll, CloudProviderAll, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure)
-	flagset.Var(cpVal, "cloudprovider", "Specify the cloudprovider of the shoot that should be taken from the pool")
+	cloudproviderFlagVar := cmdvalues.NewCloudProviderValue(&r.cloudprovider, CloudProviderAll, CloudProviderAll, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure)
+	flagset.Var(cloudproviderFlagVar, "cloudprovider", "Specify the cloudprovider of the shoot that should be taken from the pool")
 
 	cmdutil.ViperHelper.BindPFlag("gardener.kubeconfig", flagset.Lookup("kubeconfig"))
 }
