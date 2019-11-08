@@ -29,6 +29,8 @@ See [here](docs/testmachinery/GetStarted.md) how new tests can be easily added.
   Testrunner is an additional component of the Test Machinery that abstracts templating, deploying and watching of Testruns and provide additional functionality like storing test results or notifying test-owners.
 - [**Kubernetes e2e Testrunner**](integration-tests/e2e)<br>
   Executes the Kubernetes e2e/Conformance tests and uploads them for further analysis to testgrid or elasticsearch.
+- [**Kubernetes CNCF Pull Request Creator**](cmd/tm-bot)<br>
+  Prepares a pull request for CNCF kubernetes certification
 - [**Host Scheduler**](cmd/hostscheduler)<br>
   The hostscheduler selects available cluster from specific providers and locks the selected cluster so that a fresh gardener can be installed.
   When the cluster is not needed anymore, the host scheduler cleans and releases the cluster.
