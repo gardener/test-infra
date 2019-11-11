@@ -15,19 +15,19 @@ package cmdvalues
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/spf13/pflag"
 )
 
 type CloudProviderValue struct {
-	allowedProvider map[v1beta1.CloudProvider]bool
-	cloudprovider   *v1beta1.CloudProvider
+	allowedProvider map[common.CloudProvider]bool
+	cloudprovider   *common.CloudProvider
 }
 
-func NewCloudProviderValue(value *v1beta1.CloudProvider, defaultValue v1beta1.CloudProvider, allowed ...v1beta1.CloudProvider) pflag.Value {
+func NewCloudProviderValue(value *common.CloudProvider, defaultValue common.CloudProvider, allowed ...common.CloudProvider) pflag.Value {
 	*value = defaultValue
 	cpvalue := &CloudProviderValue{
-		allowedProvider: make(map[v1beta1.CloudProvider]bool),
+		allowedProvider: make(map[common.CloudProvider]bool),
 		cloudprovider:   value,
 	}
 	for _, cp := range allowed {
@@ -47,7 +47,7 @@ func (v *CloudProviderValue) Type() string {
 }
 
 func (v *CloudProviderValue) Set(value string) error {
-	provider := v1beta1.CloudProvider(value)
+	provider := common.CloudProvider(value)
 	if _, ok := v.allowedProvider[provider]; len(v.allowedProvider) != 0 && !ok {
 		return fmt.Errorf("unsupported cloudprovider %s", provider)
 	}

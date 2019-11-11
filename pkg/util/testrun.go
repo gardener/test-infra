@@ -16,6 +16,7 @@ package util
 
 import (
 	"context"
+	"fmt"
 	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -59,4 +60,20 @@ func ResumeTestrun(ctx context.Context, k8sClient kubernetes.Interface, tr *v1be
 	}
 
 	return nil
+}
+
+// TestrunProgress returns the progress of a testrun
+func TestrunProgress(tr *v1beta1.Testrun) string {
+	allSteps := 0
+	completedSteps := 0
+	for _, step := range tr.Status.Steps {
+		if step.Annotations[common.AnnotationSystemStep] != "true" {
+			allSteps++
+			if Completed(step.Phase) {
+				completedSteps++
+			}
+		}
+	}
+
+	return fmt.Sprintf("%d/%d", completedSteps, allSteps)
 }

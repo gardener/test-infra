@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
+	"github.com/gardener/test-infra/pkg/tm-bot/ui"
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -45,10 +46,11 @@ func setup(log logr.Logger) (*mux.Router, error) {
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware(log.WithName("trace")))
-
 	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
 	r.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
 
+	botUI := ui.New(log, uiBasePath)
+	botUI.Serve(r)
 	return r, nil
 }
 

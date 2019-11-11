@@ -63,6 +63,15 @@ func (r *Runs) GetRunning(event *github.GenericRequestEvent) (*Run, bool) {
 	return run, ok
 }
 
+// GetAllRunning returns all running tests
+func GetAllRunning() []*Run {
+	runlist := make([]*Run, 0)
+	for _, run := range runs.tests {
+		runlist = append(runlist, run)
+	}
+	return runlist
+}
+
 func (r *Runs) Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
 	runs.m.Lock()
 	defer runs.m.Unlock()

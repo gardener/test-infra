@@ -1,0 +1,38 @@
+{{define "title"}}Command Help{{end}}
+{{define "content"}}
+    <div class="table-container">
+        <table id="command-table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <thead>
+            <tr>
+                <th></th>
+                <th class="mdl-data-table__cell--non-numeric">Command</th>
+                <th class="mdl-data-table__cell--non-numeric">Example</th>
+                <th id="description-col" class="mdl-data-table__cell--non-numeric">Description</th>
+                <th id="usage-col" class="mdl-data-table__cell--non-numeric">Who Can Use</th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {{ range $_, $plugin := .plugins }}
+                <tr>
+                    <td></td>
+                    <td class="mdl-data-table__cell--non-numeric">{{ $plugin.Command }}</td>
+                    <td class="mdl-data-table__cell--non-numeric">{{ $plugin.Example }}</td>
+                    <td id="description-col" class="mdl-data-table__cell--non-numeric">{{ $plugin.Description }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $plugin.Authorization }}</td>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <a href="/command-help/{{ $plugin.Command }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                            Usage
+                        </a>
+                    </td>
+                    <td></td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{end}}
+
+{{template "page" (settings "command-help" .)}}

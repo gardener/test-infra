@@ -16,9 +16,9 @@ package gardenerscheduler
 import (
 	"fmt"
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/go-logr/logr"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 )
 
@@ -44,7 +44,7 @@ func ShootKubeconfigSecretName(shootName string) string {
 
 type registration struct {
 	kubeconfigPath string
-	cloudprovider  string
+	cloudprovider  common.CloudProvider
 	scheduler      *gardenerscheduler
 }
 
@@ -54,7 +54,7 @@ type gardenerscheduler struct {
 
 	shootName     string
 	namespace     string
-	cloudprovider gardenv1beta1.CloudProvider
+	cloudprovider common.CloudProvider
 }
 
 func isFree(shoot *v1alpha1.Shoot) bool {

@@ -1,0 +1,39 @@
+{{define "title"}}Status{{end}}
+{{define "content"}}
+    <div class="table-container">
+        <table id="command-table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <thead>
+            <tr>
+                <th></th>
+                <th class="mdl-data-table__cell--non-numeric">PR</th>
+                <th class="mdl-data-table__cell--non-numeric">Testrun</th>
+                <th class="mdl-data-table__cell--non-numeric">Progress</th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {{ range $_, $test := .tests }}
+                <tr>
+                    <td class="icon-cell">
+                        <i id="phase-{{ $test.Testrun }}" class="material-icons mdl-list__item-icon" style="color:{{ $test.Phase.Color }}">{{ $test.Phase.Icon }}</i>
+                        <div class="mdl-tooltip" for="phase-{{ $test.Testrun }}">{{ $test.Phase.Tooltip }}</div>
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">{{ $test.Organization }}/{{ $test.Repository }}/{{ $test.PR }}</td>
+                    <td class="mdl-data-table__cell--non-numeric">{{ $test.Testrun }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Progress }}</td>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <a href="/pr-status/{{ $test.Testrun }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                            Details
+                        </a>
+                    </td>
+                    <td></td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{end}}
+
+{{template "page" (settings "pr-status" .)}}

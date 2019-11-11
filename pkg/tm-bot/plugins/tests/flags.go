@@ -16,7 +16,6 @@ package tests
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -55,7 +54,7 @@ func (t *test) Flags() *pflag.FlagSet {
 	flagset.StringVar(&t.config.Namespace, "namespace", "default", "Testrun namespace")
 	flagset.Var(cmdvalues.NewHostProviderValue(&t.config.HostProvider, gardenerscheduler.Name), hostprovider, "Specify the provider for selecting the base cluster")
 	flagset.StringVar(&t.config.GardenSetupRevision, gardensetupRevision, "master", "Specify the garden setup version to setup gardener")
-	flagset.Var(cmdvalues.NewCloudProviderValue(&t.config.BaseClusterCloudprovider, v1beta1.CloudProviderGCP, v1beta1.CloudProviderGCP, v1beta1.CloudProviderAWS, v1beta1.CloudProviderAzure),
+	flagset.Var(cmdvalues.NewCloudProviderValue(&t.config.BaseClusterCloudprovider, common.CloudProviderGCP, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure),
 		hostCloudprovider, "Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster")
 	flagset.StringVar(&t.config.Gardener.Version, gardenerVersion, "", "Specify the gardener to be deployed by garden setup")
 	flagset.StringVar(&t.config.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")

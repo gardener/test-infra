@@ -1,0 +1,41 @@
+{{define "title"}}<a href="/pr-status" >PR Status</a> > {{ .Testrun }}{{end}}
+{{define "content"}}
+    <div class="pr-status-card-wide mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title">
+            <h2 class="mdl-card__title-text">{{ .Testrun }}</h2>
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-list__item-primary-content">
+                    <i class="material-icons mdl-list__item-icon">info</i>
+                    {{ .Organization }}/{{ .Repository }}/{{ .PR }}
+                </div>
+                <div class="mdl-cell mdl-list__item-primary-content">
+                    <i class="material-icons mdl-list__item-icon">perm_identity</i>
+                    {{ .Author }}
+                </div>
+            </div>
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-list__item-primary-content">
+                    <i class="material-icons mdl-list__item-icon">schedule</i>
+                    {{ .StartTime }}
+                </div>
+            </div>
+            <div class="mdl-grid">
+                <div class="mdl-cell  mdl-list__item-primary-content">
+                    <i class="material-icons mdl-list__item-icon">speed</i>
+                    {{ .Progress }} Steps
+                </div>
+            </div>
+        </div>
+        <div class="mdl-card__supporting-text">
+            <pre>{{ .RawStatus }}</pre>
+        </div>
+        <div class="mdl-card__menu">
+            <i id="phase-{{ .Testrun }}" class="material-icons mdl-list__item-icon" style="color:{{ .Phase.Color }}">{{ .Phase.Icon }}</i>
+            <div class="mdl-tooltip" for="phase-{{ .Testrun }}">{{ .Phase.Tooltip }}</div>
+        </div>
+    </div>
+{{end}}
+
+{{template "page" (settings "pr-status" .)}}
