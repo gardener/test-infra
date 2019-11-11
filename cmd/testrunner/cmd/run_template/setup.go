@@ -13,7 +13,7 @@ func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix
 	// read and parse test shoot configuration
 	dat, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read test shoot configuration file from %s", testShootConfigPath)
+		return nil, errors.Wrapf(err, "unable to read test shoot configuration file from %s", flavorConfigPath)
 	}
 
 	flavors := common.ExtendedShootFlavors{}

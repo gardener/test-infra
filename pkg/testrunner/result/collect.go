@@ -16,6 +16,7 @@ package result
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util/output"
 	"os"
 	"path/filepath"
@@ -53,7 +54,9 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 			continue
 		}
 
-		c.ingestIntoElasticsearch(cfg, err, runLogger, tmClient, run)
+		if err := c.ingestIntoElasticsearch(cfg, runLogger, tmClient, run); err != nil {
+			runLogger.Error(err, "error while ingesting file")
+		}
 		c.uploadStatusAsset(cfg, runLogger, err, run, tmClient)
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
@@ -74,18 +77,15 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 	return testrunsFailed, util.ReturnMultiError(result)
 }
 
-func (c *Collector) ingestIntoElasticsearch(cfg Config, err error, runLogger logr.Logger, tmClient kubernetes.Interface, run *testrunner.Run) {
-	if cfg.OutputDir != "" && cfg.ESConfigName != "" {
-		err = IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
-		if err != nil {
-			runLogger.Error(err, "cannot persist file", "file", cfg.OutputDir)
-		} else {
-			err := MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
-			if err != nil {
-				runLogger.Error(err, "unable to ingest testrun")
-			}
-		}
+func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, tmClient kubernetes.Interface, run *testrunner.Run) error {
+	if cfg.OutputDir == "" && cfg.ESConfigName == "" {
+		return nil
 	}
+	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
+	if err != nil {
+		return errors.Wrapf(err, "cannot persist file %s", cfg.OutputDir)
+	}
+	return MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 }
 
 func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {

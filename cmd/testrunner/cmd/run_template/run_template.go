@@ -38,7 +38,7 @@ var collectConfig = result.Config{}
 var shootParameters = testrunnerTemplate.Parameters{}
 
 var (
-	testShootConfigPath string
+	flavorConfigPath    string
 	testrunNamePrefix   string
 	shootPrefix         string
 	tmKubeconfigPath    string
@@ -86,7 +86,7 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
-		shootFlavors, err := GetShootFlavors(testShootConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
+		shootFlavors, err := GetShootFlavors(flavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
 			os.Exit(1)
@@ -173,9 +173,9 @@ func init() {
 	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
 	}
-	runCmd.Flags().StringVar(&shootParameters.FlavoredTestrunChartPath, "shoot-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
-	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
+	runCmd.Flags().StringVar(&shootParameters.FlavoredTestrunChartPath, "flavored-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
+	if err := runCmd.MarkFlagFilename("flavored-testruns-chart-path"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "flavored-testruns-chart-path")
 	}
 	runCmd.Flags().StringVar(&shootParameters.GardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
 	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
@@ -188,12 +188,9 @@ func init() {
 		logger.Log.Error(err, "mark flag required", "flag", "gardener-kubeconfig-path")
 	}
 
-	runCmd.Flags().StringVar(&testShootConfigPath, "shoot-test-config", "", "Path to shoot test configuration.")
-	if err := runCmd.MarkFlagRequired("shoot-test-config"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "shoot-test-config")
-	}
-	if err := runCmd.MarkFlagFilename("shoot-test-config"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "shoot-test-config")
+	runCmd.Flags().StringVar(&flavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
+	if err := runCmd.MarkFlagFilename("flavor-config"); err != nil {
+		logger.Log.Error(err, "mark flag filename", "flag", "flavor-config")
 	}
 
 	runCmd.Flags().StringVar(&shootPrefix, "shoot-name", "", "Shoot name which is used to run tests.")
