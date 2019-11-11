@@ -51,7 +51,7 @@ func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.In
 }
 
 func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
-	if err := runs.Add(event, *tr); err != nil {
+	if err := runs.Add(event, tr); err != nil {
 		return nil, err
 	}
 	defer runs.Remove(event)
@@ -68,7 +68,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 			log.Error(err, "cannot get Testrun")
 			return false, nil
 		}
-		tr = testrun
+		*tr = *testrun
 
 		if tr.Status.State != "" {
 			testrunPhase = tr.Status.Phase

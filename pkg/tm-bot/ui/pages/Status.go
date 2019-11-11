@@ -102,8 +102,8 @@ func NewPRStatusPage(logger logr.Logger, basePath string) http.HandlerFunc {
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon[util.TestrunStatusPhase(&run.Testrun)],
-				Progress:     util.TestrunProgress(&run.Testrun),
+				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
+				Progress:     util.TestrunProgress(run.Testrun),
 			}
 		}
 		params := map[string]interface{}{
@@ -159,8 +159,8 @@ func NewPRStatusDetailPage(logger logr.Logger, basePath string) http.HandlerFunc
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon[util.TestrunStatusPhase(&run.Testrun)],
-				Progress:     util.TestrunProgress(&run.Testrun),
+				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
+				Progress:     util.TestrunProgress(run.Testrun),
 			},
 			Author:    run.Event.GetAuthorName(),
 			StartTime: startTime,
@@ -176,7 +176,7 @@ var repo = "repo"
 var author = "demo-user"
 var startTime = metav1.NewTime(time.Now())
 var demotest = tests.Run{
-	Testrun: v1beta1.Testrun{
+	Testrun: &v1beta1.Testrun{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "demo-tr",
 		},

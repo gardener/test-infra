@@ -33,7 +33,7 @@ type Runs struct {
 }
 
 type Run struct {
-	Testrun v1beta1.Testrun
+	Testrun *v1beta1.Testrun
 	Event   *github.GenericRequestEvent
 }
 
@@ -72,7 +72,7 @@ func GetAllRunning() []*Run {
 	return runlist
 }
 
-func (r *Runs) Add(event *github.GenericRequestEvent, tr v1beta1.Testrun) error {
+func (r *Runs) Add(event *github.GenericRequestEvent, tr *v1beta1.Testrun) error {
 	runs.m.Lock()
 	defer runs.m.Unlock()
 

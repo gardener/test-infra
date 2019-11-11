@@ -38,7 +38,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event, v1beta1.Testrun{})).NotTo(HaveOccurred())
+		Expect(runs.Add(event, &v1beta1.Testrun{})).NotTo(HaveOccurred())
 
 		Expect(runs.IsRunning(event)).To(BeTrue())
 	})
@@ -57,7 +57,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event, v1beta1.Testrun{})).NotTo(HaveOccurred())
+		Expect(runs.Add(event, &v1beta1.Testrun{})).NotTo(HaveOccurred())
 
 		run, ok := runs.GetRunning(event)
 		Expect(ok).To(BeTrue())
@@ -78,7 +78,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event, v1beta1.Testrun{})).NotTo(HaveOccurred())
+		Expect(runs.Add(event, &v1beta1.Testrun{})).NotTo(HaveOccurred())
 
 		event2 := &ghutil.GenericRequestEvent{
 			Number: 0,
@@ -89,7 +89,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event2, v1beta1.Testrun{})).To(HaveOccurred())
+		Expect(runs.Add(event2, &v1beta1.Testrun{})).To(HaveOccurred())
 
 		Expect(runs.IsRunning(event)).To(BeTrue())
 	})
@@ -108,7 +108,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event, v1beta1.Testrun{})).NotTo(HaveOccurred())
+		Expect(runs.Add(event, &v1beta1.Testrun{})).NotTo(HaveOccurred())
 
 		owner2 := "test2"
 		repo2 := "repo2"
@@ -121,7 +121,7 @@ var _ = Describe("Runs", func() {
 				},
 			},
 		}
-		Expect(runs.Add(event2, v1beta1.Testrun{})).NotTo(HaveOccurred())
+		Expect(runs.Add(event2, &v1beta1.Testrun{})).NotTo(HaveOccurred())
 
 		Expect(runs.IsRunning(event)).To(BeTrue())
 		Expect(runs.IsRunning(event2)).To(BeTrue())
