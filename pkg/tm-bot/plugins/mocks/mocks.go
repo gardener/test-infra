@@ -63,6 +63,20 @@ func (mr *MockPluginMockRecorder) Command() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Command", reflect.TypeOf((*MockPlugin)(nil).Command))
 }
 
+// Config mocks base method
+func (m *MockPlugin) Config() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Config")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Config indicates an expected call of Config
+func (mr *MockPluginMockRecorder) Config() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Config", reflect.TypeOf((*MockPlugin)(nil).Config))
+}
+
 // Description mocks base method
 func (m *MockPlugin) Description() string {
 	m.ctrl.T.Helper()

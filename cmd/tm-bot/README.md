@@ -8,9 +8,11 @@ The bot is mainly build to run integration tests in PR's and report back the cor
 
 ## Plugins
 
+[Command help](https://tm.gardener.cloud/command-help)
+
 Plugins and their default values can be configured by creating a values file in `.ci/tm-bot` in the default branch of the repository.
 This file will be parsed by the bot and the plugins will automatically be able to access the config for a certain call.
-For detailed information about the plugins configuration see the resprective plugin.
+For detailed information about the plugins configuration see the respective plugin.
 
 The configuration file has the following format:
 ```yaml
@@ -36,84 +38,6 @@ test:
     - 1.14.4
     - 1.13.10
 
-```
-
-#### echo
-Writes the value as PR comment
-```
-Command: echo
-Flags: --value string
-```
-#### xkcd
-Prints a random or flag specified xkcd
-```
-Command: xkcd
-Flags: --num int
-```
-
-#### skip
-Skips all required testmachinery github status by setting it to success with the description `skipped`.
-```
-Command: skip
-```
-
-#### test
-Runs a default testrun with the given default configuration and provided flags.<br>
-Detailed testrun information can be found [here](../../docs/tests/gardener-default.md).
-```
-Command test
-Runs a default gardener test with the specified flavors
-
-Example: /test
-
-Usage:
-  -p, --cloudprovider CloudProviderArray   Specify the cloudproviders to test.
-      --dry-run                            Print the rendered testrun
-      --garden-setup-version string        Specify the garden setup version to setup gardener (default "master")
-      --gardener-commit string             Specify the gardener commit that is deployed by garden setup
-      --gardener-image string              Specify the gardener image tag to be deployed by garden setup
-      --gardener-version string            Specify the gardener to be deployed by garden setup
-      --hibernation                        test hibernation
-      --host-cloudprovider CloudProvider   Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster (default gcp)
-      --hostprovider HostProvider          Specify the provider for selecting the base cluster (default gardener)
-      --kubernetes-version stringArray     Specify the kubernetes version to test
-  -l, --label string                       Specify test label that should be fetched by the testmachinery (default "default")
-      --namespace string                   Testrun namespace (default "default")
-      --pause                              Pauses the testrun before gardener is deleted
-      --project-namespace string           Specify the shoot namespace where the shoots should be created (default "garden-core")
-```
-
-#### Resume
-Resumes a paused testrun.
-```
-Command resume
-Resumes the last paused testrun
-
-Example: /resume
-```
-
-
-**Default Configuration**<br>
-Note: all values are optional and can be manually overwritten by specifying the according flag.
-```yaml
-test:
-  hostprovider: gardener # gardener or gke
-  baseClusterCloudprovider: gcp # Cloudprovider of the selected host. Only applicable for hostprovider gardener
-
-  gardensetup:
-    revision: # StringOrGitHubConfig
-
-  gardener:
-    version: # StringOrGitHubConfig
-    commit: # StringOrGitHubConfig
-
-  shootFlavors:
-  - cloudprovider: # cloudprovider e.g. aws
-    kubernetesVersions: 
-    - version: "" # expirable version
-    workers:
-    - workerPools: # gardener worker definitions
-      - name: "wp1" 
 ```
 
 ```yaml

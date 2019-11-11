@@ -219,7 +219,7 @@ func saveJunitXmlToFile(junitXMLFilePaths []string, mergedJunitXmlResult *JunitX
 		}
 		return nil
 	}
-		output, err := xml.MarshalIndent(mergedJunitXmlResult, "  ", "    ")
+	output, err := xml.MarshalIndent(mergedJunitXmlResult, "  ", "    ")
 	if err != nil {
 		return err
 	}

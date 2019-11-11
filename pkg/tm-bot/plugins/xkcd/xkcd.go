@@ -62,11 +62,15 @@ func (_ *xkcd) Authorization() github.AuthorizationType {
 }
 
 func (_ *xkcd) Description() string {
-	return "Adds an random image of xkcd"
+	return "Adds an random image from xkcd"
 }
 
 func (_ *xkcd) Example() string {
 	return "/xkcd --num 2"
+}
+
+func (_ *xkcd) Config() string {
+	return ""
 }
 
 func (_ *xkcd) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {

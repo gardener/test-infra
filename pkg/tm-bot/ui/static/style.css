@@ -66,6 +66,10 @@ ul.noBullets li {
     width: 75%;
 }
 
+.commandhelp-card-wide .mdl-card__supporting-text {
+    width: 100%;
+}
+
 .commandhelp-card-wide pre {
     white-space: pre-wrap;       /* Since CSS 2.1 */
     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
@@ -73,6 +77,7 @@ ul.noBullets li {
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
     line-height: 2em;
+    padding-left: 40px;
 }
 
 .pr-status-card-wide {

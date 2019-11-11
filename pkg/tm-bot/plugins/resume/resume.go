@@ -61,6 +61,10 @@ func (r *resume) Example() string {
 	return "/resume"
 }
 
+func (_ *resume) Config() string {
+	return ""
+}
+
 func (r *resume) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
 	return nil
 }

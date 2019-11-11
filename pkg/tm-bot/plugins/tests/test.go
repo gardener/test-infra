@@ -74,3 +74,34 @@ func (t *test) Description() string {
 func (t *test) Example() string {
 	return "/test "
 }
+
+func (t *test) Config() string {
+	return `
+test:
+  hostprovider: gardener # gardener or gke
+  baseClusterCloudprovider: gcp # Cloudprovider of the selected host. Only applicable for hostprovider gardener
+
+  gardensetup:
+    revision: # StringOrGitHubConfig
+
+  gardener:
+    version: # StringOrGitHubConfig
+    commit: # StringOrGitHubConfig
+
+  shootFlavors:
+  - cloudprovider: # cloudprovider e.g. aws
+    kubernetesVersions: 
+    - version: "" # expirable version
+    workers:
+    - workerPools: # gardener worker definitions
+      - name: "wp1" 
+
+# StringOrGitHubConfig
+parameter: "string"
+
+parameter:
+  value: "string" # raw string value. Same as defining only a string
+  path: test/path # read the file in the default branch of the repo (repo root will used to define the path) and return its content as a string
+  prHead: true # use the commit sha of the current PR's head
+`
+}

@@ -39,6 +39,7 @@ type CommandHelpDetailedItem struct {
 	CommandHelpItem
 	AuthorizationTooltip string
 	Usage                string
+	Config               string
 }
 
 func NewCommandHelpPage(logger logr.Logger, basePath string) http.HandlerFunc {
@@ -80,6 +81,7 @@ func NewCommandDetailedHelpPage(logger logr.Logger, basePath string) http.Handle
 			},
 			AuthorizationTooltip: AuthorizationTooltip[plugin.Authorization()],
 			Usage:                plugin.Flags().FlagUsages(),
+			Config:               plugin.Config(),
 		}
 		p.handleSimplePage("command-help-detailed.html", params)(w, r)
 	}

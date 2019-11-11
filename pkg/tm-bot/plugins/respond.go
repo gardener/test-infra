@@ -18,7 +18,7 @@ import (
 	"fmt"
 )
 
-const AboutThisBotWithoutCommands = "Instructions for interacting with me using PR comments are available <a href=\"https://github.com/gardener/test-infra/tree/master/cmd/tm-bot#Plugins\">here</a>"
+const AboutThisBotWithoutCommands = "Instructions for interacting with me using PR comments are available <a href=\"https://tm.gardener.cloud/command-help\">here</a>"
 
 // FormatSimpleResponse formats a response that does not warrant additional explanation in the
 // details section.

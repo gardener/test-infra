@@ -41,6 +41,9 @@ type Plugin interface {
 	// Example returns an example for the command
 	Example() string
 
+	// Config returns description for the default config that can be used in the repository
+	Config() string
+
 	// Flags return command line style flags for the command
 	Flags() *pflag.FlagSet
 

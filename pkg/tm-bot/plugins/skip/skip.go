@@ -54,6 +54,10 @@ func (_ *skip) Example() string {
 	return "/skip"
 }
 
+func (_ *skip) Config() string {
+	return ""
+}
+
 func (_ *skip) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
 	return nil
 }
