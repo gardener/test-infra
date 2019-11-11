@@ -61,7 +61,7 @@ var _ = Describe("Runs", func() {
 
 		run, ok := runs.GetRunning(event)
 		Expect(ok).To(BeTrue())
-		Expect(run.Testrun).To(Equal(v1beta1.Testrun{}))
+		Expect(run.Testrun).To(Equal(&v1beta1.Testrun{}))
 	})
 
 	It("should reject another Run if one is already running", func() {

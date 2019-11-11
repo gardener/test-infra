@@ -278,7 +278,7 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}}}))
 		})
 
 		It("should add different versions for gcp and aws", func() {
@@ -305,8 +305,8 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}}))
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderAWS, []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderAWS, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
 		})
 
 		It("should add 2 unique versions from different flavors to the same cloudprovider", func() {
@@ -333,7 +333,7 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
 		})
 	})
 
