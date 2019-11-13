@@ -33,6 +33,10 @@ type DefaultsConfig struct {
 		Commit  *ghval.StringOrGitHubValue `json:"commit"`
 	} `json:"gardener"`
 
+	// github.com/gardener/gardener-extension version
+	// has to be a yaml of a map[extension-name]{version: "0.0.0",repo:"github.com/x/x"}
+	GardenerExtensions *ghval.GitHubValue `json:"gardenerExtensions"`
+
 	ShootFlavors *[]*common.ShootFlavor `json:"shootFlavors"`
 }
 

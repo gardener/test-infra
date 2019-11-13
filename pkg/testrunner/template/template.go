@@ -72,6 +72,7 @@ func getInternalParametersFunc(parameters *Parameters) (func(string) *internalPa
 
 	return func(chartPath string) *internalParameters {
 		return &internalParameters{
+			FlavorConfigPath:    parameters.FlavorConfigPath,
 			ComponentDescriptor: componentDescriptor,
 			ChartPath:           chartPath,
 			GardenerKubeconfig:  gardenerKubeconfig,
@@ -109,7 +110,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 	}
 
 	for _, shoot := range shootFlavors {
-		chartPath, err := determineAbsoluteShootChartPath(parameters.ChartPath, shoot.ChartPath)
+		chartPath, err := determineAbsoluteShootChartPath(parameters, shoot.ChartPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to determine chart to render")
 		}

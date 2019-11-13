@@ -25,9 +25,10 @@ const (
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
 
 	// Repositories
-	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
-	GardenerRepo    = "https://github.com/gardener/gardener.git"
+	TestInfraRepo          = "https://github.com/gardener/test-infra.git"
+	GardenSetupRepo        = "https://github.com/gardener/garden-setup.git"
+	GardenerRepo           = "https://github.com/gardener/gardener.git"
+	GardenerExtensionsRepo = "https://github.com/gardener/gardener-extensions.git"
 
 	PatternLatest = "latest"
 )

@@ -34,7 +34,7 @@ type shoot struct {
 func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 	gsLocationName := "gs"
 	prepareHostCluster := templates.GetStepLockHost(cfg.HostProvider, cfg.BaseClusterCloudprovider)
-	createGardener, err := templates.GetStepCreateGardener(gsLocationName, []string{prepareHostCluster.Name}, cfg.BaseClusterCloudprovider, cfg.Shoots.Flavors.GetUsedKubernetesVersions(), cfg.Shoots.Flavors.GetUsedMachineImages(), cfg.Gardener)
+	createGardener, err := templates.GetStepCreateGardener(gsLocationName, []string{prepareHostCluster.Name}, cfg.BaseClusterCloudprovider, cfg.Shoots.Flavors.GetUsedKubernetesVersions(), cfg.Shoots.Flavors.GetUsedMachineImages(), cfg.Gardener, cfg.GardenerExtensions)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 
 		Spec: v1beta1.TestrunSpec{
 			LocationSets: []v1beta1.LocationSet{
-				templates.GetDefaultLocationsSet(cfg.Gardener),
+				templates.GetDefaultLocationsSet(cfg.Gardener, cfg.GardenerExtensions),
 				templates.TestInfraLocation,
 				templates.GetGardenSetupLocation(gsLocationName, cfg.GardenSetupRevision),
 			},

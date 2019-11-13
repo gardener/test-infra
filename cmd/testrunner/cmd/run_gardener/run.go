@@ -25,6 +25,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
+	"github.com/gardener/test-infra/pkg/util/gardensetup"
 	"os"
 	"time"
 
@@ -53,6 +54,7 @@ var (
 	componentDescriptorPath string
 	kubernetesVersions      []string
 	cloudproviders          []common.CloudProvider
+	gardenerExtensions      string
 	testLabel               string
 	hibernation             bool
 )
@@ -101,6 +103,11 @@ var runCmd = &cobra.Command{
 		defaultConfig.Shoots.DefaultTest = templates.TestWithLabels(testLabel)
 		if hibernation {
 			defaultConfig.Shoots.Tests = []testrun_renderer.TestsFunc{templates.HibernationLifecycle}
+		}
+		defaultConfig.GardenerExtensions, err = gardensetup.ParseFlag(gardenerExtensions)
+		if err != nil {
+			logger.Log.Error(err, "unable to parse gardener extensions")
+			os.Exit(1)
 		}
 
 		tr, err := _default.Render(&defaultConfig)
@@ -186,9 +193,10 @@ func init() {
 	runCmd.Flags().StringVar(&defaultConfig.GardenSetupRevision, "garden-setup-version", "master", "Specify the garden setup version to setup gardener")
 	runCmd.Flags().Var(cmdvalues.NewCloudProviderValue(&defaultConfig.BaseClusterCloudprovider, common.CloudProviderGCP, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure),
 		"host-cloudprovider", "Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster")
-	runCmd.Flags().StringVar(&defaultConfig.Gardener.Version, "gardener-version", "", "Specify the gardener to be deployed by garden setup")
+	runCmd.Flags().StringVar(&defaultConfig.Gardener.Version, "gardener-version", "", "Specify the gardener version to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Commit, "gardener-commit", "", "Specify the gardener commit that is deployed by garden setup")
+	runCmd.Flags().StringVar(&gardenerExtensions, "gardener-extensions", "provider-gcp=github.com/gardener/gardener-extensions.git:master", "Specify the gardener extensions versions to be deployed by garden setup")
 
 	runCmd.Flags().StringVar(&defaultConfig.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	runCmd.Flags().StringArrayVar(&kubernetesVersions, "kubernetes-version", []string{}, "Specify the kubernetes version to test")

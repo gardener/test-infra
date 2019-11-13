@@ -38,7 +38,6 @@ var collectConfig = result.Config{}
 var shootParameters = testrunnerTemplate.Parameters{}
 
 var (
-	flavorConfigPath    string
 	testrunNamePrefix   string
 	shootPrefix         string
 	tmKubeconfigPath    string
@@ -86,7 +85,7 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
-		shootFlavors, err := GetShootFlavors(flavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
+		shootFlavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
 			os.Exit(1)
@@ -188,7 +187,7 @@ func init() {
 		logger.Log.Error(err, "mark flag required", "flag", "gardener-kubeconfig-path")
 	}
 
-	runCmd.Flags().StringVar(&flavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
+	runCmd.Flags().StringVar(&shootParameters.FlavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
 	if err := runCmd.MarkFlagFilename("flavor-config"); err != nil {
 		logger.Log.Error(err, "mark flag filename", "flag", "flavor-config")
 	}
