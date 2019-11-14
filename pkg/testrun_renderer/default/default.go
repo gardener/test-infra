@@ -160,7 +160,7 @@ func Validate(cfg *Config) error {
 	}
 
 	if len(cfg.GardenerExtensions) == 0 {
-		result = multierror.Append(result, errors.New("the gardener extensions version has to be defined"))
+		result = multierror.Append(result, errors.New("the gardener extensions have to be defined"))
 	}
 
 	return util.ReturnMultiError(result)

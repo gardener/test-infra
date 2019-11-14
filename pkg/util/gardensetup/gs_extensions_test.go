@@ -80,7 +80,7 @@ var _ = Describe("gardensetup extensions util", func() {
 
 	Context("parse flag", func() {
 		It("should parse one extensions definition with a valid version", func() {
-			f := "ext1=repo1:0.0.1"
+			f := "ext1=repo1::0.0.1"
 			res, err := gardensetup.ParseFlag(f)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(common.GSExtensions{
@@ -89,7 +89,7 @@ var _ = Describe("gardensetup extensions util", func() {
 		})
 
 		It("should parse one extensions definition with a commit", func() {
-			f := "ext1=repo1:000000000a000000b0000000000000c000000000"
+			f := "ext1=repo1::000000000a000000b0000000000000c000000000"
 			res, err := gardensetup.ParseFlag(f)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(common.GSExtensions{
@@ -98,7 +98,7 @@ var _ = Describe("gardensetup extensions util", func() {
 		})
 
 		It("should parse one extensions definition with a branch", func() {
-			f := "ext1=repo1:patch-1"
+			f := "ext1=repo1::patch-1"
 			res, err := gardensetup.ParseFlag(f)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(common.GSExtensions{
@@ -107,7 +107,7 @@ var _ = Describe("gardensetup extensions util", func() {
 		})
 
 		It("should parse multiple extension definitions", func() {
-			f := "ext1=repo1:0.0.1,ext2=repo2:0.0.0"
+			f := "ext1=repo1::0.0.1,ext2=repo2::0.0.0"
 			res, err := gardensetup.ParseFlag(f)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(common.GSExtensions{

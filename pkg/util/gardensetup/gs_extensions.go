@@ -34,13 +34,13 @@ func ParseFlag(value string) (common.GSExtensions, error) {
 		var pair []string
 		switch v := val.(type) {
 		case string:
-			pair = strings.Split(v, ":")
+			pair = strings.Split(v, "::")
 		default:
-			return nil, fmt.Errorf("unsupported type %s at %s expected string with repo:version pair", reflect.TypeOf(v), name)
+			return nil, fmt.Errorf("unsupported type %s at %s expected string with repo::version pair", reflect.TypeOf(v), name)
 		}
 
 		if len(pair) != 2 {
-			return nil, fmt.Errorf("value %s of %s has to be of type repo:version", val, name)
+			return nil, fmt.Errorf("value %s of %s has to be of type repo::version", val, name)
 		}
 
 		config, err := parseExtensionFromPair(pair)
@@ -63,6 +63,7 @@ func parseExtensionFromPair(pair []string) (common.GSExtensionConfig, error) {
 		Repository: repository,
 	}
 
+	// check if revision is a commit sha by checking for length of exactly 40
 	if len(revision) == 40 {
 		config.Commit = revision
 		config.ImageTag = revision

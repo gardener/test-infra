@@ -43,22 +43,18 @@ func GetDefaultLocationsSet(gardenerCfg GardenerConfig, gardenerExtensions commo
 	}
 
 	if gardenerCfg.Version != "" {
-		set.Locations = []v1beta1.TestLocation{
-			{
-				Type:     v1beta1.LocationTypeGit,
-				Repo:     common.GardenerRepo,
-				Revision: gardenerCfg.Version,
-			},
-		}
+		set.Locations = append(set.Locations, v1beta1.TestLocation{
+			Type:     v1beta1.LocationTypeGit,
+			Repo:     common.GardenerRepo,
+			Revision: gardenerCfg.Version,
+		})
 	}
 	if gardenerCfg.Commit != "" {
-		set.Locations = []v1beta1.TestLocation{
-			{
-				Type:     v1beta1.LocationTypeGit,
-				Repo:     common.GardenerRepo,
-				Revision: gardenerCfg.Commit,
-			},
-		}
+		set.Locations = append(set.Locations, v1beta1.TestLocation{
+			Type:     v1beta1.LocationTypeGit,
+			Repo:     common.GardenerRepo,
+			Revision: gardenerCfg.Commit,
+		})
 	}
 
 	return set

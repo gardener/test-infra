@@ -61,7 +61,7 @@ func (t *test) Flags() *pflag.FlagSet {
 	flagset.StringVar(&t.config.Gardener.Version, gardenerVersion, "", "Specify the gardener to be deployed by garden setup")
 	flagset.StringVar(&t.config.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
 	flagset.StringVar(&t.config.Gardener.Commit, gardenerCommit, "", "Specify the gardener commit that is deployed by garden setup")
-	flagset.StringVar(&t.gardenerExtensions, gardenerExtensions, "", "Specify the gardener extensions in the format <extension-name>=<repo>:<revision>")
+	flagset.StringVar(&t.gardenerExtensions, gardenerExtensions, "", "Specify the gardener extensions in the format <extension-name>=<repo>::<revision>")
 
 	flagset.StringVar(&t.config.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	flagset.StringArrayVar(&t.kubernetesVersions, kubernetesVersion, []string{}, "Specify the kubernetes version to test")
@@ -185,7 +185,7 @@ func (t *test) applyDefaultExtensions(client github.Client, event *github.Generi
 			return err
 		}
 	}
-	if t.config.GardenerExtensions != nil {
+	if defaultConfig.GardenerExtensions != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.GardenerExtensions)
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener extensions", err.Error())
@@ -196,9 +196,6 @@ func (t *test) applyDefaultExtensions(client github.Client, event *github.Generi
 			return errors.Wrap(err, "unable to parse default config value for gardener extensions")
 		}
 		defaultExt = gardensetup.ConvertRawDependenciesToInternalExtensionConfig(rawDep)
-	}
-	if defaultConfig.GardenerExtensions == nil {
-		return errors.New("gardener extensions have to be defined", "no gardener extensions are either defined by flag nor by the default config")
 	}
 
 	if flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions == nil {
@@ -211,6 +208,7 @@ func (t *test) applyDefaultExtensions(client github.Client, event *github.Generi
 	}
 	if flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions != nil {
 		t.config.GardenerExtensions = gardensetup.MergeExtensions(defaultExt, flagExt)
+		return nil
 	}
 
 	return errors.New("gardener extensions have to be defined", "no gardener extensions are either defined by flag nor by the default config")

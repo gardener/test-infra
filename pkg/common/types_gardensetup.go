@@ -22,10 +22,10 @@ type GSExtensionConfig struct {
 	Tag             string `json:"tag,omitempty"`
 	Commit          string `json:"commit,omitempty"`
 	Branch          string `json:"branch,omitempty"`
-	Repository      string `json:"repo,omitemtpy"`
-	ImageTag        string `json:"image_tag,omitemtpy"`
-	ImageRepository string `json:"image_repo,omitemtpy"`
-	ChartPath       string `json:"chart_path,omitemtpy"`
+	Repository      string `json:"repo,omitempty"`
+	ImageTag        string `json:"image_tag,omitempty"`
+	ImageRepository string `json:"image_repo,omitempty"`
+	ChartPath       string `json:"chart_path,omitempty"`
 }
 
 // GSDependencies represents the dependency vector of all elements in garden setup

@@ -196,7 +196,7 @@ func init() {
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Version, "gardener-version", "", "Specify the gardener version to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Commit, "gardener-commit", "", "Specify the gardener commit that is deployed by garden setup")
-	runCmd.Flags().StringVar(&gardenerExtensions, "gardener-extensions", "provider-gcp=github.com/gardener/gardener-extensions.git:master", "Specify the gardener extensions versions to be deployed by garden setup")
+	runCmd.Flags().StringVar(&gardenerExtensions, "gardener-extensions", "provider-gcp=github.com/gardener/gardener-extensions.git::master", "Specify the gardener extensions versions to be deployed by garden setup")
 
 	runCmd.Flags().StringVar(&defaultConfig.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	runCmd.Flags().StringArrayVar(&kubernetesVersions, "kubernetes-version", []string{}, "Specify the kubernetes version to test")

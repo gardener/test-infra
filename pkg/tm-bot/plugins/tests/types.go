@@ -35,7 +35,7 @@ type DefaultsConfig struct {
 
 	// github.com/gardener/gardener-extension version
 	// has to be a yaml of a map[extension-name]{version: "0.0.0",repo:"github.com/x/x"}
-	GardenerExtensions *ghval.GitHubValue `json:"gardenerExtensions"`
+	GardenerExtensions *ghval.GitHubValue `json:"gardener-extensions"`
 
 	ShootFlavors *[]*common.ShootFlavor `json:"shootFlavors"`
 }
