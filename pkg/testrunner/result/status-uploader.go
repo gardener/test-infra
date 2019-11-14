@@ -123,7 +123,7 @@ func uploadFiles(components []ComponentExtended, files []string) error {
 
 			_, response, err := c.GithubClient.Repositories.UploadReleaseAsset(context.Background(), c.Owner, c.Name, c.GithubReleaseID, &uploadOptions, file)
 			if err != nil {
-				l.Error(err, fmt.Sprintf("Was not able to upload release asset %s/%s", file, c.Owner, c.Name))
+				l.Error(err, fmt.Sprintf("Was not able to upload %s release asset %s/%s", file.Name(), c.Owner, c.Name))
 				return err
 			} else if response.StatusCode != 201 {
 				err := errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
@@ -170,7 +170,7 @@ func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunne
 	}
 	overviewJSONBytes, err := json.MarshalIndent(assetOverview, "", "   ")
 	if err != nil {
-		l.Error(err, fmt.Sprintf("failed to marshal %s", assetOverview))
+		l.Error(err, fmt.Sprintf("failed to marshal %s", overviewFilepath))
 		return err
 	}
 	if err := ioutil.WriteFile(overviewFilepath, overviewJSONBytes, 0644); err != nil {
@@ -202,7 +202,7 @@ func generateTestrunAssetName(testrun *testrunner.Run) string {
 }
 
 func identifyTestrunsToUpload(runs *testrunner.RunList, component ComponentExtended, overviewFilepath string) (*testrunner.RunList, error) {
-	_ = os.Remove(overviewFilepath) // try to remove previously donwloaded file
+	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
 	remoteAssetID, err := getAssetIDByName(component, overviewFilepath)
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func downloadReleaseAssetByName(component ComponentExtended, filename, targetPat
 	l.Info(fmt.Sprintf("%s in %s exists, downloading...", filename, component.Name))
 	remoteAssetID, err := getAssetIDByName(component, filename)
 	if err != nil {
-		l.Error(err, fmt.Sprintf("failed to get github asset ID of %s in %s", filename, component))
+		l.Error(err, fmt.Sprintf("failed to get github asset ID of %s in %s", filename, component.Name))
 		return err
 	}
 	assetReader, redirectURL, err := component.GithubClient.Repositories.DownloadReleaseAsset(context.Background(), component.Owner, component.Name, remoteAssetID)
@@ -274,14 +274,14 @@ func downloadReleaseAssetByName(component ComponentExtended, filename, targetPat
 		}
 		if _, err := io.Copy(assetFile, res.Body); err != nil {
 			err := errors.Wrap(err, "http.Get failed:")
-			l.Error(err, fmt.Sprintf("failed to write data to file %s", assetFile))
+			l.Error(err, fmt.Sprintf("failed to write data to file %s", assetFile.Name()))
 			return err
 		}
 		res.Body.Close()
 
 	} else {
 		if _, err = io.Copy(assetFile, assetReader); err != nil {
-			l.Error(err, fmt.Sprintf("failed to write data to file", assetFile))
+			l.Error(err, fmt.Sprintf("failed to write data to file %s", assetFile.Name()))
 			return err
 		}
 	}
@@ -423,7 +423,7 @@ func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interfa
 		tr.Status.UploadedToGithub = &enabled
 		err := tmClient.Client().Update(ctx, tr)
 		if err != nil {
-			log.Error(err, fmt.Sprintf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace))
+			log.Error(err, fmt.Sprintf("unable to update status of testrun %s in namespace: %s", tr.Name, tr.Namespace))
 			return err
 		}
 	}
