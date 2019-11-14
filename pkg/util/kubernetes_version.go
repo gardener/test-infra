@@ -47,7 +47,7 @@ func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.Shoo
 		return nil, fmt.Errorf("no K8s version can be specified")
 	}
 
-	if filterPatchVersions {
+	if (config.FilterPatchVersions != nil && *config.FilterPatchVersions) || (config.FilterPatchVersions == nil && filterPatchVersions) {
 		return FilterPatchVersions(filtered)
 	}
 
