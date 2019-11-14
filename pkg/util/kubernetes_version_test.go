@@ -112,6 +112,44 @@ var _ = Describe("kubernetes version util", func() {
 				newExpirableVersion("1.14.6"),
 			))
 		})
+
+		Context("filter patch versions", func() {
+			It("should filter patch versions although default is false", func() {
+				pattern := "*"
+				filter := true
+				versionFlavor := common.ShootKubernetesVersionFlavor{
+					Pattern:             &pattern,
+					FilterPatchVersions: &filter,
+				}
+
+				versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(versions).To(ConsistOf(
+					newExpirableVersion("1.15.2"),
+					newExpirableVersion("1.14.6"),
+					newExpirableVersion("1.13.5"),
+				))
+			})
+
+			It("should not filter patch versions although default is true", func() {
+				pattern := "*"
+				filter := false
+				versionFlavor := common.ShootKubernetesVersionFlavor{
+					Pattern:             &pattern,
+					FilterPatchVersions: &filter,
+				}
+
+				versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, true)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(versions).To(ConsistOf(
+					newExpirableVersion("1.15.2"),
+					newExpirableVersion("1.15.1"),
+					newExpirableVersion("1.14.6"),
+					newExpirableVersion("1.14.5"),
+					newExpirableVersion("1.13.5"),
+				))
+			})
+		})
 	})
 
 	Context("previous kubernetes version", func() {

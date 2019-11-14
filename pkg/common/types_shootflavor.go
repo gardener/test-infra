@@ -72,6 +72,10 @@ type ShootKubernetesVersionFlavor struct {
 	// +optional
 	Pattern *string `json:"pattern"`
 
+	// FilterPatchVersions will only keep the latest patch version of all minor versions
+	// +optional
+	FilterPatchVersions *bool `json:"filterPatchVersions"`
+
 	// List of versions to test
 	// +optional
 	Versions *[]gardenv1alpha1.ExpirableVersion `json:"versions"`
