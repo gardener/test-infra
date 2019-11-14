@@ -57,7 +57,6 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		if err := c.ingestIntoElasticsearch(cfg, runLogger, tmClient, run); err != nil {
 			runLogger.Error(err, "error while ingesting file")
 		}
-		c.uploadStatusAsset(cfg, runLogger, err, run, tmClient)
 
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			runLogger.Info("Testrun finished successfully")
@@ -70,6 +69,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		fmt.Println(":---------------------------------------------------------------------------------------------:")
 	}
 
+	c.uploadStatusAssets(c.config, log, &runs, tmClient, log)
 	output.RenderStatusTableForTestruns(os.Stdout, runs)
 
 	c.fetchTelemetryResults()
@@ -88,41 +88,41 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, t
 	return MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 }
 
-func (c *Collector) uploadStatusAsset(cfg Config, runLogger logr.Logger, err error, run *testrunner.Run, tmClient kubernetes.Interface) {
+func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescriptor.Component {
+	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+	if err != nil {
+		runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+	}
+	var componentsForUpload []*componentdescriptor.Component
+	for _, componentName := range cfg.AssetComponents {
+		if component := componentsFromFile.Get(componentName); component == nil {
+			runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
+		} else {
+			componentsForUpload = append(componentsForUpload, component)
+		}
+	}
+	return componentsForUpload
+}
+
+func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs *testrunner.RunList, tmClient kubernetes.Interface, log logr.Logger) {
 	if !cfg.UploadStatusAsset {
 		return
 	}
 
 	if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
-		runLogger.Error(err, "missing github password / github user / component descriptor path argument")
-	}
-	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
-	if err != nil {
-		runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+		err := errors.New("missing github password / github user / component descriptor path argument", "")
+		log.Error(err, fmt.Sprintf("components: %s, ghUser: %s, ghPasswordLength: %s", cfg.AssetComponents, cfg.GithubUser, len(cfg.GithubPassword)))
 	}
 
-	assetUploadSuccessful := true
-	var componentsForUpload []*componentdescriptor.Component
-	for _, componentName := range cfg.AssetComponents {
-		if component := componentsFromFile.Get(componentName); component == nil {
-			runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
-			assetUploadSuccessful = false
-		} else {
-			componentsForUpload = append(componentsForUpload, component)
-		}
-	}
-	for _, component := range componentsForUpload {
-		if err := UploadStatusToGithub(runLogger, run, component, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
-			runLogger.Error(err, "unable to attach testrun status to github component")
-			assetUploadSuccessful = false
-		}
-	}
-	if assetUploadSuccessful {
-		err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, run.Testrun)
-		if err != nil {
+	componentsForUpload := getComponentsForUpload(cfg, runLogger)
+	if err := UploadStatusToGithub(log, runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
+		runLogger.Error(err, "upload of testrun status to github release(s) failed")
+	} else {
+		if err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, runs); err != nil {
 			runLogger.Error(err, "unable to mark testrun status as uploaded to github")
 		}
 	}
+	return
 }
 
 func (c *Collector) fetchTelemetryResults() {

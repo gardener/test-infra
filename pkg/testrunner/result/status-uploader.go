@@ -2,6 +2,7 @@ package result
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -11,7 +12,13 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -19,113 +26,320 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
-const (
-	success = "SUCCESS"
-	fail    = "FAIL"
-)
+var prefix string
+var l logr.Logger
 
 // uploads status results as asset to the component
-func UploadStatusToGithub(log logr.Logger, run *testrunner.Run, component *componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
-	tr := run.Testrun
-	md := run.Metadata
-	testrunStatusTag := fail
-	if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-		testrunStatusTag = success
+func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
+	prefix = assetPrefix
+	l = loggerInstance
+	dest := "/tmp/"
+	l.Info(fmt.Sprintf("Storing asset files temporary to directory '%s'", dest))
+	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", prefix, (*runs)[0].Metadata.Landscape))
+	extendedComponents, err := parseComponents(components, githubUser, githubPassword)
+	if err != nil {
+		l.Error(err, "failed to parse components")
+		return err
 	}
-	tableString := strings.Builder{}
-	output.RenderStatusTable(&tableString, tr.Status.Steps)
-	statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
-	filenameWithoutStatus := fmt.Sprintf("%s%s-%s-%s", assetPrefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
-	filename := fmt.Sprintf("%s-%s.txt", filenameWithoutStatus, testrunStatusTag)
+	randomComponent := extendedComponents[0]
 
-	repoURL, err := url.Parse(fmt.Sprintf("https://%s", component.Name))
-	if err != nil {
+	testrunsToUpload, err := identifyTestrunsToUpload(runs, randomComponent, overviewFilepath)
+	if testrunsToUpload == nil || len(*testrunsToUpload) == 0 {
+		l.Info("no testrun updates, therefore not assets to upload")
+		return nil
+	}
+	l.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(*testrunsToUpload)))
+
+	archiveFilename := fmt.Sprintf("%s%s.zip", prefix, (*runs)[0].Metadata.Landscape)
+	extension := filepath.Ext(archiveFilename)
+	archiveFilenameWithoutExtension := archiveFilename[0 : len(archiveFilename)-len(extension)]
+	archiveContentDir := path.Join(dest, archiveFilenameWithoutExtension)
+	archiveFilepath := filepath.Join(dest, archiveFilename)
+	_ = os.Remove(archiveFilepath)
+	_ = os.RemoveAll(archiveContentDir)
+	if err := os.MkdirAll(archiveContentDir, 0777); err != nil {
+		l.Error(err, fmt.Sprintf("failed to create dir: %s", archiveContentDir))
 		return err
 	}
-	repoOwner, repoName := util.ParseRepoURL(repoURL)
-	githubClient, err := getGithubClient(repoURL, githubUser, githubPassword)
+	remoteArchiveAssetID, err := getAssetIDByName(randomComponent, archiveFilename)
 	if err != nil {
+		l.Error(err, fmt.Sprintf("failed to get asset ID of %s in component %s/%s", archiveFilename, randomComponent.Owner, randomComponent.Name))
+		return err
+	}
+	if remoteArchiveAssetID != 0 {
+		// if status archive file exists, download and unzip it
+		if err := downloadReleaseAssetByName(randomComponent, archiveFilename, archiveFilepath); err != nil {
+			l.Error(err, fmt.Sprintf("failed to download release asset %s in component %s/%s", archiveFilename, randomComponent.Owner, randomComponent.Name))
+			return err
+		}
+		l.Info(fmt.Sprintf("unzipping %s into %s", archiveFilename, archiveContentDir))
+		if err := util.Unzip(archiveFilepath, archiveContentDir); err != nil {
+			l.Error(err, fmt.Sprintf("failed to unzip %s", archiveFilepath))
+			return err
+		}
+	}
+	if err := storeRunsStatusAsFiles(testrunsToUpload, archiveContentDir); err != nil {
+		l.Error(err, "Failed to store testrun status as files")
+		return err
+	}
+	if err := util.Zipit(archiveContentDir, archiveFilepath); err != nil {
+		l.Error(err, fmt.Sprintf("Failed to zip %s", archiveContentDir))
+		return err
+	}
+	if err := createOrUpdateOverview(overviewFilepath, testrunsToUpload); err != nil {
+		l.Error(err, fmt.Sprintf("Failed to create/update %s", overviewFilepath))
 		return err
 	}
 
-	release, err := getRelease(githubClient, repoOwner, repoName, component.Version)
-	if err != nil {
+	var filesToUpload []string
+	filesToUpload = append(filesToUpload, overviewFilepath)
+	filesToUpload = append(filesToUpload, archiveFilepath)
+
+	if err := uploadFiles(extendedComponents, filesToUpload); err != nil {
 		return err
 	}
 
-	remoteAssetID, isRemoteAssetSuccessful, err := getAssetIDByName(githubClient, *release.ID, repoOwner, repoName, filenameWithoutStatus)
-	if err != nil {
-		return err
-	}
-	if remoteAssetID != 0 {
-		if isRemoteAssetSuccessful {
-			// do not overwrite existing successful asset to ensure consistent reporting
-			log.V(3).Info(fmt.Sprintf("Skip asset upload, since asset of a a succeeded testrun '%s*' already exists", filenameWithoutStatus))
-			return nil
-		} else {
-			// delete failed remote asset, since a new one will be uploaded
-			log.V(3).Info(fmt.Sprintf("Delete remote asset '%s*', so that a newer version can be uploaded", filenameWithoutStatus))
-			if err := deleteAsset(githubClient, repoOwner, repoName, remoteAssetID); err != nil {
+	return nil
+}
+
+func uploadFiles(components []ComponentExtended, files []string) error {
+	for _, c := range components {
+		for _, filepathToUpload := range files {
+			l.Info(fmt.Sprintf("uploading asset %s to %s/%s", filepath.Base(filepathToUpload), c.Owner, c.Name))
+			file, err := os.Open(filepathToUpload)
+			if err != nil {
+				l.Error(err, fmt.Sprintf("Can't open file %s", filepathToUpload))
+				return err
+			}
+			defer file.Close()
+			filename := filepath.Base(filepathToUpload)
+			uploadOptions := github.UploadOptions{Name: filename}
+
+			// delete previous remote asset, since a new one will be uploaded
+			if err := deleteAssetIfExists(c, filename); err != nil {
+				l.Error(err, fmt.Sprintf("Can't open file %s", filepathToUpload))
+				return err
+			}
+
+			_, response, err := c.GithubClient.Repositories.UploadReleaseAsset(context.Background(), c.Owner, c.Name, c.GithubReleaseID, &uploadOptions, file)
+			if err != nil {
+				l.Error(err, fmt.Sprintf("Was not able to upload release asset %s/%s", file, c.Owner, c.Name))
+				return err
+			} else if response.StatusCode != 201 {
+				err := errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
+				l.Error(err, "")
 				return err
 			}
 		}
 	}
+	return nil
+}
 
-	if err = uploadAsset(githubClient, *release.ID, repoOwner, repoName, filename, statusOutput); err != nil {
+func parseComponents(components []*componentdescriptor.Component, githubUser, githubPassword string) ([]ComponentExtended, error) {
+	var extendedComponents []ComponentExtended
+	for _, component := range components {
+		extendedComponent, err := parseComponent(component, githubUser, githubPassword)
+		if err != nil {
+			return nil, err
+		}
+		extendedComponents = append(extendedComponents, extendedComponent)
+	}
+	return extendedComponents, nil
+}
+
+func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunner.RunList) error {
+	assetOverview := AssetOverview{}
+	_, err := os.Stat(overviewFilepath) // checks if file exists
+	if err == nil {
+		l.Info("assets already exist on remote")
+		assetOverview, err = unmarshalOverview(overviewFilepath)
+		if err != nil {
+			return err
+		}
+	} else {
+		l.Info("no assets exist on remote")
+	}
+	for _, run := range *testrunsToUpload {
+		assetItemName := generateTestrunAssetName(run)
+		isAssetItemSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
+		assetOverviewItem := assetOverview.Get(assetItemName)
+		if assetOverviewItem.Name != "" {
+			assetOverview.Get(assetItemName).Successful = isAssetItemSuccessful
+		}
+		assetOverview.AssetOverviewItems = append(assetOverview.AssetOverviewItems, AssetOverviewItem{Name: assetItemName, Successful: isAssetItemSuccessful})
+	}
+	overviewJSONBytes, err := json.MarshalIndent(assetOverview, "", "   ")
+	if err != nil {
+		l.Error(err, fmt.Sprintf("failed to marshal %s", assetOverview))
+		return err
+	}
+	if err := ioutil.WriteFile(overviewFilepath, overviewJSONBytes, 0644); err != nil {
+		l.Error(err, fmt.Sprintf("failed to write file %s", overviewFilepath))
 		return err
 	}
 	return nil
 }
 
-func deleteAsset(githubClient *github.Client, repoOwner string, repoName string, assetID int64) error {
-	response, err := githubClient.Repositories.DeleteReleaseAsset(context.Background(), repoOwner, repoName, assetID)
+func storeRunsStatusAsFiles(runs *testrunner.RunList, dest string) error {
+	l.Info(fmt.Sprintf("storing testruns status as files in %s", dest))
+	for _, run := range *runs {
+		tr := run.Testrun
+		tableString := strings.Builder{}
+		output.RenderStatusTable(&tableString, tr.Status.Steps)
+		statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
+		assetFilepath := filepath.Join(dest, generateTestrunAssetName(run))
+		if err := ioutil.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
+			l.Error(err, fmt.Sprintf("failed to write file %s", assetFilepath))
+			return err
+		}
+	}
+	return nil
+}
+
+func generateTestrunAssetName(testrun *testrunner.Run) string {
+	md := testrun.Metadata
+	return fmt.Sprintf("%s%s-%s-%s.txt", prefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
+}
+
+func identifyTestrunsToUpload(runs *testrunner.RunList, component ComponentExtended, overviewFilepath string) (*testrunner.RunList, error) {
+	_ = os.Remove(overviewFilepath) // try to remove previously donwloaded file
+	remoteAssetID, err := getAssetIDByName(component, overviewFilepath)
 	if err != nil {
+		return nil, err
+	}
+	if remoteAssetID == 0 {
+		// if no status overview file exists upload results of all testruns
+		return runs, nil
+	}
+	if err := downloadReleaseAssetByName(component, filepath.Base(overviewFilepath), overviewFilepath); err != nil {
+		return nil, err
+	}
+	var testrunsToUpload testrunner.RunList
+	assetOverview, err := unmarshalOverview(overviewFilepath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, run := range *runs {
+		testrunAssetName := generateTestrunAssetName(run)
+		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
+		if !assetOverview.Contains(testrunAssetName) || testrunSuccessful && !assetOverview.Get(testrunAssetName).Successful {
+			testrunsToUpload = append(testrunsToUpload, run)
+		}
+	}
+	return &testrunsToUpload, nil
+}
+
+func unmarshalOverview(overviewFilepath string) (AssetOverview, error) {
+	var assetOverview AssetOverview
+	assetOverviewBytes, err := ioutil.ReadFile(overviewFilepath)
+	if err != nil {
+		l.Error(err, fmt.Sprintf("failed to read file %s", overviewFilepath))
+		return AssetOverview{}, err
+	}
+	if err := json.Unmarshal(assetOverviewBytes, &assetOverview); err != nil {
+		l.Error(err, fmt.Sprintf("failed to unmarshal %s", overviewFilepath))
+		return AssetOverview{}, err
+	}
+	return assetOverview, nil
+}
+
+func downloadReleaseAssetByName(component ComponentExtended, filename, targetPath string) error {
+	l.Info(fmt.Sprintf("%s in %s exists, downloading...", filename, component.Name))
+	remoteAssetID, err := getAssetIDByName(component, filename)
+	if err != nil {
+		l.Error(err, fmt.Sprintf("failed to get github asset ID of %s in %s", filename, component))
+		return err
+	}
+	assetReader, redirectURL, err := component.GithubClient.Repositories.DownloadReleaseAsset(context.Background(), component.Owner, component.Name, remoteAssetID)
+	if assetReader != nil {
+		defer assetReader.Close()
+	}
+	if err != nil {
+		return err
+	}
+
+	assetFile, err := os.Create(targetPath)
+	if err != nil {
+		l.Error(err, fmt.Sprintf("failed to create file %s", targetPath))
+		return err
+	}
+	defer assetFile.Close()
+	if redirectURL != "" {
+		res, err := http.Get(redirectURL)
+		if err != nil {
+			err := errors.Wrap(err, "http.Get failed:")
+			l.Error(err, fmt.Sprintf("failed to HTTP GET %s", redirectURL))
+			return err
+		}
+		if _, err := io.Copy(assetFile, res.Body); err != nil {
+			err := errors.Wrap(err, "http.Get failed:")
+			l.Error(err, fmt.Sprintf("failed to write data to file %s", assetFile))
+			return err
+		}
+		res.Body.Close()
+
+	} else {
+		if _, err = io.Copy(assetFile, assetReader); err != nil {
+			l.Error(err, fmt.Sprintf("failed to write data to file", assetFile))
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getGithubArtifacts(componentName, githubUser, githubPassword string) (githubClient *github.Client, repoOwner, repoName string, err error) {
+	urlRaw := fmt.Sprintf("https://%s", componentName)
+	repoURL, err := url.Parse(urlRaw)
+	if err != nil {
+		l.Error(err, fmt.Sprintf("url parse failed for %s", urlRaw))
+		return nil, "", "", err
+	}
+	repoOwner, repoName = util.ParseRepoURL(repoURL)
+	githubClient = getGithubClient(componentName, githubUser, githubPassword)
+	return githubClient, repoOwner, repoName, nil
+}
+
+func deleteAssetIfExists(c ComponentExtended, filename string) error {
+	remoteAssetID, err := getAssetIDByName(c, filename)
+	if remoteAssetID == 0 {
+		// no remote asset exists, nothing to do
+		return nil
+	}
+	response, err := c.GithubClient.Repositories.DeleteReleaseAsset(context.Background(), c.Owner, c.Name, remoteAssetID)
+	if err != nil {
+		l.Error(errors.New("delete github release asset failed"), "")
 		return err
 	} else if response.StatusCode != 204 {
-		return errors.New(fmt.Sprintf("Delete github release asset failed with status code %d", response.StatusCode))
+		l.Error(errors.New(fmt.Sprintf("Delete github release asset failed with status code %d", response.StatusCode)), "")
+		return err
 	}
 	return nil
 }
 
-func getAssetIDByName(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename string) (int64, bool, error) {
-	releaseAssets, response, err := githubClient.Repositories.ListReleaseAssets(context.Background(), repoOwner, repoName, releaseID, &github.ListOptions{})
+func getAssetIDByName(component ComponentExtended, filename string) (int64, error) {
+	releaseAssets, response, err := component.GithubClient.Repositories.ListReleaseAssets(context.Background(), component.Owner, component.Name, component.GithubReleaseID, &github.ListOptions{})
 	if err != nil {
-		return 0, false, err
+		l.Error(errors.New(fmt.Sprintf("failed to list release assets of %s %s", component.Name, component.Version)), "")
+		return 0, err
 	} else if response.StatusCode != 200 {
-		return 0, false, errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
+		err := errors.New(fmt.Sprintf("Get github release assets failed with status code %d", response.StatusCode))
+		l.Error(err, "")
+		return 0, err
 	}
 	for _, releaseAsset := range releaseAssets {
 		if strings.Contains(*releaseAsset.Name, filename) {
-			if strings.Contains(*releaseAsset.Name, fail) {
-				return *releaseAsset.ID, false, nil
-			} else if strings.Contains(*releaseAsset.Name, success) {
-				return *releaseAsset.ID, true, nil
-			}
+			return *releaseAsset.ID, nil
 		}
 	}
-	return 0, false, nil
-}
-
-func uploadAsset(githubClient *github.Client, releaseID int64, repoOwner, repoName, filename, statusOutput string) error {
-	uploadUrl := fmt.Sprintf("repos/%s/%s/releases/%d/assets?name=%s", repoOwner, repoName, releaseID, filename)
-	mediaType := "text/plain; charset=utf-8"
-	request, err := githubClient.NewUploadRequest(uploadUrl, strings.NewReader(statusOutput), int64(len(statusOutput)), mediaType)
-	if err != nil {
-		return err
-	}
-	asset := new(github.ReleaseAsset)
-	response, err := githubClient.Do(context.Background(), request, asset)
-	if err != nil {
-		return err
-	} else if response.StatusCode != 201 {
-		return errors.New(fmt.Sprintf("Asset upload failed with status code %d", response.StatusCode))
-	}
-	return nil
+	return 0, nil
 }
 
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
 	version, err := semver.NewVersion(componentVersion)
 	if err != nil {
+		l.Error(err, fmt.Sprintf("version parse failed of %s", componentVersion))
 		return nil, err
 	}
 
@@ -133,15 +347,19 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	if !draft {
 		release, response, err := githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, componentVersion)
 		if err != nil {
+			l.Error(err, fmt.Sprintf("failed to get github release by tag %s in %s", componentVersion, repoName))
 			return nil, err
 		} else if response.StatusCode != 200 {
-			return nil, errors.New(fmt.Sprintf("Github release GET failed with status code %d", response.StatusCode))
+			err := errors.New(fmt.Sprintf("release retrival failed with status code %d", response.StatusCode))
+			l.Error(err, "")
+			return nil, err
 		}
 		return release, nil
 	}
 
 	releaseName, err := version.SetPrerelease("")
 	if err != nil {
+		l.Error(err, "")
 		return nil, err
 	}
 
@@ -151,9 +369,12 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	for {
 		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, opt)
 		if err != nil {
+			l.Error(err, fmt.Sprintf("failed to get github release by tag %s in %s", componentVersion, repoName))
 			return nil, err
 		} else if response.StatusCode != 200 {
-			return nil, errors.New(fmt.Sprintf("Github releases GET failed with status code %d", response.StatusCode))
+			err := errors.New(fmt.Sprintf("github releases GET failed with status code %d", response.StatusCode))
+			l.Error(err, "")
+			return nil, err
 		}
 		for _, release := range releases {
 			if *release.Draft && strings.Contains(*release.Name, releaseName.String()) {
@@ -165,10 +386,16 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 		}
 		opt.Page = response.NextPage
 	}
-	return nil, errors.New("no releases found")
+	err = errors.New("no releases found")
+	l.Error(err, "")
+	return nil, err
 }
 
-func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*github.Client, error) {
+func getGithubClient(component, githubUser, githubPassword string) *github.Client {
+	repoURL, err := url.Parse(fmt.Sprintf("https://%s", component))
+	if err != nil {
+		return nil
+	}
 	var apiURL, uploadURL string
 	if repoURL.Hostname() == "github.com" {
 		apiURL = "https://api." + repoURL.Hostname()
@@ -179,23 +406,86 @@ func getGithubClient(repoURL *url.URL, githubUser, githubPassword string) (*gith
 	}
 	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, uploadURL, true)
 	if err != nil {
-		return nil, err
+		l.Error(err, fmt.Sprintf("failed to get github client for %s", component))
+		return nil
 	}
-	return githubClient, nil
+	return githubClient
 }
 
 // MarkTestrunsAsIngested sets the ingest status of testruns to true
-func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) error {
+func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interface, runs *testrunner.RunList) error {
 	ctx := context.Background()
 	defer ctx.Done()
 
-	enabled := true
-	tr.Status.UploadedToGithub = &enabled
-	err := tmClient.Client().Update(ctx, tr)
-	if err != nil {
-		return fmt.Errorf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
+	for _, run := range *runs {
+		tr := run.Testrun
+		enabled := true
+		tr.Status.UploadedToGithub = &enabled
+		err := tmClient.Client().Update(ctx, tr)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace))
+			return err
+		}
 	}
-	log.V(3).Info("Successfully updated status of testrun")
-
+	log.Info("successfully updated status of testrun")
 	return nil
+}
+
+type ComponentExtended struct {
+	PlainURL        string
+	Version         string
+	GithubClient    *github.Client
+	Owner           string
+	Name            string
+	GithubReleaseID int64
+}
+
+func parseComponent(component *componentdescriptor.Component, githubUser string, githubPassword string) (ComponentExtended, error) {
+	githubClient, repoOwner, repoName, err := getGithubArtifacts(component.Name, githubUser, githubPassword)
+	if err != nil {
+		l.Error(err, "Failed to get github artifacts client, owner, name")
+		return ComponentExtended{}, err
+	}
+
+	release, err := getRelease(githubClient, repoOwner, repoName, component.Version)
+	if err != nil {
+		l.Error(err, fmt.Sprintf("Failed to get repo release for %s %s", repoName, component.Version))
+		return ComponentExtended{}, err
+	}
+
+	return ComponentExtended{
+		PlainURL:        component.Name,
+		Version:         component.Version,
+		GithubClient:    githubClient,
+		Owner:           repoOwner,
+		Name:            repoName,
+		GithubReleaseID: *release.ID,
+	}, nil
+}
+
+type AssetOverview struct {
+	AssetOverviewItems []AssetOverviewItem
+}
+
+func (overview AssetOverview) Get(assetName string) *AssetOverviewItem {
+	for _, asset := range overview.AssetOverviewItems {
+		if asset.Name == assetName {
+			return &asset
+		}
+	}
+	return &AssetOverviewItem{}
+}
+
+func (overview AssetOverview) Contains(searchAssetName string) bool {
+	foundAsset := overview.Get(searchAssetName)
+	if foundAsset.Name != "" {
+		return true
+	} else {
+		return false
+	}
+}
+
+type AssetOverviewItem struct {
+	Name       string `json:"name"`
+	Successful bool   `json:"successful"`
 }
