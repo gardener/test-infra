@@ -69,7 +69,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 		fmt.Println(":---------------------------------------------------------------------------------------------:")
 	}
 
-	c.uploadStatusAssets(c.config, log, &runs, tmClient, log)
+	c.uploadStatusAssets(c.config, log, runs, tmClient, log)
 	output.RenderStatusTableForTestruns(os.Stdout, runs)
 
 	c.fetchTelemetryResults()
@@ -104,7 +104,7 @@ func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescr
 	return componentsForUpload
 }
 
-func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs *testrunner.RunList, tmClient kubernetes.Interface, log logr.Logger) {
+func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs testrunner.RunList, tmClient kubernetes.Interface, log logr.Logger) {
 	if !cfg.UploadStatusAsset {
 		return
 	}

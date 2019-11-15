@@ -30,12 +30,12 @@ var prefix string
 var l logr.Logger
 
 // uploads status results as assets to github component releases
-func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
+func UploadStatusToGithub(loggerInstance logr.Logger, runs testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	prefix = assetPrefix
 	l = loggerInstance
 	dest := "/tmp/"
 	l.Info(fmt.Sprintf("Storing asset files temporary to directory '%s'", dest))
-	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", prefix, (*runs)[0].Metadata.Landscape))
+	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", prefix, (runs)[0].Metadata.Landscape))
 	extendedComponents, err := parseComponents(components, githubUser, githubPassword)
 	if err != nil {
 		l.Error(err, "failed to parse components")
@@ -45,13 +45,13 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, 
 	randomComponent := extendedComponents[0]
 
 	testrunsToUpload, err := identifyTestrunsToUpload(runs, randomComponent, overviewFilepath)
-	if testrunsToUpload == nil || len(*testrunsToUpload) == 0 {
+	if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
 		l.Info("no testrun updates, therefore not assets to upload")
 		return nil
 	}
-	l.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(*testrunsToUpload)))
+	l.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(testrunsToUpload)))
 
-	archiveFilename := fmt.Sprintf("%s%s.zip", prefix, (*runs)[0].Metadata.Landscape)
+	archiveFilename := fmt.Sprintf("%s%s.zip", prefix, (runs)[0].Metadata.Landscape)
 	extension := filepath.Ext(archiveFilename)
 	archiveFilenameWithoutExtension := archiveFilename[0 : len(archiveFilename)-len(extension)]
 	archiveContentDir := path.Join(dest, archiveFilenameWithoutExtension)
@@ -150,7 +150,7 @@ func parseComponents(components []*componentdescriptor.Component, githubUser, gi
 }
 
 // Either creates a new overview file and feeds it with current testrun results, or downloads the overview file from github and extends it
-func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunner.RunList) error {
+func createOrUpdateOverview(overviewFilepath string, testrunsToUpload testrunner.RunList) error {
 	assetOverview := AssetOverview{}
 	_, err := os.Stat(overviewFilepath) // checks if file exists
 	if err == nil {
@@ -162,8 +162,8 @@ func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunne
 	} else {
 		l.Info("no assets exist on remote")
 	}
-	for _, run := range *testrunsToUpload {
-		assetItemName := generateTestrunAssetName(run)
+	for _, run := range testrunsToUpload {
+		assetItemName := generateTestrunAssetName(*run)
 		isAssetItemSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
 		assetOverviewItem := assetOverview.Get(assetItemName)
 		if assetOverviewItem.Name != "" {
@@ -184,14 +184,14 @@ func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunne
 }
 
 // renders testrun statuses and saves them as files
-func storeRunsStatusAsFiles(runs *testrunner.RunList, dest string) error {
+func storeRunsStatusAsFiles(runs testrunner.RunList, dest string) error {
 	l.Info(fmt.Sprintf("storing testruns status as files in %s", dest))
-	for _, run := range *runs {
+	for _, run := range runs {
 		tr := run.Testrun
 		tableString := strings.Builder{}
 		output.RenderStatusTable(&tableString, tr.Status.Steps)
 		statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
-		assetFilepath := filepath.Join(dest, generateTestrunAssetName(run))
+		assetFilepath := filepath.Join(dest, generateTestrunAssetName(*run))
 		if err := ioutil.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
 			l.Error(err, fmt.Sprintf("failed to write file %s", assetFilepath))
 			return err
@@ -200,15 +200,15 @@ func storeRunsStatusAsFiles(runs *testrunner.RunList, dest string) error {
 	return nil
 }
 
-func generateTestrunAssetName(testrun *testrunner.Run) string {
+func generateTestrunAssetName(testrun testrunner.Run) string {
 	md := testrun.Metadata
 	return fmt.Sprintf("%s%s-%s-%s.txt", prefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
 }
 
 // compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
-func identifyTestrunsToUpload(runs *testrunner.RunList, component ComponentExtended, overviewFilepath string) (*testrunner.RunList, error) {
+func identifyTestrunsToUpload(runs testrunner.RunList, component ComponentExtended, overviewFilepath string) (testrunner.RunList, error) {
 	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
-	remoteAssetID, err := getAssetIDByName(component, overviewFilepath)
+	remoteAssetID, err := getAssetIDByName(component, filepath.Base(overviewFilepath))
 	if err != nil {
 		return nil, err
 	}
@@ -225,14 +225,14 @@ func identifyTestrunsToUpload(runs *testrunner.RunList, component ComponentExten
 		return nil, err
 	}
 
-	for _, run := range *runs {
-		testrunAssetName := generateTestrunAssetName(run)
+	for _, run := range runs {
+		testrunAssetName := generateTestrunAssetName(*run)
 		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
 		if !assetOverview.Contains(testrunAssetName) || testrunSuccessful && !assetOverview.Get(testrunAssetName).Successful {
 			testrunsToUpload = append(testrunsToUpload, run)
 		}
 	}
-	return &testrunsToUpload, nil
+	return testrunsToUpload, nil
 }
 
 func unmarshalOverview(overviewFilepath string) (AssetOverview, error) {
@@ -420,11 +420,11 @@ func getGithubClient(component, githubUser, githubPassword string) *github.Clien
 }
 
 // MarkTestrunsAsIngested sets the ingest status of testruns to true
-func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interface, runs *testrunner.RunList) error {
+func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interface, runs testrunner.RunList) error {
 	ctx := context.Background()
 	defer ctx.Done()
 
-	for _, run := range *runs {
+	for _, run := range runs {
 		tr := run.Testrun
 		enabled := true
 		tr.Status.UploadedToGithub = &enabled
@@ -434,7 +434,7 @@ func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interfa
 			return err
 		}
 	}
-	log.Info("successfully updated status of testrun")
+	log.Info("successfully updated status of testruns")
 	return nil
 }
 
