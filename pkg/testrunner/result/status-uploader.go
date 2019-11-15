@@ -29,7 +29,7 @@ import (
 var prefix string
 var l logr.Logger
 
-// uploads status results as asset to the component
+// uploads status results as assets to github component releases
 func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	prefix = assetPrefix
 	l = loggerInstance
@@ -41,6 +41,7 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, 
 		l.Error(err, "failed to parse components")
 		return err
 	}
+	// need one component to check whether status assets have been uploaded before to corresponding release
 	randomComponent := extendedComponents[0]
 
 	testrunsToUpload, err := identifyTestrunsToUpload(runs, randomComponent, overviewFilepath)
@@ -102,6 +103,7 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs *testrunner.RunList, 
 	return nil
 }
 
+// uploads files to github component releases as assets
 func uploadFiles(components []ComponentExtended, files []string) error {
 	for _, c := range components {
 		for _, filepathToUpload := range files {
@@ -138,7 +140,7 @@ func uploadFiles(components []ComponentExtended, files []string) error {
 func parseComponents(components []*componentdescriptor.Component, githubUser, githubPassword string) ([]ComponentExtended, error) {
 	var extendedComponents []ComponentExtended
 	for _, component := range components {
-		extendedComponent, err := parseComponent(component, githubUser, githubPassword)
+		extendedComponent, err := enhanceComponent(component, githubUser, githubPassword)
 		if err != nil {
 			return nil, err
 		}
@@ -147,6 +149,7 @@ func parseComponents(components []*componentdescriptor.Component, githubUser, gi
 	return extendedComponents, nil
 }
 
+// Either creates a new overview file and feeds it with current testrun results, or downloads the overview file from github and extends it
 func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunner.RunList) error {
 	assetOverview := AssetOverview{}
 	_, err := os.Stat(overviewFilepath) // checks if file exists
@@ -180,6 +183,7 @@ func createOrUpdateOverview(overviewFilepath string, testrunsToUpload *testrunne
 	return nil
 }
 
+// renders testrun statuses and saves them as files
 func storeRunsStatusAsFiles(runs *testrunner.RunList, dest string) error {
 	l.Info(fmt.Sprintf("storing testruns status as files in %s", dest))
 	for _, run := range *runs {
@@ -201,6 +205,7 @@ func generateTestrunAssetName(testrun *testrunner.Run) string {
 	return fmt.Sprintf("%s%s-%s-%s.txt", prefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
 }
 
+// compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
 func identifyTestrunsToUpload(runs *testrunner.RunList, component ComponentExtended, overviewFilepath string) (*testrunner.RunList, error) {
 	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
 	remoteAssetID, err := getAssetIDByName(component, overviewFilepath)
@@ -301,6 +306,7 @@ func getGithubArtifacts(componentName, githubUser, githubPassword string) (githu
 	return githubClient, repoOwner, repoName, nil
 }
 
+// deletes remote github asset if the asset exists
 func deleteAssetIfExists(c ComponentExtended, filename string) error {
 	remoteAssetID, err := getAssetIDByName(c, filename)
 	if remoteAssetID == 0 {
@@ -336,6 +342,7 @@ func getAssetIDByName(component ComponentExtended, filename string) (int64, erro
 	return 0, nil
 }
 
+// gets a github release of a repo based on given version
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
 	version, err := semver.NewVersion(componentVersion)
 	if err != nil {
@@ -440,7 +447,8 @@ type ComponentExtended struct {
 	GithubReleaseID int64
 }
 
-func parseComponent(component *componentdescriptor.Component, githubUser string, githubPassword string) (ComponentExtended, error) {
+// wraps component struct with additional github properties: github client, repo owner, repo name, release ID
+func enhanceComponent(component *componentdescriptor.Component, githubUser string, githubPassword string) (ComponentExtended, error) {
 	githubClient, repoOwner, repoName, err := getGithubArtifacts(component.Name, githubUser, githubPassword)
 	if err != nil {
 		l.Error(err, "Failed to get github artifacts client, owner, name")
