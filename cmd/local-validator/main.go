@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -30,8 +31,14 @@ import (
 // Connection to remote is needed to validate remote testdefinitions
 func main() {
 	logger.InitFlags(nil)
+	testmachinery.InitFlags(nil)
 	trFilePath := flag.String("testrun", "examples/int-testrun.yaml", "Filepath to the testrun")
 	flag.Parse()
+
+	if err := testmachinery.Setup(); err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
 
 	log, err := logger.New(nil)
 	if err != nil {

@@ -43,7 +43,7 @@ type Config struct {
 	// CloudProvider of the base cluster (has to be specified to install the correct credentials and cloudprofiles for the soil/seeds)
 	BaseClusterCloudprovider common.CloudProvider
 
-	// Revision for the gardensetup repo that i sused to install gardener
+	// Revision for the gardensetup repo that is used to install gardener
 	GardenSetupRevision string
 
 	// List of components (by default read from a component_descriptor) that are added as locations
@@ -51,6 +51,9 @@ type Config struct {
 
 	// Gardener specific configuration
 	Gardener templates.GardenerConfig
+
+	// GardenerExtensions specify the extensions and their versions to deploy
+	GardenerExtensions common.GSExtensions
 
 	// Gardener tests that do not depend on shoots and run after the shoot tests
 	Tests testrun_renderer.TestsFunc
@@ -150,6 +153,14 @@ func Validate(cfg *Config) error {
 
 	if cfg.Shoots.Namespace == "" {
 		result = multierror.Append(result, errors.New("the shoot project namespace has to be defined"))
+	}
+
+	if cfg.Gardener.Version == "" && cfg.Gardener.Commit == "" {
+		result = multierror.Append(result, errors.New("a gardener version or commit has to be defined"))
+	}
+
+	if len(cfg.GardenerExtensions) == 0 {
+		result = multierror.Append(result, errors.New("the gardener extensions have to be defined"))
 	}
 
 	return util.ReturnMultiError(result)

@@ -44,6 +44,10 @@ type GitHubValue struct {
 	// Path will read the value from the default branch
 	Path *string `json:"path"`
 
+	// StructuredJSONPath reads the specified path from the parsed path file.
+	// Path has to be defined and has to be in yaml format in order to get the path.
+	StructuredJSONPath *string `json:"structuredJSONPath"`
+
 	// Use the commit of the current Pull Request
 	PRHead *bool `json:"prHead"`
 }

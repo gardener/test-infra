@@ -22,7 +22,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/pkg/errors"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 	"sigs.k8s.io/yaml"
@@ -64,15 +63,15 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 }
 
 // determineAbsoluteShootChartPath returns the chart to render for the specific shoot flavor
-func determineAbsoluteShootChartPath(defaultChart string, chart *string) (string, error) {
+func determineAbsoluteShootChartPath(parameters *internalParameters, chart *string) (string, error) {
 	if chart == nil {
-		return defaultChart, nil
+		return parameters.ChartPath, nil
 	}
 	if filepath.IsAbs(*chart) {
 		return *chart, nil
 	}
 
-	cDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	cDir, err := filepath.Abs(filepath.Dir(parameters.FlavorConfigPath))
 	if err != nil {
 		return "", err
 	}

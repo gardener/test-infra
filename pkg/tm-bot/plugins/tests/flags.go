@@ -24,6 +24,7 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
+	"github.com/gardener/test-infra/pkg/util/gardensetup"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
 )
@@ -34,6 +35,7 @@ const (
 	gardensetupRevision = "garden-setup-version"
 	gardenerVersion     = "gardener-version"
 	gardenerCommit      = "gardener-commit"
+	gardenerExtensions  = "gardener-extensions"
 	kubernetesVersion   = "kubernetes-version"
 	cloudprovider       = "cloudprovider"
 )
@@ -59,6 +61,7 @@ func (t *test) Flags() *pflag.FlagSet {
 	flagset.StringVar(&t.config.Gardener.Version, gardenerVersion, "", "Specify the gardener to be deployed by garden setup")
 	flagset.StringVar(&t.config.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
 	flagset.StringVar(&t.config.Gardener.Commit, gardenerCommit, "", "Specify the gardener commit that is deployed by garden setup")
+	flagset.StringVar(&t.gardenerExtensions, gardenerExtensions, "", "Specify the gardener extensions in the format <extension-name>=<repo>::<revision>")
 
 	flagset.StringVar(&t.config.Shoots.Namespace, "project-namespace", "garden-core", "Specify the shoot namespace where the shoots should be created")
 	flagset.StringArrayVar(&t.kubernetesVersions, kubernetesVersion, []string{}, "Specify the kubernetes version to test")
@@ -94,25 +97,26 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		val, err := client.ResolveConfigValue(event, defaultConfig.GardenSetup.Revision.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for garden setup revision", err.Error())
-		} else {
-			t.config.GardenSetupRevision = val
 		}
+		t.config.GardenSetupRevision = val
 	}
 	if !flagset.Changed(gardenerVersion) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Version != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Version.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener version", err.Error())
-		} else {
-			t.config.Gardener.Version = val
 		}
+		t.config.Gardener.Version = val
 	}
 	if !flagset.Changed(gardenerCommit) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Commit != nil {
 		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Commit.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener commit", err.Error())
-		} else {
-			t.config.Gardener.Commit = val
 		}
+		t.config.Gardener.Commit = val
+	}
+
+	if err := t.applyDefaultExtensions(client, event, defaultConfig, flagset); err != nil {
+		return err
 	}
 
 	if err := t.applyDefaultShootFlavors(defaultConfig, flagset); err != nil {
@@ -167,4 +171,45 @@ func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *p
 		return nil
 	}
 	return errors.New("At least one cloudprovider and one kubernetes version has to be defined", "neither a default configuration nor cloudprovider and kubernetes flags are defined.")
+}
+
+func (t *test) applyDefaultExtensions(client github.Client, event *github.GenericRequestEvent, defaultConfig DefaultsConfig, flagset *pflag.FlagSet) error {
+	var (
+		err        error
+		defaultExt common.GSExtensions
+		flagExt    common.GSExtensions
+	)
+	if flagset.Changed(gardenerExtensions) {
+		flagExt, err = gardensetup.ParseFlag(t.gardenerExtensions)
+		if err != nil {
+			return err
+		}
+	}
+	if defaultConfig.GardenerExtensions != nil {
+		val, err := client.ResolveConfigValue(event, defaultConfig.GardenerExtensions)
+		if err != nil {
+			return errors.New("unable to resolve default config value for gardener extensions", err.Error())
+		}
+
+		var rawDep map[string]common.GSVersion
+		if err := yaml.Unmarshal([]byte(val), &rawDep); err != nil {
+			return errors.Wrap(err, "unable to parse default config value for gardener extensions")
+		}
+		defaultExt = gardensetup.ConvertRawDependenciesToInternalExtensionConfig(rawDep)
+	}
+
+	if flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions == nil {
+		t.config.GardenerExtensions = flagExt
+		return nil
+	}
+	if !flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions != nil {
+		t.config.GardenerExtensions = defaultExt
+		return nil
+	}
+	if flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions != nil {
+		t.config.GardenerExtensions = gardensetup.MergeExtensions(defaultExt, flagExt)
+		return nil
+	}
+
+	return errors.New("gardener extensions have to be defined", "no gardener extensions are either defined by flag nor by the default config")
 }

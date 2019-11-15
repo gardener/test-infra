@@ -35,6 +35,7 @@ type test struct {
 	config             _default.Config
 	kubernetesVersions []string
 	cloudproviders     []common.CloudProvider
+	gardenerExtensions string
 	testLabel          string
 	hibernation        bool
 	dryRun             bool
@@ -88,6 +89,11 @@ test:
     version: # StringOrGitHubConfig
     commit: # StringOrGitHubConfig
 
+  gardener-extensions: #StringOrGitHubConfig but the string has to be a yaml map of 
+#    extension_name:
+#      version: 0.0.0
+#      repo: github.com/x/x
+
   shootFlavors:
   - cloudprovider: # cloudprovider e.g. aws
     kubernetesVersions: 
@@ -102,6 +108,7 @@ parameter: "string"
 parameter:
   value: "string" # raw string value. Same as defining only a string
   path: test/path # read the file in the default branch of the repo (repo root will used to define the path) and return its content as a string
+  structureJSONPath: # parses the file read from path and returns the string at the specified structureJSONPath
   prHead: true # use the commit sha of the current PR's head
 `
 }

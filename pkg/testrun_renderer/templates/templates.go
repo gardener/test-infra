@@ -35,30 +35,26 @@ var TestInfraLocation = v1beta1.LocationSet{
 	},
 }
 
-func GetDefaultLocationsSet(cfg GardenerConfig) v1beta1.LocationSet {
+func GetDefaultLocationsSet(gardenerCfg GardenerConfig, gardenerExtensions common.GSExtensions) v1beta1.LocationSet {
 	set := v1beta1.LocationSet{
 		Name:      DefaultLocationSetName,
 		Default:   true,
-		Locations: []v1beta1.TestLocation{},
+		Locations: GetLocationsFromExtensions(gardenerExtensions),
 	}
 
-	if cfg.Version != "" {
-		set.Locations = []v1beta1.TestLocation{
-			{
-				Type:     v1beta1.LocationTypeGit,
-				Repo:     common.GardenerRepo,
-				Revision: cfg.Version,
-			},
-		}
+	if gardenerCfg.Version != "" {
+		set.Locations = append(set.Locations, v1beta1.TestLocation{
+			Type:     v1beta1.LocationTypeGit,
+			Repo:     common.GardenerRepo,
+			Revision: gardenerCfg.Version,
+		})
 	}
-	if cfg.Commit != "" {
-		set.Locations = []v1beta1.TestLocation{
-			{
-				Type:     v1beta1.LocationTypeGit,
-				Repo:     common.GardenerRepo,
-				Revision: cfg.Commit,
-			},
-		}
+	if gardenerCfg.Commit != "" {
+		set.Locations = append(set.Locations, v1beta1.TestLocation{
+			Type:     v1beta1.LocationTypeGit,
+			Repo:     common.GardenerRepo,
+			Revision: gardenerCfg.Commit,
+		})
 	}
 
 	return set

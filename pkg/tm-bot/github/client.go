@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
 	"net/http"
+	"sigs.k8s.io/yaml"
 )
 
 func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
@@ -93,6 +95,26 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 		if err != nil {
 			return "", pluginerr.New(fmt.Sprintf("unable to get config in path %s", *value.Path), err.Error())
 		}
+
+		if value.StructuredJSONPath != nil {
+			var val interface{}
+			_, err := util.JSONPath([]byte(content), *value.StructuredJSONPath, &val)
+			if err != nil {
+				return "", err
+			}
+
+			switch v := val.(type) {
+			case string:
+				return v, nil
+			default:
+				yamlData, err := yaml.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(yamlData), nil
+			}
+		}
+
 		return content, nil
 	}
 	return "", pluginerr.New("no value is defined", "no value is defined")

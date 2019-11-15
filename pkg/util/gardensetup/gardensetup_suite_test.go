@@ -12,35 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package gardensetup_test
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"testing"
 )
 
-// Parameters are the parameters which describe the test that is executed by the testrunner.
-type Parameters struct {
-	FlavorConfigPath string
-	// Path to the kubeconfig where the gardener is running.
-	GardenKubeconfigPath     string
-	Namespace                string
-	FlavoredTestrunChartPath string
-	DefaultTestrunChartPath  string
-
-	// metadata
-	Landscape               string
-	ComponentDescriptorPath string
-
-	SetValues  string
-	FileValues []string
-}
-
-type internalParameters struct {
-	FlavorConfigPath    string
-	ComponentDescriptor componentdescriptor.ComponentList
-	ChartPath           string
-
-	GardenerKubeconfig []byte
-	GardenerVersion    string
-	Landscape          string
+func TestUtil(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "GardenSetup Utils Test Suite")
 }
