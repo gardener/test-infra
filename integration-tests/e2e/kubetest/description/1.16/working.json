@@ -460,5 +460,6 @@
   { "testcase": "[sig-instrumentation] Logging soak [Performance] [Slow] [Disruptive] should survive logging 1KB every 1s seconds, for a duration of 2m0s", "groups": ["slow"]},
   { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide default limits.ephemeral-storage from node allocatable", "groups": ["slow"]},
   { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide container's limits.ephemeral-storage and requests.ephemeral-storage as env vars", "groups": ["slow"]},
-  { "testcase": "[sig-cli] Kubectl client Kubectl apply should reuse port when apply to an existing SVC", "groups": ["fast"]}
+  { "testcase": "[sig-cli] Kubectl client Kubectl apply should reuse port when apply to an existing SVC", "groups": ["fast"]},
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a exec \"cat /tmp/health\" liveness probe [NodeConformance] [Conformance]", "groups": ["slow"]}
 ]

@@ -478,5 +478,6 @@
   { "testcase": "[sig-api-machinery] CustomResourcePublishOpenAPI works for CRD preserving unknown fields at the schema root", "groups": ["fast"]},
   { "testcase": "[sig-api-machinery] CustomResourcePublishOpenAPI works for CRD preserving unknown fields in an embedded object", "groups": ["fast"]},
   { "testcase": "[sig-storage] PersistentVolumes-local  Pods sharing a single local PV [Serial] all pods should be running", "groups": ["slow"]},
-  { "testcase": "[sig-storage] PersistentVolumes-local  Stress with local volumes [Serial] should be able to process many pods and reuse local volumes", "groups": ["slow"]}
+  { "testcase": "[sig-storage] PersistentVolumes-local  Stress with local volumes [Serial] should be able to process many pods and reuse local volumes", "groups": ["slow"]},
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a exec \"cat /tmp/health\" liveness probe [NodeConformance] [Conformance]", "groups": ["slow"]}
 ]
