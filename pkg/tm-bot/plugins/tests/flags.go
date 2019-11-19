@@ -115,7 +115,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		t.config.Gardener.Commit = val
 		t.config.Gardener.ImageTag, err = util.GetDockerImageFromCommit(common.DockerImageGardenerApiServer, val)
 		if err != nil {
-			return errors.New(fmt.Sprintf("gardener images for commit %s does not exist", val), err.Error())
+			return errors.New(fmt.Sprintf("Gardener images for commit %s does not exist. Run the concourse pipline before to build the corresponding images.", val), err.Error())
 		}
 	}
 
