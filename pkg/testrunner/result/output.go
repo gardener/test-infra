@@ -139,13 +139,13 @@ func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status t
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
-		log.Error(err, "unable to create minio client", "endpoint", cfg.Endpoint)
+		log.Error(err, "unable to create s3 client", "endpoint", cfg.Endpoint)
 		return nil
 	}
 
 	ok, err := minioClient.BucketExists(cfg.BucketName)
 	if err != nil {
-		log.Error(err, "error getting bucket name", "bucket")
+		log.Error(err, "error getting bucket name", "bucket", cfg.BucketName)
 		return nil
 	}
 	if !ok {
