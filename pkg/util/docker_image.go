@@ -51,7 +51,7 @@ func CheckDockerImageExists(image, tag string) error {
 
 // GetDockerImageFromCommit searches all tags of a image and try to matches the commit (e.g. .10.0-dev-<commit>).
 // The image tag is returned if an applicable tag can be found
-// todo: use pagination
+// todo: use pagination if gcr will support is someday
 func GetDockerImageFromCommit(image, commit string) (string, error) {
 
 	// construct api call with the form hostname/v2/<image>/tags/list

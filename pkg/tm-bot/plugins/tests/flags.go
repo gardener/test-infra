@@ -113,6 +113,10 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 			return errors.New("unable to resolve default config value for gardener commit", err.Error())
 		}
 		t.config.Gardener.Commit = val
+		t.config.Gardener.ImageTag, err = util.GetDockerImageFromCommit(common.DockerImageGardenerApiServer, val)
+		if err != nil {
+			return errors.New(fmt.Sprintf("gardener images for commit %s does not exist", val), err.Error())
+		}
 	}
 
 	if err := t.applyDefaultExtensions(client, event, defaultConfig, flagset); err != nil {
