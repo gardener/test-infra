@@ -46,6 +46,7 @@ type JunitXMLResult struct {
 	XMLName         xml.Name         `xml:"testsuite"`
 	ExecutedTests   int              `xml:"tests,attr"`
 	FailedTests     int              `xml:"failures,attr"`
+	Errors          int              `xml:"errors,attr"`
 	DurationFloat   float32          `xml:"time,attr"`
 	Testcases       []TestcaseResult `xml:"testcase"`
 	DurationInt     int              `xml:"-"` // calculated

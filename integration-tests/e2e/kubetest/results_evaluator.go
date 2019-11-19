@@ -31,7 +31,9 @@ const (
 var mergedJunitXmlFilePath = filepath.Join(config.ExportPath, MergedJunitXmlFile)
 var MergedE2eLogFilePath = filepath.Join(config.ExportPath, MergedE2eLogFile)
 
-// Analyze analyzes junit.xml files and e2e.log files, which are dumped by kubetest and provides a resulting test suite summary and results for each testcase individually. These results are then written to the export dir as files.
+// Analyze analyzes junit.xml files and e2e.log files, which are dumped by kubetest and provides a resulting
+// test suite summary and results for each testcase individually. These results are then written
+// to the export dir as files.
 func Analyze(kubetestResultsPath string) Summary {
 	log.Infof("Analyze e2e.log and junit.xml files in %s", kubetestResultsPath)
 
@@ -78,10 +80,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 		if err != nil {
 			return err
 		}
-		mergedJunitXmlResult.FailedTests += junitXml.FailedTests
-		mergedJunitXmlResult.ExecutedTests += junitXml.ExecutedTests
-		mergedJunitXmlResult.SuccessfulTests += junitXml.SuccessfulTests
-
+		mergedJunitXmlResult.Errors += junitXml.Errors
 		// scatter testcases in groups succeeded, failed, skipped
 		for _, newTestcase := range junitXml.Testcases {
 			_, existsInFailureOccurences := failureOccurrences[newTestcase.Name]
@@ -111,14 +110,16 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 		return err
 	}
 
-	// unify all junit files in one single file
-	for _, testcase := range testcases {
-		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
-	}
+	mergedJunitXmlResult.Testcases = testcases
 	for _, testcase := range skippedTestcases {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
 	addAdditionalInfoToSummary(summary, &failureOccurrences, &succeededTestcases)
+	mergedJunitXmlResult.DurationFloat = float32(summary.TestsuiteDuration)
+	mergedJunitXmlResult.DurationInt = summary.TestsuiteDuration
+	mergedJunitXmlResult.FailedTests = summary.FailedTestcases
+	mergedJunitXmlResult.ExecutedTests = summary.ExecutedTestcases
+	mergedJunitXmlResult.SuccessfulTests = summary.SuccessfulTestcases
 	if err := saveJunitXmlToFile(junitXMLFilePaths, mergedJunitXmlResult); err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func saveJunitXmlToFile(junitXMLFilePaths []string, mergedJunitXmlResult *JunitX
 	if len(junitXMLFilePaths) == 1 {
 		// if there is only one single junit xml file, we can use the original file as output
 		// this is especially the case if conformance tests are executed
-		if err := os.Rename(junitXMLFilePaths[0], mergedJunitXmlFilePath); err != nil {
+		if _, err := util.Copy(junitXMLFilePaths[0], mergedJunitXmlFilePath); err != nil {
 			return err
 		}
 		return nil
@@ -225,9 +226,7 @@ func saveJunitXmlToFile(junitXMLFilePaths []string, mergedJunitXmlResult *JunitX
 	}
 	output = append([]byte(xml.Header), output...)
 
-	file, _ := os.Create(mergedJunitXmlFilePath)
-	defer file.Close()
-	if _, err = file.Write(output); err != nil {
+	if err = ioutil.WriteFile(mergedJunitXmlFilePath, output, 0644); err != nil {
 		return err
 	}
 	return nil
