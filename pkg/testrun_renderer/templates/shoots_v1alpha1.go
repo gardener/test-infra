@@ -103,6 +103,11 @@ func v1alpha1GCPShootConfig(name string, dependencies []string, cfg []v1beta1.Co
 		},
 		{
 			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
+			Value: "gcp",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudprofileName,
 			Value: "gcp",
 		},
@@ -152,6 +157,11 @@ func v1alpha1AWSShootConfig(name string, dependencies []string, cfg []v1beta1.Co
 		},
 		{
 			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
+			Value: "aws",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudprofileName,
 			Value: "aws",
 		},
@@ -191,6 +201,11 @@ func v1alpha1AzureShootConfig(name string, dependencies []string, cfg []v1beta1.
 		{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudproviderName,
+			Value: "azure",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
 			Value: "azure",
 		},
 		{

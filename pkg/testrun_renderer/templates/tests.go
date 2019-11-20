@@ -23,6 +23,14 @@ import (
 )
 
 // TestWithLabels creates tests functions that render test steps executed in serial.
+func TestWithName(name string) testrun_renderer.TestsFunc {
+	return func(suffix string, parents []string) ([]*v1beta1.DAGStep, []string, error) {
+		step := GetTestStepWithName(fmt.Sprintf("tests-%s-%s", suffix, util.RandomString(3)),name, parents)
+		return []*v1beta1.DAGStep{&step}, []string{step.Name}, nil
+	}
+}
+
+// TestWithLabels creates tests functions that render test steps executed in serial.
 func TestWithLabels(labels ...string) testrun_renderer.TestsFunc {
 	return func(suffix string, parents []string) ([]*v1beta1.DAGStep, []string, error) {
 		steps := make([]*v1beta1.DAGStep, len(labels))
