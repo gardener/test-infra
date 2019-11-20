@@ -15,11 +15,12 @@
 package template
 
 import (
+	"path/filepath"
+
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
