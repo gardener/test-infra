@@ -199,7 +199,10 @@ func (t *test) applyDefaultExtensions(client github.Client, event *github.Generi
 		if err := yaml.Unmarshal([]byte(val), &rawDep); err != nil {
 			return errors.Wrap(err, "unable to parse default config value for gardener extensions")
 		}
-		defaultExt = gardensetup.ConvertRawDependenciesToInternalExtensionConfig(rawDep)
+		defaultExt, err = gardensetup.ConvertRawDependenciesToInternalExtensionConfig(client, rawDep)
+		if err != nil {
+			return err
+		}
 	}
 
 	if flagset.Changed(gardenerExtensions) && defaultConfig.GardenerExtensions == nil {

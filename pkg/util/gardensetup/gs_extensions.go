@@ -18,6 +18,9 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/util"
 	"k8s.io/helm/pkg/strvals"
 	"reflect"
 	"strings"
@@ -85,13 +88,34 @@ func MergeExtensions(base, newVal common.GSExtensions) common.GSExtensions {
 }
 
 // ConvertRawDependenciesToInternalExtensionConfig converts gardener dependencies to gardensetup extension configuration that can be used in the acre.yaml
-func ConvertRawDependenciesToInternalExtensionConfig(deps map[string]common.GSVersion) common.GSExtensions {
+func ConvertRawDependenciesToInternalExtensionConfig(client github.Client, deps map[string]common.GSVersion) (common.GSExtensions, error) {
 	extensions := make(common.GSExtensions, len(deps))
 	for name, cfg := range deps {
+		owner, repo, err := util.ParseRepoURLFromString(cfg.Repository)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse repo url for %s", cfg.Repository)
+		}
+		version, err := resolveVersionFromGitHub(client, owner, repo, cfg.Version)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to solve version for %s:%s", cfg.Repository, cfg.Version)
+		}
+
 		extensions[name] = common.GSExtensionConfig{
-			Tag:        cfg.Version,
+			Tag:        version,
 			Repository: cfg.Repository,
 		}
 	}
-	return extensions
+	return extensions, nil
+}
+
+func resolveVersionFromGitHub(client github.Client, owner, repo, constraint string) (string, error) {
+	versions, err := client.GetVersions(owner, repo)
+	if err != nil {
+		return "", err
+	}
+	v, err := util.GetLatestVersionFromConstraint(versions, constraint)
+	if err != nil {
+		return "", err
+	}
+	return v.String(), err
 }

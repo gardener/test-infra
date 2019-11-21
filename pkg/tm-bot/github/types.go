@@ -16,6 +16,7 @@ package github
 
 import (
 	"encoding/json"
+	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
@@ -31,6 +32,7 @@ type Client interface {
 
 	GetIssue(event *GenericRequestEvent) (*github.Issue, error)
 	GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error)
+	GetVersions(owner, repo string) ([]*semver.Version, error)
 
 	IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool
 
