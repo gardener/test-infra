@@ -78,6 +78,9 @@ const (
 	// the kibana-logging pod.
 	DeploymentNameKibana = "kibana-logging"
 
+	// StatefulSetNameAlertManager is a constant for the name of a Kubernetes stateful set object that contains
+	// the alertmanager pod.
+	StatefulSetNameAlertManager = "alertmanager"
 	// StatefulSetNameETCDMain is a constant for the name of a Kubernetes stateful set object that contains
 	// the etcd-main pod.
 	StatefulSetNameETCDMain = "etcd-main"
@@ -107,10 +110,42 @@ const (
 	// operation.
 	GardenerOperationMigrate = "migrate"
 
+	// DeprecatedGardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
+	// +deprecated
+	DeprecatedGardenRole = "garden.sapcloud.io/role"
 	// GardenRole is a constant for a label that describes a role.
 	GardenRole = "gardener.cloud/role"
 	// GardenRoleExtension is a constant for a label that describes the 'extensions' role.
 	GardenRoleExtension = "extension"
+	// GardenRoleAlertingSMTP is the value of the GardenRole key indicating type 'alerting-smtp'.
+	GardenRoleAlertingSMTP = "alerting-smtp"
+	// GardenRoleSeed is the value of the GardenRole key indicating type 'seed'.
+	GardenRoleSeed = "seed"
+	// GardenRoleShoot is the value of the GardenRole key indicating type 'shoot'.
+	GardenRoleShoot = "shoot"
+	// GardenRoleLogging is the value of the GardenRole key indicating type 'logging'.
+	GardenRoleLogging = "logging"
+	// GardenRoleProject is the value of GardenRole key indicating type 'project'.
+	GardenRoleProject = "project"
+	// GardenRoleControlPlane is the value of the GardenRole key indicating type 'controlplane'.
+	GardenRoleControlPlane = "controlplane"
+	// GardenRoleSystemComponent is the value of the GardenRole key indicating type 'system-component'.
+	GardenRoleSystemComponent = "system-component"
+	// GardenRoleMonitoring is the value of the GardenRole key indicating type 'monitoring'.
+	GardenRoleMonitoring = "monitoring"
+	// GardenRoleOptionalAddon is the value of the GardenRole key indicating type 'optional-addon'.
+	GardenRoleOptionalAddon = "optional-addon"
+
+	// DeprecatedShootHibernated is a constant for a label on the Shoot namespace in the Seed indicating the Shoot's hibernation status.
+	// +deprecated: Use `Cluster` resource instead.
+	DeprecatedShootHibernated = "shoot.garden.sapcloud.io/hibernated"
+	// DeprecatedShootUID is an annotation key for the shoot namespace in the seed cluster,
+	// which value will be the value of `shoot.status.uid`
+	// +deprecated: Use `Cluster` resource instead.
+	DeprecatedShootUID = "shoot.garden.sapcloud.io/uid"
+	// DeprecatedGardenRoleBackup is the value of GardenRole key indicating type 'backup'.
+	// +deprecated
+	DeprecatedGardenRoleBackup = "backup"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -127,6 +162,8 @@ const (
 	LabelExtensionConfiguration = "extensions.gardener.cloud/configuration"
 	// LabelLogging is a constant for a label for logging stack configurations
 	LabelLogging = "logging"
+	// LabelMonitoring is a constant for a label for monitoring stack configurations
+	LabelMonitoring = "monitoring"
 
 	// LabelNetworkPolicyToBlockedCIDRs allows Egress from pods labeled with 'networking.gardener.cloud/to-blocked-cidrs=allowed'.
 	LabelNetworkPolicyToBlockedCIDRs = "networking.gardener.cloud/to-blocked-cidrs"
@@ -173,6 +210,26 @@ const (
 	// LabelAPIServer is a constant for a label for the kube-scheduler.
 	LabelScheduler = "scheduler"
 
+	// GardenNamespace is the namespace in which the configuration and secrets for
+	// the Gardener controller manager will be stored (e.g., secrets for the Seed clusters).
+	// It is also used by the gardener-apiserver.
+	GardenNamespace = "garden"
+
+	// AnnotationShootUseAsSeed is a constant for an annotation on a Shoot resource indicating that the Shoot shall be registered as Seed in the
+	// Garden cluster once successfully created.
+	AnnotationShootUseAsSeed = "shoot.garden.sapcloud.io/use-as-seed"
+	// AnnotationShootIgnoreAlerts is the key for an annotation of a Shoot cluster whose value indicates
+	// if alerts for this cluster should be ignored
+	AnnotationShootIgnoreAlerts = "shoot.garden.sapcloud.io/ignore-alerts"
+	// AnnotationShootOperatedBy is the key for an annotation of a Shoot cluster whose value must be a valid email address and
+	// is used to send alerts to.
+	AnnotationShootOperatedBy = "garden.sapcloud.io/operatedBy"
+	// AnnotationShootCustom is such a prefix so that the shoot namespace in the seed cluster
+	// will be annotated with the annotations of the shoot resource starting with it.
+	// For example, if the shoot is annotated with <AnnotationShootCustom>key=value,
+	// then the namespace in the seed will be annotated with <AnnotationShootCustom>key=value, as well.
+	AnnotationShootCustom = "custom.shoot.sapcloud.io/"
+
 	// OperatingSystemConfigUnitNameKubeletService is a constant for a unit in the operating system config that contains the kubelet service.
 	OperatingSystemConfigUnitNameKubeletService = "kubelet.service"
 	// OperatingSystemConfigFilePathKernelSettings is a constant for a path to a file in the operating system config that contains some general kernel settings.
@@ -182,9 +239,21 @@ const (
 
 	// FluentBitConfigMapKubernetesFilterConfig is a constant for the Fluent Bit ConfigMap's section regarding Kubernetes filters
 	FluentBitConfigMapKubernetesFilter = "filter-kubernetes.conf"
-	// FluentBitConfigMapParserConfig is a constant for the Fluent Bit ConfigMap's section regarding Parses for common container types
+	// FluentBitConfigMapParserConfig is a constant for the Fluent Bit ConfigMap's section regarding Parsers for common container types
 	FluentBitConfigMapParser = "parsers.conf"
+	// PrometheusConfigMapAlertingRules is a constant for the Prometheus alerting rules tag in provider-specific monitoring configuration
+	PrometheusConfigMapAlertingRules = "alerting_rules"
+	// PrometheusConfigMapScrapeConfig is a constant for the Prometheus scrape config tag in provider-specific monitoring configuration
+	PrometheusConfigMapScrapeConfig = "scrape_config"
+	// GrafanaConfigMapUserDashboard is a constant for the Grafana user dashboard tag in provider-specific monitoring configuration
+	GrafanaConfigMapUserDashboard = "dashboard_users"
+	// GrafanaConfigMapOperatorDashboard is a constant for the Grafana operator dashboard tag in provider-specific monitoring configuration
+	GrafanaConfigMapOperatorDashboard = "dashboard_operators"
 
 	// ControllerRegistrationName is the key of a label on extension namespaces that indicates the controller registration name.
 	LabelControllerRegistrationName = "controllerregistration.core.gardener.cloud/name"
+
+	// EventResourceReferenced indicates that the resource deletion is in waiting mode because the resource is still
+	// being referenced by at least one other resource (e.g. a SecretBinding is still referenced by a Shoot)
+	EventResourceReferenced = "ResourceReferenced"
 )

@@ -17,7 +17,6 @@ package v1beta1
 import (
 	"math"
 
-	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/apis/garden"
 	"github.com/gardener/gardener/pkg/utils"
 
@@ -64,6 +63,13 @@ func SetDefaults_Shoot(obj *Shoot) {
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderAWS, obj)))
 		}
+		if obj.Spec.Cloud.AWS.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.AWS.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.AWS.Workers[i].MachineImage = obj.Spec.Cloud.AWS.MachineImage
+				}
+			}
+		}
 	}
 
 	if cloud.Azure != nil {
@@ -76,6 +82,13 @@ func SetDefaults_Shoot(obj *Shoot) {
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderAzure, obj)))
 		}
+		if obj.Spec.Cloud.Azure.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.Azure.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.Azure.Workers[i].MachineImage = obj.Spec.Cloud.Azure.MachineImage
+				}
+			}
+		}
 	}
 
 	if cloud.GCP != nil {
@@ -87,6 +100,13 @@ func SetDefaults_Shoot(obj *Shoot) {
 		}
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderGCP, obj)))
+		}
+		if obj.Spec.Cloud.GCP.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.GCP.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.GCP.Workers[i].MachineImage = obj.Spec.Cloud.GCP.MachineImage
+				}
+			}
 		}
 	}
 
@@ -107,6 +127,13 @@ func SetDefaults_Shoot(obj *Shoot) {
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderAlicloud, obj)))
 		}
+		if obj.Spec.Cloud.Alicloud.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.Alicloud.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.Alicloud.Workers[i].MachineImage = obj.Spec.Cloud.Alicloud.MachineImage
+				}
+			}
+		}
 	}
 
 	if cloud.OpenStack != nil {
@@ -119,11 +146,25 @@ func SetDefaults_Shoot(obj *Shoot) {
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderOpenStack, obj)))
 		}
+		if obj.Spec.Cloud.OpenStack.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.OpenStack.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.OpenStack.Workers[i].MachineImage = obj.Spec.Cloud.OpenStack.MachineImage
+				}
+			}
+		}
 	}
 
 	if cloud.Packet != nil {
 		if obj.Spec.Kubernetes.KubeControllerManager == nil || obj.Spec.Kubernetes.KubeControllerManager.NodeCIDRMaskSize == nil {
 			SetNodeCIDRMaskSize(&obj.Spec.Kubernetes, CalculateDefaultNodeCIDRMaskSize(&obj.Spec.Kubernetes, getShootCloudProviderWorkers(CloudProviderPacket, obj)))
+		}
+		if obj.Spec.Cloud.Packet.MachineImage != nil {
+			for i, worker := range obj.Spec.Cloud.Packet.Workers {
+				if worker.MachineImage == nil {
+					obj.Spec.Cloud.Packet.Workers[i].MachineImage = obj.Spec.Cloud.Packet.MachineImage
+				}
+			}
 		}
 	}
 
@@ -226,17 +267,17 @@ func SetDefaults_Seed(obj *Seed) {
 	}
 
 	if v, ok := obj.Annotations[garden.MigrationSeedProviderType]; ok && v == "alicloud" {
-		if obj.Spec.Networks.ShootDefaults.Pods == nil && !gardencorev1alpha1helper.NetworksIntersect(obj.Spec.Networks.Pods, defaultPodCIDRAlicloud) {
+		if obj.Spec.Networks.ShootDefaults.Pods == nil && !utils.NetworksIntersect(obj.Spec.Networks.Pods, defaultPodCIDRAlicloud) {
 			obj.Spec.Networks.ShootDefaults.Pods = &defaultPodCIDRAlicloud
 		}
-		if obj.Spec.Networks.ShootDefaults.Services == nil && !gardencorev1alpha1helper.NetworksIntersect(obj.Spec.Networks.Services, defaultServiceCIDRAlicloud) {
+		if obj.Spec.Networks.ShootDefaults.Services == nil && !utils.NetworksIntersect(obj.Spec.Networks.Services, defaultServiceCIDRAlicloud) {
 			obj.Spec.Networks.ShootDefaults.Services = &defaultServiceCIDRAlicloud
 		}
 	} else {
-		if obj.Spec.Networks.ShootDefaults.Pods == nil && !gardencorev1alpha1helper.NetworksIntersect(obj.Spec.Networks.Pods, defaultPodCIDR) {
+		if obj.Spec.Networks.ShootDefaults.Pods == nil && !utils.NetworksIntersect(obj.Spec.Networks.Pods, defaultPodCIDR) {
 			obj.Spec.Networks.ShootDefaults.Pods = &defaultPodCIDR
 		}
-		if obj.Spec.Networks.ShootDefaults.Services == nil && !gardencorev1alpha1helper.NetworksIntersect(obj.Spec.Networks.Services, defaultServiceCIDR) {
+		if obj.Spec.Networks.ShootDefaults.Services == nil && !utils.NetworksIntersect(obj.Spec.Networks.Services, defaultServiceCIDR) {
 			obj.Spec.Networks.ShootDefaults.Services = &defaultServiceCIDR
 		}
 	}

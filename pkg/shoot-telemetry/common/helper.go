@@ -20,16 +20,16 @@ import (
 	"io/ioutil"
 	"time"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	clientset "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
-	gardeninformers "github.com/gardener/gardener/pkg/client/garden/informers/externalversions"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	clientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
+	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"
 	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 // GetShootKeyFromShoot return a key for a Shoot in the format <shoot-namespace>/<shoot-name>
-func GetShootKeyFromShoot(shoot *gardenv1beta1.Shoot) string {
+func GetShootKeyFromShoot(shoot *gardenv1alpha1.Shoot) string {
 	if shoot == nil {
 		return ""
 	}
@@ -101,27 +101,4 @@ func SetupInformerFactory(kubeconfigPath string) (k8sinformers.SharedInformerFac
 
 	// Return the informer factories.
 	return k8sinformers.NewSharedInformerFactory(k8sClientSet, 0), gardeninformers.NewSharedInformerFactory(gardenClientSet, 0), nil
-}
-
-// DetermineShootProvider returns the corresponding infrastructure.
-func DetermineShootProvider(shoot *gardenv1beta1.Shoot) string {
-	if shoot.Spec.Cloud.AWS != nil {
-		return "aws"
-	}
-	if shoot.Spec.Cloud.Azure != nil {
-		return "azure"
-	}
-	if shoot.Spec.Cloud.GCP != nil {
-		return "gcp"
-	}
-	if shoot.Spec.Cloud.OpenStack != nil {
-		return "openstack"
-	}
-	if shoot.Spec.Cloud.Alicloud != nil {
-		return "alicloud"
-	}
-	if shoot.Spec.Cloud.Packet != nil {
-		return "packet"
-	}
-	return "unknown"
 }

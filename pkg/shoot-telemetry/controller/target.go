@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +42,7 @@ type target struct {
 	series []*sample.Sample
 }
 
-func (c *controller) addTarget(shoot *gardenv1beta1.Shoot) {
+func (c *controller) addTarget(shoot *gardenv1alpha1.Shoot) {
 	var key = common.GetShootKeyFromShoot(shoot)
 
 	// Check if a target for the Shoot alrady exists
@@ -61,13 +61,13 @@ func (c *controller) addTarget(shoot *gardenv1beta1.Shoot) {
 		}
 
 		seedName := "unknown"
-		if shoot.Spec.Cloud.Seed != nil {
-			seedName = *shoot.Spec.Cloud.Seed
+		if shoot.Spec.SeedName != nil {
+			seedName = *shoot.Spec.SeedName
 		}
 
 		t = &target{
 			seedName: seedName,
-			provider: common.DetermineShootProvider(shoot),
+			provider: shoot.Spec.Provider.Type,
 			endpoint: endpoint,
 			username: string(secret.Data["username"]),
 			password: string(secret.Data["password"]),
@@ -88,7 +88,7 @@ func (c *controller) addTarget(shoot *gardenv1beta1.Shoot) {
 	c.targetsMutex.Unlock()
 }
 
-func (c *controller) removeTarget(shoot *gardenv1beta1.Shoot) {
+func (c *controller) removeTarget(shoot *gardenv1alpha1.Shoot) {
 	var key = common.GetShootKeyFromShoot(shoot)
 	c.targetsMutex.Lock()
 	if t, exists := c.targets[key]; exists {
@@ -126,7 +126,7 @@ func (c *controller) observeTarget(t *target, stopCh <-chan struct{}) {
 
 // initTargets initiliazes the targets with all available shoots
 func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
-	shoots := &gardenv1beta1.ShootList{}
+	shoots := &gardenv1alpha1.ShootList{}
 	if err := k8sClient.Client().List(context.TODO(), shoots); err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
 }
 
 // filterShoot returns if a shoot should be watched based on the controller configuration
-func (c *controller) filterShoot(shoot *gardenv1beta1.Shoot) bool {
+func (c *controller) filterShoot(shoot *gardenv1alpha1.Shoot) bool {
 	if c.config.ShootsFilter == nil || len(c.config.ShootsFilter) == 0 {
 		return false
 	}

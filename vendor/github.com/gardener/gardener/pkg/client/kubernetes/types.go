@@ -16,6 +16,7 @@ package kubernetes
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 
 	dnsscheme "github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme"
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
@@ -28,6 +29,7 @@ import (
 
 	resourcesscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 
+	hvpav1alpha1 "github.com/gardener/hvpa-controller/api/v1alpha1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextensionsscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -81,6 +83,7 @@ func init() {
 		dnsscheme.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
 		resourcesscheme.AddToScheme,
+		hvpav1alpha1.AddToScheme,
 	)
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 
@@ -171,4 +174,12 @@ type Interface interface {
 	CheckForwardPodPort(string, string, int, int) error
 
 	Version() string
+}
+
+// RuntimeClientFactory is used to dynamically create controller-runtime Clients
+// from a given secret
+type RuntimeClientFactory interface {
+	// CreateRuntimeClientFromSecret creates a controller-runtime Client from the given secret
+	// and applies the given ConfigFuncs
+	CreateRuntimeClientFromSecret(secret *corev1.Secret, fns ...ConfigFunc) (client.Client, error)
 }

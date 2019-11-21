@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/apis/garden"
 	"github.com/gardener/gardener/pkg/apis/garden/helper"
+	"github.com/gardener/gardener/pkg/utils"
 
 	alicloudv1alpha1 "github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud/v1alpha1"
 	awsv1alpha1 "github.com/gardener/gardener-extensions/controllers/provider-aws/pkg/apis/aws/v1alpha1"
@@ -136,7 +136,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Shoot"),
 		func(label, value string) (string, string, error) {
 			switch label {
-			case "metadata.name", "metadata.namespace", garden.ShootSeedName:
+			case "metadata.name", "metadata.namespace", garden.ShootSeedNameDeprecated:
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)
@@ -312,17 +312,17 @@ func Convert_garden_Seed_To_v1beta1_Seed(in *garden.Seed, out *Seed, s conversio
 	}
 
 	if v, ok := out.Annotations[garden.MigrationSeedProviderType]; ok && v == "alicloud" {
-		if out.Spec.Networks.ShootDefaults.Pods == nil && !gardencorev1alpha1helper.NetworksIntersect(out.Spec.Networks.Pods, defaultPodCIDRAlicloud) {
+		if out.Spec.Networks.ShootDefaults.Pods == nil && !utils.NetworksIntersect(out.Spec.Networks.Pods, defaultPodCIDRAlicloud) {
 			out.Spec.Networks.ShootDefaults.Pods = &defaultPodCIDRAlicloud
 		}
-		if out.Spec.Networks.ShootDefaults.Services == nil && !gardencorev1alpha1helper.NetworksIntersect(out.Spec.Networks.Services, defaultServiceCIDRAlicloud) {
+		if out.Spec.Networks.ShootDefaults.Services == nil && !utils.NetworksIntersect(out.Spec.Networks.Services, defaultServiceCIDRAlicloud) {
 			out.Spec.Networks.ShootDefaults.Services = &defaultServiceCIDRAlicloud
 		}
 	} else {
-		if out.Spec.Networks.ShootDefaults.Pods == nil && !gardencorev1alpha1helper.NetworksIntersect(out.Spec.Networks.Pods, defaultPodCIDR) {
+		if out.Spec.Networks.ShootDefaults.Pods == nil && !utils.NetworksIntersect(out.Spec.Networks.Pods, defaultPodCIDR) {
 			out.Spec.Networks.ShootDefaults.Pods = &defaultPodCIDR
 		}
-		if out.Spec.Networks.ShootDefaults.Services == nil && !gardencorev1alpha1helper.NetworksIntersect(out.Spec.Networks.Services, defaultServiceCIDR) {
+		if out.Spec.Networks.ShootDefaults.Services == nil && !utils.NetworksIntersect(out.Spec.Networks.Services, defaultServiceCIDR) {
 			out.Spec.Networks.ShootDefaults.Services = &defaultServiceCIDR
 		}
 	}
@@ -539,14 +539,22 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 			out.Spec.VolumeTypes = append(out.Spec.VolumeTypes, o)
 		}
 
+		for _, zone := range in.Spec.Azure.Constraints.Zones {
+			r := garden.Region{Name: zone.Region}
+			for _, name := range zone.Names {
+				r.Zones = append(r.Zones, garden.AvailabilityZone{
+					Name: name,
+				})
+			}
+			out.Spec.Regions = append(out.Spec.Regions, r)
+		}
+
 		if regionsJSON, ok := in.Annotations[garden.MigrationCloudProfileRegions]; ok {
 			var regions []garden.Region
 			if err := json.Unmarshal([]byte(regionsJSON), &regions); err != nil {
 				return err
 			}
 			out.Spec.Regions = regions
-		} else {
-			out.Spec.Regions = nil
 		}
 
 		providerConfig := &garden.ProviderConfig{}
@@ -729,19 +737,12 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 			if err := autoConvert_v1beta1_MachineType_To_garden_MachineType(&machineType.MachineType, &o, s); err != nil {
 				return err
 			}
-			o.Storage = &garden.MachineTypeStorage{
-				Size: machineType.VolumeSize,
-				Type: machineType.VolumeType,
+			if o.Storage == nil {
+				o.Storage = &garden.MachineTypeStorage{}
 			}
+			o.Storage.Size = machineType.VolumeSize
+			o.Storage.Type = machineType.VolumeType
 			out.Spec.MachineTypes = append(out.Spec.MachineTypes, o)
-
-			if !volumeTypesHaveName(out.Spec.VolumeTypes, machineType.Name) {
-				out.Spec.VolumeTypes = append(out.Spec.VolumeTypes, garden.VolumeType{
-					Name:   machineType.Name,
-					Class:  machineType.VolumeType,
-					Usable: machineType.Usable,
-				})
-			}
 		}
 
 		for _, zone := range in.Spec.OpenStack.Constraints.Zones {
@@ -1082,15 +1083,6 @@ func Convert_garden_CloudProfile_To_v1beta1_CloudProfile(in *garden.CloudProfile
 				out.Spec.Azure = &AzureProfile{}
 			}
 			out.Spec.Azure.Constraints.DNSProviders = stringSliceToDNSProviderConstraint(strings.Split(dnsProviders, ","))
-		}
-		if len(in.Spec.Regions) > 0 {
-			data, err := json.Marshal(in.Spec.Regions)
-			if err != nil {
-				return err
-			}
-			out.Annotations[garden.MigrationCloudProfileRegions] = string(data)
-		} else {
-			delete(out.Annotations, garden.MigrationCloudProfileRegions)
 		}
 
 	case "gcp":
@@ -1438,7 +1430,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: worker.VolumeType,
+					Type: &worker.VolumeType,
 				},
 			}
 
@@ -1486,11 +1478,17 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 	case in.Spec.Cloud.Azure != nil:
 		out.Spec.Provider.Type = "azure"
 
+		var zoned bool
+		if len(in.Spec.Cloud.Azure.Zones) > 0 {
+			zoned = true
+		}
+
 		infrastructureConfig := &azurev1alpha1.InfrastructureConfig{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: azurev1alpha1.SchemeGroupVersion.String(),
 				Kind:       "InfrastructureConfig",
 			},
+			Zoned: zoned,
 		}
 
 		var resourceGroup *azurev1alpha1.ResourceGroup
@@ -1508,11 +1506,15 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		if in.Spec.Cloud.Azure.Networks.VNet.Name != nil {
 			vnet.Name = in.Spec.Cloud.Azure.Networks.VNet.Name
 		}
+		if in.Spec.Cloud.Azure.Networks.VNet.ResourceGroup != nil {
+			vnet.ResourceGroup = in.Spec.Cloud.Azure.Networks.VNet.ResourceGroup
+		}
 
 		infrastructureConfig.ResourceGroup = resourceGroup
 		infrastructureConfig.Networks = azurev1alpha1.NetworkConfig{
-			VNet:    vnet,
-			Workers: in.Spec.Cloud.Azure.Networks.Workers,
+			VNet:             vnet,
+			Workers:          in.Spec.Cloud.Azure.Networks.Workers,
+			ServiceEndpoints: in.Spec.Cloud.Azure.Networks.ServiceEndpoints,
 		}
 
 		data, err := json.Marshal(infrastructureConfig)
@@ -1569,7 +1571,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: worker.VolumeType,
+					Type: &worker.VolumeType,
 				},
 			}
 
@@ -1593,6 +1595,9 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 			if data, ok := workerMigrationInfo[worker.Name]; ok {
 				w.ProviderConfig = data.ProviderConfig
 				w.Zones = data.Zones
+			}
+			if w.Zones == nil && zoned {
+				w.Zones = in.Spec.Cloud.Azure.Zones
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -1701,7 +1706,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: worker.VolumeType,
+					Type: &worker.VolumeType,
 				},
 			}
 
@@ -1861,6 +1866,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 			if data, ok := workerMigrationInfo[worker.Name]; ok {
 				w.ProviderConfig = data.ProviderConfig
 				w.Zones = data.Zones
+				w.Volume = data.Volume
 			}
 
 			if w.Zones == nil {
@@ -1976,7 +1982,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: worker.VolumeType,
+					Type: &worker.VolumeType,
 				},
 			}
 
@@ -2077,7 +2083,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: worker.VolumeType,
+					Type: &worker.VolumeType,
 				},
 			}
 
@@ -2195,6 +2201,7 @@ func Convert_garden_Shoot_To_v1beta1_Shoot(in *garden.Shoot, out *Shoot, s conve
 			workerMigrationInfo[worker.Name] = garden.WorkerMigrationData{
 				ProviderConfig: worker.ProviderConfig,
 				Zones:          worker.Zones,
+				Volume:         worker.Volume,
 			}
 		}
 		data, err := json.Marshal(workerMigrationInfo)
@@ -2288,7 +2295,9 @@ func Convert_garden_Worker_To_v1beta1_AWSWorker(in *garden.Worker, out *AWSWorke
 
 	if in.Volume != nil {
 		out.VolumeSize = in.Volume.Size
-		out.VolumeType = in.Volume.Type
+		if in.Volume.Type != nil {
+			out.VolumeType = *in.Volume.Type
+		}
 	}
 
 	var kubeletConfig *KubeletConfig
@@ -2330,7 +2339,9 @@ func Convert_garden_Worker_To_v1beta1_AzureWorker(in *garden.Worker, out *AzureW
 
 	if in.Volume != nil {
 		out.VolumeSize = in.Volume.Size
-		out.VolumeType = in.Volume.Type
+		if in.Volume.Type != nil {
+			out.VolumeType = *in.Volume.Type
+		}
 	}
 
 	var kubeletConfig *KubeletConfig
@@ -2372,7 +2383,9 @@ func Convert_garden_Worker_To_v1beta1_GCPWorker(in *garden.Worker, out *GCPWorke
 
 	if in.Volume != nil {
 		out.VolumeSize = in.Volume.Size
-		out.VolumeType = in.Volume.Type
+		if in.Volume.Type != nil {
+			out.VolumeType = *in.Volume.Type
+		}
 	}
 
 	var kubeletConfig *KubeletConfig
@@ -2451,7 +2464,9 @@ func Convert_garden_Worker_To_v1beta1_AlicloudWorker(in *garden.Worker, out *Ali
 
 	if in.Volume != nil {
 		out.VolumeSize = in.Volume.Size
-		out.VolumeType = in.Volume.Type
+		if in.Volume.Type != nil {
+			out.VolumeType = *in.Volume.Type
+		}
 	}
 
 	var kubeletConfig *KubeletConfig
@@ -2493,7 +2508,9 @@ func Convert_garden_Worker_To_v1beta1_PacketWorker(in *garden.Worker, out *Packe
 
 	if in.Volume != nil {
 		out.VolumeSize = in.Volume.Size
-		out.VolumeType = in.Volume.Type
+		if in.Volume.Type != nil {
+			out.VolumeType = *in.Volume.Type
+		}
 	}
 
 	var kubeletConfig *KubeletConfig

@@ -18,12 +18,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/gardener/gardener/pkg/utils/retry"
-
-	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
-
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils/flow"
+	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
+	"github.com/gardener/gardener/pkg/utils/retry"
 
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -76,9 +75,11 @@ var (
 
 	// ZeroGracePeriod is an option to delete resources with no grace period.
 	ZeroGracePeriod = utilclient.DeleteWith(utilclient.GracePeriodSeconds(0))
+	// GracePeriodFiveMinutes is an option to delete resources with a grace period of five minutes.
+	GracePeriodFiveMinutes = utilclient.DeleteWith(utilclient.GracePeriodSeconds(5 * 60))
 
 	// NotSystemComponent is a requirement that something doesn't have the GardenRole GardenRoleSystemComponent.
-	NotSystemComponent = MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleSystemComponent)
+	NotSystemComponent = MustNewRequirement(v1alpha1constants.DeprecatedGardenRole, selection.NotEquals, v1alpha1constants.GardenRoleSystemComponent)
 	// NoCleanupPrevention is a requirement that the ShootNoCleanup label of something is not true.
 	NoCleanupPrevention = MustNewRequirement(common.ShootNoCleanup, selection.NotEquals, "true")
 	// NotKubernetesProvider is a requirement that the Provider label of something is not KubernetesProvider.
@@ -89,7 +90,7 @@ var (
 	// CleanupSelector is a selector that excludes system components and all resources not considered for auto cleanup.
 	CleanupSelector = labels.NewSelector().Add(NotSystemComponent).Add(NoCleanupPrevention)
 
-	// NoCleanupPreventionListOptions are CollectionMatching that exclude system components or non-auto clean upped resource.
+	// NoCleanupPreventionListOptions are CollectionMatching that exclude system components or non-auto cleaned up resource.
 	NoCleanupPreventionListOptions = client.ListOptions{
 		LabelSelector: CleanupSelector,
 	}
@@ -180,21 +181,23 @@ func (b *Botanist) CleanWebhooks(ctx context.Context) error {
 	)
 
 	return flow.Parallel(
-		cleanResourceFn(ops, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, MutatingWebhookConfigurationCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, ValidatingWebhookConfigurationCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, MutatingWebhookConfigurationCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, ValidatingWebhookConfigurationCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
 	)(ctx)
 }
 
 // CleanExtendedAPIs removes API extensions like CRDs and API services from the Shoot cluster.
 func (b *Botanist) CleanExtendedAPIs(ctx context.Context) error {
 	var (
-		c   = b.K8sShootClient.Client()
-		ops = utilclient.DefaultCleanOps()
+		c           = b.K8sShootClient.Client()
+		defaultOps  = utilclient.DefaultCleanOps()
+		crdCleaner  = utilclient.NewCRDCleaner()
+		crdCleanOps = utilclient.NewCleanOps(crdCleaner, utilclient.DefaultGoneEnsurer())
 	)
 
 	return flow.Parallel(
-		cleanResourceFn(ops, c, &apiregistrationv1beta1.APIServiceList{}, APIServiceCleanOptions, ZeroGracePeriod, FinalizeAfterOneHour),
-		cleanResourceFn(ops, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, CustomResourceDefinitionCleanOptions, ZeroGracePeriod, FinalizeAfterOneHour),
+		cleanResourceFn(defaultOps, c, &apiregistrationv1beta1.APIServiceList{}, APIServiceCleanOptions, GracePeriodFiveMinutes, FinalizeAfterOneHour),
+		cleanResourceFn(crdCleanOps, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, CustomResourceDefinitionCleanOptions, GracePeriodFiveMinutes, FinalizeAfterOneHour),
 	)(ctx)
 }
 
@@ -207,17 +210,17 @@ func (b *Botanist) CleanKubernetesResources(ctx context.Context) error {
 	ops := utilclient.DefaultCleanOps()
 
 	return flow.Parallel(
-		cleanResourceFn(ops, c, &batchv1beta1.CronJobList{}, CronJobCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &appsv1.DaemonSetList{}, DaemonSetCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &appsv1.DeploymentList{}, DeploymentCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &extensionsv1beta1.IngressList{}, IngressCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &batchv1.JobList{}, JobCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &corev1.PodList{}, PodCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &appsv1.ReplicaSetList{}, ReplicaSetCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &corev1.ReplicationControllerList{}, ReplicationControllerCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &corev1.ServiceList{}, ServiceCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &appsv1.StatefulSetList{}, StatefulSetCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
-		cleanResourceFn(ops, c, &corev1.PersistentVolumeClaimList{}, PersistentVolumeClaimCleanOptions, ZeroGracePeriod, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &batchv1beta1.CronJobList{}, CronJobCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &appsv1.DaemonSetList{}, DaemonSetCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &appsv1.DeploymentList{}, DeploymentCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &extensionsv1beta1.IngressList{}, IngressCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &batchv1.JobList{}, JobCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &corev1.PodList{}, PodCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &appsv1.ReplicaSetList{}, ReplicaSetCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &corev1.ReplicationControllerList{}, ReplicationControllerCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &corev1.ServiceList{}, ServiceCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &appsv1.StatefulSetList{}, StatefulSetCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
+		cleanResourceFn(ops, c, &corev1.PersistentVolumeClaimList{}, PersistentVolumeClaimCleanOptions, GracePeriodFiveMinutes, FinalizeAfterFiveMinutes),
 	)(ctx)
 }
 

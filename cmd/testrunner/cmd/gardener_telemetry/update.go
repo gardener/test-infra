@@ -3,13 +3,12 @@ package gardener_telemetry_cmd
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/test-infra/pkg/logger"
 	telcommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"time"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/test/integration/framework"
@@ -17,7 +16,7 @@ import (
 )
 
 func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface) (map[string]bool, error) {
-	shoots := &v1beta1.ShootList{}
+	shoots := &gardenv1alpha1.ShootList{}
 	err := k8sClient.Client().List(ctx, shoots)
 	if err != nil {
 		return nil, err
@@ -25,7 +24,7 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 
 	unhealthyShoots := make(map[string]bool)
 	for _, shoot := range shoots.Items {
-		if shoot.Status.LastOperation.State == v1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == v1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == v1alpha1.LastOperationStateAborted {
+		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
 			continue
 		}
@@ -39,7 +38,7 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 
 func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, newGardenerVersion string, unhealthyShoots map[string]bool, timeout time.Duration) error {
 	return retry.UntilTimeout(ctx, 30*time.Second, timeout, func(ctx context.Context) (bool, error) {
-		shoots := &v1beta1.ShootList{}
+		shoots := &gardenv1alpha1.ShootList{}
 		err := k8sClient.Client().List(ctx, shoots)
 		if err != nil {
 			log.V(3).Info(err.Error())
@@ -66,7 +65,7 @@ func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kuber
 				logger.Logf(log.V(3).Info, "shoot %s in namespace %s has no last operation", shoot.Name, shoot.Namespace)
 				continue
 			}
-			if shoot.Status.LastOperation.State == v1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == v1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == v1alpha1.LastOperationStateAborted {
+			if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
 				reconciledShoots++
 				continue
 			}

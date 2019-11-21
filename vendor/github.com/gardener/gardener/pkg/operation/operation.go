@@ -18,16 +18,14 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"path/filepath"
 	"strings"
-	"time"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/chartrenderer"
-	gardeninformers "github.com/gardener/gardener/pkg/client/garden/informers/externalversions/garden/v1beta1"
+	gardencoreinformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/controllermanager/apis/config"
 	"github.com/gardener/gardener/pkg/operation/common"
@@ -40,7 +38,6 @@ import (
 	"github.com/gardener/gardener/pkg/utils/flow"
 	"github.com/gardener/gardener/pkg/utils/imagevector"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	utilretry "github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/pkg/utils/secrets"
 
 	prometheusapi "github.com/prometheus/client_golang/api"
@@ -55,27 +52,21 @@ import (
 )
 
 // New creates a new operation object with a Shoot resource object.
-func New(shoot *gardenv1beta1.Shoot, config *config.ControllerManagerConfiguration, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector, shootBackup *config.ShootBackup) (*Operation, error) {
-	return newOperation(config, logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, shoot.Spec.Cloud.Seed, shoot, nil, shootBackup)
-}
-
-// NewWithBackupInfrastructure creates a new operation object without a Shoot resource object but the BackupInfrastructure resource.
-func NewWithBackupInfrastructure(backupInfrastructure *gardenv1beta1.BackupInfrastructure, config *config.ControllerManagerConfiguration, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenInformers gardeninformers.Interface, gardenerInfo *gardenv1beta1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector) (*Operation, error) {
-	return newOperation(config, logger, k8sGardenClient, k8sGardenInformers, gardenerInfo, secretsMap, imageVector, backupInfrastructure.Namespace, &backupInfrastructure.Spec.Seed, nil, backupInfrastructure, nil)
+func New(shoot *gardencorev1alpha1.Shoot, config *config.ControllerManagerConfiguration, logger *logrus.Entry, k8sGardenClient kubernetes.Interface, k8sGardenCoreInformers gardencoreinformers.Interface, gardenerInfo *gardencorev1alpha1.Gardener, secretsMap map[string]*corev1.Secret, imageVector imagevector.ImageVector, shootBackup *config.ShootBackup) (*Operation, error) {
+	return newOperation(config, logger, k8sGardenClient, k8sGardenCoreInformers, gardenerInfo, secretsMap, imageVector, shoot.Namespace, shoot.Spec.SeedName, shoot, shootBackup)
 }
 
 func newOperation(
 	config *config.ControllerManagerConfiguration,
 	logger *logrus.Entry,
 	k8sGardenClient kubernetes.Interface,
-	k8sGardenInformers gardeninformers.Interface,
-	gardenerInfo *gardenv1beta1.Gardener,
+	k8sGardenCoreInformers gardencoreinformers.Interface,
+	gardenerInfo *gardencorev1alpha1.Gardener,
 	secretsMap map[string]*corev1.Secret,
 	imageVector imagevector.ImageVector,
 	namespace string,
 	seedName *string,
-	shoot *gardenv1beta1.Shoot,
-	backupInfrastructure *gardenv1beta1.BackupInfrastructure,
+	shoot *gardencorev1alpha1.Shoot,
 	shootBackup *config.ShootBackup,
 ) (*Operation, error) {
 
@@ -84,14 +75,14 @@ func newOperation(
 		secrets[k] = v
 	}
 
-	gardenObj, err := garden.New(k8sGardenInformers.Projects().Lister(), namespace, secrets)
+	gardenObj, err := garden.New(k8sGardenCoreInformers.Projects().Lister(), namespace, secrets)
 	if err != nil {
 		return nil, err
 	}
 
 	var seedObj *seed.Seed
 	if seedName != nil {
-		seedObj, err = seed.NewFromName(k8sGardenClient, k8sGardenInformers, *seedName)
+		seedObj, err = seed.NewFromName(k8sGardenClient, k8sGardenCoreInformers, *seedName)
 		if err != nil {
 			return nil, err
 		}
@@ -107,31 +98,30 @@ func newOperation(
 	}
 
 	operation := &Operation{
-		Config:               config,
-		Logger:               logger,
-		GardenerInfo:         gardenerInfo,
-		Secrets:              secrets,
-		ImageVector:          imageVector,
-		CheckSums:            make(map[string]string),
-		Garden:               gardenObj,
-		Seed:                 seedObj,
-		K8sGardenClient:      k8sGardenClient,
-		K8sGardenInformers:   k8sGardenInformers,
-		ChartApplierGarden:   kubernetes.NewChartApplier(renderer, applier),
-		BackupInfrastructure: backupInfrastructure,
-		ShootBackup:          shootBackup,
+		Config:                 config,
+		Logger:                 logger,
+		GardenerInfo:           gardenerInfo,
+		Secrets:                secrets,
+		ImageVector:            imageVector,
+		CheckSums:              make(map[string]string),
+		Garden:                 gardenObj,
+		Seed:                   seedObj,
+		K8sGardenClient:        k8sGardenClient,
+		K8sGardenCoreInformers: k8sGardenCoreInformers,
+		ChartApplierGarden:     kubernetes.NewChartApplier(renderer, applier),
+		ShootBackup:            shootBackup,
 	}
 
 	if shoot != nil {
-		shootObj, err := shootpkg.New(k8sGardenClient, k8sGardenInformers, shoot, gardenObj.Project.Name, gardenObj.InternalDomain.Domain, gardenObj.DefaultDomains)
+		shootObj, err := shootpkg.New(k8sGardenClient, k8sGardenCoreInformers, shoot, gardenObj.Project.Name, gardenObj.InternalDomain.Domain, gardenObj.DefaultDomains)
 		if err != nil {
 			return nil, err
 		}
 		operation.Shoot = shootObj
-		operation.Shoot.IgnoreAlerts = helper.ShootIgnoreAlerts(shoot)
-		operation.Shoot.WantsAlertmanager = helper.ShootWantsAlertmanager(shoot, secrets) && !operation.Shoot.IgnoreAlerts
+		operation.Shoot.IgnoreAlerts = gardencorev1alpha1helper.ShootIgnoresAlerts(shoot)
+		operation.Shoot.WantsAlertmanager = shootWantsAlertmanager(shoot, secrets) && !operation.Shoot.IgnoreAlerts
 
-		shootedSeed, err := helper.ReadShootedSeed(shoot)
+		shootedSeed, err := gardencorev1alpha1helper.ReadShootedSeed(shoot)
 		if err != nil {
 			logger.Warnf("Cannot use shoot %s/%s as shooted seed: %+v", shoot.Namespace, shoot.Name, err)
 		} else {
@@ -140,6 +130,17 @@ func newOperation(
 	}
 
 	return operation, nil
+}
+
+func shootWantsAlertmanager(shoot *gardencorev1alpha1.Shoot, secrets map[string]*corev1.Secret) bool {
+	if alertingSMTPSecret := common.GetSecretKeysWithPrefix(v1alpha1constants.GardenRoleAlertingSMTP, secrets); len(alertingSMTPSecret) > 0 {
+		if shoot.Spec.Monitoring != nil &&
+			shoot.Spec.Monitoring.Alerting != nil &&
+			len(shoot.Spec.Monitoring.Alerting.EmailReceivers) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // InitializeSeedClients will use the Garden Kubernetes client to read the Seed Secret in the Garden
@@ -196,7 +197,7 @@ func (o *Operation) InitializeShootClients() error {
 		}
 	}
 
-	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, gardenv1beta1.GardenerName,
+	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, gardencorev1alpha1.GardenerName,
 		kubernetes.WithClientConnectionOptions(o.Config.ShootClientConnection),
 		kubernetes.WithClientOptions(client.Options{
 			Scheme: kubernetes.ShootScheme,
@@ -307,8 +308,8 @@ func (o *Operation) ReportShootProgress(ctx context.Context, stats *flow.Stats) 
 		lastUpdateTime = metav1.Now()
 	)
 
-	newShoot, err := kutil.TryUpdateShootStatus(o.K8sGardenClient.Garden(), retry.DefaultRetry, o.Shoot.Info.ObjectMeta,
-		func(shoot *gardenv1beta1.Shoot) (*gardenv1beta1.Shoot, error) {
+	newShoot, err := kutil.TryUpdateShootStatus(o.K8sGardenClient.GardenCore(), retry.DefaultRetry, o.Shoot.Info.ObjectMeta,
+		func(shoot *gardencorev1alpha1.Shoot) (*gardencorev1alpha1.Shoot, error) {
 			if shoot.Status.LastOperation == nil {
 				return nil, fmt.Errorf("last operation of Shoot %s/%s is unset", shoot.Namespace, shoot.Name)
 			}
@@ -326,18 +327,6 @@ func (o *Operation) ReportShootProgress(ctx context.Context, stats *flow.Stats) 
 	}
 
 	o.Shoot.Info = newShoot
-}
-
-// ReportBackupInfrastructureProgress will update the phase and error in the BackupInfrastructure manifest `status` section
-// by the current progress of the Flow execution.
-func (o *Operation) ReportBackupInfrastructureProgress(ctx context.Context, stats *flow.Stats) {
-	o.BackupInfrastructure.Status.LastOperation.Description = makeDescription(stats)
-	o.BackupInfrastructure.Status.LastOperation.Progress = stats.ProgressPercent()
-	o.BackupInfrastructure.Status.LastOperation.LastUpdateTime = metav1.Now()
-
-	if newBackupInfrastructure, err := o.K8sGardenClient.Garden().GardenV1beta1().BackupInfrastructures(o.BackupInfrastructure.Namespace).UpdateStatus(o.BackupInfrastructure); err == nil {
-		o.BackupInfrastructure = newBackupInfrastructure
-	}
 }
 
 // SeedVersion is a shorthand for the kubernetes version of the K8sSeedClient.
@@ -378,50 +367,9 @@ func (o *Operation) newTerraformer(purpose, namespace, name string) (*terraforme
 	return terraformer.NewForConfig(o.Logger, o.K8sSeedClient.RESTConfig(), purpose, namespace, name, image.String())
 }
 
-// NewBackupInfrastructureTerraformer creates a new Terraformer for the matching BackupInfrastructure.
-func (o *Operation) NewBackupInfrastructureTerraformer() (*terraformer.Terraformer, error) {
-	var backupInfrastructureName string
-	if o.Shoot != nil {
-		backupInfrastructureName = common.GenerateBackupInfrastructureName(o.Shoot.SeedNamespace, o.Shoot.Info.Status.UID)
-	} else {
-		backupInfrastructureName = o.BackupInfrastructure.Name
-	}
-
-	return o.newTerraformer(common.TerraformerPurposeBackup, common.GenerateBackupNamespaceName(backupInfrastructureName), backupInfrastructureName)
-}
-
 // NewShootTerraformer creates a new Terraformer for the current shoot with the given purpose.
 func (o *Operation) NewShootTerraformer(purpose string) (*terraformer.Terraformer, error) {
 	return o.newTerraformer(purpose, o.Shoot.SeedNamespace, o.Shoot.Info.Name)
-}
-
-// ChartInitializer initializes a terraformer based on the given chart and values.
-func (o *Operation) ChartInitializer(chartName string, values map[string]interface{}) terraformer.Initializer {
-	return func(config *terraformer.InitializerConfig) error {
-		chartRenderer, err := chartrenderer.NewForConfig(o.K8sSeedClient.RESTConfig())
-		if err != nil {
-			return err
-		}
-		applier, err := kubernetes.NewApplierForConfig(o.K8sSeedClient.RESTConfig())
-		if err != nil {
-			return err
-		}
-		chartApplier := kubernetes.NewChartApplier(chartRenderer, applier)
-
-		values["names"] = map[string]interface{}{
-			"configuration": config.ConfigurationName,
-			"variables":     config.VariablesName,
-			"state":         config.StateName,
-		}
-		values["initializeEmptyState"] = config.InitializeState
-
-		return utilretry.UntilTimeout(context.TODO(), 5*time.Second, 30*time.Second, func(ctx context.Context) (done bool, err error) {
-			if err := chartApplier.ApplyChart(ctx, filepath.Join(common.TerraformerChartPath, chartName), config.Namespace, chartName, nil, values); err != nil {
-				return utilretry.MinorError(err)
-			}
-			return utilretry.Ok()
-		})
-	}
 }
 
 // SyncClusterResourceToSeed creates or updates the `Cluster` extension resource for the shoot in the seed cluster.
@@ -445,15 +393,15 @@ func (o *Operation) SyncClusterResourceToSeed(ctx context.Context) error {
 	)
 
 	cloudProfileObj.TypeMeta = metav1.TypeMeta{
-		APIVersion: gardenv1beta1.SchemeGroupVersion.String(),
+		APIVersion: gardencorev1alpha1.SchemeGroupVersion.String(),
 		Kind:       "CloudProfile",
 	}
 	seedObj.TypeMeta = metav1.TypeMeta{
-		APIVersion: gardenv1beta1.SchemeGroupVersion.String(),
+		APIVersion: gardencorev1alpha1.SchemeGroupVersion.String(),
 		Kind:       "Seed",
 	}
 	shootObj.TypeMeta = metav1.TypeMeta{
-		APIVersion: gardenv1beta1.SchemeGroupVersion.String(),
+		APIVersion: gardencorev1alpha1.SchemeGroupVersion.String(),
 		Kind:       "Shoot",
 	}
 

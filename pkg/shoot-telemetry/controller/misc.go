@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"strings"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func (c *controller) determineShootInternalEndpoint(shoot *gardenv1beta1.Shoot) (string, error) {
+func (c *controller) determineShootInternalEndpoint(shoot *gardenv1alpha1.Shoot) (string, error) {
 	projects, err := c.projects.Lister().List(labels.Everything())
 	if err != nil {
 		return "", err
