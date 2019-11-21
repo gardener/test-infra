@@ -15,33 +15,18 @@
 package common
 
 import (
-	"path/filepath"
-
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 const (
-	// AlertManagerStatefulSetName is the name of the alertmanager stateful set.
-	AlertManagerStatefulSetName = "alertmanager"
-
 	// BackupBucketName is a constant for the name of bucket of object storage.
 	BackupBucketName = "bucketName"
 
 	// BackupSecretName defines the name of the secret containing the credentials which are required to
 	// authenticate against the respective cloud provider (required to store the backups of Shoot clusters).
 	BackupSecretName = "etcd-backup"
-
-	// BackupInfrastructureForceDeletion is a constant for an annotation on a Backupinfrastructure indicating that it should be force deleted.
-	// TOREMOVE: remove this with backupinfra controller.
-	BackupInfrastructureForceDeletion = "backupinfrastructure.garden.sapcloud.io/force-deletion"
-
-	// BackupInfrastructureOperation is a constant for an annotation on a Backupinfrastructure indicating that an operation shall be performed.
-	BackupInfrastructureOperation = "backupinfrastructure.garden.sapcloud.io/operation"
-
-	// BackupInfrastructureReconcile is a constant for an annotation on a Backupinfrastructure indicating that a Backupinfrastructure reconciliation shall be triggered.
-	BackupInfrastructureReconcile = "reconcile"
 
 	// BasicAuthSecretName is the name of the secret containing basic authentication credentials for the kube-apiserver.
 	BasicAuthSecretName = "kube-apiserver-basic-auth"
@@ -143,38 +128,6 @@ const (
 	// EtcdEncryptionKeySecretLen is the expected length in bytes of the EncryptionConfiguration's key
 	EtcdEncryptionKeySecretLen = 32
 
-	// GardenNamespace is the namespace in which the configuration and secrets for
-	// the Gardener controller manager will be stored (e.g., secrets for the Seed clusters).
-	// It is also used by the gardener-apiserver.
-	GardenNamespace = "garden"
-
-	// GardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
-	GardenRole = "garden.sapcloud.io/role"
-
-	// GardenRoleShoot is the value of the GardenRole key indicating type 'shoot'.
-	GardenRoleShoot = "shoot"
-
-	// GardenRoleSeed is the value of the GardenRole key indicating type 'seed'.
-	GardenRoleSeed = "seed"
-
-	// GardenRoleControlPlane is the value of the GardenRole key indicating type 'controlplane'.
-	GardenRoleControlPlane = "controlplane"
-
-	// GardenRoleSystemComponent is the value of the GardenRole key indicating type 'system-component'.
-	GardenRoleSystemComponent = "system-component"
-
-	// GardenRoleMonitoring is the value of the GardenRole key indicating type 'monitoring'.
-	GardenRoleMonitoring = "monitoring"
-
-	// GardenRoleGlobalMonitoring is the vlaue of the GardenRole key indicating type 'global-monitoring'
-	GardenRoleGlobalMonitoring = "global-monitoring"
-
-	// GardenRoleOptionalAddon is the value of the GardenRole key indicating type 'optional-addon'.
-	GardenRoleOptionalAddon = "optional-addon"
-
-	// GardenRoleLogging is the value of the GardenRole key indicating type 'logging'.
-	GardenRoleLogging = "logging"
-
 	// GardenRoleDefaultDomain is the value of the GardenRole key indicating type 'default-domain'.
 	GardenRoleDefaultDomain = "default-domain"
 
@@ -190,23 +143,15 @@ const (
 	// GardenRoleMembers is the value of GardenRole key indicating type 'members'.
 	GardenRoleMembers = "members"
 
-	// GardenRoleProject is the value of GardenRole key indicating type 'project'.
-	GardenRoleProject = "project"
+	// GardenRoleGlobalMonitoring is the value of the GardenRole key indicating type 'global-monitoring'
+	GardenRoleGlobalMonitoring = "global-monitoring"
 
-	// GardenRoleBackup is the value of GardenRole key indicating type 'backup'.
-	GardenRoleBackup = "backup"
+	// GardenRoleHvpa is the value of GardenRole key indicating type 'hvpa'.
+	GardenRoleHvpa = "hvpa"
 
 	// GardenCreatedBy is the key for an annotation of a Shoot cluster whose value indicates contains the username
 	// of the user that created the resource.
 	GardenCreatedBy = "garden.sapcloud.io/createdBy"
-
-	// GardenOperatedBy is the key for an annotation of a Shoot cluster whose value must be a valid email address and
-	// is used to send alerts to.
-	GardenOperatedBy = "garden.sapcloud.io/operatedBy"
-
-	// GardenIgnoreAlerts is the key for an annotation of a Shoot cluster whose value indicates
-	// if alerts for this cluster should be ignored
-	GardenIgnoreAlerts = "shoot.garden.sapcloud.io/ignore-alerts"
 
 	// GrafanaOperatorsPrefix is a constant for a prefix used for the operators Grafana instance.
 	GrafanaOperatorsPrefix = "go"
@@ -258,6 +203,9 @@ const (
 
 	// KubeProxyDaemonSetName is the name of the kube-proxy daemon set.
 	KubeProxyDaemonSetName = "kube-proxy"
+
+	// NodeProblemDetectorDaemonSetName is the name of the node-problem-detector daemon set.
+	NodeProblemDetectorDaemonSetName = "node-problem-detector"
 
 	// NodeExporterDaemonSetName is the name of the node-exporter daemon set.
 	NodeExporterDaemonSetName = "node-exporter"
@@ -311,10 +259,6 @@ const (
 	// TerraformerJobSuffix is the suffix used for the name of the Job which executes the Terraform configuration.
 	TerraformerJobSuffix = ".tf-job"
 
-	// TerraformerPurposeInfraDeprecated is a constant for the complete Terraform setup with purpose 'infrastructure'.
-	// deprecated
-	TerraformerPurposeInfraDeprecated = "infra"
-
 	// TerraformerPurposeInternalDNSDeprecated is a constant for the complete Terraform setup with purpose 'internal cluster domain'
 	// deprecated
 	TerraformerPurposeInternalDNSDeprecated = "internal-dns"
@@ -339,10 +283,6 @@ const (
 	// resource when cleaning a shoot during the deletion flow.
 	ShootNoCleanup = "shoot.gardener.cloud/no-cleanup"
 
-	// ShootUseAsSeed is a constant for an annotation on a Shoot resource indicating that the Shoot shall be registered as Seed in the
-	// Garden cluster once successfully created.
-	ShootUseAsSeed = "shoot.garden.sapcloud.io/use-as-seed"
-
 	// ShootStatus is a constant for a label on a Shoot resource indicating that the Shoot's health.
 	// Shoot Care controller and can be used to easily identify Shoot clusters with certain states.
 	ShootStatus = "shoot.garden.sapcloud.io/status"
@@ -351,10 +291,6 @@ const (
 	// Shoot Care controller and can be used to easily identify Shoot clusters with issues.
 	// Deprecated: Use ShootStatus instead
 	ShootUnhealthy = "shoot.garden.sapcloud.io/unhealthy"
-
-	// ShootHibernated is a constant for a label on the Shoot namespace in the Seed indicating the Shoot's hibernation status.
-	// +deprecated: Use `Cluster` resource instead.
-	ShootHibernated = "shoot.garden.sapcloud.io/hibernated"
 
 	// ShootOperation is a constant for an annotation on a Shoot in a failed state indicating that an operation shall be performed.
 	ShootOperation = "shoot.garden.sapcloud.io/operation"
@@ -373,9 +309,6 @@ const (
 	// ShootTaskDeployInfrastructure is a name for a Shoot's infrastructure deployment task.
 	ShootTaskDeployInfrastructure = "deployInfrastructure"
 
-	// ShootTaskDeployKube2IAMResource is a name for a Shoot's Kube2IAM Resource deployment task.
-	ShootTaskDeployKube2IAMResource = "deployKube2IAMResource"
-
 	// ShootOperationRetry is a constant for an annotation on a Shoot indicating that a failed Shoot reconciliation shall be retried.
 	ShootOperationRetry = "retry"
 
@@ -393,16 +326,6 @@ const (
 	// delete)).
 	ShootIgnore = "shoot.garden.sapcloud.io/ignore"
 
-	// ShootUID is an annotation key for the shoot namespace in the seed cluster,
-	// which value will be the value of `shoot.status.uid`
-	ShootUID = "shoot.garden.sapcloud.io/uid"
-
-	// AnnotateSeedNamespacePrefix is such a prefix so that the shoot namespace in the seed cluster
-	// will be annotated with the annotations of the shoot resource starting with it.
-	// For example, if the shoot is annotated with <AnnotateSeedNamespacePrefix>key=value,
-	// then the namespace in the seed will be annotated with <AnnotateSeedNamespacePrefix>key=value, as well.
-	AnnotateSeedNamespacePrefix = "custom.shoot.sapcloud.io/"
-
 	// AnnotatePersistentVolumeMinimumSize is used to specify the minimum size of persistent volume in the cluster
 	AnnotatePersistentVolumeMinimumSize = "persistentvolume.garden.sapcloud.io/minimumSize"
 
@@ -418,6 +341,9 @@ const (
 	// CoreDNSImageName is the name of the CoreDNS image.
 	CoreDNSImageName = "coredns"
 
+	// NodeProblemDetectorImageName is the name of the node-problem-detector image.
+	NodeProblemDetectorImageName = "node-problem-detector"
+
 	// HyperkubeImageName is the name of the Hyperkube image.
 	HyperkubeImageName = "hyperkube"
 
@@ -432,9 +358,6 @@ const (
 
 	// NodeExporterImageName is the name of the NodeExporter image.
 	NodeExporterImageName = "node-exporter"
-
-	// KubeLegoImageName is the name of the KubeLego image.
-	KubeLegoImageName = "kube-lego"
 
 	// KubernetesDashboardImageName is the name of the KubernetesDashboard image.
 	KubernetesDashboardImageName = "kubernetes-dashboard"
@@ -535,14 +458,14 @@ const (
 	// VpaExporterImageName is the name of the vpa-exporter image
 	VpaExporterImageName = "vpa-exporter"
 
+	// HvpaControllerImageName is the name of the hvpa-controller image
+	HvpaControllerImageName = "hvpa-controller"
+
 	// ServiceAccountSigningKeySecretDataKey is the data key of a signing key Kubernetes secret.
 	ServiceAccountSigningKeySecretDataKey = "signing-key"
 )
 
 var (
-	// TerraformerChartPath is the path where the seed-terraformer charts reside.
-	TerraformerChartPath = filepath.Join(ChartPath, "seed-terraformer", "charts")
-
 	// RequiredControlPlaneDeployments is a set of the required shoot control plane deployments
 	// running in the seed.
 	RequiredControlPlaneDeployments = sets.NewString(
@@ -574,6 +497,7 @@ var (
 	RequiredSystemComponentDaemonSets = sets.NewString(
 		CalicoNodeDaemonSetName,
 		KubeProxyDaemonSetName,
+		NodeProblemDetectorDaemonSetName,
 	)
 
 	// RequiredMonitoringSeedDeployments is a set of the required seed monitoring deployments.

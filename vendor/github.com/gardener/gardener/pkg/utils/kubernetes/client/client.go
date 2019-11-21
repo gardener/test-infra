@@ -256,6 +256,27 @@ func (f *finalizer) HasFinalizers(obj runtime.Object) (bool, error) {
 	return len(acc.GetFinalizers()) > 0, nil
 }
 
+type crdFinalizer struct {
+	finalizer
+}
+
+// NewCRDFinalizer instantiates a CustomResourceDefinition finalizer.
+func NewCRDFinalizer() Finalizer {
+	return &crdFinalizer{finalizer: finalizer{}}
+}
+
+// Finalize removes given CustomResourceDefinition from the Kubernetes store.
+// For Kubernetes < v1.15 it is required to file a DELETE request after
+// patching .meta.finalizers of the CustomResourceDefinition.
+// Ref: https://github.com/kubernetes/kubernetes/issues/84354
+func (f *crdFinalizer) Finalize(ctx context.Context, c client.Client, obj runtime.Object) error {
+	if err := f.finalizer.Finalize(ctx, c, obj); err != nil {
+		return err
+	}
+
+	return client.IgnoreNotFound(c.Delete(ctx, obj))
+}
+
 type namespaceFinalizer struct {
 	namespaceInterface typedcorev1.NamespaceInterface
 }
@@ -311,6 +332,11 @@ func DefaultCleaner() Cleaner {
 	return defaultCleaner
 }
 
+// NewCRDCleaner instantiates a new Cleaner with ability to clean CustomResourceDefinitions.
+func NewCRDCleaner() Cleaner {
+	return NewCleaner(utiltime.DefaultOps(), NewCRDFinalizer())
+}
+
 // NewNamespaceCleaner instantiates a new Cleaner with ability to clean namespaces.
 func NewNamespaceCleaner(namespaceInterface typedcorev1.NamespaceInterface) Cleaner {
 	return NewCleaner(utiltime.DefaultOps(), NewNamespaceFinalizer(namespaceInterface))
@@ -349,13 +375,16 @@ func (o *cleaner) doClean(ctx context.Context, c client.Client, obj runtime.Obje
 		}
 	}
 
-	if err := delete(ctx, c, obj, &cleanOptions.DeleteOptions); err != nil {
-		for _, tolerate := range cleanOptions.ErrorToleration {
-			if tolerate(err) {
-				return nil
+	// Ref: https://github.com/kubernetes/kubernetes/issues/83771
+	if acc.GetDeletionTimestamp().IsZero() {
+		if err := delete(ctx, c, obj, &cleanOptions.DeleteOptions); err != nil {
+			for _, tolerate := range cleanOptions.ErrorToleration {
+				if tolerate(err) {
+					return nil
+				}
 			}
+			return err
 		}
-		return err
 	}
 	return nil
 }
@@ -447,43 +476,6 @@ func (o *cleaner) cleanCollection(
 	}
 
 	return flow.Parallel(tasks...)(ctx)
-}
-
-func (o *cleanerOps) cleanAndEnsureGone(ctx context.Context, c client.Client, obj runtime.Object, cleanOptions *CleanOptions) error {
-	if err := o.Clean(ctx, c, obj, UseCleanOptions(cleanOptions)); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	key, err := client.ObjectKeyFromObject(obj)
-	if err != nil {
-		return err
-	}
-
-	if err := c.Get(ctx, key, obj); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-	return NewObjectsRemaining(obj)
-}
-
-func (o *cleanerOps) cleanCollectionAndEnsureGone(ctx context.Context, c client.Client, list runtime.Object, cleanOptions *CleanOptions) error {
-	if err := o.Clean(ctx, c, list, UseCleanOptions(cleanOptions)); err != nil {
-		return err
-	}
-
-	if err := c.List(ctx, list, useListOptionsIfNotNil(cleanOptions.CollectionOptions)); err != nil {
-		return err
-	}
-
-	if meta.LenList(list) > 0 {
-		return NewObjectsRemaining(list)
-	}
-	return nil
 }
 
 type cleanerOps struct {

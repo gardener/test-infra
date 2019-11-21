@@ -18,27 +18,23 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/util/sets"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
-
-	"github.com/gardener/gardener/pkg/utils/retry"
-
-	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
-
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/operation/shoot"
 	"github.com/gardener/gardener/pkg/utils/flow"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
+	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
+	"github.com/gardener/gardener/pkg/utils/retry"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -87,13 +83,13 @@ func (b *Botanist) DeleteStaleExtensionResources(ctx context.Context) error {
 	fns := make([]flow.TaskFn, 0, meta.LenList(deployedExtensions))
 	for _, deployedExtension := range deployedExtensions.Items {
 		if !wantedExtensions.Has(deployedExtension.Spec.Type) {
+			toDelete := &extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      deployedExtension.Name,
+					Namespace: deployedExtension.Namespace,
+				},
+			}
 			fns = append(fns, func(ctx context.Context) error {
-				toDelete := &extensionsv1alpha1.Extension{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      deployedExtension.Name,
-						Namespace: deployedExtension.Namespace,
-					},
-				}
 				return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, toDelete, kubernetes.DefaultDeleteOptionFuncs...))
 			})
 		}

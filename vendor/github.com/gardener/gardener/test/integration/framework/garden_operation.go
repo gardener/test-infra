@@ -31,12 +31,11 @@ import (
 
 	"github.com/gardener/gardener/pkg/utils/retry"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1/helper"
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/operation/common"
-	shootop "github.com/gardener/gardener/pkg/operation/shoot"
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -54,15 +53,17 @@ import (
 )
 
 const (
-	defaultPollInterval  = 5 * time.Second
-	dashboardUserName    = "admin"
-	loggingUserName      = "admin"
-	elasticsearchLogging = "elasticsearch-logging"
-	elasticsearchPort    = 9200
+	defaultPollInterval       = 5 * time.Second
+	k8sClientInitPollInterval = 20 * time.Second
+	k8sClientInitTimeout      = 5 * time.Minute
+	dashboardUserName         = "admin"
+	loggingUserName           = "admin"
+	elasticsearchLogging      = "elasticsearch-logging"
+	elasticsearchPort         = 9200
 )
 
 // NewGardenTestOperation initializes a new test operation from a gardener kubernetes interface
-func NewGardenTestOperation(ctx context.Context, k8sGardenClient kubernetes.Interface, logger logrus.FieldLogger) (*GardenerTestOperation, error) {
+func NewGardenTestOperation(k8sGardenClient kubernetes.Interface, logger logrus.FieldLogger) (*GardenerTestOperation, error) {
 	return &GardenerTestOperation{
 		Logger:       logger,
 		GardenClient: k8sGardenClient,
@@ -70,7 +71,7 @@ func NewGardenTestOperation(ctx context.Context, k8sGardenClient kubernetes.Inte
 }
 
 // NewGardenTestOperationWithShoot initializes a new test operation from created shoot Objects that can be used to issue commands against seeds and shoots
-func NewGardenTestOperationWithShoot(ctx context.Context, k8sGardenClient kubernetes.Interface, logger logrus.FieldLogger, shoot *v1beta1.Shoot) (*GardenerTestOperation, error) {
+func NewGardenTestOperationWithShoot(ctx context.Context, k8sGardenClient kubernetes.Interface, logger logrus.FieldLogger, shoot *gardencorev1alpha1.Shoot) (*GardenerTestOperation, error) {
 	operation := &GardenerTestOperation{
 		Logger:       logger,
 		GardenClient: k8sGardenClient,
@@ -85,7 +86,7 @@ func NewGardenTestOperationWithShoot(ctx context.Context, k8sGardenClient kubern
 }
 
 // AddShoot sets the shoot and its seed for the GardenerOperation.
-func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Shoot) error {
+func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *gardencorev1alpha1.Shoot) error {
 	if o.GardenClient == nil {
 		return errors.New("no gardener client is defined")
 	}
@@ -94,21 +95,21 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 		seedClient  kubernetes.Interface
 		shootClient kubernetes.Interface
 
-		seed             = &v1beta1.Seed{}
-		seedCloudProfile = &v1beta1.CloudProfile{}
-		project          = &v1beta1.Project{}
+		seed         = &gardencorev1alpha1.Seed{}
+		cloudProfile = &gardencorev1alpha1.CloudProfile{}
+		project      = &gardencorev1alpha1.Project{}
 	)
 
 	if err := o.GardenClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot); err != nil {
 		return errors.Wrap(err, "could not get Shoot in Garden cluster")
 	}
 
-	err := o.GardenClient.Client().Get(ctx, client.ObjectKey{Name: *shoot.Spec.Cloud.Seed}, seed)
+	err := o.GardenClient.Client().Get(ctx, client.ObjectKey{Name: *shoot.Spec.SeedName}, seed)
 	if err != nil {
 		return errors.Wrap(err, "could not get Seed from Shoot in Garden cluster")
 	}
 
-	err = o.GardenClient.Client().Get(ctx, client.ObjectKey{Name: seed.Spec.Cloud.Profile}, seedCloudProfile)
+	err = o.GardenClient.Client().Get(ctx, client.ObjectKey{Name: shoot.Spec.CloudProfileName}, cloudProfile)
 	if err != nil {
 		return errors.Wrap(err, "could not get Seed's CloudProvider in Garden cluster")
 	}
@@ -141,7 +142,7 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 	o.SeedClient = seedClient
 	o.Shoot = shoot
 	o.Seed = seed
-	o.SeedCloudProfile = seedCloudProfile
+	o.CloudProfile = cloudProfile
 	o.Project = project
 
 	shootScheme := runtime.NewScheme()
@@ -155,11 +156,16 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 	if err != nil {
 		return errors.Wrap(err, "could not add schemes to shoot scheme")
 	}
-	shootClient, err = kubernetes.NewClientFromSecret(seedClient, shootop.ComputeTechnicalID(project.Name, shoot), v1beta1.GardenerName, kubernetes.WithClientOptions(client.Options{
-		Scheme: shootScheme,
-	}))
-	if err != nil {
-		return errors.Wrap(err, "could not construct Shoot client")
+	if err := retry.UntilTimeout(ctx, k8sClientInitPollInterval, k8sClientInitTimeout, func(ctx context.Context) (bool, error) {
+		shootClient, err = kubernetes.NewClientFromSecret(seedClient, computeTechnicalID(project.Name, shoot), gardencorev1alpha1.GardenerName, kubernetes.WithClientOptions(client.Options{
+			Scheme: shootScheme,
+		}))
+		if err != nil {
+			return retry.MinorError(errors.Wrap(err, "could not construct Shoot client"))
+		}
+		return retry.Ok()
+	}); err != nil {
+		return err
 	}
 
 	o.ShootClient = shootClient
@@ -167,14 +173,21 @@ func (o *GardenerTestOperation) AddShoot(ctx context.Context, shoot *v1beta1.Sho
 	return nil
 }
 
-// ShootSeedNamespace gets the shoot namespace in the seed
-func (o *GardenerTestOperation) ShootSeedNamespace() string {
-	return shootop.ComputeTechnicalID(o.Project.Name, o.Shoot)
+func computeTechnicalID(projectName string, shoot *gardencorev1alpha1.Shoot) string {
+	// Use the stored technical ID in the Shoot's status field if it's there.
+	// For backwards compatibility we keep the pattern as it was before we had to change it
+	// (double hyphens).
+	if len(shoot.Status.TechnicalID) > 0 {
+		return shoot.Status.TechnicalID
+	}
+
+	// New clusters shall be created with the new technical id (double hyphens).
+	return fmt.Sprintf("shoot--%s--%s", projectName, shoot.Name)
 }
 
-// SeedCloudProvider gets the Seed cluster's CloudProvider
-func (o *GardenerTestOperation) SeedCloudProvider() (v1beta1.CloudProvider, error) {
-	return helper.DetermineCloudProviderInProfile(o.SeedCloudProfile.Spec)
+// ShootSeedNamespace gets the shoot namespace in the seed
+func (o *GardenerTestOperation) ShootSeedNamespace() string {
+	return computeTechnicalID(o.Project.Name, o.Shoot)
 }
 
 // DownloadKubeconfig downloads the shoot Kubeconfig
@@ -203,7 +216,7 @@ func (o *GardenerTestOperation) DashboardAvailable(ctx context.Context) error {
 
 // KibanaDashboardAvailable checks if Kibana instance in shoot seed namespace is available
 func (o *GardenerTestOperation) KibanaDashboardAvailable(ctx context.Context) error {
-	url := fmt.Sprintf("https://k.%s.%s.%s/api/status", o.Shoot.Name, o.Project.Name, o.Seed.Spec.IngressDomain)
+	url := fmt.Sprintf("https://k.%s.%s.%s/api/status", o.Shoot.Name, o.Project.Name, o.Seed.Spec.DNS.IngressDomain)
 	loggingPassword, err := o.getLoggingPassword(ctx)
 	if err != nil {
 		return err
@@ -322,11 +335,12 @@ func (o *GardenerTestOperation) WaitUntilDeploymentsWithLabelsIsReady(ctx contex
 
 // WaitUntilGuestbookAppIsAvailable waits until the guestbook app is available and ready to serve requests
 func (o *GardenerTestOperation) WaitUntilGuestbookAppIsAvailable(ctx context.Context, guestbookAppUrls []string) error {
-	return retry.Until(ctx, defaultPollInterval, func(ctx context.Context) (done bool, err error) {
+	return retry.UntilTimeout(ctx, defaultPollInterval, 5*time.Minute, func(ctx context.Context) (done bool, err error) {
 		for _, guestbookAppURL := range guestbookAppUrls {
 			response, err := o.HTTPGet(ctx, guestbookAppURL)
 			if err != nil {
-				return retry.SevereError(err)
+				o.Logger.Infof("Guestbook app url: %q is not available yet: %s", guestbookAppURL, err.Error())
+				return retry.MinorError(err)
 			}
 
 			if response.StatusCode != http.StatusOK {
@@ -348,11 +362,6 @@ func (o *GardenerTestOperation) WaitUntilGuestbookAppIsAvailable(ctx context.Con
 		o.Logger.Infof("Rejoice, the guestbook app urls are available now!")
 		return retry.Ok()
 	})
-}
-
-// GetCloudProvider returns the cloud provider for the shoot
-func (o *GardenerTestOperation) GetCloudProvider() (v1beta1.CloudProvider, error) {
-	return helper.DetermineCloudProviderInShoot(o.Shoot.Spec.Cloud)
 }
 
 // DownloadChartArtifacts downloads a helm chart from helm stable repo url available in resources/repositories

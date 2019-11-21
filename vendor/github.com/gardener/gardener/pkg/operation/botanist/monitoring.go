@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -28,6 +29,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils/secrets"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -36,12 +38,32 @@ import (
 // to monitor the Shoot cluster whose control plane runs in the Seed cluster.
 func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 	var (
-		credentials      = b.Secrets["monitoring-ingress-credentials"]
-		credentialsUsers = b.Secrets["monitoring-ingress-credentials-users"]
-		basicAuth        = utils.CreateSHA1Secret(credentials.Data[secrets.DataKeyUserName], credentials.Data[secrets.DataKeyPassword])
-		basicAuthUsers   = utils.CreateSHA1Secret(credentialsUsers.Data[secrets.DataKeyUserName], credentialsUsers.Data[secrets.DataKeyPassword])
-		prometheusHost   = b.ComputePrometheusHost()
+		credentials         = b.Secrets["monitoring-ingress-credentials"]
+		credentialsUsers    = b.Secrets["monitoring-ingress-credentials-users"]
+		basicAuth           = utils.CreateSHA1Secret(credentials.Data[secrets.DataKeyUserName], credentials.Data[secrets.DataKeyPassword])
+		basicAuthUsers      = utils.CreateSHA1Secret(credentialsUsers.Data[secrets.DataKeyUserName], credentialsUsers.Data[secrets.DataKeyPassword])
+		prometheusHost      = b.ComputePrometheusHost()
+		alertingRules       = strings.Builder{}
+		scrapeConfigs       = strings.Builder{}
+		operatorsDashboards = strings.Builder{}
+		usersDashboards     = strings.Builder{}
 	)
+
+	// Find extensions provider-specific monitoring configuration
+	existingConfigMaps := &corev1.ConfigMapList{}
+	if err := b.K8sSeedClient.Client().List(ctx, existingConfigMaps,
+		client.InNamespace(b.Shoot.SeedNamespace),
+		client.MatchingLabels(map[string]string{v1alpha1constants.LabelExtensionConfiguration: v1alpha1constants.LabelMonitoring})); err != nil {
+		return err
+	}
+
+	// Read extension monitoring configurations
+	for _, cm := range existingConfigMaps.Items {
+		alertingRules.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.PrometheusConfigMapAlertingRules]))
+		scrapeConfigs.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.PrometheusConfigMapScrapeConfig]))
+		operatorsDashboards.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.GrafanaConfigMapOperatorDashboard]))
+		usersDashboards.WriteString(fmt.Sprintln(cm.Data[v1alpha1constants.GrafanaConfigMapUserDashboard]))
+	}
 
 	var (
 		prometheusConfig = map[string]interface{}{
@@ -49,7 +71,7 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 			"networks": map[string]interface{}{
 				"pods":     b.Shoot.GetPodNetwork(),
 				"services": b.Shoot.GetServiceNetwork(),
-				"nodes":    b.Shoot.GetNodeNetwork(),
+				"nodes":    b.Shoot.Info.Spec.Networking.Nodes,
 			},
 			"ingress": map[string]interface{}{
 				"basicAuthSecret": basicAuth,
@@ -68,8 +90,8 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 			"apiserverServiceIP": common.ComputeClusterIP(b.Shoot.GetServiceNetwork(), 1),
 			"seed": map[string]interface{}{
 				"apiserver": b.K8sSeedClient.RESTConfig().Host,
-				"region":    b.Seed.Info.Spec.Cloud.Region,
-				"profile":   b.Seed.Info.Spec.Cloud.Profile,
+				"region":    b.Seed.Info.Spec.Provider.Region,
+				"provider":  b.Seed.Info.Spec.Provider.Type,
 			},
 			"rules": map[string]interface{}{
 				"optional": map[string]interface{}{
@@ -82,13 +104,22 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 					"elasticsearch": map[string]interface{}{
 						"enabled": controllermanagerfeatures.FeatureGate.Enabled(features.Logging),
 					},
+					"hvpa": map[string]interface{}{
+						"enabled": controllermanagerfeatures.FeatureGate.Enabled(features.HVPA),
+					},
 				},
 			},
 			"shoot": map[string]interface{}{
 				"apiserver": fmt.Sprintf("https://%s", common.GetAPIServerDomain(b.Shoot.InternalClusterDomain)),
-				"provider":  b.Shoot.CloudProvider,
+				"provider":  b.Shoot.Info.Spec.Provider.Type,
+				"name":      b.Shoot.Info.Name,
+				"project":   b.Garden.Project.Name,
 			},
 			"ignoreAlerts": b.Shoot.IgnoreAlerts,
+			"extensions": map[string]interface{}{
+				"rules":         alertingRules.String(),
+				"scrapeConfigs": scrapeConfigs.String(),
+			},
 		}
 		kubeStateMetricsSeedConfig = map[string]interface{}{
 			"replicas": b.Shoot.GetReplicas(1),
@@ -132,11 +163,11 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 		return err
 	}
 
-	if err := b.deployGrafanaCharts("operators", basicAuth, common.GrafanaOperatorsPrefix); err != nil {
+	if err := b.deployGrafanaCharts("operators", operatorsDashboards.String(), basicAuth, common.GrafanaOperatorsPrefix); err != nil {
 		return err
 	}
 
-	if err := b.deployGrafanaCharts("users", basicAuthUsers, common.GrafanaUsersPrefix); err != nil {
+	if err := b.deployGrafanaCharts("users", usersDashboards.String(), basicAuthUsers, common.GrafanaUsersPrefix); err != nil {
 		return err
 	}
 
@@ -145,21 +176,22 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 		var (
 			alertingSMTPKeys = b.GetSecretKeysOfRole(common.GardenRoleAlertingSMTP)
 			emailConfigs     = []map[string]interface{}{}
-			to, _            = b.Shoot.Info.Annotations[common.GardenOperatedBy]
 		)
-
-		for _, key := range alertingSMTPKeys {
-			secret := b.Secrets[key]
-			emailConfigs = append(emailConfigs, map[string]interface{}{
-				"to":            to,
-				"from":          string(secret.Data["from"]),
-				"smarthost":     string(secret.Data["smarthost"]),
-				"auth_username": string(secret.Data["auth_username"]),
-				"auth_identity": string(secret.Data["auth_identity"]),
-				"auth_password": string(secret.Data["auth_password"]),
-			})
+		if b.Shoot.Info.Spec.Monitoring != nil && b.Shoot.Info.Spec.Monitoring.Alerting != nil {
+			for _, email := range b.Shoot.Info.Spec.Monitoring.Alerting.EmailReceivers {
+				for _, key := range alertingSMTPKeys {
+					secret := b.Secrets[key]
+					emailConfigs = append(emailConfigs, map[string]interface{}{
+						"to":            email,
+						"from":          string(secret.Data["from"]),
+						"smarthost":     string(secret.Data["smarthost"]),
+						"auth_username": string(secret.Data["auth_username"]),
+						"auth_identity": string(secret.Data["auth_identity"]),
+						"auth_password": string(secret.Data["auth_password"]),
+					})
+				}
+			}
 		}
-
 		alertManagerValues, err := b.InjectSeedShootImages(map[string]interface{}{
 			"ingress": map[string]interface{}{
 				"basicAuthSecret": basicAuthUsers,
@@ -184,7 +216,7 @@ func (b *Botanist) DeploySeedMonitoring(ctx context.Context) error {
 	return nil
 }
 
-func (b *Botanist) deployGrafanaCharts(role, basicAuth, subDomain string) error {
+func (b *Botanist) deployGrafanaCharts(role, dashboards, basicAuth, subDomain string) error {
 	values, err := b.InjectSeedShootImages(map[string]interface{}{
 		"ingress": map[string]interface{}{
 			"basicAuthSecret": basicAuth,
@@ -192,6 +224,9 @@ func (b *Botanist) deployGrafanaCharts(role, basicAuth, subDomain string) error 
 		},
 		"replicas": b.Shoot.GetReplicas(1),
 		"role":     role,
+		"extensions": map[string]interface{}{
+			"dashboards": dashboards,
+		},
 	}, common.GrafanaImageName, common.BusyboxImageName)
 	if err != nil {
 		return err
@@ -205,7 +240,7 @@ func (b *Botanist) deployGrafanaCharts(role, basicAuth, subDomain string) error 
 func (b *Botanist) DeleteSeedMonitoring(ctx context.Context) error {
 	alertManagerStatefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.AlertManagerStatefulSetName,
+			Name:      v1alpha1constants.StatefulSetNameAlertManager,
 			Namespace: b.Shoot.SeedNamespace,
 		},
 	}

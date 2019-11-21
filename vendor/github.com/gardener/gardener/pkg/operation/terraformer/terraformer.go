@@ -393,12 +393,12 @@ func (t *Terraformer) podSpec(scriptName string) *corev1.PodSpec {
 				},
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("50m"),
+						corev1.ResourceCPU:    resource.MustParse("100m"),
 						corev1.ResourceMemory: resource.MustParse("200Mi"),
 					},
 					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("200m"),
-						corev1.ResourceMemory: resource.MustParse("512Mi"),
+						corev1.ResourceCPU:    resource.MustParse("500m"),
+						corev1.ResourceMemory: resource.MustParse("1.5Gi"),
 					},
 				},
 				Env: t.env(),
@@ -440,10 +440,13 @@ func (t *Terraformer) podSpec(scriptName string) *corev1.PodSpec {
 	}
 }
 
-// listJobPods lists all pods which have a label 'job-name' whose value is equal to the Terraformer job name.
+// listJobPods lists all pods in the Terraformer namespace which have a label 'job-name'
+// whose value is equal to the Terraformer job name.
 func (t *Terraformer) listJobPods(ctx context.Context) (*corev1.PodList, error) {
 	podList := &corev1.PodList{}
-	if err := t.client.List(ctx, podList, client.MatchingLabels(map[string]string{jobNameLabel: t.jobName})); err != nil {
+	if err := t.client.List(ctx, podList,
+		client.InNamespace(t.namespace),
+		client.MatchingLabels(map[string]string{jobNameLabel: t.jobName})); err != nil {
 		return nil, err
 	}
 	return podList, nil

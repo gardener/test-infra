@@ -16,9 +16,12 @@ package v1alpha1
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/apis/garden"
+	"github.com/gardener/gardener/pkg/utils"
 
 	alicloudinstall "github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud/install"
 	alicloudv1alpha1 "github.com/gardener/gardener-extensions/controllers/provider-alicloud/pkg/apis/alicloud/v1alpha1"
@@ -39,6 +42,19 @@ import (
 )
 
 func addConversionFuncs(scheme *runtime.Scheme) error {
+	if err := scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Shoot"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", garden.ShootSeedName, garden.ShootCloudProfileName:
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		},
+	); err != nil {
+		return err
+	}
+
 	// Add non-generated conversion functions
 	return scheme.AddConversionFuncs(
 		Convert_v1alpha1_Seed_To_garden_Seed,
@@ -261,6 +277,15 @@ func Convert_v1alpha1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out 
 			}
 		}
 
+		for _, region := range in.Spec.Regions {
+			if !zonesHaveName(out.Spec.Azure.Constraints.Zones, region.Name) {
+				z := garden.Zone{Region: region.Name}
+				for _, zones := range region.Zones {
+					z.Names = append(z.Names, zones.Name)
+				}
+				out.Spec.Azure.Constraints.Zones = append(out.Spec.Azure.Constraints.Zones, z)
+			}
+		}
 		cloudProfileConfig := &azurev1alpha1.CloudProfileConfig{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: azurev1alpha1.SchemeGroupVersion.String(),
@@ -406,8 +431,9 @@ func Convert_v1alpha1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out 
 				t := garden.OpenStackMachineType{MachineType: o}
 				if machineType.Storage != nil {
 					t.Storage = &garden.MachineTypeStorage{
-						Size: machineType.Storage.Size,
-						Type: machineType.Storage.Type,
+						Class: machineType.Storage.Class,
+						Size:  machineType.Storage.Size,
+						Type:  machineType.Storage.Type,
 					}
 					t.VolumeSize = machineType.Storage.Size
 					t.VolumeType = machineType.Storage.Type
@@ -699,6 +725,7 @@ func Convert_garden_CloudProfile_To_v1alpha1_CloudProfile(in *garden.CloudProfil
 		} else {
 			delete(out.Annotations, garden.MigrationCloudProfileDNSProviders)
 		}
+		out.Spec.VolumeTypes = nil
 
 	case in.Spec.Alicloud != nil:
 		out.Spec.Type = "alicloud"
@@ -1056,6 +1083,8 @@ func Convert_v1alpha1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conv
 		out.Spec.Cloud.Azure.Networks.Workers = infrastructureConfig.Networks.Workers
 		out.Spec.Cloud.Azure.Networks.VNet.CIDR = infrastructureConfig.Networks.VNet.CIDR
 		out.Spec.Cloud.Azure.Networks.VNet.Name = infrastructureConfig.Networks.VNet.Name
+		out.Spec.Cloud.Azure.Networks.VNet.ResourceGroup = infrastructureConfig.Networks.VNet.ResourceGroup
+		out.Spec.Cloud.Azure.Networks.ServiceEndpoints = infrastructureConfig.Networks.ServiceEndpoints
 		out.Spec.Cloud.Azure.Networks.Pods = in.Spec.Networking.Pods
 		out.Spec.Cloud.Azure.Networks.Services = in.Spec.Networking.Services
 		out.Spec.Cloud.Azure.Networks.Nodes = &in.Spec.Networking.Nodes
@@ -1103,6 +1132,7 @@ func Convert_v1alpha1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conv
 			}
 		}
 
+		out.Spec.Cloud.Azure.Zones = nil
 		out.Spec.Cloud.Azure.Workers = nil
 		for _, worker := range in.Spec.Provider.Workers {
 			var o garden.Worker
@@ -1110,6 +1140,7 @@ func Convert_v1alpha1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conv
 				return err
 			}
 			out.Spec.Cloud.Azure.Workers = append(out.Spec.Cloud.Azure.Workers, o)
+			out.Spec.Cloud.Azure.Zones = o.Zones
 		}
 
 	case "gcp":
@@ -1536,6 +1567,31 @@ func Convert_garden_Shoot_To_v1alpha1_Shoot(in *garden.Shoot, out *Shoot, s conv
 	out.Spec.Region = in.Spec.Cloud.Region
 	out.Spec.SecretBindingName = in.Spec.Cloud.SecretBindingRef.Name
 	out.Spec.SeedName = in.Spec.Cloud.Seed
+
+	if email, ok := in.Annotations[constants.AnnotationShootOperatedBy]; ok && utils.TestEmail(email) {
+		exists := false
+		if in.Spec.Monitoring == nil {
+			out.Spec.Monitoring = &Monitoring{
+				Alerting: &Alerting{},
+			}
+		}
+		if in.Spec.Monitoring != nil && in.Spec.Monitoring.Alerting == nil {
+			out.Spec.Monitoring.Alerting = &Alerting{}
+		}
+		if in.Spec.Monitoring != nil && in.Spec.Monitoring.Alerting != nil {
+			for _, receiver := range in.Spec.Monitoring.Alerting.EmailReceivers {
+				if receiver == email {
+					exists = true
+					break
+				}
+			}
+		}
+		if !exists {
+			out.Spec.Monitoring.Alerting.EmailReceivers = append(out.Spec.Monitoring.Alerting.EmailReceivers, email)
+		}
+		// Always delete annotation (Either email gets appended to emailReceivers or email already exists).
+		delete(out.Annotations, constants.AnnotationShootOperatedBy)
+	}
 
 	switch in.Spec.Provider.Type {
 	case "aws":

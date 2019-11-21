@@ -29,8 +29,8 @@ import (
 	v1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
-	gardeninformers "github.com/gardener/gardener/pkg/client/garden/informers/externalversions/garden/v1beta1"
+	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/config"
@@ -79,8 +79,8 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 
 	// Create the informers and listers.
 	controller.secrets = k8sinformersFactory.Core().V1().Secrets()
-	controller.projects = gardenInformerFactory.Garden().V1beta1().Projects()
-	controller.shootInformer = gardenInformerFactory.Garden().V1beta1().Shoots().Informer()
+	controller.projects = gardenInformerFactory.Core().V1alpha1().Projects()
+	controller.shootInformer = gardenInformerFactory.Core().V1alpha1().Shoots().Informer()
 
 	secretInformer := controller.secrets.Informer()
 	projectInformer := controller.projects.Informer()
@@ -148,7 +148,7 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 }
 
 func (c *controller) addShoot(obj interface{}) {
-	var shoot = obj.(*gardenv1beta1.Shoot)
+	var shoot = obj.(*gardenv1alpha1.Shoot)
 	if shoot == nil || shoot.Status.LastOperation == nil {
 		return
 	}
@@ -158,7 +158,7 @@ func (c *controller) addShoot(obj interface{}) {
 	}
 
 	// Reject Shoots which are configured to be hibernated or Shoots which should wake up are still hibernated.
-	if (shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled) || (shoot.Status.IsHibernated != nil && *shoot.Status.IsHibernated) {
+	if (shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled) || shoot.Status.IsHibernated {
 		logger.Logf(logger.Log.Info, "%s Reject hibernated shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		return
 	}
@@ -171,8 +171,8 @@ func (c *controller) addShoot(obj interface{}) {
 
 func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	var (
-		oldShoot = oldObj.(*gardenv1beta1.Shoot)
-		newShoot = newObj.(*gardenv1beta1.Shoot)
+		oldShoot = oldObj.(*gardenv1alpha1.Shoot)
+		newShoot = newObj.(*gardenv1alpha1.Shoot)
 	)
 	if oldShoot == nil || newShoot == nil || oldShoot.Status.LastOperation == nil || newShoot.Status.LastOperation == nil {
 		return
@@ -183,7 +183,7 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	}
 
 	// Remove shoots which are hibernated.
-	if (newShoot.Spec.Hibernation != nil && newShoot.Spec.Hibernation.Enabled != nil && *newShoot.Spec.Hibernation.Enabled) || (newShoot.Status.IsHibernated != nil && *newShoot.Status.IsHibernated) {
+	if (newShoot.Spec.Hibernation != nil && newShoot.Spec.Hibernation.Enabled != nil && *newShoot.Spec.Hibernation.Enabled) || newShoot.Status.IsHibernated {
 		logger.Logf(logger.Log.V(3).Info, "%s Ignore hibernated shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 		c.removeTarget(oldShoot)
 		return
@@ -206,7 +206,7 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 
 	if newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile {
 		// Add Shoot again if it was hibernated before and woke up again.
-		if oldShoot.Status.IsHibernated != nil && *oldShoot.Status.IsHibernated {
+		if oldShoot.Status.IsHibernated {
 			logger.Logf(logger.Log.V(3).Info, "%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 			c.addTarget(newShoot)
 			return

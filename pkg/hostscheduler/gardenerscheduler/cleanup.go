@@ -16,9 +16,10 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	"github.com/gardener/gardener/pkg/operation/botanist"
-	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -32,10 +33,10 @@ import (
 
 var (
 	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
-	NotMonitoringComponent = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleMonitoring)
+	NotMonitoringComponent = botanist.MustNewRequirement(v1alpha1constants.GardenRole, selection.NotEquals, v1alpha1constants.GardenRoleMonitoring)
 
 	// NotKubernetesClusterService is a requirement that something doesnt have the GardenRole GardenRoleOptionalAddon
-	NotGardenerAddon = botanist.MustNewRequirement(common.GardenRole, selection.NotEquals, common.GardenRoleOptionalAddon)
+	NotGardenerAddon = botanist.MustNewRequirement(v1alpha1constants.GardenRole, selection.NotEquals, v1alpha1constants.GardenRoleOptionalAddon)
 )
 
 func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
