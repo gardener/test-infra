@@ -47,6 +47,7 @@ spec:
         - --webhook-https-address=0.0.0.0:{{.Values.controller.webhook.https.port}}
         - --cert-file=/etc/testmachinery-controller/srv/tls.crt
         - --key-file=/etc/testmachinery-controller/srv/tls.key
+        - --github-cache-dir=/cache
         - --namespace={{ .Release.Namespace }}
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - -v={{ .Values.controller.verbosity }}

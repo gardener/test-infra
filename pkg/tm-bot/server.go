@@ -16,6 +16,7 @@ package tm_bot
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"net/http"
 	"os"
 	"time"
@@ -32,14 +33,9 @@ var (
 	serverKeyFile  string
 	uiBasePath     string
 
-	githubApiURL          string
-	githubAppID           int
-	githubKeyFile         string
-	webhookSecretToken    string
-	repoConfigFile        string
-	githubDefaultTeamName string
-
-	kubeconfigPath string
+	ghManagerConfig    *github.ManagerConfig
+	webhookSecretToken string
+	kubeconfigPath     string
 )
 
 // Serve starts the webhook server for testrun validation
@@ -95,12 +91,7 @@ func InitFlags(flagset *flag.FlagSet) {
 		"Path to private key")
 	flagset.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
 
-	flagset.StringVar(&githubApiURL, "github-api-url", "https://api.github.com", "GitHub api endpoint url")
-	flagset.IntVar(&githubAppID, "github-app-id", 0, "GitHub app installation id")
-	flagset.StringVar(&githubKeyFile, "github-key-file", "", "GitHub app private key file path")
+	ghManagerConfig = github.ManagerInitFlags(flagset)
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
-	flagset.StringVar(&repoConfigFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
-	flagset.StringVar(&githubDefaultTeamName, "github-default-team", "", "Slug name of the default team to grant access")
-
 	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
 }

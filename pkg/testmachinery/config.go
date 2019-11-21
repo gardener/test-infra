@@ -17,6 +17,7 @@ package testmachinery
 import (
 	argoscheme "github.com/argoproj/argo/pkg/client/clientset/versioned/scheme"
 	tmscheme "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned/scheme"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -94,7 +95,7 @@ type TmConfiguration struct {
 	Local             bool
 	Insecure          bool
 	CleanWorkflowPods bool
-	GitSecrets        []GitConfig
+	GitHub            GitHubConfig
 	S3                *S3Config
 }
 
@@ -107,14 +108,20 @@ type S3Config struct {
 	BucketName string
 }
 
-// GitSecrets holds all git secrets as defined in the environment variable.
-type GitSecrets struct {
-	Secrets []GitConfig `yaml:"secrets"`
+// GitHubConfig represents the github configuration for the testmachinery
+type GitHubConfig struct {
+	Cache   *ghcache.Config
+	Secrets []GitHubInstanceConfig
 }
 
-// GitConfig is an object containing config and credentials for a specific github instance.
+// GitHub holds all git secrets as defined in the environment variable.
+type GitHubSecrets struct {
+	Secrets []GitHubInstanceConfig `yaml:"secrets"`
+}
+
+// GitHubInstanceConfig is an object containing config and credentials for a specific github instance.
 // It is defined as in cc-config.
-type GitConfig struct {
+type GitHubInstanceConfig struct {
 	HttpUrl       string        `yaml:"httpUrl"`
 	ApiUrl        string        `yaml:"apiUrl"`
 	SkipTls       bool          `yaml:"disable_tls_validation"`
@@ -149,13 +156,13 @@ func (c *TmConfiguration) String() string {
 
 	cc := c.Copy()
 
-	if len(cc.GitSecrets) != 0 {
-		for i := range cc.GitSecrets {
-			if len(cc.GitSecrets[i].TechnicalUser.AuthToken) != 0 {
-				cc.GitSecrets[i].TechnicalUser.AuthToken = "--- REDACTED ---"
+	if len(cc.GitHub.Secrets) != 0 {
+		for i := range cc.GitHub.Secrets {
+			if len(cc.GitHub.Secrets[i].TechnicalUser.AuthToken) != 0 {
+				cc.GitHub.Secrets[i].TechnicalUser.AuthToken = "--- REDACTED ---"
 			}
-			if len(cc.GitSecrets[i].TechnicalUser.Password) != 0 {
-				cc.GitSecrets[i].TechnicalUser.Password = "--- REDACTED ---"
+			if len(cc.GitHub.Secrets[i].TechnicalUser.Password) != 0 {
+				cc.GitHub.Secrets[i].TechnicalUser.Password = "--- REDACTED ---"
 			}
 		}
 	}
@@ -182,8 +189,11 @@ func (c *TmConfiguration) Copy() *TmConfiguration {
 		Local:             c.Local,
 		Insecure:          c.Insecure,
 		CleanWorkflowPods: c.CleanWorkflowPods,
-		GitSecrets:        append(make([]GitConfig, 0, len(c.GitSecrets)), c.GitSecrets...),
-		S3:                c.S3.Copy(),
+		GitHub: GitHubConfig{
+			Cache:   c.GitHub.Cache.DeepCopy(),
+			Secrets: append(make([]GitHubInstanceConfig, 0, len(c.GitHub.Secrets)), c.GitHub.Secrets...),
+		},
+		S3: c.S3.Copy(),
 	}
 }
 

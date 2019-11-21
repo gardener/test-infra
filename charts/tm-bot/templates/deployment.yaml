@@ -50,6 +50,7 @@ spec:
         - --github-app-id=$(GITHUB_APP_ID)
         - --github-key-file=/etc/tm-bot/srv/github/key.pem
         - --webhook-secret-token=$(WEBHOOK_SECRET_TOKEN)
+        - --github-cache-dir=/cache
         - --github-default-team={{ .Values.bot.defaultTeamName }}
         - -v=2
         {{ if .Values.bot.configFilePath }}
