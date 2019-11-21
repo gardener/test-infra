@@ -74,7 +74,7 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs testrunner.RunList, c
 			return err
 		}
 		l.Info(fmt.Sprintf("unzipping %s into %s", archiveFilename, archiveContentDir))
-		if err := util.Unzip(archiveFilepath, archiveContentDir); err != nil {
+		if err := util.Unzip(archiveFilepath, filepath.Dir(archiveContentDir)); err != nil {
 			l.Error(err, fmt.Sprintf("failed to unzip %s", archiveFilepath))
 			return err
 		}
