@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
@@ -255,4 +256,30 @@ func (c *client) GetIssue(event *GenericRequestEvent) (*github.Issue, error) {
 		return nil, err
 	}
 	return issue, nil
+}
+
+func (c *client) GetVersions(owner, repo string) ([]*semver.Version, error) {
+	tags := make([]*semver.Version, 0)
+	opts := &github.ListOptions{PerPage: 50}
+	for {
+		rawTags, res, err := c.client.Repositories.ListTags(context.TODO(), owner, repo, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, rawTag := range rawTags {
+			version, err := semver.NewVersion(rawTag.GetName())
+			if err != nil {
+				continue
+			}
+			tags = append(tags, version)
+		}
+
+		if res.NextPage == 0 {
+			break
+		}
+		opts.Page = res.NextPage
+	}
+
+	return tags, nil
 }

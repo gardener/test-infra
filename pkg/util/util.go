@@ -218,6 +218,19 @@ func StringDefault(value, def string) string {
 }
 
 // GitHub helper functions
+
+func ParseRepoURLFromString(repoURL string) (repoOwner, repoName string, err error) {
+	u, err := url.Parse(repoURL)
+	if err != nil {
+		return "", "", err
+	}
+
+	repoNameComponents := strings.Split(u.Path, "/")
+	repoOwner = repoNameComponents[1]
+	repoName = strings.Replace(repoNameComponents[2], ".git", "", 1)
+	return
+}
+
 func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
 	repoNameComponents := strings.Split(url.Path, "/")
 	repoOwner = repoNameComponents[1]

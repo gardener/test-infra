@@ -6,6 +6,7 @@ package mock_github
 
 import (
 	json "encoding/json"
+	semver "github.com/Masterminds/semver"
 	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 	ghval "github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	gomock "github.com/golang/mock/gomock"
@@ -108,6 +109,21 @@ func (m *MockClient) GetPullRequest(arg0 *github.GenericRequestEvent) (*github0.
 func (mr *MockClientMockRecorder) GetPullRequest(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPullRequest", reflect.TypeOf((*MockClient)(nil).GetPullRequest), arg0)
+}
+
+// GetVersions mocks base method
+func (m *MockClient) GetVersions(arg0, arg1 string) ([]*semver.Version, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVersions", arg0, arg1)
+	ret0, _ := ret[0].([]*semver.Version)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVersions indicates an expected call of GetVersions
+func (mr *MockClientMockRecorder) GetVersions(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersions", reflect.TypeOf((*MockClient)(nil).GetVersions), arg0, arg1)
 }
 
 // IsAuthorized mocks base method
