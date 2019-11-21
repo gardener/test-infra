@@ -73,6 +73,7 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 	failureOccurrences := make(map[string]int)  // map of testcases that failed at least once
 	succeededTestcases := make(map[string]bool) // map of testcases that succeeded at east once
 	skippedTestcases := make(map[string]TestcaseResult)
+	uniqueJunitTestcases := make(map[string]TestcaseResult)
 
 	for _, junitXMLPath := range junitXMLFilePaths {
 		junitXml, err := unmarshalJUnitFromFile(junitXMLPath)
@@ -96,10 +97,12 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 			delete(skippedTestcases, newTestcase.Name) // if testcase was indexed as skipped from previous junit xml files, remove element
 			if newTestcase.Successful {
 				succeededTestcases[newTestcase.Name] = true
+				uniqueJunitTestcases[newTestcase.Name] = newTestcase
 			} else {
 				if existsInFailureOccurences {
 					failureOccurrences[newTestcase.Name]++
 				} else {
+					uniqueJunitTestcases[newTestcase.Name] = newTestcase
 					failureOccurrences[newTestcase.Name] = 1
 				}
 			}
@@ -110,7 +113,9 @@ func analyzeJunitXMLsEnrichSummary(junitXMLFilePaths []string, summary *Summary)
 		return err
 	}
 
-	mergedJunitXmlResult.Testcases = testcases
+	for _, testcase := range uniqueJunitTestcases {
+		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
+	}
 	for _, testcase := range skippedTestcases {
 		mergedJunitXmlResult.Testcases = append(mergedJunitXmlResult.Testcases, testcase)
 	}
