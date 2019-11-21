@@ -16,6 +16,7 @@ package testmachinery
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/version"
 	"io/ioutil"
 	"os"
@@ -39,14 +40,16 @@ var tmConfig = TmConfiguration{
 	Insecure:          false,
 	Namespace:         "default",
 	CleanWorkflowPods: false,
-	GitSecrets:        make([]GitConfig, 0),
-	S3:                &objectStoreConfig,
+	GitHub: GitHubConfig{
+		Secrets: make([]GitHubInstanceConfig, 0),
+	},
+	S3: &objectStoreConfig,
 }
 
 // Setup fetches all configuration values and creates the TmConfiguration.
 func Setup() error {
 	var err error
-	tmConfig.GitSecrets, err = readSecretsFromFile(githubSecretsPath)
+	tmConfig.GitHub.Secrets, err = readSecretsFromFile(githubSecretsPath)
 	if err != nil {
 		return err
 	}
@@ -75,7 +78,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&BASE_IMAGE, "base-image", util.Getenv("BASE_IMAGE", fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/base-step:%s", version.Get().GitVersion)),
 		"Set the base image that is used as the default image if a TestDefinition does not define a image")
 
-	flag.BoolVar(&tmConfig.Local, "local", false, "The controller runs outside of a cluster.")
+	flagset.BoolVar(&tmConfig.Local, "local", false, "The controller runs outside of a cluster.")
 	flagset.BoolVar(&tmConfig.Insecure, "insecure", tmConfig.Insecure,
 		"Enable insecure mode. The test machinery runs in insecure mode which means that local testdefs are allowed and therefore hostPaths are mounted.")
 	flagset.StringVar(&tmConfig.Namespace, "namespace", util.Getenv("TM_NAMESPACE", tmConfig.Namespace),
@@ -85,6 +88,7 @@ func InitFlags(flagset *flag.FlagSet) {
 
 	flagset.StringVar(&githubSecretsPath, "github-secrets-path", "",
 		"Path to the github secrets configuration")
+
 	flagset.StringVar(&objectStoreConfig.Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"),
 		"Set the s3 object storage endpoint")
 	flagset.StringVar(&objectStoreConfig.AccessKey, "s3-access-key", os.Getenv("S3_ACCESS_KEY"),
@@ -95,6 +99,9 @@ func InitFlags(flagset *flag.FlagSet) {
 		"Set the s3 bucket")
 	flagset.BoolVar(&objectStoreConfig.SSL, "s3-ssl", util.GetenvBool("S3_SSL", objectStoreConfig.SSL),
 		"Enable sll communication to s3 storage")
+
+	tmConfig.GitHub.Cache = ghcache.InitFlags(flagset)
+
 }
 
 // GetConfig returns the current testmachinery configuration
@@ -117,9 +124,9 @@ func GetPauseTaskName(name string) string {
 	return fmt.Sprintf("%s-pause", name)
 }
 
-func readSecretsFromFile(path string) ([]GitConfig, error) {
+func readSecretsFromFile(path string) ([]GitHubInstanceConfig, error) {
 	if len(path) == 0 {
-		return make([]GitConfig, 0), nil
+		return make([]GitHubInstanceConfig, 0), nil
 	}
 	if _, err := os.Stat(githubSecretsPath); err != nil {
 		return nil, errors.Wrapf(err, "file %s does not exist", path)
@@ -128,7 +135,7 @@ func readSecretsFromFile(path string) ([]GitConfig, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to read file from %s", githubSecretsPath)
 	}
-	gitSecrets := GitSecrets{}
+	gitSecrets := GitHubSecrets{}
 	err = yaml.Unmarshal(rawSecrets, &gitSecrets)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse git secrets")

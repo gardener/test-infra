@@ -258,7 +258,7 @@ func getAssetOverview(component ComponentExtended, overviewFilepath string) (Ass
 
 func removeFailedItems(assetOverview *AssetOverview) (failedOverviewItems []string) {
 	var successfulOverviewItems []AssetOverviewItem
-	for _, item := range assetOverview.AssetOverviewItems  {
+	for _, item := range assetOverview.AssetOverviewItems {
 		if item.Successful {
 			successfulOverviewItems = append(successfulOverviewItems, item)
 		} else {

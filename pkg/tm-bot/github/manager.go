@@ -17,6 +17,8 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+	flag "github.com/spf13/pflag"
 	"net/http"
 	"sigs.k8s.io/yaml"
 
@@ -26,14 +28,22 @@ import (
 	"github.com/google/go-github/v27/github"
 )
 
-func NewManager(log logr.Logger, apiURL string, appID int, keyFile, configFile, defaultTeam string) (Manager, error) {
+type ManagerConfig struct {
+	apiURL      string
+	appID       int
+	keyFile     string
+	configFile  string
+	defaultTeam string
+}
+
+func NewManager(log logr.Logger, cfg *ManagerConfig) (Manager, error) {
 	return &manager{
 		log:         log,
-		configFile:  configFile,
-		apiURL:      apiURL,
-		appId:       appID,
-		keyFile:     keyFile,
-		defaultTeam: defaultTeam,
+		configFile:  cfg.configFile,
+		apiURL:      cfg.apiURL,
+		appId:       cfg.appID,
+		keyFile:     cfg.keyFile,
+		defaultTeam: cfg.defaultTeam,
 		clients:     make(map[int64]*github.Client, 0),
 	}, nil
 }
@@ -88,11 +98,32 @@ func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) 
 	}
 	itr.BaseURL = m.apiURL
 
-	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: itr})
+	trp, err := ghcache.Cache(itr)
+	if err != nil {
+		return nil, err
+	}
+
+	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: trp})
 	if err != nil {
 		return nil, err
 	}
 	m.clients[installationID] = ghClient
 
 	return m.clients[installationID], nil
+}
+
+func ManagerInitFlags(flagset *flag.FlagSet) *ManagerConfig {
+	if flagset == nil {
+		flagset = flag.CommandLine
+	}
+	cfg := &ManagerConfig{}
+
+	flagset.StringVar(&cfg.apiURL, "github-api-url", "https://api.github.com", "GitHub api endpoint url")
+	flagset.IntVar(&cfg.appID, "github-app-id", 0, "GitHub app installation id")
+	flagset.StringVar(&cfg.keyFile, "github-key-file", "", "GitHub app private key file path")
+	flagset.StringVar(&cfg.configFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
+	flagset.StringVar(&cfg.defaultTeam, "github-default-team", "", "Slug name of the default team to grant access")
+
+	ghcache.InitFlags(flagset)
+	return cfg
 }

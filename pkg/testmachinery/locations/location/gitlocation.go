@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/go-logr/logr"
 	"net/http"
@@ -38,7 +39,7 @@ type GitLocation struct {
 	log  logr.Logger
 	Info *tmv1beta1.TestLocation
 
-	config    *testmachinery.GitConfig
+	config    *testmachinery.GitHubInstanceConfig
 	repoOwner string
 	repoName  string
 	repoURL   *url.URL
@@ -101,7 +102,7 @@ func (l *GitLocation) Type() tmv1beta1.LocationType {
 func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 	var definitions []*testdefinition.TestDefinition
 
-	client, err := l.getGitHubClient()
+	client, httpClient, err := l.getGitHubClient()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create github client for %s: %s", l.Info.Repo, err.Error())
 	}
@@ -115,7 +116,7 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 	for _, file := range directoryContent {
 		if *file.Type == githubContentTypeFile {
 			l.log.V(5).Info("found file", "filename", *file.Name, "path", *file.Path)
-			data, err := util.DownloadFile(l.getHTTPClient(), file.GetDownloadURL())
+			data, err := util.DownloadFile(httpClient, file.GetDownloadURL())
 			if err != nil {
 				return nil, err
 			}
@@ -139,33 +140,47 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 	return definitions, nil
 }
 
-func (l *GitLocation) getGitHubClient() (*github.Client, error) {
-	client, err := github.NewEnterpriseClient(l.getGitHubAPI(), "", l.getHTTPClient())
+func (l *GitLocation) getGitHubClient() (*github.Client, *http.Client, error) {
+	httpClient, err := l.getHTTPClient()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return client, nil
+	client, err := github.NewEnterpriseClient(l.getGitHubAPI(), "", httpClient)
+	if err != nil {
+		return nil, nil, err
+	}
+	return client, httpClient, nil
 }
 
-func (l *GitLocation) getHTTPClient() *http.Client {
+func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	if l.config != nil {
+		trp, err := ghcache.Cache(&http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		basicAuth := github.BasicAuthTransport{
-			Username: l.config.TechnicalUser.Username,
-			Password: l.config.TechnicalUser.AuthToken,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
-			},
+			Username:  l.config.TechnicalUser.Username,
+			Password:  l.config.TechnicalUser.AuthToken,
+			Transport: trp,
 		}
 		l.log.V(3).Info(fmt.Sprintf("used gitconfig for %s to authenticate", l.config.HttpUrl))
-		return basicAuth.Client()
+		return basicAuth.Client(), nil
 	}
 
 	l.log.V(3).Info("insecure and unauthenticated git connection is used")
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
+	trp, err := ghcache.Cache(&http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	return &http.Client{
+		Transport: trp,
+	}, nil
 }
 
 // Legacy function. Maybe can be removed in the future when git config is necessary.
@@ -182,13 +197,13 @@ func (l *GitLocation) getGitHubAPI() string {
 	return apiURL
 }
 
-func getGitConfig(log logr.Logger, gitURL *url.URL) *testmachinery.GitConfig {
+func getGitConfig(log logr.Logger, gitURL *url.URL) *testmachinery.GitHubInstanceConfig {
 	httpURL := fmt.Sprintf("%s://%s", gitURL.Scheme, gitURL.Host)
 	if testmachinery.GetConfig() == nil {
 		log.V(5).Info("no testmachinery config defined")
 		return nil
 	}
-	for i, secret := range testmachinery.GetConfig().GitSecrets {
+	for i, secret := range testmachinery.GetConfig().GitHub.Secrets {
 		if secret.HttpUrl == httpURL {
 			log.V(5).Info(fmt.Sprintf("found secret %d for github %s", i, gitURL))
 			return &secret

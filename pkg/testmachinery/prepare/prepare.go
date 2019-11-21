@@ -182,7 +182,7 @@ func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConf
 func (p *Definition) addNetrcFile() error {
 	netrc := ""
 
-	for _, secret := range testmachinery.GetConfig().GitSecrets {
+	for _, secret := range testmachinery.GetConfig().GitHub.Secrets {
 		u, err := url.Parse(secret.HttpUrl)
 		if err != nil {
 			return errors.Wrapf(err, "%s is not a valid URL", secret.HttpUrl)
