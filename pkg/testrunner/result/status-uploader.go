@@ -43,7 +43,13 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs testrunner.RunList, c
 	}
 
 	for _, component := range extendedComponents {
-		testrunsToUpload, err := identifyTestrunsToUpload(runs, component, overviewFilepath)
+		assetOverview, err := getAssetOverview(component, overviewFilepath)
+		// remove previously failed items, to avoid that after component patch, failed items are kept forever
+		removedTestrunItems := removeFailedItems(&assetOverview)
+		if err := writeOverviewToFile(assetOverview, overviewFilepath); err != nil {
+			return err
+		}
+		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview)
 		if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
 			l.Info("no testrun updates, therefore not assets to upload")
 			return nil
@@ -76,6 +82,12 @@ func UploadStatusToGithub(loggerInstance logr.Logger, runs testrunner.RunList, c
 			if err := util.Unzip(archiveFilepath, filepath.Dir(archiveContentDir)); err != nil {
 				l.Error(err, fmt.Sprintf("failed to unzip %s", archiveFilepath))
 				return err
+			}
+			for _, fileToRemove := range removedTestrunItems {
+				filepathToRemove := filepath.Join(archiveContentDir, fileToRemove)
+				if err := os.Remove(filepathToRemove); err != nil {
+					l.Info(fmt.Sprintf("failed to remove failed testrun file %s", filepathToRemove), err)
+				}
 			}
 		}
 		if err := storeRunsStatusAsFiles(testrunsToUpload, archiveContentDir); err != nil {
@@ -169,6 +181,13 @@ func createOrUpdateOverview(overviewFilepath string, testrunsToUpload testrunner
 		}
 		assetOverview.AssetOverviewItems = append(assetOverview.AssetOverviewItems, AssetOverviewItem{Name: assetItemName, Successful: isAssetItemSuccessful})
 	}
+	if err := writeOverviewToFile(assetOverview, overviewFilepath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeOverviewToFile(assetOverview AssetOverview, overviewFilepath string) error {
 	overviewJSONBytes, err := json.MarshalIndent(assetOverview, "", "   ")
 	if err != nil {
 		l.Error(err, fmt.Sprintf("failed to marshal %s", overviewFilepath))
@@ -204,25 +223,8 @@ func generateTestrunAssetName(testrun testrunner.Run) string {
 }
 
 // compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
-func identifyTestrunsToUpload(runs testrunner.RunList, component ComponentExtended, overviewFilepath string) (testrunner.RunList, error) {
-	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
-	remoteAssetID, err := getAssetIDByName(component, filepath.Base(overviewFilepath))
-	if err != nil {
-		return nil, err
-	}
-	if remoteAssetID == 0 {
-		// if no status overview file exists upload results of all testruns
-		return runs, nil
-	}
-	if err := downloadReleaseAssetByName(component, filepath.Base(overviewFilepath), overviewFilepath); err != nil {
-		return nil, err
-	}
+func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOverview) (testrunner.RunList, error) {
 	var testrunsToUpload testrunner.RunList
-	assetOverview, err := unmarshalOverview(overviewFilepath)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, run := range runs {
 		testrunAssetName := generateTestrunAssetName(*run)
 		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
@@ -231,6 +233,40 @@ func identifyTestrunsToUpload(runs testrunner.RunList, component ComponentExtend
 		}
 	}
 	return testrunsToUpload, nil
+}
+
+func getAssetOverview(component ComponentExtended, overviewFilepath string) (AssetOverview, error) {
+	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
+	emptyOverview := AssetOverview{}
+	remoteAssetID, err := getAssetIDByName(component, filepath.Base(overviewFilepath))
+	if err != nil {
+		return emptyOverview, err
+	}
+	if remoteAssetID == 0 {
+		// if no status overview file exists upload results of all testruns
+		return emptyOverview, nil
+	}
+	if err := downloadReleaseAssetByName(component, filepath.Base(overviewFilepath), overviewFilepath); err != nil {
+		return emptyOverview, err
+	}
+	assetOverview, err := unmarshalOverview(overviewFilepath)
+	if err != nil {
+		return emptyOverview, err
+	}
+	return assetOverview, nil
+}
+
+func removeFailedItems(assetOverview *AssetOverview) (failedOverviewItems []string) {
+	var successfulOverviewItems []AssetOverviewItem
+	for _, item := range assetOverview.AssetOverviewItems  {
+		if item.Successful {
+			successfulOverviewItems = append(successfulOverviewItems, item)
+		} else {
+			failedOverviewItems = append(failedOverviewItems, item.Name)
+		}
+	}
+	assetOverview.AssetOverviewItems = successfulOverviewItems
+	return failedOverviewItems
 }
 
 func unmarshalOverview(overviewFilepath string) (AssetOverview, error) {
