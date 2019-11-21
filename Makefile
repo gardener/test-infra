@@ -108,7 +108,7 @@ install-controller-local:
 .PHONY: run-it-tests
 run-it-tests:
 	GIT_COMMIT_SHA=${current_sha} ginkgo ./test/... -v -progress -- \
-		--kubeconfig=${KUBECONFIG} --tm-namespace=${NS} --namespace="" --git-commit-sha=master --s3-endpoint=""
+		--kubecfg=${KUBECONFIG} --tm-namespace=${NS} --namespace="" --git-commit-sha=master --s3-endpoint=""
 
 .PHONY: code-gen
 code-gen:
