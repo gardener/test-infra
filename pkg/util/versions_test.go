@@ -36,6 +36,18 @@ var _ = Describe("versions util", func() {
 			Expect(res.String()).To(Equal("1.2.3"))
 		})
 
+		It("should return the latest version with latest constraint", func() {
+			versions := []*semver.Version{
+				semver.MustParse("1.0.0"),
+				semver.MustParse("1.2.2"),
+				semver.MustParse("1.2.3"),
+			}
+
+			res, err := util.GetLatestVersionFromConstraint(versions, "latest")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(res.String()).To(Equal("1.2.3"))
+		})
+
 		It("should return the latest version of a minor version", func() {
 			versions := []*semver.Version{
 				semver.MustParse("1.0.0"),
