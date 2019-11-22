@@ -92,18 +92,18 @@ func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) 
 	if ghClient, ok := m.clients[installationID]; ok {
 		return ghClient, nil
 	}
-	itr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, m.appId, int(installationID), m.keyFile)
+
+	trp, err := ghcache.Cache(m.log.WithName("ghCache"), http.DefaultTransport)
+	if err != nil {
+		return nil, err
+	}
+	itr, err := ghinstallation.NewKeyFromFile(trp, m.appId, int(installationID), m.keyFile)
 	if err != nil {
 		return nil, err
 	}
 	itr.BaseURL = m.apiURL
 
-	trp, err := ghcache.Cache(itr)
-	if err != nil {
-		return nil, err
-	}
-
-	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: trp})
+	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: itr})
 	if err != nil {
 		return nil, err
 	}
