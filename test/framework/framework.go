@@ -16,7 +16,7 @@ package framework
 
 import (
 	"context"
-	flag "github.com/spf13/pflag"
+	"flag"
 	"os"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -29,6 +29,8 @@ import (
 
 // New creates a new test operation with a logger and a framework configuration.
 func New(log logr.Logger, config *Config) (*Operation, error) {
+
+	flag.Parse()
 
 	if err := ValidateConfig(config); err != nil {
 		return nil, err
@@ -66,7 +68,7 @@ func InitFlags(flagset *flag.FlagSet) *Config {
 		"Commit hash of the current test-infra git")
 	flagset.StringVar(&cfg.Namespace, "namespace", util.Getenv("NAMESPACE", ""),
 		"testing namespace")
-	flagset.StringVar(&cfg.TmKubeconfigPath, "kubeconfig", util.Getenv("TM_KUBECONFIG_PATH", "default"),
+	flagset.StringVar(&cfg.TmKubeconfigPath, "kubecfg", util.Getenv("TM_KUBECONFIG_PATH", "default"),
 		"Kubeconfig path to the testmachinery")
 	flagset.StringVar(&cfg.TmNamespace, "tm-namespace", util.Getenv("TM_NAMESPACE", "default"),
 		"namespace where the testmachinery is running")
