@@ -16,9 +16,8 @@ package framework
 
 import (
 	"context"
+	flag "github.com/spf13/pflag"
 	"os"
-
-	"flag"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -67,7 +66,7 @@ func InitFlags(flagset *flag.FlagSet) *Config {
 		"Commit hash of the current test-infra git")
 	flagset.StringVar(&cfg.Namespace, "namespace", util.Getenv("NAMESPACE", ""),
 		"testing namespace")
-	flagset.StringVar(&cfg.TmKubeconfigPath, "kubecfg", util.Getenv("TM_KUBECONFIG_PATH", "default"),
+	flagset.StringVar(&cfg.TmKubeconfigPath, "kubeconfig", util.Getenv("TM_KUBECONFIG_PATH", "default"),
 		"Kubeconfig path to the testmachinery")
 	flagset.StringVar(&cfg.TmNamespace, "tm-namespace", util.Getenv("TM_NAMESPACE", "default"),
 		"namespace where the testmachinery is running")

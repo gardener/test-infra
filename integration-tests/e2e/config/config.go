@@ -1,8 +1,8 @@
 package config
 
 import (
-	"flag"
 	"fmt"
+	flag "github.com/spf13/pflag"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +18,10 @@ import (
 )
 
 type arrayTestcase []string
+
+func (i *arrayTestcase) Type() string {
+	return "TestCasesArray"
+}
 
 func (i *arrayTestcase) String() string {
 	return fmt.Sprintf("%s", *i)

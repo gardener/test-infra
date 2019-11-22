@@ -16,7 +16,7 @@ package main
 
 import (
 	"context"
-	"flag"
+	flag "github.com/spf13/pflag"
 	"os"
 	"time"
 
@@ -39,7 +39,7 @@ var (
 func init() {
 	log.SetFormatter(&log.TextFormatter{})
 	// configuration flags
-	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
+	flag.StringVar(&kubeconfigPath, "kubecfg", "", "Path to the gardener cluster kubeconfigPath")
 	flag.BoolVar(&debug, "debug", false, "debug output.")
 }
 
