@@ -2,12 +2,12 @@ package result_test
 
 import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/gardener/test-infra/test/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestValidationWebhook(t *testing.T) {
 }
 
 var _ = Describe("output generation tests", func() {
-	log := logger.Log.WithName("output_test")
+	log := log.NullLogger{}
 	Context("configuration", func() {
 		It("should include environment variable configuration to in the metadata", func() {
 			configElement := v1beta1.ConfigElement{

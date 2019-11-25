@@ -241,9 +241,11 @@ func preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, metadata testrun
 
 	switch stepStatus.Phase {
 	case tmv1beta1.PhaseStatusFailed, tmv1beta1.PhaseStatusTimeout:
-		stepEnriched.PhaseNum = 0
+		zero := 0
+		stepEnriched.PhaseNum = &zero
 	case tmv1beta1.PhaseStatusSuccess:
-		stepEnriched.PhaseNum = 100
+		hundred := 100
+		stepEnriched.PhaseNum = &hundred
 	}
 
 	k8sVersion := metadata.KubernetesVersion
@@ -256,7 +258,7 @@ func preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, metadata testrun
 		}
 	}
 
-	clusterDomain, err := testrunner.GeClusterDomainURL(tmClient)
+	clusterDomain, err := testrunner.GetClusterDomainURL(tmClient)
 	if err == nil {
 		stepEnriched.ArgoDisplayName = "argo"
 		stepEnriched.LogsDisplayName = "logs"

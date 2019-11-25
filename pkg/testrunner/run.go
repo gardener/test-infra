@@ -23,7 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/api/extensions/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/url"
 	"path"
 	"regexp"
@@ -141,10 +141,13 @@ func GetArgoURL(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (string, e
 }
 
 // GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
-func GeClusterDomainURL(tmClient kubernetes.Interface) (string, error) {
+func GetClusterDomainURL(tmClient kubernetes.Interface) (string, error) {
 	// try to derive the cluster domain url from grafana ingress if possible
 	// return err if the ingress cannot be found
-	ingress, err := tmClient.Kubernetes().ExtensionsV1beta1().Ingresses("monitoring").Get("grafana", v1.GetOptions{})
+	if tmClient == nil {
+		return "", nil
+	}
+	ingress, err := tmClient.Kubernetes().ExtensionsV1beta1().Ingresses("monitoring").Get("grafana", metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
 	}

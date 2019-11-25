@@ -135,7 +135,7 @@ type StepSummary struct {
 // StepPreComputed contains fields that could be created at runtime via scripted fields, but are created statically for better performance and better support of grafana
 type StepPreComputed struct {
 	// same as StepSummary.Phase but mapping states to ints (Failed&Timeout -> 0, Succeeded -> 100); allows to do averages on success rate in dashboards
-	PhaseNum int `json:"phaseNum,omitempty"`
+	PhaseNum *int `json:"phaseNum,omitempty"`
 	// A K8S Version without the patch suffix, e.g. "1.16"
 	K8SMajorMinorVersion string `json:"k8sMajMinVer,omitempty"`
 	// Dummy field for grafana/log links
