@@ -12,31 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
-	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"time"
+	"context"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"strings"
 )
 
-type TestmachineryController struct {
-	Controller controller.Controller
-}
+func (r *TestmachineryReconciler) getImagePullSecrets(ctx context.Context) []string {
+	configMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetConfig().Namespace}, configMap)
+	if err != nil {
+		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace))
+		return nil
+	}
 
-type TestrunReconciler struct {
-	client.Client
-	scheme *runtime.Scheme
-	Logger logr.Logger
-	timers map[string]*time.Timer
-}
+	pullSecretNames := configMap.Data["secrets.PullSecrets"]
+	if pullSecretNames == "" {
+		return nil
+	}
 
-type reconcileContext struct {
-	tr      *v1beta1.Testrun
-	wf      *v1alpha1.Workflow
-	updated bool
+	return strings.Split(pullSecretNames, ",")
 }

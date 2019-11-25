@@ -18,6 +18,8 @@ require (
 	github.com/google/go-github/v27 v27.0.4
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gorilla/mux v1.6.2
+	github.com/gorilla/sessions v1.1.3
+	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
@@ -39,6 +41,7 @@ require (
 	golang.org/x/crypto v0.0.0-20191119213627-4f8c1d86b1ba // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914 // indirect
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.0.1 // indirect

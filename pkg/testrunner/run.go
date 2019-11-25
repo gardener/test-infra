@@ -18,22 +18,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
+	"regexp"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/api/extensions/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/url"
-	"path"
-	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // GetTestruns returns all testruns of a RunList as testrun array
@@ -68,53 +65,52 @@ func (rl RunList) Errors() error {
 	return util.ReturnMultiError(res)
 }
 
-func runTestrun(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, namespace, name string) (*tmv1beta1.Testrun, error) {
+func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	ctx := context.Background()
 	defer ctx.Done()
-	// TODO: Remove legacy name attribute. Instead enforce usage of generateName.
-	tr.Name = ""
-	tr.GenerateName = name
-	tr.Namespace = namespace
-	err := tmClient.Client().Create(ctx, tr)
-	if err != nil {
-		return nil, trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
-	}
-	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
+	newTR := r.Testrun.DeepCopy()
 
-	if argoUrl, err := GetArgoURL(tmClient, tr); err == nil {
-		log.WithValues("testrun", tr.Name).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
+	// Remove legacy name attribute. Instead enforce usage of generateName.
+	newTR.Name = ""
+	newTR.GenerateName = prefix
+	newTR.Namespace = config.Namespace
+	err := config.Watch.Client().Create(ctx, newTR)
+	if err != nil {
+		log.Error(err, "unable to create testrun")
+		r.Error = trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
+		return
+	}
+
+	*r.Testrun = *newTR
+	r.Metadata.Testrun.ID = newTR.GetName()
+	log.Info(fmt.Sprintf("Testrun %s deployed", newTR.Name))
+
+	if argoUrl, err := GetArgoURL(config.Watch.Client(), r.Testrun); err == nil {
+		log.WithValues("testrun", r.Testrun.GetName()).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
-	err = wait.PollImmediate(pollInterval, maxWaitTime, func() (bool, error) {
-		testrun := &tmv1beta1.Testrun{}
-		err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: tr.Name}, testrun)
-		if err != nil {
-			log.Error(err, "cannot get testrun")
-			return false, nil
-		}
-		tr = testrun
-
-		if tr.Status.State != "" {
-			testrunPhase = tr.Status.Phase
-			log.Info(fmt.Sprintf("Testrun %s is in %s phase. State: %s", tr.Name, testrunPhase, tr.Status.State))
+	err = config.Watch.WatchUntil(config.Timeout, r.Testrun.GetNamespace(), r.Testrun.GetName(), func(new *tmv1beta1.Testrun) (bool, error) {
+		*r.Testrun = *new
+		if r.Testrun.Status.State != "" {
+			testrunPhase = r.Testrun.Status.Phase
+			log.Info(fmt.Sprintf("Testrun %s is in %s phase. State: %s", r.Testrun.GetName(), testrunPhase, r.Testrun.Status.State))
 		} else {
-			log.Info(fmt.Sprintf("Testrun %s is in %s phase. Waiting ...", tr.Name, testrunPhase))
+			log.Info(fmt.Sprintf("Testrun %s is in %s phase. Waiting ...", r.Testrun.GetName(), testrunPhase))
 		}
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		return nil, trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", maxWaitTime, name))
+		r.Testrun.Status.Phase = tmv1beta1.PhaseStatusTimeout
+		r.Error = trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", config.Timeout, r.Testrun.GetName()))
 	}
-
-	return tr, nil
 }
 
-func GetArgoURL(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (string, error) {
+func GetArgoURL(tmClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
 	// get argo url from the argo ingress if possible
 	// return err if the ingress cannot be found
 	argoIngress := &v1beta1.Ingress{}
-	err := tmClient.Client().Get(context.TODO(), client.ObjectKey{Name: "argo-ui", Namespace: "default"}, argoIngress)
+	err := tmClient.Get(context.TODO(), client.ObjectKey{Name: "argo-ui", Namespace: "default"}, argoIngress)
 	if err != nil {
 		return "", err
 	}
@@ -141,13 +137,14 @@ func GetArgoURL(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (string, e
 }
 
 // GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
-func GetClusterDomainURL(tmClient kubernetes.Interface) (string, error) {
+func GetClusterDomainURL(tmClient client.Client) (string, error) {
 	// try to derive the cluster domain url from grafana ingress if possible
 	// return err if the ingress cannot be found
 	if tmClient == nil {
 		return "", nil
 	}
-	ingress, err := tmClient.Kubernetes().ExtensionsV1beta1().Ingresses("monitoring").Get("grafana", metav1.GetOptions{})
+	ingress := &v1beta1.Ingress{}
+	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
 	if err != nil {
 		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
 	}

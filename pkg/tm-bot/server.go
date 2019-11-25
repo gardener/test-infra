@@ -31,7 +31,12 @@ var (
 
 	serverCertFile string
 	serverKeyFile  string
-	uiBasePath     string
+
+	authOrg           string
+	oauthClientID     string
+	oauthClientSecret string
+	cookieSecret      string
+	uiBasePath        string
 
 	ghManagerConfig    *github.ManagerConfig
 	webhookSecretToken string
@@ -92,6 +97,10 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
 
 	ghManagerConfig = github.ManagerInitFlags(flagset)
+	flagset.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
+	flagset.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
+	flagset.StringVar(&cookieSecret, "cookie-secret", "", "Cookie store secret")
+	flagset.StringVar(&authOrg, "auth-org", "gardener", "GitHub organization to restrict access to the bot")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
 	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
 }

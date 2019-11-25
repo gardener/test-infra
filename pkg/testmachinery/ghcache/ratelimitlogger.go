@@ -16,6 +16,7 @@ package ghcache
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/gregjones/httpcache"
 	"net/http"
 )
 
@@ -34,7 +35,11 @@ func (l *rateLimitLogger) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	total := resp.Header.Get("X-RateLimit-Limit")
 	remaining := resp.Header.Get("X-RateLimit-Remaining")
-	l.log.V(5).Info("GitHub rate limit", "total", total, "remaining", remaining, "url", req.URL.String())
+	hit := resp.Header.Get(httpcache.XFromCache)
+	l.log.V(5).Info("GitHub rate limit", "hit", hit, "total", total, "remaining", remaining, "url", req.URL.String())
+	if remaining == "0" {
+		l.log.Error(nil, "GitHub request limit exceeded", "total", total, "remaining", remaining, "url", req.URL.String())
+	}
 
 	return resp, nil
 }

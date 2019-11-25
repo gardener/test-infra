@@ -57,6 +57,11 @@ ul.noBullets li {
     color: white;
 }
 
+.mdl-layout__header .login-btn {
+    color: #fff;
+    border: #fff 1px solid;
+}
+
 .commandhelp-card-wide {
     width: 50%;
     margin: 10px auto;
@@ -96,6 +101,10 @@ ul.noBullets li {
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
     line-height: 2em;
+}
+
+.mdl-data-table__cell--numeric.actions .mdl-button {
+    margin-right: 10px;
 }
 
 .home {

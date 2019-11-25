@@ -33,12 +33,12 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "testrunner",
 	Short: "Testrunner for Test Machinery",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		var err error
-		_, err = logger.NewCliLogger()
+	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		log, err := logger.NewCliLogger()
 		if err != nil {
 			return err
 		}
+		logger.SetLogger(log)
 		return nil
 	},
 }

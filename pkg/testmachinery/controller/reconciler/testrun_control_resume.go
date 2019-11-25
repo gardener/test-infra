@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 )
 
 // Resume a workflow if a specific annotation is set
-func (r *TestrunReconciler) resumeAction(ctx context.Context, rCtx *reconcileContext) error {
+func (r *TestmachineryReconciler) resumeAction(ctx context.Context, rCtx *reconcileContext) error {
 	if b, ok := rCtx.tr.Annotations[common.ResumeTestrunAnnotation]; ok && b == "true" {
 		// resume workflow
 		argo.ResumeWorkflow(rCtx.wf)
@@ -44,7 +44,7 @@ func (r *TestrunReconciler) resumeAction(ctx context.Context, rCtx *reconcileCon
 }
 
 // checkResume checks if a step is a paused step and creates an timer to resume after a dedicated time
-func (r *TestrunReconciler) checkResume(rCtx *reconcileContext, step *v1beta1.DAGStep, stepStatusName string) {
+func (r *TestmachineryReconciler) checkResume(rCtx *reconcileContext, step *v1beta1.DAGStep, stepStatusName string) {
 	// check if a pause step exists
 	argoNodeStatus := getNodeStatusByName(rCtx.wf, testmachinery.GetPauseTaskName(stepStatusName))
 	if argoNodeStatus == nil {

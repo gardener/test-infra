@@ -18,10 +18,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"github.com/gardener/test-infra/pkg/testrunner"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/gardener/test-infra/pkg/testrunner"
 
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 
@@ -54,13 +55,14 @@ var _ = Describe("Testrunner execution tests", func() {
 	It("should output a summary of the testrun as elasticsearch bulk request", func() {
 		ctx := context.Background()
 		defer ctx.Done()
+
 		testrunConfig.OutputDir = outputDirPath + util.RandomString(3)
 		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client().Client(), operation.TestNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -107,7 +109,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client().Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)
@@ -156,7 +158,7 @@ var _ = Describe("Testrunner execution tests", func() {
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = result.Output(operation.Log(), &testrunConfig, operation.Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
+		err = result.Output(operation.Log(), &testrunConfig, operation.Client().Client(), operation.TestMachineryNamespace(), tr, &testrunner.Metadata{Testrun: testrunner.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
 		files, err := ioutil.ReadDir(testrunConfig.OutputDir)

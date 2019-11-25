@@ -12,29 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
-	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"strings"
+	"time"
 )
 
-func (r *TestrunReconciler) getImagePullSecrets(ctx context.Context) []string {
-	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetConfig().Namespace}, configMap)
-	if err != nil {
-		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace))
+func (r *TestmachineryReconciler) addTimer(key string, t time.Duration, f func()) error {
+	r.Logger.V(5).Info("add timer", "duration", t.String(), "key", key)
+	if t := r.timers[key]; t != nil {
+		return fmt.Errorf("a timer is already defined for %s", key)
+	}
+	timer := time.NewTimer(t)
+	go func() {
+		<-timer.C
+		delete(r.timers, key)
+		f()
+	}()
+	r.timers[key] = timer
+	return nil
+}
+
+func (r *TestmachineryReconciler) stopTimer(key string) error {
+	if t := r.timers[key]; t == nil {
 		return nil
 	}
-
-	pullSecretNames := configMap.Data["secrets.PullSecrets"]
-	if pullSecretNames == "" {
-		return nil
-	}
-
-	return strings.Split(pullSecretNames, ",")
+	r.timers[key].Stop()
+	delete(r.timers, key)
+	return nil
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
 	"github.com/go-logr/logr"
@@ -72,6 +73,8 @@ type runItem struct {
 	Testrun  string
 	Phase    IconWithTooltip
 	Progress string
+
+	ArgoURL string
 }
 
 type runDetailedItem struct {
@@ -87,8 +90,8 @@ type IconWithTooltip struct {
 	Color   string
 }
 
-func NewPRStatusPage(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func NewPRStatusPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		allTests := tests.GetAllRunning()
 		if len(allTests) == 0 {
@@ -104,6 +107,7 @@ func NewPRStatusPage(logger logr.Logger, basePath string) http.HandlerFunc {
 				Testrun:      run.Testrun.GetName(),
 				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
 				Progress:     util.TestrunProgress(run.Testrun),
+				ArgoURL:      "",
 			}
 		}
 		params := map[string]interface{}{
@@ -114,8 +118,8 @@ func NewPRStatusPage(logger logr.Logger, basePath string) http.HandlerFunc {
 	}
 }
 
-func NewPRStatusDetailPage(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func NewPRStatusDetailPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		trName := mux.Vars(r)["testrun"]
 		if trName == "" {

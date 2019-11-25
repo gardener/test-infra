@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -32,7 +32,7 @@ func TestConfig(t *testing.T) {
 var (
 	workflowTmpl argov1.Workflow
 	testrunTmpl  tmv1beta1.Testrun
-	reconciler   *TestrunReconciler
+	reconciler   *TestmachineryReconciler
 )
 
 var _ = Describe("Testmachinery controller update", func() {
@@ -71,7 +71,7 @@ var _ = Describe("Testmachinery controller update", func() {
 	})
 
 	BeforeEach(func() {
-		reconciler = &TestrunReconciler{
+		reconciler = &TestmachineryReconciler{
 			Logger: log.NullLogger{},
 			timers: make(map[string]*time.Timer),
 		}

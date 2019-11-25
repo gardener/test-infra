@@ -15,16 +15,17 @@
 package pages
 
 import (
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/go-logr/logr"
 	"net/http"
 )
 
-func NewHomePage(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func NewHomePage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return p.handleSimplePage("index.html", nil)
 }
 
-func New404Page(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func New404Page(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return p.handleSimplePage("404.html", nil)
 }

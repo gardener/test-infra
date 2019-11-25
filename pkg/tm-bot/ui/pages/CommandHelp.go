@@ -17,6 +17,7 @@ package pages
 import (
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -43,8 +44,8 @@ type CommandHelpDetailedItem struct {
 	Config               string
 }
 
-func NewCommandHelpPage(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func NewCommandHelpPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawList := make([]CommandHelpItem, len(plugins.GetAll()))
 		for i, plugin := range plugins.GetAll() {
@@ -63,8 +64,8 @@ func NewCommandHelpPage(logger logr.Logger, basePath string) http.HandlerFunc {
 	}
 }
 
-func NewCommandDetailedHelpPage(logger logr.Logger, basePath string) http.HandlerFunc {
-	p := Page{log: logger, basePath: basePath}
+func NewCommandDetailedHelpPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		pluginName := mux.Vars(r)["plugin"]
 		_, plugin, err := plugins.Get(pluginName)

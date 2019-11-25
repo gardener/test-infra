@@ -19,9 +19,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -454,7 +453,7 @@ func getGithubClient(component, githubUser, githubPassword string) *github.Clien
 }
 
 // MarkTestrunsAsIngested sets the ingest status of testruns to true
-func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interface, runs testrunner.RunList) error {
+func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient client.Client, runs testrunner.RunList) error {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -462,7 +461,7 @@ func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient kubernetes.Interfa
 		tr := run.Testrun
 		enabled := true
 		tr.Status.UploadedToGithub = &enabled
-		err := tmClient.Client().Update(ctx, tr)
+		err := tmClient.Update(ctx, tr)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("unable to update status of testrun %s in namespace: %s", tr.Name, tr.Namespace))
 			return err

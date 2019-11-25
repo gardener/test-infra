@@ -14,8 +14,7 @@
             </tr>
             </thead>
             <tbody>
-
-            {{ range $_, $plugin := .plugins }}
+            {{ range $_, $plugin := .page.plugins }}
                 <tr>
                     <td></td>
                     <td class="mdl-data-table__cell--non-numeric">{{ $plugin.Command }}</td>
@@ -23,9 +22,7 @@
                     <td id="description-col" class="mdl-data-table__cell--non-numeric">{{ $plugin.Description }}</td>
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $plugin.Authorization }}</td>
                     <td class="mdl-data-table__cell--non-numeric">
-                        <a href="/command-help/{{ $plugin.Command }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                            Usage
-                        </a>
+                        <a href="/command-help/{{ $plugin.Command }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Usage</a>
                     </td>
                     <td></td>
                 </tr>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	"context"
@@ -38,11 +38,11 @@ import (
 var ErrDeadlineExceeded = "Pod was active on the node longer than the specified deadline"
 
 // handleActions handles any changes that trigger actions on a running workflow like annotations to resume a workflow
-func (r *TestrunReconciler) handleActions(ctx context.Context, rCtx *reconcileContext) error {
+func (r *TestmachineryReconciler) handleActions(ctx context.Context, rCtx *reconcileContext) error {
 	return r.resumeAction(ctx, rCtx)
 }
 
-func (r *TestrunReconciler) updateStatus(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
+func (r *TestmachineryReconciler) updateStatus(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
 	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 
 	if !rCtx.tr.Status.StartTime.Equal(&rCtx.wf.Status.StartedAt) {
@@ -76,7 +76,7 @@ func (r *TestrunReconciler) updateStatus(ctx context.Context, rCtx *reconcileCon
 	return reconcile.Result{}, nil
 }
 
-func (r *TestrunReconciler) completeTestrun(rCtx *reconcileContext) error {
+func (r *TestmachineryReconciler) completeTestrun(rCtx *reconcileContext) error {
 	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 	log.Info("start collecting node status of Testrun")
 
@@ -96,14 +96,14 @@ func (r *TestrunReconciler) completeTestrun(rCtx *reconcileContext) error {
 
 	// cleanup pods to remove workload from the api server
 	// logs are still accessible through "archiveLogs" option in argo
-	if err := garbagecollection.CleanWorkflowPods(r.Client, rCtx.wf); err != nil {
+	if err := garbagecollection.CleanWorkflowPods(r, rCtx.wf); err != nil {
 		log.Error(err, "error while trying to cleanup pods")
 	}
 
 	return nil
 }
 
-func (r *TestrunReconciler) updateStepsStatus(rCtx *reconcileContext) {
+func (r *TestmachineryReconciler) updateStepsStatus(rCtx *reconcileContext) {
 	r.Logger.V(3).Info("update step status")
 	completedSteps := 0
 	numSteps := len(rCtx.tr.Status.Steps)

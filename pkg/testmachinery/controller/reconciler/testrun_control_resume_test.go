@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
@@ -28,7 +28,7 @@ import (
 var _ = Describe("Testmachinery controller resume", func() {
 
 	BeforeEach(func() {
-		reconciler = &TestrunReconciler{
+		reconciler = &TestmachineryReconciler{
 			Logger: log.NullLogger{},
 			timers: make(map[string]*time.Timer),
 		}

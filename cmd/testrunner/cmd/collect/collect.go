@@ -103,7 +103,7 @@ var collectCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to initialize collector")
 			os.Exit(1)
 		}
-		_, err = collector.Collect(logger.Log.WithName("Collect"), tmClient, namespace, []*testrunner.Run{run})
+		_, err = collector.Collect(logger.Log.WithName("Collect"), tmClient.Client(), namespace, []*testrunner.Run{run})
 		if err != nil {
 			logger.Log.Error(err, "unable to collect result", "testrun", testrunName)
 			os.Exit(1)

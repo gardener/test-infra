@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -31,8 +33,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// NewReconciler returns a new testmachinery reconciler
+func NewReconciler(mgr manager.Manager, log logr.Logger) reconcile.Reconciler {
+	return &TestmachineryReconciler{
+		Client: mgr.GetClient(),
+		scheme: mgr.GetScheme(),
+		Logger: log,
+		timers: make(map[string]*time.Timer),
+	}
+}
+
 // Reconcile handles various testrun events like crete, update and delete.
-func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *TestmachineryReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 	rCtx := &reconcileContext{
 		tr: &tmv1beta1.Testrun{},
@@ -93,7 +105,7 @@ func (r *TestrunReconciler) Reconcile(request reconcile.Request) (reconcile.Resu
 
 }
 
-func (r *TestrunReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
+func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
 	log.V(5).Info("generate workflow")
 	var err error
 	rCtx.wf, err = r.generateWorkflow(ctx, rCtx.tr)
@@ -125,7 +137,7 @@ func (r *TestrunReconciler) createWorkflow(ctx context.Context, rCtx *reconcileC
 	return reconcile.Result{}, nil
 }
 
-func (r *TestrunReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, error) {
+func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, error) {
 	tr, err := testrun.New(r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing testrun: %s", err.Error())

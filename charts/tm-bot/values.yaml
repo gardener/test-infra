@@ -47,8 +47,11 @@ bot:
       -----END RSA PRIVATE KEY-----
 
 secrets:
+  cookieSecret: ""
   github:
     apiUrl: ""
     webhookSecretToken: "" # secret token configured for the github app
     appID: "" # app installation id
     key: "" # base64 encoded private key
+    oauthClientID: ""
+    oauthClientSecret: ""

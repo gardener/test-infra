@@ -17,13 +17,15 @@ package result
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/types"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -62,13 +64,18 @@ func IngestFile(log logr.Logger, file, esCfgName string) error {
 }
 
 // MarkTestrunsAsIngested sets the ingest status of testruns to true
-func MarkTestrunsAsIngested(log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) error {
+func MarkTestrunsAsIngested(log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun) error {
 	ctx := context.Background()
 	defer ctx.Done()
 
-	tr.Status.Ingested = true
-	err := tmClient.Client().Update(ctx, tr)
+	patched := tr.DeepCopy()
+	patched.Status.Ingested = true
+	patch, err := kubernetes.CreateTwoWayMergePatch(tr, patched)
 	if err != nil {
+		return errors.Wrap(err, "unable to create patch update for ingestion")
+	}
+
+	if err := tmClient.Patch(ctx, tr, client.ConstantPatch(types.MergePatchType, patch)); err != nil {
 		return fmt.Errorf("unable to update status of testrun %s in namespace %s: %s", tr.Name, tr.Namespace, err.Error())
 	}
 	log.V(3).Info("Successfully updated status of testrun")
