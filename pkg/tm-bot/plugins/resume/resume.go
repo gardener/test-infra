@@ -50,7 +50,7 @@ func (r *resume) Command() string {
 }
 
 func (r *resume) Authorization() github.AuthorizationType {
-	return github.AuthorizationOrg
+	return github.AuthorizationTeam
 }
 
 func (r *resume) Description() string {

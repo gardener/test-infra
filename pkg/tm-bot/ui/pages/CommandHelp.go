@@ -23,9 +23,10 @@ import (
 )
 
 var AuthorizationTooltip = map[github.AuthorizationType]string{
-	github.AuthorizationAll:  "Everyone is allowed to use the command",
-	github.AuthorizationOrg:  "Everyone that is member of the org is allowed to use the command",
-	github.AuthorizationTeam: "Everyone that is in the default team or in the requested reviewers is allowed to use the command",
+	github.AuthorizationAll:        "Everyone is allowed to use the command",
+	github.AuthorizationOrg:        "Everyone that is member of the org is allowed to use the command",
+	github.AuthorizationTeam:       "Everyone that is in the default team is allowed to use the command",
+	github.AuthorizationCodeOwners: "Only codeowners are allowed to use command. If no code owner exists the default team is used.",
 }
 
 type CommandHelpItem struct {

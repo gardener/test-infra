@@ -43,7 +43,7 @@ func (_ *skip) Command() string {
 }
 
 func (_ *skip) Authorization() github.AuthorizationType {
-	return github.AuthorizationOrg
+	return github.AuthorizationCodeOwners
 }
 
 func (_ *skip) Description() string {

@@ -78,9 +78,10 @@ type client struct {
 type AuthorizationType string
 
 const (
-	AuthorizationAll  AuthorizationType = "all"
-	AuthorizationOrg  AuthorizationType = "org"
-	AuthorizationTeam AuthorizationType = "team"
+	AuthorizationAll        AuthorizationType = "all"
+	AuthorizationOrg        AuthorizationType = "org"
+	AuthorizationTeam       AuthorizationType = "team"
+	AuthorizationCodeOwners AuthorizationType = "codeowners"
 )
 
 // EventActionType represents the action type of a github event
