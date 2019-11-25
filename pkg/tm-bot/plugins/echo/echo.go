@@ -39,7 +39,7 @@ func (_ *echo) Command() string {
 }
 
 func (_ *echo) Authorization() github.AuthorizationType {
-	return github.AuthorizationAll
+	return github.AuthorizationTeam
 }
 
 func (_ *echo) Description() string {

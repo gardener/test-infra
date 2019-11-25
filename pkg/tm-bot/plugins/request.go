@@ -47,12 +47,13 @@ func (p *Plugins) HandleRequest(client github.Client, event *github.GenericReque
 func (p *Plugins) runPlugin(client github.Client, event *github.GenericRequestEvent, args []string) {
 	runID, plugin, err := p.Get(args[0])
 	if err != nil {
-		_ = p.Error(client, event, nil, err)
+		p.log.Error(err, "unable to get plugin for command", "command", args[0])
 		return
 	}
 
 	if !client.IsAuthorized(plugin.Authorization(), event) {
 		p.log.V(3).Info("user not authorized", "user", event.GetAuthorName(), "plugin", plugin.Command())
+		_, _ = client.Comment(event, FormatUnauthorizedResponse(event.GetAuthorName(), args[0]))
 		return
 	}
 

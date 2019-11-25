@@ -58,7 +58,7 @@ func (_ *xkcd) Command() string {
 }
 
 func (_ *xkcd) Authorization() github.AuthorizationType {
-	return github.AuthorizationAll
+	return github.AuthorizationOrg
 }
 
 func (_ *xkcd) Description() string {

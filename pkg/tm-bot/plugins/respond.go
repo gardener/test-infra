@@ -86,3 +86,9 @@ Usage:
 `
 	return fmt.Sprintf(format, name, description, example, usage)
 }
+
+// FormatUnauthorizedResponse returns the user not authorized response
+func FormatUnauthorizedResponse(to, name string) string {
+	format := ":construction: @%s you are not allowed to use the command `%s`"
+	return fmt.Sprintf(format, to, name)
+}

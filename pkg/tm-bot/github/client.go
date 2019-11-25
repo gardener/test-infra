@@ -173,6 +173,9 @@ func (c *client) IsAuthorized(authorizationType AuthorizationType, event *Generi
 	case AuthorizationOrg:
 		return c.isInOrganization(event)
 	case AuthorizationTeam:
+		return c.isInDefaultTeam(event)
+	case AuthorizationCodeOwners:
+		// todo: update to really parse the codeowners file with fallback to default team or org
 		return c.isInRequestedTeam(event)
 	}
 	return false
@@ -201,10 +204,10 @@ func (c *client) isInOrganization(event *GenericRequestEvent) bool {
 		c.log.V(3).Info(err.Error())
 		return false
 	}
-	if MembershipStatus(membership.GetState()) != MembershipStatusActive {
-		return false
+	if MembershipStatus(membership.GetState()) == MembershipStatusActive {
+		return true
 	}
-	return true
+	return false
 }
 
 // isInRequestedTeam checks if the author is in the requested PR team
@@ -233,9 +236,26 @@ func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
 			c.log.V(3).Info(err.Error(), "team", team.GetName())
 			return false
 		}
-		if MembershipStatus(membership.GetState()) != MembershipStatusActive {
+		if MembershipStatus(membership.GetState()) == MembershipStatusActive {
 			return true
 		}
+	}
+	return false
+}
+
+// isInRequestedTeam checks if the author is in the requested PR team
+func (c *client) isInDefaultTeam(event *GenericRequestEvent) bool {
+	if c.defaultTeam == nil {
+		c.log.Info("no default team defined", "repository", event.GetRepositoryName(), "owner", event.GetOwnerName())
+		return false
+	}
+	membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), c.defaultTeam.GetID(), event.GetAuthorName())
+	if err != nil {
+		c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
+		return false
+	}
+	if MembershipStatus(membership.GetState()) == MembershipStatusActive {
+		return true
 	}
 	return false
 }
