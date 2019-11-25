@@ -135,6 +135,9 @@ type TestrunStatus struct {
 	// This value is calculated by (CompletionTime - StartTime)
 	Duration int64 `json:"duration,omitempty"`
 
+	// Tells whether testrun failed first and succeeded in a retry
+	Flaked bool `json:"flaked,omitempty"`
+
 	// Workflow is the name of the generated argo workflow
 	Workflow string `json:"workflow,omitempty"`
 

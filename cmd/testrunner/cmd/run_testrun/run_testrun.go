@@ -35,10 +35,11 @@ import (
 )
 
 var (
-	tmKubeconfigPath string
-	namespace        string
-	timeout          int64
-	interval         int64
+	tmKubeconfigPath     string
+	namespace            string
+	timeout              int64
+	interval             int64
+	testrunFlakeAttempts int
 
 	testrunPath       string
 	testrunNamePrefix string
@@ -71,10 +72,11 @@ var runTestrunCmd = &cobra.Command{
 		}
 
 		config := &testrunner.Config{
-			Client:    tmClient,
-			Namespace: namespace,
-			Timeout:   time.Duration(timeout) * time.Second,
-			Interval:  time.Duration(interval) * time.Second,
+			Client:        tmClient,
+			Namespace:     namespace,
+			Timeout:       time.Duration(timeout) * time.Second,
+			Interval:      time.Duration(interval) * time.Second,
+			FlakeAttempts: testrunFlakeAttempts,
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)
@@ -119,6 +121,7 @@ func init() {
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runTestrunCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Number of desired retries in cases of testrun failure.")
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")

@@ -36,6 +36,9 @@ type Config struct {
 
 	// Poll intervall to check the testrun status
 	Interval time.Duration
+
+	// Number of testrun retries after a failed run
+	FlakeAttempts int
 }
 
 // Run describes a testrun that is executed by the testrunner.
@@ -117,6 +120,7 @@ type TestrunSummary struct {
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
 	StartTime *metav1.Time     `json:"startTime,omitempty"`
 	Duration  int64            `json:"duration,omitempty"`
+	Flaked    bool             `json:"flaked,omitempty"`
 	TestsRun  int              `json:"testsRun,omitempty"`
 }
 
