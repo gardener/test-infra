@@ -16,6 +16,8 @@ package template
 
 import (
 	"fmt"
+	"io/ioutil"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
@@ -23,7 +25,6 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"io/ioutil"
 )
 
 // RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
@@ -126,6 +127,12 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 		}
 		log.V(3).Info(fmt.Sprintf("Infrastructure: \n%s \n", util.PrettyPrintStruct(infrastructure)))
 
+		networkingConfig, err := encodeRawObject(shoot.NetworkingConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse networking config")
+		}
+		log.V(3).Info(fmt.Sprintf("networking: \n%s \n", util.PrettyPrintStruct(networkingConfig)))
+
 		controlplane, err := encodeRawObject(shoot.ControlPlaneConfig)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse infrastructure config")
@@ -153,6 +160,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 				"floatingPoolName":       shoot.FloatingPoolName,
 				"loadbalancerProvider":   shoot.LoadbalancerProvider,
 				"infrastructureConfig":   infrastructure,
+				"networkingConfig":       networkingConfig,
 				"controlplaneConfig":     controlplane,
 			},
 			"gardener": map[string]interface{}{

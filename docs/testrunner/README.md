@@ -73,7 +73,7 @@ components:
 ### Shoot Flavor Configuration
 
 The testrunner can render testruns from helm templates and multiply them to cover a specified test matrix of shoots.
-As gardener supports multiple shoot flavors of different cloudproviders, operating-systems etc., 
+As gardener supports multiple shoot flavors of different cloudproviders, operating-systems etc.,
 these shoot flavors are described a config file.
 
 This config file has the following structure.<br>
@@ -85,7 +85,7 @@ flavors:
 - provider: aws|gcp|azure|alicloud|openstack|...
   kubernetes:
     pattern: "latest|<semver constraint>" # latest or semver constraint see https://github.com/Masterminds/semver#checking-version-constraints
-    filterPatchVersions: true|false # filter patch versions and only keep the latest patch versions per minor  
+    filterPatchVersions: true|false # filter patch versions and only keep the latest patch versions per minor
     versions: # list of specific versions to test (a version is a expirable version as defined in the cloudprofiles)
     - version: "<specific version>"
   cloudprofile: "<cloudpropfile name>"
@@ -97,6 +97,7 @@ flavors:
   - workerPools:
     - <raw gardener worker configuration>
   infrastructureConfig: {} # optional, raw gardener infrastructure provider config
+  networkingConfig: {} # optional, raw gardener networking config
   controlplaneConfig: {} # optional, raw gardener controlplane config
   chartPath: "path/to/chart" # optional, absolute or relative path to the helm chart conatining testruns. Path is relativ to testrunner binary
 ```
