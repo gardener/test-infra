@@ -39,11 +39,11 @@ func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNameP
 	maxWaitTime = config.Timeout
 	pollInterval = config.Interval
 
-	runs.Run(log.WithValues("namespace", config.Namespace), config.Client, config.Namespace, testrunNamePrefix)
+	runs.Run(log.WithValues("namespace", config.Namespace), config.Client, config.Namespace, testrunNamePrefix, config.FlakeAttempts)
 }
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
-func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace, testrunNamePrefix string) {
+func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace, testrunNamePrefix string, maxFlakeAttempts int) {
 	var wg sync.WaitGroup
 	for i := range rl {
 		if rl[i].Error != nil {
@@ -54,19 +54,34 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 		go func(i int) {
 			defer wg.Done()
 
-			tr, err := runTestrun(log, tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
-			if err != nil {
-				log.Error(err, "unable to run testrun")
+			for flakeAttempt := 0; flakeAttempt <= maxFlakeAttempts; flakeAttempt++ {
+				tr, err := runTestrun(log, tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
+				if err != nil {
+					log.Error(err, "unable to run testrun")
 
-				if trerrors.IsTimeout(err) {
-					rl[i].Testrun.Status.Phase = tmv1beta1.PhaseStatusTimeout
+					if trerrors.IsTimeout(err) {
+						rl[i].Testrun.Status.Phase = tmv1beta1.PhaseStatusTimeout
+					}
+				}
+				if tr != nil {
+					rl[i].Testrun = tr
+					rl[i].Metadata.Testrun.ID = tr.Name
+				}
+				rl[i].Error = err
+
+				if err == nil && tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+					if flakeAttempt != 0 {
+						rl[i].Metadata.Flaked++
+					}
+					// testrun was successful, break retry loop
+					break
+				}
+				if flakeAttempt != maxFlakeAttempts {
+					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
+					tr.Status = tmv1beta1.TestrunStatus{}
+					tr.Name = ""
 				}
 			}
-			if tr != nil {
-				rl[i].Testrun = tr
-				rl[i].Metadata.Testrun.ID = tr.Name
-			}
-			rl[i].Error = err
 
 		}(i)
 	}

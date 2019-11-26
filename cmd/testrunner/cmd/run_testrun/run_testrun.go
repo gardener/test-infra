@@ -35,10 +35,11 @@ import (
 )
 
 var (
-	tmKubeconfigPath string
-	namespace        string
-	timeout          int64
-	interval         int64
+	tmKubeconfigPath     string
+	namespace            string
+	timeout              int64
+	interval             int64
+	testrunFlakeAttempts int
 
 	testrunPath       string
 	testrunNamePrefix string
@@ -56,10 +57,10 @@ var runTestrunCmd = &cobra.Command{
 		"run-tr",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.Info("Start testmachinery testrunner")
+		logger.Log.Info("start testmachinery testrunner")
 		err := godotenv.Load()
 		if err != nil {
-			logger.Log.Error(err, "Error loading .env file")
+			logger.Log.Error(err, "error loading .env file")
 		}
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
@@ -71,10 +72,11 @@ var runTestrunCmd = &cobra.Command{
 		}
 
 		config := &testrunner.Config{
-			Client:    tmClient,
-			Namespace: namespace,
-			Timeout:   time.Duration(timeout) * time.Second,
-			Interval:  time.Duration(interval) * time.Second,
+			Client:        tmClient,
+			Namespace:     namespace,
+			Timeout:       time.Duration(timeout) * time.Second,
+			Interval:      time.Duration(interval) * time.Second,
+			FlakeAttempts: testrunFlakeAttempts,
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)
@@ -90,16 +92,16 @@ var runTestrunCmd = &cobra.Command{
 			},
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), config, run, testrunNamePrefix)
+		testrunner.ExecuteTestruns(logger.Log.WithName("execute"), config, run, testrunNamePrefix)
 		if run.HasErrors() {
-			logger.Log.Error(run.Errors(), "Testrunner execution disrupted")
+			logger.Log.Error(run.Errors(), "testrunner execution disrupted")
 			os.Exit(1)
 		}
 
 		if run[0].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-			logger.Log.Info("Testrunner successfully finished.")
+			logger.Log.Info("testrunner successfully finished.")
 		} else {
-			logger.Log.Error(errors.New("Testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
+			logger.Log.Error(errors.New("testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
 		}
 
 		fmt.Print(util.PrettyPrintStruct(run[0].Testrun.Status))
@@ -119,6 +121,7 @@ func init() {
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runTestrunCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Number of desired retries in cases of testrun failure.")
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")

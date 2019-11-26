@@ -34,8 +34,11 @@ type Config struct {
 	// Max wait time for a testrun to finish.
 	Timeout time.Duration
 
-	// Poll intervall to check the testrun status
+	// Poll interval to check the testrun status
 	Interval time.Duration
+
+	// Number of testrun retries after a failed run
+	FlakeAttempts int
 }
 
 // Run describes a testrun that is executed by the testrunner.
@@ -89,6 +92,9 @@ type Metadata struct {
 
 	// Additional annotations form the testrun or steps
 	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Tells whether testrun failed first but succeeded after a retry
+	Flaked int `json:"flaked,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
@@ -96,7 +102,7 @@ type TestrunMetadata struct {
 	// Name of the testrun crd object.
 	ID string `json:"id"`
 
-	// Startime of the testrun.
+	// StartTime of the testrun.
 	StartTime *metav1.Time `json:"startTime"`
 }
 

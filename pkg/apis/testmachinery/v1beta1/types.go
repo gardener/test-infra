@@ -142,7 +142,7 @@ type TestrunStatus struct {
 	// It also shows all specific executed tests.
 	Steps []*StepStatus `json:"steps,omitempty"`
 
-	// Ingested states whether the result of a testrun is already ingested into a persistant storage (db).
+	// Ingested states whether the result of a testrun is already ingested into a persistent storage (db).
 	Ingested bool `json:"ingested"`
 
 	// UploadedToGithub states whether the status of a testrun is already uploaded to github component
