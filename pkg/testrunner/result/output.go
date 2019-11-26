@@ -18,6 +18,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
+	"github.com/Masterminds/semver"
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
@@ -39,7 +40,7 @@ func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, name
 	metadata.Testrun.StartTime = tr.Status.StartTime
 	metadata.Annotations = tr.Annotations
 
-	trSummary, summaries, err := DetermineTestrunSummary(tr, metadata, config)
+	trSummary, summaries, err := DetermineTestrunSummary(tr, metadata, config, tmClient, log)
 	if err != nil {
 		return err
 	}
@@ -91,7 +92,7 @@ func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, name
 }
 
 // DetermineTestrunSummary parses a testruns status and returns
-func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config) (testrunner.TestrunSummary, []testrunner.StepSummary, error) {
+func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config, tmClient kubernetes.Interface, log logr.Logger) (testrunner.TestrunSummary, []testrunner.StepSummary, error) {
 	status := tr.Status
 	testsRun := 0
 	summaries := make([]testrunner.StepSummary, 0)
@@ -106,15 +107,17 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 				stepMetadata.Configuration[elem.Name] = elem.Value
 			}
 		}
+		pre := preComputeTeststepFields(step, stepMetadata, tmClient, log)
 
 		summary := testrunner.StepSummary{
-			Metadata:  &stepMetadata,
-			Type:      testrunner.SummaryTypeTeststep,
-			Name:      step.TestDefinition.Name,
-			StepName:  step.Position.Step,
-			Phase:     step.Phase,
-			StartTime: step.StartTime,
-			Duration:  step.Duration,
+			Metadata:    &stepMetadata,
+			Type:        testrunner.SummaryTypeTeststep,
+			Name:        step.TestDefinition.Name,
+			StepName:    step.Position.Step,
+			Phase:       step.Phase,
+			StartTime:   step.StartTime,
+			Duration:    step.Duration,
+			PreComputed: pre,
 		}
 
 		summaries = append(summaries, summary)
@@ -230,4 +233,37 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 	}
 
 	return files, nil
+}
+
+// preComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)
+func preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, metadata testrunner.Metadata, tmClient kubernetes.Interface, log logr.Logger) *testrunner.StepPreComputed {
+	var stepEnriched testrunner.StepPreComputed
+
+	switch stepStatus.Phase {
+	case tmv1beta1.PhaseStatusFailed, tmv1beta1.PhaseStatusTimeout:
+		zero := 0
+		stepEnriched.PhaseNum = &zero
+	case tmv1beta1.PhaseStatusSuccess:
+		hundred := 100
+		stepEnriched.PhaseNum = &hundred
+	}
+
+	k8sVersion := metadata.KubernetesVersion
+	if k8sVersion != "" {
+		semVer, err := semver.NewVersion(k8sVersion)
+		if err != nil {
+			log.Error(err, "cannot parse k8s Version, will not precompute derived data")
+		} else {
+			stepEnriched.K8SMajorMinorVersion = fmt.Sprintf("%d.%d", semVer.Major(), semVer.Minor())
+		}
+	}
+
+	clusterDomain, err := testrunner.GetClusterDomainURL(tmClient)
+	if err == nil {
+		stepEnriched.ArgoDisplayName = "argo"
+		stepEnriched.LogsDisplayName = "logs"
+		stepEnriched.ClusterDomain = clusterDomain
+	}
+
+	return &stepEnriched
 }

@@ -18,7 +18,7 @@ Testrunner is an additional component of the Test Machinery that abstracts templ
 
 The testrunner is a basic go commandline tool that can be run by either calling it directly via
 ```
-go run cmd/testmachinery-run/main.go [flags]
+go run -mod=vendor cmd/testrunner/main.go [flags]
 ```
 or via the prebuild binary which is updated and kept in sync with each new Test Machinery version (also available in the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run`)
 ```

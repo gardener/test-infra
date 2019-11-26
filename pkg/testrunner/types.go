@@ -122,11 +122,26 @@ type TestrunSummary struct {
 
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata  *Metadata        `json:"tm,omitempty"`
-	Type      SummaryType      `json:"type,omitempty"`
-	Name      string           `json:"name,omitempty"`
-	StepName  string           `json:"stepName,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
+	Metadata    *Metadata        `json:"tm,omitempty"`
+	Type        SummaryType      `json:"type,omitempty"`
+	Name        string           `json:"name,omitempty"`
+	StepName    string           `json:"stepName,omitempty"`
+	Phase       argov1.NodePhase `json:"phase,omitempty"`
+	StartTime   *metav1.Time     `json:"startTime,omitempty"`
+	Duration    int64            `json:"duration,omitempty"`
+	PreComputed *StepPreComputed `json:"pre,omitempty"`
+}
+
+// StepPreComputed contains fields that could be created at runtime via scripted fields, but are created statically for better performance and better support of grafana
+type StepPreComputed struct {
+	// same as StepSummary.Phase but mapping states to ints (Failed&Timeout -> 0, Succeeded -> 100); allows to do averages on success rate in dashboards
+	PhaseNum *int `json:"phaseNum,omitempty"`
+	// A K8S Version without the patch suffix, e.g. "1.16"
+	K8SMajorMinorVersion string `json:"k8sMajMinVer,omitempty"`
+	// Dummy field for grafana/log links
+	LogsDisplayName string `json:"logsText,omitempty"`
+	// Dummy field for argoui/workflow links
+	ArgoDisplayName string `json:"argoText,omitempty"`
+	// the cluster domain of the testmachinery (useful to build other URLs in dashboards)
+	ClusterDomain string `json:"clusterDomain,omitempty"`
 }

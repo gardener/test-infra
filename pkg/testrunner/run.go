@@ -23,8 +23,10 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/url"
 	"path"
+	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -136,4 +138,27 @@ func GetArgoURL(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (string, e
 	argoUrl.Path = path.Join(argoUrl.Path, "workflows", tr.Namespace, testmachinery.GetWorkflowName(tr))
 
 	return argoUrl.String(), nil
+}
+
+// GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
+func GetClusterDomainURL(tmClient kubernetes.Interface) (string, error) {
+	// try to derive the cluster domain url from grafana ingress if possible
+	// return err if the ingress cannot be found
+	if tmClient == nil {
+		return "", nil
+	}
+	ingress, err := tmClient.Kubernetes().ExtensionsV1beta1().Ingresses("monitoring").Get("grafana", metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
+	}
+	if len(ingress.Spec.Rules) == 0 {
+		return "", fmt.Errorf("cannot get ingress rule from ingress %v", ingress)
+	}
+	host := ingress.Spec.Rules[0].Host
+	r, _ := regexp.Compile("[a-z]+\\.ingress\\.(.+)$")
+	matches := r.FindStringSubmatch(host)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
+	}
+	return matches[1], nil
 }
