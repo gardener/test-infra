@@ -34,7 +34,7 @@ type Config struct {
 	// Max wait time for a testrun to finish.
 	Timeout time.Duration
 
-	// Poll intervall to check the testrun status
+	// Poll interval to check the testrun status
 	Interval time.Duration
 
 	// Number of testrun retries after a failed run
@@ -102,7 +102,7 @@ type TestrunMetadata struct {
 	// Name of the testrun crd object.
 	ID string `json:"id"`
 
-	// Startime of the testrun.
+	// StartTime of the testrun.
 	StartTime *metav1.Time `json:"startTime"`
 }
 

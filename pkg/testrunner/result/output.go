@@ -71,7 +71,7 @@ func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, name
 		return err
 	}
 
-	// Print out the summary if no outputfile is specified
+	// Print out the summary if no output file is specified
 	if config.OutputDir == "" {
 		fmt.Printf("Collected summary:\n%s", summary)
 		return nil

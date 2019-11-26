@@ -57,10 +57,10 @@ var runTestrunCmd = &cobra.Command{
 		"run-tr",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.Info("Start testmachinery testrunner")
+		logger.Log.Info("start testmachinery testrunner")
 		err := godotenv.Load()
 		if err != nil {
-			logger.Log.Error(err, "Error loading .env file")
+			logger.Log.Error(err, "error loading .env file")
 		}
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
@@ -92,16 +92,16 @@ var runTestrunCmd = &cobra.Command{
 			},
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), config, run, testrunNamePrefix)
+		testrunner.ExecuteTestruns(logger.Log.WithName("execute"), config, run, testrunNamePrefix)
 		if run.HasErrors() {
-			logger.Log.Error(run.Errors(), "Testrunner execution disrupted")
+			logger.Log.Error(run.Errors(), "testrunner execution disrupted")
 			os.Exit(1)
 		}
 
 		if run[0].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-			logger.Log.Info("Testrunner successfully finished.")
+			logger.Log.Info("testrunner successfully finished.")
 		} else {
-			logger.Log.Error(errors.New("Testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
+			logger.Log.Error(errors.New("testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
 		}
 
 		fmt.Print(util.PrettyPrintStruct(run[0].Testrun.Status))

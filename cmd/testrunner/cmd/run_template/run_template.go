@@ -38,11 +38,12 @@ var collectConfig = result.Config{}
 var shootParameters = testrunnerTemplate.Parameters{}
 
 var (
-	testrunNamePrefix   string
-	shootPrefix         string
-	tmKubeconfigPath    string
-	filterPatchVersions bool
-	failOnError         bool
+	testrunNamePrefix    string
+	shootPrefix          string
+	tmKubeconfigPath     string
+	filterPatchVersions  bool
+	failOnError          bool
+	testrunFlakeAttempts int
 
 	timeout  int64
 	interval int64
@@ -83,6 +84,7 @@ var runCmd = &cobra.Command{
 
 		testrunnerConfig.Timeout = time.Duration(timeout) * time.Second
 		testrunnerConfig.Interval = time.Duration(interval) * time.Second
+		testrunnerConfig.FlakeAttempts = testrunFlakeAttempts
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 
 		shootFlavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
@@ -151,6 +153,7 @@ func init() {
 	runCmd.Flags().StringVarP(&testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Number of desired retries in cases of testrun failure.")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 	runCmd.Flags().BoolVar(&collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
 
