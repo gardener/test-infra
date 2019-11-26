@@ -93,8 +93,8 @@ type Metadata struct {
 	// Additional annotations form the testrun or steps
 	Annotations map[string]string `json:"annotations,omitempty"`
 
-	// Tells whether testrun failed first but succeeded after a retry
-	Flaked int `json:"flaked,omitempty"`
+	// Represents how many retries the testrun had
+	Retries int `json:"retries,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
