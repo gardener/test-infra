@@ -129,7 +129,6 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 		Phase:     status.Phase,
 		StartTime: status.StartTime,
 		Duration:  status.Duration,
-		Flaked:    status.Flaked,
 		TestsRun:  testsRun,
 	}
 

@@ -71,7 +71,7 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 
 				if err == nil && tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 					if flakeAttempt != 0 {
-						tr.Status.Flaked = true
+						rl[i].Metadata.Flaked = true
 					}
 					// testrun was successful, break retry loop
 					break

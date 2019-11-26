@@ -92,6 +92,9 @@ type Metadata struct {
 
 	// Additional annotations form the testrun or steps
 	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Tells whether testrun failed first but succeeded after a retry
+	Flaked bool `json:"flaked,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
@@ -120,7 +123,6 @@ type TestrunSummary struct {
 	Phase     argov1.NodePhase `json:"phase,omitempty"`
 	StartTime *metav1.Time     `json:"startTime,omitempty"`
 	Duration  int64            `json:"duration,omitempty"`
-	Flaked    bool             `json:"flaked,omitempty"`
 	TestsRun  int              `json:"testsRun,omitempty"`
 }
 
