@@ -17,7 +17,7 @@ package testrunner
 import (
 	"fmt"
 	"github.com/go-logr/logr"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
 	"time"
 
@@ -77,9 +77,9 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 				}
 				if attempt < maxFlakeAttempts {
 					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
-					log.V(3).Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt, maxFlakeAttempts))
+					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt, maxFlakeAttempts))
 					tr.Status = tmv1beta1.TestrunStatus{}
-					tr.ObjectMeta = v1.ObjectMeta{GenerateName: tr.GetGenerateName(), Namespace:tr.GetNamespace()}
+					tr.ObjectMeta = metav1.ObjectMeta{GenerateName: tr.GetGenerateName(), Namespace:tr.GetNamespace()}
 				}
 			}
 
