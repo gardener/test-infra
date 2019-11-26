@@ -54,7 +54,7 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 		go func(i int) {
 			defer wg.Done()
 
-			for flakeAttempt := 0; flakeAttempt <= maxFlakeAttempts; flakeAttempt++ {
+			for attempt := 1; attempt <= maxFlakeAttempts; attempt++ {
 				tr, err := runTestrun(log, tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
 				if err != nil {
 					log.Error(err, "unable to run testrun")
@@ -68,16 +68,15 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 					rl[i].Metadata.Testrun.ID = tr.Name
 				}
 				rl[i].Error = err
+				rl[i].Metadata.Retries = attempt - 1
 
 				if err == nil && tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-					if flakeAttempt != 0 {
-						rl[i].Metadata.Flaked++
-					}
 					// testrun was successful, break retry loop
 					break
 				}
-				if flakeAttempt != maxFlakeAttempts {
+				if attempt < maxFlakeAttempts {
 					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
+					log.V(3).Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt, maxFlakeAttempts))
 					tr.Status = tmv1beta1.TestrunStatus{}
 					tr.Name = ""
 				}

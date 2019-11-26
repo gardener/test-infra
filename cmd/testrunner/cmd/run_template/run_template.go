@@ -153,7 +153,7 @@ func init() {
 	runCmd.Flags().StringVarP(&testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Number of desired retries in cases of testrun failure.")
+	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 1, "Max number of testruns until testrun is successful")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 	runCmd.Flags().BoolVar(&collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
 
