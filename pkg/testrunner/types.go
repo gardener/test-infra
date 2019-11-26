@@ -94,7 +94,7 @@ type Metadata struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// Represents how many retries the testrun had
-	Retries int `json:"flaked,omitempty"`
+	Retries int `json:"retries,omitempty"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
