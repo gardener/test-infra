@@ -55,7 +55,7 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 		go func(i int) {
 			defer wg.Done()
 
-			for attempt := 1; attempt <= maxFlakeAttempts; attempt++ {
+			for attempt := 0; attempt <= maxFlakeAttempts; attempt++ {
 				tr, err := runTestrun(log, tmClient, rl[i].Testrun, namespace, testrunNamePrefix)
 				if err != nil {
 					log.Error(err, "unable to run testrun")
@@ -69,7 +69,7 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 					rl[i].Metadata.Testrun.ID = tr.Name
 				}
 				rl[i].Error = err
-				rl[i].Metadata.Retries = attempt - 1
+				rl[i].Metadata.Retries = attempt
 
 				if err == nil && tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 					// testrun was successful, break retry loop
@@ -77,9 +77,9 @@ func (rl RunList) Run(log logr.Logger, tmClient kubernetes.Interface, namespace,
 				}
 				if attempt < maxFlakeAttempts {
 					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
-					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt, maxFlakeAttempts))
+					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt+1, maxFlakeAttempts))
 					tr.Status = tmv1beta1.TestrunStatus{}
-					tr.ObjectMeta = metav1.ObjectMeta{GenerateName: tr.GetGenerateName(), Namespace:tr.GetNamespace()}
+					tr.ObjectMeta = metav1.ObjectMeta{GenerateName: tr.GetGenerateName(), Namespace: tr.GetNamespace()}
 				}
 			}
 

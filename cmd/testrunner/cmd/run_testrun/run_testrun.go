@@ -121,7 +121,7 @@ func init() {
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runTestrunCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 1, "Max number of testruns until testrun is successful")
+	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")
