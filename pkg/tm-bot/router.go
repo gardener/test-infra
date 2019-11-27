@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui"
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -49,8 +50,8 @@ func setup(log logr.Logger) (*mux.Router, error) {
 	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
 	r.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
 
-	botUI := ui.New(log, uiBasePath)
-	botUI.Serve(r)
+	a := auth.NewAuth(log.WithName("authentication"), authOrg, oauthClientID, oauthClientSecret, cookieSecret)
+	ui.Serve(log, uiBasePath, a, r)
 	return r, nil
 }
 

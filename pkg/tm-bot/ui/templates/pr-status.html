@@ -14,7 +14,8 @@
             </thead>
             <tbody>
 
-            {{ range $_, $test := .tests }}
+            {{ $global := .global }}
+            {{ range $_, $test := .page.tests }}
                 <tr>
                     <td class="icon-cell">
                         <i id="phase-{{ $test.Testrun }}" class="material-icons mdl-list__item-icon" style="color:{{ $test.Phase.Color }}">{{ $test.Phase.Icon }}</i>
@@ -23,10 +24,11 @@
                     <td class="mdl-data-table__cell--non-numeric">{{ $test.Organization }}/{{ $test.Repository }}/{{ $test.PR }}</td>
                     <td class="mdl-data-table__cell--non-numeric">{{ $test.Testrun }}</td>
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Progress }}</td>
-                    <td class="mdl-data-table__cell--non-numeric">
-                        <a href="/pr-status/{{ $test.Testrun }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                            Details
-                        </a>
+                    <td class="mdl-data-table__cell--numeric actions">
+                        <a href="/pr-status/{{ $test.Testrun }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Details</a>
+                        {{ if $global.Authenticated }}
+                            <a href="{{ $test.ArgoURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Open in Argo</a>
+                        {{ end }}
                     </td>
                     <td></td>
                 </tr>

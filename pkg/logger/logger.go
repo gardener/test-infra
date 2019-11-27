@@ -65,6 +65,17 @@ var defaultConfig = zap.Config{
 	ErrorOutputPaths:  []string{"stderr"},
 }
 
+var cliConfig = zap.Config{
+	Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
+	Development:       false,
+	Encoding:          "console",
+	DisableStacktrace: false,
+	DisableCaller:     true,
+	EncoderConfig:     cliEncoderConfig,
+	OutputPaths:       []string{"stderr"},
+	ErrorOutputPaths:  []string{"stderr"},
+}
+
 var productionConfig = zap.Config{
 	Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
 	Development:       false,
@@ -89,8 +100,11 @@ func New(config *Config) (logr.Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	Log = zapr.NewLogger(zapLog)
-	return Log, nil
+	return zapr.NewLogger(zapLog), nil
+}
+
+func SetLogger(log logr.Logger) {
+	Log = log
 }
 
 // NewCliLogger creates a new logger for cli usage.
@@ -110,8 +124,11 @@ func determineZapConfig(loggerConfig *Config) zap.Config {
 	if loggerConfig.Development {
 		zapConfig = defaultConfig
 	} else if loggerConfig.Cli {
-		zapConfig = defaultConfig
-		zapConfig.EncoderConfig = cliEncoderConfig
+		zapConfig = cliConfig
+		if loggerConfig.Development {
+			zapConfig.Development = true
+			loggerConfig.DisableCaller = false
+		}
 	} else {
 		zapConfig = productionConfig
 	}

@@ -16,14 +16,13 @@ package server
 
 import (
 	"context"
+	webhooks2 "github.com/gardener/test-infra/pkg/testmachinery/controller/admission/server/webhooks"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
-
-	"github.com/gardener/test-infra/pkg/controller/admission/server/webhooks"
 )
 
 var (
@@ -51,7 +50,7 @@ func Serve(ctx context.Context, log logr.Logger) {
 		}
 	}()
 
-	trWebhook, err := webhooks.NewTestrunWebhook(log)
+	trWebhook, err := webhooks2.NewTestrunWebhook(log)
 	if err != nil {
 		log.Error(err, "unable to create webhook for testrun")
 		os.Exit(1)

@@ -20,8 +20,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util/output"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
@@ -33,7 +33,7 @@ import (
 
 // Collect collects results of all testruns and writes them to a file.
 // It returns whether there are failed testruns or not.
-func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, namespace string, runs testrunner.RunList) (bool, error) {
+func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) (bool, error) {
 	var (
 		testrunsFailed = false
 		result         *multierror.Error
@@ -77,7 +77,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient kubernetes.Interface, name
 	return testrunsFailed, util.ReturnMultiError(result)
 }
 
-func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, tmClient kubernetes.Interface, run *testrunner.Run) error {
+func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, tmClient client.Client, run *testrunner.Run) error {
 	if cfg.OutputDir == "" && cfg.ESConfigName == "" {
 		return nil
 	}
@@ -104,7 +104,7 @@ func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescr
 	return componentsForUpload
 }
 
-func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs testrunner.RunList, tmClient kubernetes.Interface, log logr.Logger) {
+func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs testrunner.RunList, tmClient client.Client, log logr.Logger) {
 	if !cfg.UploadStatusAsset {
 		return
 	}

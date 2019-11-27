@@ -32,7 +32,6 @@ var _ = Describe("Testrunner execution tests", func() {
 
 	BeforeEach(func() {
 		testrunConfig = testrunner.Config{
-			Client:    operation.Client(),
 			Namespace: operation.TestNamespace(),
 			Timeout:   InitializationTimeout,
 			Interval:  5 * time.Second,
@@ -41,6 +40,12 @@ var _ = Describe("Testrunner execution tests", func() {
 
 	Context("testrun", func() {
 		It("should run a single testrun", func() {
+			stopCh := make(chan struct{})
+			defer close(stopCh)
+			w, err := testrunner.StartWatchController(operation.Log(), operation.GetKubeconfigPath(), stopCh)
+			Expect(err).ToNot(HaveOccurred())
+			testrunConfig.Watch = w
+
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{
 				{
@@ -57,6 +62,12 @@ var _ = Describe("Testrunner execution tests", func() {
 		})
 
 		It("should run 2 testruns", func() {
+			stopCh := make(chan struct{})
+			defer close(stopCh)
+			w, err := testrunner.StartWatchController(operation.Log(), operation.GetKubeconfigPath(), stopCh)
+			Expect(err).ToNot(HaveOccurred())
+			testrunConfig.Watch = w
+
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr2 := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{

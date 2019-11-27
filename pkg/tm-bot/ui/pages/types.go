@@ -15,6 +15,7 @@
 package pages
 
 import (
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/version"
 	"github.com/go-logr/logr"
 	"html/template"
@@ -25,33 +26,66 @@ import (
 type Page struct {
 	basePath string
 	log      logr.Logger
+	auth     auth.Authentication
+}
+
+type globalSettings struct {
+	Authenticated bool
+	User          user
 }
 
 type baseTemplateSettings struct {
+	globalSettings
 	PageName  string
 	Arguments interface{}
 }
 
-func makeBaseTemplateSettings(pageName string, arguments interface{}) baseTemplateSettings {
-	return baseTemplateSettings{pageName, arguments}
+type user struct {
+	Name string
+}
+
+func makeBaseTemplateSettings(global globalSettings) func(string, interface{}) baseTemplateSettings {
+	return func(pageName string, arguments interface{}) baseTemplateSettings {
+		return baseTemplateSettings{
+			globalSettings: global,
+			PageName:       pageName,
+			Arguments:      arguments,
+		}
+	}
 }
 
 func (p *Page) handleSimplePage(templateName string, param interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		isAuthenticated := true
+		aCtx, err := p.auth.GetAuthContext(r)
+		if err != nil {
+			p.log.V(3).Info(err.Error())
+			isAuthenticated = false
+		}
+		global := globalSettings{
+			Authenticated: isAuthenticated,
+			User: user{
+				Name: aCtx.User,
+			},
+		}
+
 		base := filepath.Join(p.basePath, "templates", "base.html")
 		fp := filepath.Join(p.basePath, "templates", templateName)
 
 		tmpl := template.New(templateName)
 		tmpl.Funcs(map[string]interface{}{
-			"settings": makeBaseTemplateSettings,
+			"settings": makeBaseTemplateSettings(global),
 			"version":  func() string { return version.Get().String() },
 		})
-		tmpl, err := tmpl.ParseFiles(base, fp)
+		tmpl, err = tmpl.ParseFiles(base, fp)
 		if err != nil {
 			p.log.Error(err, "unable to parse files")
 			return
 		}
-		if err := tmpl.Execute(w, param); err != nil {
+		if err := tmpl.Execute(w, map[string]interface{}{
+			"global": global,
+			"page":   param,
+		}); err != nil {
 			p.log.Error(err, "unable to execute template")
 		}
 	}

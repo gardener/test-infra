@@ -16,18 +16,17 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
-
 	goflag "flag"
+	"fmt"
 	flag "github.com/spf13/pflag"
+	"os"
 
 	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/gardener/test-infra/pkg/version"
 
-	"github.com/gardener/test-infra/pkg/controller"
-	"github.com/gardener/test-infra/pkg/controller/admission/server"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/server"
 	"github.com/joho/godotenv"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
@@ -60,14 +59,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	tmController, err := controller.New(mgr, ctrl.Log.WithName("controllers").WithName("Testrun"))
+	_, err = controller.NewTestMachineryController(mgr, ctrl.Log)
 	if err != nil {
 		setupLogger.Error(err, "unable to create controller", "controllers", "Testrun")
-		os.Exit(1)
-	}
-	err = tmController.RegisterWatches()
-	if err != nil {
-		setupLogger.Error(err, "unable to register watches", "controllers", "Testrun")
 		os.Exit(1)
 	}
 
@@ -100,6 +94,7 @@ func init() {
 		fmt.Print(err.Error())
 		os.Exit(1)
 	}
+	logger.SetLogger(log)
 	ctrl.SetLogger(log)
 
 	err = godotenv.Load()

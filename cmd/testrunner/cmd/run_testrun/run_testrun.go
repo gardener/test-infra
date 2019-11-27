@@ -16,19 +16,12 @@ package run_testrun
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/pkg/errors"
 	"os"
 	"time"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/joho/godotenv"
-
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/spf13/cobra"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -58,21 +51,17 @@ var runTestrunCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Log.Info("start testmachinery testrunner")
-		err := godotenv.Load()
-		if err != nil {
-			logger.Log.Error(err, "error loading .env file")
-		}
+		stopCh := make(chan struct{})
+		defer close(stopCh)
 
-		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		}))
+		w, err := testrunner.StartWatchController(logger.Log, tmKubeconfigPath, stopCh)
 		if err != nil {
-			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
+			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)
 		}
 
 		config := &testrunner.Config{
-			Client:        tmClient,
+			Watch:         w,
 			Namespace:     namespace,
 			Timeout:       time.Duration(timeout) * time.Second,
 			Interval:      time.Duration(interval) * time.Second,
@@ -85,26 +74,24 @@ var runTestrunCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		run := testrunner.RunList{
-			{
-				Testrun:  &tr,
-				Metadata: &testrunner.Metadata{},
-			},
+		run := testrunner.Run{
+			Testrun:  &tr,
+			Metadata: &testrunner.Metadata{},
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("execute"), config, run, testrunNamePrefix)
-		if run.HasErrors() {
-			logger.Log.Error(run.Errors(), "testrunner execution disrupted")
+		run.Exec(logger.Log.WithName("execute"), config, testrunNamePrefix)
+		if run.Error != nil {
+			logger.Log.Error(run.Error, "testrunner execution disrupted")
 			os.Exit(1)
 		}
 
-		if run[0].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			logger.Log.Info("testrunner successfully finished.")
 		} else {
-			logger.Log.Error(errors.New("testrunner finished unsuccessful"), "", "phase", run[0].Testrun.Status.Phase)
+			logger.Log.Error(nil, "testrunner finished unsuccessful", "phase", run.Testrun.Status.Phase)
 		}
 
-		fmt.Print(util.PrettyPrintStruct(run[0].Testrun.Status))
+		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
 	},
 }
 

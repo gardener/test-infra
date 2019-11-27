@@ -55,7 +55,7 @@ func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface,
 		return nil, err
 	}
 	defer runs.Remove(event)
-	argoUrl, err := testrunner.GetArgoURL(k8sClient, tr)
+	argoUrl, err := testrunner.GetArgoURL(k8sClient.Client(), tr)
 	if err != nil {
 		log.WithValues("Testrun", tr.Name).Error(err, "unable to construct argourl")
 	}

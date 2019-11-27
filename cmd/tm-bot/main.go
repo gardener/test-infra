@@ -36,5 +36,6 @@ func main() {
 		fmt.Printf(err.Error())
 		os.Exit(1)
 	}
+	logger.SetLogger(log)
 	tm_bot.Serve(ctx, log)
 }

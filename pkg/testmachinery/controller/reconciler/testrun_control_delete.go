@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package reconciler
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *TestrunReconciler) deleteTestrun(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
+func (r *TestmachineryReconciler) deleteTestrun(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
 	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 
 	if finalizers := sets.NewString(rCtx.tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {

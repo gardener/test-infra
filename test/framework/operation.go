@@ -33,6 +33,11 @@ func (o *Operation) Client() kubernetes.Interface {
 	return o.tmClient
 }
 
+// GetKubeconfigPath returns the path to the current kubeconfig
+func (o *Operation) GetKubeconfigPath() string {
+	return o.config.TmKubeconfigPath
+}
+
 // TestMachineryNamespace returns the current namespace where the testmachinery components are running.
 func (o *Operation) TestMachineryNamespace() string {
 	return o.config.TmNamespace

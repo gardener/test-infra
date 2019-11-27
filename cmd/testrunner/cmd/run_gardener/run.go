@@ -32,10 +32,7 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/spf13/cobra"
@@ -71,7 +68,11 @@ var runCmd = &cobra.Command{
 		"gardener",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
+		var (
+			err    error
+			stopCh = make(chan struct{})
+		)
+		defer close(stopCh)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
 
@@ -132,11 +133,9 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		testrunnerConfig.Client, err = kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: testmachinery.TestMachineryScheme,
-		}))
+		testrunnerConfig.Watch, err = testrunner.StartWatchController(logger.Log, tmKubeconfigPath, stopCh)
 		if err != nil {
-			logger.Log.Error(err, "unable to build kubernetes client", "file", tmKubeconfigPath)
+			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)
 		}
 
@@ -149,7 +148,7 @@ var runCmd = &cobra.Command{
 		}
 
 		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunName)
-		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Client, testrunnerConfig.Namespace, runs)
+		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
 		if err != nil {
 			logger.Log.Error(err, "unable to collect results")
 			os.Exit(1)

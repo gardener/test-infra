@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -31,11 +30,12 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
 
 // Output takes a completed testrun status and writes the results to elastic search bulk json file.
-func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
+func Output(log logr.Logger, config *Config, tmClient client.Client, namespace string, tr *tmv1beta1.Testrun, metadata *testrunner.Metadata) error {
 
 	metadata.Testrun.StartTime = tr.Status.StartTime
 	metadata.Annotations = tr.Annotations
@@ -92,7 +92,7 @@ func Output(log logr.Logger, config *Config, tmClient kubernetes.Interface, name
 }
 
 // DetermineTestrunSummary parses a testruns status and returns
-func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config, tmClient kubernetes.Interface, log logr.Logger) (testrunner.TestrunSummary, []testrunner.StepSummary, error) {
+func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadata, config *Config, tmClient client.Client, log logr.Logger) (testrunner.TestrunSummary, []testrunner.StepSummary, error) {
 	status := tr.Status
 	testsRun := 0
 	summaries := make([]testrunner.StepSummary, 0)
@@ -236,7 +236,7 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 }
 
 // preComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)
-func preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, metadata testrunner.Metadata, tmClient kubernetes.Interface, log logr.Logger) *testrunner.StepPreComputed {
+func preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, metadata testrunner.Metadata, tmClient client.Client, log logr.Logger) *testrunner.StepPreComputed {
 	var stepEnriched testrunner.StepPreComputed
 
 	switch stepStatus.Phase {

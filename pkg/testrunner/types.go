@@ -16,8 +16,8 @@ package testrunner
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 )
@@ -25,8 +25,8 @@ import (
 // Config are configuration of the environment like the testmachinery cluster or S3 store
 // where the testrunner executes the testrun.
 type Config struct {
-	// Kubernetes client for the testmachinery k8s cluster
-	Client kubernetes.Interface
+	// Testrun watch controller
+	Watch watch.Watch
 
 	// Namespace where the testrun is deployed.
 	Namespace string

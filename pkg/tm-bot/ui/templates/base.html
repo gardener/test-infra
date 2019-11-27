@@ -20,6 +20,12 @@
             <a href="/"
                class="logo"><img src="/static/gardener-test-machinery.svg" alt="gardener testmachinery logo" class="logo"/></a>
             <span class="mdl-layout-title header-title">{{block "pageTitle" .Arguments}}{{template "title" .}}{{end}}</span>
+            <div class="mdl-layout-spacer"></div>
+            {{ if .Authenticated }}
+                <div>{{ .User.Name }}</div>
+            {{ else }}
+                <a class="mdl-button mdl-js-button login-btn" href="/login">Login</a>
+            {{ end }}
         </div>
     </header>
     <div class="mdl-layout__drawer">
@@ -28,6 +34,9 @@
             <a class="mdl-navigation__link{{if eq .PageName "home"}} mdl-navigation__link--current{{end}}" href="/">Home</a>
             <a class="mdl-navigation__link{{if eq .PageName "pr-status"}} mdl-navigation__link--current{{end}}" href="/pr-status">PR Status</a>
             <a class="mdl-navigation__link{{if eq .PageName "command-help"}} mdl-navigation__link--current{{end}}" href="/command-help">Command Help</a>
+            {{ if .Authenticated }}
+                <a class="mdl-navigation__link{{if eq .PageName "testruns"}} mdl-navigation__link--current{{end}}" href="/testruns">Testruns</a>
+            {{ end }}
             <a class="mdl-navigation__link" href="https://github.com/gardener/test-infra/blob/master/README.md" target="_blank">Documentation <span class="material-icons">open_in_new</span></a>
         </nav>
         <footer>
