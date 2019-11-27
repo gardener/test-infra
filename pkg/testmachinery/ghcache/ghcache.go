@@ -16,57 +16,70 @@ package ghcache
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/sirupsen/logrus"
+	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
+	"github.com/peterbourgon/diskv"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	"k8s.io/test-infra/ghproxy/ghcache"
 )
 
-// Cache adds github caching to a http client
-// Returns a mem cache by default and a disk cache if a directory is defined
-func Cache(log logr.Logger, delegate http.RoundTripper) (http.RoundTripper, error) {
-	if config == nil {
+// Cache adds github caching to a http client.
+// It returns a mem cache by default and a disk cache if a directory is defined
+func Cache(log logr.Logger, cfg *Config, delegate http.RoundTripper) (http.RoundTripper, error) {
+	if cfg == nil && config == nil {
 		return nil, errors.New("no configuration is provided for the github cache")
 	}
+	if cfg == nil {
+		cfg = config
+	}
 
-	//ghcache logging to only log errors as unknown authorization like github app authorizations are log with a warning
-	logrus.SetLevel(logrus.ErrorLevel)
-
-	githubCache, err := getCache(delegate)
+	githubCache, err := getCache(cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	cachedTransport := httpcache.NewTransport(githubCache)
+	cachedTransport.Transport = &cache{
+		delegate:      delegate,
+		maxAgeSeconds: cfg.MaxAgeSeconds,
+	}
+
 	return &rateLimitLogger{
 		log:      log,
-		delegate: githubCache,
+		delegate: cachedTransport,
 	}, nil
 
 }
 
-func getCache(delegate http.RoundTripper) (http.RoundTripper, error) {
-	if config.CacheDir == "" {
-		return ghcache.NewMemCache(delegate, config.MaxConcurrency), nil
+func getCache(cfg *Config) (httpcache.Cache, error) {
+	if cfg.CacheDir == "" {
+		return httpcache.NewMemoryCache(), nil
 	}
 
-	if err := os.MkdirAll(config.CacheDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(cfg.CacheDir, os.ModePerm); err != nil {
 		return nil, err
 	}
-	if config.CacheDiskSizeGB == 0 {
+	if cfg.CacheDiskSizeGB == 0 {
 		return nil, errors.New("disk cache size ha to be grater than 0")
 	}
 
-	return ghcache.NewDiskCache(delegate, config.CacheDir, config.CacheDiskSizeGB, config.MaxConcurrency), nil
+	return diskcache.NewWithDiskv(
+		diskv.New(diskv.Options{
+			BasePath:     path.Join(cfg.CacheDir, "data"),
+			TempDir:      path.Join(cfg.CacheDir, "temp"),
+			CacheSizeMax: uint64(cfg.CacheDiskSizeGB) * uint64(1000000000), // GB to B
+		})), nil
 }
 
 // Config is the github cache configuration
 type Config struct {
 	CacheDir        string
 	CacheDiskSizeGB int
-	MaxConcurrency  int
+	MaxAgeSeconds   int
 }
 
 var config *Config
@@ -89,7 +102,7 @@ func InitFlags(flagset *flag.FlagSet) *Config {
 		"Path directory that should be used to cache github requests")
 	flagset.IntVar(&config.CacheDiskSizeGB, "github-cache-size", 1,
 		"Size of the github cache in GB")
-	flagset.IntVar(&config.MaxConcurrency, "github-max-concurrency", 25,
-		"Maximum concurrent requests to the Github api")
+	flagset.IntVar(&config.MaxAgeSeconds, "github-cache-max-age", 600,
+		"Maximum age of a failed github response in seconds")
 	return config
 }
