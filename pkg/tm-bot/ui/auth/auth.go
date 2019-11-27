@@ -102,7 +102,7 @@ func (a *auth) Protect(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if github2.MembershipStatus(membership.GetState()) != github2.MembershipStatusActive {
-			a.log.Error(err, "user member of org", "user", aCtx.User, "org", a.org)
+			a.log.Error(err, "user not active member of org", "user", aCtx.User, "org", a.org)
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
 			return
 		}
