@@ -70,7 +70,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 	}
 
 	c.uploadStatusAssets(c.config, log, runs, tmClient, log)
-	output.RenderStatusTableForTestruns(os.Stdout, runs)
+	fmt.Println(runs.RenderTable())
 
 	c.fetchTelemetryResults()
 

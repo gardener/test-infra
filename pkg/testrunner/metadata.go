@@ -15,21 +15,34 @@
 package testrunner
 
 import (
+	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 const (
-	AnnotationLandscape     = "testrunner.testmachinery.sapcloud.io/landscape"
-	AnnotationK8sVersion    = "testrunner.testmachinery.sapcloud.io/k8sVersion"
-	AnnotationCloudProvider = "testrunner.testmachinery.sapcloud.io/cloudprovider"
+	AnnotationLandscape       = "testrunner.testmachinery.sapcloud.io/landscape"
+	AnnotationK8sVersion      = "testrunner.testmachinery.sapcloud.io/k8sVersion"
+	AnnotationCloudProvider   = "testrunner.testmachinery.sapcloud.io/cloudprovider"
+	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
+	AnnotationDimension       = "testrunner.testmachinery.sapcloud.io/dimension"
 )
 
 func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
-		AnnotationLandscape:     m.Landscape,
-		AnnotationK8sVersion:    m.KubernetesVersion,
-		AnnotationCloudProvider: m.CloudProvider,
+		AnnotationLandscape:       m.Landscape,
+		AnnotationK8sVersion:      m.KubernetesVersion,
+		AnnotationCloudProvider:   m.CloudProvider,
+		AnnotationOperatingSystem: m.OperatingSystem,
+		AnnotationDimension:       m.GetDimensionFromMetadata(),
 	}
+}
+
+func (m *Metadata) GetDimensionFromMetadata() string {
+	d := fmt.Sprintf("%s/%s/%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
+	if m.FlavorDescription != "" {
+		d = fmt.Sprintf("%s-%s", d, m.FlavorDescription)
+	}
+	return d
 }
 
 func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
@@ -37,6 +50,7 @@ func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 		Landscape:         tr.Annotations[AnnotationLandscape],
 		KubernetesVersion: tr.Annotations[AnnotationK8sVersion],
 		CloudProvider:     tr.Annotations[AnnotationCloudProvider],
+		OperatingSystem:   tr.Annotations[AnnotationOperatingSystem],
 		Testrun: TestrunMetadata{
 			ID: tr.Name,
 		},

@@ -16,23 +16,20 @@ package testrunner
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
 	"os"
-	"sync"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/go-logr/logr"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/test-infra/pkg/util"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -41,40 +38,6 @@ func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNameP
 	log.V(3).Info(fmt.Sprintf("Config: %+v", util.PrettyPrintStruct(config)))
 
 	runs.Run(log.WithValues("namespace", config.Namespace), config, testrunNamePrefix)
-}
-
-// runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
-func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string) {
-	var wg sync.WaitGroup
-	for i := range rl {
-		if rl[i].Error != nil {
-			continue
-		}
-
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			for attempt := 0; attempt <= config.FlakeAttempts; attempt++ {
-				rl[i].Exec(log, config, testrunNamePrefix)
-				rl[i].Metadata.Retries = attempt
-
-				if rl[i].Error == nil && rl[i].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-					// testrun was successful, break retry loop
-					return
-				}
-				if attempt < config.FlakeAttempts {
-					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
-					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt+1, config.FlakeAttempts))
-					rl[i].Testrun.Status = tmv1beta1.TestrunStatus{}
-					rl[i].Testrun.ObjectMeta = metav1.ObjectMeta{GenerateName: rl[i].Testrun.GetGenerateName(), Namespace: rl[i].Testrun.GetNamespace()}
-				}
-			}
-
-		}(i)
-	}
-	wg.Wait()
-	log.Info("All testruns completed.")
 }
 
 // StartWatchController starts a new controller that watches testruns
