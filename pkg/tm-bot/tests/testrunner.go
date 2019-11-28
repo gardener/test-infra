@@ -20,23 +20,20 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/pkg/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, ghClient github.Client, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) (*tmv1beta1.Testrun, *StatusUpdater, error) {
+func (r *Runs) CreateTestrun(log logr.Logger, ctx context.Context, ghClient github.Client, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) (*tmv1beta1.Testrun, *StatusUpdater, error) {
 	if runs.IsRunning(event) {
 		return nil, nil, errors.New("A test is already running for this PR.")
 	}
 
-	if err := k8sClient.Client().Create(ctx, tr); err != nil {
+	if err := r.watch.Client().Create(ctx, tr); err != nil {
 		return nil, nil, pluginerr.New("unable to create Testrun", err.Error())
 	}
 	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
@@ -50,26 +47,19 @@ func CreateTestrun(log logr.Logger, ctx context.Context, k8sClient kubernetes.In
 	return tr, statusUpdater, nil
 }
 
-func Watch(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
+func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
 	if err := runs.Add(event, tr); err != nil {
 		return nil, err
 	}
 	defer runs.Remove(event)
-	argoUrl, err := testrunner.GetArgoURL(k8sClient.Client(), tr)
+	argoUrl, err := testrunner.GetArgoURL(r.watch.Client(), tr)
 	if err != nil {
 		log.WithValues("Testrun", tr.Name).Error(err, "unable to construct argourl")
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
-	err = wait.PollImmediate(pollInterval, maxWaitTime, func() (bool, error) {
-		testrun := &tmv1beta1.Testrun{}
-		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, testrun)
-		if err != nil {
-			log.Error(err, "cannot get Testrun")
-			return false, nil
-		}
-		*tr = *testrun
-
+	err = r.watch.WatchUntil(maxWaitTime, tr.GetNamespace(), tr.GetName(), func(new *tmv1beta1.Testrun) (bool, error) {
+		*tr = *new
 		if tr.Status.State != "" {
 			testrunPhase = tr.Status.Phase
 			log.V(3).Info(fmt.Sprintf("Testrun %s is in %s phase. State: %s", tr.Name, testrunPhase, tr.Status.State))

@@ -25,7 +25,7 @@ import (
 
 var _ = Describe("Runs", func() {
 	It("should add a Run", func() {
-		runs := tests.NewRuns()
+		runs := tests.NewRuns(nil)
 
 		owner := "test"
 		repo := "repo"
@@ -44,7 +44,7 @@ var _ = Describe("Runs", func() {
 	})
 
 	It("should return the currently running Testrun", func() {
-		runs := tests.NewRuns()
+		runs := tests.NewRuns(nil)
 
 		owner := "test"
 		repo := "repo"
@@ -65,7 +65,7 @@ var _ = Describe("Runs", func() {
 	})
 
 	It("should reject another Run if one is already running", func() {
-		runs := tests.NewRuns()
+		runs := tests.NewRuns(nil)
 
 		owner := "test"
 		repo := "repo"
@@ -95,7 +95,7 @@ var _ = Describe("Runs", func() {
 	})
 
 	It("should add another Run if one is running in a different repo", func() {
-		runs := tests.NewRuns()
+		runs := tests.NewRuns(nil)
 
 		owner := "test"
 		repo := "repo"

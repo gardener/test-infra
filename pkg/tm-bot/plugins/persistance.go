@@ -16,7 +16,6 @@ package plugins
 
 import (
 	"context"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,23 +27,23 @@ import (
 type kubernetesPersistence struct {
 	cm client.ObjectKey
 
-	k8sClient kubernetes.Interface
+	k8sClient client.Client
 }
 
-func NewKubernetesPersistence(k8sClient kubernetes.Interface, name, namespace string) (Persistence, error) {
+func NewKubernetesPersistence(k8sClient client.Client, name, namespace string) (Persistence, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 
 	cmKey := client.ObjectKey{Name: name, Namespace: namespace}
 	cm := &corev1.ConfigMap{}
-	if err := k8sClient.Client().Get(ctx, cmKey, cm); err != nil {
+	if err := k8sClient.Get(ctx, cmKey, cm); err != nil {
 		if !errors.IsNotFound(err) {
 			return nil, err
 		}
 
 		cm.Name = name
 		cm.Namespace = namespace
-		if err := k8sClient.Client().Create(ctx, cm); err != nil {
+		if err := k8sClient.Create(ctx, cm); err != nil {
 			return nil, err
 		}
 	}
@@ -71,7 +70,7 @@ func (p *kubernetesPersistence) Save(states map[string]map[string]*State) error 
 		},
 	}
 
-	if err := p.k8sClient.Client().Update(context.TODO(), cm); err != nil {
+	if err := p.k8sClient.Update(context.TODO(), cm); err != nil {
 		return err
 	}
 
@@ -79,7 +78,7 @@ func (p *kubernetesPersistence) Save(states map[string]map[string]*State) error 
 }
 func (p *kubernetesPersistence) Load() (map[string]map[string]*State, error) {
 	cm := &corev1.ConfigMap{}
-	if err := p.k8sClient.Client().Get(context.TODO(), p.cm, cm); err != nil {
+	if err := p.k8sClient.Get(context.TODO(), p.cm, cm); err != nil {
 		return nil, err
 	}
 

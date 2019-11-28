@@ -15,6 +15,7 @@
 package pages
 
 import (
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/version"
 	"github.com/go-logr/logr"
@@ -27,6 +28,7 @@ type Page struct {
 	basePath string
 	log      logr.Logger
 	auth     auth.Authentication
+	runs     *tests.Runs
 }
 
 type globalSettings struct {
@@ -42,6 +44,15 @@ type baseTemplateSettings struct {
 
 type user struct {
 	Name string
+}
+
+func New(logger logr.Logger, runs *tests.Runs, auth auth.Authentication, basePath string) *Page {
+	return &Page{
+		basePath: basePath,
+		log:      logger,
+		auth:     auth,
+		runs:     runs,
+	}
 }
 
 func makeBaseTemplateSettings(global globalSettings) func(string, interface{}) baseTemplateSettings {

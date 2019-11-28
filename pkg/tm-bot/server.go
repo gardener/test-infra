@@ -45,7 +45,10 @@ var (
 
 // Serve starts the webhook server for testrun validation
 func Serve(ctx context.Context, log logr.Logger) {
-	r, err := setup(log)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+
+	r, err := setup(log, stopCh)
 	if err != nil {
 		log.Error(err, "unable to setup components")
 		os.Exit(1)

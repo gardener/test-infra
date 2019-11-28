@@ -17,7 +17,6 @@ package resume
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
@@ -25,16 +24,16 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
-	client2 "sigs.k8s.io/controller-runtime/pkg/client"
+	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type resume struct {
 	runID     string
 	log       logr.Logger
-	k8sClient kubernetes.Interface
+	k8sClient kclient.Client
 }
 
-func New(log logr.Logger, k8sClient kubernetes.Interface) plugins.Plugin {
+func New(log logr.Logger, k8sClient kclient.Client) plugins.Plugin {
 	return &resume{
 		log:       log,
 		k8sClient: k8sClient,
@@ -86,7 +85,7 @@ func (r *resume) Run(flagset *pflag.FlagSet, client github.Client, event *github
 	logger := r.log.WithValues("testrun", run.Testrun.GetName(), "namespace", run.Testrun.GetNamespace())
 
 	tr := &v1beta1.Testrun{}
-	if err := r.k8sClient.Client().Get(ctx, client2.ObjectKey{Name: run.Testrun.Name, Namespace: run.Testrun.Namespace}, tr); err != nil {
+	if err := r.k8sClient.Get(ctx, kclient.ObjectKey{Name: run.Testrun.Name, Namespace: run.Testrun.Namespace}, tr); err != nil {
 		logger.Error(err, "unable to to fetch testrun")
 		if _, err := client.Comment(event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "There are no running tests for this PR")); err != nil {
 			logger.Error(err, "unable to comment to github")

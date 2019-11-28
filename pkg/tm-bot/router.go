@@ -15,32 +15,30 @@
 package tm_bot
 
 import (
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func setup(log logr.Logger) (*mux.Router, error) {
-	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: testmachinery.TestMachineryScheme,
-	}))
+func setup(log logr.Logger, stopCh chan struct{}) (*mux.Router, error) {
+	w, err := testrunner.StartWatchController(log, kubeconfigPath, stopCh)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to initialize kubernetes client")
+		return nil, err
 	}
+	runs := tests.NewRuns(w)
 
 	ghClient, err := github.NewManager(log.WithName("github"), ghManagerConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize github client")
 	}
-	hooks, err := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken, k8sClient)
+	hooks, err := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken, w, runs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize webhooks handler")
 	}
@@ -51,7 +49,7 @@ func setup(log logr.Logger) (*mux.Router, error) {
 	r.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
 
 	a := auth.NewAuth(log.WithName("authentication"), authOrg, oauthClientID, oauthClientSecret, cookieSecret)
-	ui.Serve(log, uiBasePath, a, r)
+	ui.Serve(log, runs, uiBasePath, a, r)
 	return r, nil
 }
 

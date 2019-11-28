@@ -256,7 +256,7 @@ var _ = Describe("Testflow execution tests", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			err = util.ResumeTestrun(ctx, operation.Client(), tr)
+			err = util.ResumeTestrun(ctx, operation.Client().Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 2*time.Minute)

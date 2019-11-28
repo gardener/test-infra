@@ -15,11 +15,11 @@
 package tests
 
 import (
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/common"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/go-logr/logr"
 	"time"
 )
@@ -28,9 +28,9 @@ type test struct {
 	runID string
 	log   logr.Logger
 
-	k8sClient kubernetes.Interface
-	timeout   time.Duration
-	interval  time.Duration
+	runs     *tests.Runs
+	timeout  time.Duration
+	interval time.Duration
 
 	config             _default.Config
 	kubernetesVersions []string
@@ -41,22 +41,22 @@ type test struct {
 	dryRun             bool
 }
 
-func New(log logr.Logger, k8sClient kubernetes.Interface) plugins.Plugin {
+func New(log logr.Logger, runs *tests.Runs) plugins.Plugin {
 	return &test{
-		log:       log.WithName("test"),
-		k8sClient: k8sClient,
-		timeout:   5 * time.Hour,
-		interval:  1 * time.Minute,
+		log:      log.WithName("test"),
+		runs:     runs,
+		timeout:  5 * time.Hour,
+		interval: 1 * time.Minute,
 	}
 }
 
 func (t *test) New(runID string) plugins.Plugin {
 	return &test{
-		runID:     runID,
-		log:       t.log,
-		k8sClient: t.k8sClient,
-		timeout:   t.timeout,
-		interval:  t.interval,
+		runID:    runID,
+		log:      t.log,
+		runs:     t.runs,
+		timeout:  t.timeout,
+		interval: t.interval,
 	}
 }
 
