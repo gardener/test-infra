@@ -19,6 +19,8 @@ const (
 	PurposeTestrunAnnotation = "testmachinery.sapcloud.io/purpose"
 	ResumeTestrunAnnotation  = "testmachinery.sapcloud.io/resume"
 
+	TemplateIDTestrunAnnotation = "testrunner.testmachinery.sapcloud.io/templateID"
+
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
 
 	// images

@@ -66,7 +66,7 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 	versions := make(map[common.CloudProvider]gardenv1alpha1.KubernetesSettings, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 
-	shoots := make([]*common.ExtendedShoot, 0)
+	shoots := make([]*ExtendedFlavorInstance, 0)
 	for i, rawFlavor := range rawFlavors {
 		if err := ValidateExtendedFlavor(fmt.Sprintf("Flavors.%d", i), rawFlavor); err != nil {
 			return nil, err
@@ -88,18 +88,20 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 				if err != nil {
 					return nil, err
 				}
-				shoots = append(shoots, &common.ExtendedShoot{
-					Shoot: common.Shoot{
-						Description:       rawFlavor.Description,
-						Provider:          rawFlavor.Provider,
-						KubernetesVersion: k8sVersion,
-						Workers:           pools,
-					},
-					ExtendedShootConfiguration: common.ExtendedShootConfiguration{
-						Name:                  fmt.Sprintf("%s%s", shootPrefix, util.RandomString(5)),
-						Namespace:             fmt.Sprintf("garden-%s", rawFlavor.ProjectName),
-						Cloudprofile:          cloudprofile,
-						ExtendedConfiguration: rawFlavor.ExtendedConfiguration,
+				shoots = append(shoots, &ExtendedFlavorInstance{
+					shoot: &common.ExtendedShoot{
+						Shoot: common.Shoot{
+							Description:       rawFlavor.Description,
+							Provider:          rawFlavor.Provider,
+							KubernetesVersion: k8sVersion,
+							Workers:           pools,
+						},
+						ExtendedShootConfiguration: common.ExtendedShootConfiguration{
+							Name:                  fmt.Sprintf("%s%s", shootPrefix, util.RandomString(3)),
+							Namespace:             fmt.Sprintf("garden-%s", rawFlavor.ProjectName),
+							Cloudprofile:          cloudprofile,
+							ExtendedConfiguration: rawFlavor.ExtendedConfiguration,
+						},
 					},
 				})
 			}
@@ -114,9 +116,9 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 }
 
 // GetShoots returns a list of all shoots that are defined by the given flavors.
-func (f *ExtendedFlavors) GetShoots() []*common.ExtendedShoot {
+func (f *ExtendedFlavors) GetShoots() []*ExtendedFlavorInstance {
 	if f.shoots == nil {
-		return []*common.ExtendedShoot{}
+		return []*ExtendedFlavorInstance{}
 	}
 	return f.shoots
 }
@@ -127,4 +129,19 @@ func (f *ExtendedFlavors) GetUsedKubernetesVersions() map[common.CloudProvider]g
 		return map[common.CloudProvider]gardenv1alpha1.KubernetesSettings{}
 	}
 	return f.usedKubernetesVersions
+}
+
+func NewExtendedFlavorInstance(shoot *common.ExtendedShoot) *ExtendedFlavorInstance {
+	return &ExtendedFlavorInstance{shoot: shoot}
+}
+
+// New creates a new unique ExtendedFlavor shoot instance
+func (i *ExtendedFlavorInstance) New() *common.ExtendedShoot {
+	newFlavor := *i.shoot
+	newFlavor.Name = fmt.Sprintf("%s-%s", newFlavor.Name, util.RandomString(3))
+	return &newFlavor
+}
+
+func (i *ExtendedFlavorInstance) Get() *common.ExtendedShoot {
+	return i.shoot
 }

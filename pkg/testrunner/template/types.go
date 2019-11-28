@@ -15,6 +15,7 @@
 package template
 
 import (
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
@@ -43,4 +44,9 @@ type internalParameters struct {
 	GardenerKubeconfig []byte
 	GardenerVersion    string
 	Landscape          string
+}
+
+// ValueRenderer renders the helm values, run metdata and info for a specific chart rendering
+type ValueRenderer interface {
+	Render(defaultValues map[string]interface{}) (values map[string]interface{}, metadata *testrunner.Metadata, info interface{}, err error)
 }

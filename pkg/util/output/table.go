@@ -16,8 +16,6 @@ package output
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testrunner"
 	"io"
 	"sort"
 	"strings"
@@ -48,49 +46,6 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 		table.Append([]string{s.Name, definition, strings.Join(s.DependsOn, "\n")})
 	}
 	table.Render()
-}
-
-// RenderStatusTableForTestruns renders a status table for multiple testruns.
-func RenderStatusTableForTestruns(writer io.Writer, runs testrunner.RunList) {
-	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
-
-	dimensions := make(map[string][][]string, 0)
-	for _, run := range runs {
-		// dimension header
-		dimension := getDimensionFromMetadata(run.Metadata)
-		if _, ok := dimensions[dimension]; !ok {
-			dimensions[dimension] = make([][]string, 0)
-		}
-
-		// testrun header
-		tr := run.Testrun
-		name := tr.Name
-		if purpose, ok := tr.GetAnnotations()[common.PurposeTestrunAnnotation]; ok {
-			name = fmt.Sprintf("%s\n(%s)", name, purpose)
-		}
-		dimensions[dimension] = append(dimensions[dimension], []string{"", name})
-
-		for _, s := range tr.Status.Steps {
-			d := time.Duration(s.Duration) * time.Second
-			dimensions[dimension] = append(dimensions[dimension], []string{"", "", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})
-		}
-	}
-
-	for dim, value := range dimensions {
-		table.Append([]string{dim})
-		table.AppendBulk(value)
-	}
-
-	table.Render()
-}
-
-func getDimensionFromMetadata(meta *testrunner.Metadata) string {
-	d := fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
-	if meta.FlavorDescription != "" {
-		d = fmt.Sprintf("%s\n(%s)", d, meta.FlavorDescription)
-	}
-	return d
 }
 
 // RenderStatusTable creates a human readable table for testrun status steps.

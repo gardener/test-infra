@@ -33,7 +33,12 @@ type Flavors struct {
 // Has be to be initiated by NewExtended
 type ExtendedFlavors struct {
 	Info   []*common.ExtendedShootFlavor
-	shoots []*common.ExtendedShoot
+	shoots []*ExtendedFlavorInstance
 
 	usedKubernetesVersions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings
+}
+
+// ExtendedFlavorInstance defines a instance of a shoot flavor
+type ExtendedFlavorInstance struct {
+	shoot *common.ExtendedShoot
 }

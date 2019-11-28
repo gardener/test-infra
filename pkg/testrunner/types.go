@@ -49,6 +49,13 @@ type Run struct {
 	Testrun  *tmv1beta1.Testrun
 	Metadata *Metadata
 	Error    error
+
+	Rerenderer Rerenderer
+}
+
+// Rerenderer is instance that rerenders the current run to make it retryable.
+type Rerenderer interface {
+	Rerender(tr *tmv1beta1.Testrun) (*Run, error)
 }
 
 // RunList represents a list of Runs.

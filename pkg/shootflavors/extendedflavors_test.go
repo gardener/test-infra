@@ -106,12 +106,12 @@ var _ = Describe("extended flavor test", func() {
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
 		shoot := flavors.GetShoots()[0]
-		Expect(shoot.Shoot).To(Equal(common.Shoot{
+		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:          common.CloudProviderGCP,
 			KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
 			Workers:           []v1alpha1.Worker{{Name: "wp1"}},
 		}))
-		Expect(shoot.ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
 	It("should add a prefix to the shoot name", func() {
@@ -140,7 +140,7 @@ var _ = Describe("extended flavor test", func() {
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
 		shoot := flavors.GetShoots()[0]
-		Expect(shoot.Name).To(HavePrefix("test-pref"))
+		Expect(shoot.Get().Name).To(HavePrefix("test-pref"))
 	})
 
 	It("should generate a shoot with the latest kubernetes version from the cloudprofile", func() {
@@ -169,8 +169,8 @@ var _ = Describe("extended flavor test", func() {
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
 		shoot := flavors.GetShoots()[0]
-		Expect(shoot.Shoot.KubernetesVersion.Version).To(Equal("1.16.1"))
-		Expect(shoot.ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+		Expect(shoot.Get().Shoot.KubernetesVersion.Version).To(Equal("1.16.1"))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
 	It("should generate a shoot for every kubernetes version from the cloudprofile", func() {
@@ -232,7 +232,7 @@ var _ = Describe("extended flavor test", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
-		Expect(flavors.GetShoots()[0].Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
+		Expect(flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
 	})
 
 })
