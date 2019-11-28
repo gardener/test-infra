@@ -24,7 +24,6 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
@@ -50,8 +49,13 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string)
 				if attempt < config.FlakeAttempts {
 					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
 					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt+1, config.FlakeAttempts))
-					rl[i].Testrun.Status = tmv1beta1.TestrunStatus{}
-					rl[i].Testrun.ObjectMeta = metav1.ObjectMeta{GenerateName: rl[i].Testrun.GetGenerateName(), Namespace: rl[i].Testrun.GetNamespace()}
+
+					newRun, err := rl[i].Rerenderer.Rerender(rl[i].Testrun)
+					if err != nil {
+						log.Error(err, "unable to rerender testrun")
+						return
+					}
+					*rl[i] = *newRun
 				}
 			}
 

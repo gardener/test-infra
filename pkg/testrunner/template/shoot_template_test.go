@@ -15,6 +15,7 @@
 package template
 
 import (
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"path/filepath"
 
 	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
@@ -27,12 +28,12 @@ import (
 var _ = Describe("shoot templates", func() {
 
 	var (
-		shoots []*common.ExtendedShoot
+		shoots []*shootflavors.ExtendedFlavorInstance
 	)
 
 	BeforeEach(func() {
-		shoots = []*common.ExtendedShoot{
-			{
+		shoots = []*shootflavors.ExtendedFlavorInstance{
+			shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderGCP,
 					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15.2"},
@@ -50,7 +51,7 @@ var _ = Describe("shoot templates", func() {
 						Zone:             "region-1-1",
 					},
 				},
-			},
+			}),
 		}
 	})
 
@@ -105,14 +106,35 @@ var _ = Describe("shoot templates", func() {
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
 			}
-			shoots[0].Cloudprofile = v1alpha1.CloudProfile{Spec: v1alpha1.CloudProfileSpec{
-				Kubernetes: v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{
-					{Version: "1.15.2"},
-					{Version: "1.14.1"},
-					{Version: "1.14.0"},
-					{Version: "1.13.8"},
-				}},
-			}}
+			shoots = []*shootflavors.ExtendedFlavorInstance{
+				shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
+					Shoot: common.Shoot{
+						Provider:          common.CloudProviderGCP,
+						KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15.2"},
+						Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: v1alpha1.Machine{Image: &v1alpha1.ShootMachineImage{Name: "core-os"}}}},
+					},
+					ExtendedShootConfiguration: common.ExtendedShootConfiguration{
+						Name:      "test-name",
+						Namespace: "garden-it",
+						Cloudprofile: v1alpha1.CloudProfile{Spec: v1alpha1.CloudProfileSpec{
+							Kubernetes: v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{
+								{Version: "1.15.2"},
+								{Version: "1.14.1"},
+								{Version: "1.14.0"},
+								{Version: "1.13.8"},
+							}},
+						},
+						},
+						ExtendedConfiguration: common.ExtendedConfiguration{
+							ProjectName:      "test-proj",
+							CloudprofileName: "test",
+							SecretBinding:    "test-sb",
+							Region:           "region-1",
+							Zone:             "region-1-1",
+						},
+					},
+				}),
+			}
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
@@ -131,7 +153,7 @@ var _ = Describe("shoot templates", func() {
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
 			}
-			shoots = append(shoots, &common.ExtendedShoot{
+			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderAWS,
 					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.16.2"},
@@ -149,7 +171,7 @@ var _ = Describe("shoot templates", func() {
 						Zone:             "region1c",
 					},
 				},
-			})
+			}))
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(2))
@@ -177,7 +199,7 @@ var _ = Describe("shoot templates", func() {
 				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
 			}
-			shoots = append(shoots, &common.ExtendedShoot{
+			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderAWS,
 					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.16.2"},
@@ -195,10 +217,49 @@ var _ = Describe("shoot templates", func() {
 						Zone:             "region1c",
 					},
 				},
-			})
+			}))
 			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(3))
+		})
+	})
+
+	Context("rerender", func() {
+		It("should rerender the basic shoot chart with different shoot name but with all other same values", func() {
+			params := &Parameters{
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				ComponentDescriptorPath:  componentDescriptorPath,
+			}
+
+			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(runs.GetTestruns()).To(HaveLen(1))
+			tr := runs[0].Testrun
+
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.projectNamespace", "garden-it"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprovider", "gcp"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprofile", "test"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.secretBinding", "test-sb"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
+
+			rerenderedRun, err := runs[0].Rerenderer.Rerender(tr)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.projectNamespace", "garden-it"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.cloudprovider", "gcp"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.cloudprofile", "test"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.secretBinding", "test-sb"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
+			Expect(rerenderedRun.Testrun.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
+
+			Expect(rerenderedRun.Testrun.Annotations["shoot.name"]).ToNot(Equal(tr.Annotations["shoot.name"]))
 		})
 	})
 

@@ -16,9 +16,9 @@ package template
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"io/ioutil"
 
-	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
@@ -29,7 +29,7 @@ import (
 
 // RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*common.ExtendedShoot) (testrunner.RunList, error) {
+func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
 	log.V(3).Info(fmt.Sprintf("Parameters: %+v", util.PrettyPrintStruct(parameters)))
 
 	getInternalParameters, err := getInternalParametersFunc(parameters)
@@ -37,7 +37,7 @@ func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*com
 		return nil, err
 	}
 
-	tmplRenderer, err := newRenderer(log, parameters.SetValues, parameters.FileValues)
+	tmplRenderer, err := newTemplateRenderer(log, parameters.SetValues, parameters.FileValues)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize template renderer")
 	}
@@ -87,104 +87,25 @@ func renderDefaultChart(renderer *templateRenderer, parameters *internalParamete
 	if parameters.ChartPath == "" {
 		return make(testrunner.RunList, 0), nil
 	}
-	values := map[string]interface{}{
-		"gardener": map[string]interface{}{
-			"version": parameters.GardenerVersion,
-		},
-		"kubeconfigs": map[string]interface{}{
-			"gardener": string(parameters.GardenerKubeconfig),
-		},
-	}
-
-	metadata := &testrunner.Metadata{
-		Landscape:           parameters.Landscape,
-		ComponentDescriptor: parameters.ComponentDescriptor.JSON(),
-	}
-
-	return renderer.RenderChart(parameters, parameters.ChartPath, values, metadata, nil)
+	return renderer.RenderChart(parameters, parameters.ChartPath, NewDefaultValueRenderer(parameters))
 }
 
-func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors []*common.ExtendedShoot) (testrunner.RunList, error) {
+func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
 	runs := make(testrunner.RunList, 0)
 	if parameters.ChartPath == "" {
 		return runs, nil
 	}
 
-	for _, shoot := range shootFlavors {
-		chartPath, err := determineAbsoluteShootChartPath(parameters, shoot.ChartPath)
+	for _, flavor := range shootFlavors {
+		chartPath, err := determineAbsoluteShootChartPath(parameters, flavor.Get().ChartPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to determine chart to render")
 		}
-		workers, err := encodeRawObject(shoot.Workers)
+
+		valueRenderer := NewShootValueRenderer(log, flavor, parameters)
+		shootRuns, err := renderer.RenderChart(parameters, chartPath, valueRenderer)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse worker config")
-		}
-		log.V(3).Info(fmt.Sprintf("Workers: \n%s \n", util.PrettyPrintStruct(workers)))
-
-		infrastructure, err := encodeRawObject(shoot.InfrastructureConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse infrastructure config")
-		}
-		log.V(3).Info(fmt.Sprintf("Infrastructure: \n%s \n", util.PrettyPrintStruct(infrastructure)))
-
-		networkingConfig, err := encodeRawObject(shoot.NetworkingConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse networking config")
-		}
-		log.V(3).Info(fmt.Sprintf("networking: \n%s \n", util.PrettyPrintStruct(networkingConfig)))
-
-		controlplane, err := encodeRawObject(shoot.ControlPlaneConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse infrastructure config")
-		}
-		log.V(3).Info(fmt.Sprintf("Controlplane: \n%s \n", util.PrettyPrintStruct(controlplane)))
-
-		prevPrePatchVersion, prevPatchVersion, err := util.GetPreviousKubernetesVersions(shoot.Cloudprofile, shoot.KubernetesVersion)
-		if err != nil {
-			log.Info("unable to get previous versions", "error", err.Error())
-		}
-
-		values := map[string]interface{}{
-			"shoot": map[string]interface{}{
-				"name":                   shoot.Name,
-				"projectNamespace":       shoot.Namespace,
-				"cloudprovider":          shoot.Provider,
-				"cloudprofile":           shoot.CloudprofileName,
-				"secretBinding":          shoot.SecretBinding,
-				"region":                 shoot.Region,
-				"zone":                   shoot.Zone,
-				"workers":                workers,
-				"k8sVersion":             shoot.KubernetesVersion.Version,
-				"k8sPrevPrePatchVersion": prevPrePatchVersion.Version,
-				"k8sPrevPatchVersion":    prevPatchVersion.Version,
-				"floatingPoolName":       shoot.FloatingPoolName,
-				"loadbalancerProvider":   shoot.LoadbalancerProvider,
-				"infrastructureConfig":   infrastructure,
-				"networkingConfig":       networkingConfig,
-				"controlplaneConfig":     controlplane,
-			},
-			"gardener": map[string]interface{}{
-				"version": parameters.GardenerVersion,
-			},
-			"kubeconfigs": map[string]interface{}{
-				"gardener": string(parameters.GardenerKubeconfig),
-			},
-		}
-
-		metadata := &testrunner.Metadata{
-			FlavorDescription:   shoot.Description,
-			Landscape:           parameters.Landscape,
-			ComponentDescriptor: parameters.ComponentDescriptor.JSON(),
-			CloudProvider:       string(shoot.Provider),
-			KubernetesVersion:   shoot.KubernetesVersion.Version,
-			Region:              shoot.Region,
-			Zone:                shoot.Zone,
-			OperatingSystem:     shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
-		}
-
-		shootRuns, err := renderer.RenderChart(parameters, chartPath, values, metadata, shoot)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to render chart for shoot %v", shoot)
+			return nil, errors.Wrapf(err, "unable to render chart for flavor %v", flavor)
 		}
 		runs = append(runs, shootRuns...)
 	}
