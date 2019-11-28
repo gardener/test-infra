@@ -27,6 +27,7 @@ const (
 	AnnotationDimension       = "testrunner.testmachinery.sapcloud.io/dimension"
 )
 
+// CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
 		AnnotationLandscape:       m.Landscape,
@@ -37,6 +38,7 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 	}
 }
 
+// GetDimensionFromMetadata returns a string describing the dimension of the metadata
 func (m *Metadata) GetDimensionFromMetadata() string {
 	d := fmt.Sprintf("%s/%s/%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
 	if m.FlavorDescription != "" {
@@ -45,6 +47,14 @@ func (m *Metadata) GetDimensionFromMetadata() string {
 	return d
 }
 
+// DeepCopy creates a copy of the metadata struct
+// todo: deep copy annotations and components if set
+func (m *Metadata) DeepCopy() *Metadata {
+	meta := *m
+	return &meta
+}
+
+// MetadataFromTestrun reads metadata from a testrun
 func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	return &Metadata{
 		Landscape:         tr.Annotations[AnnotationLandscape],

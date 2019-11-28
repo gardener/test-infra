@@ -54,7 +54,7 @@ func (r *templateRenderer) RenderChart(parameters *internalParameters, chartPath
 	testruns := ParseTestrunsFromChart(r.log, chart)
 	renderedTestruns := make(testrunner.RunList, len(testruns))
 	for i, tr := range testruns {
-
+		meta := metadata.DeepCopy()
 		// Add all repositories defined in the component descriptor to the testrun locations.
 		// This gives us all dependent repositories as well as there deployed version.
 		if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", parameters.ComponentDescriptor, true); err != nil {
@@ -63,12 +63,12 @@ func (r *templateRenderer) RenderChart(parameters *internalParameters, chartPath
 		}
 
 		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(tr, metadata.CreateAnnotations())
+		addAnnotationsToTestrun(tr, meta.CreateAnnotations())
 
 		renderedTestruns[i] = &testrunner.Run{
 			Info:     info,
 			Testrun:  tr,
-			Metadata: metadata,
+			Metadata: meta,
 		}
 	}
 	return renderedTestruns, nil
