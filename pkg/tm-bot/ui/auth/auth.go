@@ -20,7 +20,6 @@ import (
 	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/google/go-github/v27/github"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -53,7 +52,7 @@ type auth struct {
 	org string
 }
 
-func NewAuth(log logr.Logger, org, clientID, clientSecret, cookieSecret string) *auth {
+func NewAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSecret string) *auth {
 	gob.Register(AuthContext{})
 	return &auth{
 		log:   log,
@@ -66,7 +65,8 @@ func NewAuth(log logr.Logger, org, clientID, clientSecret, cookieSecret string) 
 				AuthURL:  "https://github.com/login/oauth/authorize",
 				TokenURL: "https://github.com/login/oauth/access_token",
 			},
-			Scopes: []string{"read:org"},
+			RedirectURL: redirectURL,
+			Scopes:      []string{"read:org"},
 		},
 	}
 }
@@ -86,7 +86,6 @@ func (a *auth) Protect(next http.HandlerFunc) http.HandlerFunc {
 		if err != nil {
 			a.log.Error(err, "unable to get Token")
 
-			a.setRedirectUrl(r.URL)
 			authURL := a.config.AuthCodeURL(r.URL.String(), oauth2.AccessTypeOffline)
 			http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 			return
@@ -158,13 +157,6 @@ func (a *auth) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, state, http.StatusTemporaryRedirect)
-}
-
-func (a *auth) setRedirectUrl(u *url.URL) {
-	redirectUrl, _ := url.Parse(u.String())
-	redirectUrl.Path = "oauth/redirect"
-	redirectUrl.RawQuery = ""
-	a.config.RedirectURL = redirectUrl.String()
 }
 
 // GetAuthContext get the Token from the cookie store

@@ -1,0 +1,50 @@
+{{define "title"}}Testruns{{end}}
+{{define "content"}}
+    <div class="table-container">
+        <table id="command-table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <thead>
+            <tr>
+                <th></th>
+                <th class="mdl-data-table__cell--non-numeric">Testrun</th>
+                <th class="mdl-data-table__cell--non-numeric">Progress</th>
+                <th class="mdl-data-table__cell--non-numeric">Start</th>
+                <th class="mdl-data-table__cell--non-numeric">Duration</th>
+                <th class="mdl-data-table__cell--non-numeric">Details</th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {{ range $_, $test := .page.tests }}
+                <tr>
+                    <td class="icon-cell">
+                        <i id="phase-{{ $test.ID }}" class="material-icons mdl-list__item-icon" style="color:{{ $test.Phase.Color }}">{{ $test.Phase.Icon }}</i>
+                        <div class="mdl-tooltip" for="phase-{{ $test.ID }}">{{ $test.Phase.Tooltip }}</div>
+                    </td>
+                    <td class="mdl-data-table__cell--non-numeric">{{ $test.ID }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Progress }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.StartTime }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Duration }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Dimension }}</td>
+                    <td class="mdl-data-table__cell--numeric actions">
+                        <a href="/testrun/{{ $test.Namespace }}/{{ $test.ID }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Details</a>
+                        {{ if $test.ArgoURL }}
+                            <a id="argo-url-{{$test.ID}}" href="{{ $test.ArgoURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><img alt="argo logo" src="/static/img/argo.svg" /></a>
+                            <div class="mdl-tooltip" for="argo-url-{{$test.ID}}">Show Argo Workflow</div>
+                        {{ end }}
+                        {{ if $test.GrafanaURL }}
+                            <a id="grafana-url-{{$test.ID}}" href="{{ $test.GrafanaURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><i class="material-icons">list</i></a>
+                            <div class="mdl-tooltip" for="grafana-url-{{$test.ID}}">Show logs</div>
+                        {{ end }}
+                    </td>
+                    <td></td>
+                </tr>
+                <div class="mdl-tooltip" for="grafana-url">{{ $test.Phase.Tooltip }}</div>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{end}}
+
+{{template "page" (settings "testruns" .)}}

@@ -72,7 +72,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 
 	tr.GenerateName = fmt.Sprintf("bot-%s-", t.Command())
-	tr, updater, err := tests.CreateTestrun(logger, ctx, t.k8sClient, client, event, tr)
+	tr, updater, err := t.runs.CreateTestrun(logger, ctx, client, event, tr)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		logger.Error(err, "unable to persist state")
 	}
 
-	_, err = tests.Watch(logger, ctx, t.k8sClient, updater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 	}
 	updater := tests.NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
 
-	_, err := tests.Watch(logger, ctx, t.k8sClient, updater, event, tr, t.interval, t.timeout)
+	_, err := t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}

@@ -17,8 +17,10 @@ package tests
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
 )
 
@@ -28,6 +30,7 @@ var runs = &Runs{
 }
 
 type Runs struct {
+	watch watch.Watch
 	m     sync.Mutex
 	tests map[string]*Run
 }
@@ -37,8 +40,9 @@ type Run struct {
 	Event   *github.GenericRequestEvent
 }
 
-func NewRuns() *Runs {
+func NewRuns(w watch.Watch) *Runs {
 	r := Runs{
+		watch: w,
 		m:     sync.Mutex{},
 		tests: make(map[string]*Run),
 	}
@@ -50,6 +54,11 @@ func NewRuns() *Runs {
 func (r *Runs) IsRunning(event *github.GenericRequestEvent) bool {
 	_, ok := r.tests[uniqueEventString(event)]
 	return ok
+}
+
+// GetClient returns the controller runtime kubernetes client
+func (r *Runs) GetClient() client.Client {
+	return r.watch.Client()
 }
 
 // GetRunning returns the currently running Testrun for a Event (org, repo, pr)
@@ -73,8 +82,8 @@ func GetAllRunning() []*Run {
 }
 
 func (r *Runs) Add(event *github.GenericRequestEvent, tr *v1beta1.Testrun) error {
-	runs.m.Lock()
-	defer runs.m.Unlock()
+	r.m.Lock()
+	defer r.m.Unlock()
 
 	if r.tests[uniqueEventString(event)] != nil {
 		return errors.New("A test is already running for this PR.")

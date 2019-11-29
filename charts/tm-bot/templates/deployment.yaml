@@ -49,9 +49,11 @@ spec:
         - --key-file=/etc/tm-bot/srv/tls.key
         - --github-app-id=$(GITHUB_APP_ID)
         - --github-key-file=/etc/tm-bot/srv/github/key.pem
-        - --oauth-client-id={{ .Values.secrets.github.oauthClientID }}
-        - --oauth-client-secret={{ .Values.secrets.github.oauthClientSecret }}
-        - --cookie-secret={{ .Values.secrets.cookieSecret }}
+        - --oauth-client-id={{ .Values.secrets.oauth.clientID }}
+        - --oauth-client-secret={{ .Values.secrets.oauth.clientSecret }}
+        - --oauth-redirect-url={{ .Values.secrets.oauth.redirectUrl }}
+        - --cookie-secret={{ .Values.secrets.oauth.cookieSecret }}
+        - --auth-org={{ .Values.oauth.org }}
         - --webhook-secret-token=$(WEBHOOK_SECRET_TOKEN)
         - --github-cache-dir=/cache
         - --github-default-team={{ .Values.bot.defaultTeamName }}

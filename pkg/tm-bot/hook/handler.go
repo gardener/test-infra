@@ -15,15 +15,17 @@
 package hook
 
 import (
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/resume"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/skip"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
+	testsmanager "github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/pkg/errors"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/go-logr/logr"
@@ -37,7 +39,7 @@ type Handler struct {
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient kubernetes.Interface) (*Handler, error) {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient client.Client, watch watch.Watch, runs *testsmanager.Runs) (*Handler, error) {
 
 	persistence, err := plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot")
 	if err != nil {
@@ -53,9 +55,9 @@ func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sC
 	}
 	plugins.Register(xkcdPlugin)
 
-	plugins.Register(tests.New(log, k8sClient))
+	plugins.Register(tests.New(log, runs))
 	plugins.Register(skip.New(log))
-	plugins.Register(resume.New(log, k8sClient))
+	plugins.Register(resume.New(log, watch.Client()))
 
 	if err := plugins.ResumePlugins(ghMgr); err != nil {
 		return nil, errors.Wrap(err, "unable to resume running plugins")

@@ -17,6 +17,7 @@ package testrunner
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"net/url"
 	"path"
 	"regexp"
@@ -28,34 +29,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetArgoURL(tmClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
-	// get argo url from the argo ingress if possible
-	// return err if the ingress cannot be found
-	argoIngress := &v1beta1.Ingress{}
-	err := tmClient.Get(context.TODO(), client.ObjectKey{Name: "argo-ui", Namespace: "default"}, argoIngress)
+func GetArgoURL(k8sClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
+	argoBaseURL, err := GetArgoHost(k8sClient)
 	if err != nil {
-		return "", err
+		return "", nil
 	}
+	return GetArgoURLFromHost(argoBaseURL, tr), nil
+}
 
-	if len(argoIngress.Spec.Rules) == 0 {
-		return "", errors.New("no rules defined")
-	}
-	rule := argoIngress.Spec.Rules[0]
-	if len(rule.HTTP.Paths) == 0 {
-		return "", errors.New("no http backend defined")
-	}
+// GetArgoURLFromHost returns the url for a specific workflow with a given base path
+func GetArgoURLFromHost(host string, tr *tmv1beta1.Testrun) string {
+	return path.Join(host, "workflows", tr.Namespace, testmachinery.GetWorkflowName(tr))
+}
 
-	protocol := "http://"
-	if len(argoIngress.Spec.TLS) != 0 {
-		protocol = "https://"
-	}
-	argoUrl, err := url.ParseRequestURI(protocol + rule.Host)
-	if err != nil {
-		return "", err
-	}
-	argoUrl.Path = path.Join(argoUrl.Path, "workflows", tr.Namespace, testmachinery.GetWorkflowName(tr))
+// GetArgoHost returns the host of the argo ui
+func GetArgoHost(tmClient client.Client) (string, error) {
+	return GetHostURLFromIngress(tmClient, client.ObjectKey{Name: "argo-ui", Namespace: "default"})
+}
 
-	return argoUrl.String(), nil
+// GetGrafanaURLFromHostForWorkflow returns the path to the logs in grafana for a whole workflow
+func GetGrafanaURLFromHostForWorkflow(host string, tr *tmv1beta1.Testrun) string {
+	return path.Join(host, fmt.Sprintf(`explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"ui":[true,true,true,"exact"]}]`, tr.Status.Workflow))
+}
+
+// GetGrafanaURLFromHostForStep returns the path to the logs in grafana for a specific step
+func GetGrafanaURLFromHostForStep(host string, tr *tmv1beta1.Testrun, step *tmv1beta1.StepStatus) string {
+	return path.Join(host, fmt.Sprintf(`explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"ui":[true,true,true,"exact"]}]`, step.TestDefinition.Name, tr.Status.Workflow))
+}
+
+// GetGrafanaHost returns the host of the grafana instance int he monitoring ns
+func GetGrafanaHost(tmClient client.Client) (string, error) {
+	return GetHostURLFromIngress(tmClient, client.ObjectKey{Namespace: "monitoring", Name: "grafana"})
 }
 
 // GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
@@ -80,4 +84,36 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
 	}
 	return matches[1], nil
+}
+
+// GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
+func GetHostURLFromIngress(tmClient client.Client, obj types.NamespacedName) (string, error) {
+	// try to derive the cluster domain url from grafana ingress if possible
+	// return err if the ingress cannot be found
+	if tmClient == nil {
+		return "", nil
+	}
+	ingress := &v1beta1.Ingress{}
+	err := tmClient.Get(context.TODO(), obj, ingress)
+	if err != nil {
+		return "", errors.Errorf("cannot get grafana ingress: %v", err)
+	}
+
+	if len(ingress.Spec.Rules) == 0 {
+		return "", errors.New("no rules defined")
+	}
+	rule := ingress.Spec.Rules[0]
+	if len(rule.HTTP.Paths) == 0 {
+		return "", errors.New("no http backend defined")
+	}
+
+	protocol := "http://"
+	if len(ingress.Spec.TLS) != 0 {
+		protocol = "https://"
+	}
+	hostUrl, err := url.ParseRequestURI(protocol + rule.Host)
+	if err != nil {
+		return "", err
+	}
+	return hostUrl.String(), nil
 }

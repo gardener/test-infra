@@ -15,6 +15,7 @@
 package ui
 
 import (
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages"
 	"github.com/go-logr/logr"
@@ -23,17 +24,21 @@ import (
 	"path/filepath"
 )
 
-func Serve(log logr.Logger, basePath string, a auth.Authentication, r *mux.Router) {
+func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Authentication, r *mux.Router) {
 	fs := http.FileServer(http.Dir(filepath.Join(basePath, "static")))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
 	r.HandleFunc("/oauth/redirect", a.Redirect)
-
 	r.HandleFunc("/login", a.Login)
+
+	page := pages.New(log, runs, a, basePath)
+
 	r.HandleFunc("/command-help", pages.NewCommandHelpPage(log, a, basePath))
 	r.HandleFunc("/command-help/{plugin}", pages.NewCommandDetailedHelpPage(log, a, basePath))
-	r.HandleFunc("/pr-status", pages.NewPRStatusPage(log, a, basePath))
+	r.HandleFunc("/pr-status", pages.NewPRStatusPage(page))
 	r.HandleFunc("/pr-status/{testrun}", pages.NewPRStatusDetailPage(log, a, basePath))
+	r.HandleFunc("/testruns", a.Protect(pages.NewTestrunsPage(page)))
+	r.HandleFunc("/testrun/{namespace}/{testrun}", a.Protect(pages.NewTestrunPage(page)))
 	r.HandleFunc("/404", pages.New404Page(log, a, basePath))
 	r.HandleFunc("/", pages.NewHomePage(log, a, basePath))
 }

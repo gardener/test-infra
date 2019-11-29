@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +30,7 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 	}
 
 	for _, step := range tr.Status.Steps {
-		if step.Phase == v1beta1.PhaseStatusInit {
+		if step.Phase == v1beta1.PhaseStatusInit || step.Phase == v1beta1.PhaseStatusSkipped {
 			continue
 		}
 		if step.Phase != v1beta1.PhaseStatusSuccess && step.Annotations[common.AnnotationSystemStep] != "true" {
@@ -43,19 +42,19 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 }
 
 // Resume testruns resumes a testrun by adding the appropriate annotation to it
-func ResumeTestrun(ctx context.Context, k8sClient kubernetes.Interface, tr *v1beta1.Testrun) error {
+func ResumeTestrun(ctx context.Context, k8sClient client.Client, tr *v1beta1.Testrun) error {
 	obj, err := client.ObjectKeyFromObject(tr)
 	if err != nil {
 		return err
 	}
-	if err := k8sClient.Client().Get(ctx, obj, tr); err != nil {
+	if err := k8sClient.Get(ctx, obj, tr); err != nil {
 		return err
 	}
 	if tr.Annotations == nil {
 		tr.Annotations = make(map[string]string, 0)
 	}
 	tr.Annotations[common.ResumeTestrunAnnotation] = "true"
-	if err := k8sClient.Client().Update(ctx, tr); err != nil {
+	if err := k8sClient.Update(ctx, tr); err != nil {
 		return err
 	}
 
@@ -69,7 +68,7 @@ func TestrunProgress(tr *v1beta1.Testrun) string {
 	for _, step := range tr.Status.Steps {
 		if step.Annotations[common.AnnotationSystemStep] != "true" {
 			allSteps++
-			if Completed(step.Phase) {
+			if step.Phase != v1beta1.PhaseStatusSkipped && Completed(step.Phase) {
 				completedSteps++
 			}
 		}

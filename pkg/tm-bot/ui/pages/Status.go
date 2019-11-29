@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
@@ -32,10 +33,21 @@ import (
 	"time"
 )
 
+type IconWithTooltip struct {
+	Icon    string
+	Tooltip string
+	Color   string
+}
+
 var PhaseIcon = map[v1alpha1.NodePhase]IconWithTooltip{
 	v1beta1.PhaseStatusInit: {
 		Icon:    "schedule",
 		Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.PhaseStatusInit),
+		Color:   "grey",
+	},
+	v1beta1.PhaseStatusSkipped: {
+		Icon:    "remove",
+		Tooltip: fmt.Sprintf("%s phase: Testrun was skipped", v1beta1.PhaseStatusSkipped),
 		Color:   "grey",
 	},
 	v1beta1.PhaseStatusRunning: {
@@ -84,15 +96,15 @@ type runDetailedItem struct {
 	RawStatus string
 }
 
-type IconWithTooltip struct {
-	Icon    string
-	Tooltip string
-	Color   string
-}
-
-func NewPRStatusPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
-	p := Page{log: logger, auth: auth, basePath: basePath}
+func NewPRStatusPage(p *Page) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		isAuthenticated := true
+		_, err := p.auth.GetAuthContext(r)
+		if err != nil {
+			p.log.V(3).Info(err.Error())
+			isAuthenticated = false
+		}
+
 		allTests := tests.GetAllRunning()
 		if len(allTests) == 0 {
 			allTests = append(allTests, &demotest)
@@ -107,8 +119,11 @@ func NewPRStatusPage(logger logr.Logger, auth auth.Authentication, basePath stri
 				Testrun:      run.Testrun.GetName(),
 				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
 				Progress:     util.TestrunProgress(run.Testrun),
-				ArgoURL:      "",
 			}
+			if isAuthenticated {
+				rawList[i].ArgoURL, _ = testrunner.GetArgoURL(p.runs.GetClient(), run.Testrun)
+			}
+
 		}
 		params := map[string]interface{}{
 			"tests": rawList,
@@ -192,6 +207,7 @@ var demotest = tests.Run{
 					Phase: v1beta1.PhaseStatusRunning,
 				},
 			},
+			Workflow: "tm-test49l44",
 		},
 	},
 	Event: &github.GenericRequestEvent{
