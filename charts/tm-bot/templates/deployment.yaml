@@ -53,7 +53,7 @@ spec:
         - --oauth-client-secret={{ .Values.secrets.oauth.clientSecret }}
         - --oauth-redirect-url={{ .Values.secrets.oauth.redirectUrl }}
         - --cookie-secret={{ .Values.secrets.oauth.cookieSecret }}
-        - --auth-org={{ .Values.oauth.org }}
+        - --auth-org={{ .Values.secrets.oauth.org }}
         - --webhook-secret-token=$(WEBHOOK_SECRET_TOKEN)
         - --github-cache-dir=/cache
         - --github-default-team={{ .Values.bot.defaultTeamName }}
