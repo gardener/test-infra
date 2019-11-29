@@ -172,7 +172,7 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 			for scanner.Scan() {
 				log.Info("    " + scanner.Text())
 			}
-			log.Info("END: dump kubetest stdout last %d bytes", bufferSize)
+			log.Infof("END: dump kubetest stdout last %d bytes", bufferSize)
 		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
 	} else {
