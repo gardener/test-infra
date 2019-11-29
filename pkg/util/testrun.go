@@ -30,7 +30,7 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 	}
 
 	for _, step := range tr.Status.Steps {
-		if step.Phase == v1beta1.PhaseStatusInit {
+		if step.Phase == v1beta1.PhaseStatusInit || step.Phase == v1beta1.PhaseStatusSkipped {
 			continue
 		}
 		if step.Phase != v1beta1.PhaseStatusSuccess && step.Annotations[common.AnnotationSystemStep] != "true" {
@@ -68,7 +68,7 @@ func TestrunProgress(tr *v1beta1.Testrun) string {
 	for _, step := range tr.Status.Steps {
 		if step.Annotations[common.AnnotationSystemStep] != "true" {
 			allSteps++
-			if Completed(step.Phase) {
+			if step.Phase != v1beta1.PhaseStatusSkipped && Completed(step.Phase) {
 				completedSteps++
 			}
 		}

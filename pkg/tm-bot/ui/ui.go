@@ -37,6 +37,8 @@ func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Authentica
 	r.HandleFunc("/command-help/{plugin}", pages.NewCommandDetailedHelpPage(log, a, basePath))
 	r.HandleFunc("/pr-status", pages.NewPRStatusPage(page))
 	r.HandleFunc("/pr-status/{testrun}", pages.NewPRStatusDetailPage(log, a, basePath))
+	r.HandleFunc("/testruns", a.Protect(pages.NewTestrunsPage(page)))
+	r.HandleFunc("/testrun/{namespace}/{testrun}", a.Protect(pages.NewTestrunPage(page)))
 	r.HandleFunc("/404", pages.New404Page(log, a, basePath))
 	r.HandleFunc("/", pages.NewHomePage(log, a, basePath))
 }

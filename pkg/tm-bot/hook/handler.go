@@ -22,9 +22,10 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/skip"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
-	tests2 "github.com/gardener/test-infra/pkg/tm-bot/tests"
+	testsmanager "github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/pkg/errors"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/go-logr/logr"
@@ -38,9 +39,9 @@ type Handler struct {
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, watch watch.Watch, runs *tests2.Runs) (*Handler, error) {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient client.Client, watch watch.Watch, runs *testsmanager.Runs) (*Handler, error) {
 
-	persistence, err := plugins.NewKubernetesPersistence(watch.Client(), "state", "ts-test")
+	persistence, err := plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to setup plugin persistence")
 	}

@@ -33,10 +33,21 @@ import (
 	"time"
 )
 
+type IconWithTooltip struct {
+	Icon    string
+	Tooltip string
+	Color   string
+}
+
 var PhaseIcon = map[v1alpha1.NodePhase]IconWithTooltip{
 	v1beta1.PhaseStatusInit: {
 		Icon:    "schedule",
 		Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.PhaseStatusInit),
+		Color:   "grey",
+	},
+	v1beta1.PhaseStatusSkipped: {
+		Icon:    "remove",
+		Tooltip: fmt.Sprintf("%s phase: Testrun was skipped", v1beta1.PhaseStatusSkipped),
 		Color:   "grey",
 	},
 	v1beta1.PhaseStatusRunning: {
@@ -83,12 +94,6 @@ type runDetailedItem struct {
 	Author    string
 	StartTime string
 	RawStatus string
-}
-
-type IconWithTooltip struct {
-	Icon    string
-	Tooltip string
-	Color   string
 }
 
 func NewPRStatusPage(p *Page) http.HandlerFunc {

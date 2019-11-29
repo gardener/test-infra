@@ -1,0 +1,79 @@
+{{define "title"}}<a href="/testruns" >Testruns</a> > {{ .page.ID }}{{end}}
+{{define "content"}}
+    <div class="testrun-card-wide mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title">
+            <h2 class="mdl-card__title-text">{{ .page.Namespace }}/{{ .page.ID }}</h2>
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+            <div class="mdl-grid">
+                <div class="mdl-cell  mdl-list__item-primary-content">
+                    {{ .page.Dimension }}
+                </div>
+                <div class="mdl-cell mdl-list__item-primary-content">
+                    <button class="mdl-button mdl-button--icon mdl-button--disabled"><i class="material-icons mdl-list__item-icon">schedule</i></button>
+                    {{ .page.StartTime }}
+                </div>
+                <div class="mdl-cell  mdl-list__item-primary-content">
+                    <button class="mdl-button mdl-button--icon mdl-button--disabled"><i class="material-icons mdl-list__item-icon">speed</i></button>
+                    {{ .page.Progress }} Steps
+                </div>
+            </div>
+        </div>
+        <div class="mdl-card__actions">
+            <table id="command-table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th class="mdl-data-table__cell--non-numeric">Test</th>
+                    <th class="mdl-data-table__cell--non-numeric">Step</th>
+                    <th class="mdl-data-table__cell--non-numeric">Start</th>
+                    <th class="mdl-data-table__cell--non-numeric">Duration</th>
+                    <th class="mdl-data-table__cell--non-numeric">Location</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ range $_, $step := .page.Steps }}
+                    <tr>
+                        <td class="icon-cell">
+                            <i id="phase-{{ $step.Name }}" class="material-icons mdl-list__item-icon" style="color:{{ $step.Phase.Color }}">{{ $step.Phase.Icon }}</i>
+                            <div class="mdl-tooltip" for="phase-{{ $step.Name }}">{{ $step.Phase.Tooltip }}</div>
+                        </td>
+                        <td class="mdl-data-table__cell--non-numeric">{{ $step.Name }}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{ $step.Step }}</td>
+                        <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $step.StartTime }}</td>
+                        <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $step.Duration }}</td>
+                        <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $step.Location }}</td>
+                        <td class="mdl-data-table__cell--numeric actions">
+                            {{ if $step.GrafanaURL }}
+                                <a id="grafana-url-{{$step.Name}}" href="{{ $step.GrafanaURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><i class="material-icons">list</i></a>
+                                <div class="mdl-tooltip" for="grafana-url-{{$step.Name}}">Show logs</div>
+                            {{ end }}
+                        </td>
+                        <td></td>
+                    </tr>
+                    <div class="mdl-tooltip" for="grafana-url">{{ $step.Phase.Tooltip }}</div>
+                {{ end }}
+                </tbody>
+            </table>
+
+        </div>
+        <div class="mdl-card__menu">
+            {{ if .page.ArgoURL }}
+                <a id="argo-url-{{.page.ID}}" href="{{ .page.ArgoURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><img alt="argo logo" src="/static/img/argo.svg" /></a>
+                <div class="mdl-tooltip" for="argo-url-{{.page.ID}}">Show Argo Workflow</div>
+            {{ end }}
+            {{ if .page.GrafanaURL }}
+                <a id="grafana-url-{{.page.ID}}" href="{{ .page.GrafanaURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><i class="material-icons">list</i></a>
+                <div class="mdl-tooltip" for="grafana-url-{{.page.ID}}">Show logs</div>
+            {{ end }}
+            <button id="phase-{{ .page.ID }}"  class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                <i class="material-icons mdl-list__item-icon" style="color:{{ .page.Phase.Color }}">{{ .page.Phase.Icon }}</i>
+            </button>
+            <div class="mdl-tooltip" for="phase-{{ .page.ID }}">{{ .page.Phase.Tooltip }}</div>
+        </div>
+    </div>
+{{end}}
+
+{{template "page" (settings "testruns" .)}}

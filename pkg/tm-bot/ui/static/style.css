@@ -103,6 +103,19 @@ ul.noBullets li {
     line-height: 2em;
 }
 
+.testrun-card-wide {
+    width: 50%;
+    margin: 10px auto;
+}
+
+.testrun-card-wide.mdl-card {
+    width: 60%;
+}
+
+.testrun-card-wide > .mdl-card__title {
+    height: 100px;
+}
+
 .mdl-data-table__cell--numeric.actions .mdl-button {
     margin-right: 10px;
 }

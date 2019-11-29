@@ -35,6 +35,7 @@ var (
 	authOrg           string
 	oauthClientID     string
 	oauthClientSecret string
+	oauthRedirectURL  string
 	cookieSecret      string
 	uiBasePath        string
 
@@ -102,6 +103,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	ghManagerConfig = github.ManagerInitFlags(flagset)
 	flagset.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
 	flagset.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
+	flagset.StringVar(&oauthRedirectURL, "oauth-redirect-url", "", "GitHub redirect url")
 	flagset.StringVar(&cookieSecret, "cookie-secret", "", "Cookie store secret")
 	flagset.StringVar(&authOrg, "auth-org", "gardener", "GitHub organization to restrict access to the bot")
 	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
