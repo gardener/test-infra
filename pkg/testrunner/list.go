@@ -16,6 +16,9 @@ package testrunner
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"strings"
 	"sync"
 	"time"
@@ -26,8 +29,41 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// GetTestruns returns all testruns of a RunList as testrun array
+func (rl RunList) GetTestruns() []*tmv1beta1.Testrun {
+	testruns := make([]*tmv1beta1.Testrun, len(rl))
+	for i, run := range rl {
+		if run != nil {
+			testruns[i] = run.Testrun
+		}
+	}
+	return testruns
+}
+
+// HasErrors checks whether one run in list is erroneous.
+func (rl RunList) HasErrors() bool {
+	for _, run := range rl {
+		if run.Error != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// Errors returns all errors of all testruns in this testrun
+func (rl RunList) Errors() error {
+	var res *multierror.Error
+	for _, run := range rl {
+		if run.Error != nil {
+			res = multierror.Append(res, run.Error)
+		}
+	}
+	return util.ReturnMultiError(res)
+}
+
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string) {
+	runID := uuid.New().String()
 	var wg sync.WaitGroup
 	for i := range rl {
 		if rl[i].Error != nil {
@@ -39,6 +75,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string)
 			defer wg.Done()
 
 			for attempt := 0; attempt <= config.FlakeAttempts; attempt++ {
+				rl[i].SetRunID(runID)
 				rl[i].Exec(log, config, testrunNamePrefix)
 				rl[i].Metadata.Retries = attempt
 
@@ -85,7 +122,7 @@ func (rl RunList) RenderTable() string {
 		if run.Metadata.Retries != 0 {
 			name = fmt.Sprintf("%s(%d)", name, run.Metadata.Retries)
 		}
-		if purpose, ok := tr.GetAnnotations()[common.PurposeTestrunAnnotation]; ok {
+		if purpose, ok := tr.GetAnnotations()[common.AnnotationTestrunPurpose]; ok {
 			name = fmt.Sprintf("%s\n(%s)", name, purpose)
 		}
 		dimensions[dimension] = append(dimensions[dimension], []string{"", name})

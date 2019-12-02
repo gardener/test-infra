@@ -17,24 +17,17 @@ package testrunner
 import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-)
-
-const (
-	AnnotationLandscape       = "testrunner.testmachinery.sapcloud.io/landscape"
-	AnnotationK8sVersion      = "testrunner.testmachinery.sapcloud.io/k8sVersion"
-	AnnotationCloudProvider   = "testrunner.testmachinery.sapcloud.io/cloudprovider"
-	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
-	AnnotationDimension       = "testrunner.testmachinery.sapcloud.io/dimension"
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
-		AnnotationLandscape:       m.Landscape,
-		AnnotationK8sVersion:      m.KubernetesVersion,
-		AnnotationCloudProvider:   m.CloudProvider,
-		AnnotationOperatingSystem: m.OperatingSystem,
-		AnnotationDimension:       m.GetDimensionFromMetadata(),
+		common.AnnotationLandscape:       m.Landscape,
+		common.AnnotationK8sVersion:      m.KubernetesVersion,
+		common.AnnotationCloudProvider:   m.CloudProvider,
+		common.AnnotationOperatingSystem: m.OperatingSystem,
+		common.AnnotationDimension:       m.GetDimensionFromMetadata(),
 	}
 }
 
@@ -57,12 +50,13 @@ func (m *Metadata) DeepCopy() *Metadata {
 // MetadataFromTestrun reads metadata from a testrun
 func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	return &Metadata{
-		Landscape:         tr.Annotations[AnnotationLandscape],
-		KubernetesVersion: tr.Annotations[AnnotationK8sVersion],
-		CloudProvider:     tr.Annotations[AnnotationCloudProvider],
-		OperatingSystem:   tr.Annotations[AnnotationOperatingSystem],
+		Landscape:         tr.Annotations[common.AnnotationLandscape],
+		KubernetesVersion: tr.Annotations[common.AnnotationK8sVersion],
+		CloudProvider:     tr.Annotations[common.AnnotationCloudProvider],
+		OperatingSystem:   tr.Annotations[common.AnnotationOperatingSystem],
 		Testrun: TestrunMetadata{
-			ID: tr.Name,
+			ID:    tr.Name,
+			RunId: tr.Annotations[common.LabelTestrunRunID],
 		},
 	}
 }

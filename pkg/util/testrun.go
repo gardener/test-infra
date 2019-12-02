@@ -41,6 +41,16 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 	return v1beta1.PhaseStatusInit
 }
 
+func IsSystemStep(step *v1beta1.StepStatus) bool {
+	if len(step.Annotations) == 0 {
+		return false
+	}
+	if _, ok := step.Annotations[common.AnnotationSystemStep]; ok {
+		return true
+	}
+	return false
+}
+
 // Resume testruns resumes a testrun by adding the appropriate annotation to it
 func ResumeTestrun(ctx context.Context, k8sClient client.Client, tr *v1beta1.Testrun) error {
 	obj, err := client.ObjectKeyFromObject(tr)
@@ -53,7 +63,7 @@ func ResumeTestrun(ctx context.Context, k8sClient client.Client, tr *v1beta1.Tes
 	if tr.Annotations == nil {
 		tr.Annotations = make(map[string]string, 0)
 	}
-	tr.Annotations[common.ResumeTestrunAnnotation] = "true"
+	tr.Annotations[common.AnnotationResumeTestrun] = "true"
 	if err := k8sClient.Update(ctx, tr); err != nil {
 		return err
 	}

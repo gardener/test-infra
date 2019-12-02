@@ -7,8 +7,19 @@
         <div class="mdl-card__actions mdl-card--border">
             <div class="mdl-grid">
                 <div class="mdl-cell  mdl-list__item-primary-content">
-                    {{ .page.Dimension }}
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" id="run-id" value="{{ .page.RunID }}" readonly>
+                        <label class="mdl-textfield__label" for="run-id">Run Id</label>
+                    </div>
                 </div>
+                <div class="mdl-cell  mdl-list__item-primary-content">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" id="dimension" value="{{ .page.Dimension }}" readonly>
+                        <label class="mdl-textfield__label" for="dimension">Dimension</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mdl-grid">
                 <div class="mdl-cell mdl-list__item-primary-content">
                     <button class="mdl-button mdl-button--icon mdl-button--disabled"><i class="material-icons mdl-list__item-icon">schedule</i></button>
                     {{ .page.StartTime }}
@@ -35,7 +46,7 @@
                 </thead>
                 <tbody>
                 {{ range $_, $step := .page.Steps }}
-                    <tr>
+                    <tr {{if $step.IsSystem }} class="disabled" {{ end }}>
                         <td class="icon-cell">
                             <i id="phase-{{ $step.Name }}" class="material-icons mdl-list__item-icon" style="color:{{ $step.Phase.Color }}">{{ $step.Phase.Icon }}</i>
                             <div class="mdl-tooltip" for="phase-{{ $step.Name }}">{{ $step.Phase.Tooltip }}</div>

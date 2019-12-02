@@ -16,11 +16,36 @@ package common
 
 // Annotations
 const (
-	PurposeTestrunAnnotation = "testmachinery.sapcloud.io/purpose"
-	ResumeTestrunAnnotation  = "testmachinery.sapcloud.io/resume"
+	// AnnotationResumeTestrun is the annotation name to trigger resume on the testrun
+	AnnotationResumeTestrun = "testmachinery.sapcloud.io/resume"
 
-	TemplateIDTestrunAnnotation = "testrunner.testmachinery.sapcloud.io/templateID"
+	// AnnotationTestrunPurpose is the annotation name to specify a purpose of the testrun
+	AnnotationTestrunPurpose = "testmachinery.sapcloud.io/purpose"
 
+	// LabelTestrunRunID is the annotation to specify the unique name of the run (multiple testuns) this test belongs to.
+	// A run represents all tests that are running from one testrunner.
+	LabelTestrunRunID = "testrunner.testmachinery.sapcloud.io/runID"
+
+	// AnnotationTemplateIDTestrun is the annotation to specify the name of the template the testun is rendered from
+	AnnotationTemplateIDTestrun = "testrunner.testmachinery.sapcloud.io/templateID"
+
+	// AnnotationLandscape is the annotation to specify the landscape this testrun is testing
+	AnnotationLandscape = "testrunner.testmachinery.sapcloud.io/landscape"
+
+	// AnnotationK8sVersion is the annotation to specify the k8s version the testrun is testing
+	AnnotationK8sVersion = "testrunner.testmachinery.sapcloud.io/k8sVersion"
+
+	// AnnotationCloudProvider is the annotation to specify the cloudprovider the testrun is testing
+	AnnotationCloudProvider = "testrunner.testmachinery.sapcloud.io/cloudprovider"
+
+	// AnnotationOperatingSystem is the annotation to specify the operating system of teh shoot nodes the testrun is testing
+	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
+
+	// AnnotationDimension is the annotation to specify the dimension the testrun is testing
+	AnnotationDimension = "testrunner.testmachinery.sapcloud.io/dimension"
+
+	// AnnotationSystemStep is the testflow step annotation to specify that the step is a testmachinery system step.
+	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
 
 	// images

@@ -100,12 +100,12 @@ func (s *renderState) Rerender(tr *v1beta1.Testrun) (*testrunner.Run, error) {
 		return nil, err
 	}
 
-	templateID, ok := tr.GetAnnotations()[common.TemplateIDTestrunAnnotation]
+	templateID, ok := tr.GetAnnotations()[common.AnnotationTemplateIDTestrun]
 	if !ok {
 		return nil, errors.Errorf("testrun %s does not have a template id", tr.GetName())
 	}
 	for _, run := range runs {
-		if id := run.Testrun.GetAnnotations()[common.TemplateIDTestrunAnnotation]; id == templateID {
+		if id := run.Testrun.GetAnnotations()[common.AnnotationTemplateIDTestrun]; id == templateID {
 			return run, nil
 		}
 	}
@@ -135,7 +135,7 @@ func ParseTestrunsFromChart(log logr.Logger, chart *chartrenderer.RenderedChart)
 			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
 			continue
 		}
-		metav1.SetMetaDataAnnotation(&tr.ObjectMeta, common.TemplateIDTestrunAnnotation, filename)
+		metav1.SetMetaDataAnnotation(&tr.ObjectMeta, common.AnnotationTemplateIDTestrun, filename)
 		testruns = append(testruns, &tr)
 	}
 	return testruns
