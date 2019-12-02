@@ -17,11 +17,14 @@ package pages
 import (
 	"context"
 	"fmt"
+	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
 	"github.com/gorilla/mux"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
@@ -33,6 +36,7 @@ type testrunItem struct {
 	testrun   *v1beta1.Testrun
 	ID        string
 	Namespace string
+	RunID     string
 	Phase     IconWithTooltip
 	StartTime string
 	Duration  string
@@ -59,7 +63,22 @@ type testrunStepStatusItem struct {
 	Duration  string
 	Location  string
 
+	IsSystem bool
+
 	GrafanaURL string
+}
+
+type rungroupItem struct {
+	testruns  []*v1beta1.Testrun
+	phase     argov1alpha1.NodePhase
+	startTime *metav1.Time
+	completed int
+
+	DisplayName string
+	Name        string
+	StartTime   string
+	State       string
+	Phase       IconWithTooltip
 }
 
 func NewTestrunsPage(p *Page) http.HandlerFunc {
@@ -67,8 +86,13 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		ctx := context.Background()
 		defer ctx.Done()
 
+		listOpts := client.MatchingLabels(map[string]string{})
+		rg, rgOk := r.URL.Query()["runID"]
+		if rgOk {
+			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunRunID: rg[0]})
+		}
 		runs := &v1beta1.TestrunList{}
-		if err := p.runs.GetClient().List(ctx, runs); err != nil {
+		if err := p.runs.GetClient().List(ctx, runs, listOpts); err != nil {
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
 			return
 		}
@@ -76,19 +100,25 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		argoHostURL, _ := testrunner.GetArgoHost(p.runs.GetClient())
 		grafanaHostURL, _ := testrunner.GetGrafanaHost(p.runs.GetClient())
 
-		rawList := make(testrunItemList, len(runs.Items))
+		testrunsList := make(testrunItemList, len(runs.Items))
+		runsList := make(rungroupItemList, 0)
 		for i, tr := range runs.Items {
 			testrun := tr
+
+			if !rgOk {
+				runsList.Add(&testrun)
+			}
 			metadata := testrunner.MetadataFromTestrun(&tr)
 			startTime := ""
 			if tr.Status.StartTime != nil {
 				startTime = tr.Status.StartTime.Format(time.RFC822)
 			}
 			d := time.Duration(tr.Status.Duration) * time.Second
-			rawList[i] = testrunItem{
+			testrunsList[i] = testrunItem{
 				testrun:   &testrun,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
+				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
 				Phase:     PhaseIcon[util.TestrunStatusPhase(&tr)],
 				StartTime: startTime,
 				Duration:  d.String(),
@@ -96,16 +126,25 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				Dimension: metadata.GetDimensionFromMetadata(),
 			}
 			if argoHostURL != "" {
-				rawList[i].ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, &tr)
+				testrunsList[i].ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, &tr)
 			}
 			if grafanaHostURL != "" {
-				rawList[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, &tr)
+				testrunsList[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, &tr)
 			}
 		}
 
-		sort.Sort(rawList)
+		sort.Sort(testrunsList)
+		sort.Sort(runsList)
 		params := map[string]interface{}{
-			"tests": rawList[:50], // todo add pagination to not cut at 50 items
+			"rungroup":  rg,
+			"tests":     testrunsList,
+			"rungroups": runsList,
+		}
+		if len(testrunsList) > 50 {
+			params["tests"] = testrunsList[:50] // todo add pagination to not cut at 50 items
+		}
+		if len(runsList) > 5 {
+			params["rungroups"] = runsList[:5]
 		}
 
 		p.handleSimplePage("testruns.html", params)(w, r)
@@ -144,15 +183,15 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 
 		item := detailedTestrunItem{
 			testrunItem: testrunItem{
-				testrun:    tr,
-				ID:         tr.GetName(),
-				Namespace:  tr.GetNamespace(),
-				Phase:      PhaseIcon[util.TestrunStatusPhase(tr)],
-				StartTime:  startTime,
-				Duration:   d.String(),
-				Progress:   util.TestrunProgress(tr),
-				Dimension:  metadata.GetDimensionFromMetadata(),
-				GrafanaURL: "afadfadf",
+				testrun:   tr,
+				ID:        tr.GetName(),
+				Namespace: tr.GetNamespace(),
+				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
+				Phase:     PhaseIcon[util.TestrunStatusPhase(tr)],
+				StartTime: startTime,
+				Duration:  d.String(),
+				Progress:  util.TestrunProgress(tr),
+				Dimension: metadata.GetDimensionFromMetadata(),
 			},
 			Steps:     make(testrunStepStatusItemList, len(tr.Status.Steps)),
 			RawStatus: statusTable.String(),
@@ -178,6 +217,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				StartTime: startTime,
 				Duration:  d.String(),
 				Location:  fmt.Sprintf("%s:%s", step.TestDefinition.Location.Repo, step.TestDefinition.Location.Revision),
+				IsSystem:  util.IsSystemStep(step),
 			}
 			if grafanaHostURL != "" {
 				item.Steps[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForStep(grafanaHostURL, tr, step)
@@ -236,4 +276,89 @@ func (l testrunStepStatusItemList) Less(a, b int) bool {
 		return true
 	}
 	return l[a].step.StartTime.Before(l[b].step.StartTime)
+}
+
+type rungroupItemList []rungroupItem
+
+func (l rungroupItemList) Len() int      { return len(l) }
+func (l rungroupItemList) Swap(a, b int) { l[a], l[b] = l[b], l[a] }
+func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
+	list := *l
+	runId, ok := tr.GetLabels()[common.LabelTestrunRunID]
+	if !ok {
+		return
+	}
+
+	isCompleted := 0
+	if util.Completed(tr.Status.Phase) {
+		isCompleted = 1
+	}
+
+	for i, run := range list {
+		if run.Name == runId {
+			list[i].testruns = append(run.testruns, tr)
+			list[i].phase = mergePhases(run.phase, tr.Status.Phase)
+			list[i].Phase = PhaseIcon[list[i].phase]
+			list[i].completed = list[i].completed + isCompleted
+			list[i].State = fmt.Sprintf("%d/%d Testruns are completed", list[i].completed, len(list[i].testruns))
+			return
+		}
+	}
+
+	*l = append(*l, rungroupItem{
+		testruns:    []*v1beta1.Testrun{tr},
+		phase:       util.TestrunStatusPhase(tr),
+		startTime:   tr.Status.StartTime,
+		completed:   1,
+		DisplayName: testgroupDisplayName(tr),
+		Name:        runId,
+		StartTime:   tr.Status.StartTime.Format(time.RFC822),
+		State:       fmt.Sprintf("%d/%d Testruns are completed", isCompleted, 1),
+		Phase:       PhaseIcon[util.TestrunStatusPhase(tr)],
+	})
+}
+func (l rungroupItemList) Less(a, b int) bool {
+	if l[a].phase != l[b].phase {
+		if l[a].phase == v1beta1.PhaseStatusRunning {
+			return true
+		}
+		if l[b].phase == v1beta1.PhaseStatusRunning {
+			return false
+		}
+
+		if l[a].phase == v1beta1.PhaseStatusInit {
+			return false
+		}
+		if l[b].phase == v1beta1.PhaseStatusInit {
+			return true
+		}
+	}
+	if l[a].startTime == nil || l[b].startTime == nil {
+		return true
+	}
+	return l[a].startTime.Before(l[b].startTime)
+}
+
+func mergePhases(a, b argov1alpha1.NodePhase) argov1alpha1.NodePhase {
+	if a == v1beta1.PhaseStatusRunning || b == v1beta1.PhaseStatusRunning {
+		return v1beta1.PhaseStatusRunning
+	}
+	if a == v1beta1.PhaseStatusFailed || b == v1beta1.PhaseStatusFailed {
+		return v1beta1.PhaseStatusFailed
+	}
+	if a == v1beta1.PhaseStatusError || b == v1beta1.PhaseStatusError {
+		return v1beta1.PhaseStatusError
+	}
+	if a == v1beta1.PhaseStatusTimeout || b == v1beta1.PhaseStatusTimeout {
+		return v1beta1.PhaseStatusTimeout
+	}
+	return a
+}
+
+func testgroupDisplayName(tr *v1beta1.Testrun) string {
+	landscape, ok := tr.GetAnnotations()[common.AnnotationLandscape]
+	if ok {
+		return landscape
+	}
+	return ""
 }

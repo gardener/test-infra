@@ -35,6 +35,7 @@ type Config struct {
 	Timeout time.Duration
 
 	// Poll interval to check the testrun status
+	// DEPRECATED
 	Interval time.Duration
 
 	// Number of testrun retries after a failed run
@@ -108,6 +109,9 @@ type Metadata struct {
 type TestrunMetadata struct {
 	// Name of the testrun crd object.
 	ID string `json:"id"`
+
+	// Name of the run this test belongs to
+	RunId string `json:"runID,omitempty"`
 
 	// StartTime of the testrun.
 	StartTime *metav1.Time `json:"startTime"`

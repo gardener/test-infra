@@ -120,6 +120,14 @@ ul.noBullets li {
     margin-right: 10px;
 }
 
+.runs_container .mdl-cell {
+    width: auto;
+}
+
+tr.disabled {
+    opacity: 50%;
+}
+
 .home {
     width: 90%;
     margin: 0 auto;

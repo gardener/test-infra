@@ -18,42 +18,19 @@ import (
 	"context"
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
 )
 
-// GetTestruns returns all testruns of a RunList as testrun array
-func (rl RunList) GetTestruns() []*tmv1beta1.Testrun {
-	testruns := make([]*tmv1beta1.Testrun, len(rl))
-	for i, run := range rl {
-		if run != nil {
-			testruns[i] = run.Testrun
-		}
+// SetRunID sets the provided run id as annotation and adds it to the metadata
+func (r *Run) SetRunID(id string) {
+	if r.Testrun.Labels == nil {
+		r.Testrun.Labels = make(map[string]string, 1)
 	}
-	return testruns
-}
-
-// HasErrors checks whether one run in list is erroneous.
-func (rl RunList) HasErrors() bool {
-	for _, run := range rl {
-		if run.Error != nil {
-			return true
-		}
-	}
-	return false
-}
-
-// Errors returns all errors of all testruns in this testrun
-func (rl RunList) Errors() error {
-	var res *multierror.Error
-	for _, run := range rl {
-		if run.Error != nil {
-			res = multierror.Append(res, run.Error)
-		}
-	}
-	return util.ReturnMultiError(res)
+	r.Testrun.Labels[common.LabelTestrunRunID] = id
+	r.Metadata.Testrun.RunId = id
 }
 
 func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {

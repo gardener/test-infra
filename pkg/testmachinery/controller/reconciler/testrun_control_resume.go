@@ -30,14 +30,14 @@ import (
 
 // Resume a workflow if a specific annotation is set
 func (r *TestmachineryReconciler) resumeAction(ctx context.Context, rCtx *reconcileContext) error {
-	if b, ok := rCtx.tr.Annotations[common.ResumeTestrunAnnotation]; ok && b == "true" {
+	if b, ok := rCtx.tr.Annotations[common.AnnotationResumeTestrun]; ok && b == "true" {
 		// resume workflow
 		argo.ResumeWorkflow(rCtx.wf)
 		if err := r.Client.Update(ctx, rCtx.wf); err != nil {
 			return err
 		}
 
-		delete(rCtx.tr.Annotations, common.ResumeTestrunAnnotation)
+		delete(rCtx.tr.Annotations, common.AnnotationResumeTestrun)
 		rCtx.updated = true
 	}
 	return nil
