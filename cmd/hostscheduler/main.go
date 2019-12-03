@@ -36,12 +36,12 @@ var hostschedulerCmd = &cobra.Command{
 	Aliases: []string{"hs"},
 	Short:   "Manage gardener host cluster for gardener tests",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		var err error
-		_, err = logger.NewCliLogger()
+		log, err := logger.NewCliLogger()
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
+		logger.SetLogger(log)
 		cmdutil.ViperHelper.ApplyConfig()
 	},
 }
