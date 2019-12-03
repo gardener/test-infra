@@ -123,14 +123,14 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		return err
 	}
 
-	if err := t.applyDefaultShootFlavors(defaultConfig, flagset); err != nil {
+	if err := t.applyDefaultShootFlavors(&defaultConfig, flagset); err != nil {
 		return err
 	}
 	t.config.Shoots.Flavors, err = shootflavors.New(*defaultConfig.ShootFlavors)
 	return err
 }
 
-func (t *test) applyDefaultShootFlavors(defaultConfig DefaultsConfig, flagset *pflag.FlagSet) error {
+func (t *test) applyDefaultShootFlavors(defaultConfig *DefaultsConfig, flagset *pflag.FlagSet) error {
 
 	if flagset.Changed(cloudprovider) && flagset.Changed(kubernetesVersion) {
 		flavors := make([]*common.ShootFlavor, len(t.cloudproviders))
