@@ -20,7 +20,7 @@ testrunner run-gardener [flags]
       --fail-on-error                      Testrunners exits with 1 if one testruns failed. (default true)
       --garden-setup-version string        Specify the garden setup version to setup gardener (default "master")
       --gardener-commit string             Specify the gardener commit that is deployed by garden setup
-      --gardener-extensions string         Specify the gardener extensions versions to be deployed by garden setup (default "provider-gcp=github.com/gardener/gardener-extensions.git:master")
+      --gardener-extensions string         Specify the gardener extensions versions to be deployed by garden setup (default "provider-gcp=github.com/gardener/gardener-extensions.git::master")
       --gardener-image string              Specify the gardener image tag to be deployed by garden setup
       --gardener-version string            Specify the gardener version to be deployed by garden setup
   -h, --help                               help for run-gardener

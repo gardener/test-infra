@@ -35,6 +35,7 @@ testrunner run-template [flags]
       --s3-ssl                                S3 has SSL enabled.
       --set string                            setValues additional helm values
       --shoot-name string                     Shoot name which is used to run tests.
+      --testrun-flake-attempts int            Max number of testruns until testrun is successful
       --testrun-prefix string                 Testrun name prefix which is used to generate a unique testrun name. (default "default-")
       --testruns-chart-path string            Path to the default testruns chart.
       --timeout int                           Timout in seconds of the testrunner to wait for the complete testrun to finish. (default 3600)

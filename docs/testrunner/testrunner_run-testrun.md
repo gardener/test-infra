@@ -13,13 +13,14 @@ testrunner run-testrun [flags]
 ### Options
 
 ```
-  -f, --file string                 Path to the testrun yaml
-  -h, --help                        help for run-testrun
-      --interval int                Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
-      --name-prefix string          Name prefix of the testrun (default "testrunner-")
-  -n, --namespace string            Namespace where the testrun should be deployed. (default "default")
-      --timeout int                 Timout in seconds of the testrunner to wait for the complete testrun to finish. (default 3600)
-      --tm-kubeconfig-path string   Path to the testmachinery cluster kubeconfig
+  -f, --file string                  Path to the testrun yaml
+  -h, --help                         help for run-testrun
+      --interval int                 Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
+      --name-prefix string           Name prefix of the testrun (default "testrunner-")
+  -n, --namespace string             Namespace where the testrun should be deployed. (default "default")
+      --testrun-flake-attempts int   Max number of testruns until testrun is successful
+      --timeout int                  Timout in seconds of the testrunner to wait for the complete testrun to finish. (default 3600)
+      --tm-kubeconfig-path string    Path to the testmachinery cluster kubeconfig
 ```
 
 ### Options inherited from parent commands
