@@ -24,6 +24,7 @@ Testrunner for Test Machinery
 * [testrunner collect](testrunner_collect.md)	 - Collects results from a completed testrun.
 * [testrunner docs](testrunner_docs.md)	 - Generate docs for the testrunner
 * [testrunner gardener-telemetry](testrunner_gardener-telemetry.md)	 - Collects metrics during gardener updates until gardener is updated and all shoots are successfully reconciled
+* [testrunner notify](testrunner_notify.md)	 - Posts a result table of a previous run as table to slack.
 * [testrunner run-gardener](testrunner_run-gardener.md)	 - Run the testrunner with the default gardener test
 * [testrunner run-template](testrunner_run-template.md)	 - Run the testrunner with a helm template containing testruns
 * [testrunner run-testrun](testrunner_run-testrun.md)	 - Run the testrunner with a testrun

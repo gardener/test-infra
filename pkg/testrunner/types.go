@@ -162,3 +162,11 @@ type StepPreComputed struct {
 	// the cluster domain of the testmachinery (useful to build other URLs in dashboards)
 	ClusterDomain string `json:"clusterDomain,omitempty"`
 }
+
+// Dimension describes the basic dimension of a test
+type Dimension struct {
+	Description       string `json:"description,omitempty"`
+	Cloudprovider     string `json:"cloudprovider,omitempty"`
+	KubernetesVersion string `json:"k8sVersion,omitempty"`
+	OperatingSystem   string `json:"operating_system,omitempty"`
+}
