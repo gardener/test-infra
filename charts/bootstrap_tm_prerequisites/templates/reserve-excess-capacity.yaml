@@ -42,10 +42,9 @@ spec:
       # ensure pods are placed on "purpose: testload" labeled nodes (if present)
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
               - key: purpose
                 operator: In
                 values:
