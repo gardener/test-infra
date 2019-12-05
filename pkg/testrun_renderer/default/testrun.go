@@ -63,13 +63,13 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 
 	deps := make([]string, len(shoots))
 	for i, shootConfig := range shoots {
-		steps, err := GetShootTest(cfg.Gardener, shootConfig, []string{createGardener.Name})
+		steps, deleteShootStep, err := GetShootTest(cfg.Gardener, shootConfig, []string{createGardener.Name})
 		if err != nil {
 			return nil, err
 		}
 
 		tr.Spec.TestFlow = append(tr.Spec.TestFlow, steps...)
-		deps[i] = steps[1].Name
+		deps[i] = deleteShootStep.Name
 	}
 
 	// add gardener tests
@@ -96,14 +96,14 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 // - create-shoot
 // - tests
 // - delete-shoot
-func GetShootTest(gardenerConfig templates.GardenerConfig, shootConfig *shoot, dependencies []string) ([]*v1beta1.DAGStep, error) {
+func GetShootTest(gardenerConfig templates.GardenerConfig, shootConfig *shoot, dependencies []string) ([]*v1beta1.DAGStep, *v1beta1.DAGStep, error) {
 	createShootStep, createShootStepName, err := templates.GetStepCreateShoot(gardenerConfig, shootConfig.Type, fmt.Sprintf("create-%s", shootConfig.Suffix), dependencies, shootConfig.Config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	//defaultTestStep := templates.GetTestStepWithLabels(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStep.Name}, shootConfig.TestLabel, string(testmachinery.TestLabelShoot))
 	tests, testDep, err := shootConfig.TestsFunc(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStepName})
 	deleteShootStep := templates.GetStepDeleteShoot(fmt.Sprintf("delete-%s", shootConfig.Suffix), createShootStepName, shootConfig.Config.ShootName, testDep)
 
-	return append(append(createShootStep, &deleteShootStep), tests...), nil
+	return append(append(createShootStep, &deleteShootStep), tests...), &deleteShootStep, nil
 }

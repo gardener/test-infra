@@ -66,6 +66,7 @@ func renderTableFromAsset(overview result.AssetOverview) (string, error) {
 
 	table.SetHeader(header)
 	table.AppendBulk(res.GetContent())
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.Render()
 	return writer.String(), nil
 }

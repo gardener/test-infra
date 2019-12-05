@@ -105,6 +105,6 @@ func header() string {
 
 func legend() string {
 	return fmt.Sprintf(`
-%s: Tests succeeded | %s: Tests failed | N/A: Tests not applicable
-`, SucessSymbols[true], SucessSymbols[false])
+%s: Tests succeeded | %s: Tests failed | %s: Tests not applicable
+`, SucessSymbols[true], SucessSymbols[false], NA)
 }
