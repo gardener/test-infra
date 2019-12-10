@@ -116,4 +116,6 @@ spec:
         - workflow-controller
         image: argoproj/workflow-controller:{{ .Values.argo.tag }}
         name: workflow-controller
+        resouces:
+          {{- toYaml .Values.argo.resources | nindent 10 }}
       serviceAccountName: argo

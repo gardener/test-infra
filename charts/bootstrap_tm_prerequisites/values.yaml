@@ -15,7 +15,13 @@
 argo:
   tag: v2.4.2
   containerRuntimeExecutor: docker
-
+  resources: {}
+  # requests:
+  #   cpu: 200m
+  #   memory: 256Mi
+  # limits:
+  #   cpu: 1
+  #   memory: 1Gi
 configmap:
   name: tm-config
 
