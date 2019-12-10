@@ -64,6 +64,7 @@ func (rl RunList) Errors() error {
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string) {
 	runID := uuid.New().String()
+	log.Info(fmt.Sprintf("Starting testruns execution group %s", runID))
 	var wg sync.WaitGroup
 	for i := range rl {
 		if rl[i].Error != nil {
