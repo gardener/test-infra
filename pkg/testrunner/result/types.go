@@ -15,6 +15,7 @@
 package result
 
 import (
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
 	"github.com/go-logr/logr"
 )
@@ -36,7 +37,7 @@ type Config struct {
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
 
-	// EnableTelemetry enbales the measurement of shoot downtimes during execution
+	// EnableTelemetry enables the measurement of shoot downtimes during execution
 	EnableTelemetry bool
 
 	// ComponentDescriptorPath path to the component descriptor file
@@ -58,9 +59,11 @@ type Config struct {
 }
 
 type Collector struct {
-	log       logr.Logger
-	config    Config
-	telemetry *telemetryCtrl.Telemetry
+	log    logr.Logger
+	config Config
+
+	telemetry        *telemetryCtrl.Telemetry
+	telemetryResults map[string]*analyse.Figures
 }
 
 // notificationConfig is the configuration that is used by concourse to send notifications.

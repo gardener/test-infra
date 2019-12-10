@@ -84,7 +84,6 @@ var runCmd = &cobra.Command{
 		}
 
 		testrunnerConfig.Timeout = time.Duration(timeout) * time.Second
-		testrunnerConfig.Interval = time.Duration(interval) * time.Second
 		testrunnerConfig.FlakeAttempts = testrunFlakeAttempts
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
 

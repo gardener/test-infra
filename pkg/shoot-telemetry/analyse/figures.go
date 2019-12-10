@@ -19,21 +19,21 @@ import (
 	"sort"
 )
 
-type figures struct {
+type Figures struct {
 	Name                  string                       `json:"name"`
 	Provider              string                       `json:"provider"`
 	Seed                  string                       `json:"seed"`
 	CountUnhealthyPeriods int                          `json:"countUnhealthyPeriods"`
 	CountRequests         int                          `json:"countRequest"`
 	CountTimeouts         int                          `json:"countRequestTimeouts"`
-	DownPeriods           *figuresDowntimePeriods      `json:"downTimesSec"`
-	ResponseTimeDuration  *figuresResponseTimeDuration `json:"responseTimesMs"`
+	DownPeriods           *FiguresDowntimePeriods      `json:"downTimesSec"`
+	ResponseTimeDuration  *FiguresResponseTimeDuration `json:"responseTimesMs"`
 
 	downPeriodsStore     durationList
 	requestDurationStore responseTimeList
 }
 
-type figuresResponseTimeDuration struct {
+type FiguresResponseTimeDuration struct {
 	Min    int     `json:"min"`
 	Max    int     `json:"max"`
 	Avg    float64 `json:"avg"`
@@ -41,7 +41,7 @@ type figuresResponseTimeDuration struct {
 	Std    float64 `json:"std"`
 }
 
-type figuresDowntimePeriods struct {
+type FiguresDowntimePeriods struct {
 	Min    float64 `json:"min"`
 	Max    float64 `json:"max"`
 	Avg    float64 `json:"avg"`
@@ -49,11 +49,11 @@ type figuresDowntimePeriods struct {
 	Std    float64 `json:"std"`
 }
 
-func (f *figures) calculateDownPeriodStatistics() {
+func (f *Figures) calculateDownPeriodStatistics() {
 	if f.CountUnhealthyPeriods < 1 {
 		return
 	}
-	f.DownPeriods = &figuresDowntimePeriods{}
+	f.DownPeriods = &FiguresDowntimePeriods{}
 	sort.Sort(f.downPeriodsStore)
 
 	var sum, sumSqrt, avg, variance float64
@@ -82,11 +82,11 @@ func (f *figures) calculateDownPeriodStatistics() {
 	f.DownPeriods.Std = math.Sqrt(variance)
 }
 
-func (f *figures) calculateResponseTimeStatistics() {
+func (f *Figures) calculateResponseTimeStatistics() {
 	if f.CountRequests-f.CountTimeouts < 1 {
 		return
 	}
-	f.ResponseTimeDuration = &figuresResponseTimeDuration{}
+	f.ResponseTimeDuration = &FiguresResponseTimeDuration{}
 	sort.Sort(f.requestDurationStore)
 
 	var (

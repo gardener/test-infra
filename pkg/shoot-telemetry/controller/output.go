@@ -37,7 +37,7 @@ func (c *controller) generateOutput() error {
 		doc    = csv.NewWriter(outputFile)
 		record = []string{common.MeasurementsHeadCluster, common.MeasurementsHeadProvider, common.MeasurementsHeadSeed, common.MeasurementsHeadTimestamp, common.MeasurementsHeadStatusCode, common.MeasurementsHeadResponseTime}
 	)
-	logger.Log.V(3).Info("Write measurements to file")
+	logger.Log.V(5).Info("Write measurements to file")
 
 	outputFileStat, err := outputFile.Stat()
 	if err != nil {

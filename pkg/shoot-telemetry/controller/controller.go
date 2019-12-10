@@ -136,7 +136,7 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	}
 
 	if !config.DisableAnalyse {
-		if err := analyse.Analyse(controller.config.OutputFile, controller.config.AnalyseOutput, controller.config.AnalyseFormat); err != nil {
+		if _, err := analyse.Analyse(controller.config.OutputFile, controller.config.AnalyseOutput, controller.config.AnalyseFormat); err != nil {
 			return err
 		}
 		if controller.config.AnalyseOutput != "" {
@@ -153,18 +153,18 @@ func (c *controller) addShoot(obj interface{}) {
 		return
 	}
 	if c.filterShoot(shoot) {
-		logger.Logf(logger.Log.V(5).Info, "%s Filter shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+		logger.Logf(logger.Log.V(6).Info, "%s Filter shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		return
 	}
 
 	// Reject Shoots which are configured to be hibernated or Shoots which should wake up are still hibernated.
 	if (shoot.Spec.Hibernation != nil && shoot.Spec.Hibernation.Enabled != nil && *shoot.Spec.Hibernation.Enabled) || shoot.Status.IsHibernated {
-		logger.Logf(logger.Log.Info, "%s Reject hibernated shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+		logger.Logf(logger.Log.V(5).Info, "%s Reject hibernated shoot: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		return
 	}
 
 	if shoot.Status.LastOperation != nil && shoot.Status.LastOperation.Type == "Reconcile" {
-		logger.Logf(logger.Log.V(3).Info, "%s Add shoot to queue: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
+		logger.Logf(logger.Log.V(5).Info, "%s Add shoot to queue: %s/%s", common.LogDebugAddPrefix, shoot.Namespace, shoot.Name)
 		c.addTarget(shoot)
 	}
 }
@@ -178,20 +178,20 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 		return
 	}
 	if c.filterShoot(newShoot) {
-		logger.Logf(logger.Log.V(5).Info, "%s Filter shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+		logger.Logf(logger.Log.V(6).Info, "%s Filter shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 		return
 	}
 
 	// Remove shoots which are hibernated.
 	if (newShoot.Spec.Hibernation != nil && newShoot.Spec.Hibernation.Enabled != nil && *newShoot.Spec.Hibernation.Enabled) || newShoot.Status.IsHibernated {
-		logger.Logf(logger.Log.V(3).Info, "%s Ignore hibernated shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+		logger.Logf(logger.Log.V(5).Info, "%s Ignore hibernated shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 		c.removeTarget(oldShoot)
 		return
 	}
 
 	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate && newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate {
 		if oldShoot.Status.LastOperation.Progress != newShoot.Status.LastOperation.Progress && newShoot.Status.LastOperation.Progress == 100 {
-			logger.Logf(logger.Log.V(3).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+			logger.Logf(logger.Log.V(5).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 			c.addTarget(newShoot)
 		}
 		return
@@ -199,7 +199,7 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 
 	// Remove shoot from queue if it move from reconcile to create/delete.
 	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile && newShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
-		logger.Logf(logger.Log.V(3).Info, "%s Remove shoot %s/%s from queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+		logger.Logf(logger.Log.V(5).Info, "%s Remove shoot %s/%s from queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 		c.removeTarget(oldShoot)
 		return
 	}
@@ -207,14 +207,14 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	if newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile {
 		// Add Shoot again if it was hibernated before and woke up again.
 		if oldShoot.Status.IsHibernated {
-			logger.Logf(logger.Log.V(3).Info, "%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
+			logger.Logf(logger.Log.V(5).Info, "%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
 			c.addTarget(newShoot)
 			return
 		}
 
 		// Add Shoot if it moves from other State(Create) into Reconcile state.
 		if oldShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
-			logger.Logf(logger.Log.V(3).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
+			logger.Logf(logger.Log.V(5).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 			c.addTarget(newShoot)
 			return
 		}

@@ -28,23 +28,23 @@ import (
 
 // Analyse reads a file with measurements on a given path <inputFilePath> and
 // detects periods when Cluster API servers were not healthy. It calculates and
-// prints some statistical key figures for the unhealthy periods per cluster.
+// prints some statistical key Figures for the unhealthy periods per cluster.
 // The <outputPath> parameter specifies the file to store the analysis. Empty string means stdout.
 // The <outputFormat> parameter specifies how the analysis results should be formatted.
-func Analyse(inputFilePath, outputPath, outputFormat string) error {
+func Analyse(inputFilePath, outputPath, outputFormat string) (map[string]*Figures, error) {
 	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
-		return errors.New("input file does not exist")
+		return nil, errors.New("input file does not exist")
 	}
 	inputFile, err := os.Open(inputFilePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer inputFile.Close()
 
 	var (
 		csvReader     = csv.NewReader(inputFile)
 		downTimeCache = make(map[string]string)
-		figuresStore  = make(map[string]*figures)
+		figuresStore  = make(map[string]*Figures)
 		rowCounter    int
 	)
 
@@ -54,10 +54,10 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if len(record) != 6 {
-			return fmt.Errorf("invalid row %d", rowCounter)
+			return nil, fmt.Errorf("invalid row %d", rowCounter)
 		}
 		// Skip the first/head row.
 		if record[0] == common.MeasurementsHeadCluster && record[1] == common.MeasurementsHeadProvider && record[2] == common.MeasurementsHeadSeed && record[3] == common.MeasurementsHeadTimestamp && record[4] == common.MeasurementsHeadStatusCode && record[5] == common.MeasurementsHeadResponseTime {
@@ -68,7 +68,7 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 		// Check if a figure for this entry already exists, if not create one.
 		figure, exists := figuresStore[record[0]]
 		if !exists {
-			figure = &figures{
+			figure = &Figures{
 				Name:     record[0],
 				Provider: record[1],
 				Seed:     record[2],
@@ -79,7 +79,7 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 		// Parse Request Duration
 		responseTime, err := strconv.Atoi(record[5])
 		if err != nil {
-			return err
+			return nil, err
 		}
 		// Ignore timeouts and count the request timeout occurrences.
 		figure.CountRequests++
@@ -92,18 +92,18 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 		// Parse Status Code.
 		statusCode, err := strconv.Atoi(record[4])
 		if err != nil {
-			return err
+			return nil, err
 		}
 		downTimeStart, cached := downTimeCache[record[0]]
 		if statusCode >= 200 && statusCode < 299 {
 			if cached {
 				downTimeStart, err := time.Parse(time.RFC3339, downTimeStart)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				downTimeEnd, err := time.Parse(time.RFC3339, record[3])
 				if err != nil {
-					return err
+					return nil, err
 				}
 				figure.CountUnhealthyPeriods++
 				figure.downPeriodsStore = append(figure.downPeriodsStore, downTimeEnd.Sub(downTimeStart))
@@ -122,10 +122,10 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 
 	// Create a new report.
 	result := report{
-		Figures: []*figures{},
+		Figures: []*Figures{},
 	}
 
-	// Calculate statistical figures per cluster and add them to the report.
+	// Calculate statistical Figures per cluster and add them to the report.
 	for _, f := range figuresStore {
 		f.calculateDownPeriodStatistics()
 		f.calculateResponseTimeStatistics()
@@ -134,8 +134,8 @@ func Analyse(inputFilePath, outputPath, outputFormat string) error {
 
 	// Export the report.
 	if err := result.exportReport(outputFormat, outputPath); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return figuresStore, nil
 }

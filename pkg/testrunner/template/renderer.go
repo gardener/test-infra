@@ -1,8 +1,8 @@
 package template
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
@@ -14,13 +14,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
+	chartapi "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/strvals"
+	"k8s.io/helm/pkg/timeconv"
+	"path/filepath"
 )
 
 // templateRenderer is the internal template templateRenderer
 type templateRenderer struct {
 	log      logr.Logger
-	renderer chartrenderer.Interface
+	renderer *engine.Engine
 
 	defaultValues map[string]interface{}
 }
@@ -35,7 +38,7 @@ type renderState struct {
 }
 
 func newTemplateRenderer(log logr.Logger, setValues string, fileValues []string) (*templateRenderer, error) {
-	chartRenderer := chartrenderer.New(engine.New(), &chartutil.Capabilities{})
+	chartRenderer := engine.New()
 	values, err := determineDefaultValues(setValues, fileValues)
 	if err != nil {
 		return nil, err
@@ -48,8 +51,8 @@ func newTemplateRenderer(log logr.Logger, setValues string, fileValues []string)
 	}, nil
 }
 
-// RenderChart renders a helm chart of multiple testruns with values and returns a list of runs.
-func (r *templateRenderer) RenderChart(parameters *internalParameters, chartPath string, valueRenderer ValueRenderer) (testrunner.RunList, error) {
+// Render renders a helm chart of multiple testruns with values and returns a list of runs.
+func (r *templateRenderer) Render(parameters *internalParameters, chartPath string, valueRenderer ValueRenderer) (testrunner.RunList, error) {
 	if chartPath == "" {
 		return make(testrunner.RunList, 0), nil
 	}
@@ -61,41 +64,89 @@ func (r *templateRenderer) RenderChart(parameters *internalParameters, chartPath
 		parameters:       parameters,
 	}
 
-	values, metadata, info, err := valueRenderer.Render(r.defaultValues)
-	if err != nil {
-		return nil, err
-	}
-	chart, err := r.renderer.Render(chartPath, "", "", values)
+	c, err := chartutil.Load(chartPath)
 	if err != nil {
 		return nil, err
 	}
 
-	testruns := ParseTestrunsFromChart(r.log, chart)
-	renderedTestruns := make(testrunner.RunList, len(testruns))
-	for i, tr := range testruns {
-		meta := metadata.DeepCopy()
-		// Add all repositories defined in the component descriptor to the testrun locations.
-		// This gives us all dependent repositories as well as there deployed version.
-		if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", parameters.ComponentDescriptor, true); err != nil {
-			r.log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
-			continue
+	// split all found templates into separate charts
+	templates, files := splitTemplates(c.GetTemplates())
+	runs := make(testrunner.RunList, 0)
+	for _, tmpl := range files {
+		values, metadata, info, err := valueRenderer.Render(r.defaultValues)
+		if err != nil {
+			return nil, err
+		}
+		c.Templates = append(templates, tmpl)
+		files, err := r.RenderChart(c, parameters.Namespace, values)
+		if err != nil {
+			return nil, err
 		}
 
-		// Add runtime annotations to the testrun
-		addAnnotationsToTestrun(tr, meta.CreateAnnotations())
+		testruns := parseTestrunsFromChart(r.log, files)
 
-		renderedTestruns[i] = &testrunner.Run{
-			Info:       info,
-			Testrun:    tr,
-			Metadata:   meta,
-			Rerenderer: state,
+		for _, tr := range testruns {
+			meta := metadata.DeepCopy()
+			// Add all repositories defined in the component descriptor to the testrun locations.
+			// This gives us all dependent repositories as well as there deployed version.
+			if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", parameters.ComponentDescriptor, true); err != nil {
+				r.log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
+				continue
+			}
+
+			// Add runtime annotations to the testrun
+			addAnnotationsToTestrun(tr, meta.CreateAnnotations())
+
+			runs = append(runs, &testrunner.Run{
+				Info:       info,
+				Testrun:    tr,
+				Metadata:   meta,
+				Rerenderer: state,
+			})
 		}
+
 	}
-	return renderedTestruns, nil
+
+	return runs, nil
+}
+
+func (r *templateRenderer) RenderChart(chart *chartapi.Chart, namespace string, values map[string]interface{}) (map[string]string, error) {
+	chartName := chart.GetMetadata().GetName()
+
+	parsedValues, err := json.Marshal(values)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse variables for chart %s: ,%s", chartName, err)
+	}
+	chartConfig := &chartapi.Config{Raw: string(parsedValues)}
+
+	err = chartutil.ProcessRequirementsEnabled(chart, chartConfig)
+	if err != nil {
+		return nil, fmt.Errorf("can't process requirements for chart %s: ,%s", chartName, err)
+	}
+	err = chartutil.ProcessRequirementsImportValues(chart)
+	if err != nil {
+		return nil, fmt.Errorf("can't process requirements for import values for chart %s: ,%s", chartName, err)
+	}
+
+	revision := 1
+	ts := timeconv.Now()
+	options := chartutil.ReleaseOptions{
+		Name:      util.RandomString(5),
+		Time:      ts,
+		Namespace: namespace,
+		Revision:  revision,
+		IsInstall: true,
+	}
+
+	valuesToRender, err := chartutil.ToRenderValuesCaps(chart, chartConfig, options, nil)
+	if err != nil {
+		return nil, err
+	}
+	return r.renderer.Render(chart, valuesToRender)
 }
 
 func (s *renderState) Rerender(tr *v1beta1.Testrun) (*testrunner.Run, error) {
-	runs, err := s.RenderChart(s.parameters, s.chartPath, s.values)
+	runs, err := s.Render(s.parameters, s.chartPath, s.values)
 	if err != nil {
 		return nil, err
 	}
@@ -127,9 +178,26 @@ func determineDefaultValues(setValues string, fileValues []string) (map[string]i
 	return values, nil
 }
 
-func ParseTestrunsFromChart(log logr.Logger, chart *chartrenderer.RenderedChart) []*v1beta1.Testrun {
+// splitTemplates splits all found templates into 2 lists of .tpl and other files
+// todo: improve to check whether the template is a testrun
+func splitTemplates(all []*chartapi.Template) ([]*chartapi.Template, []*chartapi.Template) {
+	var (
+		templates = make([]*chartapi.Template, 0)
+		others    = make([]*chartapi.Template, 0)
+	)
+	for _, tmpl := range all {
+		if filepath.Ext(tmpl.Name) == ".tpl" {
+			templates = append(templates, tmpl)
+		} else {
+			others = append(others, tmpl)
+		}
+	}
+	return templates, others
+}
+
+func parseTestrunsFromChart(log logr.Logger, files map[string]string) []*v1beta1.Testrun {
 	testruns := make([]*v1beta1.Testrun, 0)
-	for filename, file := range chart.Files() {
+	for filename, file := range files {
 		tr, err := util.ParseTestrun([]byte(file))
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))

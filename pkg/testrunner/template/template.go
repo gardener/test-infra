@@ -76,6 +76,7 @@ func getInternalParametersFunc(parameters *Parameters) (func(string) *internalPa
 			FlavorConfigPath:    parameters.FlavorConfigPath,
 			ComponentDescriptor: componentDescriptor,
 			ChartPath:           chartPath,
+			Namespace:           parameters.Namespace,
 			GardenerKubeconfig:  gardenerKubeconfig,
 			GardenerVersion:     gardenerVersion,
 			Landscape:           parameters.Landscape,
@@ -87,7 +88,7 @@ func renderDefaultChart(renderer *templateRenderer, parameters *internalParamete
 	if parameters.ChartPath == "" {
 		return make(testrunner.RunList, 0), nil
 	}
-	return renderer.RenderChart(parameters, parameters.ChartPath, NewDefaultValueRenderer(parameters))
+	return renderer.Render(parameters, parameters.ChartPath, NewDefaultValueRenderer(parameters))
 }
 
 func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameters *internalParameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
@@ -103,7 +104,7 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 		}
 
 		valueRenderer := NewShootValueRenderer(log, flavor, parameters)
-		shootRuns, err := renderer.RenderChart(parameters, chartPath, valueRenderer)
+		shootRuns, err := renderer.Render(parameters, chartPath, valueRenderer)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to render chart for flavor %v", flavor)
 		}

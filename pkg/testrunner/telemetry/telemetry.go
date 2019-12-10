@@ -87,6 +87,31 @@ func (c *Telemetry) StartForShoot(shootName, shootNamespace, kubeconfigPath, res
 	return c.RawResultsPath, nil
 }
 
+// StartForShoots starts the telemetry measurement with a kubeconfig for specific shoots
+func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys []string) (string, error) {
+	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+		return "", err
+	}
+
+	c.RawResultsPath = path.Join(resultDir, "results.csv")
+	cfg := &config.Config{
+		KubeConfigPath: kubeconfigPath,
+		CheckInterval:  c.interval,
+		OutputDir:      resultDir,
+		OutputFile:     c.RawResultsPath,
+		DisableAnalyse: true,
+		ShootsFilter:   make(map[string]bool, len(shootKeys)),
+	}
+
+	for _, key := range shootKeys {
+		cfg.ShootsFilter[key] = true
+	}
+
+	c.StartWithConfig(cfg)
+
+	return c.RawResultsPath, nil
+}
+
 func (c *Telemetry) StartWithConfig(cfg *config.Config) {
 	c.stopCh = make(chan struct{})
 	c.signalCh = make(chan os.Signal, 2)
@@ -101,9 +126,9 @@ func (c *Telemetry) StartWithConfig(cfg *config.Config) {
 }
 
 // StopAndAnalyze stops the telemetry measurement and generates a result summary
-func (c *Telemetry) StopAndAnalyze(resultDir, format string) (string, error) {
+func (c *Telemetry) StopAndAnalyze(resultDir, format string) (string, map[string]*analyse.Figures, error) {
 	if err := c.Stop(); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	return c.Analyze(resultDir, format)
 }
@@ -123,14 +148,16 @@ func (c *Telemetry) Stop() error {
 }
 
 // Analyze analyzes the previously measured values and returns the path to the summary
-func (c *Telemetry) Analyze(resultDir, format string) (string, error) {
+func (c *Telemetry) Analyze(resultDir, format string) (string, map[string]*analyse.Figures, error) {
 	c.log.V(3).Info("analyze telemetry metrics")
 	summaryOutput := ""
 	if resultDir != "" {
 		summaryOutput = path.Join(resultDir, "summary.json")
 	}
-	if err := analyse.Analyse(c.RawResultsPath, summaryOutput, format); err != nil {
-		return "", errors.Wrap(err, "unable to analyze measurement")
+
+	figures, err := analyse.Analyse(c.RawResultsPath, summaryOutput, format)
+	if err != nil {
+		return "", nil, errors.Wrap(err, "unable to analyze measurement")
 	}
-	return summaryOutput, nil
+	return summaryOutput, figures, nil
 }
