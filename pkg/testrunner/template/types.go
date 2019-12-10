@@ -40,6 +40,7 @@ type internalParameters struct {
 	FlavorConfigPath    string
 	ComponentDescriptor componentdescriptor.ComponentList
 	ChartPath           string
+	Namespace           string
 
 	GardenerKubeconfig []byte
 	GardenerVersion    string

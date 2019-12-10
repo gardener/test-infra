@@ -17,6 +17,7 @@ package result
 import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/logger"
+	common2 "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryctrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
 	"github.com/go-logr/logr"
@@ -42,33 +43,34 @@ func New(log logr.Logger, config Config) (*Collector, error) {
 	return collector, nil
 }
 
-func (c *Collector) PreRunShoots(kubeconfigPath string, list testrunner.RunList) error {
+func (c *Collector) PreRunShoots(kubeconfigPath string, runs testrunner.RunList) error {
 	if c.telemetry == nil {
 		return nil
 	}
-	if len(list) != 1 {
+	if len(runs) == 0 {
 		c.log.V(3).Info("no shoots registered")
 		c.telemetry = nil
 		return nil
 	}
 
-	// check if run is a shoot run
-	var shoot common.ExtendedShoot
-	switch r := list[0].Info.(type) {
-	case common.ExtendedShoot:
-		shoot = r
-	default:
-		return nil
+	shootsToWatch := make([]string, 0)
+	for _, run := range runs {
+		// check if run is a shoot run
+		switch s := run.Info.(type) {
+		case *common.ExtendedShoot:
+			shootsToWatch = append(shootsToWatch, common2.GetShootKey(s.Name, s.Namespace))
+			c.log.V(5).Info("registered shoot for telemetry watch", "name", s.Name, "namespace", s.Namespace)
+		}
 	}
 
 	telemetryOutputDir := path.Join(c.config.OutputDir, "telemetry")
 	if err := os.MkdirAll(telemetryOutputDir, os.ModePerm); err != nil {
 		return err
 	}
-	if _, err := c.telemetry.StartForShoot(shoot.Name, shoot.ProjectName, kubeconfigPath, telemetryOutputDir); err != nil {
+	if _, err := c.telemetry.StartForShoots(kubeconfigPath, telemetryOutputDir, shootsToWatch); err != nil {
 		return errors.Wrap(err, "unable to start telemetry controller")
 	}
-	c.log.V(3).Info("registered shoot for telemetry measurement", "shoot", shoot.Name, "namespace", shoot.ProjectName)
+	c.log.V(3).Info("registered shoots for telemetry measurement", "num", len(shootsToWatch))
 	return nil
 }
 

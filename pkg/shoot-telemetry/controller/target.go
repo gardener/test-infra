@@ -124,7 +124,7 @@ func (c *controller) observeTarget(t *target, stopCh <-chan struct{}) {
 	}, c.config.CheckInterval, false, stopCh)
 }
 
-// initTargets initiliazes the targets with all available shoots
+// initTargets initializes the targets with all available shoots
 func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
 	shoots := &gardenv1alpha1.ShootList{}
 	if err := k8sClient.Client().List(context.TODO(), shoots); err != nil {

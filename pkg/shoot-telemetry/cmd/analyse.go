@@ -48,7 +48,7 @@ func GetAnalyseCommand() *cobra.Command {
 						log.Error(err, "invalid flag input")
 						os.Exit(1)
 					}
-					if err := analyse.Analyse(inputPath, outputPath, outputFormat); err != nil {
+					if _, err := analyse.Analyse(inputPath, outputPath, outputFormat); err != nil {
 						log.Error(err, "Error while analysing data")
 						os.Exit(1)
 					}

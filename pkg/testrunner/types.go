@@ -103,6 +103,10 @@ type Metadata struct {
 
 	// Represents how many retries the testrun had
 	Retries int `json:"retries,omitempty"`
+
+	// Contains the measured telemetry data
+	// Is only used for internal sharing.
+	TelemetryData *TelemetryData `json:"-"`
 }
 
 // TestrunMetadata represents the metadata of a testrun
@@ -129,12 +133,13 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata  *Metadata        `json:"tm,omitempty"`
-	Type      SummaryType      `json:"type,omitempty"`
-	Phase     argov1.NodePhase `json:"phase,omitempty"`
-	StartTime *metav1.Time     `json:"startTime,omitempty"`
-	Duration  int64            `json:"duration,omitempty"`
-	TestsRun  int              `json:"testsRun,omitempty"`
+	Metadata      *Metadata        `json:"tm,omitempty"`
+	Type          SummaryType      `json:"type,omitempty"`
+	Phase         argov1.NodePhase `json:"phase,omitempty"`
+	StartTime     *metav1.Time     `json:"startTime,omitempty"`
+	Duration      int64            `json:"duration,omitempty"`
+	TestsRun      int              `json:"testsRun,omitempty"`
+	TelemetryData *TelemetryData   `json:"telemetry,omitempty"`
 }
 
 // StepSummary is the result of a specific step.
@@ -169,4 +174,28 @@ type Dimension struct {
 	Cloudprovider     string `json:"cloudprovider,omitempty"`
 	KubernetesVersion string `json:"k8sVersion,omitempty"`
 	OperatingSystem   string `json:"operating_system,omitempty"`
+}
+
+// TelemetryData describes the measured telemetry data for the tested shoot
+type TelemetryData struct {
+	ResponseTime    *TelemetryResponseTimeDuration `json:"response_time,omitempty"`
+	DowntimePeriods *TelemetryDowntimePeriods      `json:"downtime,omitempty"`
+}
+
+// TelemetryResponseTimeDuration describes the response data of the telemetry measurement
+type TelemetryResponseTimeDuration struct {
+	Min    int   `json:"min"`
+	Max    int   `json:"max"`
+	Avg    int64 `json:"avg"`
+	Median int64 `json:"median"`
+	Std    int64 `json:"std"`
+}
+
+// TelemetryResponseTimeDuration describes the measured downtimes
+type TelemetryDowntimePeriods struct {
+	Min    int64 `json:"min"`
+	Max    int64 `json:"max"`
+	Avg    int64 `json:"avg"`
+	Median int64 `json:"median"`
+	Std    int64 `json:"std"`
 }

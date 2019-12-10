@@ -16,8 +16,11 @@ package result
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
+	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util/output"
+	"math"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,12 +41,19 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 		testrunsFailed = false
 		result         *multierror.Error
 	)
+
+	c.fetchTelemetryResults()
 	for _, run := range runs {
 		runLogger := log.WithValues("testrun", run.Testrun.Name, "namespace", run.Testrun.Namespace)
 		// Do only try to collect testruns results of testruns that ran into a timeout.
 		// Any other error can not be retrieved.
 		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 			continue
+		}
+
+		// add telemetry results to metadata
+		if telemetryData := c.getTelemetryResultsForRun(run); telemetryData != nil {
+			run.Metadata.TelemetryData = telemetryData
 		}
 
 		cfg := c.config
@@ -71,8 +81,6 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 
 	c.uploadStatusAssets(c.config, log, runs, tmClient, log)
 	fmt.Println(runs.RenderTable())
-
-	c.fetchTelemetryResults()
 
 	return testrunsFailed, util.ReturnMultiError(result)
 }
@@ -126,10 +134,51 @@ func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs t
 func (c *Collector) fetchTelemetryResults() {
 	if c.telemetry != nil {
 		c.log.Info("fetch telemetry controller summaryPath")
-		_, err := c.telemetry.StopAndAnalyze("", "text")
+		_, figures, err := c.telemetry.StopAndAnalyze("", "text")
 		if err != nil {
 			c.log.Error(err, "unable to fetch telemetry measurements")
 			return
 		}
+		c.telemetryResults = figures
 	}
+}
+
+func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *testrunner.TelemetryData {
+	if c.telemetry != nil && c.telemetryResults != nil {
+		var shoot *common.ExtendedShoot
+		switch s := run.Info.(type) {
+		case *common.ExtendedShoot:
+			shoot = s
+		default:
+			return nil
+		}
+		shootKey := telemetrycommon.GetShootKey(shoot.Name, shoot.Namespace)
+		figure, ok := c.telemetryResults[shootKey]
+		if !ok {
+			return nil
+		}
+
+		dat := &testrunner.TelemetryData{}
+		if figure.ResponseTimeDuration != nil {
+			dat.ResponseTime = &testrunner.TelemetryResponseTimeDuration{
+				Min:    figure.ResponseTimeDuration.Min,
+				Max:    figure.ResponseTimeDuration.Max,
+				Avg:    int64(math.Round(figure.ResponseTimeDuration.Avg)),
+				Median: int64(math.Round(figure.ResponseTimeDuration.Median)),
+				Std:    int64(math.Round(figure.ResponseTimeDuration.Std)),
+			}
+		}
+		if figure.DownPeriods != nil {
+			dat.DowntimePeriods = &testrunner.TelemetryDowntimePeriods{
+				Min:    int64(math.Round(figure.DownPeriods.Min)),
+				Max:    int64(math.Round(figure.DownPeriods.Max)),
+				Avg:    int64(math.Round(figure.DownPeriods.Avg)),
+				Median: int64(math.Round(figure.DownPeriods.Median)),
+				Std:    int64(math.Round(figure.DownPeriods.Std)),
+			}
+		}
+
+		return dat
+	}
+	return nil
 }

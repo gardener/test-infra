@@ -127,12 +127,13 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 	}
 
 	trSummary := testrunner.TestrunSummary{
-		Metadata:  metadata,
-		Type:      testrunner.SummaryTypeTestrun,
-		Phase:     status.Phase,
-		StartTime: status.StartTime,
-		Duration:  status.Duration,
-		TestsRun:  testsRun,
+		Metadata:      metadata,
+		Type:          testrunner.SummaryTypeTestrun,
+		Phase:         status.Phase,
+		StartTime:     status.StartTime,
+		Duration:      status.Duration,
+		TestsRun:      testsRun,
+		TelemetryData: metadata.TelemetryData,
 	}
 
 	return trSummary, summaries, nil

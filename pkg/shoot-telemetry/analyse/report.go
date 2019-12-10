@@ -26,7 +26,7 @@ import (
 )
 
 type report struct {
-	Figures []*figures `json:"results"`
+	Figures []*Figures `json:"results"`
 }
 
 func (a *report) exportReport(format, path string) error {

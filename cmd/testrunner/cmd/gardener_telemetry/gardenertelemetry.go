@@ -109,7 +109,7 @@ var gardenerTelemtryCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := analyse.Analyse(telemetry.RawResultsPath, "", common.ReportOutputFormatText); err != nil {
+		if _, err := analyse.Analyse(telemetry.RawResultsPath, "", common.ReportOutputFormatText); err != nil {
 			logger.Log.Error(err, "unable to analyze measurement")
 			os.Exit(1)
 		}
