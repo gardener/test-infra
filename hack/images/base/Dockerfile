@@ -10,6 +10,7 @@ RUN  \
     coreutils \
     bash \
     binutils \
+    bind-tools \
     build-base \
     curl \
     file \
