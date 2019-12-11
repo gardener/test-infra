@@ -16,6 +16,7 @@ package result
 
 import (
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
 	"github.com/go-logr/logr"
 )
@@ -59,11 +60,15 @@ type Config struct {
 }
 
 type Collector struct {
-	log    logr.Logger
-	config Config
+	log            logr.Logger
+	config         Config
+	kubeconfigPath string
 
 	telemetry        *telemetryCtrl.Telemetry
 	telemetryResults map[string]*analyse.Figures
+
+	// RunExecCh is called when a new testrun is executed
+	RunExecCh chan *testrunner.Run
 }
 
 // notificationConfig is the configuration that is used by concourse to send notifications.

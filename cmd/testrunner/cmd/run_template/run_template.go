@@ -104,7 +104,7 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		collector, err := result.New(logger.Log.WithName("collector"), collectConfig)
+		collector, err := result.New(logger.Log.WithName("collector"), collectConfig, tmKubeconfigPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to initialize collector")
 			os.Exit(1)
@@ -114,7 +114,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix)
+		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix, collector.RunExecCh)
 
 		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
 		if err != nil {

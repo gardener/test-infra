@@ -38,7 +38,7 @@ type Config struct {
 	FlakeAttempts int
 }
 
-// RunEventFunc is called everytime a new testrun is triggered
+// RunEventFunc is called every time a new testrun is triggered
 // Also notifies for retries
 type RunEventFunc func(run *Run)
 

@@ -62,7 +62,7 @@ func (rl RunList) Errors() error {
 }
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
-func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string) {
+func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) {
 	runID := uuid.New().String()
 	log.Info(fmt.Sprintf("Starting testruns execution group %s", runID))
 	var wg sync.WaitGroup
@@ -77,6 +77,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string)
 
 			for attempt := 0; attempt <= config.FlakeAttempts; attempt++ {
 				rl[i].SetRunID(runID)
+				triggerRunEvent(notify, rl[i])
 				rl[i].Exec(log, config, testrunNamePrefix)
 				rl[i].Metadata.Retries = attempt
 
@@ -141,6 +142,14 @@ func (rl RunList) RenderTable() string {
 
 	table.Render()
 	return writer.String()
+}
+
+func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
+	for _, c := range notifyChannels {
+		go func(c chan *Run) {
+			c <- run
+		}(c)
+	}
 }
 
 func getDimensionFromMetadata(meta *Metadata) string {

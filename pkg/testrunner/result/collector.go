@@ -17,7 +17,7 @@ package result
 import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/logger"
-	common2 "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryctrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
 	"github.com/go-logr/logr"
@@ -27,10 +27,12 @@ import (
 	"time"
 )
 
-func New(log logr.Logger, config Config) (*Collector, error) {
+func New(log logr.Logger, config Config, kubeconfig string) (*Collector, error) {
 	collector := &Collector{
-		log:    log,
-		config: config,
+		log:            log,
+		config:         config,
+		kubeconfigPath: kubeconfig,
+		RunExecCh:      make(chan *testrunner.Run),
 	}
 	if config.EnableTelemetry {
 		var err error
@@ -38,6 +40,7 @@ func New(log logr.Logger, config Config) (*Collector, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to initialize telemetry controller")
 		}
+		collector.watchNewShoots()
 	}
 
 	return collector, nil
@@ -58,7 +61,7 @@ func (c *Collector) PreRunShoots(kubeconfigPath string, runs testrunner.RunList)
 		// check if run is a shoot run
 		switch s := run.Info.(type) {
 		case *common.ExtendedShoot:
-			shootsToWatch = append(shootsToWatch, common2.GetShootKey(s.Name, s.Namespace))
+			shootsToWatch = append(shootsToWatch, telemetrycommon.GetShootKey(s.Name, s.Namespace))
 			c.log.V(5).Info("registered shoot for telemetry watch", "name", s.Name, "namespace", s.Namespace)
 		}
 	}
@@ -86,4 +89,30 @@ func (c *Collector) PreRunGardener(kubeconfigPath string) error {
 		return errors.Wrap(err, "unable to start telemetry controller")
 	}
 	return nil
+}
+
+// watchNewShoots watches the runExec channel for new runs and adds the new shoots to be measured by the telemetry controller.
+func (c *Collector) watchNewShoots() {
+	go func() {
+		for run := range c.RunExecCh {
+			var shoot *common.ExtendedShoot
+			switch s := run.Info.(type) {
+			case *common.ExtendedShoot:
+				shoot = s
+				c.log.V(5).Info("registered shoot for telemetry watch", "name", s.Name, "namespace", s.Namespace)
+			default:
+				return
+			}
+
+			c.telemetry.AddShoot(telemetrycommon.GetShootKey(shoot.Name, shoot.Namespace))
+
+			// start the controller if it is not already started
+			if !c.telemetry.IsStarted() {
+				if _, err := c.telemetry.Start(c.kubeconfigPath, path.Join(c.config.OutputDir, "telemetry")); err != nil {
+					c.log.Error(err, "unable to start telemetry controller")
+				}
+			}
+
+		}
+	}()
 }
