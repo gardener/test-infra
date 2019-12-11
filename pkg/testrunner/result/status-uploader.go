@@ -50,7 +50,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview)
 		if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
 			log.Info("no testrun updates, therefore not assets to upload")
-			return nil
+			continue
 		}
 		log.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(testrunsToUpload)))
 
@@ -68,13 +68,13 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		remoteArchiveAssetID, err := getAssetIDByName(component, archiveFilename)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("failed to get asset ID of %s in component %s/%s", archiveFilename, component.Owner, component.Name))
-			return err
+			continue
 		}
 		if remoteArchiveAssetID != 0 {
 			// if status archive file exists, download and unzip it
 			if err := downloadReleaseAssetByName(log, component, archiveFilename, archiveFilepath); err != nil {
 				log.Error(err, fmt.Sprintf("failed to download release asset %s in component %s/%s", archiveFilename, component.Owner, component.Name))
-				return err
+				continue
 			}
 			log.Info(fmt.Sprintf("unzipping %s into %s", archiveFilename, archiveContentDir))
 			if err := util.Unzip(archiveFilepath, filepath.Dir(archiveContentDir)); err != nil {
@@ -89,15 +89,15 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		}
 		if err := storeRunsStatusAsFiles(log, testrunsToUpload, archiveContentDir); err != nil {
 			log.Error(err, "Failed to store testrun status as files")
-			return err
+			continue
 		}
 		if err := util.Zipit(archiveContentDir, archiveFilepath); err != nil {
 			log.Error(err, fmt.Sprintf("Failed to zip %s", archiveContentDir))
-			return err
+			continue
 		}
 		if err := createOrUpdateOverview(log, overviewFilepath, testrunsToUpload); err != nil {
 			log.Error(err, fmt.Sprintf("Failed to create/update %s", overviewFilepath))
-			return err
+			continue
 		}
 
 		var filesToUpload []string
