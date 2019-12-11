@@ -44,8 +44,8 @@ import (
 	prepare "github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path"
@@ -70,15 +70,28 @@ func runPrepare(log logr.Logger, cfg *prepare.Config, repoBasePath string) error
 		repoPath := path.Join(repoBasePath, repo.Name)
 		log.Info("Clone repo", "repo", repo.URL, "revision", repo.Revision, "path", repoPath)
 
-		if err := runGit(cwd, "clone", "-v", repo.URL, repoPath); err != nil {
+		if err := runCommand(log, cwd, "git", "clone", "-v", repo.URL, repoPath); err != nil {
+			// do some checks to diagnose why git clone fails
+			if addrs, e := net.LookupHost("github.com"); e == nil {
+				fmt.Printf("LookupHost github.com: %v", addrs)
+			}
+			if addrs, e := net.LookupHost("google.com"); e == nil {
+				fmt.Printf("LookupHost google.com: %v", addrs)
+			}
+			if addrs, e := net.LookupHost("kubernetes.default.svc.cluster.local"); e == nil {
+				fmt.Printf("LookupHost kubernetes.default.svc.cluster.local: %v", addrs)
+			}
+			_ = runCommand(log, cwd, "nslookup", "github.com")
+			_ = runCommand(log, cwd, "nslookup", "google.com")
+			_ = runCommand(log, cwd, "nslookup", "kubernetes.default.svc.cluster.local")
 			return err
 		}
 
-		if err := runGit(repoPath, "fetch", "origin", repo.Revision); err != nil {
+		if err := runCommand(log, repoPath, "git", "fetch", "origin", repo.Revision); err != nil {
 			return err
 		}
 
-		if err := runGit(repoPath, "checkout", repo.Revision); err != nil {
+		if err := runCommand(log, repoPath, "git", "checkout", repo.Revision); err != nil {
 			return err
 		}
 
@@ -104,15 +117,16 @@ func readConfigFile(file string) (*prepare.Config, error) {
 	return cfg, nil
 }
 
-func runGit(pwd string, args ...string) error {
-	cmd := exec.Command("git", args...)
-	cmd.Dir = pwd
+func runCommand(log logr.Logger, dir string, command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Command: %s", strings.Join(args, " ")))
+		log.Error(err, fmt.Sprintf("Couldn't execute command '%s' with args '%s' in dir '%s'", command, strings.Join(args, " "), dir))
+		return err
 	}
 	return nil
 }
