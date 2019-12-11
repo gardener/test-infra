@@ -34,10 +34,10 @@ import (
 )
 
 // ExecuteTestruns deploys it to a testmachinery cluster and waits for the testruns results
-func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNamePrefix string) {
+func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNamePrefix string, notify ...chan *Run) {
 	log.V(3).Info(fmt.Sprintf("Config: %+v", util.PrettyPrintStruct(config)))
 
-	runs.Run(log.WithValues("namespace", config.Namespace), config, testrunNamePrefix)
+	runs.Run(log.WithValues("namespace", config.Namespace), config, testrunNamePrefix, notify...)
 }
 
 // StartWatchController starts a new controller that watches testruns

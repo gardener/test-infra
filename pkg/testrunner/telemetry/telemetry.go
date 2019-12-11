@@ -30,18 +30,21 @@ import (
 type Telemetry struct {
 	log logr.Logger
 
-	interval time.Duration
-	err      error
-	stopCh   chan struct{}
-	signalCh chan os.Signal
+	shootsFilter map[string]bool
+	interval     time.Duration
+	err          error
+	started      bool
+	stopCh       chan struct{}
+	signalCh     chan os.Signal
 
 	RawResultsPath string
 }
 
 func New(log logr.Logger, interval time.Duration) (*Telemetry, error) {
 	return &Telemetry{
-		log:      log,
-		interval: interval,
+		log:          log,
+		interval:     interval,
+		shootsFilter: make(map[string]bool, 0),
 	}, nil
 }
 
@@ -70,6 +73,10 @@ func (c *Telemetry) StartForShoot(shootName, shootNamespace, kubeconfigPath, res
 		return "", err
 	}
 
+	c.shootsFilter = map[string]bool{
+		common.GetShootKey(shootName, shootNamespace): true,
+	}
+
 	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
 		KubeConfigPath: kubeconfigPath,
@@ -77,9 +84,7 @@ func (c *Telemetry) StartForShoot(shootName, shootNamespace, kubeconfigPath, res
 		OutputDir:      resultDir,
 		OutputFile:     c.RawResultsPath,
 		DisableAnalyse: true,
-		ShootsFilter: map[string]bool{
-			common.GetShootKey(shootName, shootNamespace): true,
-		},
+		ShootsFilter:   c.shootsFilter,
 	}
 
 	c.StartWithConfig(cfg)
@@ -93,6 +98,11 @@ func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys [
 		return "", err
 	}
 
+	c.shootsFilter = make(map[string]bool, len(shootKeys))
+	for _, key := range shootKeys {
+		c.shootsFilter[key] = true
+	}
+
 	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
 		KubeConfigPath: kubeconfigPath,
@@ -100,11 +110,7 @@ func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys [
 		OutputDir:      resultDir,
 		OutputFile:     c.RawResultsPath,
 		DisableAnalyse: true,
-		ShootsFilter:   make(map[string]bool, len(shootKeys)),
-	}
-
-	for _, key := range shootKeys {
-		cfg.ShootsFilter[key] = true
+		ShootsFilter:   c.shootsFilter,
 	}
 
 	c.StartWithConfig(cfg)
@@ -115,6 +121,7 @@ func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys [
 func (c *Telemetry) StartWithConfig(cfg *config.Config) {
 	c.stopCh = make(chan struct{})
 	c.signalCh = make(chan os.Signal, 2)
+	c.started = true
 
 	go func() {
 		defer close(c.stopCh)
@@ -123,6 +130,21 @@ func (c *Telemetry) StartWithConfig(cfg *config.Config) {
 			return
 		}
 	}()
+}
+
+// IsStarted indicates if the controller is already running
+func (c *Telemetry) IsStarted() bool {
+	return c.started
+}
+
+// AddShoot adds another shoot to watch
+func (c *Telemetry) AddShoot(shootKey string) {
+	c.shootsFilter[shootKey] = true
+}
+
+// RemoveShoot removes a shoot from the telemetry watch
+func (c *Telemetry) RemoveShoot(shootKey string) {
+	delete(c.shootsFilter, shootKey)
 }
 
 // StopAndAnalyze stops the telemetry measurement and generates a result summary
@@ -144,6 +166,7 @@ func (c *Telemetry) Stop() error {
 
 	// wait for controller to finish
 	<-c.stopCh
+	c.started = false
 	return nil
 }
 

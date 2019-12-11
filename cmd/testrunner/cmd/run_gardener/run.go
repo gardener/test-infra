@@ -141,7 +141,7 @@ var runCmd = &cobra.Command{
 
 		testrunName := fmt.Sprintf("%s-", testrunNamePrefix)
 
-		collector, err := result.New(logger.Log.WithName("collector"), collectConfig)
+		collector, err := result.New(logger.Log.WithName("collector"), collectConfig, tmKubeconfigPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to initialize collector")
 			os.Exit(1)
@@ -177,7 +177,7 @@ func init() {
 	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
 	runCmd.Flags().StringVarP(&testrunnerConfig.Namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 	runCmd.Flags().Var(cmdvalues.NewDurationValue(&testrunnerConfig.Timeout, time.Hour), "timeout", "Timout the testrunner to wait for the complete testrun to finish. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
-	runCmd.Flags().Var(cmdvalues.NewDurationValue(&testrunnerConfig.Interval, 20*time.Second), "interval", "Poll interval of the testrunner to poll for the testrun status. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
+	runCmd.Flags().String("interval", "20s", "[DEPRECTAED] Value has no effect on the testrunner")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
