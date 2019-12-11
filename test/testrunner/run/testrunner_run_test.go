@@ -21,7 +21,6 @@ import (
 	"github.com/gardener/test-infra/test/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("Testrunner execution tests", func() {
@@ -34,7 +33,6 @@ var _ = Describe("Testrunner execution tests", func() {
 		testrunConfig = testrunner.Config{
 			Namespace: operation.TestNamespace(),
 			Timeout:   InitializationTimeout,
-			Interval:  5 * time.Second,
 		}
 	})
 

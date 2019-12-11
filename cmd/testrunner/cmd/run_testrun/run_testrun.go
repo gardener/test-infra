@@ -31,7 +31,6 @@ var (
 	tmKubeconfigPath     string
 	namespace            string
 	timeout              int64
-	interval             int64
 	testrunFlakeAttempts int
 
 	testrunPath       string
@@ -64,7 +63,6 @@ var runTestrunCmd = &cobra.Command{
 			Watch:         w,
 			Namespace:     namespace,
 			Timeout:       time.Duration(timeout) * time.Second,
-			Interval:      time.Duration(interval) * time.Second,
 			FlakeAttempts: testrunFlakeAttempts,
 		}
 
@@ -107,7 +105,7 @@ func init() {
 	runTestrunCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
-	runTestrunCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	runTestrunCmd.Flags().Int64("interval", 20, "[DEPRECTAED] Value has no effect")
 	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 
 	// parameter flags

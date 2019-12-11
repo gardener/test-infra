@@ -34,13 +34,13 @@ type Config struct {
 	// Max wait time for a testrun to finish.
 	Timeout time.Duration
 
-	// Poll interval to check the testrun status
-	// DEPRECATED
-	Interval time.Duration
-
 	// Number of testrun retries after a failed run
 	FlakeAttempts int
 }
+
+// RunEventFunc is called everytime a new testrun is triggered
+// Also notifies for retries
+type RunEventFunc func(run *Run)
 
 // Run describes a testrun that is executed by the testrunner.
 // It consists of a testrun and its metadata
