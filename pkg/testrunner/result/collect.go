@@ -167,6 +167,7 @@ func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *testrunner.T
 				Median: int64(math.Round(figure.ResponseTimeDuration.Median)),
 				Std:    int64(math.Round(figure.ResponseTimeDuration.Std)),
 			}
+			dat.DowntimePeriods = &testrunner.TelemetryDowntimePeriods{}
 		}
 		if figure.DownPeriods != nil {
 			dat.DowntimePeriods = &testrunner.TelemetryDowntimePeriods{
