@@ -17,7 +17,7 @@ package gardenerscheduler
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"os"
 
@@ -59,7 +59,7 @@ func (r *registration) RegisterFlags(flagset *flag.FlagSet) {
 	cloudproviderFlagVar := cmdvalues.NewCloudProviderValue(&r.cloudprovider, CloudProviderAll, CloudProviderAll, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure)
 	flagset.Var(cloudproviderFlagVar, "cloudprovider", "Specify the cloudprovider of the shoot that should be taken from the pool")
 
-	cmdutil.ViperHelper.BindPFlag("gardener.kubeconfig", flagset.Lookup("kubeconfig"))
+	viper.BindPFlagFromFlagSet(flagset, "kubeconfig", "gardener.kubeconfig")
 }
 
 func (r *registration) PreRun(cmd *cobra.Command, args []string) error {

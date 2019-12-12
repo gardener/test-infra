@@ -17,6 +17,7 @@ package tm_bot
 import (
 	"context"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	"net/http"
 	"os"
 	"time"
@@ -89,23 +90,28 @@ func InitFlags(flagset *flag.FlagSet) {
 		flagset = flag.CommandLine
 	}
 
-	flagset.StringVar(&listenAddressHTTP, "webhook-http-address", ":80",
+	fs := flag.NewFlagSet("bot", flag.ExitOnError)
+
+	fs.StringVar(&listenAddressHTTP, "webhook-http-address", ":80",
 		"Webhook HTTP address to bind")
-	flagset.StringVar(&listenAddressHTTPS, "webhook-https-address", ":443",
+	fs.StringVar(&listenAddressHTTPS, "webhook-https-address", ":443",
 		"Webhook HTTPS address to bind")
 
-	flagset.StringVar(&serverCertFile, "cert-file", os.Getenv("WEBHOOK_CERT_FILE"),
+	fs.StringVar(&serverCertFile, "cert-file", os.Getenv("WEBHOOK_CERT_FILE"),
 		"Path to server certificate")
-	flagset.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
+	fs.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
 		"Path to private key")
-	flagset.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
+	fs.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
 
-	ghManagerConfig = github.ManagerInitFlags(flagset)
-	flagset.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
-	flagset.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
-	flagset.StringVar(&oauthRedirectURL, "oauth-redirect-url", "", "GitHub redirect url")
-	flagset.StringVar(&cookieSecret, "cookie-secret", "", "Cookie store secret")
-	flagset.StringVar(&authOrg, "auth-org", "gardener", "GitHub organization to restrict access to the bot")
-	flagset.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
-	flagset.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
+	ghManagerConfig = github.ManagerInitFlags(fs)
+	fs.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
+	fs.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
+	fs.StringVar(&oauthRedirectURL, "oauth-redirect-url", "", "GitHub redirect url")
+	fs.StringVar(&cookieSecret, "cookie-secret", "", "Cookie store secret")
+	fs.StringVar(&authOrg, "auth-org", "gardener", "GitHub organization to restrict access to the bot")
+	fs.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
+	fs.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
+
+	viper.PrefixFlagSetConfigs(fs, "bot")
+	flagset.AddFlagSet(fs)
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
 	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
+	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -36,21 +36,32 @@ var hostschedulerCmd = &cobra.Command{
 	Aliases: []string{"hs"},
 	Short:   "Manage gardener host cluster for gardener tests",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		vh.ViperHelper.ApplyConfig()
 		log, err := logger.NewCliLogger()
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 		logger.SetLogger(log)
-		cmdutil.ViperHelper.ApplyConfig()
+	},
+}
+
+// helpCmd represents the completion command
+var helpCmd = &cobra.Command{
+	Use:   "config-help",
+	Short: "Prints the configuration help",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(vh.ViperHelper.Usage())
 	},
 }
 
 func init() {
-	cmdutil.NewViperHelper()
+	viperHelper := vh.NewViperHelper(nil, "hostscheduler", "$HOME/.tm", ".")
+	vh.SetViper(viperHelper)
 	cobra.OnInitialize(initConfig)
 	logger.InitFlags(hostschedulerCmd.PersistentFlags())
 	completion.RegisterCmd(hostschedulerCmd)
+	hostschedulerCmd.AddCommand(helpCmd)
 
 	// register hostscheduler provider
 	registration = &hostscheduler.Registrations{}
@@ -61,13 +72,13 @@ func init() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+
+	hostschedulerCmd.Commands()
+	viperHelper.BindPFlags(hostschedulerCmd.PersistentFlags(), "")
 }
 
 func initConfig() {
-	viper.SetConfigName("hostscheduler")
-	viper.AddConfigPath("$HOME/.tm")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
+	err := vh.ViperHelper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			return

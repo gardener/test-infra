@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
@@ -48,14 +48,18 @@ func (r *registration) Interface() hostscheduler.Interface {
 	return r.scheduler
 }
 func (r *registration) RegisterFlags(flagset *flag.FlagSet) {
+	if flagset == nil {
+		flagset = flag.CommandLine
+	}
+
 	flagset.StringVar(&r.gcloudkeyFile, "key", "", "Path to the gardener cluster gcloudKeyfilePath")
 	flagset.StringVar(&r.scheduler.hostname, "name", "", "Name of the target gke cluster. Optional")
 	flagset.StringVar(&r.scheduler.project, "project", "", "gcp project name")
 	flagset.StringVar(&r.scheduler.zone, "zone", "", "gcp zone name")
 
-	cmdutil.ViperHelper.BindPFlag("gke.gcloudKeyPath", flagset.Lookup("key"))
-	cmdutil.ViperHelper.BindPFlag("gke.project", flagset.Lookup("project"))
-	cmdutil.ViperHelper.BindPFlag("gke.zone", flagset.Lookup("zone"))
+	viper.BindPFlagFromFlagSet(flagset, "key", "gke.gcloudKeyPath")
+	viper.BindPFlagFromFlagSet(flagset, "project", "gke.project")
+	viper.BindPFlagFromFlagSet(flagset, "zone", "gke.zone")
 }
 
 func (r *registration) PreRun(cmd *cobra.Command, args []string) error {

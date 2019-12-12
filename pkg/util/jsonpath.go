@@ -17,16 +17,17 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 	"strings"
 )
 
-func JSONPath(content []byte, path string, dest interface{}) ([]byte, error) {
+func RawJSONPath(content []byte, path string, dest interface{}) ([]byte, error) {
 	subPaths := strings.Split(path, ".")
 	if len(subPaths) == 0 {
 		return content, nil
 	}
-	data, err := getJSONPath("", content, subPaths)
+	data, err := getRawJSONPath("", content, subPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func JSONPath(content []byte, path string, dest interface{}) ([]byte, error) {
 	return data, nil
 }
 
-func getJSONPath(identifier string, content []byte, path []string) ([]byte, error) {
+func getRawJSONPath(identifier string, content []byte, path []string) ([]byte, error) {
 	var obj map[string]json.RawMessage
 	if err := yaml.Unmarshal(content, &obj); err != nil {
 		return nil, err
@@ -51,5 +52,30 @@ func getJSONPath(identifier string, content []byte, path []string) ([]byte, erro
 		return subContent, nil
 	}
 
-	return getJSONPath(fmt.Sprintf("%s.%s", identifier, path[0]), subContent, path[1:])
+	return getRawJSONPath(fmt.Sprintf("%s.%s", identifier, path[0]), subContent, path[1:])
+}
+
+func JSONPath(data interface{}, path string) (interface{}, error) {
+	paths := strings.Split(path, ".")
+	return getJSONPath(".", data, paths)
+}
+
+func getJSONPath(identifier string, data interface{}, path []string) (interface{}, error) {
+	if len(path) == 0 {
+		return nil, errors.New("path has to be defined")
+	}
+	m, ok := data.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("unable to cast to map")
+	}
+
+	elem, ok := m[path[0]]
+	if !ok {
+		return nil, errors.Errorf("unable to find path %s.%s", identifier, path[0])
+	}
+
+	if len(path) == 1 {
+		return elem, nil
+	}
+	return getJSONPath(fmt.Sprintf("%s.%s", identifier, path[0]), elem, path[1:])
 }
