@@ -360,5 +360,5 @@ func testgroupDisplayName(tr *v1beta1.Testrun) string {
 	if ok {
 		return landscape
 	}
-	return ""
+	return "Unknown"
 }
