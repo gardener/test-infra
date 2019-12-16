@@ -70,8 +70,12 @@ var notifyCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to download asset from repository")
 			os.Exit(1)
 		}
+		if len(overview.AssetOverviewItems) == 0 {
+			logger.Log.Error(nil, "overview sset does not exist")
+			os.Exit(1)
+		}
 
-		table, err := renderTableFromAsset(overview)
+		table, err := renderTableFromAsset(logger.Log, overview)
 		if err != nil {
 			return err
 		}

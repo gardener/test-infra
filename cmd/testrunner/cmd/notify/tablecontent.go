@@ -19,13 +19,14 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
+	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 	"reflect"
 	"sort"
 	"strings"
 )
 
-func renderTableFromAsset(overview result.AssetOverview) (string, error) {
+func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (string, error) {
 	writer := &strings.Builder{}
 	table := tablewriter.NewWriter(writer)
 	headerKeys := make(map[string]int, 0) // maps the header values to their index
@@ -50,6 +51,7 @@ func renderTableFromAsset(overview result.AssetOverview) (string, error) {
 	for _, asset := range overview.AssetOverviewItems {
 		d := asset.Dimension
 		if reflect.DeepEqual(d, testrunner.Dimension{}) {
+			log.V(5).Info("skipped asset item", "name", asset.Name)
 			continue
 		}
 
