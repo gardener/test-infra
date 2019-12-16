@@ -122,8 +122,6 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		outputArtifacts: make(ArtifactSet, 0),
 		config:          config.NewSet(config.New(def.Spec.Config, config.LevelTestDefinition)...),
 	}
-
-	td.AddInputArtifacts(GetStdInputArtifacts()...)
 	td.AddOutputArtifacts(outputArtifacts...)
 
 	return td, nil

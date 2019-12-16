@@ -269,6 +269,10 @@ type StepDefinition struct {
 	// If this is empty the default location set is used
 	// +optional
 	LocationSet *string `json:"locationSet,omitempty"`
+
+	// Untrusted describes whether the step runs a trusted workload.
+	// +optional
+	Untrusted bool `json:"untrusted,omitempty"`
 }
 
 type Pause struct {

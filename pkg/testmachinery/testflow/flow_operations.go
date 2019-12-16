@@ -143,6 +143,11 @@ func ApplyOutputScope(steps map[string]*Step) error {
 						return true
 					}
 					return !node.Step().Definition.ContinueOnError
+				}, func(node *node.Node) bool {
+					if node.Step() == nil {
+						return true
+					}
+					return !node.Step().Definition.Untrusted
 				})
 			}
 			if outputSourceNode != nil {

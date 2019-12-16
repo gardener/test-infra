@@ -76,6 +76,15 @@ const (
 
 	// Name of the argo suspend template name
 	PauseTemplateName = "suspend"
+
+	// ArtifactKubeconfigs is the name of the kubeconfigs artifact
+	ArtifactKubeconfigs = "kubeconfigs"
+
+	// ArtifactUntrustedKubeconfigs is the name of the kubeconfigs artifacts for untrusted steps
+	ArtifactUntrustedKubeconfigs = "untrustedKubeconfigs"
+
+	// ArtifactSharedFolder is the name of the shared folder artifact
+	ArtifactSharedFolder = "sharedFolder"
 )
 
 var (
