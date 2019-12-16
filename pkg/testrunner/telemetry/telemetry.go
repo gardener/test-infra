@@ -53,6 +53,15 @@ func (c *Telemetry) Start(kubeconfigPath, resultDir string) (string, error) {
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
 		return "", err
 	}
+	if _, err := os.Stat(resultDir); err != nil {
+		if !os.IsNotExist(err) {
+			return "", err
+		}
+		if err := os.MkdirAll(resultDir, os.ModePerm); err != nil {
+			return "", err
+		}
+	}
+
 	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
 		KubeConfigPath: kubeconfigPath,

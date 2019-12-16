@@ -37,7 +37,7 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 }
 
 func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, newGardenerVersion string, unhealthyShoots map[string]bool, timeout time.Duration) error {
-	return retry.UntilTimeout(ctx, 30*time.Second, timeout, func(ctx context.Context) (bool, error) {
+	return retry.UntilTimeout(ctx, 1*time.Minute, timeout, func(ctx context.Context) (bool, error) {
 		shoots := &gardenv1alpha1.ShootList{}
 		err := k8sClient.Client().List(ctx, shoots)
 		if err != nil {
