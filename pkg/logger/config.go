@@ -16,6 +16,7 @@ package logger
 
 import (
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	flag "github.com/spf13/pflag"
 	"go.uber.org/zap"
 )
@@ -35,14 +36,18 @@ func InitFlags(flagset *flag.FlagSet) {
 	if flagset == nil {
 		flagset = flag.CommandLine
 	}
-	configFromFlags.flagset = flagset
+	fs := flag.NewFlagSet("log", flag.ExitOnError)
 
-	flag.BoolVar(&configFromFlags.Development, "dev", false, "enable development logging which result in console encoding, enabled stacktrace and enabled caller")
-	flag.BoolVar(&configFromFlags.Cli, "cli", util.GetenvBool("CLI", false), "logger runs as cli logger. enables cli logging")
-	flag.IntVarP(&configFromFlags.Verbosity, "verbosity", "v", 1, "number for the log level verbosity")
-	flag.BoolVar(&configFromFlags.DisableStacktrace, "disable-stacktrace", true, "disable the stacktrace of error logs")
-	flag.BoolVar(&configFromFlags.DisableCaller, "disable-caller", true, "disable the caller of logs")
-	flag.BoolVar(&configFromFlags.DisableTimestamp, "disable-timestamp", true, "disable timestamp output")
+	fs.BoolVar(&configFromFlags.Development, "dev", false, "enable development logging which result in console encoding, enabled stacktrace and enabled caller")
+	fs.BoolVar(&configFromFlags.Cli, "cli", util.GetenvBool("CLI", false), "logger runs as cli logger. enables cli logging")
+	fs.IntVarP(&configFromFlags.Verbosity, "verbosity", "v", 1, "number for the log level verbosity")
+	fs.BoolVar(&configFromFlags.DisableStacktrace, "disable-stacktrace", true, "disable the stacktrace of error logs")
+	fs.BoolVar(&configFromFlags.DisableCaller, "disable-caller", true, "disable the caller of logs")
+	fs.BoolVar(&configFromFlags.DisableTimestamp, "disable-timestamp", true, "disable timestamp output")
+
+	viper.PrefixFlagSetConfigs(fs, "log")
+	configFromFlags.flagset = fs
+	flagset.AddFlagSet(configFromFlags.flagset)
 }
 
 // SetDisableStacktrace dis- or enables the stackstrace according to the provided flag if the flag was provided

@@ -82,7 +82,6 @@ func CommandFromRegistration(r Registration) (*cobra.Command, error) {
 	}
 
 	r.RegisterFlags(cmd.PersistentFlags())
-
 	return cmd, nil
 }
 

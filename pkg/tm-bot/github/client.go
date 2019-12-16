@@ -99,7 +99,7 @@ func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.Git
 
 		if value.StructuredJSONPath != nil {
 			var val interface{}
-			_, err := util.JSONPath([]byte(content), *value.StructuredJSONPath, &val)
+			_, err := util.RawJSONPath([]byte(content), *value.StructuredJSONPath, &val)
 			if err != nil {
 				return "", err
 			}

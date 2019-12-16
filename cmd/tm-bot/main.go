@@ -19,17 +19,26 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/logger"
 	tm_bot "github.com/gardener/test-infra/pkg/tm-bot"
+	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	flag "github.com/spf13/pflag"
 	"os"
 )
 
 func init() {
+	viperHelper := vh.NewViperHelper(nil, "config", "$HOME/.tm-bot", ".")
+	vh.SetViper(viperHelper)
+	viperHelper.InitFlags(nil)
 	tm_bot.InitFlags(nil)
 	logger.InitFlags(nil)
+	viperHelper.BindPFlags(flag.CommandLine, "")
 }
 
 func main() {
 	flag.Parse()
+	if err := vh.ViperHelper.ReadInConfig(); err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
 	ctx := context.Background()
 	log, err := logger.New(nil)
 	if err != nil {
