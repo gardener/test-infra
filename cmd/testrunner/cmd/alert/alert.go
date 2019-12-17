@@ -25,11 +25,15 @@ import (
 )
 
 var (
-	elasticsearchAPI string
-	elasticsearchUser string
-	elasticsearchPass string
-	slackToken        string
-	slackChannel        string
+	elasticsearchAPI           string
+	elasticsearchUser          string
+	elasticsearchPass          string
+	slackToken                 string
+	slackChannel               string
+	continuousFailureThreshold int
+	evalTimeDays               int
+	minSuccessRate             int
+	testsToExclude             []string
 )
 
 // AddCommand adds alert to a command.
@@ -53,12 +57,19 @@ var alertCmd = &cobra.Command{
 		}
 
 		basicAuthToken := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", elasticsearchUser, elasticsearchPass))))
-		alertClient, _ := alert.New(logger.Log.WithName("alert"), alert.ElasticsearchConfig{Endpoint: elasticsearchAPI, Authorization: basicAuthToken}, ctx, 3, 7, 50, 3)
+		alertConfig := alert.Config{
+			Logger:                      logger.Log.WithName("alert"),
+			ContinuousFailureThreshold:  continuousFailureThreshold,
+			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: elasticsearchAPI, Authorization: basicAuthToken},
+			EvalTimeDays:                evalTimeDays,
+			SuccessRateThresholdPercent: minSuccessRate,
+			Context:                     ctx,
+			TestsToExclude:                     testsToExclude,
+		}
+		alertClient, _ := alert.New(alertConfig)
 		failedTests := alertClient.FindFailedTests()
-		if len(failedTests) > 0 {
-			if err := alertClient.PostAlertToSlack(slackClient, slackChannel, failedTests); err != nil {
-				logger.Log.Error(err, "failed to post an alert to slack")
-			}
+		if err := alertClient.PostAlertToSlack(slackClient, slackChannel, failedTests); err != nil {
+			logger.Log.Error(err, "failed to post an alert to slack")
 		}
 
 		logger.Log.Info("finished alerting")
@@ -73,4 +84,8 @@ func init() {
 	alertCmd.Flags().StringVar(&elasticsearchPass, "elasticsearch-pass", "", "Elasticsearch password")
 	alertCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
 	alertCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
+	alertCmd.Flags().IntVar(&continuousFailureThreshold, "min-continuous-failures", 3, "if test fails >=n times send alert")
+	alertCmd.Flags().IntVar(&evalTimeDays, "eval-time-days", 3, "if test fails >=n times send alert")
+	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate falls below threshold post an alert")
+	alertCmd.Flags().StringArrayVar(&testsToExclude, "exclude", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
 }
