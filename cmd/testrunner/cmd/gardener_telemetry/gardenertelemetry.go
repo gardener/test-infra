@@ -40,7 +40,7 @@ var (
 	resultDir string
 )
 
-// AddCommand adds run-testrun to a command.
+// AddCommand adds gardener-telemetry to a command.
 func AddCommand(cmd *cobra.Command) {
 	cmd.AddCommand(gardenerTelemtryCmd)
 }

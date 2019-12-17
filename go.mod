@@ -8,8 +8,10 @@ require (
 	github.com/argoproj/argo v2.4.0+incompatible
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation v0.1.2
+	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/gardener/gardener v0.0.0-20191114144236-0e90aba93f3d
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-ini/ini v1.51.0 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/jsonreference v0.19.3 // indirect

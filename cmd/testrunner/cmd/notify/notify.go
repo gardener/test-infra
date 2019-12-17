@@ -45,7 +45,7 @@ var (
 	slackToken   string
 )
 
-// AddCommand adds run-testrun to a command.
+// AddCommand adds notify to a command.
 func AddCommand(cmd *cobra.Command) {
 	cmd.AddCommand(notifyCmd)
 }

@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
 	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
 	"os"
 
@@ -57,6 +58,7 @@ func init() {
 	logger.InitFlags(rootCmd.PersistentFlags())
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 
+	alert.AddCommand(rootCmd)
 	run_template.AddCommand(rootCmd)
 	run_testrun.AddCommand(rootCmd)
 	run_gardener.AddCommand(rootCmd)
