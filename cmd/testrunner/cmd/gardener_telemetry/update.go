@@ -3,12 +3,14 @@ package gardener_telemetry_cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/test-infra/pkg/logger"
 	telcommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	"time"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/test/integration/framework"
@@ -24,6 +26,18 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 
 	unhealthyShoots := make(map[string]bool)
 	for _, shoot := range shoots.Items {
+
+		// add shoots to unhelathy shoots if they are reconciled but a condition is unhealthy
+		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateSucceeded {
+			for _, condition := range shoot.Status.Conditions {
+				if condition.Status != gardencorev1alpha1.ConditionTrue {
+					unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
+					log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
+					continue
+				}
+			}
+		}
+
 		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
 			log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
@@ -51,6 +65,12 @@ func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kuber
 
 			// ignore shoots that have a do not reconcile label
 			if shoot.Annotations[common.ShootIgnore] == "true" {
+				reconciledShoots++
+				continue
+			}
+
+			// ignore shoots that are being deleted
+			if shoot.DeletionTimestamp != nil {
 				reconciledShoots++
 				continue
 			}
