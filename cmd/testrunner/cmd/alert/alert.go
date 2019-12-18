@@ -15,17 +15,16 @@
 package alert
 
 import (
-	"context"
-	"encoding/base64"
-	"fmt"
 	"github.com/gardener/test-infra/pkg/alert"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util/slack"
 	"github.com/spf13/cobra"
+	"net/url"
+	"os"
 )
 
 var (
-	elasticsearchAPI           string
+	elasticsearchEndpoint      string
 	elasticsearchUser          string
 	elasticsearchPass          string
 	slackToken                 string
@@ -45,47 +44,56 @@ var alertCmd = &cobra.Command{
 	Use:   "alert",
 	Short: "Evaluates recently completed testruns and sends alerts for failed  testruns if conditions are met.",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		defer ctx.Done()
 
 		logger.Log.Info("Start testmachinery alerting")
 
 		slackClient, err := slack.New(logger.Log, slackToken)
 		if err != nil {
 			logger.Log.Error(err, "Cannot create slack client")
-			return
+			os.Exit(1)
 		}
 
-		basicAuthToken := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", elasticsearchUser, elasticsearchPass))))
+		url, err := url.Parse(elasticsearchEndpoint)
+		if err != nil {
+			logger.Log.Error(err, "%s is not a valid URL", elasticsearchEndpoint)
+			os.Exit(1)
+		}
 		alertConfig := alert.Config{
-			Logger:                      logger.Log.WithName("alert"),
 			ContinuousFailureThreshold:  continuousFailureThreshold,
-			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: elasticsearchAPI, Authorization: basicAuthToken},
+			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: url, User: elasticsearchUser, Pass: elasticsearchPass},
 			EvalTimeDays:                evalTimeDays,
 			SuccessRateThresholdPercent: minSuccessRate,
-			Context:                     ctx,
 			TestsToExclude:                     testsToExclude,
 		}
-		alertClient, _ := alert.New(alertConfig)
-		failedTests := alertClient.FindFailedTests()
-		if err := alertClient.PostAlertToSlack(slackClient, slackChannel, failedTests); err != nil {
-			logger.Log.Error(err, "failed to post an alert to slack")
+		alertClient := alert.New(logger.Log.WithName("alert"), alertConfig)
+		newFailedTests, recoveredTests, err := alertClient.FindFailedAndRecoveredTests()
+		if err != nil {
+			logger.Log.Error(err, "failed to find test items for alert and recover messages. Cannot sent slack message.")
+			os.Exit(1)
+		}
+		if err := alertClient.PostAlertMessageToSlack(slackClient, slackChannel, newFailedTests); err != nil {
+			logger.Log.Error(err, "failed to post an alert message to slack")
+			os.Exit(1)
+		}
+		if err := alertClient.PostRecoverMessageToSlack(slackClient, slackChannel, recoveredTests); err != nil {
+			logger.Log.Error(err, "failed to post a recover message to slack")
+			os.Exit(1)
 		}
 
 		logger.Log.Info("finished alerting")
-		return
+		os.Exit(0)
 	},
 }
 
 func init() {
 	// parameter flags
-	alertCmd.Flags().StringVar(&elasticsearchAPI, "elasticsearch-endpoint", "", "Elasticsearch endpoint URL")
+	alertCmd.Flags().StringVar(&elasticsearchEndpoint, "elasticsearch-endpoint", "", "Elasticsearch endpoint URL")
 	alertCmd.Flags().StringVar(&elasticsearchUser, "elasticsearch-user", "", "Elasticsearch username")
 	alertCmd.Flags().StringVar(&elasticsearchPass, "elasticsearch-pass", "", "Elasticsearch password")
 	alertCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
 	alertCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
 	alertCmd.Flags().IntVar(&continuousFailureThreshold, "min-continuous-failures", 3, "if test fails >=n times send alert")
 	alertCmd.Flags().IntVar(&evalTimeDays, "eval-time-days", 3, "if test fails >=n times send alert")
-	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate falls below threshold post an alert")
+	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate % falls below threshold, then post an alert")
 	alertCmd.Flags().StringArrayVar(&testsToExclude, "exclude", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
 }
