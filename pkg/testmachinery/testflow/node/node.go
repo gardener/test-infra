@@ -49,6 +49,12 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
 
+	if !step.Definition.Untrusted {
+		td.AddInputArtifacts(testdefinition.GetStdInputArtifacts()...)
+	} else {
+		td.AddInputArtifacts(testdefinition.GetUntrustedInputArtifacts()...)
+	}
+
 	node := &Node{
 		name:           name,
 		TestDefinition: td,
@@ -182,13 +188,21 @@ func (n *Node) isRootNode() bool {
 func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 	artifactsMap := make(map[string]argov1.Artifact)
 	if n.isRootNode() {
-		artifactsMap["kubeconfigs"] = argov1.Artifact{
-			Name: "kubeconfigs",
-			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.kubeconfigs}}", n.inputSource.Name()),
-		}
-		artifactsMap["sharedFolder"] = argov1.Artifact{
-			Name: "sharedFolder",
-			From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.sharedFolder}}", n.inputSource.Name()),
+
+		if n.Step().Definition.Untrusted {
+			artifactsMap[testmachinery.ArtifactUntrustedKubeconfigs] = argov1.Artifact{
+				Name: testmachinery.ArtifactUntrustedKubeconfigs,
+				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactUntrustedKubeconfigs),
+			}
+		} else {
+			artifactsMap[testmachinery.ArtifactKubeconfigs] = argov1.Artifact{
+				Name: testmachinery.ArtifactKubeconfigs,
+				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactKubeconfigs),
+			}
+			artifactsMap[testmachinery.ArtifactSharedFolder] = argov1.Artifact{
+				Name: testmachinery.ArtifactSharedFolder,
+				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactSharedFolder),
+			}
 		}
 
 		if n.TestDefinition.Location != nil && n.TestDefinition.Location.Type() != tmv1beta1.LocationTypeLocal {
@@ -200,13 +214,20 @@ func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 	}
 
 	if n.step.UseGlobalArtifacts {
-		artifactsMap["kubeconfigs"] = argov1.Artifact{
-			Name: "kubeconfigs",
-			From: "{{workflow.outputs.artifacts.kubeconfigs}}",
-		}
-		artifactsMap["sharedFolder"] = argov1.Artifact{
-			Name: "sharedFolder",
-			From: "{{workflow.outputs.artifacts.sharedFolder}}",
+		if n.Step().Definition.Untrusted {
+			artifactsMap[testmachinery.ArtifactUntrustedKubeconfigs] = argov1.Artifact{
+				Name: testmachinery.ArtifactUntrustedKubeconfigs,
+				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", testmachinery.ArtifactUntrustedKubeconfigs),
+			}
+		} else {
+			artifactsMap[testmachinery.ArtifactKubeconfigs] = argov1.Artifact{
+				Name: testmachinery.ArtifactKubeconfigs,
+				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", testmachinery.ArtifactKubeconfigs),
+			}
+			artifactsMap[testmachinery.ArtifactSharedFolder] = argov1.Artifact{
+				Name: testmachinery.ArtifactSharedFolder,
+				From: fmt.Sprintf("{{workflow.outputs.artifacts.%s}}", testmachinery.ArtifactSharedFolder),
+			}
 		}
 	}
 	return artifactsMapToList(artifactsMap)

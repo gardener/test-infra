@@ -211,7 +211,7 @@ var _ = Describe("flow operations", func() {
 			Expect(rootNode.HasOutput()).To(BeTrue())
 			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[0]))
 			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[1]))
-			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(HaveLen(2))
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(HaveLen(3), "kubeconfigs, untrustedKubeconfigs and sharedFolder")
 			Expect(A.GetInputSource()).To(Equal(rootNode))
 
 			Expect(B.GetInputSource()).To(Equal(A))
@@ -326,6 +326,32 @@ var _ = Describe("flow operations", func() {
 			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
 			Expect(rootNode.HasOutput()).To(BeTrue())
 			Expect(G.GetInputSource()).To(Equal(A))
+		})
+
+		It("should set the last trusted serial parent as artifact source", func() {
+			untrustedStepD := testDAGStep([]string{"B", "C"})
+			untrustedStepD.Definition.Untrusted = true
+
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, nil)
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
+			C := testNode("C", node.NewSet(A), defaultTestDef, testDAGStep([]string{"A"}))
+			D := testNode("D", node.NewSet(B, C), defaultTestDef, untrustedStepD)
+			E := testNode("E", node.NewSet(D), defaultTestDef, testDAGStep([]string{"D"}))
+			steps := createStepsFromNodes(A, B, C, D, E)
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+
+			Expect(rootNode.HasOutput()).To(BeTrue())
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[0]))
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(ContainElement(testdefinition.GetStdOutputArtifacts(false)[1]))
+			Expect(rootNode.TestDefinition.Template.Outputs.Artifacts).To(HaveLen(3), "kubeconfigs, untrustedKubeconfigs and sharedFolder")
+			Expect(A.GetInputSource()).To(Equal(rootNode))
+
+			Expect(B.GetInputSource()).To(Equal(A))
+			Expect(C.GetInputSource()).To(Equal(A))
+			Expect(D.GetInputSource()).To(Equal(A))
+			Expect(E.GetInputSource()).To(Equal(A))
 		})
 
 	})

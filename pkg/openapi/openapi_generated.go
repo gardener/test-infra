@@ -299,6 +299,13 @@ func schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"untrusted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Untrusted describes whether the step runs a trusted workload.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -978,7 +985,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 					},
 					"ingested": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Ingested states whether the result of a testrun is already ingested into a persistant storage (db).",
+							Description: "Ingested states whether the result of a testrun is already ingested into a persistent storage (db).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

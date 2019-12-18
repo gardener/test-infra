@@ -128,6 +128,54 @@ var _ = Describe("Testflow execution tests", func() {
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
+	})
+
+	Context("kubeconfigs", func() {
+		It("should add a shoot kubeconfig to all test steps and add a gardener kubeconfig only to trusted", func() {
+			ctx := context.Background()
+			defer ctx.Done()
+
+			// get kubeconfigfile from testdata
+			file, err := ioutil.ReadFile("./testdata/kubeconfig")
+			Expect(err).ToNot(HaveOccurred())
+
+			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
+			tr.Spec.Kubeconfigs.Gardener = strconf.FromString(base64.StdEncoding.EncodeToString(file))
+			tr.Spec.Kubeconfigs.Shoot = strconf.FromString(base64.StdEncoding.EncodeToString(file))
+			tr.Spec.TestFlow = tmv1beta1.TestFlow{
+				{
+					Name: "trusted-test",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "check-file-testdef",
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "gardener.config"),
+							},
+						},
+					},
+				},
+				{
+					Name: "untrusted-test",
+					Definition: tmv1beta1.StepDefinition{
+						Name:      "check-file-not-exist-testdef",
+						Untrusted: true,
+						Config: []tmv1beta1.ConfigElement{
+							{
+								Type:  tmv1beta1.ConfigTypeEnv,
+								Name:  "FILE",
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "gardener.config"),
+							},
+						},
+					},
+				},
+			}
+
+			tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			defer utils.DeleteTestrun(operation.Client(), tr)
+			Expect(err).ToNot(HaveOccurred())
+		})
 
 	})
 })

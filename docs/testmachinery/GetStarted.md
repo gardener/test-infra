@@ -254,6 +254,10 @@ spec:
         label: default
         config: ...
         location: ...
+        # Specify if if tests are running trusted content.
+        # If the test is not trusted only the minimal configuration is mounted into test.
+        # Minimal configuration does currently only content the shoot kubeconfig.
+        untrusted: false 
       dependsOn: [ create-shoot ]
       useGlobalArtifacts: true # optional, default get from last "serial" step
       artifactsFrom: create-shoot # optional, default get from last "serial" step

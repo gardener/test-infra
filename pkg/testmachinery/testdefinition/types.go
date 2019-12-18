@@ -7,6 +7,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	apiv1 "k8s.io/api/core/v1"
+	"path"
 )
 
 // TestDefinition represents a TestDefinition which was fetched from locations.
@@ -37,17 +38,29 @@ type Location interface {
 }
 
 // GetStdInputArtifacts returns the default input artifacts of testdefionitions.
-// Thes artifacts include kubeconfig and shared folder inputs
+// The artifacts include kubeconfigs and shared folder inputs
 func GetStdInputArtifacts() []argov1.Artifact {
 	return []argov1.Artifact{
 		{
-			Name:     "kubeconfigs",
+			Name:     testmachinery.ArtifactKubeconfigs,
 			Path:     testmachinery.TM_KUBECONFIG_PATH,
 			Optional: true,
 		},
 		{
-			Name:     "sharedFolder",
+			Name:     testmachinery.ArtifactSharedFolder,
 			Path:     testmachinery.TM_SHARED_PATH,
+			Optional: true,
+		},
+	}
+}
+
+// GetUntrustedInputArtifacts returns the untrusted input artifacts of testdefionitions.
+// The artifacts only include minimal configuration
+func GetUntrustedInputArtifacts() []argov1.Artifact {
+	return []argov1.Artifact{
+		{
+			Name:     testmachinery.ArtifactUntrustedKubeconfigs,
+			Path:     testmachinery.TM_KUBECONFIG_PATH,
 			Optional: true,
 		},
 	}
@@ -57,12 +70,17 @@ func GetStdInputArtifacts() []argov1.Artifact {
 // These artifacts include kubeconfigs and the shared folder.
 func GetStdOutputArtifacts(global bool) []argov1.Artifact {
 	kubeconfigArtifact := argov1.Artifact{
-		Name:     "kubeconfigs",
+		Name:     testmachinery.ArtifactKubeconfigs,
 		Path:     testmachinery.TM_KUBECONFIG_PATH,
 		Optional: true,
 	}
+	untrustedKubeconfigArtifact := argov1.Artifact{
+		Name:     testmachinery.ArtifactUntrustedKubeconfigs,
+		Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
+		Optional: true,
+	}
 	sharedFolderArtifact := argov1.Artifact{
-		Name:     "sharedFolder",
+		Name:     testmachinery.ArtifactSharedFolder,
 		Path:     testmachinery.TM_SHARED_PATH,
 		Optional: true,
 	}
@@ -70,9 +88,12 @@ func GetStdOutputArtifacts(global bool) []argov1.Artifact {
 	if global {
 		kubeconfigArtifact.GlobalName = kubeconfigArtifact.Name
 		kubeconfigArtifact.Name = fmt.Sprintf("%s-global", kubeconfigArtifact.Name)
+		untrustedKubeconfigArtifact.GlobalName = untrustedKubeconfigArtifact.Name
+		untrustedKubeconfigArtifact.Name = fmt.Sprintf("%s-global", untrustedKubeconfigArtifact.Name)
+
 		sharedFolderArtifact.GlobalName = sharedFolderArtifact.Name
 		sharedFolderArtifact.Name = fmt.Sprintf("%s-global", sharedFolderArtifact.Name)
 	}
 
-	return []argov1.Artifact{kubeconfigArtifact, sharedFolderArtifact}
+	return []argov1.Artifact{kubeconfigArtifact, untrustedKubeconfigArtifact, sharedFolderArtifact}
 }
