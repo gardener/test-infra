@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	encryptionconfiguration "github.com/gardener/gardener/pkg/operation/etcdencryption"
 	"github.com/gardener/gardener/pkg/utils"
@@ -113,7 +113,7 @@ func (b *Botanist) syncEncryptionConfigurationToGarden(ctx context.Context, conf
 	secret := &corev1.Secret{ObjectMeta: kutil.ObjectMetaFromKey(common.GardenEtcdEncryptionSecretKey(b.Shoot.Info.Namespace, b.Shoot.Info.Name))}
 	_, err := controllerutil.CreateOrUpdate(ctx, b.K8sGardenClient.Client(), secret, func() error {
 		secret.OwnerReferences = []metav1.OwnerReference{
-			*metav1.NewControllerRef(b.Shoot.Info, gardencorev1alpha1.SchemeGroupVersion.WithKind("Shoot")),
+			*metav1.NewControllerRef(b.Shoot.Info, gardencorev1beta1.SchemeGroupVersion.WithKind("Shoot")),
 		}
 		return encryptionconfiguration.UpdateSecret(secret, conf)
 	})
@@ -185,7 +185,7 @@ func (b *Botanist) RewriteShootSecretsIfEncryptionConfigurationChanged(ctx conte
 
 func (b *Botanist) updateShootLabelsForEtcdEncryption(ctx context.Context, labelRequirement *labels.Requirement, mutateLabelsFunc func(m metav1.Object)) []error {
 	secretList := &corev1.SecretList{}
-	if err := b.K8sShootClient.Client().List(ctx, secretList, client.UseListOptions(&client.ListOptions{LabelSelector: labels.NewSelector().Add(*labelRequirement)})); err != nil {
+	if err := b.K8sShootClient.Client().List(ctx, secretList, client.MatchingLabelsSelector{Selector: labels.NewSelector().Add(*labelRequirement)}); err != nil {
 		return []error{err}
 	}
 

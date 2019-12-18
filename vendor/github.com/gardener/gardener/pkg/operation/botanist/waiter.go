@@ -18,11 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
@@ -42,11 +43,11 @@ func (b *Botanist) WaitUntilKubeAPIServerServiceIsReady(ctx context.Context) err
 	defer cancel()
 
 	return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
-		loadBalancerIngress, err := kutil.GetLoadBalancerIngress(ctx, b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeAPIServer)
+		loadBalancerIngress, err := kutil.GetLoadBalancerIngress(ctx, b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, v1beta1constants.DeploymentNameKubeAPIServer)
 		if err != nil {
-			b.Logger.Info("Waiting until the kube-apiserver service is ready...")
+			b.Logger.Info("Waiting until the kube-apiserver service deployed in the Seed cluster is ready...")
 			// TODO(AC): This is a quite optimistic check / we should differentiate here
-			return retry.MinorError(fmt.Errorf("kube-apiserver service is not ready: %v", err))
+			return retry.MinorError(fmt.Errorf("kube-apiserver service deployed in the Seed cluster is not ready: %v", err))
 		}
 		b.Operation.APIServerAddress = loadBalancerIngress
 		return retry.Ok()
@@ -59,7 +60,7 @@ func (b *Botanist) WaitUntilEtcdReady(ctx context.Context) error {
 		statefulSetList := &appsv1.StatefulSetList{}
 		err = b.K8sSeedClient.Client().List(ctx, statefulSetList,
 			client.InNamespace(b.Shoot.SeedNamespace),
-			client.MatchingLabels(map[string]string{"app": "etcd-statefulset"}))
+			client.MatchingLabels{"app": "etcd-statefulset"})
 		if err != nil {
 			return retry.SevereError(err)
 		}
@@ -112,7 +113,7 @@ func (b *Botanist) WaitUntilKubeAPIServerReady(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 300*time.Second, func(ctx context.Context) (done bool, err error) {
 
 		deploy := &appsv1.Deployment{}
-		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeAPIServer), deploy); err != nil {
+		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1beta1constants.DeploymentNameKubeAPIServer), deploy); err != nil {
 			return retry.SevereError(err)
 		}
 		if deploy.Generation != deploy.Status.ObservedGeneration {
@@ -147,7 +148,7 @@ func (b *Botanist) WaitUntilVPNConnectionExists(ctx context.Context) error {
 		podList := &corev1.PodList{}
 		err = b.K8sShootClient.Client().List(ctx, podList,
 			client.InNamespace(metav1.NamespaceSystem),
-			client.MatchingLabels(map[string]string{"app": "vpn-shoot"}))
+			client.MatchingLabels{"app": "vpn-shoot"})
 		if err != nil {
 			return retry.SevereError(err)
 		}
@@ -196,14 +197,14 @@ func (b *Botanist) waitUntilNamespaceDeleted(ctx context.Context, namespace stri
 // been deleted.
 func (b *Botanist) WaitUntilClusterAutoscalerDeleted(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 600*time.Second, func(ctx context.Context) (done bool, err error) {
-		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameClusterAutoscaler), &appsv1.Deployment{}); err != nil {
+		if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1beta1constants.DeploymentNameClusterAutoscaler), &appsv1.Deployment{}); err != nil {
 			if apierrors.IsNotFound(err) {
 				return retry.Ok()
 			}
 			return retry.SevereError(err)
 		}
-		b.Logger.Infof("Waiting until the %s has been deleted in the Seed cluster...", v1alpha1constants.DeploymentNameClusterAutoscaler)
-		return retry.MinorError(fmt.Errorf("deployment %q is still present", v1alpha1constants.DeploymentNameClusterAutoscaler))
+		b.Logger.Infof("Waiting until the %s has been deleted in the Seed cluster...", v1beta1constants.DeploymentNameClusterAutoscaler)
+		return retry.MinorError(fmt.Errorf("deployment %q is still present", v1beta1constants.DeploymentNameClusterAutoscaler))
 	})
 }
 
@@ -227,9 +228,9 @@ func (b *Botanist) WaitForControllersToBeActive(ctx context.Context) error {
 	)
 
 	// Check whether the kube-controller-manager deployment exists
-	if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeControllerManager), &appsv1.Deployment{}); err == nil {
+	if err := b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, v1beta1constants.DeploymentNameKubeControllerManager), &appsv1.Deployment{}); err == nil {
 		controllers = append(controllers, controllerInfo{
-			name: v1alpha1constants.DeploymentNameKubeControllerManager,
+			name: v1beta1constants.DeploymentNameKubeControllerManager,
 			labels: map[string]string{
 				"app":  "kubernetes",
 				"role": "controller-manager",
@@ -325,20 +326,81 @@ func (b *Botanist) WaitUntilNodesDeleted(ctx context.Context) error {
 	})
 }
 
+// WaitUntilNoPodRunning waits until there is no running Pod in the shoot cluster.
+func (b *Botanist) WaitUntilNoPodRunning(ctx context.Context) error {
+	b.Logger.Info("waiting until there are no running Pods in the shoot cluster...")
+
+	return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
+		podList := &corev1.PodList{}
+		if err := b.K8sShootClient.Client().List(ctx, podList); err != nil {
+			return retry.SevereError(err)
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Status.Phase == corev1.PodRunning {
+				msg := fmt.Sprintf("waiting until there are no running Pods in the shoot cluster... "+
+					"there is still at least one running Pod in the shoot cluster: %s/%s", pod.Namespace, pod.Name)
+				b.Logger.Info(msg)
+				return retry.MinorError(fmt.Errorf(msg))
+			}
+		}
+
+		return retry.Ok()
+	})
+}
+
+// WaitUntilEndpointsDoNotContainPodIPs waits until all endpoints in the shoot cluster to not contain any IPs from the Shoot's PodCIDR.
+func (b *Botanist) WaitUntilEndpointsDoNotContainPodIPs(ctx context.Context) error {
+	b.Logger.Info("waiting until there are no Endpoints containing Pod IPs in the shoot cluster...")
+
+	var podsNetwork *net.IPNet
+	if val := b.Shoot.Info.Spec.Networking.Pods; val != nil {
+		var err error
+		_, podsNetwork, err = net.ParseCIDR(*val)
+		if err != nil {
+			return fmt.Errorf("unable to check if there are still Endpoints containing Pod IPs in the shoot cluster. Shoots's Pods network could not be parsed: %+v", err)
+		}
+	} else {
+		return fmt.Errorf("unable to check if there are still Endpoints containing Pod IPs in the shoot cluster. Shoot's Pods network is empty")
+	}
+
+	return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
+		endpointsList := &corev1.EndpointsList{}
+		if err := b.K8sShootClient.Client().List(ctx, endpointsList); err != nil {
+			return retry.SevereError(err)
+		}
+
+		for _, endpoints := range endpointsList.Items {
+			for _, subset := range endpoints.Subsets {
+				for _, address := range subset.Addresses {
+					if podsNetwork.Contains(net.ParseIP(address.IP)) {
+						msg := fmt.Sprintf("waiting until there are no Endpoints containing Pod IPs in the shoot cluster..."+
+							"there is still at least one Endpoints containing a Pod's IP: %s/%s, IP: %s", endpoints.Namespace, endpoints.Name, address.IP)
+						b.Logger.Info(msg)
+						return retry.MinorError(fmt.Errorf(msg))
+					}
+				}
+			}
+		}
+
+		return retry.Ok()
+	})
+}
+
 // WaitUntilBackupEntryInGardenReconciled waits until the backup entry within the garden cluster has
 // been reconciled.
 func (b *Botanist) WaitUntilBackupEntryInGardenReconciled(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 600*time.Second, func(ctx context.Context) (done bool, err error) {
-		be := &gardencorev1alpha1.BackupEntry{}
+		be := &gardencorev1beta1.BackupEntry{}
 		if err := b.K8sGardenClient.Client().Get(ctx, kutil.Key(b.Shoot.Info.Namespace, common.GenerateBackupEntryName(b.Shoot.SeedNamespace, b.Shoot.Info.Status.UID)), be); err != nil {
 			return retry.SevereError(err)
 		}
 		if be.Status.LastOperation != nil {
-			if be.Status.LastOperation.State == gardencorev1alpha1.LastOperationStateSucceeded {
+			if be.Status.LastOperation.State == gardencorev1beta1.LastOperationStateSucceeded {
 				b.Logger.Info("Backup entry has been successfully reconciled.")
 				return retry.Ok()
 			}
-			if be.Status.LastOperation.State == gardencorev1alpha1.LastOperationStateError {
+			if be.Status.LastOperation.State == gardencorev1beta1.LastOperationStateError {
 				b.Logger.Info("Backup entry has been reconciled with error.")
 				return retry.SevereError(errors.New(be.Status.LastError.Description))
 			}

@@ -17,10 +17,10 @@ package common
 import (
 	"errors"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"io/ioutil"
 	"time"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	clientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"
 	k8sinformers "k8s.io/client-go/informers"
@@ -29,7 +29,7 @@ import (
 )
 
 // GetShootKeyFromShoot return a key for a Shoot in the format <shoot-namespace>/<shoot-name>
-func GetShootKeyFromShoot(shoot *gardenv1alpha1.Shoot) string {
+func GetShootKeyFromShoot(shoot *gardencorev1beta1.Shoot) string {
 	if shoot == nil {
 		return ""
 	}

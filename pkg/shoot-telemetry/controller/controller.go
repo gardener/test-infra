@@ -16,7 +16,7 @@ package controller
 
 import (
 	"errors"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
@@ -29,7 +29,6 @@ import (
 	v1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
@@ -148,7 +147,7 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 }
 
 func (c *controller) addShoot(obj interface{}) {
-	var shoot = obj.(*gardenv1alpha1.Shoot)
+	var shoot = obj.(*gardencorev1beta1.Shoot)
 	if shoot == nil || shoot.Status.LastOperation == nil {
 		return
 	}
@@ -171,8 +170,8 @@ func (c *controller) addShoot(obj interface{}) {
 
 func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	var (
-		oldShoot = oldObj.(*gardenv1alpha1.Shoot)
-		newShoot = newObj.(*gardenv1alpha1.Shoot)
+		oldShoot = oldObj.(*gardencorev1beta1.Shoot)
+		newShoot = newObj.(*gardencorev1beta1.Shoot)
 	)
 	if oldShoot == nil || newShoot == nil || oldShoot.Status.LastOperation == nil || newShoot.Status.LastOperation == nil {
 		return
@@ -189,7 +188,7 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 		return
 	}
 
-	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate && newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeCreate {
+	if oldShoot.Status.LastOperation.Type == gardencorev1beta1.LastOperationTypeCreate && newShoot.Status.LastOperation.Type == gardencorev1beta1.LastOperationTypeCreate {
 		if oldShoot.Status.LastOperation.Progress != newShoot.Status.LastOperation.Progress && newShoot.Status.LastOperation.Progress == 100 {
 			logger.Logf(logger.Log.V(5).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 			c.addTarget(newShoot)
@@ -198,13 +197,13 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 	}
 
 	// Remove shoot from queue if it move from reconcile to create/delete.
-	if oldShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile && newShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
+	if oldShoot.Status.LastOperation.Type == gardencorev1beta1.LastOperationTypeReconcile && newShoot.Status.LastOperation.Type != gardencorev1beta1.LastOperationTypeReconcile {
 		logger.Logf(logger.Log.V(5).Info, "%s Remove shoot %s/%s from queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 		c.removeTarget(oldShoot)
 		return
 	}
 
-	if newShoot.Status.LastOperation.Type == v1alpha1.LastOperationTypeReconcile {
+	if newShoot.Status.LastOperation.Type == gardencorev1beta1.LastOperationTypeReconcile {
 		// Add Shoot again if it was hibernated before and woke up again.
 		if oldShoot.Status.IsHibernated {
 			logger.Logf(logger.Log.V(5).Info, "%s Add awakened shoot: %s/%s", common.LogDebugUpdatePrefix, newShoot.Namespace, newShoot.Name)
@@ -213,7 +212,7 @@ func (c *controller) updateShoot(oldObj, newObj interface{}) {
 		}
 
 		// Add Shoot if it moves from other State(Create) into Reconcile state.
-		if oldShoot.Status.LastOperation.Type != v1alpha1.LastOperationTypeReconcile {
+		if oldShoot.Status.LastOperation.Type != gardencorev1beta1.LastOperationTypeReconcile {
 			logger.Logf(logger.Log.V(5).Info, "%s Add shoot %s/%s to the queue", common.LogDebugUpdatePrefix, newShoot.GetNamespace(), newShoot.GetName())
 			c.addTarget(newShoot)
 			return

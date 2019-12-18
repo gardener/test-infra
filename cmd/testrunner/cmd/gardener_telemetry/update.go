@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/test-infra/pkg/logger"
 	telcommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/test/integration/framework"
@@ -18,7 +17,7 @@ import (
 )
 
 func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface) (map[string]bool, error) {
-	shoots := &gardenv1alpha1.ShootList{}
+	shoots := &gardencorev1beta1.ShootList{}
 	err := k8sClient.Client().List(ctx, shoots)
 	if err != nil {
 		return nil, err
@@ -28,9 +27,9 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 	for _, shoot := range shoots.Items {
 
 		// add shoots to unhelathy shoots if they are reconciled but a condition is unhealthy
-		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateSucceeded {
+		if shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateSucceeded {
 			for _, condition := range shoot.Status.Conditions {
-				if condition.Status != gardencorev1alpha1.ConditionTrue {
+				if condition.Status != gardencorev1beta1.ConditionTrue {
 					unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
 					log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
 					continue
@@ -38,10 +37,10 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 			}
 		}
 
-		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
+		if shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateError || shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateAborted {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
 			log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
-		} else if shoot.Status.LastError != nil {
+		} else if len(shoot.Status.LastErrors) != 0 {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
 			log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
 		}
@@ -53,7 +52,7 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 
 func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, newGardenerVersion string, unhealthyShoots map[string]bool, timeout time.Duration) error {
 	return retry.UntilTimeout(ctx, 1*time.Minute, timeout, func(ctx context.Context) (bool, error) {
-		shoots := &gardenv1alpha1.ShootList{}
+		shoots := &gardencorev1beta1.ShootList{}
 		err := k8sClient.Client().List(ctx, shoots)
 		if err != nil {
 			log.V(3).Info(err.Error())
@@ -86,7 +85,7 @@ func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kuber
 				logger.Logf(log.V(3).Info, "shoot %s in namespace %s has no last operation", shoot.Name, shoot.Namespace)
 				continue
 			}
-			if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
+			if shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateError || shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardencorev1beta1.LastOperationStateAborted {
 				reconciledShoots++
 				continue
 			}

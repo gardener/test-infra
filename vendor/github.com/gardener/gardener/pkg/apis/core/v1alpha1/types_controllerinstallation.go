@@ -57,17 +57,20 @@ type ControllerInstallationSpec struct {
 // ControllerInstallationStatus is the status of a ControllerInstallation.
 type ControllerInstallationStatus struct {
 	// Conditions represents the latest available observations of a ControllerInstallations's current state.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
 	// +optional
-	Conditions []Condition `json:"conditions,omitempty"`
+	Conditions []Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 	// ProviderStatus contains type-specific status.
 	// +optional
 	ProviderStatus *ProviderConfig `json:"providerStatus,omitempty"`
 }
 
 const (
-	// ControllerInstallationValid is a condition type for indicating whether the installation request is valid.
-	ControllerInstallationValid ConditionType = "Valid"
-
+	// ControllerInstallationHealthy is a condition type for indicating whether the controller is healthy.
+	ControllerInstallationHealthy ConditionType = "Healthy"
 	// ControllerInstallationInstalled is a condition type for indicating whether the controller has been installed.
 	ControllerInstallationInstalled ConditionType = "Installed"
+	// ControllerInstallationValid is a condition type for indicating whether the installation request is valid.
+	ControllerInstallationValid ConditionType = "Valid"
 )

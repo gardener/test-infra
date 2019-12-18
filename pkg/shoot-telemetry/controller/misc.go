@@ -17,13 +17,13 @@ package controller
 import (
 	"errors"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"strings"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func (c *controller) determineShootInternalEndpoint(shoot *gardenv1alpha1.Shoot) (string, error) {
+func (c *controller) determineShootInternalEndpoint(shoot *gardencorev1beta1.Shoot) (string, error) {
 	projects, err := c.projects.Lister().List(labels.Everything())
 	if err != nil {
 		return "", err

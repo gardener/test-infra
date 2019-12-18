@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
+	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
@@ -47,10 +47,7 @@ func (b *Botanist) DeployInternalDomainDNSRecord(ctx context.Context) error {
 	if err := b.deployDNSProvider(ctx, DNSPurposeInternal, b.Garden.InternalDomain.Provider, b.Garden.InternalDomain.SecretData, []string{b.Shoot.InternalClusterDomain}, nil, b.Garden.InternalDomain.IncludeZones, b.Garden.InternalDomain.ExcludeZones); err != nil {
 		return err
 	}
-	if err := b.deployDNSEntry(ctx, DNSPurposeInternal, common.GetAPIServerDomain(b.Shoot.InternalClusterDomain), b.APIServerAddress); err != nil {
-		return err
-	}
-	return b.deleteLegacyTerraformDNSResources(ctx, common.TerraformerPurposeInternalDNSDeprecated)
+	return b.deployDNSEntry(ctx, DNSPurposeInternal, common.GetAPIServerDomain(b.Shoot.InternalClusterDomain), b.APIServerAddress)
 }
 
 // DestroyInternalDomainDNSRecord destroys the DNS record for the internal cluster domain.
@@ -63,17 +60,14 @@ func (b *Botanist) DestroyInternalDomainDNSRecord(ctx context.Context) error {
 
 // DeployExternalDomainDNSRecord deploys the DNS record for the external cluster domain.
 func (b *Botanist) DeployExternalDomainDNSRecord(ctx context.Context) error {
-	if b.Shoot.Info.Spec.DNS.Domain == nil || b.Shoot.ExternalClusterDomain == nil || strings.HasSuffix(*b.Shoot.ExternalClusterDomain, ".nip.io") {
+	if b.Shoot.Info.Spec.DNS == nil || b.Shoot.Info.Spec.DNS.Domain == nil || b.Shoot.ExternalClusterDomain == nil || strings.HasSuffix(*b.Shoot.ExternalClusterDomain, ".nip.io") {
 		return nil
 	}
 
 	if err := b.deployDNSProvider(ctx, DNSPurposeExternal, b.Shoot.ExternalDomain.Provider, b.Shoot.ExternalDomain.SecretData, sets.NewString(append(b.Shoot.ExternalDomain.IncludeDomains, *b.Shoot.ExternalClusterDomain)...).List(), b.Shoot.ExternalDomain.ExcludeDomains, b.Shoot.ExternalDomain.IncludeZones, b.Shoot.ExternalDomain.ExcludeZones); err != nil {
 		return err
 	}
-	if err := b.deployDNSEntry(ctx, DNSPurposeExternal, common.GetAPIServerDomain(*b.Shoot.ExternalClusterDomain), common.GetAPIServerDomain(b.Shoot.InternalClusterDomain)); err != nil {
-		return err
-	}
-	return b.deleteLegacyTerraformDNSResources(ctx, common.TerraformerPurposeExternalDNSDeprecated)
+	return b.deployDNSEntry(ctx, DNSPurposeExternal, common.GetAPIServerDomain(*b.Shoot.ExternalClusterDomain), common.GetAPIServerDomain(b.Shoot.InternalClusterDomain))
 }
 
 // DestroyExternalDomainDNSRecord destroys the DNS record for the external cluster domain.
@@ -131,7 +125,7 @@ func (b *Botanist) waitUntilDNSProviderReady(ctx context.Context, name string) e
 		b.Logger.Infof("Waiting for %q DNS provider to be ready... (status=%s, message=%s)", name, status, message)
 		return retry.MinorError(fmt.Errorf("DNS provider %q is not ready (status=%s, message=%s)", name, status, message))
 	}); err != nil {
-		return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("Failed to create DNS provider for %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
+		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("Failed to create DNS provider for %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
 	}
 
 	return nil
@@ -186,7 +180,7 @@ func (b *Botanist) waitUntilDNSEntryReady(ctx context.Context, name string) erro
 		b.Logger.Infof("Waiting for %q DNS record to be ready... (status=%s, message=%s)", name, status, message)
 		return retry.MinorError(fmt.Errorf("DNS record %q is not ready (status=%s, message=%s)", name, status, message))
 	}); err != nil {
-		return gardencorev1alpha1helper.DetermineError(fmt.Sprintf("Failed to create %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
+		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("Failed to create %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
 	}
 
 	return nil
@@ -201,13 +195,4 @@ func (b *Botanist) deleteDNSEntry(ctx context.Context, name string) error {
 	defer cancel()
 
 	return kutil.WaitUntilResourceDeleted(ctx, b.K8sSeedClient.Client(), &dnsv1alpha1.DNSEntry{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: name}}, 5*time.Second)
-}
-
-func (b *Botanist) deleteLegacyTerraformDNSResources(ctx context.Context, purpose string) error {
-	tf, err := b.NewShootTerraformer(purpose)
-	if err != nil {
-		return err
-	}
-
-	return tf.CleanupConfiguration(ctx)
 }
