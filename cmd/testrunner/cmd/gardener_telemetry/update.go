@@ -26,13 +26,14 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 	for _, shoot := range shoots.Items {
 		if shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateError || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateFailed || shoot.Status.LastOperation.State == gardenv1alpha1.LastOperationStateAborted {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
-			continue
-		}
-		if shoot.Status.LastError != nil {
+			log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
+		} else if shoot.Status.LastError != nil {
 			unhealthyShoots[telcommon.GetShootKeyFromShoot(&shoot)] = true
+			log.V(5).Info("shoot is already unhealthy", "name", shoot.GetName(), "namespace", shoot.GetNamespace())
 		}
 	}
 
+	log.Info(fmt.Sprintf("Found %d unhealthy shoots", len(unhealthyShoots)))
 	return unhealthyShoots, nil
 }
 
