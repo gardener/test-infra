@@ -50,7 +50,7 @@ var (
 	assetPrefix             string
 )
 
-// AddCommand adds run-testrun to a command.
+// AddCommand adds collect to a command.
 func AddCommand(cmd *cobra.Command) {
 	cmd.AddCommand(collectCmd)
 }

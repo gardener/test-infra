@@ -48,7 +48,7 @@ var (
 	interval int64
 )
 
-// AddCommand adds run-testrun to a command.
+// AddCommand adds run-template to a command.
 func AddCommand(cmd *cobra.Command) {
 	cmd.AddCommand(runCmd)
 }
