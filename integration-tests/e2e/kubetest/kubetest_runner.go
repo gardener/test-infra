@@ -64,15 +64,15 @@ func Run(descFile string) (resultsPath string) {
 	fmt.Print(getFileContent(descFile))
 
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
-	if parallelTestsFocus != "" {
-		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
-		log.Info("run kubetest in parallel way")
-		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
-		runKubetest(kubtestArgs, false)
-	}
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
 		log.Info("run kubetest in serial way")
+		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
+		runKubetest(kubtestArgs, false)
+	}
+	if parallelTestsFocus != "" {
+		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
+		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs, false)
 	}
