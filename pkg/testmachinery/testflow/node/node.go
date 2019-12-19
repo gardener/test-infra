@@ -49,12 +49,6 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	name := GetUniqueName(td, step, flow)
 	td.SetName(name)
 
-	if !step.Definition.Untrusted {
-		td.AddInputArtifacts(testdefinition.GetStdInputArtifacts()...)
-	} else {
-		td.AddInputArtifacts(testdefinition.GetUntrustedInputArtifacts()...)
-	}
-
 	node := &Node{
 		name:           name,
 		TestDefinition: td,
@@ -182,12 +176,12 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 }
 
 func (n *Node) isRootNode() bool {
-	return n.inputSource != nil
+	return n.inputSource == nil
 }
 
 func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 	artifactsMap := make(map[string]argov1.Artifact)
-	if n.isRootNode() {
+	if !n.isRootNode() {
 
 		if n.Step().Definition.Untrusted {
 			artifactsMap[testmachinery.ArtifactUntrustedKubeconfigs] = argov1.Artifact{
@@ -257,6 +251,11 @@ func (n *Node) HasOutput() bool {
 // SetInputSource sets the input source node for artifacts that are mounted to the test.
 func (n *Node) SetInputSource(node *Node) {
 	n.inputSource = node
+	if !n.step.Definition.Untrusted {
+		n.TestDefinition.AddInputArtifacts(testdefinition.GetStdInputArtifacts()...)
+	} else {
+		n.TestDefinition.AddInputArtifacts(testdefinition.GetUntrustedInputArtifacts()...)
+	}
 }
 
 // GetInputSource returns the input source node.
