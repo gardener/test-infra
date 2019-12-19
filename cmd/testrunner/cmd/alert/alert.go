@@ -15,6 +15,7 @@
 package alert
 
 import (
+	"errors"
 	"github.com/gardener/test-infra/pkg/alert"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util/slack"
@@ -47,23 +48,28 @@ var alertCmd = &cobra.Command{
 
 		logger.Log.Info("Start testmachinery alerting")
 
+		if err := validate(); err != nil {
+			logger.Log.Error(err, "alert arguments validation failed")
+			os.Exit(1)
+		}
+
 		slackClient, err := slack.New(logger.Log, slackToken)
 		if err != nil {
 			logger.Log.Error(err, "Cannot create slack client")
 			os.Exit(1)
 		}
 
-		url, err := url.Parse(elasticsearchEndpoint)
+		esEndpoint, err := url.Parse(elasticsearchEndpoint)
 		if err != nil {
 			logger.Log.Error(err, "%s is not a valid URL", elasticsearchEndpoint)
 			os.Exit(1)
 		}
 		alertConfig := alert.Config{
 			ContinuousFailureThreshold:  continuousFailureThreshold,
-			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: url, User: elasticsearchUser, Pass: elasticsearchPass},
+			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: esEndpoint, User: elasticsearchUser, Pass: elasticsearchPass},
 			EvalTimeDays:                evalTimeDays,
 			SuccessRateThresholdPercent: minSuccessRate,
-			TestsToExclude:                     testsToExclude,
+			TestsToExclude:              testsToExclude,
 		}
 		alertClient := alert.New(logger.Log.WithName("alert"), alertConfig)
 		newFailedTests, recoveredTests, err := alertClient.FindFailedAndRecoveredTests()
@@ -83,6 +89,31 @@ var alertCmd = &cobra.Command{
 		logger.Log.Info("finished alerting")
 		os.Exit(0)
 	},
+}
+
+func validate() error {
+	if elasticsearchEndpoint == "" {
+		return errors.New("elasticsearch-endpoint argument is required but empty")
+	}
+	if elasticsearchUser == "" {
+		return errors.New("elasticsearch-user argument is required but empty")
+	}
+	if elasticsearchPass == "" {
+		return errors.New("elasticsearch-pass argument is required but empty")
+	}
+	if slackToken == "" {
+		return errors.New("slack-token argument is required but empty")
+	}
+	if slackChannel == "" {
+		return errors.New("slack-channel argument is required but empty")
+	}
+	if continuousFailureThreshold == 0 {
+		return errors.New("min-continuous-failures=0 is not allowed")
+	}
+	if evalTimeDays == 0 {
+		return errors.New("eval-time-days=0 is not allowed")
+	}
+	return nil
 }
 
 func init() {
