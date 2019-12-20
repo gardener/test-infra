@@ -19,7 +19,10 @@ import (
 	"fmt"
 	"strings"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
+	gardencoreinformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"
 	gardencorelisters "github.com/gardener/gardener/pkg/client/core/listers/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/logger"
@@ -82,7 +85,7 @@ func GetDefaultDomains(secrets map[string]*corev1.Secret) ([]*Domain, error) {
 func GetInternalDomain(secrets map[string]*corev1.Secret) (*Domain, error) {
 	internalDomainSecret, ok := secrets[common.GardenRoleInternalDomain]
 	if !ok {
-		return nil, fmt.Errorf("missing secret with key %s", common.GardenRoleInternalDomain)
+		return nil, nil
 	}
 
 	return constructDomainFromSecret(internalDomainSecret)
@@ -115,11 +118,12 @@ func DomainIsDefaultDomain(domain string, defaultDomains []*Domain) *Domain {
 
 // ReadGardenSecrets reads the Kubernetes Secrets from the Garden cluster which are independent of Shoot clusters.
 // The Secret objects are stored on the Controller in order to pass them to created Garden objects later.
-func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[string]*corev1.Secret, error) {
+func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory, k8sGardenCoreInformers gardencoreinformers.SharedInformerFactory) (map[string]*corev1.Secret, error) {
 	var (
 		secretsMap                          = make(map[string]*corev1.Secret)
 		numberOfInternalDomainSecrets       = 0
 		numberOfOpenVPNDiffieHellmanSecrets = 0
+		numberOfAlertingSecrets             = 0
 	)
 
 	selector, err := labels.Parse(v1alpha1constants.DeprecatedGardenRole)
@@ -131,7 +135,9 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 		return nil, err
 	}
 
-	for _, secret := range secrets {
+	for _, obj := range secrets {
+		secret := obj.DeepCopy()
+
 		// Retrieving default domain secrets based on all secrets in the Garden namespace which have
 		// a label indicating the Garden role default-domain.
 		if secret.Labels[v1alpha1constants.DeprecatedGardenRole] == common.GardenRoleDefaultDomain {
@@ -159,15 +165,6 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 			numberOfInternalDomainSecrets++
 		}
 
-		// Retrieving alerting SMTP secrets based on all secrets in the Garden namespace which have
-		// a label indicating the Garden role alerting-smtp.
-		// Only when using the in-cluster config as we do not want to configure alerts in development modus.
-		if secret.Labels[v1alpha1constants.DeprecatedGardenRole] == common.GardenRoleAlertingSMTP {
-			alertingSMTP := secret
-			secretsMap[fmt.Sprintf("%s-%s", common.GardenRoleAlertingSMTP, secret.Name)] = alertingSMTP
-			logger.Logger.Infof("Found alerting SMTP secret %s.", secret.Name)
-		}
-
 		// Retrieving Diffie-Hellman secret for OpenVPN based on all secrets in the Garden namespace which have
 		// a label indicating the Garden role openvpn-diffie-hellman.
 		if secret.Labels[v1alpha1constants.DeprecatedGardenRole] == common.GardenRoleOpenVPNDiffieHellman {
@@ -187,21 +184,56 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 			monitoringSecret := secret
 			secretsMap[common.GardenRoleGlobalMonitoring] = monitoringSecret
 			logger.Logger.Infof("Found monitoring basic auth secret %s.", secret.Name)
-		} else {
-			logger.Logger.Info("No monitoring basic auth secret found.")
 		}
 	}
 
-	// For each Shoot we create a LoadBalancer(LB) pointing to the API server of the Shoot. Because the technical address
-	// of the LB (ip or hostname) can change we cannot directly write it into the kubeconfig of the components
-	// which talk from outside (kube-proxy, kubelet etc.) (otherwise those kubeconfigs would be broken once ip/hostname
-	// of LB changed; and we don't have means to exchange kubeconfigs currently).
-	// Therefore, to have a stable endpoint, we create a DNS record pointing to the ip/hostname of the LB. This DNS record
-	// is used in all kubeconfigs. With that we have a robust endpoint stable against underlying ip/hostname changes.
-	// And there can only be one of this internal domain secret because otherwise the gardener would not know which
-	// domain it should use.
-	if numberOfInternalDomainSecrets != 1 {
-		return nil, fmt.Errorf("require exactly ONE internal domain secret, but found %d", numberOfInternalDomainSecrets)
+	selectorGardenRole, err := labels.Parse(v1alpha1constants.GardenRole)
+	if err != nil {
+		return nil, err
+	}
+
+	secretsGardenRole, err := k8sInformers.Core().V1().Secrets().Lister().Secrets(v1alpha1constants.GardenNamespace).List(selectorGardenRole)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, secret := range secretsGardenRole {
+
+		// Retrieve the alerting secret to configure alerting. Either in cluster email alerting or
+		// external alertmanager configuration.
+		if secret.Labels[v1alpha1constants.GardenRole] == common.GardenRoleAlerting {
+			authType := string(secret.Data["auth_type"])
+			if authType != "smtp" && authType != "none" && authType != "basic" && authType != "certificate" {
+				return nil, fmt.Errorf("Invalid or missing field 'auth_type' in secret %s", secret.Name)
+			}
+			alertingSecret := secret
+			secretsMap[common.GardenRoleAlerting] = alertingSecret
+			logger.Logger.Infof("Found alerting secret %s.", secret.Name)
+			numberOfAlertingSecrets++
+		}
+	}
+
+	// Check if an internal domain secret is required
+	seeds, err := k8sGardenCoreInformers.Core().V1alpha1().Seeds().Lister().List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+	for _, seed := range seeds {
+		if helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintDisableDNS) {
+			continue
+		}
+
+		// For each Shoot we create a LoadBalancer(LB) pointing to the API server of the Shoot. Because the technical address
+		// of the LB (ip or hostname) can change we cannot directly write it into the kubeconfig of the components
+		// which talk from outside (kube-proxy, kubelet etc.) (otherwise those kubeconfigs would be broken once ip/hostname
+		// of LB changed; and we don't have means to exchange kubeconfigs currently).
+		// Therefore, to have a stable endpoint, we create a DNS record pointing to the ip/hostname of the LB. This DNS record
+		// is used in all kubeconfigs. With that we have a robust endpoint stable against underlying ip/hostname changes.
+		// And there can only be one of this internal domain secret because otherwise the gardener would not know which
+		// domain it should use.
+		if numberOfInternalDomainSecrets != 1 {
+			return nil, fmt.Errorf("require exactly ONE internal domain secret, but found %d", numberOfInternalDomainSecrets)
+		}
 	}
 
 	// The VPN bridge from a Shoot's control plane running in the Seed cluster to the worker nodes of the Shoots is based
@@ -211,6 +243,12 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory) (map[st
 	// the Gardener cannot determine which to choose).
 	if numberOfOpenVPNDiffieHellmanSecrets > 1 {
 		return nil, fmt.Errorf("can only accept at most one OpenVPN Diffie Hellman secret, but found %d", numberOfOpenVPNDiffieHellmanSecrets)
+	}
+
+	// Operators can configure gardener to send email alerts or send the alerts to an external alertmanager. If no configuration
+	// is provided then no alerts will be sent.
+	if numberOfAlertingSecrets > 1 {
+		return nil, fmt.Errorf("can only accept at most one alerting secret, but found %d", numberOfAlertingSecrets)
 	}
 
 	return secretsMap, nil

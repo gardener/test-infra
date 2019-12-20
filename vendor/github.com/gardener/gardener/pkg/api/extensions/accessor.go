@@ -148,13 +148,34 @@ func (u unstructuredStatusAccessor) GetConditions() []gardencorev1alpha1.Conditi
 	if err != nil || !ok {
 		return nil
 	}
-
-	conditions, ok2 := val.([]gardencorev1alpha1.Condition)
-	if !ok2 {
-		return nil
+	var conditions []gardencorev1alpha1.Condition
+	interfaceConditionSlice := val.([]interface{})
+	for _, interfaceCondition := range interfaceConditionSlice {
+		new := interfaceCondition.(map[string]interface{})
+		condition := &gardencorev1alpha1.Condition{}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(new, condition)
+		if err != nil {
+			return nil
+		}
+		conditions = append(conditions, *condition)
 	}
-
 	return conditions
+}
+
+// SetConditions implements Status.
+func (u unstructuredStatusAccessor) SetConditions(conditions []gardencorev1alpha1.Condition) {
+	var interfaceSlice = make([]interface{}, len(conditions))
+	for i, d := range conditions {
+		unstrc, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&d)
+		if err != nil {
+			return
+		}
+		interfaceSlice[i] = unstrc
+	}
+	err := unstructured.SetNestedSlice(u.UnstructuredContent(), interfaceSlice, "status", "conditions")
+	if err != nil {
+		return
+	}
 }
 
 // GetLastOperation implements Status.
@@ -173,6 +194,16 @@ func (u unstructuredStatusAccessor) GetObservedGeneration() int64 {
 // GetDescription implements LastError.
 func (u unstructuredLastErrorAccessor) GetDescription() string {
 	return nestedString(u.Object, "status", "lastError", "description")
+}
+
+// GetTaskID implements LastError
+func (u unstructuredLastErrorAccessor) GetTaskID() *string {
+	s, ok, err := unstructured.NestedString(u.Object, "status", "lastError", "taskID")
+	if err != nil || !ok {
+		return nil
+	}
+
+	return &s
 }
 
 // GetCodes implements LastError.

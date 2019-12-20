@@ -63,6 +63,13 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 			}
 		}
 
+		var pConfig *runtime.RawExtension
+		if worker.ProviderConfig != nil {
+			pConfig = &runtime.RawExtension{
+				Raw: worker.ProviderConfig.Raw,
+			}
+		}
+
 		pools = append(pools, extensionsv1alpha1.WorkerPool{
 			Name:           worker.Name,
 			Minimum:        int(worker.Minimum),
@@ -77,9 +84,10 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 				Name:    worker.Machine.Image.Name,
 				Version: worker.Machine.Image.Version,
 			},
-			UserData: []byte(b.Shoot.OperatingSystemConfigsMap[worker.Name].Downloader.Data.Content),
-			Volume:   volume,
-			Zones:    worker.Zones,
+			ProviderConfig: pConfig,
+			UserData:       []byte(b.Shoot.OperatingSystemConfigsMap[worker.Name].Downloader.Data.Content),
+			Volume:         volume,
+			Zones:          worker.Zones,
 		})
 	}
 
@@ -108,10 +116,14 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 // DestroyWorker deletes the `Worker` extension resource in the shoot namespace in the seed cluster,
 // and it waits for a maximum of 5m until it is deleted.
 func (b *Botanist) DestroyWorker(ctx context.Context) error {
-	if err := b.K8sSeedClient.Client().Delete(ctx, &extensionsv1alpha1.Worker{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: b.Shoot.Info.Name}}); err != nil && !apierrors.IsNotFound(err) {
-		return err
+	worker := &extensionsv1alpha1.Worker{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: b.Shoot.SeedNamespace,
+			Name:      b.Shoot.Info.Name,
+		},
 	}
-	return nil
+
+	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, worker))
 }
 
 // WaitUntilWorkerReady waits until the worker extension resource has been successfully reconciled.

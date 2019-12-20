@@ -18,7 +18,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unsafe"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/apis/garden"
 	"github.com/gardener/gardener/pkg/apis/garden/helper"
 	"github.com/gardener/gardener/pkg/utils"
@@ -36,7 +38,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog"
 )
 
@@ -95,13 +99,15 @@ func Convert_garden_MachineImage_To_v1beta1_MachineImage(in *garden.MachineImage
 func Convert_v1beta1_KubernetesConstraints_To_garden_KubernetesConstraints(in *KubernetesConstraints, out *garden.KubernetesConstraints, s conversion.Scope) error {
 	out.OfferedVersions = []garden.KubernetesVersion{}
 	duplicates := map[string]int{}
-	for index, externalVersion := range in.Versions {
+	index := 0
+	for _, externalVersion := range in.Versions {
 		internalVersion := &garden.KubernetesVersion{Version: externalVersion}
 		if _, exists := duplicates[externalVersion]; exists {
 			continue
 		}
 		out.OfferedVersions = append(out.OfferedVersions, *internalVersion)
 		duplicates[externalVersion] = index
+		index++
 	}
 	for _, externalVersion := range in.OfferedVersions {
 		internalVersion := &garden.KubernetesVersion{}
@@ -220,6 +226,8 @@ func Convert_v1beta1_Seed_To_garden_Seed(in *Seed, out *garden.Seed, s conversio
 		})
 	}
 
+	out.Spec.Networks.BlockCIDRs = in.Spec.BlockCIDRs
+
 	return nil
 }
 
@@ -327,6 +335,8 @@ func Convert_garden_Seed_To_v1beta1_Seed(in *garden.Seed, out *Seed, s conversio
 		}
 	}
 
+	out.Spec.BlockCIDRs = in.Spec.Networks.BlockCIDRs
+
 	return nil
 }
 
@@ -336,6 +346,14 @@ func Convert_garden_SeedSpec_To_v1beta1_SeedSpec(in *garden.SeedSpec, out *SeedS
 
 func Convert_v1beta1_SeedSpec_To_garden_SeedSpec(in *SeedSpec, out *garden.SeedSpec, s conversion.Scope) error {
 	return autoConvert_v1beta1_SeedSpec_To_garden_SeedSpec(in, out, s)
+}
+
+func Convert_garden_SeedNetworks_To_v1beta1_SeedNetworks(in *garden.SeedNetworks, out *SeedNetworks, s conversion.Scope) error {
+	return autoConvert_garden_SeedNetworks_To_v1beta1_SeedNetworks(in, out, s)
+}
+
+func Convert_v1beta1_SeedNetworks_To_garden_SeedNetworks(in *SeedNetworks, out *garden.SeedNetworks, s conversion.Scope) error {
+	return autoConvert_v1beta1_SeedNetworks_To_garden_SeedNetworks(in, out, s)
 }
 
 func Convert_v1beta1_ProjectSpec_To_garden_ProjectSpec(in *ProjectSpec, out *garden.ProjectSpec, s conversion.Scope) error {
@@ -385,7 +403,7 @@ func Convert_v1beta1_QuotaSpec_To_garden_QuotaSpec(in *QuotaSpec, out *garden.Qu
 	switch in.Scope {
 	case QuotaScopeProject:
 		out.Scope = corev1.ObjectReference{
-			APIVersion: "core.gardener.cloud/v1alpha1",
+			APIVersion: "core.gardener.cloud/v1beta1",
 			Kind:       "Project",
 		}
 	case QuotaScopeSecret:
@@ -403,7 +421,7 @@ func Convert_garden_QuotaSpec_To_v1beta1_QuotaSpec(in *garden.QuotaSpec, out *Qu
 		return err
 	}
 
-	if in.Scope.APIVersion == "core.gardener.cloud/v1alpha1" && in.Scope.Kind == "Project" {
+	if gvk := schema.FromAPIVersionAndKind(in.Scope.APIVersion, in.Scope.Kind); gvk.Group == "core.gardener.cloud" && gvk.Kind == "Project" {
 		out.Scope = QuotaScopeProject
 	}
 	if in.Scope.APIVersion == "v1" && in.Scope.Kind == "Secret" {
@@ -580,13 +598,13 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 				var ok bool
 				cloudProfileConfig = providerConfig.Object.(*azurev1alpha1.CloudProfileConfig)
 				if !ok {
-					klog.Errorf("Cannot cast providerConfig of core.gardener.cloud/v1alpha1.CloudProfile %s", in.Name)
+					klog.Errorf("Cannot cast providerConfig of core.gardener.cloud.CloudProfile %s", in.Name)
 				}
 			case providerConfig.Raw != nil:
 				if _, _, err := decoder.Decode(providerConfig.Raw, nil, cloudProfileConfig); err != nil {
 					// If an error occurs then the provider config information contains invalid syntax, and in this
 					// case we don't want to fail here. We rather don't try to migrate.
-					klog.Errorf("Cannot decode providerConfig of core.gardener.cloud/v1alpha1.CloudProfile %s", in.Name)
+					klog.Errorf("Cannot decode providerConfig of core.gardener.cloud.CloudProfile %s", in.Name)
 				}
 			}
 		}
@@ -595,7 +613,7 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 		}
 		cloudProfileConfig.CountFaultDomains = nil
 		for _, c := range in.Spec.Azure.CountFaultDomains {
-			if !azureV1alpha1DomainCountsHaveRegion(cloudProfileConfig.CountUpdateDomains, c.Region) {
+			if !azureV1alpha1DomainCountsHaveRegion(cloudProfileConfig.CountFaultDomains, c.Region) {
 				cloudProfileConfig.CountFaultDomains = append(cloudProfileConfig.CountFaultDomains, azurev1alpha1.DomainCount{
 					Region: c.Region,
 					Count:  c.Count,
@@ -778,13 +796,13 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 				var ok bool
 				cloudProfileConfig = providerConfig.Object.(*openstackv1alpha1.CloudProfileConfig)
 				if !ok {
-					klog.Errorf("Cannot cast providerConfig of core.gardener.cloud/v1alpha1.CloudProfile %s", in.Name)
+					klog.Errorf("Cannot cast providerConfig of core.gardener.cloud.CloudProfile %s", in.Name)
 				}
 			case providerConfig.Raw != nil:
 				if _, _, err := decoder.Decode(providerConfig.Raw, nil, cloudProfileConfig); err != nil {
 					// If an error occurs then the provider config information contains invalid syntax, and in this
 					// case we don't want to fail here. We rather don't try to migrate.
-					klog.Errorf("Cannot decode providerConfig of core.gardener.cloud/v1alpha1.CloudProfile %s", in.Name)
+					klog.Errorf("Cannot decode providerConfig of core.gardener.cloud.CloudProfile %s", in.Name)
 				}
 			}
 		}
@@ -1052,12 +1070,14 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 		out.Spec.SeedSelector = nil
 	}
 
-	if providerConfigJSON, ok := in.Annotations[garden.MigrationCloudProfileProviderConfig]; ok {
-		var providerConfig garden.ProviderConfig
-		if err := json.Unmarshal([]byte(providerConfigJSON), &providerConfig); err != nil {
-			return err
+	if out.Spec.ProviderConfig == nil {
+		if providerConfigJSON, ok := in.Annotations[garden.MigrationCloudProfileProviderConfig]; ok {
+			providerConfig := &garden.ProviderConfig{}
+			if err := json.Unmarshal([]byte(providerConfigJSON), providerConfig); err != nil {
+				return err
+			}
+			out.Spec.ProviderConfig = providerConfig
 		}
-		out.Spec.ProviderConfig = &providerConfig
 	}
 
 	return nil
@@ -1066,6 +1086,10 @@ func Convert_v1beta1_CloudProfile_To_garden_CloudProfile(in *CloudProfile, out *
 func Convert_garden_CloudProfile_To_v1beta1_CloudProfile(in *garden.CloudProfile, out *CloudProfile, s conversion.Scope) error {
 	if err := autoConvert_garden_CloudProfile_To_v1beta1_CloudProfile(in, out, s); err != nil {
 		return err
+	}
+
+	if out.Annotations == nil {
+		out.Annotations = make(map[string]string)
 	}
 
 	switch in.Spec.Type {
@@ -1278,51 +1302,53 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 	}
 	out.Spec.Networking = networking
 
-	var dns garden.DNS
-	if err := autoConvert_v1beta1_DNS_To_garden_DNS(&in.Spec.DNS, &dns, s); err != nil {
-		return err
-	}
-
-	var provider garden.DNSProvider
-	if in.Spec.DNS.ExcludeDomains != nil || in.Spec.DNS.ExcludeZones != nil || in.Spec.DNS.IncludeDomains != nil || in.Spec.DNS.IncludeZones != nil || in.Spec.DNS.Provider != nil || in.Spec.DNS.SecretName != nil {
-		provider.SecretName = in.Spec.DNS.SecretName
-		provider.Type = in.Spec.DNS.Provider
-
-		var domains *garden.DNSIncludeExclude
-		if in.Spec.DNS.IncludeDomains != nil || in.Spec.DNS.ExcludeDomains != nil {
-			domains = &garden.DNSIncludeExclude{}
-			for _, val := range in.Spec.DNS.IncludeDomains {
-				domains.Include = append(domains.Include, val)
-			}
-			for _, val := range in.Spec.DNS.ExcludeDomains {
-				domains.Exclude = append(domains.Exclude, val)
-			}
-		}
-		provider.Domains = domains
-
-		var zones *garden.DNSIncludeExclude
-		if in.Spec.DNS.IncludeZones != nil || in.Spec.DNS.ExcludeZones != nil {
-			zones = &garden.DNSIncludeExclude{}
-			for _, val := range in.Spec.DNS.IncludeZones {
-				zones.Include = append(zones.Include, val)
-			}
-			for _, val := range in.Spec.DNS.ExcludeZones {
-				zones.Exclude = append(zones.Exclude, val)
-			}
-		}
-		provider.Zones = zones
-
-		dns.Providers = append(dns.Providers, provider)
-	}
-
-	if additionalProviders, ok := in.Annotations[garden.MigrationShootDNSProviders]; ok {
-		var providers []garden.DNSProvider
-		if err := json.Unmarshal([]byte(additionalProviders), &providers); err != nil {
+	if in.Spec.DNS != nil {
+		var dns garden.DNS
+		if err := autoConvert_v1beta1_DNS_To_garden_DNS(in.Spec.DNS, &dns, s); err != nil {
 			return err
 		}
-		dns.Providers = append(dns.Providers, providers...)
+
+		var provider garden.DNSProvider
+		if in.Spec.DNS != nil && (in.Spec.DNS.ExcludeDomains != nil || in.Spec.DNS.ExcludeZones != nil || in.Spec.DNS.IncludeDomains != nil || in.Spec.DNS.IncludeZones != nil || in.Spec.DNS.Provider != nil || in.Spec.DNS.SecretName != nil) {
+			provider.SecretName = in.Spec.DNS.SecretName
+			provider.Type = in.Spec.DNS.Provider
+
+			var domains *garden.DNSIncludeExclude
+			if in.Spec.DNS.IncludeDomains != nil || in.Spec.DNS.ExcludeDomains != nil {
+				domains = &garden.DNSIncludeExclude{}
+				for _, val := range in.Spec.DNS.IncludeDomains {
+					domains.Include = append(domains.Include, val)
+				}
+				for _, val := range in.Spec.DNS.ExcludeDomains {
+					domains.Exclude = append(domains.Exclude, val)
+				}
+			}
+			provider.Domains = domains
+
+			var zones *garden.DNSIncludeExclude
+			if in.Spec.DNS.IncludeZones != nil || in.Spec.DNS.ExcludeZones != nil {
+				zones = &garden.DNSIncludeExclude{}
+				for _, val := range in.Spec.DNS.IncludeZones {
+					zones.Include = append(zones.Include, val)
+				}
+				for _, val := range in.Spec.DNS.ExcludeZones {
+					zones.Exclude = append(zones.Exclude, val)
+				}
+			}
+			provider.Zones = zones
+
+			dns.Providers = append(dns.Providers, provider)
+		}
+
+		if additionalProviders, ok := in.Annotations[garden.MigrationShootDNSProviders]; ok {
+			var providers []garden.DNSProvider
+			if err := json.Unmarshal([]byte(additionalProviders), &providers); err != nil {
+				return err
+			}
+			dns.Providers = append(dns.Providers, providers...)
+		}
+		out.Spec.DNS = &dns
 	}
-	out.Spec.DNS = &dns
 
 	var workerMigrationInfo garden.WorkerMigrationInfo
 	if data, ok := in.Annotations[garden.MigrationShootWorkers]; ok {
@@ -1415,6 +1441,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		out.Spec.Provider.Workers = nil
 
 		for _, worker := range in.Spec.Cloud.AWS.Workers {
+			volumeType := worker.VolumeType
 			w := garden.Worker{
 				Annotations: worker.Annotations,
 				CABundle:    worker.CABundle,
@@ -1430,7 +1457,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: &worker.VolumeType,
+					Type: &volumeType,
 				},
 			}
 
@@ -1456,8 +1483,11 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.Zones = data.Zones
 			}
 
-			if w.Zones == nil {
-				w.Zones = in.Spec.Cloud.AWS.Zones
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.AWS.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -1556,6 +1586,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		out.Spec.Provider.Workers = nil
 
 		for _, worker := range in.Spec.Cloud.Azure.Workers {
+			volumeType := worker.VolumeType
 			w := garden.Worker{
 				Annotations: worker.Annotations,
 				CABundle:    worker.CABundle,
@@ -1571,7 +1602,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: &worker.VolumeType,
+					Type: &volumeType,
 				},
 			}
 
@@ -1596,8 +1627,12 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.ProviderConfig = data.ProviderConfig
 				w.Zones = data.Zones
 			}
-			if w.Zones == nil && zoned {
-				w.Zones = in.Spec.Cloud.Azure.Zones
+
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.Azure.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -1691,6 +1726,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		out.Spec.Provider.Workers = nil
 
 		for _, worker := range in.Spec.Cloud.GCP.Workers {
+			volumeType := worker.VolumeType
 			w := garden.Worker{
 				Annotations: worker.Annotations,
 				CABundle:    worker.CABundle,
@@ -1706,7 +1742,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: &worker.VolumeType,
+					Type: &volumeType,
 				},
 			}
 
@@ -1732,8 +1768,11 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.Zones = data.Zones
 			}
 
-			if w.Zones == nil {
-				w.Zones = in.Spec.Cloud.GCP.Zones
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.GCP.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -1869,8 +1908,11 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.Volume = data.Volume
 			}
 
-			if w.Zones == nil {
-				w.Zones = in.Spec.Cloud.OpenStack.Zones
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.OpenStack.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -1967,6 +2009,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		out.Spec.Provider.Workers = nil
 
 		for _, worker := range in.Spec.Cloud.Alicloud.Workers {
+			volumeType := worker.VolumeType
 			w := garden.Worker{
 				Annotations: worker.Annotations,
 				CABundle:    worker.CABundle,
@@ -1982,7 +2025,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: &worker.VolumeType,
+					Type: &volumeType,
 				},
 			}
 
@@ -2008,8 +2051,11 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.Zones = data.Zones
 			}
 
-			if w.Zones == nil {
-				w.Zones = in.Spec.Cloud.Alicloud.Zones
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.Alicloud.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -2068,6 +2114,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 		out.Spec.Provider.Workers = nil
 
 		for _, worker := range in.Spec.Cloud.Packet.Workers {
+			volumeType := worker.VolumeType
 			w := garden.Worker{
 				Annotations: worker.Annotations,
 				CABundle:    worker.CABundle,
@@ -2083,7 +2130,7 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				Taints:         worker.Taints,
 				Volume: &garden.Volume{
 					Size: worker.VolumeSize,
-					Type: &worker.VolumeType,
+					Type: &volumeType,
 				},
 			}
 
@@ -2109,8 +2156,11 @@ func Convert_v1beta1_Shoot_To_garden_Shoot(in *Shoot, out *garden.Shoot, s conve
 				w.Zones = data.Zones
 			}
 
-			if w.Zones == nil {
-				w.Zones = in.Spec.Cloud.Packet.Zones
+			usedZones := sets.NewString(w.Zones...)
+			for _, zone := range in.Spec.Cloud.Packet.Zones {
+				if !usedZones.Has(zone) {
+					w.Zones = append(w.Zones, zone)
+				}
 			}
 
 			out.Spec.Provider.Workers = append(out.Spec.Provider.Workers, w)
@@ -2157,9 +2207,10 @@ func Convert_garden_Shoot_To_v1beta1_Shoot(in *garden.Shoot, out *Shoot, s conve
 	}
 	out.Spec.Networking = networking
 
-	var dns DNS
+	var dns *DNS
 	if in.Spec.DNS != nil {
-		if err := autoConvert_garden_DNS_To_v1beta1_DNS(in.Spec.DNS, &dns, s); err != nil {
+		dns = &DNS{}
+		if err := autoConvert_garden_DNS_To_v1beta1_DNS(in.Spec.DNS, dns, s); err != nil {
 			return err
 		}
 
@@ -2216,7 +2267,6 @@ func Convert_garden_Shoot_To_v1beta1_Shoot(in *garden.Shoot, out *Shoot, s conve
 		}
 		metav1.SetMetaDataAnnotation(&out.ObjectMeta, garden.MigrationShootProvider, string(data))
 	}
-
 	return nil
 }
 
@@ -2233,8 +2283,18 @@ func Convert_garden_ShootStatus_To_v1beta1_ShootStatus(in *garden.ShootStatus, o
 		return err
 	}
 
-	if in.Seed != nil {
-		out.Seed = *in.Seed
+	if len(in.LastErrors) != 0 {
+		out.LastError = (*gardencorev1alpha1.LastError)(unsafe.Pointer(&in.LastErrors[0]))
+		if len(in.LastErrors) > 1 {
+			lastErrors := in.LastErrors[1:]
+			out.LastErrors = *(*[]gardencorev1alpha1.LastError)(unsafe.Pointer(&lastErrors))
+		} else {
+			out.LastErrors = nil
+		}
+	}
+
+	if in.SeedName != nil {
+		out.Seed = *in.SeedName
 	} else {
 		out.Seed = ""
 	}
@@ -2247,10 +2307,23 @@ func Convert_v1beta1_ShootStatus_To_garden_ShootStatus(in *ShootStatus, out *gar
 		return err
 	}
 
-	if len(in.Seed) > 0 {
-		out.Seed = &in.Seed
+	if in.LastError != nil {
+		outLastErrors := []garden.LastError{
+			{
+				Description:    in.LastError.Description,
+				Codes:          *(*[]garden.ErrorCode)(unsafe.Pointer(&in.LastError.Codes)),
+				LastUpdateTime: in.LastError.LastUpdateTime,
+			},
+		}
+		out.LastErrors = append(outLastErrors, *(*[]garden.LastError)(unsafe.Pointer(&in.LastErrors))...)
 	} else {
-		out.Seed = nil
+		out.LastErrors = nil
+	}
+
+	if len(in.Seed) > 0 {
+		out.SeedName = &in.Seed
+	} else {
+		out.SeedName = nil
 	}
 
 	return nil

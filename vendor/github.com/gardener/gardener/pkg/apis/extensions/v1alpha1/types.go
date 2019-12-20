@@ -24,6 +24,8 @@ type Status interface {
 	// GetConditions retrieves the Conditions of a status.
 	// Conditions may be nil.
 	GetConditions() []gardencorev1alpha1.Condition
+	// SetConditions sets the Conditions of a status.
+	SetConditions([]gardencorev1alpha1.Condition)
 	// GetLastOperation retrieves the LastOperation of a status.
 	// LastOperation may be nil.
 	GetLastOperation() LastOperation
@@ -52,6 +54,8 @@ type LastOperation interface {
 type LastError interface {
 	// GetDescription gets the description of the last occurred error.
 	GetDescription() string
+	// GetTaskID gets the task ID of the last error.
+	GetTaskID() *string
 	// GetCodes gets the error codes of the last error.
 	GetCodes() []gardencorev1alpha1.ErrorCode
 	// GetLastUpdateTime retrieves the last time the error was updated.

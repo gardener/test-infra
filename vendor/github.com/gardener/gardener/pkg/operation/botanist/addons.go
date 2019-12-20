@@ -28,11 +28,9 @@ import (
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/secrets"
 
-	resourcesvalpha1 "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener-resource-manager/pkg/manager"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // DNSPurposeIngress is a constant for a DNS record used for the ingress domain name.
@@ -53,11 +51,7 @@ func (b *Botanist) EnsureIngressDNSRecord(ctx context.Context) error {
 		return err
 	}
 
-	if err := b.deployDNSEntry(ctx, DNSPurposeIngress, b.Shoot.GetIngressFQDN("*"), loadBalancerIngress); err != nil {
-		return err
-	}
-
-	return b.deleteLegacyTerraformDNSResources(ctx, common.TerraformerPurposeIngressDNSDeprecated)
+	return b.deployDNSEntry(ctx, DNSPurposeIngress, b.Shoot.GetIngressFQDN("*"), loadBalancerIngress)
 }
 
 // DestroyIngressDNSRecord destroys the nginx-ingress resources created by Terraform.
@@ -96,6 +90,7 @@ func (b *Botanist) GenerateNginxIngressConfig() (map[string]interface{}, error) 
 				"customConfig": b.Shoot.Info.Spec.Addons.NginxIngress.Config,
 				"service": map[string]interface{}{
 					"loadBalancerSourceRanges": b.Shoot.Info.Spec.Addons.NginxIngress.LoadBalancerSourceRanges,
+					"externalTrafficPolicy":    *b.Shoot.Info.Spec.Addons.NginxIngress.ExternalTrafficPolicy,
 				},
 			},
 		}
@@ -124,13 +119,6 @@ func (b *Botanist) DeployManagedResources(ctx context.Context) error {
 		chartRenderFunc func() (*chartrenderer.RenderedChart, error)
 	}
 
-	// Delete legacy storage classes managed resource (no longer needed because the provider extension
-	// controllers are now responsible for deploying the shoot storage classes).
-	// This code can be removed in a future Gardener version.
-	if err := b.K8sSeedClient.Client().Delete(ctx, &resourcesvalpha1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: "storageclasses"}}); client.IgnoreNotFound(err) != nil {
-		return err
-	}
-
 	var (
 		injectedLabels = map[string]string{
 			common.ShootNoCleanup: "true",
@@ -143,6 +131,8 @@ func (b *Botanist) DeployManagedResources(ctx context.Context) error {
 			"shoot-core":                   {false, b.generateCoreAddonsChart},
 			"shoot-core-namespaces":        {true, b.generateCoreNamespacesChart},
 			"addons":                       {false, b.generateOptionalAddonsChart},
+			// TODO: Just a temporary solution. Remove this in a future version once Kyma is moved out again.
+			"addons-kyma": {false, b.generateTemporaryKymaAddonsChart},
 		}
 	)
 
@@ -154,7 +144,8 @@ func (b *Botanist) DeployManagedResources(ctx context.Context) error {
 
 		data := make(map[string][]byte, len(renderedChart.Files()))
 		for fileName, fileContent := range renderedChart.Files() {
-			data[strings.Replace(fileName, "/", "_", -1)] = []byte(fileContent)
+			key := strings.Replace(fileName, "/", "_", -1)
+			data[key] = []byte(fileContent)
 		}
 
 		secretName := "managedresource-" + name
@@ -206,7 +197,7 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 		clusterAutoscaler = map[string]interface{}{
 			"enabled": b.Shoot.WantsClusterAutoscaler,
 		}
-		podsecuritypolicies = map[string]interface{}{
+		podSecurityPolicies = map[string]interface{}{
 			"allowPrivilegedContainers": *b.Shoot.Info.Spec.Kubernetes.AllowPrivilegedContainers,
 		}
 		kubeProxyConfig = map[string]interface{}{
@@ -234,9 +225,22 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 				"checksum/secret-vpn-shoot": b.CheckSums["vpn-shoot"],
 			},
 		}
+		shootInfo = map[string]interface{}{
+			"projectName":       b.Garden.Project.Name,
+			"shootName":         b.Shoot.Info.Name,
+			"provider":          b.Shoot.Info.Spec.Provider.Type,
+			"region":            b.Shoot.Info.Spec.Region,
+			"kubernetesVersion": b.Shoot.Info.Spec.Kubernetes.Version,
+			"podNetwork":        b.Shoot.GetPodNetwork(),
+			"serviceNetwork":    b.Shoot.GetServiceNetwork(),
+			"nodeNetwork":       b.Shoot.Info.Spec.Networking.Nodes,
+			"maintenanceBegin":  b.Shoot.Info.Spec.Maintenance.TimeWindow.Begin,
+			"maintenanceEnd":    b.Shoot.Info.Spec.Maintenance.TimeWindow.End,
+		}
 		nodeExporterConfig        = map[string]interface{}{}
 		blackboxExporterConfig    = map[string]interface{}{}
 		nodeProblemDetectorConfig = map[string]interface{}{}
+		networkPolicyConfig       = map[string]interface{}{}
 	)
 
 	proxyConfig := b.Shoot.Info.Spec.Kubernetes.KubeProxy
@@ -247,6 +251,15 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 	if openvpnDiffieHellmanSecret, ok := b.Secrets[common.GardenRoleOpenVPNDiffieHellman]; ok {
 		vpnShootConfig["diffieHellmanKey"] = openvpnDiffieHellmanSecret.Data["dh2048.pem"]
 	}
+
+	if domain := b.Shoot.ExternalClusterDomain; domain != nil {
+		shootInfo["domain"] = *domain
+	}
+	var extensions []string
+	for extensionType := range b.Shoot.Extensions {
+		extensions = append(extensions, extensionType)
+	}
+	shootInfo["extensions"] = strings.Join(extensions, ",")
 
 	coreDNS, err := b.InjectShootShootImages(coreDNSConfig, common.CoreDNSImageName)
 	if err != nil {
@@ -299,7 +312,7 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 	return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-core", "components"), "shoot-core", metav1.NamespaceSystem, map[string]interface{}{
 		"global":              global,
 		"cluster-autoscaler":  clusterAutoscaler,
-		"podsecuritypolicies": podsecuritypolicies,
+		"podsecuritypolicies": podSecurityPolicies,
 		"coredns":             coreDNS,
 		"kube-proxy":          kubeProxy,
 		"vpn-shoot":           vpnShoot,
@@ -308,7 +321,9 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 			"node-exporter":     nodeExporter,
 			"blackbox-exporter": blackboxExporter,
 		},
+		"network-policies":      networkPolicyConfig,
 		"node-problem-detector": nodeProblemDetector,
+		"shoot-info":            shootInfo,
 	})
 }
 
@@ -346,5 +361,14 @@ func (b *Botanist) generateOptionalAddonsChart() (*chartrenderer.RenderedChart, 
 	return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-addons"), "addons", metav1.NamespaceSystem, map[string]interface{}{
 		"kubernetes-dashboard": kubernetesDashboard,
 		"nginx-ingress":        nginxIngress,
+	})
+}
+
+// generateTemporaryKymaAddonsChart renders the gardener-resource-manager chart for the kyma addon. After that it
+// creates a ManagedResource CRD that references the rendered manifests and creates it.
+// TODO: Just a temporary solution. Remove this in a future version once Kyma is moved out again.
+func (b *Botanist) generateTemporaryKymaAddonsChart() (*chartrenderer.RenderedChart, error) {
+	return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-addons-kyma"), "kyma", "kyma-installer", map[string]interface{}{
+		"kyma": common.GenerateAddonConfig(nil, metav1.HasAnnotation(b.Shoot.Info.ObjectMeta, common.ShootExperimentalAddonKyma)),
 	})
 }

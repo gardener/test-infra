@@ -185,7 +185,7 @@ func (b *Botanist) RewriteShootSecretsIfEncryptionConfigurationChanged(ctx conte
 
 func (b *Botanist) updateShootLabelsForEtcdEncryption(ctx context.Context, labelRequirement *labels.Requirement, mutateLabelsFunc func(m metav1.Object)) []error {
 	secretList := &corev1.SecretList{}
-	if err := b.K8sShootClient.Client().List(ctx, secretList, client.UseListOptions(&client.ListOptions{LabelSelector: labels.NewSelector().Add(*labelRequirement)})); err != nil {
+	if err := b.K8sShootClient.Client().List(ctx, secretList, client.MatchingLabelsSelector{Selector: labels.NewSelector().Add(*labelRequirement)}); err != nil {
 		return []error{err}
 	}
 

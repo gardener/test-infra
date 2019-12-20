@@ -42,6 +42,9 @@ var (
 	LogDir                   string
 	TmpDir                   string
 	ShootKubeconfigPath      string
+	GardenKubeconfigPath     string
+	ProjectNamespace         string
+	ShootName                string
 	GinkgoParallel           bool
 	DescriptionFile          string
 	K8sRelease               string
@@ -119,6 +122,9 @@ func init() {
 	if ShootKubeconfigPath == "" {
 		log.Fatal("shoot config not set")
 	}
+	GardenKubeconfigPath = os.Getenv("GARDEN_KUBECONFIG_PATH")
+	ProjectNamespace = os.Getenv("PROJECT_NAMESPACE")
+	ShootName = os.Getenv("SHOOT_NAME")
 	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}

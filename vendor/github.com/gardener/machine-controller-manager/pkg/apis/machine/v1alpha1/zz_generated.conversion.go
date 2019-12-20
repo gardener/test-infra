@@ -9,7 +9,7 @@ import (
 
 	machine "github.com/gardener/machine-controller-manager/pkg/apis/machine"
 	v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
@@ -1089,10 +1089,7 @@ func Convert_machine_AzureHardwareProfile_To_v1alpha1_AzureHardwareProfile(in *m
 
 func autoConvert_v1alpha1_AzureImageReference_To_machine_AzureImageReference(in *AzureImageReference, out *machine.AzureImageReference, s conversion.Scope) error {
 	out.ID = in.ID
-	out.Publisher = in.Publisher
-	out.Offer = in.Offer
-	out.Sku = in.Sku
-	out.Version = in.Version
+	out.URN = (*string)(unsafe.Pointer(in.URN))
 	return nil
 }
 
@@ -1103,10 +1100,7 @@ func Convert_v1alpha1_AzureImageReference_To_machine_AzureImageReference(in *Azu
 
 func autoConvert_machine_AzureImageReference_To_v1alpha1_AzureImageReference(in *machine.AzureImageReference, out *AzureImageReference, s conversion.Scope) error {
 	out.ID = in.ID
-	out.Publisher = in.Publisher
-	out.Offer = in.Offer
-	out.Sku = in.Sku
-	out.Version = in.Version
+	out.URN = (*string)(unsafe.Pointer(in.URN))
 	return nil
 }
 
@@ -1477,6 +1471,7 @@ func Convert_machine_AzureSubResource_To_v1alpha1_AzureSubResource(in *machine.A
 
 func autoConvert_v1alpha1_AzureSubnetInfo_To_machine_AzureSubnetInfo(in *AzureSubnetInfo, out *machine.AzureSubnetInfo, s conversion.Scope) error {
 	out.VnetName = in.VnetName
+	out.VnetResourceGroup = (*string)(unsafe.Pointer(in.VnetResourceGroup))
 	out.SubnetName = in.SubnetName
 	return nil
 }
@@ -1488,6 +1483,7 @@ func Convert_v1alpha1_AzureSubnetInfo_To_machine_AzureSubnetInfo(in *AzureSubnet
 
 func autoConvert_machine_AzureSubnetInfo_To_v1alpha1_AzureSubnetInfo(in *machine.AzureSubnetInfo, out *AzureSubnetInfo, s conversion.Scope) error {
 	out.VnetName = in.VnetName
+	out.VnetResourceGroup = (*string)(unsafe.Pointer(in.VnetResourceGroup))
 	out.SubnetName = in.SubnetName
 	return nil
 }
@@ -1510,9 +1506,8 @@ func autoConvert_v1alpha1_AzureVirtualMachineProperties_To_machine_AzureVirtualM
 	if err := Convert_v1alpha1_AzureNetworkProfile_To_machine_AzureNetworkProfile(&in.NetworkProfile, &out.NetworkProfile, s); err != nil {
 		return err
 	}
-	if err := Convert_v1alpha1_AzureSubResource_To_machine_AzureSubResource(&in.AvailabilitySet, &out.AvailabilitySet, s); err != nil {
-		return err
-	}
+	out.AvailabilitySet = (*machine.AzureSubResource)(unsafe.Pointer(in.AvailabilitySet))
+	out.Zone = (*int)(unsafe.Pointer(in.Zone))
 	return nil
 }
 
@@ -1534,9 +1529,8 @@ func autoConvert_machine_AzureVirtualMachineProperties_To_v1alpha1_AzureVirtualM
 	if err := Convert_machine_AzureNetworkProfile_To_v1alpha1_AzureNetworkProfile(&in.NetworkProfile, &out.NetworkProfile, s); err != nil {
 		return err
 	}
-	if err := Convert_machine_AzureSubResource_To_v1alpha1_AzureSubResource(&in.AvailabilitySet, &out.AvailabilitySet, s); err != nil {
-		return err
-	}
+	out.AvailabilitySet = (*AzureSubResource)(unsafe.Pointer(in.AvailabilitySet))
+	out.Zone = (*int)(unsafe.Pointer(in.Zone))
 	return nil
 }
 
@@ -1744,6 +1738,7 @@ func Convert_machine_GCPMetadata_To_v1alpha1_GCPMetadata(in *machine.GCPMetadata
 }
 
 func autoConvert_v1alpha1_GCPNetworkInterface_To_machine_GCPNetworkInterface(in *GCPNetworkInterface, out *machine.GCPNetworkInterface, s conversion.Scope) error {
+	out.DisableExternalIP = in.DisableExternalIP
 	out.Network = in.Network
 	out.Subnetwork = in.Subnetwork
 	return nil
@@ -1755,6 +1750,7 @@ func Convert_v1alpha1_GCPNetworkInterface_To_machine_GCPNetworkInterface(in *GCP
 }
 
 func autoConvert_machine_GCPNetworkInterface_To_v1alpha1_GCPNetworkInterface(in *machine.GCPNetworkInterface, out *GCPNetworkInterface, s conversion.Scope) error {
+	out.DisableExternalIP = in.DisableExternalIP
 	out.Network = in.Network
 	out.Subnetwork = in.Subnetwork
 	return nil
@@ -1983,7 +1979,7 @@ func Convert_machine_MachineDeploymentRollback_To_v1alpha1_MachineDeploymentRoll
 
 func autoConvert_v1alpha1_MachineDeploymentSpec_To_machine_MachineDeploymentSpec(in *MachineDeploymentSpec, out *machine.MachineDeploymentSpec, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	if err := Convert_v1alpha1_MachineTemplateSpec_To_machine_MachineTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
@@ -2005,7 +2001,7 @@ func Convert_v1alpha1_MachineDeploymentSpec_To_machine_MachineDeploymentSpec(in 
 
 func autoConvert_machine_MachineDeploymentSpec_To_v1alpha1_MachineDeploymentSpec(in *machine.MachineDeploymentSpec, out *MachineDeploymentSpec, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	if err := Convert_machine_MachineTemplateSpec_To_v1alpha1_MachineTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
@@ -2189,7 +2185,7 @@ func Convert_machine_MachineSetList_To_v1alpha1_MachineSetList(in *machine.Machi
 
 func autoConvert_v1alpha1_MachineSetSpec_To_machine_MachineSetSpec(in *MachineSetSpec, out *machine.MachineSetSpec, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	if err := Convert_v1alpha1_ClassSpec_To_machine_ClassSpec(&in.MachineClass, &out.MachineClass, s); err != nil {
 		return err
 	}
@@ -2207,7 +2203,7 @@ func Convert_v1alpha1_MachineSetSpec_To_machine_MachineSetSpec(in *MachineSetSpe
 
 func autoConvert_machine_MachineSetSpec_To_v1alpha1_MachineSetSpec(in *machine.MachineSetSpec, out *MachineSetSpec, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	if err := Convert_machine_ClassSpec_To_v1alpha1_ClassSpec(&in.MachineClass, &out.MachineClass, s); err != nil {
 		return err
 	}
@@ -2719,7 +2715,7 @@ func Convert_machine_ScaleSpec_To_v1alpha1_ScaleSpec(in *machine.ScaleSpec, out 
 
 func autoConvert_v1alpha1_ScaleStatus_To_machine_ScaleStatus(in *ScaleStatus, out *machine.ScaleStatus, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	out.TargetSelector = in.TargetSelector
 	return nil
 }
@@ -2731,7 +2727,7 @@ func Convert_v1alpha1_ScaleStatus_To_machine_ScaleStatus(in *ScaleStatus, out *m
 
 func autoConvert_machine_ScaleStatus_To_v1alpha1_ScaleStatus(in *machine.ScaleStatus, out *ScaleStatus, s conversion.Scope) error {
 	out.Replicas = in.Replicas
-	out.Selector = (*meta_v1.LabelSelector)(unsafe.Pointer(in.Selector))
+	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	out.TargetSelector = in.TargetSelector
 	return nil
 }

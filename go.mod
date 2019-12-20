@@ -9,7 +9,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
-	github.com/gardener/gardener v0.0.0-20191114144236-0e90aba93f3d
+	github.com/gardener/gardener v0.33.6
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.51.0 // indirect
 	github.com/go-logr/logr v0.1.0
@@ -21,7 +21,6 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/sessions v1.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
