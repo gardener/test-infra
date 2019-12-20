@@ -143,8 +143,8 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		if len(testrunsList) > 50 {
 			params["tests"] = testrunsList[:50] // todo add pagination to not cut at 50 items
 		}
-		if len(runsList) > 5 {
-			params["rungroups"] = runsList[:5]
+		if len(runsList) > 6 {
+			params["rungroups"] = runsList[:6]
 		}
 
 		p.handleSimplePage("testruns.html", params)(w, r)
@@ -336,7 +336,7 @@ func (l rungroupItemList) Less(a, b int) bool {
 	if l[a].startTime == nil || l[b].startTime == nil {
 		return true
 	}
-	return l[a].startTime.Before(l[b].startTime)
+	return l[b].startTime.Before(l[a].startTime)
 }
 
 func mergePhases(a, b argov1alpha1.NodePhase) argov1alpha1.NodePhase {
