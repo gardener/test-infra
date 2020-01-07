@@ -22,8 +22,6 @@ import (
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
-	utilerrors "github.com/gardener/gardener/pkg/utils/errors"
-	errors2 "github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,7 +48,7 @@ var (
 	unauthorizedRegexp           = regexp.MustCompile(`(?i)(Unauthorized|InvalidClientTokenId|SignatureDoesNotMatch|Authentication failed|AuthFailure|AuthorizationFailed|invalid character|invalid_grant|invalid_client|Authorization Profile was not found|cannot fetch token|no active subscriptions|InvalidAccessKeyId|InvalidSecretAccessKey)`)
 	quotaExceededRegexp          = regexp.MustCompile(`(?i)(LimitExceeded|Quota)`)
 	insufficientPrivilegesRegexp = regexp.MustCompile(`(?i)(AccessDenied|Forbidden|deny|denied)`)
-	dependenciesRegexp           = regexp.MustCompile(`(?i)(PendingVerification|Access Not Configured|accessNotConfigured|DependencyViolation|OptInRequired|DeleteConflict|Conflict|inactive billing state|ReadOnlyDisabledSubscription|is already being used|not available in the current hardware cluster)`)
+	dependenciesRegexp           = regexp.MustCompile(`(?i)(PendingVerification|Access Not Configured|accessNotConfigured|DependencyViolation|OptInRequired|DeleteConflict|Conflict|inactive billing state|ReadOnlyDisabledSubscription|is already being used)`)
 )
 
 // DetermineError determines the Garden error code for the given error message.
@@ -59,6 +57,7 @@ func DetermineError(message string) error {
 	if code == "" {
 		return errors.New(message)
 	}
+
 	return &errorWithCode{code, message}
 }
 
@@ -103,46 +102,11 @@ func FormatLastErrDescription(err error) string {
 	return errString
 }
 
-// WrappedLastErrors is a structure which contains the general description of the lastErrors which occurred and an array of all lastErrors
-type WrappedLastErrors struct {
-	Description string
-	LastErrors  []gardencorev1alpha1.LastError
-}
-
-// NewWrappedLastErrors returns an error
-func NewWrappedLastErrors(description string, err error) *WrappedLastErrors {
-	var lastErrors []gardencorev1alpha1.LastError
-
-	for _, partError := range utils.Errors(err) {
-		lastErrors = append(lastErrors, *LastErrorWithTaskID(
-			partError.Error(),
-			utilerrors.GetID(partError),
-			ExtractErrorCodes(errors2.Cause(partError))...))
-	}
-
-	return &WrappedLastErrors{
-		Description: description,
-		LastErrors:  lastErrors,
-	}
-}
-
 // LastError creates a new LastError with the given description, optional codes and sets timestamp when the error is lastly observed.
 func LastError(description string, codes ...gardencorev1alpha1.ErrorCode) *gardencorev1alpha1.LastError {
 	return &gardencorev1alpha1.LastError{
 		Description: description,
 		Codes:       codes,
-		LastUpdateTime: &metav1.Time{
-			Time: time.Now(),
-		},
-	}
-}
-
-// LastErrorWithTaskID creates a new LastError with the given description, the ID of the task when the error occurred, optional codes and sets timestamp when the error is lastly observed.
-func LastErrorWithTaskID(description string, taskID string, codes ...gardencorev1alpha1.ErrorCode) *gardencorev1alpha1.LastError {
-	return &gardencorev1alpha1.LastError{
-		Description: description,
-		Codes:       codes,
-		TaskID:      &taskID,
 		LastUpdateTime: &metav1.Time{
 			Time: time.Now(),
 		},

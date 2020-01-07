@@ -87,6 +87,17 @@ func GenerateAddonConfig(values map[string]interface{}, enabled bool) map[string
 	return v
 }
 
+// GenerateTerraformVariablesEnvironment takes a <secret> and a <keyValueMap> and builds an environment which
+// can be injected into the Terraformer job/pod manifest. The keys of the <keyValueMap> will be prefixed with
+// 'TF_VAR_' and the value will be used to extract the respective data from the <secret>.
+func GenerateTerraformVariablesEnvironment(secret *corev1.Secret, keyValueMap map[string]string) map[string]string {
+	out := make(map[string]string)
+	for key, value := range keyValueMap {
+		out[fmt.Sprintf("TF_VAR_%s", key)] = strings.TrimSpace(string(secret.Data[value]))
+	}
+	return out
+}
+
 // GenerateBackupEntryName returns BackupEntry resource name created from provided <seedNamespace> and <shootUID>.
 func GenerateBackupEntryName(seedNamespace string, shootUID types.UID) string {
 	return fmt.Sprintf("%s--%s", seedNamespace, shootUID)
@@ -308,6 +319,9 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		&appsv1.StatefulSetList{},
 	}
 
+	// TODO: Use `DeleteCollection` as soon it is in the controller-runtime:
+	// https://github.com/kubernetes-sigs/controller-runtime/pull/324
+
 	for _, list := range lists {
 		if err := k8sClient.List(ctx, list,
 			client.InNamespace(namespace),
@@ -316,7 +330,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		}
 
 		if err := meta.EachListItem(list, func(obj runtime.Object) error {
-			return client.IgnoreNotFound(k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptions...))
+			return client.IgnoreNotFound(k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptionFuncs...))
 		}); err != nil {
 			return err
 		}
@@ -373,7 +387,7 @@ func DeleteAlertmanager(ctx context.Context, k8sClient client.Client, namespace 
 	}
 
 	for _, obj := range objs {
-		if err := k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptions...); client.IgnoreNotFound(err) != nil {
+		if err := k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptionFuncs...); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}

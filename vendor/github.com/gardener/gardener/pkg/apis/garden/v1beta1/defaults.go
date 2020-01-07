@@ -21,7 +21,6 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 
 	rbacv1 "k8s.io/api/rbac/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -242,14 +241,6 @@ func SetDefaults_Shoot(obj *Shoot) {
 			defaultAuthMode = KubernetesDashboardAuthModeToken
 		}
 		obj.Spec.Addons.KubernetesDashboard.AuthenticationMode = &defaultAuthMode
-	}
-}
-
-// SetDefaults_NginxIngress sets default values for NginxIngress objects.
-func SetDefaults_NginxIngress(obj *NginxIngress) {
-	if obj.ExternalTrafficPolicy == nil {
-		v := corev1.ServiceExternalTrafficPolicyTypeCluster
-		obj.ExternalTrafficPolicy = &v
 	}
 }
 

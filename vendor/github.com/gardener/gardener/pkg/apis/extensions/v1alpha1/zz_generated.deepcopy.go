@@ -471,11 +471,6 @@ func (in *DefaultStatus) DeepCopyInto(out *DefaultStatus) {
 		*out = new(corev1alpha1.LastOperation)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.State != nil {
-		in, out := &in.State, &out.State
-		*out = new(runtime.RawExtension)
-		(*in).DeepCopyInto(*out)
-	}
 	return
 }
 

@@ -96,14 +96,7 @@ type ShootSpec struct {
 type ShootStatus struct {
 	// Conditions represents the latest available observations of a Shoots's current state.
 	// +optional
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Conditions []Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-	// Constraints represents conditions of a Shoot's current state that constraint some operations on it.
-	// +optional
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Constraints []Condition `json:"constraints,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []Condition `json:"conditions,omitempty"`
 	// Gardener holds information about the Gardener which last acted on the Shoot.
 	Gardener Gardener `json:"gardener"`
 	// IsHibernated indicates whether the Shoot is currently hibernated.
@@ -114,9 +107,6 @@ type ShootStatus struct {
 	// LastError holds information about the last occurred error during an operation.
 	// +optional
 	LastError *LastError `json:"lastError,omitempty"`
-	// LastErrors holds information about the last occurred error(s) during an operation.
-	// +optional
-	LastErrors []LastError `json:"lastErrors,omitempty"`
 	// ObservedGeneration is the most recent generation observed for this Shoot. It corresponds to the
 	// Shoot's generation, which is updated on mutation by the API Server.
 	// +optional
@@ -182,10 +172,6 @@ type NginxIngress struct {
 	// See https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/configmap.md#configuration-options
 	// +optional
 	Config map[string]string `json:"config,omitempty"`
-	// ExternalTrafficPolicy controls the `.spec.externalTrafficPolicy` value of the load balancer `Service`
-	// exposing the nginx-ingress. Defaults to `Cluster`.
-	// +optional
-	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty"`
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,10 +186,8 @@ type DNS struct {
 	Domain *string `json:"domain,omitempty"`
 	// Providers is a list of DNS providers that shall be enabled for this shoot cluster. Only relevant if
 	// not a default domain is used.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +optional
-	Providers []DNSProvider `json:"providers,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Providers []DNSProvider `json:"providers,omitempty"`
 }
 
 // DNSProvider contains information about a DNS provider.
@@ -345,10 +329,8 @@ type KubeAPIServerConfig struct {
 	KubernetesConfig `json:",inline"`
 	// AdmissionPlugins contains the list of user-defined admission plugins (additional to those managed by Gardener), and, if desired, the corresponding
 	// configuration.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty"`
 	// APIAudiences are the identifiers of the API. The service account token authenticator will
 	// validate that tokens used against the API are bound to at least one of these audiences.
 	// If `serviceAccountConfig.issuer` is configured and this is not, this defaults to a single
@@ -787,9 +769,7 @@ type Provider struct {
 	// +optional
 	InfrastructureConfig *ProviderConfig `json:"infrastructureConfig,omitempty"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []Worker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []Worker `json:"workers"`
 }
 
 // Worker is the base definition of a worker group.
@@ -905,6 +885,4 @@ const (
 	ShootEveryNodeReady ConditionType = "EveryNodeReady"
 	// ShootSystemComponentsHealthy is a constant for a condition type indicating the system components health.
 	ShootSystemComponentsHealthy ConditionType = "SystemComponentsHealthy"
-	// ShootHibernationPossible is a constant for a condition type indicating whether the Shoot can be hibernated.
-	ShootHibernationPossible ConditionType = "HibernationPossible"
 )

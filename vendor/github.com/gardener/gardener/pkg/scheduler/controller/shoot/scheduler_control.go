@@ -205,29 +205,19 @@ func determineBestSeedCandidate(shoot *gardencorev1alpha1.Shoot, cloudProfile *g
 	// Filter out candidates
 	old := candidates
 	candidates = nil
-	candidateErrors := make(map[string]error)
 
 	for _, seed := range old {
-		if disjointed, err := networksAreDisjointed(seed, shoot); !disjointed {
-			candidateErrors[seed.Name] = err
+		if !networksAreDisjunct(seed, shoot) {
 			continue
 		}
-
-		if ignoreSeedDueToDNSConfiguration(seed, shoot) {
-			candidateErrors[seed.Name] = fmt.Errorf("seed does not support DNS")
-			continue
-		}
-
 		if !seedSelector.Matches(labels.Set(seed.Labels)) {
-			candidateErrors[seed.Name] = fmt.Errorf("seed labels don't match seed selector")
 			continue
 		}
-
 		candidates = append(candidates, seed)
 	}
 
 	if candidates == nil {
-		return nil, fmt.Errorf("found %d potential seed cluster(s), but none is possible: %v", len(old), errorMapToString(candidateErrors))
+		return nil, fmt.Errorf("found %d possible seed cluster(s), however none have a disjoint network", len(old))
 	}
 
 	// Find the best candidate (i.e. the one managing the smallest number of shoots right now).
@@ -250,7 +240,7 @@ func determineBestSeedCandidate(shoot *gardencorev1alpha1.Shoot, cloudProfile *g
 func determineCandidatesWithSameRegionStrategy(seedList []*gardencorev1alpha1.Seed, shoot *gardencorev1alpha1.Shoot, candidates []*gardencorev1alpha1.Seed) []*gardencorev1alpha1.Seed {
 	// Determine all candidate seed clusters matching the shoot's provider and region.
 	for _, seed := range seedList {
-		if seed.DeletionTimestamp == nil && seed.Spec.Provider.Type == shoot.Spec.Provider.Type && seed.Spec.Provider.Region == shoot.Spec.Region && !gardencorev1alpha1helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintInvisible) && common.VerifySeedReadiness(seed) {
+		if seed.DeletionTimestamp == nil && seed.Spec.Provider.Type == shoot.Spec.Provider.Type && seed.Spec.Provider.Region == shoot.Spec.Region && !gardencorev1alpha1helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintInvisible) && verifySeedAvailability(seed) {
 			candidates = append(candidates, seed)
 		}
 	}
@@ -269,7 +259,7 @@ func determineCandidatesWithMinimalDistanceStrategy(seeds []*gardencorev1alpha1.
 
 	// Determine all candidate seed clusters with matching cloud provider but different region that are lexicographically closest to the shoot
 	for _, seed := range seeds {
-		if seed.DeletionTimestamp == nil && seed.Spec.Provider.Type == shoot.Spec.Provider.Type && !gardencorev1alpha1helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintInvisible) && common.VerifySeedReadiness(seed) {
+		if seed.DeletionTimestamp == nil && seed.Spec.Provider.Type == shoot.Spec.Provider.Type && !gardencorev1alpha1helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintInvisible) && verifySeedAvailability(seed) {
 			seedRegion := seed.Spec.Provider.Region
 
 			for currentMaxMatchingCharacters < len(shootRegion) {
@@ -299,28 +289,15 @@ func generateSeedUsageMap(shootList []*gardencorev1alpha1.Shoot) map[string]int 
 	return m
 }
 
-func networksAreDisjointed(seed *gardencorev1alpha1.Seed, shoot *gardencorev1alpha1.Shoot) (bool, error) {
-	var (
-		errs          = schedulerutils.ValidateNetworkDisjointedness(seed.Spec.Networks, shoot.Spec.Networking.Nodes, shoot.Spec.Networking.Pods, shoot.Spec.Networking.Services, field.NewPath(""))
-		errorMessages []string
-	)
-
-	for _, e := range errs {
-		errorMessages = append(errorMessages, e.ErrorBody())
-	}
-
-	return len(errs) == 0, fmt.Errorf("invalid networks: %s", errorMessages)
+func networksAreDisjunct(seed *gardencorev1alpha1.Seed, shoot *gardencorev1alpha1.Shoot) bool {
+	return len(schedulerutils.ValidateNetworkDisjointedness(seed.Spec.Networks, shoot.Spec.Networking.Nodes, shoot.Spec.Networking.Pods, shoot.Spec.Networking.Services, field.NewPath(""))) == 0
 }
 
-// ignore seed if it disables DNS and shoot has DNS but not unmanaged
-func ignoreSeedDueToDNSConfiguration(seed *gardencorev1alpha1.Seed, shoot *gardencorev1alpha1.Shoot) bool {
-	if !gardencorev1alpha1helper.TaintsHave(seed.Spec.Taints, gardencorev1alpha1.SeedTaintDisableDNS) {
-		return false
+func verifySeedAvailability(seed *gardencorev1alpha1.Seed) bool {
+	if cond := gardencorev1alpha1helper.GetCondition(seed.Status.Conditions, gardencorev1alpha1.SeedAvailable); cond != nil {
+		return cond.Status == gardencorev1alpha1.ConditionTrue
 	}
-	if shoot.Spec.DNS == nil {
-		return false
-	}
-	return !gardencorev1alpha1helper.ShootUsesUnmanagedDNS(shoot)
+	return false
 }
 
 // UpdateShootToBeScheduledOntoSeed sets the seed name where the shoot should be scheduled on. Then it executes the actual update call to the API server. The call is capsuled to allow for easier testing.
@@ -339,13 +316,4 @@ func (c *defaultControl) reportSuccessfulScheduling(shoot *gardencorev1alpha1.Sh
 
 func (c *defaultControl) reportEvent(project *gardencorev1alpha1.Shoot, eventType string, eventReason, messageFmt string, args ...interface{}) {
 	c.recorder.Eventf(project, eventType, eventReason, messageFmt, args...)
-}
-
-func errorMapToString(errs map[string]error) string {
-	res := "{"
-	for k, v := range errs {
-		res += fmt.Sprintf("%s => %s, ", k, v.Error())
-	}
-	res = strings.TrimSuffix(res, ", ") + "}"
-	return res
 }

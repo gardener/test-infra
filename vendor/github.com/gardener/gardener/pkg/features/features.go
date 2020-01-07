@@ -31,13 +31,8 @@ const (
 	// alpha: v0.13.0
 	Logging utilfeature.Feature = "Logging"
 
-	// HVPA enables simultaneous horizontal and vertical scaling in Seed Clusters.
+	// HVPA enables simultaneous horizontal and vertical in Seed Clusters.
 	// owner @ggaurav10, @amshuman-kr
 	// alpha: v0.1.0
 	HVPA utilfeature.Feature = "HVPA"
-
-	// HVPAForShootedSeed enables simultaneous horizontal and vertical scaling in shooted seed Clusters.
-	// owner @ggaurav10, @amshuman-kr
-	// alpha: v0.1.0
-	HVPAForShootedSeed utilfeature.Feature = "HVPAForShootedSeed"
 )

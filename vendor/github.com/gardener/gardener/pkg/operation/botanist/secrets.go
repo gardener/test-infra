@@ -20,14 +20,13 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
-	"time"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/apis/garden"
+	controllermanagerfeatures "github.com/gardener/gardener/pkg/controllermanager/features"
 	"github.com/gardener/gardener/pkg/features"
-	gardenletfeatures "github.com/gardener/gardener/pkg/gardenlet/features"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/secrets"
@@ -35,7 +34,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -94,17 +92,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 		kubeSchedulerCertDNSNames         = dnsNamesForService("kube-scheduler", b.Shoot.SeedNamespace)
 
 		etcdCertDNSNames = dnsNamesForEtcd(b.Shoot.SeedNamespace)
-
-		endUserCrtValidity = 730 * 24 * time.Hour // ~2 years
 	)
-
-	if gardencorev1alpha1helper.TaintsHave(b.Seed.Info.Spec.Taints, gardencorev1alpha1.SeedTaintDisableDNS) {
-		if addr := net.ParseIP(b.APIServerAddress); addr != nil {
-			apiServerIPAddresses = append(apiServerIPAddresses, addr)
-		} else {
-			apiServerCertDNSNames = append(apiServerCertDNSNames, b.APIServerAddress)
-		}
-	}
 
 	if len(certificateAuthorities) != len(wantedCertificateAuthorities) {
 		return nil, fmt.Errorf("missing certificate authorities")
@@ -175,7 +163,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 			},
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -210,7 +198,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -245,7 +233,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -265,7 +253,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -285,7 +273,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true),
 			},
 		},
 
@@ -305,7 +293,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -325,7 +313,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(true, false),
 			},
 		},
 
@@ -360,7 +348,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true),
 			},
 		},
 
@@ -380,7 +368,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			KubeConfigRequest: &secrets.KubeConfigRequest{
 				ClusterName:  b.Shoot.SeedNamespace,
-				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true, b.APIServerAddress),
+				APIServerURL: b.Shoot.ComputeAPIServerURL(false, true),
 			},
 		},
 
@@ -509,7 +497,6 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			CertType:  secrets.ServerCert,
 			SigningCA: certificateAuthorities[v1alpha1constants.SecretNameCACluster],
-			Validity:  &endUserCrtValidity,
 		},
 
 		// Secret definition for prometheus (ingress)
@@ -523,7 +510,6 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 			CertType:  secrets.ServerCert,
 			SigningCA: certificateAuthorities[v1alpha1constants.SecretNameCACluster],
-			Validity:  &endUserCrtValidity,
 		},
 	}
 
@@ -544,43 +530,11 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 		KubeConfigRequest: &secrets.KubeConfigRequest{
 			ClusterName:  b.Shoot.SeedNamespace,
-			APIServerURL: b.Shoot.ComputeAPIServerURL(false, false, b.APIServerAddress),
+			APIServerURL: b.Shoot.ComputeAPIServerURL(false, false),
 		},
 	})
 
-	// Secret definition for dependency-watchdog-internal-probe
-	secretList = append(secretList, &secrets.ControlPlaneSecretConfig{
-		CertificateSecretConfig: &secrets.CertificateSecretConfig{
-			Name:      common.DependencyWatchdogInternalProbeSecretName,
-			SigningCA: certificateAuthorities[v1alpha1constants.SecretNameCACluster],
-		},
-
-		BasicAuth: basicAuthAPIServer,
-		Token:     kubecfgToken,
-
-		KubeConfigRequest: &secrets.KubeConfigRequest{
-			ClusterName:  b.Shoot.SeedNamespace,
-			APIServerURL: fmt.Sprintf("%s.%s.svc", v1alpha1constants.DeploymentNameKubeAPIServer, b.Shoot.SeedNamespace),
-		},
-	})
-
-	// Secret definition for dependency-watchdog-external-probe
-	secretList = append(secretList, &secrets.ControlPlaneSecretConfig{
-		CertificateSecretConfig: &secrets.CertificateSecretConfig{
-			Name:      common.DependencyWatchdogExternalProbeSecretName,
-			SigningCA: certificateAuthorities[v1alpha1constants.SecretNameCACluster],
-		},
-
-		BasicAuth: basicAuthAPIServer,
-		Token:     kubecfgToken,
-
-		KubeConfigRequest: &secrets.KubeConfigRequest{
-			ClusterName:  b.Shoot.SeedNamespace,
-			APIServerURL: b.Shoot.ComputeAPIServerURL(false, true, b.APIServerAddress),
-		},
-	})
-
-	loggingEnabled := gardenletfeatures.FeatureGate.Enabled(features.Logging)
+	loggingEnabled := controllermanagerfeatures.FeatureGate.Enabled(features.Logging)
 	if loggingEnabled {
 		elasticsearchHosts := []string{"elasticsearch-logging",
 			fmt.Sprintf("elasticsearch-logging.%s", b.Shoot.SeedNamespace),
@@ -597,7 +551,6 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 
 				CertType:  secrets.ServerCert,
 				SigningCA: certificateAuthorities[v1alpha1constants.SecretNameCACluster],
-				Validity:  &endUserCrtValidity,
 			},
 			// Secret for elasticsearch
 			&secrets.CertificateSecretConfig{
@@ -672,7 +625,7 @@ func (b *Botanist) generateWantedSecrets(basicAuthAPIServer *secrets.BasicAuth, 
 }
 
 // DeploySecrets creates a CA certificate for the Shoot cluster and uses it to sign the server certificate
-// used by the kube-apiserver, and all client certificates used for communication. It also creates RSA key
+// used by the kube-apiserver, and all client certificates used for communcation. It also creates RSA key
 // pairs for SSH connections to the nodes/VMs and for the VPN tunnel. Moreover, basic authentication
 // credentials are computed which will be used to secure the Ingress resources and the kube-apiserver itself.
 // Server certificates for the exposed monitoring endpoints (via Ingress) are generated as well.
@@ -754,39 +707,8 @@ func (b *Botanist) DeploySecrets(ctx context.Context) error {
 		return err
 	}
 
-	// Only necessary to renew certificates for Grafana, Kibana, Prometheus
-	// TODO: (timuthy) remove in future version.
-	var (
-		renewedLabel = "cert.gardener.cloud/renewed"
-		browserCerts = sets.NewString("grafana-tls", "kibana-tls", "prometheus-tls")
-	)
-	for name, secret := range existingSecretsMap {
-		_, ok := secret.Labels[renewedLabel]
-		if browserCerts.Has(name) && !ok {
-			if err := b.K8sSeedClient.Client().Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
-				return err
-			}
-			delete(existingSecretsMap, name)
-		}
-	}
-
 	if err := b.generateShootSecrets(ctx, existingSecretsMap, wantedSecretsList); err != nil {
 		return err
-	}
-
-	// Only necessary to renew certificates for Grafana, Kibana, Prometheus
-	// TODO: (timuthy) remove in future version.
-	for name, secret := range b.Secrets {
-		_, ok := secret.Labels[renewedLabel]
-		if browserCerts.Has(name) && !ok {
-			if secret.Labels == nil {
-				secret.Labels = make(map[string]string)
-			}
-			secret.Labels[renewedLabel] = "true"
-			if err := b.K8sSeedClient.Client().Update(ctx, secret); err != nil {
-				return err
-			}
-		}
 	}
 
 	b.mutex.Lock()
@@ -1044,7 +966,7 @@ func (b *Botanist) SyncShootCredentialsToGarden(ctx context.Context) error {
 		},
 	}
 
-	if gardenletfeatures.FeatureGate.Enabled(features.Logging) {
+	if controllermanagerfeatures.FeatureGate.Enabled(features.Logging) {
 		projectSecrets = append(projectSecrets, projectSecret{
 			secretName:  "logging-ingress-credentials-users",
 			suffix:      secretSuffixLogging,

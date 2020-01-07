@@ -16,17 +16,20 @@ package kubernetes
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 
+	dnsscheme "github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme"
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
 	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
 	gardenclientset "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
 	gardenscheme "github.com/gardener/gardener/pkg/client/garden/clientset/versioned/scheme"
+	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
+	machinescheme "github.com/gardener/gardener/pkg/client/machine/clientset/versioned/scheme"
 
-	dnsscheme "github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme"
 	resourcesscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
+
 	hvpav1alpha1 "github.com/gardener/hvpa-controller/api/v1alpha1"
-	machinev1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextensionsscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -54,13 +57,13 @@ var (
 	// PlantScheme is the scheme used in the Plant cluster
 	PlantScheme = runtime.NewScheme()
 
-	// DefaultDeleteOptions use foreground propagation policy and grace period of 60 seconds.
-	DefaultDeleteOptions = []client.DeleteOption{
+	// DefaultDeleteOptionFuncs use foreground propagation policy and grace period of 60 seconds.
+	DefaultDeleteOptionFuncs = []client.DeleteOptionFunc{
 		client.PropagationPolicy(metav1.DeletePropagationForeground),
 		client.GracePeriodSeconds(60),
 	}
-	// ForceDeleteOptions use background propagation policy and grace period of 0 seconds.
-	ForceDeleteOptions = []client.DeleteOption{
+	// ForceDeleteOptionFuncs use background propagation policy and grace period of 0 seconds.
+	ForceDeleteOptionFuncs = []client.DeleteOptionFunc{
 		client.PropagationPolicy(metav1.DeletePropagationBackground),
 		client.GracePeriodSeconds(0),
 	}
@@ -76,7 +79,7 @@ func init() {
 
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
-		machinev1alpha1.AddToScheme,
+		machinescheme.AddToScheme,
 		dnsscheme.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
 		resourcesscheme.AddToScheme,
@@ -118,6 +121,7 @@ type Clientset struct {
 	kubernetes      kubernetesclientset.Interface
 	garden          gardenclientset.Interface
 	gardenCore      gardencoreclientset.Interface
+	machine         machineclientset.Interface
 	apiextension    apiextensionsclientset.Interface
 	apiregistration apiregistrationclientset.Interface
 
@@ -161,6 +165,7 @@ type Interface interface {
 	Kubernetes() kubernetesclientset.Interface
 	Garden() gardenclientset.Interface
 	GardenCore() gardencoreclientset.Interface
+	Machine() machineclientset.Interface
 	APIExtension() apiextensionsclientset.Interface
 	APIRegistration() apiregistrationclientset.Interface
 
@@ -169,4 +174,12 @@ type Interface interface {
 	CheckForwardPodPort(string, string, int, int) error
 
 	Version() string
+}
+
+// RuntimeClientFactory is used to dynamically create controller-runtime Clients
+// from a given secret
+type RuntimeClientFactory interface {
+	// CreateRuntimeClientFromSecret creates a controller-runtime Client from the given secret
+	// and applies the given ConfigFuncs
+	CreateRuntimeClientFromSecret(secret *corev1.Secret, fns ...ConfigFunc) (client.Client, error)
 }

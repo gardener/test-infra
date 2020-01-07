@@ -63,19 +63,16 @@ github.com/gardener/controller-manager-library/pkg/kutil
 github.com/gardener/controller-manager-library/pkg/logger
 github.com/gardener/controller-manager-library/pkg/resources
 github.com/gardener/controller-manager-library/pkg/utils
-# github.com/gardener/external-dns-management v0.0.0-20190722114702-f6b12f6e4b43
+# github.com/gardener/external-dns-management v0.0.0-20190220100540-b4bbb5832a03
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
 github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme
-# github.com/gardener/gardener v0.33.6
+# github.com/gardener/gardener v0.33.7 => github.com/gardener/gardener v0.0.0-20191114144236-0e90aba93f3d
 github.com/gardener/gardener/pkg/api/extensions
 github.com/gardener/gardener/pkg/apis/core
 github.com/gardener/gardener/pkg/apis/core/v1alpha1
 github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants
 github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper
-github.com/gardener/gardener/pkg/apis/core/v1beta1
-github.com/gardener/gardener/pkg/apis/core/v1beta1/constants
-github.com/gardener/gardener/pkg/apis/core/v1beta1/helper
 github.com/gardener/gardener/pkg/apis/extensions
 github.com/gardener/gardener/pkg/apis/extensions/v1alpha1
 github.com/gardener/gardener/pkg/apis/garden
@@ -85,24 +82,24 @@ github.com/gardener/gardener/pkg/chartrenderer
 github.com/gardener/gardener/pkg/client/core/clientset/versioned
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1alpha1
-github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1beta1
 github.com/gardener/gardener/pkg/client/core/informers/externalversions
 github.com/gardener/gardener/pkg/client/core/informers/externalversions/core
 github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1
-github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1
 github.com/gardener/gardener/pkg/client/core/informers/externalversions/internalinterfaces
 github.com/gardener/gardener/pkg/client/core/listers/core/v1alpha1
-github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1
 github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/garden/clientset/versioned/typed/garden/v1beta1
 github.com/gardener/gardener/pkg/client/kubernetes
-github.com/gardener/gardener/pkg/controllerutils
-github.com/gardener/gardener/pkg/controllerutils/metrics
+github.com/gardener/gardener/pkg/client/machine/clientset/versioned
+github.com/gardener/gardener/pkg/client/machine/clientset/versioned/scheme
+github.com/gardener/gardener/pkg/client/machine/clientset/versioned/typed/machine/v1alpha1
+github.com/gardener/gardener/pkg/controllermanager/apis/config
+github.com/gardener/gardener/pkg/controllermanager/controller/utils
+github.com/gardener/gardener/pkg/controllermanager/features
+github.com/gardener/gardener/pkg/controllermanager/metrics
 github.com/gardener/gardener/pkg/features
-github.com/gardener/gardener/pkg/gardenlet/apis/config
-github.com/gardener/gardener/pkg/gardenlet/features
 github.com/gardener/gardener/pkg/logger
 github.com/gardener/gardener/pkg/mock/controller-runtime/client
 github.com/gardener/gardener/pkg/operation
@@ -112,7 +109,7 @@ github.com/gardener/gardener/pkg/operation/etcdencryption
 github.com/gardener/gardener/pkg/operation/garden
 github.com/gardener/gardener/pkg/operation/seed
 github.com/gardener/gardener/pkg/operation/shoot
-github.com/gardener/gardener/pkg/scheduler
+github.com/gardener/gardener/pkg/operation/terraformer
 github.com/gardener/gardener/pkg/scheduler/apis/config
 github.com/gardener/gardener/pkg/scheduler/apis/config/v1alpha1
 github.com/gardener/gardener/pkg/scheduler/controller/common
@@ -121,7 +118,6 @@ github.com/gardener/gardener/pkg/scheduler/utils
 github.com/gardener/gardener/pkg/utils
 github.com/gardener/gardener/pkg/utils/chart
 github.com/gardener/gardener/pkg/utils/context
-github.com/gardener/gardener/pkg/utils/errors
 github.com/gardener/gardener/pkg/utils/flow
 github.com/gardener/gardener/pkg/utils/imagevector
 github.com/gardener/gardener/pkg/utils/kubernetes
@@ -150,13 +146,13 @@ github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/
 github.com/gardener/gardener-extensions/controllers/provider-openstack/pkg/apis/openstack/v1alpha1
 github.com/gardener/gardener-extensions/controllers/provider-packet/pkg/apis/packet
 github.com/gardener/gardener-extensions/controllers/provider-packet/pkg/apis/packet/v1alpha1
-# github.com/gardener/gardener-resource-manager v0.8.1
+# github.com/gardener/gardener-resource-manager v0.0.0-20191025075317-09173887c1a7
 github.com/gardener/gardener-resource-manager/pkg/apis/resources
 github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1
 github.com/gardener/gardener-resource-manager/pkg/manager
-# github.com/gardener/hvpa-controller v0.0.0-20191014062307-fad3bdf06a25
+# github.com/gardener/hvpa-controller v0.0.0-20190924063424-ef5c3668949d
 github.com/gardener/hvpa-controller/api/v1alpha1
-# github.com/gardener/machine-controller-manager v0.0.0-20191118095523-e30355bc7945
+# github.com/gardener/machine-controller-manager v0.0.0-20190606071036-119056ee3fdd
 github.com/gardener/machine-controller-manager/pkg/apis/machine
 github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1
 # github.com/ghodss/yaml v1.0.0
@@ -213,7 +209,7 @@ github.com/google/gofuzz
 github.com/google/uuid
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
-# github.com/googleapis/gnostic v0.3.1
+# github.com/googleapis/gnostic v0.3.0
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
@@ -232,7 +228,7 @@ github.com/gregjones/httpcache/diskcache
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.0.0
 github.com/hashicorp/go-multierror
-# github.com/hashicorp/golang-lru v0.5.3
+# github.com/hashicorp/golang-lru v0.5.1
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
@@ -264,7 +260,7 @@ github.com/joho/godotenv
 github.com/json-iterator/go
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 github.com/kballard/go-shellquote
-# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
@@ -341,7 +337,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/pborman/uuid v1.2.0
+# github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
 github.com/pborman/uuid
 # github.com/pelletier/go-toml v1.3.0
 github.com/pelletier/go-toml
@@ -990,6 +986,7 @@ sigs.k8s.io/controller-runtime/pkg/predicate
 sigs.k8s.io/controller-runtime/pkg/reconcile
 sigs.k8s.io/controller-runtime/pkg/recorder
 sigs.k8s.io/controller-runtime/pkg/runtime/inject
+sigs.k8s.io/controller-runtime/pkg/runtime/log
 sigs.k8s.io/controller-runtime/pkg/runtime/signals
 sigs.k8s.io/controller-runtime/pkg/scheme
 sigs.k8s.io/controller-runtime/pkg/source

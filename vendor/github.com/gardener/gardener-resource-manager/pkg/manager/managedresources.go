@@ -21,7 +21,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -94,9 +93,7 @@ func (m *ManagedResource) KeepObjects(v bool) *ManagedResource {
 }
 
 func (m *ManagedResource) Reconcile(ctx context.Context) error {
-	resource := &resourcesv1alpha1.ManagedResource{
-		ObjectMeta: metav1.ObjectMeta{Name: m.resource.Name, Namespace: m.resource.Namespace},
-	}
+	resource := &resourcesv1alpha1.ManagedResource{ObjectMeta: m.resource.ObjectMeta}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, m.client, resource, func() error {
 		resource.Labels = m.resource.Labels

@@ -19,7 +19,6 @@ import (
 
 	"github.com/gardener/gardener/pkg/utils"
 
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -156,14 +155,6 @@ func SetDefaults_Worker(obj *Worker) {
 	}
 	if obj.MaxUnavailable == nil {
 		obj.MaxUnavailable = &DefaultWorkerMaxUnavailable
-	}
-}
-
-// SetDefaults_NginxIngress sets default values for NginxIngress objects.
-func SetDefaults_NginxIngress(obj *NginxIngress) {
-	if obj.ExternalTrafficPolicy == nil {
-		v := corev1.ServiceExternalTrafficPolicyTypeCluster
-		obj.ExternalTrafficPolicy = &v
 	}
 }
 

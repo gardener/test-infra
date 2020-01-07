@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	resourcesv1alpha1 "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
-	resourcesv1alpha1 "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,19 +54,17 @@ func (b *Botanist) DeleteManagedResources(ctx context.Context) error {
 		}
 	}
 
-	return b.K8sSeedClient.Client().DeleteAllOf(ctx, &resourcesv1alpha1.ManagedResource{},
+	return utilclient.Delete(ctx, b.K8sSeedClient.Client(), &resourcesv1alpha1.ManagedResourceList{}, utilclient.CollectionMatching(
 		client.InNamespace(b.Shoot.SeedNamespace),
-		client.MatchingLabels{ManagedResourceLabelKeyOrigin: ManagedResourceLabelValueGardener})
+		client.MatchingLabels(map[string]string{ManagedResourceLabelKeyOrigin: ManagedResourceLabelValueGardener})),
+	)
 }
 
 // WaitUntilManagedResourcesDeleted waits until all managed resources are gone or the context is cancelled.
 func (b *Botanist) WaitUntilManagedResourcesDeleted(ctx context.Context) error {
 	return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
 		managedResources := &resourcesv1alpha1.ManagedResourceList{}
-		if err := b.K8sSeedClient.Client().List(ctx,
-			managedResources,
-			client.InNamespace(b.Shoot.SeedNamespace),
-			client.MatchingLabels{ManagedResourceLabelKeyOrigin: ManagedResourceLabelValueGardener}); err != nil {
+		if err := b.K8sSeedClient.Client().List(ctx, managedResources, client.InNamespace(b.Shoot.SeedNamespace), client.MatchingLabels(map[string]string{ManagedResourceLabelKeyOrigin: ManagedResourceLabelValueGardener})); err != nil {
 			return retry.SevereError(err)
 		}
 

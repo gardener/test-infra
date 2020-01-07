@@ -14,10 +14,7 @@
 
 package v1alpha1
 
-import (
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-)
+import gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 
 // DefaultSpec contains common status fields for every extension resource.
 type DefaultSpec struct {
@@ -44,18 +41,12 @@ type DefaultStatus struct {
 	// ObservedGeneration is the most recent generation observed for this resource.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// State can be filled by the operating controller with what ever data it needs.
-	// +optional
-	State *runtime.RawExtension `json:"state,omitempty"`
+	State string `json:"state,omitempty"`
 }
 
 // GetConditions implements Status.
 func (d *DefaultStatus) GetConditions() []gardencorev1alpha1.Condition {
 	return d.Conditions
-}
-
-// SetConditions implements Status.
-func (d *DefaultStatus) SetConditions(c []gardencorev1alpha1.Condition) {
-	d.Conditions = c
 }
 
 // GetLastOperation implements Status.

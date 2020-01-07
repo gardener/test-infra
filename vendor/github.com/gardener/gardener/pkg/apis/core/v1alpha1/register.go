@@ -67,8 +67,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SecretBindingList{},
 		&Seed{},
 		&SeedList{},
-		&ShootState{},
-		&ShootStateList{},
 		&Shoot{},
 		&ShootList{},
 	)

@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/gardener/gardener/pkg/utils"
-	utilerrors "github.com/gardener/gardener/pkg/utils/errors"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -35,9 +34,6 @@ const (
 
 // ProgressReporter is continuously called on progress in a flow.
 type ProgressReporter func(context.Context, *Stats)
-
-// ErrorCleaner is called when a task which errored during the previous reconciliation phase completes with success
-type ErrorCleaner func(context.Context, string)
 
 type nodes map[TaskID]*node
 
@@ -102,8 +98,6 @@ func (n *node) addTargets(taskIDs ...TaskID) {
 type Opts struct {
 	Logger           logrus.FieldLogger
 	ProgressReporter func(ctx context.Context, stats *Stats)
-	ErrorCleaner     func(ctx context.Context, taskID string)
-	ErrorContext     *utilerrors.ErrorContext
 	Context          context.Context
 }
 
@@ -114,7 +108,7 @@ func (f *Flow) Run(opts Opts) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return newExecution(f, opts.Logger, opts.ProgressReporter, opts.ErrorCleaner, opts.ErrorContext).run(ctx)
+	return newExecution(f, opts.Logger, opts.ProgressReporter).run(ctx)
 }
 
 type nodeResult struct {
@@ -159,7 +153,7 @@ func InitialStats(all TaskIDs) *Stats {
 	}
 }
 
-func newExecution(flow *Flow, logger logrus.FieldLogger, reporter ProgressReporter, errorCleaner ErrorCleaner, errorContext *utilerrors.ErrorContext) *execution {
+func newExecution(flow *Flow, logger logrus.FieldLogger, reporter ProgressReporter) *execution {
 	all := NewTaskIDs()
 
 	for name := range flow.nodes {
@@ -177,8 +171,6 @@ func newExecution(flow *Flow, logger logrus.FieldLogger, reporter ProgressReport
 		nil,
 		logger,
 		reporter,
-		errorCleaner,
-		errorContext,
 		make(chan *nodeResult),
 		make(map[TaskID]int),
 	}
@@ -192,8 +184,6 @@ type execution struct {
 
 	log              logrus.FieldLogger
 	progressReporter ProgressReporter
-	errorCleaner     ErrorCleaner
-	errorContext     *utilerrors.ErrorContext
 
 	done          chan *nodeResult
 	triggerCounts map[TaskID]int
@@ -204,9 +194,6 @@ func (e *execution) Log() logrus.FieldLogger {
 }
 
 func (e *execution) runNode(ctx context.Context, id TaskID) {
-	if e.errorContext != nil {
-		e.errorContext.AddErrorID(string(id))
-	}
 	e.stats.Pending.Delete(id)
 	e.stats.Running.Insert(id)
 	go func() {
@@ -249,12 +236,6 @@ func (e *execution) processTriggers(ctx context.Context, id TaskID) {
 	}
 }
 
-func (e *execution) cleanErrors(ctx context.Context, taskID TaskID) {
-	if e.errorCleaner != nil {
-		e.errorCleaner(ctx, string(taskID))
-	}
-}
-
 func (e *execution) reportProgress(ctx context.Context) {
 	if e.progressReporter != nil {
 		e.progressReporter(ctx, e.stats.Copy())
@@ -280,13 +261,10 @@ func (e *execution) run(ctx context.Context) error {
 	for e.stats.Running.Len() > 0 {
 		result := <-e.done
 		if result.Error != nil {
-			e.taskErrors = append(e.taskErrors, utilerrors.WithID(string(result.TaskID), result.Error))
+			e.taskErrors = append(e.taskErrors, result.Error)
 			e.updateFailure(result.TaskID)
 		} else {
 			e.updateSuccess(result.TaskID)
-			if e.errorContext != nil && e.errorContext.HasLastErrorWithID(string(result.TaskID)) {
-				e.cleanErrors(ctx, result.TaskID)
-			}
 			if cancelErr = ctx.Err(); cancelErr == nil {
 				e.processTriggers(ctx, result.TaskID)
 			}

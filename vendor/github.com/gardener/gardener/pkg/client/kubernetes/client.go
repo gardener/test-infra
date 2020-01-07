@@ -21,6 +21,7 @@ import (
 
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardenclientset "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
+	machineclientset "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
@@ -30,7 +31,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	componentbaseconfig "k8s.io/component-base/config"
 	apiserviceclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,7 +53,13 @@ func NewRuntimeClientFromBytes(kubeconfig []byte, fns ...ConfigFunc) (client.Cli
 		return nil, err
 	}
 
-	if err := validateClientConfig(clientConfig); err != nil {
+	// Validate that the given kubeconfig doesn't have fields in its auth-info that are
+	// not acceptable.
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return nil, err
+	}
+	if err := ValidateClientConfig(rawConfig); err != nil {
 		return nil, err
 	}
 
@@ -84,11 +90,10 @@ func NewRuntimeClientForConfig(fns ...ConfigFunc) (client.Client, error) {
 func NewClientFromFile(masterURL, kubeconfigPath string, fns ...ConfigFunc) (Interface, error) {
 	if kubeconfigPath == "" && masterURL == "" {
 		kubeconfig, err := rest.InClusterConfig()
-		if err != nil {
-			return nil, err
+		if err == nil {
+			opts := append([]ConfigFunc{WithRESTConfig(kubeconfig)}, fns...)
+			return NewWithConfig(opts...)
 		}
-		opts := append([]ConfigFunc{WithRESTConfig(kubeconfig)}, fns...)
-		return NewWithConfig(opts...)
 	}
 
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -96,7 +101,13 @@ func NewClientFromFile(masterURL, kubeconfigPath string, fns ...ConfigFunc) (Int
 		&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: masterURL}},
 	)
 
-	if err := validateClientConfig(clientConfig); err != nil {
+	// Validate that the given kubeconfig doesn't have fields in its auth-info that are
+	// not acceptable.
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return nil, err
+	}
+	if err := ValidateClientConfig(rawConfig); err != nil {
 		return nil, err
 	}
 
@@ -111,7 +122,22 @@ func NewClientFromFile(masterURL, kubeconfigPath string, fns ...ConfigFunc) (Int
 
 // NewClientFromBytes creates a new Client struct for a given kubeconfig byte slice.
 func NewClientFromBytes(kubeconfig []byte, fns ...ConfigFunc) (Interface, error) {
-	config, err := RESTConfigFromClientConnectionConfiguration(nil, kubeconfig)
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate that the given kubeconfig doesn't have fields in its auth-info that are
+	// not acceptable.
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return nil, err
+	}
+	if err := ValidateClientConfig(rawConfig); err != nil {
+		return nil, err
+	}
+
+	config, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -141,63 +167,8 @@ func NewClientFromSecretObject(secret *corev1.Secret, fns ...ConfigFunc) (Interf
 	return nil, errors.New("the secret does not contain a field with name 'kubeconfig'")
 }
 
-// RESTConfigFromClientConnectionConfiguration creates a *rest.Config from a componentbaseconfig.ClientConnectionConfiguration & the configured kubeconfig
-func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.ClientConnectionConfiguration, kubeconfig []byte) (*rest.Config, error) {
-	var (
-		restConfig *rest.Config
-		err        error
-	)
-
-	if kubeconfig == nil {
-		clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			&clientcmd.ClientConfigLoadingRules{ExplicitPath: cfg.Kubeconfig},
-			&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: ""}},
-		)
-
-		if err := validateClientConfig(clientConfig); err != nil {
-			return nil, err
-		}
-
-		restConfig, err = clientConfig.ClientConfig()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := validateClientConfig(clientConfig); err != nil {
-			return nil, err
-		}
-
-		restConfig, err = clientConfig.ClientConfig()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if cfg != nil {
-		restConfig.Burst = int(cfg.Burst)
-		restConfig.QPS = cfg.QPS
-		restConfig.AcceptContentTypes = cfg.AcceptContentTypes
-		restConfig.ContentType = cfg.ContentType
-	}
-
-	return restConfig, nil
-}
-
-func validateClientConfig(clientConfig clientcmd.ClientConfig) error {
-	rawConfig, err := clientConfig.RawConfig()
-	if err != nil {
-		return err
-	}
-	return ValidateConfig(rawConfig)
-}
-
-// ValidateConfig validates that the auth info of a given kubeconfig doesn't have unsupported fields.
-func ValidateConfig(config clientcmdapi.Config) error {
+// ValidateClientConfig validates that the auth info of a given kubeconfig doesn't have unsupported fields.
+func ValidateClientConfig(config clientcmdapi.Config) error {
 	validFields := []string{"client-certificate-data", "client-key-data", "token", "username", "password"}
 
 	for user, authInfo := range config.AuthInfos {
@@ -218,6 +189,21 @@ func ValidateConfig(config clientcmdapi.Config) error {
 	}
 
 	return nil
+}
+
+// runtimeClientFactory is the default implementation for the RuntimeClientFactory interface
+type runtimeClientFactory struct {
+}
+
+// NewRuntimeClientFactory creates a new default implementation of the RuntimeClientFactory interface
+func NewRuntimeClientFactory() RuntimeClientFactory {
+	return &runtimeClientFactory{}
+}
+
+// CreateRuntimeClientFromSecret creates a controller-runtime client by passing
+// the given parameters to NewRuntimeClientFromSecret
+func (f *runtimeClientFactory) CreateRuntimeClientFromSecret(secret *corev1.Secret, fns ...ConfigFunc) (client.Client, error) {
+	return NewRuntimeClientFromSecret(secret, fns...)
 }
 
 var supportedKubernetesVersions = []string{
@@ -283,6 +269,11 @@ func new(conf *config) (Interface, error) {
 		return nil, err
 	}
 
+	machine, err := machineclientset.NewForConfig(conf.restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	apiRegistration, err := apiserviceclientset.NewForConfig(conf.restConfig)
 	if err != nil {
 		return nil, err
@@ -305,6 +296,7 @@ func new(conf *config) (Interface, error) {
 		kubernetes:      kubernetes,
 		garden:          garden,
 		gardenCore:      gardenCore,
+		machine:         machine,
 		apiregistration: apiRegistration,
 		apiextension:    apiExtension,
 	}

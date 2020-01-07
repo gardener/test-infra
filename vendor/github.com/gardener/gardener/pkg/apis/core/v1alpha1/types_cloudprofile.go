@@ -49,26 +49,20 @@ type CloudProfileList struct {
 // CloudProfileSpec is the specification of a CloudProfile.
 // It must contain exactly one of its defined keys.
 type CloudProfileSpec struct {
-	// CABundle is a certificate bundle which will be installed onto every host machine of shoot cluster targeting this profile.
+	// CABundle is a certificate bundle which will be installed onto every host machine of shoot cluster targetting this profile.
 	// +optional
 	CABundle *string `json:"caBundle,omitempty"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesSettings `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []MachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []MachineType `json:"machineTypes"`
 	// ProviderConfig contains provider-specific configuration for the profile.
 	// +optional
 	ProviderConfig *ProviderConfig `json:"providerConfig,omitempty"`
 	// Regions contains constraints regarding allowed values for regions and zones.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Regions []Region `json:"regions" patchStrategy:"merge" patchMergeKey:"name"`
+	Regions []Region `json:"regions"`
 	// SeedSelector contains an optional list of labels on `Seed` resources that marks those seeds whose shoots may use this provider profile.
 	// An empty list means that all seeds of the same provider type are supported.
 	// This is useful for environments that are of the same type (like openstack) but may have different "instances"/landscapes.
@@ -77,19 +71,15 @@ type CloudProfileSpec struct {
 	// Type is the name of the provider.
 	Type string `json:"type"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	VolumeTypes []VolumeType `json:"volumeTypes,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []VolumeType `json:"volumeTypes,omitempty"`
 }
 
 // KubernetesSettings contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 type KubernetesSettings struct {
 	// Versions is the list of allowed Kubernetes versions with optional expiration dates for Shoot clusters.
-	// +patchMergeKey=version
-	// +patchStrategy=merge
 	// +optional
-	Versions []ExpirableVersion `json:"versions,omitempty" patchStrategy:"merge" patchMergeKey:"version"`
+	Versions []ExpirableVersion `json:"versions,omitempty"`
 }
 
 // MachineImage defines the name and multiple versions of the machine image in any environment.
@@ -97,9 +87,7 @@ type MachineImage struct {
 	// Name is the name of the image.
 	Name string `json:"name"`
 	// Versions contains versions and expiration dates of the machine image
-	// +patchMergeKey=version
-	// +patchStrategy=merge
-	Versions []ExpirableVersion `json:"versions" patchStrategy:"merge" patchMergeKey:"version"`
+	Versions []ExpirableVersion `json:"versions"`
 }
 
 // ExpirableVersion contains a version and an expiration date.
@@ -144,10 +132,8 @@ type Region struct {
 	// Name is a region name.
 	Name string `json:"name"`
 	// Zones is a list of availability zones in this region.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	Zones []AvailabilityZone `json:"zones,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	Zones []AvailabilityZone `json:"zones,omitempty"`
 }
 
 // AvailabilityZone is an availability zone.

@@ -23,7 +23,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // DetermineCloudProviderInProfile takes a CloudProfile specification and returns the cloud provider this profile is used for.
@@ -224,11 +223,6 @@ func ShootWantsBasicAuthentication(kubeAPIServerConfig *garden.KubeAPIServerConf
 	return *kubeAPIServerConfig.EnableBasicAuthentication
 }
 
-// ShootUsesUnmanagedDNS returns true if the shoot's DNS section is marked as 'unmanaged'.
-func ShootUsesUnmanagedDNS(shoot *garden.Shoot) bool {
-	return shoot.Spec.DNS != nil && len(shoot.Spec.DNS.Providers) > 0 && shoot.Spec.DNS.Providers[0].Type != nil && *shoot.Spec.DNS.Providers[0].Type == garden.DNSUnmanaged
-}
-
 // GetConditionIndex returns the index of the condition with the given <conditionType> out of the list of <conditions>.
 // In case the required type could not be found, it returns -1.
 func GetConditionIndex(conditions []garden.Condition, conditionType garden.ConditionType) int {
@@ -261,21 +255,11 @@ func TaintsHave(taints []garden.SeedTaint, key string) bool {
 
 // QuotaScope returns the scope of a quota scope reference.
 func QuotaScope(scopeRef corev1.ObjectReference) (string, error) {
-	if gvk := schema.FromAPIVersionAndKind(scopeRef.APIVersion, scopeRef.Kind); gvk.Group == "core.gardener.cloud" && gvk.Kind == "Project" {
+	if scopeRef.APIVersion == "core.gardener.cloud/v1alpha1" && scopeRef.Kind == "Project" {
 		return "project", nil
 	}
 	if scopeRef.APIVersion == "v1" && scopeRef.Kind == "Secret" {
 		return "secret", nil
 	}
 	return "", fmt.Errorf("unknown quota scope")
-}
-
-// FindWorkerByName tries to find the worker with the given name. If it cannot be found it returns nil.
-func FindWorkerByName(workers []garden.Worker, name string) *garden.Worker {
-	for _, w := range workers {
-		if w.Name == name {
-			return &w
-		}
-	}
-	return nil
 }

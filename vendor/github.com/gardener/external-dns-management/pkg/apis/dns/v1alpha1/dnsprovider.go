@@ -46,24 +46,21 @@ type DNSProviderSpec struct {
 	Type           string                  `json:"type,omitempty"`
 	ProviderConfig *runtime.RawExtension   `json:"providerConfig,omitempty"`
 	SecretRef      *corev1.SecretReference `json:"secretRef,omitempty"`
-	Domains        *DNSSelection           `json:"domains,omitempty"`
-	Zones          *DNSSelection           `json:"zones,omitempty"`
+	Domains        *DNSDomainSpec          `json:"domains,omitempty"`
 }
 
-type DNSSelection struct {
+type DNSDomainSpec struct {
 	Include []string `json:"include,omitempty"`
 	Exclude []string `json:"exclude,omitempty"`
 }
 
 type DNSProviderStatus struct {
-	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
-	State              string             `json:"state"`
-	Message            *string            `json:"message,omitempty"`
-	Domains            DNSSelectionStatus `json:"domains"`
-	Zones              DNSSelectionStatus `json:"zones"`
+	State   string          `json:"state"`
+	Message *string         `json:"message,omitempty"`
+	Domains DNSDomainStatus `json:"domains"`
 }
 
-type DNSSelectionStatus struct {
+type DNSDomainStatus struct {
 	Included []string `json:"included,omitempty"`
 	Excluded []string `json:"excluded,omitempty"`
 }

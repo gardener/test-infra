@@ -20,9 +20,11 @@ import (
 	"path/filepath"
 
 	"github.com/mholt/archiver"
+
+	"k8s.io/helm/pkg/helm/environment"
+
 	"k8s.io/helm/pkg/downloader"
 	"k8s.io/helm/pkg/getter"
-	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/repo"
 )

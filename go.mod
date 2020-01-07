@@ -4,21 +4,27 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.45.1
+	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/argoproj/argo v2.4.0+incompatible
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation v0.1.2
+	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
+	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
+	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
-	github.com/gardener/gardener v0.33.6
+	github.com/gardener/gardener v0.33.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.51.0 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/jsonreference v0.19.3 // indirect
 	github.com/go-openapi/spec v0.19.4
+	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/golang/mock v1.3.1
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.6.2
@@ -32,6 +38,7 @@ require (
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/minio/minio-go v6.0.13+incompatible
+	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
@@ -47,6 +54,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.opencensus.io v0.22.2 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20191119213627-4f8c1d86b1ba // indirect
@@ -77,6 +85,7 @@ require (
 
 replace (
 	github.com/census-instrumentation/opencensus-proto => github.com/census-instrumentation/opencensus-proto v0.0.3-0.20181214143942-ba49f56771b8
+	github.com/gardener/gardener => github.com/gardener/gardener v0.0.0-20191114144236-0e90aba93f3d
 	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2

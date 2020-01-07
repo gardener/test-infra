@@ -22,9 +22,9 @@ import (
 	"runtime"
 	"strings"
 
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
-	"github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	"github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 
@@ -49,8 +49,8 @@ const (
 )
 
 // CreateShootTestArtifacts creates a shoot object from the given path and sets common attributes (test-individual settings like workers have to be handled by each test).
-func CreateShootTestArtifacts(shootTestYamlPath string, prefix *string, projectNamespace, shootRegion, cloudProfile, secretbinding, providerType, k8sVersion, externalDomain *string, clearDNS bool, clearExtensions bool) (string, *gardencorev1beta1.Shoot, error) {
-	shoot := &gardencorev1beta1.Shoot{}
+func CreateShootTestArtifacts(shootTestYamlPath string, prefix *string, projectNamespace, shootRegion, cloudProfile, secretbinding, providerType, k8sVersion, externalDomain *string, clearDNS bool, clearExtensions bool) (string, *gardencorev1alpha1.Shoot, error) {
+	shoot := &gardencorev1alpha1.Shoot{}
 	if err := ReadObject(shootTestYamlPath, shoot); err != nil {
 		return "", nil, err
 	}
@@ -60,7 +60,7 @@ func CreateShootTestArtifacts(shootTestYamlPath string, prefix *string, projectN
 	}
 
 	if externalDomain != nil && len(*externalDomain) > 0 {
-		shoot.Spec.DNS = &gardencorev1beta1.DNS{Domain: externalDomain}
+		shoot.Spec.DNS = &gardencorev1alpha1.DNS{Domain: externalDomain}
 		clearDNS = false
 	}
 
@@ -93,7 +93,7 @@ func CreateShootTestArtifacts(shootTestYamlPath string, prefix *string, projectN
 	}
 
 	if clearDNS {
-		shoot.Spec.DNS = &gardencorev1beta1.DNS{}
+		shoot.Spec.DNS = &gardencorev1alpha1.DNS{}
 	}
 
 	if clearExtensions {
@@ -103,48 +103,40 @@ func CreateShootTestArtifacts(shootTestYamlPath string, prefix *string, projectN
 	if shoot.Annotations == nil {
 		shoot.Annotations = map[string]string{}
 	}
-	shoot.Annotations[v1beta1constants.AnnotationShootIgnoreAlerts] = "true"
+	shoot.Annotations[v1alpha1constants.AnnotationShootIgnoreAlerts] = "true"
 
 	return shoot.Name, shoot, nil
 }
 
 // SetProviderConfigsFromFilepath parses the infrastructure, controlPlane and networking provider-configs and sets them on the shoot
-func SetProviderConfigsFromFilepath(shoot *gardencorev1beta1.Shoot, infrastructureConfigPath, controlPlaneConfigPath, networkingConfigPath, workersConfigPath *string) error {
+func SetProviderConfigsFromFilepath(shoot *gardencorev1alpha1.Shoot, infrastructure, controlPlane, networking *string) error {
 	// clear provider configs first
 	shoot.Spec.Provider.InfrastructureConfig = nil
 	shoot.Spec.Provider.ControlPlaneConfig = nil
 	shoot.Spec.Networking.ProviderConfig = nil
 
-	if infrastructureConfigPath != nil && len(*infrastructureConfigPath) != 0 {
-		infrastructureProviderConfig, err := ParseFileAsProviderConfig(*infrastructureConfigPath)
+	if infrastructure != nil && len(*infrastructure) != 0 {
+		infrastructureProviderConfig, err := ParseFileAsProviderConfig(*infrastructure)
 		if err != nil {
 			return err
 		}
 		shoot.Spec.Provider.InfrastructureConfig = infrastructureProviderConfig
 	}
 
-	if len(*controlPlaneConfigPath) != 0 {
-		controlPlaneProviderConfig, err := ParseFileAsProviderConfig(*controlPlaneConfigPath)
+	if len(*controlPlane) != 0 {
+		controlPlaneProviderConfig, err := ParseFileAsProviderConfig(*controlPlane)
 		if err != nil {
 			return err
 		}
 		shoot.Spec.Provider.ControlPlaneConfig = controlPlaneProviderConfig
 	}
 
-	if len(*networkingConfigPath) != 0 {
-		networkingProviderConfig, err := ParseFileAsProviderConfig(*networkingConfigPath)
+	if len(*networking) != 0 {
+		networkingProviderConfig, err := ParseFileAsProviderConfig(*networking)
 		if err != nil {
 			return err
 		}
 		shoot.Spec.Networking.ProviderConfig = networkingProviderConfig
-	}
-
-	if len(*workersConfigPath) != 0 {
-		workers, err := ParseFileAsWorkers(*workersConfigPath)
-		if err != nil {
-			return err
-		}
-		shoot.Spec.Provider.Workers = workers
 	}
 
 	return nil
@@ -164,9 +156,9 @@ func generateRandomShootName(prefix string, length int) (string, error) {
 }
 
 // CreatePlantTestArtifacts creates a plant object which is read from the resources directory
-func CreatePlantTestArtifacts(plantTestYamlPath string) (*gardencorev1beta1.Plant, error) {
+func CreatePlantTestArtifacts(plantTestYamlPath string) (*gardencorev1alpha1.Plant, error) {
 
-	plant := &gardencorev1beta1.Plant{}
+	plant := &gardencorev1alpha1.Plant{}
 	if err := ReadObject(plantTestYamlPath, plant); err != nil {
 		return nil, err
 	}
@@ -186,7 +178,7 @@ func ReadObject(file string, into apimachineryRuntime.Object) error {
 }
 
 // ParseFileAsProviderConfig parses a file as a ProviderConfig
-func ParseFileAsProviderConfig(filepath string) (*gardencorev1beta1.ProviderConfig, error) {
+func ParseFileAsProviderConfig(filepath string) (*gardencorev1alpha1.ProviderConfig, error) {
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
@@ -197,21 +189,7 @@ func ParseFileAsProviderConfig(filepath string) (*gardencorev1beta1.ProviderConf
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode ProviderConfig: %v", err)
 	}
-	return &gardencorev1beta1.ProviderConfig{RawExtension: apimachineryRuntime.RawExtension{Raw: jsonData}}, nil
-}
-
-// ParseFileAsWorkers parses a file as a Worker configuration
-func ParseFileAsWorkers(filepath string) ([]gardencorev1beta1.Worker, error) {
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	workers := []gardencorev1beta1.Worker{}
-	if err := yaml.Unmarshal(data, &workers); err != nil {
-		return nil, fmt.Errorf("unable to decode workers: %v", err)
-	}
-	return workers, nil
+	return &gardencorev1alpha1.ProviderConfig{RawExtension: apimachineryRuntime.RawExtension{Raw: jsonData}}, nil
 }
 
 // GetProjectRootPath gets the root path of the project relative to the integration test folder
@@ -222,7 +200,7 @@ func GetProjectRootPath() string {
 }
 
 // AddWorkerForName adds a valid worker to the shoot for the given machine image name. Returns an error if the machine image cannot be found in the CloudProfile.
-func AddWorkerForName(shoot *gardencorev1beta1.Shoot, cloudProfile *gardencorev1beta1.CloudProfile, machineImageName *string, workerZone *string) error {
+func AddWorkerForName(shoot *gardencorev1alpha1.Shoot, cloudProfile *gardencorev1alpha1.CloudProfile, machineImageName *string, workerZone *string) error {
 	found, image, err := helper.DetermineMachineImageForName(cloudProfile, *machineImageName)
 	if err != nil {
 		return err
@@ -235,7 +213,7 @@ func AddWorkerForName(shoot *gardencorev1beta1.Shoot, cloudProfile *gardencorev1
 }
 
 // AddWorker adds a valid default worker to the shoot for the given machineImage and CloudProfile.
-func AddWorker(shoot *gardencorev1beta1.Shoot, cloudProfile *gardencorev1beta1.CloudProfile, machineImage gardencorev1beta1.MachineImage, workerZone *string) error {
+func AddWorker(shoot *gardencorev1alpha1.Shoot, cloudProfile *gardencorev1alpha1.CloudProfile, machineImage gardencorev1alpha1.MachineImage, workerZone *string) error {
 	_, shootMachineImage, err := helper.GetShootMachineImageFromLatestMachineImageVersion(machineImage)
 	if err != nil {
 		return err
@@ -251,21 +229,21 @@ func AddWorker(shoot *gardencorev1beta1.Shoot, cloudProfile *gardencorev1beta1.C
 		return err
 	}
 
-	shoot.Spec.Provider.Workers = append(shoot.Spec.Provider.Workers, gardencorev1beta1.Worker{
+	shoot.Spec.Provider.Workers = append(shoot.Spec.Provider.Workers, gardencorev1alpha1.Worker{
 		Name:    workerName,
 		Maximum: 2,
 		Minimum: 2,
-		Machine: gardencorev1beta1.Machine{
+		Machine: gardencorev1alpha1.Machine{
 			Type:  machineType.Name,
 			Image: &shootMachineImage,
 		},
 	})
 
 	if machineType.Storage == nil {
-		if len(cloudProfile.Spec.VolumeTypes) == 0 {
+		if len(cloudProfile.Spec.VolumeTypes) != 0 {
 			return fmt.Errorf("no VolumeTypes configured in the Cloudprofile '%s'", cloudProfile.Name)
 		}
-		shoot.Spec.Provider.Workers[0].Volume = &gardencorev1beta1.Volume{
+		shoot.Spec.Provider.Workers[0].Volume = &gardencorev1alpha1.Volume{
 			Type: &cloudProfile.Spec.VolumeTypes[0].Name,
 			Size: "35Gi",
 		}

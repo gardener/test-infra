@@ -94,28 +94,18 @@ type AWSProfile struct {
 // AWSConstraints is an object containing constraints for certain values in the Shoot specification.
 type AWSConstraints struct {
 	// DNSProviders contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []MachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []MachineType `json:"machineTypes"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	VolumeTypes []VolumeType `json:"volumeTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []VolumeType `json:"volumeTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones"`
 }
 
 // MachineImage defines the name and multiple versions of the machine image in any environment.
@@ -126,10 +116,8 @@ type MachineImage struct {
 	// +optional
 	Version string `json:"version,omitempty"`
 	// Versions contains versions and expiration dates of the machine image
-	// +patchMergeKey=version
-	// +patchStrategy=merge
 	// +optional
-	Versions []MachineImageVersion `json:"versions,omitempty" patchStrategy:"merge" patchMergeKey:"version"`
+	Versions []MachineImageVersion `json:"versions,omitempty"`
 }
 
 // MachineImageVersion contains a version and an expiration date of a machine image
@@ -148,41 +136,27 @@ type AzureProfile struct {
 	// Constraints is an object containing constraints for certain values in the Shoot specification.
 	Constraints AzureConstraints `json:"constraints"`
 	// CountUpdateDomains is list of Azure update domain counts for each region.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	CountUpdateDomains []AzureDomainCount `json:"countUpdateDomains" patchStrategy:"merge" patchMergeKey:"region"`
+	CountUpdateDomains []AzureDomainCount `json:"countUpdateDomains"`
 	// CountFaultDomains is list of Azure fault domain counts for each region.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	CountFaultDomains []AzureDomainCount `json:"countFaultDomains" patchStrategy:"merge" patchMergeKey:"region"`
+	CountFaultDomains []AzureDomainCount `json:"countFaultDomains"`
 }
 
 // AzureConstraints is an object containing constraints for certain values in the Shoot specification.
 type AzureConstraints struct {
 	// DNSProviders contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []MachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []MachineType `json:"machineTypes"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	VolumeTypes []VolumeType `json:"volumeTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []VolumeType `json:"volumeTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
 	// +optional
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones,omitempty"`
 }
 
 // AzureDomainCount defines the region and the count for this domain count value.
@@ -202,28 +176,18 @@ type GCPProfile struct {
 // GCPConstraints is an object containing constraints for certain values in the Shoot specification.
 type GCPConstraints struct {
 	// DNSProviders contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []MachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []MachineType `json:"machineTypes"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	VolumeTypes []VolumeType `json:"volumeTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []VolumeType `json:"volumeTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones"`
 }
 
 // OpenStackProfile defines certain constraints and definitions for the OpenStack cloud.
@@ -247,32 +211,20 @@ type OpenStackProfile struct {
 // OpenStackConstraints is an object containing constraints for certain values in the Shoot specification.
 type OpenStackConstraints struct {
 	// DNSProviders contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty"`
 	// FloatingPools contains constraints regarding allowed values of the 'floatingPoolName' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	FloatingPools []OpenStackFloatingPool `json:"floatingPools" patchStrategy:"merge" patchMergeKey:"name"`
+	FloatingPools []OpenStackFloatingPool `json:"floatingPools"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// LoadBalancerProviders contains constraints regarding allowed values of the 'loadBalancerProvider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	LoadBalancerProviders []OpenStackLoadBalancerProvider `json:"loadBalancerProviders" patchStrategy:"merge" patchMergeKey:"name"`
+	LoadBalancerProviders []OpenStackLoadBalancerProvider `json:"loadBalancerProviders"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []OpenStackMachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []OpenStackMachineType `json:"machineTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones"`
 }
 
 // OpenStackFloatingPool contains constraints regarding allowed values of the 'floatingPoolName' block in the Shoot specification.
@@ -280,10 +232,8 @@ type OpenStackFloatingPool struct {
 	// Name is the name of the floating pool.
 	Name string `json:"name"`
 	// LoadBalancerClasses contains a list of supported labeled load balancer network settings.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty"`
 }
 
 // OpenStackLoadBalancerProvider contains constraints regarding allowed values of the 'loadBalancerProvider' block in the Shoot specification.
@@ -301,28 +251,18 @@ type AlicloudProfile struct {
 // AlicloudConstraints is an object containing constraints for certain values in the Shoot specification
 type AlicloudConstraints struct {
 	// DNSProviders contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	DNSProviders []DNSProviderConstraint `json:"dnsProviders,omitempty"`
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []AlicloudMachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []AlicloudMachineType `json:"machineTypes"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	VolumeTypes []AlicloudVolumeType `json:"volumeTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []AlicloudVolumeType `json:"volumeTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones"`
 }
 
 // AlicloudMachineType defines certain machine types and zone constraints.
@@ -351,21 +291,13 @@ type PacketConstraints struct {
 	// Kubernetes contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 	Kubernetes KubernetesConstraints `json:"kubernetes"`
 	// MachineImages contains constraints regarding allowed values for machine images in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineImages []MachineImage `json:"machineImages" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineImages []MachineImage `json:"machineImages"`
 	// MachineTypes contains constraints regarding allowed values for machine types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	MachineTypes []MachineType `json:"machineTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	MachineTypes []MachineType `json:"machineTypes"`
 	// VolumeTypes contains constraints regarding allowed values for volume types in the 'workers' block in the Shoot specification.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	VolumeTypes []VolumeType `json:"volumeTypes" patchStrategy:"merge" patchMergeKey:"name"`
+	VolumeTypes []VolumeType `json:"volumeTypes"`
 	// Zones contains constraints regarding allowed values for 'zones' block in the Shoot specification.
-	// +patchMergeKey=region
-	// +patchStrategy=merge
-	Zones []Zone `json:"zones" patchStrategy:"merge" patchMergeKey:"region"`
+	Zones []Zone `json:"zones"`
 }
 
 // DNSProviderConstraint contains constraints regarding allowed values of the 'dns.provider' block in the Shoot specification.
@@ -380,10 +312,8 @@ type KubernetesConstraints struct {
 	// +optional
 	Versions []string `json:"versions,omitempty"`
 	// OfferedVersions is the list of allowed Kubernetes versions with optional expiration dates for Shoot clusters.
-	// +patchMergeKey=version
-	// +patchStrategy=merge
 	// +optional
-	OfferedVersions []KubernetesVersion `json:"offeredVersions,omitempty" patchStrategy:"merge" patchMergeKey:"version"`
+	OfferedVersions []KubernetesVersion `json:"offeredVersions,omitempty"`
 }
 
 // KubernetesVersion contains the version code and optional expiration date for a kubernetes version
@@ -450,8 +380,7 @@ type Zone struct {
 	// Region is a region name.
 	Region string `json:"region"`
 	// Names is a list of availability zone names in this region.
-	// +optional
-	Names []string `json:"names,omitempty"`
+	Names []string `json:"names"`
 }
 
 // BackupProfile contains the object store configuration for backups for shoot(currently only etcd).
@@ -563,6 +492,7 @@ const (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Seed holds certain properties about a Seed cluster.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,DOMAIN:.spec.ingressDomain,CLOUDPROFILE:.spec.cloud.profile,REGION:.spec.cloud.profile,READY:.status.conditions[?(@.type == 'Available')].status
 type Seed struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata.
@@ -597,11 +527,10 @@ type SeedSpec struct {
 	IngressDomain string `json:"ingressDomain"`
 	// SecretRef is a reference to a Secret object containing the Kubeconfig and the cloud provider credentials for
 	// the account the Seed cluster has been deployed to.
-	// +optional
-	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
+	SecretRef corev1.SecretReference `json:"secretRef"`
 	// Networks defines the pod, service and worker network of the Seed cluster.
 	Networks SeedNetworks `json:"networks"`
-	// BlockCIDRs is a list of network addresses that should be blocked for shoot control plane components running
+	// BlockCIDRs is a list of network addresses tha should be blocked for shoot control plane components running
 	// in the seed cluster.
 	// +optional
 	BlockCIDRs []string `json:"blockCIDRs,omitempty"`
@@ -621,17 +550,12 @@ type SeedSpec struct {
 
 // SeedStatus holds the most recently observed status of the Seed cluster.
 type SeedStatus struct {
+	// Gardener holds information about the Gardener which last acted on the Shoot.
+	// +optional
+	Gardener Gardener `json:"gardener,omitempty"`
 	// Conditions represents the latest available observations of a Seed's current state.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +optional
-	Conditions []gardencorev1alpha1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-	// Gardener holds information about the Gardener which last acted on the Seed.
-	// +optional
-	Gardener *Gardener `json:"gardener,omitempty"`
-	// KubernetesVersion is the Kubernetes version of the seed cluster.
-	// +optional
-	KubernetesVersion *string `json:"kubernetesVersion,omitempty"`
+	Conditions []gardencorev1alpha1.Condition `json:"conditions,omitempty"`
 	// ObservedGeneration is the most recent generation observed for this Seed. It corresponds to the
 	// Seed's generation, which is updated on mutation by the API Server.
 	// +optional
@@ -757,6 +681,7 @@ type SecretBindingList struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,SEED:.spec.cloud.seed,DOMAIN:.spec.dns.domain,VERSION:.spec.kubernetes.version,CONTROL:.status.conditions[?(@.type == 'ControlPlaneHealthy')].status,NODES:.status.conditions[?(@.type == 'EveryNodeReady')].status,SYSTEM:.status.conditions[?(@.type == 'SystemComponentsHealthy')].status,LATEST:.status.lastOperation.state
 type Shoot struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata.
@@ -790,8 +715,7 @@ type ShootSpec struct {
 	// Cloud contains information about the cloud environment and their specific settings.
 	Cloud Cloud `json:"cloud"`
 	// DNS contains information about the DNS settings of the Shoot.
-	// +optional
-	DNS *DNS `json:"dns,omitempty"`
+	DNS DNS `json:"dns"`
 	// Extensions contain type and provider information for Shoot extensions.
 	// +optional
 	Extensions []Extension `json:"extensions,omitempty"`
@@ -814,15 +738,8 @@ type ShootSpec struct {
 // ShootStatus holds the most recently observed status of the Shoot cluster.
 type ShootStatus struct {
 	// Conditions represents the latest available observations of a Shoots's current state.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +optional
-	Conditions []gardencorev1alpha1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-	// Constraints represents conditions of a Shoot's current state that constraint some operations on it.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	// +optional
-	Constraints []gardencorev1alpha1.Condition `json:"constraints,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []gardencorev1alpha1.Condition `json:"conditions,omitempty"`
 	// Gardener holds information about the Gardener which last acted on the Shoot.
 	Gardener Gardener `json:"gardener"`
 	// LastOperation holds information about the last operation on the Shoot.
@@ -831,9 +748,6 @@ type ShootStatus struct {
 	// LastError holds information about the last occurred error during an operation.
 	// +optional
 	LastError *gardencorev1alpha1.LastError `json:"lastError,omitempty"`
-	// LastErrors holds information about the last occurred error(s) during an operation.
-	// +optional
-	LastErrors []gardencorev1alpha1.LastError `json:"lastErrors,omitempty"`
 	// ObservedGeneration is the most recent generation observed for this Shoot. It corresponds to the
 	// Shoot's generation, which is updated on mutation by the API Server.
 	// +optional
@@ -915,9 +829,7 @@ type AWSCloud struct {
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks AWSNetworks `json:"networks"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []AWSWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []AWSWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to.
 	Zones []string `json:"zones"`
 }
@@ -964,9 +876,7 @@ type Alicloud struct {
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks AlicloudNetworks `json:"networks"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []AlicloudWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []AlicloudWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to, currently, only one is supported.
 	Zones []string `json:"zones"`
 }
@@ -1009,9 +919,7 @@ type PacketCloud struct {
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks PacketNetworks `json:"networks"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []PacketWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []PacketWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to, currently, only one is supported.
 	Zones []string `json:"zones"`
 }
@@ -1043,9 +951,7 @@ type AzureCloud struct {
 	// +optional
 	ResourceGroup *AzureResourceGroup `json:"resourceGroup,omitempty"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []AzureWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []AzureWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to.
 	// +optional
 	Zones []string `json:"zones,omitempty"`
@@ -1101,9 +1007,7 @@ type GCPCloud struct {
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks GCPNetworks `json:"networks"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []GCPWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []GCPWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to.
 	Zones []string `json:"zones"`
 }
@@ -1143,10 +1047,8 @@ type OpenStackCloud struct {
 	// LoadBalancerProvider is the name of the load balancer provider in the OpenStack environment.
 	LoadBalancerProvider string `json:"loadBalancerProvider"`
 	// LoadBalancerClasses available for a dedicated Shoot.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	LoadBalancerClasses []OpenStackLoadBalancerClass `json:"loadBalancerClasses,omitempty"`
 	// ShootMachineImage holds information about the machine image to use for all workers.
 	// It will default to the latest version of the first image stated in the referenced CloudProfile if no
 	// value has been provided.
@@ -1155,9 +1057,7 @@ type OpenStackCloud struct {
 	// Networks holds information about the Kubernetes and infrastructure networks.
 	Networks OpenStackNetworks `json:"networks"`
 	// Workers is a list of worker groups.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Workers []OpenStackWorker `json:"workers" patchStrategy:"merge" patchMergeKey:"name"`
+	Workers []OpenStackWorker `json:"workers"`
 	// Zones is a list of availability zones to deploy the Shoot cluster to.
 	Zones []string `json:"zones"`
 }
@@ -1332,10 +1232,6 @@ type NginxIngress struct {
 	// See https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/configmap.md#configuration-options
 	// +optional
 	Config map[string]string `json:"config,omitempty"`
-	// ExternalTrafficPolicy controls the `.spec.externalTrafficPolicy` value of the load balancer `Service`
-	// exposing the nginx-ingress. Defaults to `Cluster`.
-	// +optional
-	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty"`
 }
 
 // Monocular describes configuration values for the monocular addon.
@@ -1355,10 +1251,8 @@ type KubeLego struct {
 type Kube2IAM struct {
 	Addon `json:",inline"`
 	// Roles is list of AWS IAM roles which should be created by the Gardener.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	Roles []Kube2IAMRole `json:"roles,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	Roles []Kube2IAMRole `json:"roles,omitempty"`
 }
 
 // Kube2IAMRole allows passing AWS IAM policies which will result in IAM roles.
@@ -1513,10 +1407,8 @@ type KubeAPIServerConfig struct {
 	KubernetesConfig `json:",inline"`
 	// AdmissionPlugins contains the list of user-defined admission plugins (additional to those managed by Gardener), and, if desired, the corresponding
 	// configuration.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +optional
-	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty"`
 	// APIAudiences are the identifiers of the API. The service account token authenticator will
 	// validate that tokens used against the API are bound to at least one of these audiences.
 	// If `serviceAccountConfig.issuer` is configured and this is not, this defaults to a single
@@ -1984,11 +1876,8 @@ const (
 )
 
 const (
-	// SeedGardenletReady is a constant for a condition type indicating that the Gardenlet is ready.
-	SeedGardenletReady gardencorev1alpha1.ConditionType = "GardenletReady"
-	// SeedBootstrapped is a constant for a condition type indicating that the seed cluster has been
-	// bootstrapped.
-	SeedBootstrapped gardencorev1alpha1.ConditionType = "Bootstrapped"
+	// SeedAvailable is a constant for a condition type indicating the Seed cluster availability.
+	SeedAvailable gardencorev1alpha1.ConditionType = "Available"
 
 	// ShootControlPlaneHealthy is a constant for a condition type indicating the control plane health.
 	ShootControlPlaneHealthy gardencorev1alpha1.ConditionType = "ControlPlaneHealthy"
@@ -1998,8 +1887,6 @@ const (
 	ShootSystemComponentsHealthy gardencorev1alpha1.ConditionType = "SystemComponentsHealthy"
 	// ShootAPIServerAvailable is a constant for a condition type indicating that the Shoot clusters API server is available.
 	ShootAPIServerAvailable gardencorev1alpha1.ConditionType = "APIServerAvailable"
-	// ShootHibernationPossible is a constant for a condition type indicating whether the Shoot can be hibernated.
-	ShootHibernationPossible gardencorev1alpha1.ConditionType = "HibernationPossible"
 )
 
 const (

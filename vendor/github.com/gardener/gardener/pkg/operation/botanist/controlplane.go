@@ -27,8 +27,8 @@ import (
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	controllermanagerfeatures "github.com/gardener/gardener/pkg/controllermanager/features"
 	"github.com/gardener/gardener/pkg/features"
-	gardenletfeatures "github.com/gardener/gardener/pkg/gardenlet/features"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
@@ -117,7 +117,7 @@ func (b *Botanist) deleteNamespace(ctx context.Context, name string) error {
 			Name: name,
 		},
 	}
-	err := b.K8sSeedClient.Client().Delete(ctx, namespace, kubernetes.DefaultDeleteOptions...)
+	err := b.K8sSeedClient.Client().Delete(ctx, namespace, kubernetes.DefaultDeleteOptionFuncs...)
 	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
 		return nil
 	}
@@ -132,7 +132,7 @@ func (b *Botanist) DeleteKubeAPIServer(ctx context.Context) error {
 			Namespace: b.Shoot.SeedNamespace,
 		},
 	}
-	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, deploy, kubernetes.DefaultDeleteOptions...))
+	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, deploy, kubernetes.DefaultDeleteOptionFuncs...))
 }
 
 // DeployClusterAutoscaler deploys the cluster-autoscaler into the Shoot namespace in the Seed cluster. It is responsible
@@ -204,7 +204,20 @@ func (b *Botanist) DeleteClusterAutoscaler(ctx context.Context) error {
 			Namespace: b.Shoot.SeedNamespace,
 		},
 	}
-	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, deploy, kubernetes.DefaultDeleteOptions...))
+	return client.IgnoreNotFound(b.K8sSeedClient.Client().Delete(ctx, deploy, kubernetes.DefaultDeleteOptionFuncs...))
+}
+
+// DeployDependencyWatchdog deploys the dependency watchdog to the Shoot namespace in the Seed.
+func (b *Botanist) DeployDependencyWatchdog(ctx context.Context) error {
+	dependencyWatchdogConfig := map[string]interface{}{
+		"replicas": b.Shoot.GetReplicas(1),
+	}
+
+	dependencyWatchdog, err := b.InjectSeedSeedImages(dependencyWatchdogConfig, v1alpha1constants.DeploymentNameDependencyWatchdog)
+	if err != nil {
+		return nil
+	}
+	return b.ChartApplierSeed.ApplyChart(ctx, filepath.Join(chartPathControlPlane, v1alpha1constants.DeploymentNameDependencyWatchdog), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameDependencyWatchdog, nil, dependencyWatchdog)
 }
 
 // WakeUpControlPlane scales the replicas to 1 for the following deployments which are needed in case of shoot deletion:
@@ -247,27 +260,13 @@ func (b *Botanist) WakeUpControlPlane(ctx context.Context) error {
 func (b *Botanist) HibernateControlPlane(ctx context.Context) error {
 	c := b.K8sSeedClient.Client()
 
+	// If a shoot is hibernated we only want to scale down the entire control plane if no nodes exist anymore. The node-lifecycle-controller
+	// inside KCM is responsible for deleting Node objects of terminated/non-existing VMs, so let's wait for that before scaling down.
 	if b.K8sShootClient != nil {
 		ctxWithTimeOut, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
 
-		// If a shoot is hibernated we only want to scale down the entire control plane if no nodes exist anymore. The node-lifecycle-controller
-		// inside KCM is responsible for deleting Node objects of terminated/non-existing VMs, so let's wait for that before scaling down.
 		if err := b.WaitUntilNodesDeleted(ctxWithTimeOut); err != nil {
-			return err
-		}
-
-		// Also wait for all Pods to reflect the correct state before scaling down the control plane.
-		// KCM should remove all Pods in the cluster that are bound to Nodes that no longer exist and
-		// therefore there should be no Pods with state `Running` anymore.
-		if err := b.WaitUntilNoPodRunning(ctxWithTimeOut); err != nil {
-			return err
-		}
-
-		// Also wait for all Endpoints to not contain any IPs from the Shoot's PodCIDR.
-		// This is to make sure that the Endpoints objects also reflect the correct state of the hibernated cluster.
-		// Otherwise this could cause timeouts in user-defined webhooks for CREATE Pods or Nodes on wakeup.
-		if err := b.WaitUntilEndpointsDoNotContainPodIPs(ctxWithTimeOut); err != nil {
 			return err
 		}
 	}
@@ -283,7 +282,7 @@ func (b *Botanist) HibernateControlPlane(ctx context.Context) error {
 		}
 	}
 
-	if err := c.Delete(ctx, &hvpav1alpha1.Hvpa{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1constants.DeploymentNameKubeAPIServer, Namespace: b.Shoot.SeedNamespace}}, kubernetes.DefaultDeleteOptions...); err != nil {
+	if err := c.Delete(ctx, &hvpav1alpha1.Hvpa{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1constants.DeploymentNameKubeAPIServer, Namespace: b.Shoot.SeedNamespace}}, kubernetes.DefaultDeleteOptionFuncs...); err != nil {
 		if !apierrors.IsNotFound(err) && !metaerrors.IsNoMatchError(err) {
 			return err
 		}
@@ -658,14 +657,8 @@ func (b *Botanist) DeployKubeAPIServerService() error {
 
 // DeployKubeAPIServer deploys kube-apiserver deployment.
 func (b *Botanist) DeployKubeAPIServer() error {
-	hvpaEnabled := gardenletfeatures.FeatureGate.Enabled(features.HVPA)
-
-	if b.ShootedSeed != nil {
-		// Override for shooted seeds
-		hvpaEnabled = gardenletfeatures.FeatureGate.Enabled(features.HVPAForShootedSeed)
-	}
-
 	var (
+		hvpaEnabled       = controllermanagerfeatures.FeatureGate.Enabled(features.HVPA)
 		minReplicas int32 = 1
 		maxReplicas int32 = 4
 
@@ -725,7 +718,7 @@ func (b *Botanist) DeployKubeAPIServer() error {
 		foundDeployment = false
 	}
 
-	if b.ShootedSeed != nil && !hvpaEnabled {
+	if b.ShootedSeed != nil {
 		var (
 			apiServer  = b.ShootedSeed.APIServer
 			autoscaler = apiServer.Autoscaler
@@ -734,15 +727,29 @@ func (b *Botanist) DeployKubeAPIServer() error {
 		minReplicas = *autoscaler.MinReplicas
 		maxReplicas = autoscaler.MaxReplicas
 
-		defaultValues["apiServerResources"] = map[string]interface{}{
-			"requests": map[string]interface{}{
-				"cpu":    "1750m",
-				"memory": "2Gi",
-			},
-			"limits": map[string]interface{}{
-				"cpu":    "4000m",
-				"memory": "8Gi",
-			},
+		if hvpaEnabled {
+			// If HVPA is enabled, we can keep the limits very high
+			defaultValues["apiServerResources"] = map[string]interface{}{
+				"requests": map[string]interface{}{
+					"cpu":    "1750m",
+					"memory": "2Gi",
+				},
+				"limits": map[string]interface{}{
+					"cpu":    "8",
+					"memory": "16000M",
+				},
+			}
+		} else {
+			defaultValues["apiServerResources"] = map[string]interface{}{
+				"requests": map[string]interface{}{
+					"cpu":    "1750m",
+					"memory": "2Gi",
+				},
+				"limits": map[string]interface{}{
+					"cpu":    "4000m",
+					"memory": "8Gi",
+				},
+			}
 		}
 	} else {
 		replicas := deployment.Spec.Replicas
@@ -896,21 +903,6 @@ func (b *Botanist) DeployKubeAPIServer() error {
 				return err
 			}
 		}
-	} else {
-		// If HVPA is disabled, delete any HVPA that was already deployed
-		u := &unstructured.Unstructured{}
-		u.SetName(v1alpha1constants.DeploymentNameKubeAPIServer)
-		u.SetNamespace(b.Shoot.SeedNamespace)
-		u.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   "autoscaling.k8s.io",
-			Version: "v1alpha1",
-			Kind:    "Hvpa",
-		})
-		if err := b.K8sSeedClient.Client().Delete(context.TODO(), u); err != nil {
-			if !apierrors.IsNotFound(err) && !metaerrors.IsNoMatchError(err) {
-				return err
-			}
-		}
 	}
 
 	return b.ApplyChartSeed(filepath.Join(chartPathControlPlane, v1alpha1constants.DeploymentNameKubeAPIServer), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeAPIServer, values, nil)
@@ -975,11 +967,13 @@ func (b *Botanist) DeployKubeControllerManager() error {
 		},
 	}
 
-	replicaCount, err := common.CurrentReplicaCount(b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeControllerManager)
-	if err != nil {
-		return err
+	if b.Shoot.HibernationEnabled {
+		replicaCount, err := common.CurrentReplicaCount(b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, v1alpha1constants.DeploymentNameKubeControllerManager)
+		if err != nil {
+			return err
+		}
+		defaultValues["replicas"] = replicaCount
 	}
-	defaultValues["replicas"] = replicaCount
 
 	controllerManagerConfig := b.Shoot.Info.Spec.Kubernetes.KubeControllerManager
 	if controllerManagerConfig != nil {
@@ -1039,12 +1033,7 @@ func (b *Botanist) DeployKubeScheduler() error {
 // data the Shoot Kubernetes cluster needs to store, whereas the second etcd luster (called 'events') is only used to
 // store the events data. The objectstore is also set up to store the backups.
 func (b *Botanist) DeployETCD(ctx context.Context) error {
-	hvpaEnabled := gardenletfeatures.FeatureGate.Enabled(features.HVPA)
-
-	if b.ShootedSeed != nil {
-		// Override for shooted seeds
-		hvpaEnabled = gardenletfeatures.FeatureGate.Enabled(features.HVPAForShootedSeed)
-	}
+	hvpaEnabled := controllermanagerfeatures.FeatureGate.Enabled(features.HVPA)
 
 	etcdConfig := map[string]interface{}{
 		"podAnnotations": map[string]interface{}{
@@ -1104,22 +1093,6 @@ func (b *Botanist) DeployETCD(ctx context.Context) error {
 			}
 		}
 
-		if !hvpaEnabled {
-			// If HVPA is disabled, delete any HVPA that was already deployed
-			u := &unstructured.Unstructured{}
-			u.SetName(fmt.Sprintf("etcd-%s", role))
-			u.SetNamespace(b.Shoot.SeedNamespace)
-			u.SetGroupVersionKind(schema.GroupVersionKind{
-				Group:   "autoscaling.k8s.io",
-				Version: "v1alpha1",
-				Kind:    "Hvpa",
-			})
-			if err := b.K8sSeedClient.Client().Delete(ctx, u); err != nil {
-				if !apierrors.IsNotFound(err) && !metaerrors.IsNoMatchError(err) {
-					return err
-				}
-			}
-		}
 		if err := b.ApplyChartSeed(filepath.Join(chartPathControlPlane, "etcd"), b.Shoot.SeedNamespace, fmt.Sprintf("etcd-%s", role), nil, etcd); err != nil {
 			return err
 		}

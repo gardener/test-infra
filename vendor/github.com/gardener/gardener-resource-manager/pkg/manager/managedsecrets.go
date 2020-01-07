@@ -19,7 +19,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -61,9 +60,7 @@ func (s *Secret) WithKeyValues(keyValues map[string][]byte) *Secret {
 }
 
 func (s *Secret) Reconcile(ctx context.Context) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: s.secret.Name, Namespace: s.secret.Namespace},
-	}
+	secret := &corev1.Secret{ObjectMeta: s.secret.ObjectMeta}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, s.client, secret, func() error {
 		secret.Labels = s.secret.Labels

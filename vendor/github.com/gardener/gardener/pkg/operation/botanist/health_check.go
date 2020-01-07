@@ -26,8 +26,9 @@ import (
 	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
 	gardencorev1alpha1helper "github.com/gardener/gardener/pkg/apis/core/v1alpha1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	machine "github.com/gardener/gardener/pkg/client/machine/clientset/versioned"
+	controllermanagerfeatures "github.com/gardener/gardener/pkg/controllermanager/features"
 	"github.com/gardener/gardener/pkg/features"
-	gardenletfeatures "github.com/gardener/gardener/pkg/gardenlet/features"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
@@ -598,7 +599,7 @@ func (b *Botanist) checkControlPlane(
 	if exitCondition, err := checker.CheckMonitoringControlPlane(b.Shoot.SeedNamespace, b.Shoot.WantsAlertmanager, condition, seedDeploymentLister, seedStatefulSetLister); err != nil || exitCondition != nil {
 		return exitCondition, err
 	}
-	if gardenletfeatures.FeatureGate.Enabled(features.Logging) {
+	if controllermanagerfeatures.FeatureGate.Enabled(features.Logging) {
 		if exitCondition, err := checker.CheckLoggingControlPlane(b.Shoot.SeedNamespace, condition, seedDeploymentLister, seedStatefulSetLister); err != nil || exitCondition != nil {
 			return exitCondition, err
 		}
@@ -760,15 +761,16 @@ func makeNodeLister(clientset kubernetes.Interface, options metav1.ListOptions) 
 	})
 }
 
-func makeMachineDeploymentLister(c client.Client, namespace string) kutil.MachineDeploymentLister {
+func makeMachineDeploymentLister(clientset machine.Interface, namespace string, options metav1.ListOptions) kutil.MachineDeploymentLister {
 	var (
 		once  sync.Once
 		items []*machinev1alpha1.MachineDeployment
 		err   error
 
 		onceBody = func() {
-			list := &machinev1alpha1.MachineDeploymentList{}
-			if err := c.List(context.TODO(), list, client.InNamespace(namespace)); err != nil {
+			var list *machinev1alpha1.MachineDeploymentList
+			list, err = clientset.MachineV1alpha1().MachineDeployments(namespace).List(options)
+			if err != nil {
 				return
 			}
 
@@ -808,8 +810,9 @@ var (
 		v1alpha1constants.GardenRoleMonitoring,
 	)
 
-	seedDeploymentListOptions  = metav1.ListOptions{LabelSelector: controlPlaneMonitoringLoggingSelector.String()}
-	seedStatefulSetListOptions = metav1.ListOptions{LabelSelector: controlPlaneMonitoringLoggingSelector.String()}
+	seedDeploymentListOptions        = metav1.ListOptions{LabelSelector: controlPlaneMonitoringLoggingSelector.String()}
+	seedStatefulSetListOptions       = metav1.ListOptions{LabelSelector: controlPlaneMonitoringLoggingSelector.String()}
+	seedMachineDeploymentListOptions = metav1.ListOptions{}
 
 	shootDeploymentListOptions = metav1.ListOptions{LabelSelector: systemComponentsOptionalAddonsSelector.String()}
 	shootDaemonSetListOptions  = metav1.ListOptions{LabelSelector: systemComponentsOptionalAddonsMonitoringSelector.String()}
@@ -831,7 +834,7 @@ func (b *Botanist) healthChecks(initializeShootClients func() error, thresholdMa
 	var (
 		seedDeploymentLister        = makeDeploymentLister(b.K8sSeedClient.Kubernetes(), b.Shoot.SeedNamespace, seedDeploymentListOptions)
 		seedStatefulSetLister       = makeStatefulSetLister(b.K8sSeedClient.Kubernetes(), b.Shoot.SeedNamespace, seedStatefulSetListOptions)
-		seedMachineDeploymentLister = makeMachineDeploymentLister(b.K8sSeedClient.Client(), b.Shoot.SeedNamespace)
+		seedMachineDeploymentLister = makeMachineDeploymentLister(b.K8sSeedClient.Machine(), b.Shoot.SeedNamespace, seedMachineDeploymentListOptions)
 
 		checker = NewHealthChecker(thresholdMappings)
 	)
@@ -900,7 +903,7 @@ func isUnstableOperationType(lastOperationType gardencorev1alpha1.LastOperationT
 // in create or delete state.
 func (b *Botanist) pardonCondition(condition gardencorev1alpha1.Condition) gardencorev1alpha1.Condition {
 	shoot := b.Shoot.Info
-	if len(shoot.Status.LastErrors) > 0 || shoot.Status.LastError != nil {
+	if shoot.Status.LastError != nil {
 		return condition
 	}
 	if lastOp := shoot.Status.LastOperation; (lastOp == nil || (lastOp != nil && isUnstableOperationType(lastOp.Type))) && condition.Status == gardencorev1alpha1.ConditionFalse {

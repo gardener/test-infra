@@ -43,32 +43,16 @@ const (
 	// privileges.
 	SecretNameGardener = "gardener"
 
-	// ConfigMapNameDependencyWatchdog is a constant for the name of a Kubernetes configmap object that used to
-	// configure the dependency-watchdog pod.
-	ConfigMapNameDependencyWatchdog = "dependency-watchdog-config"
-	// VPANameDependencyWatchdog is a constant for the name of a Kubernetes VPA object that used to
-	// scale the dependency-watchdog pod.
-	VPANameDependencyWatchdog = "dependency-watchdog-vpa"
-	// ServiceAccountNameDependencyWatchdog is a constant for the name of a Kubernetes serviceaccount object that used to
-	// authorise the dependency-watchdog pod.
-	ServiceAccountNameDependencyWatchdog = "dependency-watchdog"
-	// RoleBindingNameDependencyWatchdog is a constant for the name of a Kubernetes rolebinding object that used to
-	// authorise the dependency-watchdog pod.
-	RoleBindingNameDependencyWatchdog = "gardener.cloud:dependency-watchdog:role-binding"
-	// RoleNameDependencyWatchdog is a constant for the name of a Kubernetes role object that used to
-	// authorise the dependency-watchdog pod.
-	RoleNameDependencyWatchdog = "gardener.cloud:dependency-watchdog:role"
-
 	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
 	// the cluster-autoscaler pod.
 	DeploymentNameClusterAutoscaler = "cluster-autoscaler"
-	// DeploymentNameDependencyWatchdog is a constant for the name of a Kubernetes deployment object that contains
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
 	// the dependency-watchdog pod.
 	DeploymentNameDependencyWatchdog = "dependency-watchdog"
-	// DeploymentNameKubeAPIServer is a constant for the name of a Kubernetes deployment object that contains
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
 	// the kube-apiserver pod.
 	DeploymentNameKubeAPIServer = "kube-apiserver"
-	// DeploymentNameKubeControllerManager is a constant for the name of a Kubernetes deployment object that contains
+	// DeploymentNameClusterAutoscaler is a constant for the name of a Kubernetes deployment object that contains
 	// the kube-controller-manager pod.
 	DeploymentNameKubeControllerManager = "kube-controller-manager"
 
@@ -133,6 +117,8 @@ const (
 	GardenRole = "gardener.cloud/role"
 	// GardenRoleExtension is a constant for a label that describes the 'extensions' role.
 	GardenRoleExtension = "extension"
+	// GardenRoleAlertingSMTP is the value of the GardenRole key indicating type 'alerting-smtp'.
+	GardenRoleAlertingSMTP = "alerting-smtp"
 	// GardenRoleSeed is the value of the GardenRole key indicating type 'seed'.
 	GardenRoleSeed = "seed"
 	// GardenRoleShoot is the value of the GardenRole key indicating type 'shoot'.
@@ -243,9 +229,6 @@ const (
 	// For example, if the shoot is annotated with <AnnotationShootCustom>key=value,
 	// then the namespace in the seed will be annotated with <AnnotationShootCustom>key=value, as well.
 	AnnotationShootCustom = "custom.shoot.sapcloud.io/"
-	// AnnotationShootSkipCleanup is a key for an annotation on a Shoot resource that declares that the clean up steps should be skipped when the
-	// cluster is deleted. Concretely, this will skip everything except the deletion of (load balancer) services and persistent volume resources.
-	AnnotationShootSkipCleanup = "shoot.gardener.cloud/skip-cleanup"
 
 	// OperatingSystemConfigUnitNameKubeletService is a constant for a unit in the operating system config that contains the kubelet service.
 	OperatingSystemConfigUnitNameKubeletService = "kubelet.service"
