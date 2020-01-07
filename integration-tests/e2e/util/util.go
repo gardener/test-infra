@@ -231,7 +231,6 @@ func DumpShootLogs(gardenKubeconfigPath, projectNamespace, shootName string) err
 		return err
 	}
 
-	// Dump gardener state if delete shoot is in exit handler
 	ctx := context.Background()
 	shoot := &gardencorev1alpha1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
 	if err := gardenerTestOperations.AddShoot(ctx, shoot); err != nil {
