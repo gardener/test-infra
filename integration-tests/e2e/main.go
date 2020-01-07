@@ -31,7 +31,7 @@ func main() {
 		kubetestResultsPath = kubetest.Run(desc)
 		resultSummary = kubetest.Analyze(kubetestResultsPath)
 	}
-	if config.PublishResultsToTestgrid == true && resultSummary.TestsuiteSuccessful == true {
+	if config.PublishResultsToTestgrid == true && resultSummary.TestsuiteSuccessful == true && resultSummary.Flaked == false {
 		kubetest.Publish(config.ExportPath, resultSummary)
 	}
 	if config.RunCleanUpAfterTest {
