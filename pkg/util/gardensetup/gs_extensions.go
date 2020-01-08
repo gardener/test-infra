@@ -117,5 +117,5 @@ func resolveVersionFromGitHub(client github.Client, owner, repo, constraint stri
 	if err != nil {
 		return "", err
 	}
-	return v.String(), err
+	return v.Original(), err
 }
