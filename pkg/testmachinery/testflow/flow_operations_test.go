@@ -227,6 +227,22 @@ var _ = Describe("flow operations", func() {
 			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
 			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
 			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStep([]string{"B"}))
+			steps := createStepsFromNodes(A, B, C)
+
+			Expect(testflow.ApplyOutputScope(steps)).ToNot(HaveOccurred())
+
+			Expect(B.GetInputSource()).To(Equal(A))
+			Expect(C.GetInputSource()).To(Equal(A))
+		})
+
+		It("should set the last serial parent that has no continueOnError as artifact source with parallel nodes", func() {
+			testDAGStepB := testDAGStep([]string{"A"})
+			testDAGStepB.Definition.ContinueOnError = true
+
+			rootNode := testNode("root", node.NewSet(), defaultTestDef, testDAGStep([]string{}))
+			A := testNode("A", node.NewSet(rootNode), defaultTestDef, testDAGStep([]string{}))
+			B := testNode("B", node.NewSet(A), defaultTestDef, testDAGStepB)
+			C := testNode("C", node.NewSet(B), defaultTestDef, testDAGStep([]string{"B"}))
 			D := testNode("D", node.NewSet(C), defaultTestDef, testDAGStep([]string{"C"}))
 			steps := createStepsFromNodes(A, B, C, D)
 

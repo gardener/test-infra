@@ -21,6 +21,7 @@ import (
 	tm_bot "github.com/gardener/test-infra/pkg/tm-bot"
 	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"os"
 )
 
@@ -36,6 +37,13 @@ func init() {
 func main() {
 	flag.Parse()
 	if err := vh.ViperHelper.ReadInConfig(); err != nil {
+		switch err.(type) {
+		case *viper.ConfigFileNotFoundError:
+			break
+		default:
+			fmt.Printf(err.Error())
+			os.Exit(1)
+		}
 		fmt.Printf(err.Error())
 		os.Exit(1)
 	}
