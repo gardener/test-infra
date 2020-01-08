@@ -2,7 +2,7 @@ package alert
 
 import (
 	"encoding/json"
-	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
+	"fmt"
 )
 
 // TestContextAggregation elasticsearch distinct names aggregation structure
@@ -44,8 +44,8 @@ type ESTestmachineryDoc struct {
 			K8sVersion      string `json:"k8s_version"`
 			OperatingSystem string `json:"operating_system"`
 			Landscape       string `json:"landscape"`
-			Testrun            struct {
-				ID   string `json:"id"`
+			Testrun         struct {
+				ID string `json:"id"`
 			} `json:"tr"`
 		} `json:"tm"`
 	} `json:"_source"`
