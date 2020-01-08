@@ -37,15 +37,13 @@ func init() {
 func main() {
 	flag.Parse()
 	if err := vh.ViperHelper.ReadInConfig(); err != nil {
+		fmt.Printf(err.Error())
 		switch err.(type) {
-		case *viper.ConfigFileNotFoundError:
+		case viper.ConfigFileNotFoundError:
 			break
 		default:
-			fmt.Printf(err.Error())
 			os.Exit(1)
 		}
-		fmt.Printf(err.Error())
-		os.Exit(1)
 	}
 	ctx := context.Background()
 	log, err := logger.New(nil)
