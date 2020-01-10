@@ -232,6 +232,7 @@ func DumpShootLogs(gardenKubeconfigPath, projectNamespace, shootName string) err
 	}
 
 	ctx := context.Background()
+	defer ctx.Done()
 	shoot := &gardencorev1alpha1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
 	if err := gardenerTestOperations.AddShoot(ctx, shoot); err != nil {
 		logger.Error(err.Error())
