@@ -39,25 +39,6 @@ type Alert struct {
 	ctx context.Context
 }
 
-//TestDetails describes a test which is used for alert message
-type TestDetails struct {
-	Name                string  //Name test name
-	Context             string  //Context is the concatenation of name and several test dimensions
-	FailedContinuously  bool    //FailedContinuously true if n recent test runs were failing in a row
-	LastFailedTimestamp string  //LastFailedTimestamp timestamp of last failed test execution
-	SuccessRate         float64 //SuccessRate of recent n days
-	Successful          bool    //Successful is true if success rate doesn't go below threshold and isn't failed continuously
-	Cloudprovider       string
-	OperatingSystem     string
-	Landscape           string
-	K8sVersion          string
-}
-
-//ElasticsearchBulkString creates an elastic search bulk string for ingestion
-func (test TestDetails) ElasticsearchBulkString(datetime string) string {
-	return fmt.Sprintf(`{ "index":{} }`+"\n"+`{ "testContext":"%s","datetime":"%s" }`+"\n", test.Context, datetime)
-}
-
 //ElasticsearchConfig represents the elasticsearch configuration
 type ElasticsearchConfig struct {
 	Endpoint *url.URL
@@ -137,6 +118,7 @@ func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextA
 			K8sVersion:          testDocDetails.TM.K8sVersion,
 			Cloudprovider:       testDocDetails.TM.Cloudprovider,
 			Landscape:           testDocDetails.TM.Landscape,
+			TestrunID:           testDocDetails.TM.Testrun.ID,
 			SuccessRate:         testDoc.SuccessRate.Value,
 			Context:             testDoc.Testcontext,
 			FailedContinuously:  testFailedContinuously,
@@ -182,7 +164,7 @@ func (alerter *Alert) removeExcludedTests(tests map[string]TestDetails) error {
 func (alerter *Alert) removeAlreadyFiledAlerts(tests map[string]TestDetails, alreadyFiledAlerts AlertDocs) {
 	testsSizeBefore := len(tests)
 	for _, alertItem := range alreadyFiledAlerts.Hits.AlertItems {
-		delete(tests, alertItem.Source.TestName)
+		delete(tests, alertItem.Source.Context)
 	}
 	alerter.log.V(3).Info(fmt.Sprintf("%d/%d tests alerts have been discarded, since they have already been posted in slack", testsSizeBefore-len(tests), testsSizeBefore))
 }
@@ -405,7 +387,7 @@ func (alerter *Alert) elasticRequest(urlAttributes, httpMethod, payloadFormated 
 
 //filePostedAlerts posts test contexts to elasticsearch
 func (alerter *Alert) filePostedAlerts(tests map[string]TestDetails) error {
-	payload := generatePostedAlertsPayload(tests)
+	payload := alerter.generatePostedAlertsPayload(tests)
 	if err := alerter.elasticRequest("/tm-alerter/_doc/_bulk", http.MethodPost, payload, nil); err != nil {
 		return errors.Wrap(err, "failed to store alerted tests in elasticsearch")
 	}
@@ -416,20 +398,25 @@ func (alerter *Alert) filePostedAlerts(tests map[string]TestDetails) error {
 func (alerter *Alert) extractRecoveredTests(testContextToTestMap map[string]TestDetails, filedAlerts AlertDocs) map[string]TestDetails {
 	recoveredTests := make(map[string]TestDetails)
 	for _, filedAlert := range filedAlerts.Hits.AlertItems {
-		test, ok := testContextToTestMap[filedAlert.Source.TestName]
+		test, ok := testContextToTestMap[filedAlert.Source.Context]
 		if ok && test.Successful {
-			recoveredTests[filedAlert.Source.TestName] = test
+			recoveredTests[filedAlert.Source.Context] = test
 		}
 	}
 	return recoveredTests
 }
 
 //generatePostedAlertsPayload generates a bulk payload of test context docs
-func generatePostedAlertsPayload(tests map[string]TestDetails) string {
+func (alerter *Alert) generatePostedAlertsPayload(tests map[string]TestDetails) string {
 	datetime := time.Now().UTC().Format(time.RFC3339)
 	payload := ""
 	for _, test := range tests {
-		payload += test.ElasticsearchBulkString(datetime)
+		test.FiledAlertDataTime = datetime
+		bulkString, err := test.ElasticsearchBulkString()
+		if err != nil {
+			alerter.log.Error(err, "Failed to marshal test details item", "item", test)
+		}
+		payload += bulkString
 	}
 	return payload
 }
