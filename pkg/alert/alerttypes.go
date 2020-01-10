@@ -1,6 +1,6 @@
 package alert
 
-// elasticsearch distinct names aggregation structure
+// TestContextAggregation elasticsearch distinct names aggregation structure
 type TestContextAggregation struct {
 	Aggs struct {
 		TestContext struct {
@@ -43,7 +43,7 @@ type ESTestmachineryDoc struct {
 	} `json:"_source"`
 }
 
-// elasticsearch alert docs structure
+// AlertDocs elasticsearch alert docs structure
 type AlertDocs struct {
 	Hits struct {
 		AlertItems []struct {

@@ -42,6 +42,9 @@ var (
 	LogDir                   string
 	TmpDir                   string
 	ShootKubeconfigPath      string
+	GardenKubeconfigPath     string
+	ProjectNamespace         string
+	ShootName                string
 	GinkgoParallel           bool
 	DescriptionFile          string
 	K8sRelease               string
@@ -79,6 +82,9 @@ func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
 	flag.BoolVar(&RunCleanUpAfterTest, "cleanUpAfterwards", false, "Clean downloads folder and remove kubernetes folder after test run")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
+	flag.StringVar(&GardenKubeconfigPath, "gardenKubeconfig", "", "kubeconfig file path of the virtual garden cluster")
+	flag.StringVar(&ShootName, "shoot", "", "name of the shoot cluster")
+	flag.StringVar(&ProjectNamespace, "project", "", "name of the garden project")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
@@ -118,6 +124,15 @@ func init() {
 	}
 	if ShootKubeconfigPath == "" {
 		log.Fatal("shoot config not set")
+	}
+	if GardenKubeconfigPath == "" {
+		GardenKubeconfigPath = os.Getenv("GARDEN_KUBECONFIG_PATH")
+	}
+	if ProjectNamespace == "" {
+		ProjectNamespace = os.Getenv("PROJECT_NAMESPACE")
+	}
+	if ShootName == "" {
+		ShootName = os.Getenv("SHOOT_NAME")
 	}
 	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))

@@ -3,18 +3,24 @@ package util
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/test/integration/framework"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
 
@@ -205,4 +211,33 @@ func Copy(src, dst string) (int64, error) {
 	defer destination.Close()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
+}
+
+func DumpShootLogs(gardenKubeconfigPath, projectNamespace, shootName string) error {
+	logger := log.New()
+	if gardenKubeconfigPath == "" || projectNamespace == "" || shootName == "" {
+		logger.Warn("cannot dump shoot cluster events because of missing parameters gardener kubconfig / project namespace / shoot name")
+		return nil
+	}
+	gardenerClient, err := kubernetes.NewClientFromFile("", gardenKubeconfigPath, kubernetes.WithClientOptions(
+		client.Options{
+			Scheme: kubernetes.GardenScheme,
+		}))
+	if err != nil {
+		return err
+	}
+	gardenerTestOperations, err := framework.NewGardenTestOperation(gardenerClient, logger)
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	defer ctx.Done()
+	shoot := &gardencorev1alpha1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
+	if err := gardenerTestOperations.AddShoot(ctx, shoot); err != nil {
+		logger.Error(err.Error())
+		gardenerTestOperations.Shoot = shoot
+	}
+	gardenerTestOperations.DumpState(ctx)
+	return nil
 }

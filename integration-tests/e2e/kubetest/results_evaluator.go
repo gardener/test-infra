@@ -308,9 +308,9 @@ func mergeE2eLogFiles(dst string, e2eLogFilePaths []string) {
 		}
 	}
 	if len(e2eLogFilePaths) == 1 {
-		log.Infof("copied %s file to %s/%s", e2eLogFilePaths[0], dst, MergedE2eLogFile)
+		log.Infof("copied %s file to %s", e2eLogFilePaths[0], dst)
 	} else {
-		log.Infof("merged %o e2e log files to %s%s", len(e2eLogFilePaths), dst, MergedE2eLogFile)
+		log.Infof("merged %o e2e log files to %s", len(e2eLogFilePaths), dst)
 	}
 }
 

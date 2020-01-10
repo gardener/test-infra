@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
@@ -175,6 +176,10 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 			log.Infof("END: dump kubetest stdout last %d bytes", bufferSize)
 		}
 		log.Error(errors.Wrapf(err, "kubetest run failed"))
+
+		if err = util.DumpShootLogs(config.GardenKubeconfigPath, config.ProjectNamespace, config.ShootName); err != nil {
+			log.Error(errors.Wrap(err, "could not execute shoot dump"))
+		}
 	} else {
 		log.Info("kubtest test run successful")
 	}
