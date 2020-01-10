@@ -222,7 +222,7 @@ func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, dest strin
 
 func generateTestrunAssetName(testrun testrunner.Run) string {
 	md := testrun.Metadata
-	return fmt.Sprintf("%s%s-%s-%s.txt", prefix, md.Landscape, md.CloudProvider, md.KubernetesVersion)
+	return fmt.Sprintf("%s%s-%s-%s-%s.txt", prefix, md.Landscape, md.CloudProvider, md.OperatingSystem, md.KubernetesVersion)
 }
 
 // compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
