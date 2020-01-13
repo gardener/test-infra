@@ -198,11 +198,12 @@ func (alerter *Alert) PostAlertMessageToSlack(client slack.Client, channel strin
 	message := createAlertMessage(failedTests, alerter)
 	splitedMessage := splitSlackMessage(message, 3900)
 	messagePrefix := "*🔥 New Testmachinery Alerts:* \n"
+	messageSuffix := "\nCheckout list of all active alerts and links to logs at https://kibana.ingress.cicdes.core.shoot.live.k8s-hana.ondemand.com/app/kibana#/discover/2eb705d0-339d-11ea-96c2-197bcb58cf5f?_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-7d%2Cto%3Anow))"
 	for i, messageSplitItem := range splitedMessage {
 		if i != 0 {
 			messagePrefix = ""
 		}
-		if err := client.PostMessage(channel, fmt.Sprintf("%s```%s```", messagePrefix, messageSplitItem)); err != nil {
+		if err := client.PostMessage(channel, fmt.Sprintf("%s```%s```%s", messagePrefix, messageSplitItem, messageSuffix)); err != nil {
 			return err
 		}
 		time.Sleep(1200 * time.Millisecond) // need to wait 1 sec due to slack limits
