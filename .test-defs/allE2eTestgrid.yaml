@@ -44,7 +44,7 @@ spec:
         key: gcloud.json
   - type: env
     name: TESTCASE_GROUPS
-    value: 'fast,slow'
+    value: 'fast,slow2'
 
   command: [bash, -c]
   args:
