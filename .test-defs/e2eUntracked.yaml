@@ -45,6 +45,6 @@ spec:
   - >-
     export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
-    export GARDEN_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/garden.config &&
+    export GARDEN_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/gardener.config &&
     go run -mod=vendor ./integration-tests/e2e --cleanUpAfterwards=true --flakeAttempts=5
   image: golang:1.13
