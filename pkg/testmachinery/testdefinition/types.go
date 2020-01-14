@@ -60,7 +60,7 @@ func GetUntrustedInputArtifacts() []argov1.Artifact {
 	return []argov1.Artifact{
 		{
 			Name:     testmachinery.ArtifactUntrustedKubeconfigs,
-			Path:     testmachinery.TM_KUBECONFIG_PATH,
+			Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
 			Optional: true,
 		},
 	}

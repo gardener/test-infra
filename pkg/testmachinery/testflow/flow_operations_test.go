@@ -368,6 +368,7 @@ var _ = Describe("flow operations", func() {
 			Expect(C.GetInputSource()).To(Equal(A))
 			Expect(D.GetInputSource()).To(Equal(A))
 			Expect(E.GetInputSource()).To(Equal(A))
+			Expect(D.HasOutput()).To(BeFalse())
 		})
 
 	})
