@@ -61,8 +61,6 @@ func Run(descFile string) (resultsPath string) {
 		log.Fatal("no valid description file provided.")
 	}
 	log.Infof("running kubetest for %d e2e tests:", getLinesCount(descFile))
-	// print readable file contents
-	fmt.Print(getFileContent(descFile))
 
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
 	if serialTestsFocus != "" {
