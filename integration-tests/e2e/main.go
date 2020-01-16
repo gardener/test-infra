@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -15,7 +16,12 @@ func main() {
 	if err := setup.Setup(); err != nil {
 		log.Fatal(errors.Wrapf(err, "Initial setup invocation failed"))
 	}
-	desc := kubetest.Generate()
+	desc := ""
+	if config.K8sReleaseMajorMinor == "1.16" && config.TestcaseGroupString == "e2e-fast" {
+		desc = path.Join(config.OwnDir, "e2e-fast1.16.txt")
+	} else {
+		desc = kubetest.Generate()
+	}
 	kubetestResultsPath := kubetest.Run(desc)
 	resultSummary := kubetest.Analyze(kubetestResultsPath)
 
