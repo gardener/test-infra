@@ -48,9 +48,11 @@ func New(log logr.Logger, token string) (Client, error) {
 
 func (s *slack) PostMessage(channel string, message string) error {
 	slackReq, err := json.Marshal(MessageRequest{
-		Channel: channel,
-		AsUser:  true,
-		Text:    message,
+		Channel:     channel,
+		AsUser:      true,
+		Text:        message,
+		UnfurlLinks: false,
+		UnfurlMedia: false,
 	})
 	if err != nil {
 		return err
@@ -94,9 +96,11 @@ func (s *slack) PostMessage(channel string, message string) error {
 
 // MessageRequest defines a default slack request for a message
 type MessageRequest struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text,omitempty"`
-	AsUser  bool   `json:"as_user,omitempty"`
+	Channel     string `json:"channel"`
+	Text        string `json:"text,omitempty"`
+	AsUser      bool   `json:"as_user,omitempty"`
+	UnfurlLinks bool   `json:"unfurl_links,omitempty"`
+	UnfurlMedia bool   `json:"unfurl_media,omitempty"`
 }
 
 // Response defines a slack response
