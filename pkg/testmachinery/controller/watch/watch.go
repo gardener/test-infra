@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sync"
 	"time"
 )
 
@@ -52,6 +53,7 @@ type watch struct {
 	log     logr.Logger
 	client  client.Client
 	watches map[string]chan *v1beta1.Testrun
+	mux     sync.Mutex
 }
 
 func (w *watch) Client() client.Client {
@@ -60,9 +62,12 @@ func (w *watch) Client() client.Client {
 
 func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f WatchFunc) error {
 	namespacedName := types.NamespacedName{Namespace: namespace, Name: name}
+
+	w.mux.Lock()
 	if _, ok := w.watches[namespacedName.String()]; !ok {
 		w.watches[namespacedName.String()] = make(chan *v1beta1.Testrun)
 	}
+	w.mux.Unlock()
 
 	var (
 		errs  error
@@ -121,7 +126,9 @@ func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 	// close the channel if the testrun is completed
 	if util.Completed(tr.Status.Phase) {
 		close(ch)
+		w.mux.Lock()
 		delete(w.watches, r.String())
+		w.mux.Unlock()
 	}
 
 	return reconcile.Result{}, nil
