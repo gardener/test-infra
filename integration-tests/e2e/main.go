@@ -21,7 +21,7 @@ func main() {
 		log.Info("doing extrawurst for fast e2e group in k8s 1.6")
 		desc = path.Join(config.OwnDir, "e2e-fast1.16.txt")
 	} else {
-		log.Info("default description generation")
+		log.Infof("default description generation: ", config.K8sReleaseMajorMinor, config.TestcaseGroupString)
 		desc = kubetest.Generate()
 	}
 	kubetestResultsPath := kubetest.Run(desc)
