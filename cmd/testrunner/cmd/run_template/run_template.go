@@ -156,6 +156,8 @@ func init() {
 	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 	runCmd.Flags().BoolVar(&collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
+	runCmd.Flags().IntVar(&testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
+	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
