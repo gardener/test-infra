@@ -75,6 +75,11 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		go func(i int) {
 			defer wg.Done()
 
+			// wait initial backoff before deploying the testrun
+			if config.BackoffBucket > 0 {
+				time.Sleep(config.BackoffPeriod * time.Duration(i/config.BackoffBucket))
+			}
+
 			for attempt := 0; attempt <= config.FlakeAttempts; attempt++ {
 				rl[i].SetRunID(runID)
 				triggerRunEvent(notify, rl[i])
