@@ -32,6 +32,8 @@ var (
 	namespace            string
 	timeout              int64
 	testrunFlakeAttempts int
+	backoffBucket        int
+	backoffPeriod        time.Duration
 
 	testrunPath       string
 	testrunNamePrefix string
@@ -64,6 +66,8 @@ var runTestrunCmd = &cobra.Command{
 			Namespace:     namespace,
 			Timeout:       time.Duration(timeout) * time.Second,
 			FlakeAttempts: testrunFlakeAttempts,
+			BackoffBucket: backoffBucket,
+			BackoffPeriod: backoffPeriod,
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)
@@ -105,8 +109,10 @@ func init() {
 	runTestrunCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
-	runTestrunCmd.Flags().Int64("interval", 20, "[DEPRECTAED] Value has no effect")
+	runTestrunCmd.Flags().Int64("interval", 20, "[DEPRECATED] Value has no effect")
 	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
+	runTestrunCmd.Flags().IntVar(&backoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
+	runTestrunCmd.Flags().DurationVar(&backoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
 	// parameter flags
 	runTestrunCmd.Flags().StringVarP(&testrunPath, "file", "f", "", "Path to the testrun yaml")
