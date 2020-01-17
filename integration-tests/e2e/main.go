@@ -17,9 +17,11 @@ func main() {
 		log.Fatal(errors.Wrapf(err, "Initial setup invocation failed"))
 	}
 	desc := ""
-	if config.K8sReleaseMajorMinor == "1.16" && config.TestcaseGroupString == "e2e-fast" {
+	if config.K8sReleaseMajorMinor == "1.16" && config.TestcaseGroupString == "fast" {
+		log.Info("doing extrawurst for fast e2e group in k8s 1.6")
 		desc = path.Join(config.OwnDir, "e2e-fast1.16.txt")
 	} else {
+		log.Info("default description generation")
 		desc = kubetest.Generate()
 	}
 	kubetestResultsPath := kubetest.Run(desc)
