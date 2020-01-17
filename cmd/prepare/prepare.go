@@ -73,18 +73,22 @@ func runPrepare(log logr.Logger, cfg *prepare.Config, repoBasePath string) error
 		if err := runCommand(log, cwd, "git", "clone", "-v", repo.URL, repoPath); err != nil {
 			// do some checks to diagnose why git clone fails
 			if addrs, e := net.LookupHost("github.com"); e == nil {
-				fmt.Printf("LookupHost github.com: %v", addrs)
+				fmt.Printf("LookupHost github.com: %v\n", addrs)
 			}
 			if addrs, e := net.LookupHost("google.com"); e == nil {
-				fmt.Printf("LookupHost google.com: %v", addrs)
+				fmt.Printf("LookupHost google.com: %v\n", addrs)
 			}
 			if addrs, e := net.LookupHost("kubernetes.default.svc.cluster.local"); e == nil {
-				fmt.Printf("LookupHost kubernetes.default.svc.cluster.local: %v", addrs)
+				fmt.Printf("LookupHost kubernetes.default.svc.cluster.local: %v\n", addrs)
 			}
 			_ = runCommand(log, cwd, "nslookup", "github.com")
 			_ = runCommand(log, cwd, "nslookup", "google.com")
 			_ = runCommand(log, cwd, "nslookup", "kubernetes.default.svc.cluster.local")
-			return err
+			// for whatever reason, git clone sometimes fails to resolve github.com => workaround by retrying
+			log.Info("git clone failed => retrying once")
+			if err := runCommand(log, cwd, "git", "clone", "-v", repo.URL, repoPath); err != nil {
+				return err
+			}
 		}
 
 		if err := runCommand(log, repoPath, "git", "fetch", "origin", repo.Revision); err != nil {
