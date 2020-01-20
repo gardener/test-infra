@@ -99,8 +99,8 @@ type MessageRequest struct {
 	Channel     string `json:"channel"`
 	Text        string `json:"text,omitempty"`
 	AsUser      bool   `json:"as_user,omitempty"`
-	UnfurlLinks bool   `json:"unfurl_links,omitempty"`
-	UnfurlMedia bool   `json:"unfurl_media,omitempty"`
+	UnfurlLinks bool   `json:"unfurl_links"`
+	UnfurlMedia bool   `json:"unfurl_media"`
 }
 
 // Response defines a slack response
