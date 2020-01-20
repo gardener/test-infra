@@ -108,7 +108,7 @@ func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts
 func runKubetest(args KubetestArgs, logToStd bool) {
 	//  -clean-start
 	//    	If true, purge all namespaces except default and system before running tests. This serves to Cleanup test namespaces from failed/interrupted e2e runs in a long-lived cluster.
-	ginkgoArgs := fmt.Sprintf("--test_args=--clean-start --ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
+	ginkgoArgs := fmt.Sprintf("--test_args=--ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
 	cmd := exec.Command("kubetest", "--provider=skeleton", "--deployment=local", "--test", "--check-version-skew=false", args.GinkgoParallel, ginkgoArgs, fmt.Sprintf("--dump=%s", args.LogDir))
 	cmd.Dir = config.KubernetesPath
 

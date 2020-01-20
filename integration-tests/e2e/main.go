@@ -17,7 +17,7 @@ func main() {
 		log.Fatal(errors.Wrapf(err, "Initial setup invocation failed"))
 	}
 	desc := ""
-	if config.K8sReleaseMajorMinor == "1.16" && len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "fast" {
+	if config.K8sReleaseMajorMinor == "1.17" && len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "fast" {
 		log.Info("doing extrawurst for fast e2e group in k8s 1.6")
 		desc = path.Join(config.OwnDir, "e2e-fast1.16.txt")
 	} else {
