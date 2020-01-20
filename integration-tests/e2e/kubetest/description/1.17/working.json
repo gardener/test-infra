@@ -429,5 +429,18 @@
   { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide default limits.ephemeral-storage from node allocatable", "groups": ["slow", "slow2"]},
   { "testcase": "[k8s.io] Downward API [Serial] [Disruptive] [NodeFeature:EphemeralStorage] Downward API tests for local ephemeral storage should provide container's limits.ephemeral-storage and requests.ephemeral-storage as env vars", "groups": ["slow", "slow2"]},
   { "testcase": "[sig-cli] Kubectl client Kubectl apply should reuse port when apply to an existing SVC", "groups": ["fast"]},
-  { "testcase": "[k8s.io] Probing container should *not* be restarted with a exec \"cat /tmp/health\" liveness probe [NodeConformance] [Conformance]", "groups": ["slow", "slow2"]}
+  { "testcase": "[k8s.io] Probing container should *not* be restarted with a exec \"cat /tmp/health\" liveness probe [NodeConformance] [Conformance]", "groups": ["slow", "slow2"]},
+  { "testcase": "[k8s.io] Container Runtime blackbox test when running a container with a new image should be able to pull image [NodeConformance]", "groups": ["fast"]},
+  { "testcase": "[k8s.io] NodeLease when the NodeLease feature is enabled should have OwnerReferences set", "groups": ["fast"]},
+  { "testcase": "[k8s.io] Security Context When creating a pod with privileged should run the container as privileged when true [LinuxOnly] [NodeFeature:HostAccess]", "groups": ["fast"]},
+  { "testcase": "[k8s.io] [sig-node] Mount propagation should propagate mounts to the host", "groups": ["fast"]},
+  { "testcase": "[sig-cli] Kubectl client Kubectl describe should check if kubectl describe prints relevant information for cronjob", "groups": ["fast"]},
+  { "testcase": "[sig-cli] Kubectl client kubectl get output should contain custom columns for each resource ", "groups": ["fast"]},
+  { "testcase": "[sig-network] Networking Granular Checks: Services should be able to handle large requests: http", "groups": ["fast"]},
+  { "testcase": "[sig-network] Networking Granular Checks: Services should be able to handle large requests: udp", "groups": ["fast"]},
+  { "testcase": "[sig-network] Services should be able to update service type to NodePort listening on same port number but different protocols", "groups": ["fast"]},
+  { "testcase": "[sig-node] ConfigMap should update ConfigMap successfully", "groups": ["fast"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (block volmode)] volumeMode should not mount / map unused volumes in a pod", "groups": ["fast"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (filesystem volmode)] volumeLimits should support volume limits [Serial]", "groups": ["slow", "slow2"]},
+  { "testcase": "[sig-storage] CSI Volumes [Driver: csi-hostpath] [Testpattern: Dynamic PV (filesystem volmode)] volumeMode should not mount / map unused volumes in a pod", "groups": ["fast"]}
 ]
