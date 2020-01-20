@@ -188,7 +188,7 @@ func v1alpha1AzureShootConfig(name string, dependencies []string, cfg []v1beta1.
 	step := &v1beta1.DAGStep{
 		Name: fmt.Sprintf("%s-gen", name),
 		Definition: v1beta1.StepDefinition{
-			Name:   "gen-provider-gcp",
+			Name:   "gen-provider-azure",
 			Config: defaultProviderConfig,
 		},
 		UseGlobalArtifacts: false,
