@@ -440,6 +440,7 @@ func (alerter *Alert) generateESAggregationPayload() string {
 					{ "term": { "phase.keyword": "Succeeded" } },
 					{ "term": { "phase.keyword": "Skipped" } }
 				],
+				"must_not": { "match": { "stepName.keyword":   "beta-tests" }},
 				"minimum_should_match": 1
 			}
 		},
