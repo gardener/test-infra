@@ -138,18 +138,6 @@ def modifyFiles():
     gardener_version = get_gardener_version()
     subprocess.run(["git", "clean", "-f", "-d"])
 
-    arr = os.listdir()
-    print(arr)
-    print(os.getcwd())
-    shutil.rmtree('v1.15/sap-cp-aws/')
-    shutil.rmtree('v1.15/sap-cp-gcp/')
-    shutil.rmtree('v1.15/sap-cp-azure/')
-    shutil.rmtree('v1.15/sap-cp-openstack/')
-    shutil.rmtree('v1.15/gardener-aws/')
-    shutil.rmtree('v1.15/gardener-gcp/')
-    shutil.rmtree('v1.15/gardener-azure/')
-    shutil.rmtree('v1.15/gardener-openstack/')
-
     activate_google_application_credentials()
 
     provider_version_tuples = get_provider_k8s_version_tuples()
