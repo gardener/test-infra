@@ -443,7 +443,7 @@ func (in *TestrunKubeconfigs) DeepCopy() *TestrunKubeconfigs {
 func (in *TestrunList) DeepCopyInto(out *TestrunList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Testrun, len(*in))

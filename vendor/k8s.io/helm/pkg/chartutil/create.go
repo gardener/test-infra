@@ -63,7 +63,6 @@ image:
   tag: stable
   pullPolicy: IfNotPresent
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
@@ -135,7 +134,10 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-{{ include "<CHARTNAME>.labels" . | indent 4 }}
+    app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
+    helm.sh/chart: {{ include "<CHARTNAME>.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -171,7 +173,10 @@ kind: Deployment
 metadata:
   name: {{ include "<CHARTNAME>.fullname" . }}
   labels:
-{{ include "<CHARTNAME>.labels" . | indent 4 }}
+    app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
+    helm.sh/chart: {{ include "<CHARTNAME>.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -184,10 +189,6 @@ spec:
         app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -225,7 +226,10 @@ kind: Service
 metadata:
   name: {{ include "<CHARTNAME>.fullname" . }}
   labels:
-{{ include "<CHARTNAME>.labels" . | indent 4 }}
+    app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
+    helm.sh/chart: {{ include "<CHARTNAME>.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -293,19 +297,6 @@ Create chart name and version as used by the chart label.
 {{- define "<CHARTNAME>.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-
-{{/*
-Common labels
-*/}}
-{{- define "<CHARTNAME>.labels" -}}
-app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
-helm.sh/chart: {{ include "<CHARTNAME>.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
 `
 
 const defaultTestConnection = `apiVersion: v1
@@ -313,7 +304,10 @@ kind: Pod
 metadata:
   name: "{{ include "<CHARTNAME>.fullname" . }}-test-connection"
   labels:
-{{ include "<CHARTNAME>.labels" . | indent 4 }}
+    app.kubernetes.io/name: {{ include "<CHARTNAME>.name" . }}
+    helm.sh/chart: {{ include "<CHARTNAME>.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
     "helm.sh/hook": test-success
 spec:

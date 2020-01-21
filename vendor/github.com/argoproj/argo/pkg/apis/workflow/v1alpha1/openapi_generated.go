@@ -20,6 +20,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ArtifactRepositoryRef": schema_pkg_apis_workflow_v1alpha1_ArtifactRepositoryRef(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ArtifactoryArtifact":   schema_pkg_apis_workflow_v1alpha1_ArtifactoryArtifact(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ArtifactoryAuth":       schema_pkg_apis_workflow_v1alpha1_ArtifactoryAuth(ref),
+		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Backoff":               schema_pkg_apis_workflow_v1alpha1_Backoff(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ContinueOn":            schema_pkg_apis_workflow_v1alpha1_ContinueOn(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.DAGTask":               schema_pkg_apis_workflow_v1alpha1_DAGTask(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.DAGTemplate":           schema_pkg_apis_workflow_v1alpha1_DAGTemplate(ref),
@@ -31,10 +32,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.HTTPArtifact":          schema_pkg_apis_workflow_v1alpha1_HTTPArtifact(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Inputs":                schema_pkg_apis_workflow_v1alpha1_Inputs(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Item":                  schema_pkg_apis_workflow_v1alpha1_Item(ref),
+		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ItemValue":             schema_pkg_apis_workflow_v1alpha1_ItemValue(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Metadata":              schema_pkg_apis_workflow_v1alpha1_Metadata(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.NodeStatus":            schema_pkg_apis_workflow_v1alpha1_NodeStatus(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.NoneStrategy":          schema_pkg_apis_workflow_v1alpha1_NoneStrategy(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Outputs":               schema_pkg_apis_workflow_v1alpha1_Outputs(ref),
+		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ParallelSteps":         schema_pkg_apis_workflow_v1alpha1_ParallelSteps(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Parameter":             schema_pkg_apis_workflow_v1alpha1_Parameter(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.PodGC":                 schema_pkg_apis_workflow_v1alpha1_PodGC(ref),
 		"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.RawArtifact":           schema_pkg_apis_workflow_v1alpha1_RawArtifact(ref),
@@ -390,6 +393,36 @@ func schema_pkg_apis_workflow_v1alpha1_ArtifactoryAuth(ref common.ReferenceCallb
 	}
 }
 
+func schema_pkg_apis_workflow_v1alpha1_Backoff(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"duration": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"factor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"maxDuration": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_workflow_v1alpha1_ContinueOn(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -604,7 +637,7 @@ func schema_pkg_apis_workflow_v1alpha1_GitArtifact(ref common.ReferenceCallback)
 						SchemaProps: spec.SchemaProps{
 							Description: "Depth specifies clones/fetches should be shallow and include the given number of commits from the branch tip",
 							Type:        []string{"integer"},
-							Format:      "int32",
+							Format:      "int64",
 						},
 					},
 					"fetch": {
@@ -961,6 +994,70 @@ func schema_pkg_apis_workflow_v1alpha1_Item(ref common.ReferenceCallback) common
 	}
 }
 
+func schema_pkg_apis_workflow_v1alpha1_ItemValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"NumVal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"BoolVal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"StrVal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"MapVal": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"ListVal": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "byte",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Type", "NumVal", "BoolVal", "StrVal", "MapVal", "ListVal"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_workflow_v1alpha1_Metadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1052,14 +1149,21 @@ func schema_pkg_apis_workflow_v1alpha1_NodeStatus(ref common.ReferenceCallback) 
 					},
 					"storedTemplateID": {
 						SchemaProps: spec.SchemaProps{
-							Description: "StoredTemplateID is the ID of stored template.",
+							Description: "StoredTemplateID is the ID of stored template. DEPRECATED: This value is not used anymore.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"workflowTemplateName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "WorkflowTemplateName is the WorkflowTemplate resource name on which the resolved template of this node is retrieved.",
+							Description: "WorkflowTemplateName is the WorkflowTemplate resource name on which the resolved template of this node is retrieved. DEPRECATED: This value is not used anymore.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"templateScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TemplateScope is the template scope in which the template of this node was retrieved.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1231,6 +1335,33 @@ func schema_pkg_apis_workflow_v1alpha1_Outputs(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_pkg_apis_workflow_v1alpha1_ParallelSteps(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Steps": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.WorkflowStep"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Steps"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.WorkflowStep"},
+	}
+}
+
 func schema_pkg_apis_workflow_v1alpha1_Parameter(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1391,9 +1522,24 @@ func schema_pkg_apis_workflow_v1alpha1_RetryStrategy(ref common.ReferenceCallbac
 							Format:      "int32",
 						},
 					},
+					"retryPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryPolicy is a policy of NodePhase statuses that will be retried",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"backoff": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Backoff is a backoff strategy",
+							Ref:         ref("github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Backoff"),
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Backoff"},
 	}
 }
 
@@ -1698,6 +1844,12 @@ func schema_pkg_apis_workflow_v1alpha1_ScriptTemplate(ref common.ReferenceCallba
 							Ref:         ref("k8s.io/api/core/v1.Probe"),
 						},
 					},
+					"startupProbe": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod's lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. This is an alpha feature enabled by the StartupProbe feature flag. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+							Ref:         ref("k8s.io/api/core/v1.Probe"),
+						},
+					},
 					"lifecycle": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Actions that the management system should take in response to container lifecycle events. Cannot be updated.",
@@ -1815,6 +1967,15 @@ func schema_pkg_apis_workflow_v1alpha1_SuspendTemplate(ref common.ReferenceCallb
 			SchemaProps: spec.SchemaProps{
 				Description: "SuspendTemplate is a template subtype to suspend a workflow at a predetermined point in time",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"duration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Duration is the seconds to wait before automatically resuming a template",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -1917,14 +2078,7 @@ func schema_pkg_apis_workflow_v1alpha1_Template(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref("github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.WorkflowStep"),
-												},
-											},
-										},
+										Ref: ref("github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ParallelSteps"),
 									},
 								},
 							},
@@ -2124,8 +2278,14 @@ func schema_pkg_apis_workflow_v1alpha1_Template(ref common.ReferenceCallback) co
 					},
 					"securityContext": {
 						SchemaProps: spec.SchemaProps{
-							Description: "SecurityContext holds pod-level security attributes and common container settings. Optional: Defaults to empty.  See type description for default values of each field.",
-							Ref:         ref("k8s.io/api/core/v1.PodSecurityContext"),
+							Ref: ref("k8s.io/api/core/v1.PodSecurityContext"),
+						},
+					},
+					"podSpecPatch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PodSpecPatch holds strategic merge patch to apply against the pod spec. Allows parameterization of container fields which are not strings (e.g. resource limits).",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -2133,7 +2293,7 @@ func schema_pkg_apis_workflow_v1alpha1_Template(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Arguments", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ArtifactLocation", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.DAGTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ExecutorConfig", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Inputs", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Metadata", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Outputs", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ResourceTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.RetryStrategy", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ScriptTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.SuspendTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.TemplateRef", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.UserContainer", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.WorkflowStep", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.HostAlias", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume"},
+			"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Arguments", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ArtifactLocation", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.DAGTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ExecutorConfig", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Inputs", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Metadata", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.Outputs", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ParallelSteps", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ResourceTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.RetryStrategy", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.ScriptTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.SuspendTemplate", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.TemplateRef", "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1.UserContainer", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.Container", "k8s.io/api/core/v1.HostAlias", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume"},
 	}
 }
 
@@ -2339,6 +2499,12 @@ func schema_pkg_apis_workflow_v1alpha1_UserContainer(ref common.ReferenceCallbac
 							Ref:         ref("k8s.io/api/core/v1.Probe"),
 						},
 					},
+					"startupProbe": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod's lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. This is an alpha feature enabled by the StartupProbe feature flag. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+							Ref:         ref("k8s.io/api/core/v1.Probe"),
+						},
+					},
 					"lifecycle": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Actions that the management system should take in response to container lifecycle events. Cannot be updated.",
@@ -2459,14 +2625,14 @@ func schema_pkg_apis_workflow_v1alpha1_Workflow(ref common.ReferenceCallback) co
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -2504,14 +2670,14 @@ func schema_pkg_apis_workflow_v1alpha1_WorkflowList(ref common.ReferenceCallback
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -2801,8 +2967,7 @@ func schema_pkg_apis_workflow_v1alpha1_WorkflowSpec(ref common.ReferenceCallback
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "HostAliases is an optional list of hosts and IPs that will be injected into the pod spec",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -2816,6 +2981,13 @@ func schema_pkg_apis_workflow_v1alpha1_WorkflowSpec(ref common.ReferenceCallback
 						SchemaProps: spec.SchemaProps{
 							Description: "SecurityContext holds pod-level security attributes and common container settings. Optional: Defaults to empty.  See type description for default values of each field.",
 							Ref:         ref("k8s.io/api/core/v1.PodSecurityContext"),
+						},
+					},
+					"podSpecPatch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PodSpecPatch holds strategic merge patch to apply against the pod spec. Allows parameterization of container fields which are not strings (e.g. resource limits).",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -3011,14 +3183,14 @@ func schema_pkg_apis_workflow_v1alpha1_WorkflowTemplate(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -3051,14 +3223,14 @@ func schema_pkg_apis_workflow_v1alpha1_WorkflowTemplateList(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
 							Format:      "",
 						},

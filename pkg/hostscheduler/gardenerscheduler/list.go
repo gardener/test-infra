@@ -33,10 +33,10 @@ func (s *gardenerscheduler) List(flagset *flag.FlagSet) (hostscheduler.Scheduler
 		selector := labels.SelectorFromSet(labels.Set(map[string]string{
 			ShootLabel: "true",
 		}))
-		err := s.client.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
+		err := s.client.Client().List(ctx, shoots, &client.ListOptions{
 			LabelSelector: selector,
 			Namespace:     s.namespace,
-		}))
+		})
 		if err != nil {
 			return fmt.Errorf("shoots cannot be listed: %s", err.Error())
 		}

@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"net/http"
 	"time"
@@ -42,7 +43,7 @@ type target struct {
 	series []*sample.Sample
 }
 
-func (c *controller) addTarget(shoot *gardenv1alpha1.Shoot) {
+func (c *controller) addTarget(shoot *gardencorev1beta1.Shoot) {
 	var key = common.GetShootKeyFromShoot(shoot)
 
 	// Check if a target for the Shoot alrady exists
@@ -88,7 +89,7 @@ func (c *controller) addTarget(shoot *gardenv1alpha1.Shoot) {
 	c.targetsMutex.Unlock()
 }
 
-func (c *controller) removeTarget(shoot *gardenv1alpha1.Shoot) {
+func (c *controller) removeTarget(shoot *gardencorev1beta1.Shoot) {
 	var key = common.GetShootKeyFromShoot(shoot)
 	c.targetsMutex.Lock()
 	if t, exists := c.targets[key]; exists {
@@ -139,7 +140,7 @@ func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
 }
 
 // filterShoot returns if a shoot should be watched based on the controller configuration
-func (c *controller) filterShoot(shoot *gardenv1alpha1.Shoot) bool {
+func (c *controller) filterShoot(shoot *gardencorev1beta1.Shoot) bool {
 	if c.config.ShootsFilter == nil || len(c.config.ShootsFilter) == 0 {
 		return false
 	}

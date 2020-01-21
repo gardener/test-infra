@@ -107,10 +107,10 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1alpha1.Sho
 		ShootLabel:       "true",
 		ShootLabelStatus: ShootStatusFree,
 	}))
-	err := s.client.Client().List(ctx, shoots, client.UseListOptions(&client.ListOptions{
+	err := s.client.Client().List(ctx, shoots, &client.ListOptions{
 		LabelSelector: selector,
 		Namespace:     s.namespace,
-	}))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("shoots cannot be listed: %s", err.Error())
 	}

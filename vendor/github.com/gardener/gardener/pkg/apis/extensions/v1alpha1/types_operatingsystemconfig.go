@@ -43,6 +43,12 @@ func (o *OperatingSystemConfig) GetExtensionSpec() Spec {
 	return &o.Spec
 }
 
+// GetExtensionPurpose implements Object.
+func (o *OperatingSystemConfigSpec) GetExtensionPurpose() *string {
+	return (*string)(&o.Purpose)
+
+}
+
 // GetExtensionStatus implements Object.
 func (o *OperatingSystemConfig) GetExtensionStatus() Status {
 	return &o.Status
@@ -79,10 +85,12 @@ type OperatingSystemConfigSpec struct {
 	// +patchMergeKey=name
 	// +patchStrategy=merge
 	// +optional
-	Units []Unit `json:"units,omitempty"`
+	Units []Unit `json:"units,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 	// Files is a list of files that should get written to the host's file system.
+	// +patchMergeKey=path
+	// +patchStrategy=merge
 	// +optional
-	Files []File `json:"files,omitempty"`
+	Files []File `json:"files,omitempty" patchStrategy:"merge" patchMergeKey:"path"`
 	// ProviderConfig is the configuration passed to extension resource.
 	// +optional
 	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty"`
@@ -105,7 +113,7 @@ type Unit struct {
 	// +patchMergeKey=name
 	// +patchStrategy=merge
 	// +optional
-	DropIns []DropIn `json:"dropIns,omitempty"`
+	DropIns []DropIn `json:"dropIns,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 }
 
 // DropIn is a drop-in configuration for a systemd unit.
