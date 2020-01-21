@@ -154,6 +154,7 @@ type StepSummary struct {
 	Type        SummaryType      `json:"type,omitempty"`
 	Name        string           `json:"name,omitempty"`
 	StepName    string           `json:"stepName,omitempty"`
+	Labels      []string         `json:"labels,omitempty"`
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
 	StartTime   *metav1.Time     `json:"startTime,omitempty"`
 	Duration    int64            `json:"duration,omitempty"`

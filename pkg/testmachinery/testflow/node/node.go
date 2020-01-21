@@ -161,6 +161,7 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 			Name:                  td.Info.Metadata.Name,
 			Owner:                 td.Info.Spec.Owner,
 			Config:                td.GetConfig().RawList(),
+			Labels:                td.Info.Spec.Labels,
 			RecipientsOnFailure:   td.Info.Spec.RecipientsOnFailure,
 			ActiveDeadlineSeconds: td.Info.Spec.ActiveDeadlineSeconds,
 		},

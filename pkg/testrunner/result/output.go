@@ -118,6 +118,7 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 			StartTime:   step.StartTime,
 			Duration:    step.Duration,
 			PreComputed: pre,
+			Labels:      step.TestDefinition.Labels,
 		}
 
 		summaries = append(summaries, summary)

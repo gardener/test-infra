@@ -168,6 +168,7 @@ type StepStatusTestDefinition struct {
 	Name                  string           `json:"name,omitempty"`
 	Location              TestLocation     `json:"location,omitempty"`
 	Config                []*ConfigElement `json:"config,omitempty"`
+	Labels                []string         `json:"labels,omitempty"`
 	Owner                 string           `json:"owner,omitempty"`
 	RecipientsOnFailure   []string         `json:"recipientsOnFailure"`
 	ActiveDeadlineSeconds *int64           `json:"activeDeadlineSeconds"`
