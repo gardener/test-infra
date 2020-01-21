@@ -461,6 +461,19 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 							},
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 					"owner": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},

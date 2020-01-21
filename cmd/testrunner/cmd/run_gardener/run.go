@@ -191,7 +191,7 @@ func init() {
 	runCmd.Flags().Var(cmdvalues.NewHostProviderValue(&defaultConfig.HostProvider, gardenerscheduler.Name), "hostprovider", "Specify the provider for selecting the base cluster")
 	runCmd.Flags().StringVar(&defaultConfig.GardenSetupRevision, "garden-setup-version", "master", "Specify the garden setup version to setup gardener")
 	runCmd.Flags().Var(cmdvalues.NewCloudProviderValue(&defaultConfig.BaseClusterCloudprovider, common.CloudProviderGCP, common.CloudProviderGCP, common.CloudProviderAWS, common.CloudProviderAzure),
-		"host-cloudprovider", "Specify the cloudprovider of the host cluster. Optional and only affect gardener base cluster")
+		"host-cloudprovider", "Specify the cloudprovider of the host cluster. Optional and only affect gardener base clusters")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Version, "gardener-version", "", "Specify the gardener version to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.ImageTag, "gardener-image", "", "Specify the gardener image tag to be deployed by garden setup")
 	runCmd.Flags().StringVar(&defaultConfig.Gardener.Commit, "gardener-commit", "", "Specify the gardener commit that is deployed by garden setup")
