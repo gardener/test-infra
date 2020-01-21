@@ -120,7 +120,7 @@ var runCmd = &cobra.Command{
 		runs := testrunner.RunList{
 			&testrunner.Run{
 				Testrun:  tr,
-				Metadata: nil,
+				Metadata: &testrunner.Metadata{},
 				Error:    nil,
 			},
 		}
