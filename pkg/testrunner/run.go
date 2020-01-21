@@ -30,7 +30,9 @@ func (r *Run) SetRunID(id string) {
 		r.Testrun.Labels = make(map[string]string, 1)
 	}
 	r.Testrun.Labels[common.LabelTestrunRunID] = id
-	r.Metadata.Testrun.RunId = id
+	if r.Metadata != nil {
+		r.Metadata.Testrun.RunId = id
+	}
 }
 
 func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {

@@ -84,7 +84,9 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 				rl[i].SetRunID(runID)
 				triggerRunEvent(notify, rl[i])
 				rl[i].Exec(log, config, testrunNamePrefix)
-				rl[i].Metadata.Retries = attempt
+				if rl[i].Metadata != nil {
+					rl[i].Metadata.Retries = attempt
+				}
 
 				if rl[i].Error == nil && rl[i].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 					// testrun was successful, break retry loop
