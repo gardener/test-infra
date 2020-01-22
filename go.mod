@@ -10,7 +10,6 @@ require (
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/gardener/gardener v0.34.0
-	github.com/gardener/machine-controller-manager v0.0.0-20191118095523-e30355bc7945 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.51.0 // indirect
 	github.com/go-logr/logr v0.1.0

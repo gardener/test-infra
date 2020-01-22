@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/test/integration/framework"
 	"github.com/gardener/test-infra/pkg/util"
@@ -233,7 +233,7 @@ func DumpShootLogs(gardenKubeconfigPath, projectNamespace, shootName string) err
 
 	ctx := context.Background()
 	defer ctx.Done()
-	shoot := &gardencorev1alpha1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
+	shoot := &gardencorev1beta1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
 	if err := gardenerTestOperations.AddShoot(ctx, shoot); err != nil {
 		logger.Error(err.Error())
 		gardenerTestOperations.Shoot = shoot
