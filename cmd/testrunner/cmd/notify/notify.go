@@ -42,6 +42,7 @@ var (
 
 	slackChannel string
 	slackToken   string
+	concourseURL string
 )
 
 // AddCommand adds notify to a command.
@@ -89,7 +90,12 @@ var notifyCmd = &cobra.Command{
 			return err
 		}
 
-		return slackClient.PostMessage(slackChannel, fmt.Sprintf("```%s\n%s\n%s```", header(), table, legend()))
+		concourseURLFooter := ""
+		if concourseURL != "" {
+			concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", concourseURL)
+		}
+
+		return slackClient.PostMessage(slackChannel, fmt.Sprintf("```%s\n%s\n%s```%s", header(), table, legend(), concourseURLFooter))
 	},
 }
 
@@ -101,6 +107,7 @@ func init() {
 	notifyCmd.Flags().StringVar(&overviewFileName, "overview", "", "Name of the overview asset file in the release.")
 	notifyCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
 	notifyCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
+	notifyCmd.Flags().StringVar(&concourseURL, "concourse-url", "", "Concourse job URL.")
 }
 
 func header() string {
