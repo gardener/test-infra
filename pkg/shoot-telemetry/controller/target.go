@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"
 	log "github.com/sirupsen/logrus"
@@ -127,7 +127,7 @@ func (c *controller) observeTarget(t *target, stopCh <-chan struct{}) {
 
 // initTargets initializes the targets with all available shoots
 func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
-	shoots := &gardenv1alpha1.ShootList{}
+	shoots := &gardenv1beta1.ShootList{}
 	if err := k8sClient.Client().List(context.TODO(), shoots); err != nil {
 		return err
 	}
