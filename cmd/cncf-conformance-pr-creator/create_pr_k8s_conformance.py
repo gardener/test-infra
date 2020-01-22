@@ -180,6 +180,8 @@ def get_provider_k8s_version_tuples():
             if provider not in provider_list:
                 continue  # if the provider is not supported, continue
             k8s_version = re.search('-(v\d+\.\d+)\/', blob_name).group(1)
+            if k8s_version == '1.13':
+                continue  # k8s release 1.13 can't be added anymore, since only recent 3 release versions are considered
             provider_version_tuples.append((provider, k8s_version))
     return provider_version_tuples
 
