@@ -16,9 +16,9 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
-	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/operation/botanist"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -33,10 +33,10 @@ import (
 
 var (
 	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
-	NotMonitoringComponent = botanist.MustNewRequirement(v1alpha1constants.GardenRole, selection.NotEquals, v1alpha1constants.GardenRoleMonitoring)
+	NotMonitoringComponent = botanist.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleMonitoring)
 
 	// NotKubernetesClusterService is a requirement that something doesnt have the GardenRole GardenRoleOptionalAddon
-	NotGardenerAddon = botanist.MustNewRequirement(v1alpha1constants.GardenRole, selection.NotEquals, v1alpha1constants.GardenRoleOptionalAddon)
+	NotGardenerAddon = botanist.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleOptionalAddon)
 )
 
 func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -58,7 +58,7 @@ func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.Schedu
 			}
 		}
 
-		shoot := &v1alpha1.Shoot{}
+		shoot := &gardencorev1beta1.Shoot{}
 		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot)
 		if err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())

@@ -29,7 +29,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
-	v1alpha1constants "github.com/gardener/gardener/pkg/apis/core/v1alpha1/constants"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	corev1 "k8s.io/api/core/v1"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
 
@@ -52,7 +52,7 @@ var (
 func init() {
 	// configuration flags
 	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the host cluster kubeconfigPath")
-	flag.StringVar(&namespace, "namespace", v1alpha1constants.GardenNamespace, "Namespace of the gardener deployments")
+	flag.StringVar(&namespace, "namespace", v1beta1constants.GardenNamespace, "Namespace of the gardener deployments")
 	flag.StringVar(&output, "output", "", "Logs output directory path")
 }
 

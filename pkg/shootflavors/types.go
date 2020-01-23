@@ -15,7 +15,7 @@
 package shootflavors
 
 import (
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 )
 
@@ -25,8 +25,8 @@ type Flavors struct {
 	Info   []*common.ShootFlavor
 	shoots []*common.Shoot
 
-	usedKubernetesVersions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings
-	usedMachineImages      map[common.CloudProvider][]gardenv1alpha1.MachineImage
+	usedKubernetesVersions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings
+	usedMachineImages      map[common.CloudProvider][]gardencorev1beta1.MachineImage
 }
 
 // Flavors represents the internal versions of a extended shoot flavor.
@@ -35,7 +35,7 @@ type ExtendedFlavors struct {
 	Info   []*common.ExtendedShootFlavor
 	shoots []*ExtendedFlavorInstance
 
-	usedKubernetesVersions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings
+	usedKubernetesVersions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings
 }
 
 // ExtendedFlavorInstance defines a instance of a shoot flavor

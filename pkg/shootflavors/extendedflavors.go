@@ -16,7 +16,7 @@ package shootflavors
 
 import (
 	"fmt"
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
@@ -63,7 +63,7 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 // NewExtended creates an internal representation of raw extended shoot flavors.
 // It also parses the flavors and creates the resulting extended shoots.
 func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
-	versions := make(map[common.CloudProvider]gardenv1alpha1.KubernetesSettings, 0)
+	versions := make(map[common.CloudProvider]gardencorev1beta1.KubernetesSettings, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 
 	shoots := make([]*ExtendedFlavorInstance, 0)
@@ -124,9 +124,9 @@ func (f *ExtendedFlavors) GetShoots() []*ExtendedFlavorInstance {
 }
 
 // GetUsedKubernetesVersions returns a list of unique kubernetes versions used across all shoots.
-func (f *ExtendedFlavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardenv1alpha1.KubernetesSettings {
+func (f *ExtendedFlavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardencorev1beta1.KubernetesSettings {
 	if f.usedKubernetesVersions == nil {
-		return map[common.CloudProvider]gardenv1alpha1.KubernetesSettings{}
+		return map[common.CloudProvider]gardencorev1beta1.KubernetesSettings{}
 	}
 	return f.usedKubernetesVersions
 }

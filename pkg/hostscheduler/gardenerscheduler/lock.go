@@ -17,12 +17,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -42,7 +41,7 @@ import (
 func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 	id := flagset.String("id", "", "Unique id to identify the cluster")
 	return func(ctx context.Context) error {
-		shoot := &v1alpha1.Shoot{}
+		shoot := &gardencorev1beta1.Shoot{}
 		interval := 90 * time.Second
 		timeout := 120 * time.Minute
 
@@ -101,8 +100,8 @@ func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.Scheduler
 	}, nil
 }
 
-func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1alpha1.Shoot, error) {
-	shoots := &v1alpha1.ShootList{}
+func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*gardencorev1beta1.Shoot, error) {
+	shoots := &gardencorev1beta1.ShootList{}
 	selector := labels.SelectorFromSet(labels.Set(map[string]string{
 		ShootLabel:       "true",
 		ShootLabelStatus: ShootStatusFree,
@@ -141,7 +140,7 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*v1alpha1.Sho
 	return nil, fmt.Errorf("cannot find available shoots")
 }
 
-func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *v1alpha1.Shoot, id string) error {
+func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *gardencorev1beta1.Shoot, id string) error {
 	// if shoot is hibernated it is ready to be used as host for a test.
 	// then the hibernated shoot is woken up and the gardener tests can start
 	shoot.Spec.Hibernation.Enabled = &hibernationFalse
@@ -159,7 +158,7 @@ func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *v1alpha1.Shoot
 	return nil
 }
 
-func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *v1alpha1.Shoot) error {
+func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
 	kubeconfigPath, err := hostscheduler.HostKubeconfigPath()
 	if err != nil {
@@ -187,7 +186,7 @@ func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient k
 	return nil
 }
 
-func writeHostInformationToFile(log logr.Logger, shoot *v1alpha1.Shoot) error {
+func writeHostInformationToFile(log logr.Logger, shoot *gardencorev1beta1.Shoot) error {
 	hostConfigPath, err := hostscheduler.HostConfigFilePath()
 	if err != nil {
 		log.V(3).Info("hostconfig is not written: %s", err.Error())

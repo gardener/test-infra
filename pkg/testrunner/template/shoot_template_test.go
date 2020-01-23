@@ -15,10 +15,10 @@
 package template
 
 import (
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/shootflavors"
 	"path/filepath"
 
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,13 +36,13 @@ var _ = Describe("shoot templates", func() {
 			shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderGCP,
-					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15.2"},
-					Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: v1alpha1.Machine{Image: &v1alpha1.ShootMachineImage{Name: "core-os"}}}},
+					KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
+					Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
 					Namespace:    "garden-it",
-					Cloudprofile: v1alpha1.CloudProfile{},
+					Cloudprofile: gardencorev1beta1.CloudProfile{},
 					ExtendedConfiguration: common.ExtendedConfiguration{
 						ProjectName:      "test-proj",
 						CloudprofileName: "test",
@@ -110,14 +110,14 @@ var _ = Describe("shoot templates", func() {
 				shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 					Shoot: common.Shoot{
 						Provider:          common.CloudProviderGCP,
-						KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15.2"},
-						Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: v1alpha1.Machine{Image: &v1alpha1.ShootMachineImage{Name: "core-os"}}}},
+						KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
+						Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
 					},
 					ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 						Name:      "test-name",
 						Namespace: "garden-it",
-						Cloudprofile: v1alpha1.CloudProfile{Spec: v1alpha1.CloudProfileSpec{
-							Kubernetes: v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{
+						Cloudprofile: gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+							Kubernetes: gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{
 								{Version: "1.15.2"},
 								{Version: "1.14.1"},
 								{Version: "1.14.0"},
@@ -156,13 +156,13 @@ var _ = Describe("shoot templates", func() {
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderAWS,
-					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.16.2"},
-					Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: v1alpha1.Machine{Image: &v1alpha1.ShootMachineImage{Name: "suse-os"}}}},
+					KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.16.2"},
+					Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "suse-os"}}}},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
 					Namespace:    "garden-it",
-					Cloudprofile: v1alpha1.CloudProfile{},
+					Cloudprofile: gardencorev1beta1.CloudProfile{},
 					ExtendedConfiguration: common.ExtendedConfiguration{
 						ProjectName:      "test-proj",
 						CloudprofileName: "test",
@@ -202,13 +202,13 @@ var _ = Describe("shoot templates", func() {
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
 					Provider:          common.CloudProviderAWS,
-					KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.16.2"},
-					Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: v1alpha1.Machine{Image: &v1alpha1.ShootMachineImage{Name: "suse-os"}}}},
+					KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.16.2"},
+					Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "suse-os"}}}},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
 					Namespace:    "garden-it",
-					Cloudprofile: v1alpha1.CloudProfile{},
+					Cloudprofile: gardencorev1beta1.CloudProfile{},
 					ExtendedConfiguration: common.ExtendedConfiguration{
 						ProjectName:      "test-proj",
 						CloudprofileName: "test",

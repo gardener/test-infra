@@ -15,7 +15,7 @@
 package util_test
 
 import (
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
@@ -26,12 +26,12 @@ var _ = Describe("kubernetes version util", func() {
 
 	Context("get version", func() {
 		var (
-			cloudprofile gardenv1alpha1.CloudProfile
+			cloudprofile gardencorev1beta1.CloudProfile
 		)
 		BeforeEach(func() {
-			cloudprofile = gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
-				Kubernetes: gardenv1alpha1.KubernetesSettings{
-					Versions: []gardenv1alpha1.ExpirableVersion{
+			cloudprofile = gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.15.2"),
 						newExpirableVersion("1.15.1"),
 						newExpirableVersion("1.14.6"),
@@ -44,7 +44,7 @@ var _ = Describe("kubernetes version util", func() {
 
 		It("should return only the specified version", func() {
 			versionFlavor := common.ShootKubernetesVersionFlavor{
-				Versions: &[]gardenv1alpha1.ExpirableVersion{newExpirableVersion("1.0.0")},
+				Versions: &[]gardencorev1beta1.ExpirableVersion{newExpirableVersion("1.0.0")},
 			}
 
 			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
@@ -154,9 +154,9 @@ var _ = Describe("kubernetes version util", func() {
 
 	Context("previous kubernetes version", func() {
 		It("should return 1.14.5 and 1.14.6", func() {
-			cp := gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
-				Kubernetes: gardenv1alpha1.KubernetesSettings{
-					Versions: []gardenv1alpha1.ExpirableVersion{
+			cp := gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.15.2"),
 						newExpirableVersion("1.15.1"),
 						newExpirableVersion("1.14.6"),
@@ -173,9 +173,9 @@ var _ = Describe("kubernetes version util", func() {
 		})
 
 		It("should return 1.14.6 and 1.14.6 if no other versions are available", func() {
-			cp := gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
-				Kubernetes: gardenv1alpha1.KubernetesSettings{
-					Versions: []gardenv1alpha1.ExpirableVersion{
+			cp := gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.15.2"),
 						newExpirableVersion("1.15.1"),
 						newExpirableVersion("1.14.6"),
@@ -191,9 +191,9 @@ var _ = Describe("kubernetes version util", func() {
 		})
 
 		It("should return 1.15.2 and 1.15.2 if no previous minor version is available", func() {
-			cp := gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
-				Kubernetes: gardenv1alpha1.KubernetesSettings{
-					Versions: []gardenv1alpha1.ExpirableVersion{
+			cp := gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.15.2"),
 						newExpirableVersion("1.15.1"),
 						newExpirableVersion("1.13.5"),
@@ -208,9 +208,9 @@ var _ = Describe("kubernetes version util", func() {
 		})
 
 		It("should return 1.14.0 and 1.14.1", func() {
-			cp := gardenv1alpha1.CloudProfile{Spec: gardenv1alpha1.CloudProfileSpec{
-				Kubernetes: gardenv1alpha1.KubernetesSettings{
-					Versions: []gardenv1alpha1.ExpirableVersion{
+			cp := gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.15.2"),
 						newExpirableVersion("1.14.1"),
 						newExpirableVersion("1.14.0"),

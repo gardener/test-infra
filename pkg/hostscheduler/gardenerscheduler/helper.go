@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/go-logr/logr"
@@ -24,7 +25,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func isHibernated(shoot *gardenv1alpha1.Shoot) bool {
+func isHibernated(shoot *gardencorev1beta1.Shoot) bool {
 	if shoot.Spec.Hibernation == nil {
 		return false
 	}
@@ -57,11 +57,11 @@ func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
 }
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
-func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardenv1alpha1.Shoot) (*gardenv1alpha1.Shoot, error) {
+func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) (*gardencorev1beta1.Shoot, error) {
 	interval := 1 * time.Minute
 	timeout := 30 * time.Minute
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		shootObject := &gardenv1alpha1.Shoot{}
+		shootObject := &gardencorev1beta1.Shoot{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
 		if err != nil {
 			logger.Info("Wait for shoot to be reconciled...")
@@ -82,11 +82,11 @@ func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClie
 }
 
 // WaitUntilShootIsDeleted waits until a cluster is deleted
-func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardenv1alpha1.Shoot) error {
+func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
 	interval := 1 * time.Minute
 	timeout := 30 * time.Minute
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		shootObject := &gardenv1alpha1.Shoot{}
+		shootObject := &gardencorev1beta1.Shoot{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -105,7 +105,7 @@ func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient 
 	return nil
 }
 
-func shootReady(newShoot *gardenv1alpha1.Shoot) error {
+func shootReady(newShoot *gardencorev1beta1.Shoot) error {
 	newStatus := newShoot.Status
 	if len(newStatus.Conditions) == 0 {
 		return fmt.Errorf("no conditions in newShoot status")
@@ -116,15 +116,15 @@ func shootReady(newShoot *gardenv1alpha1.Shoot) error {
 	}
 
 	for _, condition := range newStatus.Conditions {
-		if condition.Status != gardenv1alpha1.ConditionTrue {
+		if condition.Status != gardencorev1beta1.ConditionTrue {
 			return fmt.Errorf("condition of %s is %s", condition.Type, condition.Status)
 		}
 	}
 
 	if newStatus.LastOperation != nil {
-		if newStatus.LastOperation.Type == gardenv1alpha1.LastOperationTypeCreate ||
-			newStatus.LastOperation.Type == gardenv1alpha1.LastOperationTypeReconcile {
-			if newStatus.LastOperation.State != gardenv1alpha1.LastOperationStateSucceeded {
+		if newStatus.LastOperation.Type == gardencorev1beta1.LastOperationTypeCreate ||
+			newStatus.LastOperation.Type == gardencorev1beta1.LastOperationTypeReconcile {
+			if newStatus.LastOperation.State != gardencorev1beta1.LastOperationStateSucceeded {
 				return fmt.Errorf("%d%%: last operation %s is %s", newStatus.LastOperation.Progress, newStatus.LastOperation.Type, newStatus.LastOperation.State)
 			}
 		}

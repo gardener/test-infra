@@ -16,9 +16,9 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
@@ -35,7 +35,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 		if name == nil || *name == "" {
 			return errors.New("no shoot cluster is defined. Use --name or create a config file")
 		}
-		shoot := &v1alpha1.Shoot{}
+		shoot := &gardencorev1beta1.Shoot{}
 		if err := s.client.Client().Get(ctx, client.ObjectKey{Name: *name, Namespace: s.namespace}, shoot); err != nil {
 			return errors.Wrapf(err, "cannot get shoot %s", *name)
 		}
@@ -53,7 +53,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 			Labels:      shoot.GetLabels(),
 			Annotations: shoot.GetAnnotations(),
 		}
-		newShoot.Status = v1alpha1.ShootStatus{}
+		newShoot.Status = gardencorev1beta1.ShootStatus{}
 
 		if err := patchAnnotation(ctx, s.client.Client(), shoot, common.ConfirmationDeletion, "true"); err != nil {
 			return errors.Wrap(err, "unable to patch deletion confirmation")
@@ -81,7 +81,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 	}, nil
 }
 
-func patchAnnotation(ctx context.Context, k8sClient client.Client, oldShoot *v1alpha1.Shoot, key, value string) error {
+func patchAnnotation(ctx context.Context, k8sClient client.Client, oldShoot *gardencorev1beta1.Shoot, key, value string) error {
 	newShoot := oldShoot.DeepCopy()
 	metav1.SetMetaDataAnnotation(&newShoot.ObjectMeta, key, value)
 	patchBytes, err := kutil.CreateTwoWayMergePatch(oldShoot, newShoot)

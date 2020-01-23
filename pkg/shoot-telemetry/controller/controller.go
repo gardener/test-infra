@@ -29,7 +29,7 @@ import (
 	v1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
-	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1"
+	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/config"
@@ -78,8 +78,8 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 
 	// Create the informers and listers.
 	controller.secrets = k8sinformersFactory.Core().V1().Secrets()
-	controller.projects = gardenInformerFactory.Core().V1alpha1().Projects()
-	controller.shootInformer = gardenInformerFactory.Core().V1alpha1().Shoots().Informer()
+	controller.projects = gardenInformerFactory.Core().V1beta1().Projects()
+	controller.shootInformer = gardenInformerFactory.Core().V1beta1().Shoots().Informer()
 
 	secretInformer := controller.secrets.Informer()
 	projectInformer := controller.projects.Informer()

@@ -15,7 +15,7 @@
 package shootflavors
 
 import (
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -31,7 +31,7 @@ var _ = Describe("extended flavor validation test", func() {
 		flavors = []*common.ExtendedShootFlavor{{
 			ShootFlavor: common.ShootFlavor{
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -39,7 +39,7 @@ var _ = Describe("extended flavor validation test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
 					},
 				},
 			},

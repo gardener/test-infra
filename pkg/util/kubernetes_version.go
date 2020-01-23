@@ -3,13 +3,13 @@ package util
 import (
 	"fmt"
 	"github.com/Masterminds/semver"
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
 )
 
 // GetK8sVersions returns all K8s version that should be rendered by the chart
-func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.ShootKubernetesVersionFlavor, filterPatchVersions bool) ([]gardenv1alpha1.ExpirableVersion, error) {
+func GetK8sVersions(cloudprofile gardencorev1beta1.CloudProfile, config common.ShootKubernetesVersionFlavor, filterPatchVersions bool) ([]gardencorev1beta1.ExpirableVersion, error) {
 	if config.Versions != nil && len(*config.Versions) != 0 {
 		return *config.Versions, nil
 	}
@@ -24,7 +24,7 @@ func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.Shoo
 		if err != nil {
 			return nil, err
 		}
-		return []gardenv1alpha1.ExpirableVersion{version}, nil
+		return []gardencorev1beta1.ExpirableVersion{version}, nil
 	}
 
 	constraint, err := semver.NewConstraint(pattern)
@@ -32,7 +32,7 @@ func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.Shoo
 		return nil, err
 	}
 
-	filtered := make([]gardenv1alpha1.ExpirableVersion, 0)
+	filtered := make([]gardencorev1beta1.ExpirableVersion, 0)
 	for _, expirableVersion := range FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions) {
 		version, err := semver.NewVersion(expirableVersion.Version)
 		if err != nil {
@@ -55,9 +55,9 @@ func GetK8sVersions(cloudprofile gardenv1alpha1.CloudProfile, config common.Shoo
 }
 
 // GetPreviousKubernetesVersions returns the 2 latest previous minor patch versions.
-func GetPreviousKubernetesVersions(cloudprofile gardenv1alpha1.CloudProfile, currentVersion gardenv1alpha1.ExpirableVersion) (gardenv1alpha1.ExpirableVersion, gardenv1alpha1.ExpirableVersion, error) {
+func GetPreviousKubernetesVersions(cloudprofile gardencorev1beta1.CloudProfile, currentVersion gardencorev1beta1.ExpirableVersion) (gardencorev1beta1.ExpirableVersion, gardencorev1beta1.ExpirableVersion, error) {
 	type versionWrapper struct {
-		expirableVersion gardenv1alpha1.ExpirableVersion
+		expirableVersion gardencorev1beta1.ExpirableVersion
 		semverVersion    *semver.Version
 	}
 	currentSemver, err := semver.NewVersion(currentVersion.Version)
@@ -116,9 +116,9 @@ func GetPreviousKubernetesVersions(cloudprofile gardenv1alpha1.CloudProfile, cur
 }
 
 // GetLatestK8sVersion returns the lates avilable kubernetes version from the cloudprofile
-func GetLatestK8sVersion(cloudprofile gardenv1alpha1.CloudProfile) (gardenv1alpha1.ExpirableVersion, error) {
+func GetLatestK8sVersion(cloudprofile gardencorev1beta1.CloudProfile) (gardencorev1beta1.ExpirableVersion, error) {
 	if len(cloudprofile.Spec.Kubernetes.Versions) == 0 {
-		return gardenv1alpha1.ExpirableVersion{}, fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile.Name)
+		return gardencorev1beta1.ExpirableVersion{}, fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile.Name)
 	}
 
 	return GetLatestVersion(FilterExpiredVersions(cloudprofile.Spec.Kubernetes.Versions))

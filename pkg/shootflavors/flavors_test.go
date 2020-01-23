@@ -15,7 +15,7 @@
 package shootflavors
 
 import (
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,12 +23,12 @@ import (
 
 var _ = Describe("flavor test", func() {
 	var (
-		defaultMachine v1alpha1.Machine
+		defaultMachine gardencorev1beta1.Machine
 	)
 	BeforeEach(func() {
-		defaultMachine = v1alpha1.Machine{
+		defaultMachine = gardencorev1beta1.Machine{
 			Type:  "test-machine",
-			Image: &v1alpha1.ShootMachineImage{Name: "coreos", Version: "0.0.1"},
+			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: "0.0.1"},
 		}
 	})
 	It("should return no shoots if no flavors are defined", func() {
@@ -56,7 +56,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -70,7 +70,7 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))
 	})
@@ -80,7 +80,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -97,11 +97,11 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
 			},
 		))
 	})
@@ -111,7 +111,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -122,10 +122,10 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 					},
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultMachine}},
 					},
 				},
 			},
@@ -136,23 +136,23 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp2", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultMachine}},
 			},
 		))
 	})
@@ -162,7 +162,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.14",
 						},
@@ -173,14 +173,14 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 					},
 				},
 			},
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -188,7 +188,7 @@ var _ = Describe("flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
 					},
 				},
 			},
@@ -199,18 +199,18 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.13"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.13"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-				Workers:           []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
 			},
 		))
 	})
@@ -220,7 +220,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -233,7 +233,7 @@ var _ = Describe("flavor test", func() {
 			{
 				Provider: common.CloudProviderAWS,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -247,15 +247,15 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.14"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderAWS,
-				KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))
 	})
@@ -266,7 +266,7 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{
 								Version: "1.15",
 							},
@@ -278,7 +278,7 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{{Version: "1.15"}}}))
 		})
 
 		It("should add different versions for gcp and aws", func() {
@@ -286,7 +286,7 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 						},
 					},
@@ -294,7 +294,7 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderAWS,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 							{Version: "1.14"},
 						},
@@ -305,8 +305,8 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}}}))
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderAWS, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{{Version: "1.15"}}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderAWS, gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
 		})
 
 		It("should add 2 unique versions from different flavors to the same cloudprovider", func() {
@@ -314,7 +314,7 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 						},
 					},
@@ -322,7 +322,7 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 							{Version: "1.14"},
 						},
@@ -333,7 +333,7 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			k8sVersions := flavors.GetUsedKubernetesVersions()
-			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, v1alpha1.KubernetesSettings{Versions: []v1alpha1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
+			Expect(k8sVersions).To(HaveKeyWithValue(common.CloudProviderGCP, gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{{Version: "1.15"}, {Version: "1.14"}}}))
 		})
 	})
 
@@ -343,13 +343,13 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 						},
 					},
 					Workers: []common.ShootWorkerFlavor{
 						{
-							WorkerPools: []v1alpha1.Worker{{Name: "wp1", Machine: defaultMachine}},
+							WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
 						},
 					},
 				},
@@ -358,7 +358,7 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			images := flavors.GetUsedMachineImages()
-			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}}}))
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}}}))
 		})
 
 		It("should add 2 image from different pools to gcp's used images", func() {
@@ -366,13 +366,13 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 						},
 					},
 					Workers: []common.ShootWorkerFlavor{
 						{
-							WorkerPools: []v1alpha1.Worker{
+							WorkerPools: []gardencorev1beta1.Worker{
 								{Name: "wp1", Machine: defaultMachine},
 								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
 							},
@@ -384,9 +384,9 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			images := flavors.GetUsedMachineImages()
-			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{
-				{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}},
-				{Name: "jeos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.2"}}},
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
+				{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}},
+				{Name: "jeos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.2"}}},
 			}))
 		})
 
@@ -395,19 +395,19 @@ var _ = Describe("flavor test", func() {
 				{
 					Provider: common.CloudProviderGCP,
 					KubernetesVersions: common.ShootKubernetesVersionFlavor{
-						Versions: &[]v1alpha1.ExpirableVersion{
+						Versions: &[]gardencorev1beta1.ExpirableVersion{
 							{Version: "1.15"},
 						},
 					},
 					Workers: []common.ShootWorkerFlavor{
 						{
-							WorkerPools: []v1alpha1.Worker{
+							WorkerPools: []gardencorev1beta1.Worker{
 								{Name: "wp1", Machine: defaultMachine},
 								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
 							},
 						},
 						{
-							WorkerPools: []v1alpha1.Worker{
+							WorkerPools: []gardencorev1beta1.Worker{
 								{Name: "wp1", Machine: defaultMachine},
 								{Name: "wp2", Machine: newMachineImage("jeos", "0.0.2")},
 							},
@@ -419,17 +419,17 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			images := flavors.GetUsedMachineImages()
-			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []v1alpha1.MachineImage{
-				{Name: "coreos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.1"}}},
-				{Name: "jeos", Versions: []v1alpha1.ExpirableVersion{{Version: "0.0.2"}}},
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
+				{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}},
+				{Name: "jeos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.2"}}},
 			}))
 		})
 	})
 })
 
-func newMachineImage(imageName, version string) v1alpha1.Machine {
-	return v1alpha1.Machine{
+func newMachineImage(imageName, version string) gardencorev1beta1.Machine {
+	return gardencorev1beta1.Machine{
 		Type:  "test-machine",
-		Image: &v1alpha1.ShootMachineImage{Name: imageName, Version: version},
+		Image: &gardencorev1beta1.ShootMachineImage{Name: imageName, Version: version},
 	}
 }
