@@ -62,13 +62,13 @@ type AlertDocs struct {
 
 //TestDetails describes a test which is used for alert message
 type TestDetails struct {
-	Name                string  `json:"name"`                         //Name test name
-	Context             string  `json:"testContext"`                  //Context is the concatenation of name and several test dimensions
+	Name                string  `json:"name"`               //Name test name
+	Context             string  `json:"testContext"`        //Context is the concatenation of name and several test dimensions
 	FailedContinuously  bool    `json:"failedContinuously"` //FailedContinuously true if n recent test runs were failing in a row
-	LastFailedTimestamp string  `json:"lastTimeFailed"`               //LastFailedTimestamp timestamp of last failed test execution
-	SuccessRate         float64 `json:"successRate"`                  //SuccessRate of recent n days
-	FiledAlertDataTime  string  `json:"datetime"`                     //FiledAlertDataTime is the timestamp when the alert has been filed in slack
-	Successful          bool    `json:"-"`                            //Successful is true if success rate doesn't go below threshold and isn't failed continuously
+	LastFailedTimestamp string  `json:"lastTimeFailed"`     //LastFailedTimestamp timestamp of last failed test execution
+	SuccessRate         float64 `json:"successRate"`        //SuccessRate of recent n days
+	FiledAlertDataTime  string  `json:"datetime"`           //FiledAlertDataTime is the timestamp when the alert has been filed in slack
+	Successful          bool    `json:"-"`                  //Successful is true if success rate doesn't go below threshold and isn't failed continuously
 	Cloudprovider       string  `json:"cloudprovider,omitempty"`
 	OperatingSystem     string  `json:"operatingSystem,omitempty"`
 	Landscape           string  `json:"landscape"`
