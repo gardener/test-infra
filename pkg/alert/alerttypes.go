@@ -64,7 +64,7 @@ type AlertDocs struct {
 type TestDetails struct {
 	Name                string  `json:"name"`                         //Name test name
 	Context             string  `json:"testContext"`                  //Context is the concatenation of name and several test dimensions
-	FailedContinuously  bool    `json:"failedContinuously,omitempty"` //FailedContinuously true if n recent test runs were failing in a row
+	FailedContinuously  bool    `json:"failedContinuously"` //FailedContinuously true if n recent test runs were failing in a row
 	LastFailedTimestamp string  `json:"lastTimeFailed"`               //LastFailedTimestamp timestamp of last failed test execution
 	SuccessRate         float64 `json:"successRate"`                  //SuccessRate of recent n days
 	FiledAlertDataTime  string  `json:"datetime"`                     //FiledAlertDataTime is the timestamp when the alert has been filed in slack
