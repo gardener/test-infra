@@ -23,11 +23,12 @@ import (
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
-		common.AnnotationLandscape:       m.Landscape,
-		common.AnnotationK8sVersion:      m.KubernetesVersion,
-		common.AnnotationCloudProvider:   m.CloudProvider,
-		common.AnnotationOperatingSystem: m.OperatingSystem,
-		common.AnnotationDimension:       m.GetDimensionFromMetadata(),
+		common.AnnotationLandscape:         m.Landscape,
+		common.AnnotationK8sVersion:        m.KubernetesVersion,
+		common.AnnotationCloudProvider:     m.CloudProvider,
+		common.AnnotationOperatingSystem:   m.OperatingSystem,
+		common.AnnotationFlavorDescription: m.FlavorDescription,
+		common.AnnotationDimension:         m.GetDimensionFromMetadata(),
 	}
 }
 
@@ -54,6 +55,7 @@ func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 		KubernetesVersion: tr.Annotations[common.AnnotationK8sVersion],
 		CloudProvider:     tr.Annotations[common.AnnotationCloudProvider],
 		OperatingSystem:   tr.Annotations[common.AnnotationOperatingSystem],
+		FlavorDescription: tr.Annotations[common.AnnotationFlavorDescription],
 		Testrun: TestrunMetadata{
 			ID:    tr.Name,
 			RunId: tr.Annotations[common.LabelTestrunRunID],
