@@ -16,7 +16,7 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/pkg/errors"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"
@@ -38,7 +38,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			}
 		}
 
-		shoot := &v1alpha1.Shoot{}
+		shoot := &gardencorev1beta1.Shoot{}
 		if err := s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot); err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 		}
@@ -69,7 +69,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 
-		shoot.Spec.Hibernation = &v1alpha1.Hibernation{Enabled: &hibernationTrue}
+		shoot.Spec.Hibernation = &gardencorev1beta1.Hibernation{Enabled: &hibernationTrue}
 		shoot.Labels[ShootLabelStatus] = ShootStatusFree
 		delete(shoot.Annotations, ShootAnnotationLockedAt)
 		delete(shoot.Annotations, ShootAnnotationID)

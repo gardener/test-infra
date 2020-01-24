@@ -17,7 +17,7 @@ package templates
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/strconf"
@@ -37,7 +37,7 @@ type GardenerConfig struct {
 }
 
 func GetStepCreateGardener(locationSet string, dependencies []string, baseClusterCloudprovider common.CloudProvider,
-	kubernetesVersions map[common.CloudProvider]v1alpha1.KubernetesSettings, machineImages map[common.CloudProvider][]v1alpha1.MachineImage,
+	kubernetesVersions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings, machineImages map[common.CloudProvider][]gardencorev1beta1.MachineImage,
 	gardenerCfg GardenerConfig, gardenerExtensions common.GSExtensions) (v1beta1.DAGStep, error) {
 
 	stepConfig, err := AppendGardenerConfig(GetCreateGardenerConfig(baseClusterCloudprovider), gardenerCfg)

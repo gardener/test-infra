@@ -16,7 +16,7 @@ package shootflavors
 
 import (
 	"context"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	mockclient "github.com/gardener/gardener/pkg/mock/controller-runtime/client"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/golang/mock/gomock"
@@ -31,7 +31,7 @@ var _ = Describe("extended flavor test", func() {
 		c    *mockclient.MockClient
 
 		defaultExtendedCfg common.ExtendedConfiguration
-		cloudprofile       v1alpha1.CloudProfile
+		cloudprofile       gardencorev1beta1.CloudProfile
 	)
 
 	BeforeEach(func() {
@@ -45,10 +45,10 @@ var _ = Describe("extended flavor test", func() {
 			Region:           "test-region",
 			Zone:             "test-zone",
 		}
-		cloudprofile = v1alpha1.CloudProfile{
-			Spec: v1alpha1.CloudProfileSpec{
-				Kubernetes: v1alpha1.KubernetesSettings{
-					Versions: []v1alpha1.ExpirableVersion{
+		cloudprofile = gardencorev1beta1.CloudProfile{
+			Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
 						{Version: "1.16.1"},
 						{Version: "1.15.2"},
 						{Version: "1.15.1"},
@@ -56,10 +56,10 @@ var _ = Describe("extended flavor test", func() {
 						{Version: "1.13.10"},
 					},
 				},
-				MachineImages: []v1alpha1.MachineImage{
+				MachineImages: []gardencorev1beta1.MachineImage{
 					{
 						Name: "test-os",
-						Versions: []v1alpha1.ExpirableVersion{
+						Versions: []gardencorev1beta1.ExpirableVersion{
 							{Version: "0.0.2"},
 							{Version: "0.0.1"},
 						},
@@ -86,7 +86,7 @@ var _ = Describe("extended flavor test", func() {
 			ShootFlavor: common.ShootFlavor{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -94,7 +94,7 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
 					},
 				},
 			},
@@ -108,8 +108,8 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:          common.CloudProviderGCP,
-			KubernetesVersion: v1alpha1.ExpirableVersion{Version: "1.15"},
-			Workers:           []v1alpha1.Worker{{Name: "wp1"}},
+			KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			Workers:           []gardencorev1beta1.Worker{{Name: "wp1"}},
 		}))
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
@@ -120,7 +120,7 @@ var _ = Describe("extended flavor test", func() {
 			ShootFlavor: common.ShootFlavor{
 				Provider: common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
-					Versions: &[]v1alpha1.ExpirableVersion{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
 							Version: "1.15",
 						},
@@ -128,7 +128,7 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
 					},
 				},
 			},
@@ -154,13 +154,13 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
 					},
 				},
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *v1alpha1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -184,13 +184,13 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{Name: "wp1"}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
 					},
 				},
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *v1alpha1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -210,10 +210,10 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []v1alpha1.Worker{{
+						WorkerPools: []gardencorev1beta1.Worker{{
 							Name: "wp1",
-							Machine: v1alpha1.Machine{
-								Image: &v1alpha1.ShootMachineImage{
+							Machine: gardencorev1beta1.Machine{
+								Image: &gardencorev1beta1.ShootMachineImage{
 									Name:    "test-os",
 									Version: "latest",
 								},
@@ -224,7 +224,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *v1alpha1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
 			*obj = cloudprofile
 			return nil
 		})

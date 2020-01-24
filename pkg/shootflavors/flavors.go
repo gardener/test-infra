@@ -17,7 +17,7 @@ package shootflavors
 import (
 	"fmt"
 	"github.com/Masterminds/semver"
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/hashicorp/go-multierror"
@@ -57,8 +57,8 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 // New creates an internal representation of raw shoot flavors.
 // It also parses the flavors and creates the resulting shoots.
 func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
-	versions := make(map[common.CloudProvider]gardenv1alpha1.KubernetesSettings, 0)
-	machineImages := make(map[common.CloudProvider][]gardenv1alpha1.MachineImage, 0)
+	versions := make(map[common.CloudProvider]gardencorev1beta1.KubernetesSettings, 0)
+	machineImages := make(map[common.CloudProvider][]gardencorev1beta1.MachineImage, 0)
 	addVersion := addKubernetesVersionFunc(versions)
 	addMachineImage := addMachineImagesFunc(machineImages)
 
@@ -113,34 +113,34 @@ func (f *Flavors) GetShoots() []*common.Shoot {
 }
 
 // GetUsedKubernetesVersions returns a list of unique kubernetes versions used across all shoots.
-func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardenv1alpha1.KubernetesSettings {
+func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardencorev1beta1.KubernetesSettings {
 	if f.usedKubernetesVersions == nil {
-		return map[common.CloudProvider]gardenv1alpha1.KubernetesSettings{}
+		return map[common.CloudProvider]gardencorev1beta1.KubernetesSettings{}
 	}
 	return f.usedKubernetesVersions
 }
 
-func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardenv1alpha1.MachineImage {
+func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardencorev1beta1.MachineImage {
 	if f.usedMachineImages == nil {
-		return make(map[common.CloudProvider][]gardenv1alpha1.MachineImage, 0)
+		return make(map[common.CloudProvider][]gardencorev1beta1.MachineImage, 0)
 	}
 	return f.usedMachineImages
 }
 
 // addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
-func addKubernetesVersionFunc(versions map[common.CloudProvider]gardenv1alpha1.KubernetesSettings) func(common.CloudProvider, gardenv1alpha1.ExpirableVersion) {
+func addKubernetesVersionFunc(versions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings) func(common.CloudProvider, gardencorev1beta1.ExpirableVersion) {
 	used := make(map[common.CloudProvider]map[string]interface{}, 0)
-	return func(provider common.CloudProvider, version gardenv1alpha1.ExpirableVersion) {
+	return func(provider common.CloudProvider, version gardencorev1beta1.ExpirableVersion) {
 
 		if _, ok := used[provider]; !ok {
 			used[provider] = map[string]interface{}{version.Version: new(interface{})}
-			versions[provider] = gardenv1alpha1.KubernetesSettings{Versions: []gardenv1alpha1.ExpirableVersion{version}}
+			versions[provider] = gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{version}}
 			return
 		}
 
 		if _, ok := used[provider][version.Version]; !ok {
 			used[provider][version.Version] = new(interface{})
-			versions[provider] = gardenv1alpha1.KubernetesSettings{
+			versions[provider] = gardencorev1beta1.KubernetesSettings{
 				Versions: append(versions[provider].Versions, version),
 			}
 		}
@@ -148,7 +148,7 @@ func addKubernetesVersionFunc(versions map[common.CloudProvider]gardenv1alpha1.K
 }
 
 // addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
-func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.MachineImage) func(common.CloudProvider, string, string) {
+func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.MachineImage) func(common.CloudProvider, string, string) {
 	used := make(map[common.CloudProvider]map[string]map[string]interface{}, 0)
 	indexMapping := make(map[common.CloudProvider]map[string]int, 0)
 	return func(provider common.CloudProvider, name, version string) {
@@ -158,10 +158,10 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.Machi
 			}
 			indexMapping[provider] = map[string]int{name: 0}
 
-			images[provider] = []gardenv1alpha1.MachineImage{
+			images[provider] = []gardencorev1beta1.MachineImage{
 				{
 					Name:     name,
-					Versions: []gardenv1alpha1.ExpirableVersion{{Version: version}},
+					Versions: []gardencorev1beta1.ExpirableVersion{{Version: version}},
 				},
 			}
 			return
@@ -171,9 +171,9 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.Machi
 			used[provider][name] = map[string]interface{}{version: new(interface{})}
 			indexMapping[provider][name] = len(images[provider]) - 1
 
-			images[provider] = append(images[provider], gardenv1alpha1.MachineImage{
+			images[provider] = append(images[provider], gardencorev1beta1.MachineImage{
 				Name:     name,
-				Versions: []gardenv1alpha1.ExpirableVersion{{Version: version}},
+				Versions: []gardencorev1beta1.ExpirableVersion{{Version: version}},
 			})
 			return
 		}
@@ -181,7 +181,7 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.Machi
 		if _, ok := used[provider][name][version]; !ok {
 			used[provider][name][version] = new(interface{})
 			index := indexMapping[provider][name]
-			images[provider][index].Versions = append(images[provider][index].Versions, gardenv1alpha1.ExpirableVersion{Version: version})
+			images[provider][index].Versions = append(images[provider][index].Versions, gardencorev1beta1.ExpirableVersion{Version: version})
 		}
 	}
 }
@@ -189,7 +189,7 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardenv1alpha1.Machi
 // ParseKubernetesVersions parses kubernetes versions flavor and returns a list of kubernetes versions.
 // This function will not read from cloudprofile as it is meant to be used in the full gardener tests where there is no landscape
 // to fetch versions at this point in time.
-func ParseKubernetesVersions(versions common.ShootKubernetesVersionFlavor) ([]gardenv1alpha1.ExpirableVersion, error) {
+func ParseKubernetesVersions(versions common.ShootKubernetesVersionFlavor) ([]gardencorev1beta1.ExpirableVersion, error) {
 	if versions.Versions != nil && len(*versions.Versions) != 0 {
 		for _, v := range *versions.Versions {
 			_, err := semver.NewVersion(v.Version)

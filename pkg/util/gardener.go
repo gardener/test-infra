@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Masterminds/semver"
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,16 +26,16 @@ import (
 )
 
 // ConvertStringToVersion converts a string to gardener experable versions
-func ConvertStringToVersion(v string) gardenv1alpha1.ExpirableVersion {
-	return gardenv1alpha1.ExpirableVersion{
+func ConvertStringToVersion(v string) gardencorev1beta1.ExpirableVersion {
+	return gardencorev1beta1.ExpirableVersion{
 		Version:        v,
 		ExpirationDate: nil,
 	}
 }
 
 // ConvertStringArrayToVersions converts a string array of versions to gardener experable versions
-func ConvertStringArrayToVersions(versions []string) []gardenv1alpha1.ExpirableVersion {
-	expVersions := make([]gardenv1alpha1.ExpirableVersion, len(versions))
+func ConvertStringArrayToVersions(versions []string) []gardencorev1beta1.ExpirableVersion {
+	expVersions := make([]gardencorev1beta1.ExpirableVersion, len(versions))
 	for i, v := range versions {
 		expVersions[i] = ConvertStringToVersion(v)
 	}
@@ -53,8 +53,8 @@ func ContainsCloudprovider(cloudproviders []common.CloudProvider, cloudprovider 
 }
 
 // GetCloudProfile returns the cloudprofile
-func GetCloudProfile(k8sClient client.Client, profileName string) (gardenv1alpha1.CloudProfile, error) {
-	var cloudprofile gardenv1alpha1.CloudProfile
+func GetCloudProfile(k8sClient client.Client, profileName string) (gardencorev1beta1.CloudProfile, error) {
+	var cloudprofile gardencorev1beta1.CloudProfile
 	if err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: profileName}, &cloudprofile); err != nil {
 		return cloudprofile, err
 	}
@@ -62,20 +62,20 @@ func GetCloudProfile(k8sClient client.Client, profileName string) (gardenv1alpha
 }
 
 // GetLatestVersion returns the latest image from a list of expirable versions
-func GetLatestVersion(rawVersions []gardenv1alpha1.ExpirableVersion) (gardenv1alpha1.ExpirableVersion, error) {
+func GetLatestVersion(rawVersions []gardencorev1beta1.ExpirableVersion) (gardencorev1beta1.ExpirableVersion, error) {
 	if len(rawVersions) == 0 {
-		return gardenv1alpha1.ExpirableVersion{}, errors.New("no kubernetes versions found")
+		return gardencorev1beta1.ExpirableVersion{}, errors.New("no kubernetes versions found")
 	}
 
 	var (
-		latestExpVersion gardenv1alpha1.ExpirableVersion
+		latestExpVersion gardencorev1beta1.ExpirableVersion
 		latestVersion    *semver.Version
 	)
 
 	for _, rawVersion := range rawVersions {
 		v, err := semver.NewVersion(rawVersion.Version)
 		if err != nil {
-			return gardenv1alpha1.ExpirableVersion{}, err
+			return gardencorev1beta1.ExpirableVersion{}, err
 		}
 		if latestVersion == nil || v.GreaterThan(latestVersion) {
 			latestVersion = v
@@ -86,9 +86,9 @@ func GetLatestVersion(rawVersions []gardenv1alpha1.ExpirableVersion) (gardenv1al
 }
 
 // FilterPatchVersions keeps only versions with newest patch versions. E.g. 1.15.1, 1.14.4, 1.14.3, will result in 1.15.1, 1.14.4
-func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion) ([]gardenv1alpha1.ExpirableVersion, error) {
+func FilterPatchVersions(cloudProfileVersions []gardencorev1beta1.ExpirableVersion) ([]gardencorev1beta1.ExpirableVersion, error) {
 	type versionWrapper struct {
-		expirableVersion gardenv1alpha1.ExpirableVersion
+		expirableVersion gardencorev1beta1.ExpirableVersion
 		semverVersion    *semver.Version
 	}
 	newestPatchVersionMap := make(map[string]versionWrapper)
@@ -106,7 +106,7 @@ func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion)
 		}
 	}
 
-	newestPatchVersions := make([]gardenv1alpha1.ExpirableVersion, 0)
+	newestPatchVersions := make([]gardencorev1beta1.ExpirableVersion, 0)
 	for _, version := range newestPatchVersionMap {
 		newestPatchVersions = append(newestPatchVersions, version.expirableVersion)
 	}
@@ -114,8 +114,8 @@ func FilterPatchVersions(cloudProfileVersions []gardenv1alpha1.ExpirableVersion)
 }
 
 // FilterExpiredVersions removes all expired versions from the list.
-func FilterExpiredVersions(versions []gardenv1alpha1.ExpirableVersion) []gardenv1alpha1.ExpirableVersion {
-	filtered := make([]gardenv1alpha1.ExpirableVersion, 0)
+func FilterExpiredVersions(versions []gardencorev1beta1.ExpirableVersion) []gardencorev1beta1.ExpirableVersion {
+	filtered := make([]gardencorev1beta1.ExpirableVersion, 0)
 	for _, v := range versions {
 		if v.ExpirationDate == nil || v.ExpirationDate.Time.After(time.Now()) {
 			filtered = append(filtered, v)

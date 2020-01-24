@@ -15,7 +15,7 @@
 package util_test
 
 import (
-	gardenv1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,7 +28,7 @@ var _ = Describe("gardener util", func() {
 	Context("versions", func() {
 		Context("filter", func() {
 			It("should remove old 1.14 version and keep everything else", func() {
-				versions := []gardenv1alpha1.ExpirableVersion{
+				versions := []gardencorev1beta1.ExpirableVersion{
 					newExpirableVersion("1.13.5"),
 					newExpirableVersion("1.14.3"),
 					newExpirableVersion("1.14.4"),
@@ -43,7 +43,7 @@ var _ = Describe("gardener util", func() {
 			})
 
 			It("should remove old 1.14 and 1.13 version", func() {
-				versions := []gardenv1alpha1.ExpirableVersion{
+				versions := []gardencorev1beta1.ExpirableVersion{
 					newExpirableVersion("1.13.0"),
 					newExpirableVersion("1.13.5"),
 					newExpirableVersion("1.14.3"),
@@ -58,7 +58,7 @@ var _ = Describe("gardener util", func() {
 
 			Context("latest", func() {
 				It("should return the latest version", func() {
-					versions := []gardenv1alpha1.ExpirableVersion{
+					versions := []gardencorev1beta1.ExpirableVersion{
 						newExpirableVersion("1.13.0"),
 						newExpirableVersion("1.13.5"),
 						newExpirableVersion("1.14.3"),
@@ -69,7 +69,7 @@ var _ = Describe("gardener util", func() {
 			})
 
 			It("should remove expired versions", func() {
-				versions := []gardenv1alpha1.ExpirableVersion{
+				versions := []gardencorev1beta1.ExpirableVersion{
 					newExpirableVersion("1.13.5"),
 					newExpiredVersion("1.14.3"),
 					newExpiredVersion("1.14.4"),
@@ -86,11 +86,11 @@ var _ = Describe("gardener util", func() {
 	})
 })
 
-func newExpirableVersion(v string) gardenv1alpha1.ExpirableVersion {
-	return gardenv1alpha1.ExpirableVersion{Version: v}
+func newExpirableVersion(v string) gardencorev1beta1.ExpirableVersion {
+	return gardencorev1beta1.ExpirableVersion{Version: v}
 }
 
-func newExpiredVersion(v string) gardenv1alpha1.ExpirableVersion {
+func newExpiredVersion(v string) gardencorev1beta1.ExpirableVersion {
 	pastTime := metav1.NewTime(time.Now().Add(-24 * time.Hour))
-	return gardenv1alpha1.ExpirableVersion{Version: v, ExpirationDate: &pastTime}
+	return gardencorev1beta1.ExpirableVersion{Version: v, ExpirationDate: &pastTime}
 }

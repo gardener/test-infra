@@ -16,7 +16,7 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"
@@ -29,7 +29,7 @@ import (
 func (s *gardenerscheduler) List(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 	return func(ctx context.Context) error {
 
-		shoots := &v1alpha1.ShootList{}
+		shoots := &gardencorev1beta1.ShootList{}
 		selector := labels.SelectorFromSet(labels.Set(map[string]string{
 			ShootLabel: "true",
 		}))
