@@ -38,8 +38,11 @@ const (
 	// AnnotationCloudProvider is the annotation to specify the cloudprovider the testrun is testing
 	AnnotationCloudProvider = "testrunner.testmachinery.sapcloud.io/cloudprovider"
 
-	// AnnotationOperatingSystem is the annotation to specify the operating system of teh shoot nodes the testrun is testing
+	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
 	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
+
+	// AnnotationFlavorDescription is teh annotation to describe the test flavor of the current run testrun
+	AnnotationFlavorDescription = "testrunner.testmachinery.sapcloud.io/flavor-description"
 
 	// AnnotationDimension is the annotation to specify the dimension the testrun is testing
 	AnnotationDimension = "testrunner.testmachinery.sapcloud.io/dimension"

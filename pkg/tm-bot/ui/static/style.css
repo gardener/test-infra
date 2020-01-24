@@ -19,12 +19,17 @@ body {
     font-size: 14px;
 }
 
-table {
-    background: #fff;
+.table-card {
+    overflow: auto;
+    margin: 10px;
     border-radius: 2px;
     box-shadow: 0 0 4px #e0e0e0;
+}
+
+table {
+    background: #fff;
+
     border-collapse: collapse;
-    margin: 10px;
     display: table;
     width: calc(100% - 20px);
 }
