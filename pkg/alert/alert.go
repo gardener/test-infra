@@ -465,7 +465,10 @@ func (alerter *Alert) generateESAggregationPayload() string {
 					},
 					"details": {
 						"top_hits": {
-							"sort": [ { "startTime": { "order": "desc" } } ],
+							"sort": [         
+								{ "pre.phaseNum": { "order": "asc" } },
+					        	{ "startTime": { "order": "desc" } } 
+							],
 							"_source": {
 								"includes": [
 									"name",
