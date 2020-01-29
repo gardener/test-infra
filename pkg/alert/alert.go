@@ -82,6 +82,9 @@ func (alerter *Alert) FindFailedAndRecoveredTests() (map[string]TestDetails, map
 	if err := alerter.removeExcludedTests(newFailedTests); err != nil {
 		return nil, nil, err
 	}
+	if err := alerter.removeExcludedTests(recoveredTests); err != nil {
+		return nil, nil, err
+	}
 	alerter.removeAlreadyFiledAlerts(newFailedTests, alreadyFiledAlerts)
 	return newFailedTests, recoveredTests, nil
 }
