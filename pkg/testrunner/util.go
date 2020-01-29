@@ -49,12 +49,12 @@ func GetArgoHost(tmClient client.Client) (string, error) {
 
 // GetGrafanaURLFromHostForWorkflow returns the path to the logs in grafana for a whole workflow
 func GetGrafanaURLFromHostForWorkflow(host string, tr *tmv1beta1.Testrun) string {
-	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"ui":[true,true,true,"exact"]}]`, host, tr.Status.Workflow)
+	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, tr.Status.Workflow)
 }
 
 // GetGrafanaURLFromHostForStep returns the path to the logs in grafana for a specific step
 func GetGrafanaURLFromHostForStep(host string, tr *tmv1beta1.Testrun, step *tmv1beta1.StepStatus) string {
-	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"ui":[true,true,true,"exact"]}]`, host, step.TestDefinition.Name, tr.Status.Workflow)
+	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, step.TestDefinition.Name, tr.Status.Workflow)
 }
 
 // GetGrafanaHost returns the host of the grafana instance int he monitoring ns
