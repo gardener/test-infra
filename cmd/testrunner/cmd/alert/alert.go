@@ -33,7 +33,8 @@ var (
 	continuousFailureThreshold int
 	evalTimeDays               int
 	minSuccessRate             int
-	testsToExclude             []string
+	testsSkip                  []string
+	testsFocus                 []string
 )
 
 // AddCommand adds alert to a command.
@@ -69,7 +70,8 @@ var alertCmd = &cobra.Command{
 			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: esEndpoint, User: elasticsearchUser, Pass: elasticsearchPass},
 			EvalTimeDays:                evalTimeDays,
 			SuccessRateThresholdPercent: minSuccessRate,
-			TestsToExclude:              testsToExclude,
+			TestsSkip:                   testsSkip,
+			TestsFocus:                  testsFocus,
 		}
 		alertClient := alert.New(logger.Log.WithName("alert"), alertConfig)
 		newFailedTests, recoveredTests, err := alertClient.FindFailedAndRecoveredTests()
@@ -126,5 +128,6 @@ func init() {
 	alertCmd.Flags().IntVar(&continuousFailureThreshold, "min-continuous-failures", 3, "if test fails >=n times send alert")
 	alertCmd.Flags().IntVar(&evalTimeDays, "eval-time-days", 3, "if test fails >=n times send alert")
 	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate % falls below threshold, then post an alert")
-	alertCmd.Flags().StringArrayVar(&testsToExclude, "exclude", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
+	alertCmd.Flags().StringArrayVar(&testsSkip, "skip", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
+	alertCmd.Flags().StringArrayVar(&testsFocus, "focus", make([]string, 0), "regexp to keep context test names e.g. 'e2e-untracked.*aws. Is executed after skip filter.'")
 }

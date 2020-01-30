@@ -52,7 +52,8 @@ type Config struct {
 	SuccessRateThresholdPercent int //SuccessRateThresholdPercent if test success rate falls below threshold post an alert
 	ContinuousFailureThreshold  int //ContinuousFailureThreshold if test fails >=n times send alert
 	Elasticsearch               ElasticsearchConfig
-	TestsToExclude              []string
+	TestsSkip                   []string
+	TestsFocus                  []string
 }
 
 //New creates a new instance of alert
@@ -147,7 +148,7 @@ func (alerter *Alert) removeSuccessfulTests(contextToTestDetailMap map[string]Te
 //removeAlreadyFiledAlerts removes tests based on given test exclude regexp patterns
 func (alerter *Alert) removeExcludedTests(tests map[string]TestDetails) error {
 	testsSizeBefore := len(tests)
-	for _, patternStr := range alerter.cfg.TestsToExclude {
+	for _, patternStr := range alerter.cfg.TestsSkip {
 		alerter.log.V(3).Info(fmt.Sprintf("filtering out tests with expression %s", patternStr))
 		for testContext, _ := range tests {
 			matched, err := regexp.MatchString(patternStr, testContext)
@@ -159,6 +160,21 @@ func (alerter *Alert) removeExcludedTests(tests map[string]TestDetails) error {
 			}
 		}
 	}
+
+	focusFilteredTests := map[string]TestDetails{}
+	for testContext, test := range tests {
+		for _, patternStr := range alerter.cfg.TestsFocus {
+			matched, err := regexp.MatchString(patternStr, testContext)
+			if err != nil {
+				return errors.Wrapf(err, "failed to apply regexep %s", patternStr)
+			}
+			if matched {
+				focusFilteredTests[testContext] = test
+				break
+			}
+		}
+	}
+	tests = focusFilteredTests
 	alerter.log.V(3).Info(fmt.Sprintf("filtered %d/%d tests using exclusion patterns", testsSizeBefore-len(tests), testsSizeBefore))
 	return nil
 }
