@@ -51,8 +51,9 @@ var _ = Describe("Testrunner execution tests", func() {
 					Metadata: &testrunner.Metadata{},
 				},
 			}
-			testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
+			err = testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
 			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(1))
@@ -78,9 +79,10 @@ var _ = Describe("Testrunner execution tests", func() {
 					Metadata: &testrunner.Metadata{},
 				},
 			}
-			testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
+			err = testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
 			defer utils.DeleteTestrun(operation.Client(), run[0].Testrun)
 			defer utils.DeleteTestrun(operation.Client(), run[1].Testrun)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(2))

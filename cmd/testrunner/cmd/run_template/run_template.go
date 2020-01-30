@@ -114,7 +114,10 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix, collector.RunExecCh)
+		if err := testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix, collector.RunExecCh); err != nil {
+			logger.Log.Error(err, "unable to run testruns")
+			os.Exit(1)
+		}
 
 		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
 		if err != nil {
@@ -156,6 +159,7 @@ func init() {
 	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 	runCmd.Flags().BoolVar(&collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
+	runCmd.Flags().BoolVar(&testrunnerConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
 	runCmd.Flags().IntVar(&testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 

@@ -20,7 +20,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"strings"
-	"sync"
 	"time"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -62,53 +61,60 @@ func (rl RunList) Errors() error {
 }
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
-func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) {
+func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
 	runID := uuid.New().String()
 	log.Info(fmt.Sprintf("Starting testruns execution group %s", runID))
-	var wg sync.WaitGroup
+
+	executor, err := NewExecutor(log, config.ExecutorConfig)
+	if err != nil {
+		return err
+	}
+
 	for i := range rl {
 		if rl[i].Error != nil {
 			continue
 		}
 
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
+		var (
+			trI     = i
+			attempt = 0
+		)
 
-			// wait initial backoff before deploying the testrun
-			if config.BackoffBucket > 0 {
-				time.Sleep(config.BackoffPeriod * time.Duration(i/config.BackoffBucket))
+		executor.AddItem(func() {
+			rl[trI].SetRunID(runID)
+			triggerRunEvent(notify, rl[trI])
+			rl[trI].Exec(log, config, testrunNamePrefix)
+			if rl[trI].Metadata != nil {
+				rl[trI].Metadata.Retries = attempt
 			}
 
-			for attempt := 0; attempt <= config.FlakeAttempts; attempt++ {
-				rl[i].SetRunID(runID)
-				triggerRunEvent(notify, rl[i])
-				rl[i].Exec(log, config, testrunNamePrefix)
-				if rl[i].Metadata != nil {
-					rl[i].Metadata.Retries = attempt
-				}
-
-				if rl[i].Error == nil && rl[i].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-					// testrun was successful, break retry loop
-					return
-				}
-				if attempt < config.FlakeAttempts {
-					// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
-					log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt+1, config.FlakeAttempts))
-
-					newRun, err := rl[i].Rerenderer.Rerender(rl[i].Testrun)
-					if err != nil {
-						log.Error(err, "unable to rerender testrun")
-						return
-					}
-					*rl[i] = *newRun
-				}
+			if rl[trI].Error == nil && rl[trI].Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+				// testrun was successful, break retry loop
+				return
+			}
+			if attempt == config.FlakeAttempts {
+				return
 			}
 
-		}(i)
+			// retry the testrun
+
+			// clean status and name of testrun if it's failed to ignore it, since a retry will be initiated
+			log.Info(fmt.Sprintf("testrun failed, retry %d/%d. testrun", attempt+1, config.FlakeAttempts))
+
+			newRun, err := rl[trI].Rerenderer.Rerender(rl[trI].Testrun)
+			if err != nil {
+				log.Error(err, "unable to rerender testrun")
+				return
+			}
+			*rl[trI] = *newRun
+			attempt++
+		})
 	}
-	wg.Wait()
+
+	executor.Run()
+
 	log.Info("All testruns completed.")
+	return nil
 }
 
 // RenderStatusTableForTestruns renders a status table for multiple testruns.
