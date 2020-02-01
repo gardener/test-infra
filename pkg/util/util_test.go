@@ -17,6 +17,7 @@ package util_test
 import (
 	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -32,4 +33,15 @@ var _ = Describe("util test", func() {
 			Expect(owner).To(Equal("gardener"))
 		})
 	})
+
+	DescribeTable("IsLastElementOfBucket",
+		func(value int, expected bool) {
+			Expect(util.IsLastElementOfBucket(value, 3)).To(Equal(expected))
+		},
+		Entry("0", 0, false),
+		Entry("0", 1, false),
+		Entry("2", 2, true),
+		Entry("3", 3, false),
+		Entry("4", 4, false),
+		Entry("5", 5, true))
 })

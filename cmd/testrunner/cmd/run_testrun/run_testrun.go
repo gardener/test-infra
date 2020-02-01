@@ -32,6 +32,7 @@ var (
 	namespace            string
 	timeout              int64
 	testrunFlakeAttempts int
+	serial               bool
 	backoffBucket        int
 	backoffPeriod        time.Duration
 
@@ -66,8 +67,11 @@ var runTestrunCmd = &cobra.Command{
 			Namespace:     namespace,
 			Timeout:       time.Duration(timeout) * time.Second,
 			FlakeAttempts: testrunFlakeAttempts,
-			BackoffBucket: backoffBucket,
-			BackoffPeriod: backoffPeriod,
+			ExecutorConfig: testrunner.ExecutorConfig{
+				Serial:        false,
+				BackoffBucket: backoffBucket,
+				BackoffPeriod: backoffPeriod,
+			},
 		}
 
 		tr, err := util.ParseTestrunFromFile(testrunPath)
@@ -111,6 +115,7 @@ func init() {
 	runTestrunCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	runTestrunCmd.Flags().Int64("interval", 20, "[DEPRECATED] Value has no effect")
 	runTestrunCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
+	runTestrunCmd.Flags().BoolVar(&serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
 	runTestrunCmd.Flags().IntVar(&backoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	runTestrunCmd.Flags().DurationVar(&backoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 

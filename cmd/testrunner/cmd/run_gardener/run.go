@@ -147,7 +147,10 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunName)
+		if err = testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunName); err != nil {
+			logger.Log.Error(err, "unable to run testruns")
+			os.Exit(1)
+		}
 		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
 		if err != nil {
 			logger.Log.Error(err, "unable to collect results")

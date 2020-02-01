@@ -37,11 +37,7 @@ type Config struct {
 	// Number of testrun retries after a failed run
 	FlakeAttempts int
 
-	// BackoffPeriod is the duration to wait between the creation of a bucket of testruns
-	BackoffPeriod time.Duration
-
-	// BackoffBucket is the number of parallel created testruns per backoff period
-	BackoffBucket int
+	ExecutorConfig
 }
 
 // RunEventFunc is called every time a new testrun is triggered

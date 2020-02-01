@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -301,6 +302,22 @@ func Unzip(archive, target string) error {
 	return nil
 }
 
+// IsIsEndOfBucket returns if the current value is the last integer value of its bucket
+// Examples (bucket size: 3):
+// 0: false
+// 1: false
+// 2: true
+// 3: false
+// 5: true
+func IsLastElementOfBucket(value, bucketSize int) bool {
+	if bucketSize == 0 {
+		return true
+	}
+	mod := float64(value+1) / float64(bucketSize)
+	return mod == math.Trunc(mod)
+}
+
+// Zipit zips a source file or directory and writes the archive to the specified target path
 func Zipit(source, target string) error {
 	zipfile, err := os.Create(target)
 	if err != nil {
