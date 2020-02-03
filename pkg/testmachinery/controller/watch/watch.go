@@ -70,9 +70,9 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 	w.mux.Unlock()
 
 	var (
-		errs  error
-		done  = w.watches[namespacedName.String()]
-		after <-chan time.Time
+		errs    error
+		done, _ = w.get(namespacedName.String())
+		after   <-chan time.Time
 	)
 
 	if timeout != 0 {
@@ -110,7 +110,8 @@ func (w *watch) Watch(namespace, name string, f WatchFunc) error {
 func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 	defer ctx.Done()
-	ch, ok := w.watches[r.String()]
+
+	ch, ok := w.get(r.String())
 	if !ok {
 		return reconcile.Result{}, nil
 	}
@@ -132,4 +133,12 @@ func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 	}
 
 	return reconcile.Result{}, nil
+}
+
+// get returns the watch for a reconcile request
+func (w *watch) get(request string) (chan *v1beta1.Testrun, bool) {
+	w.mux.Lock()
+	defer w.mux.Unlock()
+	c, ok := w.watches[request]
+	return c, ok
 }
