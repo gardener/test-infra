@@ -39,42 +39,64 @@ type IconWithTooltip struct {
 	Color   string
 }
 
-var PhaseIcon = map[v1alpha1.NodePhase]IconWithTooltip{
-	v1beta1.PhaseStatusInit: {
-		Icon:    "schedule",
-		Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.PhaseStatusInit),
-		Color:   "grey",
-	},
-	v1beta1.PhaseStatusSkipped: {
-		Icon:    "remove",
-		Tooltip: fmt.Sprintf("%s phase: Testrun was skipped", v1beta1.PhaseStatusSkipped),
-		Color:   "grey",
-	},
-	v1beta1.PhaseStatusRunning: {
-		Icon:    "autorenew",
-		Tooltip: fmt.Sprintf("%s phase: Testrun is running", v1beta1.PhaseStatusRunning),
-		Color:   "orange",
-	},
-	v1beta1.PhaseStatusSuccess: {
-		Icon:    "done",
-		Tooltip: fmt.Sprintf("%s phase: Testrun succeeded", v1beta1.PhaseStatusSuccess),
-		Color:   "green",
-	},
-	v1beta1.PhaseStatusFailed: {
-		Icon:    "clear",
-		Tooltip: fmt.Sprintf("%s phase: Testrun failed", v1beta1.PhaseStatusFailed),
-		Color:   "red",
-	},
-	v1beta1.PhaseStatusError: {
-		Icon:    "clear",
-		Tooltip: fmt.Sprintf("%s phase: Testrun errored", v1beta1.PhaseStatusError),
-		Color:   "red",
-	},
-	v1beta1.PhaseStatusTimeout: {
-		Icon:    "clear",
-		Tooltip: fmt.Sprintf("%s phase: Testrun run longer than the specified timeout", v1beta1.PhaseStatusTimeout),
-		Color:   "red",
-	},
+var PhaseIcon = func(phase v1alpha1.NodePhase) IconWithTooltip {
+	switch phase {
+	case v1beta1.PhaseStatusInit:
+		return IconWithTooltip{
+			Icon:    "schedule",
+			Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.PhaseStatusInit),
+			Color:   "grey",
+		}
+	case v1beta1.PhaseStatusSkipped:
+		return IconWithTooltip{
+			Icon:    "remove",
+			Tooltip: fmt.Sprintf("%s phase: Testrun was skipped", v1beta1.PhaseStatusSkipped),
+			Color:   "grey",
+		}
+	case v1beta1.PhaseStatusPending:
+		return IconWithTooltip{
+			Icon:    "schedule",
+			Tooltip: fmt.Sprintf("%s phase: Testrun is pending", v1beta1.PhaseStatusSkipped),
+			Color:   "orange",
+		}
+	case v1beta1.PhaseStatusRunning:
+		return IconWithTooltip{
+			Icon:    "autorenew",
+			Tooltip: fmt.Sprintf("%s phase: Testrun is running", v1beta1.PhaseStatusRunning),
+			Color:   "orange",
+		}
+	case v1beta1.PhaseStatusSuccess:
+		return IconWithTooltip{
+			Icon:    "done",
+			Tooltip: fmt.Sprintf("%s phase: Testrun succeeded", v1beta1.PhaseStatusSuccess),
+			Color:   "green",
+		}
+	case v1beta1.PhaseStatusFailed:
+		return IconWithTooltip{
+			Icon:    "clear",
+			Tooltip: fmt.Sprintf("%s phase: Testrun failed", v1beta1.PhaseStatusFailed),
+			Color:   "red",
+		}
+	case v1beta1.PhaseStatusError:
+		return IconWithTooltip{
+			Icon:    "clear",
+			Tooltip: fmt.Sprintf("%s phase: Testrun errored", v1beta1.PhaseStatusError),
+			Color:   "red",
+		}
+	case v1beta1.PhaseStatusTimeout:
+		return IconWithTooltip{
+			Icon:    "clear",
+			Tooltip: fmt.Sprintf("%s phase: Testrun run longer than the specified timeout", v1beta1.PhaseStatusTimeout),
+			Color:   "red",
+		}
+	default:
+		return IconWithTooltip{
+			Icon:    "info",
+			Tooltip: fmt.Sprintf("%s phase", phase),
+			Color:   "grey",
+		}
+
+	}
 }
 
 type runItem struct {
@@ -117,7 +139,7 @@ func NewPRStatusPage(p *Page) http.HandlerFunc {
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
+				Phase:        PhaseIcon(util.TestrunStatusPhase(run.Testrun)),
 				Progress:     util.TestrunProgress(run.Testrun),
 			}
 			if isAuthenticated {
@@ -178,7 +200,7 @@ func NewPRStatusDetailPage(logger logr.Logger, auth auth.Authentication, basePat
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon[util.TestrunStatusPhase(run.Testrun)],
+				Phase:        PhaseIcon(util.TestrunStatusPhase(run.Testrun)),
 				Progress:     util.TestrunProgress(run.Testrun),
 			},
 			Author:    run.Event.GetAuthorName(),

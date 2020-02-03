@@ -86,13 +86,17 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		ctx := context.Background()
 		defer ctx.Done()
 
-		listOpts := client.MatchingLabels(map[string]string{})
-		rg, rgOk := r.URL.Query()["runID"]
-		if rgOk {
-			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunRunID: rg[0]})
+		var (
+			rgName   string
+			listOpts = client.MatchingLabels(map[string]string{})
+		)
+		if rg, rgOk := r.URL.Query()["runID"]; rgOk {
+			rgName = rg[0]
+			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunRunID: rgName})
 		}
 		runs := &v1beta1.TestrunList{}
 		if err := p.runs.GetClient().List(ctx, runs, listOpts); err != nil {
+			p.log.Error(err, "unable to fetch testruns")
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
 			return
 		}
@@ -105,7 +109,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		for i, tr := range runs.Items {
 			testrun := tr
 
-			if !rgOk {
+			if rgName == "" {
 				runsList.Add(&testrun)
 			}
 			metadata := testrunner.MetadataFromTestrun(&tr)
@@ -119,7 +123,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
 				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
-				Phase:     PhaseIcon[util.TestrunStatusPhase(&tr)],
+				Phase:     PhaseIcon(util.TestrunStatusPhase(&tr)),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(&tr),
@@ -136,7 +140,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		sort.Sort(testrunsList)
 		sort.Sort(runsList)
 		params := map[string]interface{}{
-			"rungroup":  rg,
+			"rungroup":  rgName,
 			"tests":     testrunsList,
 			"rungroups": runsList,
 		}
@@ -187,7 +191,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
 				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
-				Phase:     PhaseIcon[util.TestrunStatusPhase(tr)],
+				Phase:     PhaseIcon(util.TestrunStatusPhase(tr)),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(tr),
@@ -213,7 +217,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				step:      step,
 				Name:      step.TestDefinition.Name,
 				Step:      step.Position.Step,
-				Phase:     PhaseIcon[step.Phase],
+				Phase:     PhaseIcon(step.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Location:  fmt.Sprintf("%s:%s", step.TestDefinition.Location.Repo, step.TestDefinition.Location.Revision),
@@ -298,7 +302,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		if run.Name == runId {
 			list[i].testruns = append(run.testruns, tr)
 			list[i].phase = mergePhases(run.phase, tr.Status.Phase)
-			list[i].Phase = PhaseIcon[list[i].phase]
+			list[i].Phase = PhaseIcon(list[i].phase)
 			list[i].completed = list[i].completed + isCompleted
 			list[i].State = fmt.Sprintf("%d/%d Testruns are completed", list[i].completed, len(list[i].testruns))
 			return
@@ -314,7 +318,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		Name:        runId,
 		StartTime:   tr.Status.StartTime.Format(time.RFC822),
 		State:       fmt.Sprintf("%d/%d Testruns are completed", isCompleted, 1),
-		Phase:       PhaseIcon[util.TestrunStatusPhase(tr)],
+		Phase:       PhaseIcon(util.TestrunStatusPhase(tr)),
 	})
 }
 func (l rungroupItemList) Less(a, b int) bool {
@@ -356,9 +360,13 @@ func mergePhases(a, b argov1alpha1.NodePhase) argov1alpha1.NodePhase {
 }
 
 func testgroupDisplayName(tr *v1beta1.Testrun) string {
-	landscape, ok := tr.GetAnnotations()[common.AnnotationLandscape]
-	if ok {
-		return landscape
+	displayName, ok := tr.GetAnnotations()[common.AnnotationLandscape]
+	if !ok {
+		return "Unknown"
 	}
-	return "Unknown"
+
+	if gp, ok := tr.GetLabels()[common.AnnotationGroupPurpose]; ok {
+		displayName = fmt.Sprintf("%s - %s", displayName, gp)
+	}
+	return displayName
 }

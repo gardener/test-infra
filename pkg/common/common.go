@@ -41,11 +41,14 @@ const (
 	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
 	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
 
-	// AnnotationFlavorDescription is teh annotation to describe the test flavor of the current run testrun
+	// AnnotationFlavorDescription is the annotation to describe the test flavor of the current run testrun
 	AnnotationFlavorDescription = "testrunner.testmachinery.sapcloud.io/flavor-description"
 
 	// AnnotationDimension is the annotation to specify the dimension the testrun is testing
 	AnnotationDimension = "testrunner.testmachinery.sapcloud.io/dimension"
+
+	// AnnotationGroupPurpose is the annotation to describe a run group with an arbitrary string
+	AnnotationGroupPurpose = "testrunner.testmachinery.sapcloud.io/group-purpose"
 
 	// AnnotationSystemStep is the testflow step annotation to specify that the step is a testmachinery system step.
 	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
