@@ -29,7 +29,11 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 		return v1beta1.PhaseStatusSuccess
 	}
 
+	stepsRun := false
 	for _, step := range tr.Status.Steps {
+		if !stepsRun && step.Phase != v1beta1.PhaseStatusInit {
+			stepsRun = true
+		}
 		if step.Phase == v1beta1.PhaseStatusInit || step.Phase == v1beta1.PhaseStatusSkipped {
 			continue
 		}
@@ -38,7 +42,11 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 		}
 	}
 
-	return v1beta1.PhaseStatusInit
+	if stepsRun {
+		return v1beta1.PhaseStatusSuccess
+	}
+
+	return tr.Status.Phase
 }
 
 func IsSystemStep(step *v1beta1.StepStatus) bool {

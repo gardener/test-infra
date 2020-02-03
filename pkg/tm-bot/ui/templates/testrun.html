@@ -1,4 +1,10 @@
-{{define "title"}}<a href="/testruns" >Testruns</a> > {{ .page.ID }}{{end}}
+{{define "title"}}
+    <a href="/testruns" >Testruns</a>
+    {{ if .page.RunID }}
+        > <a id="run-id-title" href="/testruns?runID={{ .page.RunID }}">Execution Group</a>
+        <div class="mdl-tooltip" for="run-id-title">Show Execution Group<br>{{ .page.RunID }}</div>
+    {{ end }}
+    > {{ .page.ID }}{{end}}
 {{define "content"}}
     <div class="testrun-card-wide mdl-card mdl-shadow--2dp">
         <div class="mdl-card__title">
