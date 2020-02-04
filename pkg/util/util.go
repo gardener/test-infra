@@ -219,7 +219,7 @@ func StringDefault(value, def string) string {
 	return value
 }
 
-// HasAnnotation returns a bool if passed in label exists
+// HasLabel returns a bool if passed in label exists
 func HasLabel(obj metav1.ObjectMeta, label string) bool {
 	_, found := obj.Labels[label]
 	return found
