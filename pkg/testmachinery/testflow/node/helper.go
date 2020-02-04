@@ -7,7 +7,7 @@ import (
 )
 
 func GetUniqueName(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow string) string {
-	name := td.Info.Metadata.Name
+	name := td.Info.Name
 	if step != nil {
 		name = fmt.Sprintf("%s-%s", name, step.Name)
 	}

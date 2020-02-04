@@ -50,6 +50,12 @@ const (
 	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
 
+	// AnnotationTestDefName is the name of origin TestDefinition.
+	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
+
+	// AnnotationTestDefID is the unique name of origin TestDefinition in a specific flow and step.
+	AnnotationTestDefID = "testmachinery.sapcloud.io/ID"
+
 	// LabelTestrunRunID is the label to specify the unique name of the run (multiple testruns) this test belongs to.
 	// A run represents all tests that are running from one testrunner.
 	LabelTestrunRunID = "testrunner.testmachinery.sapcloud.io/runID"

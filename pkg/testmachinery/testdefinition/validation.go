@@ -26,16 +26,16 @@ import (
 
 // Validate validates a testdefinition.
 func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
-	if td.Metadata.Name == "" {
+	if td.GetName() == "" {
 		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Required value: name has to be defined", identifier)
 	}
 
-	if err := ValidateName(identifier, td.Metadata.Name); err != nil {
+	if err := ValidateName(identifier, td.GetName()); err != nil {
 		return err
 	}
 
 	if len(td.Spec.Command) == 0 {
-		return fmt.Errorf("Invalid TestDefinition (%s) Name: \"%s\": spec.command : Required value: command has to be defined", identifier, td.Metadata.Name)
+		return fmt.Errorf("Invalid TestDefinition (%s) Name: \"%s\": spec.command : Required value: command has to be defined", identifier, td.GetName())
 	}
 	if td.Spec.Owner == "" || !isEmailValid(td.Spec.Owner) {
 		return fmt.Errorf("Invalid TestDefinition (%s) Owner: \"%s\": spec.owner : Required value: valid email has to be defined", identifier, td.Spec.Owner)

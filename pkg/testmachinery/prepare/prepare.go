@@ -21,6 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/url"
 	"path"
 
@@ -40,7 +41,7 @@ import (
 func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error) {
 	td := testdefinition.NewEmpty()
 	td.Info = &tmv1beta1.TestDefinition{
-		Metadata: tmv1beta1.TestDefMetadata{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}

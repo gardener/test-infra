@@ -72,12 +72,12 @@ func (l *GitLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDefi
 	}
 	for _, def := range testDefs {
 		// Prioritize local testdefinitions over remote
-		if testDefMap[def.Info.Metadata.Name] == nil || testDefMap[def.Info.Metadata.Name].Location.Type() != tmv1beta1.LocationTypeLocal {
+		if testDefMap[def.Info.Name] == nil || testDefMap[def.Info.Name].Location.Type() != tmv1beta1.LocationTypeLocal {
 			def.AddInputArtifacts(argov1.Artifact{
 				Name: "repo",
 				Path: testmachinery.TM_REPO_PATH,
 			})
-			testDefMap[def.Info.Metadata.Name] = def
+			testDefMap[def.Info.Name] = def
 		}
 	}
 	return nil
@@ -125,14 +125,14 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 				l.log.V(5).Info(fmt.Sprintf("ignoring file: %s", err.Error()), "filename", *file.Name)
 				continue
 			}
-			if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
+			if def.Kind == tmv1beta1.TestDefinitionName && def.Name != "" {
 				definition, err := testdefinition.New(&def, l, file.GetName())
 				if err != nil {
 					l.log.Info(fmt.Sprintf("unable to build testdefinition: %s", err.Error()), "filename", *file.Name)
 					continue
 				}
 				definitions = append(definitions, definition)
-				l.log.V(3).Info(fmt.Sprintf("found TestDefinition %s", def.Metadata.Name))
+				l.log.V(3).Info(fmt.Sprintf("found TestDefinition %s", def.Name))
 			}
 		}
 	}

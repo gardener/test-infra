@@ -11,6 +11,7 @@ API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/te
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefSpec,Config
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefSpec,Labels
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefSpec,RecipientsOnFailure
+API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefinitionList,Items
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunList,Items
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,Config
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,LocationSets

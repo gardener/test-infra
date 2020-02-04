@@ -158,7 +158,7 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 		Annotations: n.step.Annotations,
 		Phase:       tmv1beta1.PhaseStatusInit,
 		TestDefinition: tmv1beta1.StepStatusTestDefinition{
-			Name:                  td.Info.Metadata.Name,
+			Name:                  td.Info.Name,
 			Owner:                 td.Info.Spec.Owner,
 			Config:                td.GetConfig().RawList(),
 			Labels:                td.Info.Spec.Labels,

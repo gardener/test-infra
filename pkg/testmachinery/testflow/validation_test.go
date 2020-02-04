@@ -17,6 +17,7 @@ package testflow_test
 import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
@@ -253,8 +254,8 @@ var _ = Describe("Testflow", func() {
 							Location: &locationMock{},
 							FileName: "file.name",
 							Info: &tmv1beta1.TestDefinition{
-								Metadata: tmv1beta1.TestDefMetadata{Name: "testdefname"},
-								Spec:     tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
+								ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
+								Spec:       tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
 							},
 						},
 					}
@@ -300,8 +301,8 @@ var defaultMockLocation = &testDefinitionsMock{
 				Location: &locationMock{},
 				FileName: "file.name",
 				Info: &tmv1beta1.TestDefinition{
-					Metadata: tmv1beta1.TestDefMetadata{Name: "testdefname"},
-					Spec:     tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
+					ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
+					Spec:       tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
 				},
 			},
 		}
