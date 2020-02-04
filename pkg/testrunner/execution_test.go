@@ -227,6 +227,32 @@ var _ = Describe("Executor tests", func() {
 		expectExecutionsToBe(addExecution, executions[2], 1)
 	})
 
+	It("should add same test during execution in parallel steps", func() {
+		executions := [3]*execution{}
+		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+		Expect(err).ToNot(HaveOccurred())
+
+		for i := 0; i < 3; i++ {
+			e := newExecution(i)
+			executions[i] = e
+			var f func()
+			f = func() {
+				e.start = time.Now()
+				time.Sleep(1 * time.Second)
+				if e.value == 1 {
+					e.value = 3
+					executor.AddItem(f)
+				}
+			}
+			executor.AddItem(f)
+		}
+
+		executor.Run()
+
+		Expect(executions[1].value).To(Equal(3))
+		expectExecutionsToBe(executions[1], executions[2], 1)
+	})
+
 })
 
 func expectExecutionsToBe(e1, e2 *execution, expDurationSeconds int) {

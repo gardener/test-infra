@@ -78,9 +78,9 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		var (
 			trI     = i
 			attempt = 0
+			f       func()
 		)
-
-		executor.AddItem(func() {
+		f = func() {
 			rl[trI].SetRunID(runID)
 			triggerRunEvent(notify, rl[trI])
 			rl[trI].Exec(log, config, testrunNamePrefix)
@@ -108,7 +108,9 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 			}
 			*rl[trI] = *newRun
 			attempt++
-		})
+			executor.AddItem(f)
+		}
+		executor.AddItem(f)
 	}
 
 	executor.Run()
