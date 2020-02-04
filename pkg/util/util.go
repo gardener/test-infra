@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"math"
 	"math/rand"
 	"net/http"
@@ -218,20 +219,34 @@ func StringDefault(value, def string) string {
 	return value
 }
 
+// HasLabel returns a bool if passed in label exists
+func HasLabel(obj metav1.ObjectMeta, label string) bool {
+	_, found := obj.Labels[label]
+	return found
+}
+
+// SetMetaDataLabel sets the label and value
+func SetMetaDataLabel(obj *metav1.ObjectMeta, label string, value string) {
+	if obj.Labels == nil {
+		obj.Labels = make(map[string]string)
+	}
+	obj.Labels[label] = value
+}
+
 // GitHub helper functions
 
+// ParseRepoURLFromString returns the repository owner and name of a github repo url
 func ParseRepoURLFromString(repoURL string) (repoOwner, repoName string, err error) {
 	u, err := url.Parse(repoURL)
 	if err != nil {
 		return "", "", err
 	}
 
-	repoNameComponents := strings.Split(u.Path, "/")
-	repoOwner = repoNameComponents[1]
-	repoName = strings.Replace(repoNameComponents[2], ".git", "", 1)
-	return
+	repoOwner, repoName = ParseRepoURL(u)
+	return repoOwner, repoName, nil
 }
 
+// ParseRepoURL returns the repository owner and name of a github repo url
 func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
 	repoNameComponents := strings.Split(url.Path, "/")
 	repoOwner = repoNameComponents[1]
@@ -239,6 +254,7 @@ func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
 	return
 }
 
+// GetGitHubClient returns a new github enterprise client with basic auth and optional tls verification
 func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool) (*github.Client, error) {
 	client, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
 	if err != nil {
@@ -247,6 +263,7 @@ func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool)
 	return client, nil
 }
 
+// GetHTTPClient returns a new http client with basic auth and optional tls verification
 func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
 	if username != "" && password != "" {
 		basicAuth := github.BasicAuthTransport{
@@ -265,6 +282,8 @@ func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
 		},
 	}
 }
+
+// Unzip unpacks the given archive to the specified target path
 func Unzip(archive, target string) error {
 	reader, err := zip.OpenReader(archive)
 	if err != nil {

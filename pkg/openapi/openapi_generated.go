@@ -996,22 +996,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 							},
 						},
 					},
-					"ingested": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ingested states whether the result of a testrun is already ingested into a persistent storage (db).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"uploadedToGithub": {
-						SchemaProps: spec.SchemaProps{
-							Description: "UploadedToGithub states whether the status of a testrun is already uploaded to github component",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"ingested", "uploadedToGithub"},
 			},
 		},
 		Dependencies: []string{
