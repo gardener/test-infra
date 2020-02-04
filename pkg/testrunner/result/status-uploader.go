@@ -443,8 +443,7 @@ func MarkTestrunsAsUploadedToGithub(log logr.Logger, tmClient client.Client, run
 
 	for _, run := range runs {
 		tr := run.Testrun
-		enabled := true
-		tr.Status.UploadedToGithub = &enabled
+		util.SetMetaDataLabel(&tr.ObjectMeta, common.LabelUploadedToGithub, "true")
 		err := tmClient.Update(ctx, tr)
 		if err != nil {
 			return errors.Wrapf(err, "unable to update status of testrun %s in namespace: %s", tr.Name, tr.Namespace)

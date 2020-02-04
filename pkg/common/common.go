@@ -22,10 +22,6 @@ const (
 	// AnnotationTestrunPurpose is the annotation name to specify a purpose of the testrun
 	AnnotationTestrunPurpose = "testmachinery.sapcloud.io/purpose"
 
-	// LabelTestrunRunID is the annotation to specify the unique name of the run (multiple testuns) this test belongs to.
-	// A run represents all tests that are running from one testrunner.
-	LabelTestrunRunID = "testrunner.testmachinery.sapcloud.io/runID"
-
 	// AnnotationTemplateIDTestrun is the annotation to specify the name of the template the testun is rendered from
 	AnnotationTemplateIDTestrun = "testrunner.testmachinery.sapcloud.io/templateID"
 
@@ -53,6 +49,16 @@ const (
 	// AnnotationSystemStep is the testflow step annotation to specify that the step is a testmachinery system step.
 	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
+
+	// LabelTestrunRunID is the label to specify the unique name of the run (multiple testruns) this test belongs to.
+	// A run represents all tests that are running from one testrunner.
+	LabelTestrunRunID = "testrunner.testmachinery.sapcloud.io/runID"
+
+	// LabelIngested is the label that states whether the result of a testrun is already ingested into a persistent storage (db).
+	LabelIngested = "testrunner.testmachinery.sapcloud.io/ingested"
+
+	// LabelUploadedToGithub is the label to specify whether the testrun result was uploaded to github
+	LabelUploadedToGithub = "testrunner.testmachinery.sapcloud.io/uploaded-to-github"
 
 	// images
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"

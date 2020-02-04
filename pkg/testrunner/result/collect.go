@@ -89,6 +89,9 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, t
 	if cfg.OutputDir == "" && cfg.ESConfigName == "" {
 		return nil
 	}
+	if util.HasLabel(run.Testrun.ObjectMeta, common.LabelIngested) {
+		return nil
+	}
 	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
 	if err != nil {
 		return errors.Wrapf(err, "cannot persist file %s", cfg.OutputDir)

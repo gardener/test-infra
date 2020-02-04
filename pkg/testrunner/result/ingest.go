@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -69,7 +71,7 @@ func MarkTestrunsAsIngested(log logr.Logger, tmClient client.Client, tr *tmv1bet
 	defer ctx.Done()
 
 	patched := tr.DeepCopy()
-	patched.Status.Ingested = true
+	util.SetMetaDataLabel(&patched.ObjectMeta, common.LabelIngested, "true")
 	patch, err := kubernetes.CreateTwoWayMergePatch(tr, patched)
 	if err != nil {
 		return errors.Wrap(err, "unable to create patch update for ingestion")

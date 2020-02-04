@@ -3,6 +3,7 @@ API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/te
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepDefinition,Config
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatusPosition,DependsOn
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatusTestDefinition,Config
+API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatusTestDefinition,Labels
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatusTestDefinition,RecipientsOnFailure
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefSpec,Args
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestDefSpec,Behavior

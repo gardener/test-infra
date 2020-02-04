@@ -112,7 +112,7 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
 		if err != nil {
-			log.V(3).Info(fmt.Sprintf("cannot unmarshal document %s", err.Error()))
+			log.V(5).Info(fmt.Sprintf("cannot unmarshal document %s", err.Error()))
 			continue
 		}
 
