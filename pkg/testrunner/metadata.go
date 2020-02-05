@@ -28,15 +28,15 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 		common.AnnotationCloudProvider:     m.CloudProvider,
 		common.AnnotationOperatingSystem:   m.OperatingSystem,
 		common.AnnotationFlavorDescription: m.FlavorDescription,
-		common.AnnotationDimension:         m.GetDimensionFromMetadata(),
+		common.AnnotationDimension:         m.GetDimensionFromMetadata("/"),
 	}
 }
 
 // GetDimensionFromMetadata returns a string describing the dimension of the metadata
-func (m *Metadata) GetDimensionFromMetadata() string {
-	d := fmt.Sprintf("%s/%s/%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
+func (m *Metadata) GetDimensionFromMetadata(sep string) string {
+	d := fmt.Sprintf("%s" + sep + "%s" + sep + "%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
 	if m.FlavorDescription != "" {
-		d = fmt.Sprintf("%s-%s", d, m.FlavorDescription)
+		d = fmt.Sprintf("%s" + sep + "%s", d, m.FlavorDescription)
 	}
 	return d
 }

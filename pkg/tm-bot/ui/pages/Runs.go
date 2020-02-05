@@ -127,7 +127,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(&tr),
-				Dimension: metadata.GetDimensionFromMetadata(),
+				Dimension: metadata.GetDimensionFromMetadata("/"),
 			}
 			if argoHostURL != "" {
 				testrunsList[i].ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, &tr)
@@ -195,7 +195,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(tr),
-				Dimension: metadata.GetDimensionFromMetadata(),
+				Dimension: metadata.GetDimensionFromMetadata("/"),
 			},
 			Steps:     make(testrunStepStatusItemList, len(tr.Status.Steps)),
 			RawStatus: statusTable.String(),
