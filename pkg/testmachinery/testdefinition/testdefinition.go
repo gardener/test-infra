@@ -17,6 +17,7 @@ package testdefinition
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
 	"path"
 	"strings"
 
@@ -33,12 +34,6 @@ import (
 var (
 	DefaultActiveDeadlineSeconds int64 = 600
 	archiveLogs                        = true
-)
-
-// Annotation keys defined on the testdefinition template
-const (
-	AnnotationTestDefName = "testmachinery.sapcloud.io/TestDefinition"
-	AnnotationTestDefID   = "testmachinery.sapcloud.io/ID"
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
@@ -59,7 +54,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		Name: "",
 		Metadata: argov1.Metadata{
 			Annotations: map[string]string{
-				AnnotationTestDefName: def.Metadata.Name,
+				common.AnnotationTestDefName: def.Name,
 			},
 		},
 		ArchiveLocation: &argov1.ArtifactLocation{
@@ -70,6 +65,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 			Image:      def.Spec.Image,
 			Command:    def.Spec.Command,
 			Args:       def.Spec.Args,
+			Resources:  def.Spec.Resources,
 			WorkingDir: testmachinery.TM_REPO_PATH,
 			Env: []apiv1.EnvVar{
 				{
@@ -130,7 +126,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 // New returns a deep copy of the TestDefinition.
 func (td *TestDefinition) Copy() *TestDefinition {
 	template := td.Template.DeepCopy()
-	template.Name = fmt.Sprintf("%s-%s", td.Info.Metadata.Name, util.RandomString(5))
+	template.Name = fmt.Sprintf("%s-%s", td.Info.GetName(), util.RandomString(5))
 	return &TestDefinition{
 		Info:            td.Info,
 		Location:        td.Location,
@@ -144,7 +140,7 @@ func (td *TestDefinition) Copy() *TestDefinition {
 }
 
 func (td *TestDefinition) SetName(name string) {
-	td.AddAnnotation(AnnotationTestDefID, name)
+	td.AddAnnotation(common.AnnotationTestDefID, name)
 	td.Template.Name = name
 }
 func (td *TestDefinition) GetName() string {

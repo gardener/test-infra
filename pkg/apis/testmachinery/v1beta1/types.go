@@ -17,6 +17,7 @@ package v1beta1
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/util/strconf"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -286,29 +287,65 @@ type Pause struct {
 // TestDefinitionName is the kind identifier of a testdefinition.
 const TestDefinitionName = "TestDefinition"
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // TestDefinition describes the execution of a test.
+// +k8s:openapi-gen=true
 type TestDefinition struct {
-	Kind     string          `json:"kind"`
-	Metadata TestDefMetadata `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec TestDefSpec `json:"spec"`
 }
 
-// TestDefMetadata holds the metadata of a testrun.
-type TestDefMetadata struct {
-	Name string `json:"name"`
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TestDefinitionList contains a list of TestDefinitions
+type TestDefinitionList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []TestDefinition `json:"items"`
 }
 
 // TestDefSpec is the actual description of the test.
 type TestDefSpec struct {
-	Owner                 string          `json:"owner"`
-	RecipientsOnFailure   []string        `json:"recipientsOnFailure"`
-	Description           string          `json:"description"`
-	Labels                []string        `json:"labels"`
-	Behavior              []string        `json:"behavior"`
-	ActiveDeadlineSeconds *int64          `json:"activeDeadlineSeconds"`
-	Command               []string        `json:"command"`
-	Args                  []string        `json:"args"`
-	Image                 string          `json:"image"`
-	Config                []ConfigElement `json:"config,omitempty"`
+	// Email address of the test responsible
+	// +optional
+	Owner string `json:"owner,omitempty"`
+	// List of additional test alerting recipients
+	// +optional
+	RecipientsOnFailure []string `json:"recipientsOnFailure,omitempty"`
+	// Short description of the test
+	// +optional
+	Description string `json:"description,omitempty"`
+	// Labels the test to be referenced by testruns
+	// +optional
+	Labels []string `json:"labels,omitempty"`
+	// Specific behavior inside the test which will be respected by the testmachinery.
+	// Available values: "serial"
+	// +optional
+	Behavior []string `json:"behavior,omitempty"`
+	// Optional duration in seconds the test may be active on the node relative to
+	// StartTime before the system will actively try to mark it failed and kill associated containers.
+	// Value must be a positive integer.
+	// +optional
+	ActiveDeadlineSeconds *int64 `json:"activeDeadlineSeconds,omitempty"`
+	// Entrypoint array. Not executed within a shell.
+	// The docker image's ENTRYPOINT is used if this is not provided.
+	// +optional
+	Command []string `json:"command,omitempty"`
+	// Arguments to the entrypoint.
+	// The docker image's CMD is used if this is not provided.
+	// +optional
+	Args []string `json:"args,omitempty"`
+	// Docker image name.
+	// Defaulted to the testmachinery base image.
+	// +optional
+	Image string `json:"image,omitempty"`
+	// TestDefinition default configuration like secrets or ConfigMaps
+	// +optional
+	Config []ConfigElement `json:"config,omitempty"`
+	// Compute Resources required by this container.
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }

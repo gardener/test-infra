@@ -61,7 +61,7 @@ func (l *LocalLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDe
 	}
 	for _, def := range testDefs {
 		def.AddVolumeMount(l.Name(), testmachinery.TM_REPO_PATH, "", false)
-		testDefMap[def.Info.Metadata.Name] = def
+		testDefMap[def.Info.Name] = def
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ func (l *LocalLocation) readTestDefs() ([]*testdefinition.TestDefinition, error)
 			if err != nil {
 				continue
 			}
-			if def.Kind == tmv1beta1.TestDefinitionName && def.Metadata.Name != "" {
+			if def.Kind == tmv1beta1.TestDefinitionName && def.Name != "" {
 				definition, err := testdefinition.New(&def, l, file.Name())
 				if err != nil {
 					l.log.Info(fmt.Sprintf("unable to build testdefinition: %s", err.Error()), "filename", file.Name())

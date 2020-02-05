@@ -16,6 +16,7 @@ package testdefinition_test
 
 import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
@@ -28,7 +29,7 @@ var _ = Describe("TestDefinition Validation", func() {
 		var testdef *tmv1beta1.TestDefinition
 		BeforeEach(func() {
 			testdef = &tmv1beta1.TestDefinition{
-				Metadata: tmv1beta1.TestDefMetadata{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "testdefinitionname",
 				},
 				Spec: tmv1beta1.TestDefSpec{
@@ -43,22 +44,22 @@ var _ = Describe("TestDefinition Validation", func() {
 		})
 
 		It("should succeed when a name contains '-'", func() {
-			testdef.Metadata.Name = "test-name"
+			testdef.Name = "test-name"
 			Expect(testdefinition.Validate("identifier", testdef)).ToNot(HaveOccurred())
 		})
 
 		It("should fail when no name is defined", func() {
-			testdef.Metadata.Name = ""
+			testdef.Name = ""
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 
 		It("should fail when the name contains a '.'", func() {
-			testdef.Metadata.Name = "test.name"
+			testdef.Name = "test.name"
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 
 		It("should fail when the name contains upper case letter", func() {
-			testdef.Metadata.Name = "testName"
+			testdef.Name = "testName"
 			Expect(testdefinition.Validate("identifier", testdef)).To(HaveOccurred())
 		})
 

@@ -37,9 +37,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatus":               schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition":       schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition": schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref),
-		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata":          schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec":              schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition":           schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref),
+		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinitionList":       schema_pkg_apis_testmachinery_v1beta1_TestDefinitionList(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation":             schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Testrun":                  schema_pkg_apis_testmachinery_v1beta1_Testrun(ref),
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs":       schema_pkg_apis_testmachinery_v1beta1_TestrunKubeconfigs(ref),
@@ -508,26 +508,6 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 	}
 }
 
-func schema_pkg_apis_testmachinery_v1beta1_TestDefMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TestDefMetadata holds the metadata of a testrun.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"name"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -537,13 +517,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"owner": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Email address of the test responsible",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"recipientsOnFailure": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "List of additional test alerting recipients",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -556,13 +538,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Short description of the test",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"labels": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Labels the test to be referenced by testruns",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -575,7 +559,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					},
 					"behavior": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Specific behavior inside the test which will be respected by the testmachinery. Available values: \"serial\"",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -588,13 +573,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					},
 					"activeDeadlineSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
+							Description: "Optional duration in seconds the test may be active on the node relative to StartTime before the system will actively try to mark it failed and kill associated containers. Value must be a positive integer.",
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"command": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Entrypoint array. Not executed within a shell. The docker image's ENTRYPOINT is used if this is not provided.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -607,7 +594,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					},
 					"args": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Arguments to the entrypoint. The docker image's CMD is used if this is not provided.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -620,13 +608,15 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Docker image name. Defaulted to the testmachinery base image.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "TestDefinition default configuration like secrets or ConfigMaps",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -636,12 +626,17 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							},
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Compute Resources required by this container.",
+							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
+						},
+					},
 				},
-				Required: []string{"owner", "recipientsOnFailure", "description", "labels", "behavior", "activeDeadlineSeconds", "command", "args", "image"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -654,13 +649,21 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata"),
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -669,11 +672,58 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"kind", "spec"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefMetadata", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_testmachinery_v1beta1_TestDefinitionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TestDefinitionList contains a list of TestDefinitions",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
