@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package elasticsearch
+package bulk
 
 import (
 	"bytes"
@@ -22,8 +22,6 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util"
 )
-
-//var newLine = []byte("\n")
 
 // 50 mb
 const maxBufferSize = 50 * 1024 * 1024

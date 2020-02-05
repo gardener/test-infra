@@ -86,13 +86,13 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 }
 
 func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, tmClient client.Client, run *testrunner.Run) error {
-	if cfg.OutputDir == "" && cfg.ESConfigName == "" {
+	if cfg.OutputDir == "" && (cfg.ESConfigName == "" || cfg.ESConfig != nil) {
 		return nil
 	}
 	if util.HasLabel(run.Testrun.ObjectMeta, common.LabelIngested) {
 		return nil
 	}
-	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName)
+	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName, cfg.ESConfig)
 	if err != nil {
 		return errors.Wrapf(err, "cannot persist file %s", cfg.OutputDir)
 	}
