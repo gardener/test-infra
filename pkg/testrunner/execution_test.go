@@ -52,7 +52,7 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically("~", 1, 0.01))
 			}
-		})
+		}, 10)
 
 		It("should run all functions in parallel", func() {
 			executions := [3]*execution{}
@@ -78,7 +78,7 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically("~", 0, 0.01))
 			}
-		})
+		}, 10)
 
 		It("should run 3 functions in serial with a backoff", func() {
 			executions := [3]*execution{}
@@ -107,7 +107,7 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically("~", 2, 0.01))
 			}
-		})
+		}, 10)
 
 		It("should run 6 functions in parallel with a backoff in a bucket of 2", func() {
 			executions := [6]*execution{}
@@ -136,7 +136,7 @@ var _ = Describe("Executor tests", func() {
 
 			expectExecutionsToBe(executions[2], executions[0], 2)
 			expectExecutionsToBe(executions[4], executions[2], 2)
-		})
+		}, 10)
 
 		It("should run 6 functions in serial with a backoff in a bucket of 2", func() {
 			executions := [6]*execution{}
@@ -165,7 +165,7 @@ var _ = Describe("Executor tests", func() {
 
 			expectExecutionsToBe(executions[2], executions[0], 3)
 			expectExecutionsToBe(executions[4], executions[2], 3)
-		})
+		}, 10)
 	})
 
 	It("should add another test during execution", func() {
@@ -197,7 +197,7 @@ var _ = Describe("Executor tests", func() {
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToBe(addExecution, executions[2], 1)
 
-	})
+	}, 10)
 
 	It("should add another test during execution in parallel steps", func() {
 		executions := [3]*execution{}
@@ -225,6 +225,37 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToBe(addExecution, executions[2], 1)
+	}, 10)
+
+	It("should add another test during execution in parallel steps that start immediately", func() {
+		executions := [3]*execution{}
+		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+		Expect(err).ToNot(HaveOccurred())
+
+		addExecution := newExecution(4)
+
+		for i := 0; i < 3; i++ {
+			e := newExecution(i)
+			executions[i] = e
+			f := func() {
+				e.start = time.Now()
+
+				if e.value == 1 {
+					time.Sleep(1 * time.Second)
+					executor.AddItem(func() {
+						addExecution.start = time.Now()
+					})
+				} else {
+					time.Sleep(2 * time.Second)
+				}
+			}
+			executor.AddItem(f)
+		}
+
+		executor.Run()
+
+		Expect(addExecution.start.IsZero()).To(BeFalse())
+		expectExecutionsToBe(addExecution, executions[0], 1)
 	})
 
 	It("should add same test during execution in parallel steps", func() {
@@ -251,7 +282,7 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(executions[1].value).To(Equal(3))
 		expectExecutionsToBe(executions[1], executions[2], 1)
-	})
+	}, 10)
 
 })
 
