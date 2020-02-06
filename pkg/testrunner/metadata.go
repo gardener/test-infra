@@ -34,9 +34,9 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 
 // GetDimensionFromMetadata returns a string describing the dimension of the metadata
 func (m *Metadata) GetDimensionFromMetadata(sep string) string {
-	d := fmt.Sprintf("%s" + sep + "%s" + sep + "%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
+	d := fmt.Sprintf("%s"+sep+"%s"+sep+"%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
 	if m.FlavorDescription != "" {
-		d = fmt.Sprintf("%s" + sep + "%s", d, m.FlavorDescription)
+		d = fmt.Sprintf("%s"+sep+"%s", d, m.FlavorDescription)
 	}
 	return d
 }

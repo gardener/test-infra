@@ -53,12 +53,23 @@ var _ = Describe("testrun util test", func() {
 			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))
 		})
 
-		It("should return the testrun state of all steps are in init state", func() {
+		It("should return the testrun state if all steps are in init state", func() {
 			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
 				Phase: v1beta1.PhaseStatusError,
 				Steps: []*v1beta1.StepStatus{
 					newStepStatus(v1beta1.PhaseStatusInit, true),
 					newStepStatus(v1beta1.PhaseStatusInit, false),
+				},
+			}}
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))
+		})
+
+		It("should return the testrun state if all steps are in skipped state", func() {
+			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
+				Phase: v1beta1.PhaseStatusError,
+				Steps: []*v1beta1.StepStatus{
+					newStepStatus(v1beta1.PhaseStatusSkipped, true),
+					newStepStatus(v1beta1.PhaseStatusSkipped, false),
 				},
 			}}
 			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))

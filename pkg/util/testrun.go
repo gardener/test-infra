@@ -31,7 +31,7 @@ func TestrunStatusPhase(tr *v1beta1.Testrun) argov1alpha1.NodePhase {
 
 	stepsRun := false
 	for _, step := range tr.Status.Steps {
-		if !stepsRun && step.Phase != v1beta1.PhaseStatusInit {
+		if !stepsRun && (step.Phase != v1beta1.PhaseStatusInit && step.Phase != v1beta1.PhaseStatusSkipped) {
 			stepsRun = true
 		}
 		if step.Phase == v1beta1.PhaseStatusInit || step.Phase == v1beta1.PhaseStatusSkipped {
