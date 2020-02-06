@@ -365,7 +365,7 @@ func testgroupDisplayName(tr *v1beta1.Testrun) string {
 		return "Unknown"
 	}
 
-	if gp, ok := tr.GetLabels()[common.AnnotationGroupPurpose]; ok {
+	if gp, ok := tr.GetAnnotations()[common.AnnotationGroupPurpose]; ok {
 		displayName = fmt.Sprintf("%s - %s", displayName, gp)
 	}
 	return displayName
