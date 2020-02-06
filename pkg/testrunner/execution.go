@@ -95,7 +95,7 @@ func (e *executor) AddItem(f func()) {
 
 // Run executes all added items in the configured order
 func (e *executor) Run() {
-	var wg sync.WaitGroup
+	var wg = util.AdvancedWaitGroup{}
 
 	var i = 0
 	for e.len() != 0 {
@@ -124,16 +124,24 @@ func (e *executor) Run() {
 		}(i, f)
 
 		// wait for the current run to finish if
-		// - the runs should be executed in serial and item is the last of the current
+		// - the runs should be executed in serial and item is the last of the current bucket
 		// - or the function is the last element of the queue
 		if e.config.Serial && util.IsLastElementOfBucket(i, e.config.BackoffBucket) {
 			wg.Wait()
 		}
 		if e.len() == 0 {
-			wg.Wait()
+			e.waitForLastElement(&wg)
 		}
 		i++
 	}
 	// not needed but to be sure that all goroutines are finished
 	wg.Wait()
+}
+
+// waitForLastElement waits until the last element has finished.
+// The wait is canceled if another element is added to the queue and has to be processed.
+func (e *executor) waitForLastElement(wg *util.AdvancedWaitGroup) {
+	wg.WaitWithCancelFunc(func() bool {
+		return e.len() > 0
+	})
 }
