@@ -31,9 +31,9 @@ import (
 )
 
 // NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
-func NewTestMachineryController(mgr manager.Manager, log logr.Logger) (controller.Controller, error) {
+func NewTestMachineryController(mgr manager.Manager, log logr.Logger, maxConcurrentSyncs *int) (controller.Controller, error) {
 	tmReconciler := reconciler.NewReconciler(mgr, log.WithName("controller"))
-	c, err := New(mgr, tmReconciler)
+	c, err := New(mgr, tmReconciler, maxConcurrentSyncs)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func NewWatchController(mgr manager.Manager, log logr.Logger) (controller.Contro
 	if err != nil {
 		return nil, nil, err
 	}
-	c, err := New(mgr, w)
+	c, err := New(mgr, w, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,14 +60,22 @@ func NewWatchController(mgr manager.Manager, log logr.Logger) (controller.Contro
 }
 
 // New creates a new Testmachinery controller for handling testruns and argo workflows.
-func New(mgr manager.Manager, r reconcile.Reconciler) (controller.Controller, error) {
+func New(mgr manager.Manager, r reconcile.Reconciler, maxConcurrentReconciles *int) (controller.Controller, error) {
 	if err := tmv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		return nil, err
 	}
 	if err := argov1.AddToScheme(mgr.GetScheme()); err != nil {
 		return nil, err
 	}
-	c, err := controller.New("testmachinery-controller", mgr, controller.Options{Reconciler: r})
+
+	opts := controller.Options{
+		Reconciler: r,
+	}
+	if maxConcurrentReconciles != nil {
+		opts.MaxConcurrentReconciles = *maxConcurrentReconciles
+	}
+
+	c, err := controller.New("testmachinery-controller", mgr, opts)
 	if err != nil {
 		return nil, err
 	}

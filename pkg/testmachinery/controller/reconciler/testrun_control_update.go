@@ -66,8 +66,8 @@ func (r *TestmachineryReconciler) updateStatus(ctx context.Context, rCtx *reconc
 	}
 
 	if rCtx.updated {
-		err := r.Update(ctx, rCtx.tr)
-		if err != nil {
+		rCtx.tr.Status.ObservedGeneration = rCtx.tr.Generation
+		if err := r.Status().Update(ctx, rCtx.tr); err != nil {
 			log.Error(err, "unable to update testrun status")
 			return reconcile.Result{}, err
 		}

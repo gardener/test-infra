@@ -15,25 +15,19 @@
 package prepare
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/url"
-	"path"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	"github.com/gardener/test-infra/pkg/util/strconf"
-
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/util"
-	apiv1 "k8s.io/api/core/v1"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"net/url"
 )
 
 // New creates the TM prepare step
@@ -49,15 +43,15 @@ func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error)
 		Name: fmt.Sprintf("%s-%s", name, util.RandomString(5)),
 		Metadata: argov1.Metadata{
 			Annotations: map[string]string{
-				"testmachinery.sapcloud.io/TestDefinition": "Prepare",
-				common.AnnotationSystemStep:                "true",
+				common.AnnotationTestDefName: "Prepare",
+				common.AnnotationSystemStep:  "true",
 			},
 		},
 		ActiveDeadlineSeconds: &testdefinition.DefaultActiveDeadlineSeconds,
-		Container: &apiv1.Container{
+		Container: &corev1.Container{
 			Image:   testmachinery.PREPARE_IMAGE,
 			Command: []string{"/tm/prepare", PrepareConfigPath},
-			Env: []apiv1.EnvVar{
+			Env: []corev1.EnvVar{
 				{
 					Name:  testmachinery.TM_PHASE_NAME,
 					Value: "{{inputs.parameters.phase}}",
@@ -127,57 +121,6 @@ func (p *Definition) AddRepositoriesAsArtifacts() error {
 	})
 
 	return nil
-}
-
-// AddKubeconfig adds all defined kubeconfigs as files to the prepare pod
-func (p *Definition) AddKubeconfigs(kubeconfigs tmv1beta1.TestrunKubeconfigs) error {
-	if kubeconfigs.Gardener != nil {
-		if err := p.addKubeconfig("gardener", kubeconfigs.Gardener); err != nil {
-			return err
-		}
-	}
-	if kubeconfigs.Seed != nil {
-		if err := p.addKubeconfig("seed", kubeconfigs.Seed); err != nil {
-			return err
-		}
-	}
-	if kubeconfigs.Shoot != nil {
-		if err := p.addKubeconfig("shoot", kubeconfigs.Shoot); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (p *Definition) addKubeconfig(name string, kubeconfig *strconf.StringOrConfig) error {
-	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
-	if kubeconfig.Type == strconf.String {
-		kubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
-		if err != nil {
-			return errors.Wrapf(err, "unable to parse kubeconfig")
-		}
-		p.TestDefinition.AddInputArtifacts(argov1.Artifact{
-			Name: name,
-			Path: kubeconfigPath,
-			ArtifactLocation: argov1.ArtifactLocation{
-				Raw: &argov1.RawArtifact{
-					Data: string(kubeconfig),
-				},
-			},
-		})
-		return nil
-	}
-	if kubeconfig.Type == strconf.Config {
-		cfg := config.NewElement(&tmv1beta1.ConfigElement{
-			Type:      tmv1beta1.ConfigTypeFile,
-			Name:      name,
-			Path:      kubeconfigPath,
-			ValueFrom: kubeconfig.Config(),
-		}, config.LevelTestDefinition)
-		p.TestDefinition.AddVolumeMount(cfg.Name(), kubeconfigPath, path.Base(kubeconfigPath), true)
-		return p.TestDefinition.AddVolumeFromConfig(cfg)
-	}
-	return fmt.Errorf("undefined StringSecType %s", string(kubeconfig.Type))
 }
 
 func (p *Definition) addNetrcFile() error {

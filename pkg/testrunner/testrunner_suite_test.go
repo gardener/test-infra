@@ -22,5 +22,5 @@ import (
 
 func TestTestrunnerTemplate(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testrunner Template Test Suite")
+	RunSpecs(t, "Testrunner Test Suite")
 }

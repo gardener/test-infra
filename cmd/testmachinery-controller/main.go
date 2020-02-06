@@ -38,6 +38,7 @@ import (
 var (
 	metricsAddr          string
 	enableLeaderElection bool
+	maxConcurrentSyncs   int
 
 	setupLogger = ctrl.Log.WithName("setup")
 )
@@ -59,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = controller.NewTestMachineryController(mgr, ctrl.Log)
+	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, &maxConcurrentSyncs)
 	if err != nil {
 		setupLogger.Error(err, "unable to create controller", "controllers", "Testrun")
 		os.Exit(1)
@@ -83,6 +84,7 @@ func init() {
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.IntVar(&maxConcurrentSyncs, "max-concurrent-syncs", 1, "Max number of concurrent reconciliations.")
 	logger.InitFlags(nil)
 	testmachinery.InitFlags(nil)
 	server.InitFlags(nil)

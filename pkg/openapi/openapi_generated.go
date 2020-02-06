@@ -1046,6 +1046,13 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 							},
 						},
 					},
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ObservedGeneration is the most recent generation observed for this testrun.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 			},
 		},

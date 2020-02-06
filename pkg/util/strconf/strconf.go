@@ -35,7 +35,7 @@ const (
 	Config             // The IntOrString holds a string.
 )
 
-// FromString creates a StringOrConfoig from a string.
+// FromString creates a StringOrConfig from a string.
 func FromString(s string) *StringOrConfig {
 	return &StringOrConfig{
 		Type:   String,

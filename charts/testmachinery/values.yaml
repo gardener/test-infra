@@ -22,6 +22,7 @@ controller:
   pullPolicy: IfNotPresent
   imagePullSecretName: ""
   testDefPath: ""
+  maxConcurrentSyncs: 5
   verbosity: 2
 
   serviceAccountName: testmachinery-controller

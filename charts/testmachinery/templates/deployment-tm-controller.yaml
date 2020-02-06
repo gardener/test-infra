@@ -49,6 +49,7 @@ spec:
         - --key-file=/etc/testmachinery-controller/srv/tls.key
         - --github-cache-dir=/cache
         - --namespace={{ .Release.Namespace }}
+        - --max-concurrent-syncs={{ .Values.controller.maxConcurrentSyncs }}
         - --enable-pod-gc={{ .Values.cleanup.enabled }}
         - -v={{ .Values.controller.verbosity }}
         {{- if .Values.secrets.github.data }}
