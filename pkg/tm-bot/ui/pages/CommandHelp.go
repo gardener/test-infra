@@ -44,7 +44,7 @@ type CommandHelpDetailedItem struct {
 	Config               string
 }
 
-func NewCommandHelpPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+func NewCommandHelpPage(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {
 	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawList := make([]CommandHelpItem, len(plugins.GetAll()))
@@ -64,7 +64,7 @@ func NewCommandHelpPage(logger logr.Logger, auth auth.Authentication, basePath s
 	}
 }
 
-func NewCommandDetailedHelpPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+func NewCommandDetailedHelpPage(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {
 	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		pluginName := mux.Vars(r)["plugin"]

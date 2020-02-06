@@ -20,12 +20,12 @@ import (
 	"net/http"
 )
 
-func NewHomePage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+func NewHomePage(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {
 	p := Page{log: logger, auth: auth, basePath: basePath}
 	return p.handleSimplePage("index.html", nil)
 }
 
-func New404Page(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+func New404Page(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {
 	p := Page{log: logger, auth: auth, basePath: basePath}
 	return p.handleSimplePage("404.html", nil)
 }
