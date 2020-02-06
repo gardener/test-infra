@@ -24,7 +24,7 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/testrunner/elasticsearch"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch/bulk"
 	"github.com/go-logr/logr"
 	"github.com/minio/minio-go"
 	"io"
@@ -49,13 +49,13 @@ func Output(log logr.Logger, config *Config, tmClient client.Client, namespace s
 		return err
 	}
 
-	summaryMetadata := elasticsearch.ESMetadata{
-		Index: elasticsearch.ESIndex{
+	summaryMetadata := bulk.ESMetadata{
+		Index: bulk.ESIndex{
 			Index: "testmachinery",
 			Type:  "_doc",
 		},
 	}
-	summaryBulk := elasticsearch.NewList(summaryMetadata, trStatusSummaries)
+	summaryBulk := bulk.NewList(summaryMetadata, trStatusSummaries)
 
 	if config.S3Endpoint != "" {
 		osConfig, err := getOSConfig(tmClient, namespace, config.S3Endpoint, config.S3SSL)
@@ -140,7 +140,7 @@ func DetermineTestrunSummary(tr *tmv1beta1.Testrun, metadata *testrunner.Metadat
 	return trSummary, summaries, nil
 }
 
-func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) elasticsearch.BulkList {
+func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status tmv1beta1.TestrunStatus, metadata *testrunner.Metadata) bulk.BulkList {
 
 	minioClient, err := minio.New(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.SSL)
 	if err != nil {
@@ -158,7 +158,7 @@ func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status t
 		return nil
 	}
 
-	bulks := make(elasticsearch.BulkList, 0)
+	bulks := make(bulk.BulkList, 0)
 	for _, step := range status.Steps {
 		if step.Phase != argov1.NodeSkipped && step.ExportArtifactKey != "" {
 			stepMeta := &testrunner.StepExportMetadata{
@@ -196,7 +196,7 @@ func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status t
 				}
 
 				for _, doc := range files {
-					bulks = append(bulks, elasticsearch.ParseExportedFiles(log, strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
+					bulks = append(bulks, bulk.ParseExportedFiles(log, strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
 				}
 			}
 

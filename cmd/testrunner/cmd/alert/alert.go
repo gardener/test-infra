@@ -18,9 +18,9 @@ import (
 	"errors"
 	"github.com/gardener/test-infra/pkg/alert"
 	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/slack"
 	"github.com/spf13/cobra"
-	"net/url"
 	"os"
 )
 
@@ -60,14 +60,19 @@ var alertCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		esEndpoint, err := url.Parse(elasticsearchEndpoint)
+		esClient, err := elasticsearch.NewClient(elasticsearch.Config{
+			Endpoint: elasticsearchEndpoint,
+			Username: elasticsearchUser,
+			Password: elasticsearchPass,
+		})
 		if err != nil {
-			logger.Log.Error(err, "%s is not a valid URL", elasticsearchEndpoint)
+			logger.Log.Error(err, "Cannot create elasticsearch client")
 			os.Exit(1)
 		}
+
 		alertConfig := alert.Config{
 			ContinuousFailureThreshold:  continuousFailureThreshold,
-			Elasticsearch:               alert.ElasticsearchConfig{Endpoint: esEndpoint, User: elasticsearchUser, Pass: elasticsearchPass},
+			ESClient:                    esClient,
 			EvalTimeDays:                evalTimeDays,
 			SuccessRateThresholdPercent: minSuccessRate,
 			TestsSkip:                   testsSkip,

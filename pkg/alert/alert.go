@@ -19,14 +19,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/slack"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -48,10 +47,10 @@ type ElasticsearchConfig struct {
 
 //Config represents alerting configuration
 type Config struct {
-	EvalTimeDays                int //EvalTimeDays time range to consinder for evaluation in days (now - n days before)
-	SuccessRateThresholdPercent int //SuccessRateThresholdPercent if test success rate falls below threshold post an alert
-	ContinuousFailureThreshold  int //ContinuousFailureThreshold if test fails >=n times send alert
-	Elasticsearch               ElasticsearchConfig
+	EvalTimeDays                int // EvalTimeDays time range to consinder for evaluation in days (now - n days before)
+	SuccessRateThresholdPercent int // SuccessRateThresholdPercent if test success rate falls below threshold post an alert
+	ContinuousFailureThreshold  int // ContinuousFailureThreshold if test fails >=n times send alert
+	ESClient                    elasticsearch.Client
 	TestsSkip                   []string
 	TestsFocus                  []string
 }
@@ -368,38 +367,14 @@ func splitSlackMessage(message string, charactersLimit int) []string {
 	return messageSplits
 }
 
-//elasticRequest send HTTP request to elasticsearch
+// elasticRequest send HTTP request to elasticsearch
 func (alerter *Alert) elasticRequest(urlAttributes, httpMethod, payloadFormated string, result interface{}) error {
-	alerter.cfg.Elasticsearch.Endpoint.Path = path.Join(urlAttributes)
-	requestUrl := alerter.cfg.Elasticsearch.Endpoint.String()
 	payload := strings.NewReader(payloadFormated)
-	alerter.log.V(3).Info(fmt.Sprintf("creating HTTP %s request on %s", httpMethod, requestUrl))
-	req, err := http.NewRequest(httpMethod, requestUrl, payload)
+	body, err := alerter.cfg.ESClient.Request(httpMethod, urlAttributes, payload)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create a http request for %s", requestUrl)
+		return errors.Wrapf(err, "failed to call elasticsearch")
 	}
 
-	req.SetBasicAuth(alerter.cfg.Elasticsearch.User, alerter.cfg.Elasticsearch.Pass)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Cache-Control", "no-cache")
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "failed to execute HTTP request")
-	}
-	defer res.Body.Close()
-	if res.StatusCode >= 300 {
-		errorBody, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return errors.Wrap(err, "failed to read failed HTTP response body")
-		}
-		return errors.Wrapf(err, "failed to execute HTTP request: HTTP Status Code %d Content: %s", res.StatusCode, string(errorBody))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
-	}
 	if result != nil {
 		if err := json.Unmarshal(body, result); err != nil {
 			return errors.Wrapf(err, "failed to unmarshal %s", string(body))
@@ -408,7 +383,7 @@ func (alerter *Alert) elasticRequest(urlAttributes, httpMethod, payloadFormated 
 	return nil
 }
 
-//filePostedAlerts posts test contexts to elasticsearch
+// filePostedAlerts posts test contexts to elasticsearch
 func (alerter *Alert) filePostedAlerts(tests map[string]TestDetails) error {
 	payload := alerter.generatePostedAlertsPayload(tests)
 	if err := alerter.elasticRequest("/tm-alerter/_doc/_bulk", http.MethodPost, payload, nil); err != nil {
