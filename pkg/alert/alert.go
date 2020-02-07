@@ -158,6 +158,9 @@ func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 	}
 
 	for testContext, _ := range *tests {
+		if len(alerter.cfg.TestsFocus) == 0 {
+			break
+		}
 		matched := false
 		var err error
 		for _, patternStr := range alerter.cfg.TestsFocus {
