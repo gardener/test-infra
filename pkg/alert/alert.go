@@ -70,6 +70,9 @@ func (alerter *Alert) FindFailedAndRecoveredTests() (map[string]TestDetails, map
 		return nil, nil, err
 	}
 	contextToTestDetailMap := alerter.extractTestDetailItems(testAggregationsRaw)
+	if err := alerter.removeExcludedTests(&contextToTestDetailMap); err != nil {
+		return nil, nil, err
+	}
 	if err := alerter.deleteOutdatedAlertsFromDB(); err != nil {
 		return nil, nil, err
 	}
@@ -79,12 +82,6 @@ func (alerter *Alert) FindFailedAndRecoveredTests() (map[string]TestDetails, map
 	}
 	recoveredTests := alerter.extractRecoveredTests(contextToTestDetailMap, alreadyFiledAlerts)
 	newFailedTests := alerter.removeSuccessfulTests(contextToTestDetailMap)
-	if err := alerter.removeExcludedTests(newFailedTests); err != nil {
-		return nil, nil, err
-	}
-	if err := alerter.removeExcludedTests(recoveredTests); err != nil {
-		return nil, nil, err
-	}
 	alerter.removeAlreadyFiledAlerts(newFailedTests, alreadyFiledAlerts)
 	return newFailedTests, recoveredTests, nil
 }
@@ -145,38 +142,43 @@ func (alerter *Alert) removeSuccessfulTests(contextToTestDetailMap map[string]Te
 }
 
 //removeAlreadyFiledAlerts removes tests based on given test exclude regexp patterns
-func (alerter *Alert) removeExcludedTests(tests map[string]TestDetails) error {
-	testsSizeBefore := len(tests)
+func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
+	testsSizeBefore := len(*tests)
 	for _, patternStr := range alerter.cfg.TestsSkip {
 		alerter.log.V(3).Info(fmt.Sprintf("filtering out tests with expression %s", patternStr))
-		for testContext, _ := range tests {
+		for testContext, _ := range *tests {
 			matched, err := regexp.MatchString(patternStr, testContext)
 			if err != nil {
 				return errors.Wrapf(err, "failed to apply regexep %s", patternStr)
 			}
 			if matched {
-				delete(tests, testContext)
+				delete(*tests, testContext)
 			}
 		}
 	}
 
-	focusFilteredTests := map[string]TestDetails{}
-	for testContext, test := range tests {
+	for testContext, _ := range *tests {
+		matched := false
+		var err error
 		for _, patternStr := range alerter.cfg.TestsFocus {
-			matched, err := regexp.MatchString(patternStr, testContext)
+			matched, err = regexp.MatchString(patternStr, testContext)
 			if err != nil {
 				return errors.Wrapf(err, "failed to apply regexep %s", patternStr)
 			}
 			if matched {
-				focusFilteredTests[testContext] = test
 				break
 			}
 		}
+		if !matched {
+			delete(*tests, testContext)
+		} else {
+			matched = false
+		}
 	}
-	tests = focusFilteredTests
-	alerter.log.V(3).Info(fmt.Sprintf("filtered %d/%d tests using exclusion patterns", testsSizeBefore-len(tests), testsSizeBefore))
+	alerter.log.V(3).Info(fmt.Sprintf("filtered %d/%d tests using exclusion patterns", testsSizeBefore-len(*tests), testsSizeBefore))
 	return nil
 }
+
 
 //removeAlreadyFiledAlerts filters out tests that have already been alerted in recent n days
 func (alerter *Alert) removeAlreadyFiledAlerts(tests map[string]TestDetails, alreadyFiledAlerts AlertDocs) {
