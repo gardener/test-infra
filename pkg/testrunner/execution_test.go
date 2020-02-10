@@ -256,7 +256,7 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToBe(addExecution, executions[0], 1)
-	})
+	}, 10)
 
 	It("should add same test during execution in parallel steps", func() {
 		executions := [3]*execution{}

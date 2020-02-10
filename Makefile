@@ -53,7 +53,7 @@ remove-controller:
 
 .PHONY: install-prerequisites
 install-prerequisites:
-	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites --set="argo.containerRuntimeExecutor=pns" | kubectl apply -f -
+	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites | kubectl apply -f -
 
 .PHONY: remove-prerequisites
 remove-prerequisites:

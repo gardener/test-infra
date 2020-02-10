@@ -23,6 +23,7 @@ rules:
   - secrets
   verbs:
   - get
+  - create
   - list
   - watch
 - apiGroups:
@@ -44,6 +45,7 @@ rules:
   - testmachinery.sapcloud.io
   resources:
   - testruns
+  - testruns/status
   - testruns/finalizers
   verbs:
   - "*"

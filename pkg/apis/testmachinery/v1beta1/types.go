@@ -142,6 +142,10 @@ type TestrunStatus struct {
 	// Steps is the detailed summary of every step.
 	// It also shows all specific executed tests.
 	Steps []*StepStatus `json:"steps,omitempty"`
+
+	// ObservedGeneration is the most recent generation observed for this testrun.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // StepStatus is the status of Testflow step

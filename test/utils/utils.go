@@ -47,7 +47,7 @@ import (
 
 // RunTestrunUntilCompleted executes a testrun on a cluster until it is finished and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-// DEPRECATED: this is just a wrapper function to keep functionality across tests. In the future the RunTestrun should be directly used.
+// DEPRECATED: this is just a wrapper function to keep functionality across tests. In the future the RunTestrun function should be directly used.
 func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return RunTestrun(ctx, log, tmClient, tr, phase, timeout, WatchUntilCompletedFunc)
 }
@@ -63,15 +63,13 @@ func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interf
 	foundTestrun := tr.DeepCopy()
 	err = WatchTestrun(ctx, tmClient, foundTestrun, timeout, f)
 	if err != nil {
-		fmt.Println("Testrun:")
-		fmt.Println(util.PrettyPrintStruct(tr))
-		fmt.Println("FoundTestrun:")
-		fmt.Println(util.PrettyPrintStruct(foundTestrun))
+		DumpState(ctx, log, tmClient, tr, foundTestrun)
 		return nil, nil, errors.Wrapf(err, "error watching Testrun %s in Namespace %s", tr.Name, tr.Namespace)
 	}
 
 	wf, err := GetWorkflow(ctx, tmClient, foundTestrun)
 	if err != nil {
+		DumpState(ctx, log, tmClient, tr, foundTestrun)
 		return nil, nil, fmt.Errorf("cannot get Workflow for Testrun: %s: %s", tr.Name, err.Error())
 	}
 
@@ -169,6 +167,22 @@ func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
 	if !apierrors.IsNotFound(err) {
 		Expect(err).To(BeNil(), "Error deleting Testrun: %s", tr.Name)
 	}
+}
+
+// DumpState dumps the current testrun und workflow state
+func DumpState(ctx context.Context, log logr.Logger, client kubernetes.Interface, tr, foundTestrun *tmv1beta1.Testrun) {
+	fmt.Println("Testrun:")
+	fmt.Println(util.PrettyPrintStruct(tr))
+	fmt.Println("FoundTestrun:")
+	fmt.Println(util.PrettyPrintStruct(foundTestrun))
+
+	// try to get the workflow and dump its error message
+	wf, err := GetWorkflow(ctx, client, foundTestrun)
+	if err != nil {
+		log.Info("unable to get workflow for testrun", "error", err.Error(), "workflow", foundTestrun.Status.Workflow)
+		return
+	}
+	fmt.Printf("Argo Workflow %s (Phase %s): %s", wf.Name, wf.Status.Phase, wf.Status.Message)
 }
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.

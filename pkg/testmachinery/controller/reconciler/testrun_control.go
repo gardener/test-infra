@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"time"
 
@@ -107,16 +108,29 @@ func (r *TestmachineryReconciler) Reconcile(request reconcile.Request) (reconcil
 
 func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
 	log.V(5).Info("generate workflow")
-	var err error
-	rCtx.wf, err = r.generateWorkflow(ctx, rCtx.tr)
+	var (
+		k8sHelperResources []runtime.Object
+		err                error
+	)
+	rCtx.wf, k8sHelperResources, err = r.generateWorkflow(ctx, rCtx.tr)
 	if err != nil {
 		log.Error(err, "unable to setup workflow")
 		return reconcile.Result{}, err
 	}
+
+	// create additional kubernetes objects
+	log.Info("creating helper resources")
+	for _, obj := range k8sHelperResources {
+		log.V(5).Info(fmt.Sprintf("creating helper resource %s/%s", obj.GetObjectKind().GroupVersionKind().Group, obj.GetObjectKind().GroupVersionKind().Kind))
+		if err := r.Create(ctx, obj); err != nil {
+			log.Error(err, "unable to create resource", "group", obj.GetObjectKind().GroupVersionKind().Group, "kind", obj.GetObjectKind().GroupVersionKind().Kind)
+			return reconcile.Result{Requeue: true}, err
+		}
+	}
+
 	log.Info("creating workflow", "workflow", rCtx.wf.Name, "namespace", rCtx.wf.Namespace)
-	err = r.Create(ctx, rCtx.wf)
-	if err != nil {
-		r.Logger.Error(err, "unable to create workflow", "workflow", rCtx.wf.Name, "namespace", rCtx.wf.Namespace)
+	if err := r.Create(ctx, rCtx.wf); err != nil {
+		log.Error(err, "unable to create workflow", "workflow", rCtx.wf.Name, "namespace", rCtx.wf.Namespace)
 		return reconcile.Result{Requeue: true}, err
 	}
 
@@ -133,23 +147,28 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	}
 	rCtx.tr.Finalizers = trFinalizers.UnsortedList()
 
+	// update here to add finalizers
+	if err := r.Update(ctx, rCtx.tr); err != nil {
+		return reconcile.Result{}, nil
+	}
+
 	rCtx.updated = true
 	return reconcile.Result{}, nil
 }
 
-func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, error) {
+func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, []runtime.Object, error) {
 	tr, err := testrun.New(r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing testrun: %s", err.Error())
+		return nil, nil, fmt.Errorf("error parsing testrun: %s", err.Error())
 	}
 
 	wf, err := tr.GetWorkflow(testmachinery.GetWorkflowName(testrunDef), testrunDef.Namespace, r.getImagePullSecrets(ctx))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := controllerutil.SetControllerReference(testrunDef, wf, r.scheme); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	wfFinalizers := sets.NewString(wf.Finalizers...)
@@ -160,5 +179,5 @@ func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunD
 
 	testrunDef.Status.Steps = tr.Testflow.Flow.GetStatuses()
 
-	return wf, nil
+	return wf, tr.HelperResources, nil
 }

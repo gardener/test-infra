@@ -37,14 +37,17 @@ func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
 	globalConfig := config.New(tr.Spec.Config, config.LevelGlobal)
 	globalConfig = append(globalConfig, config.NewElement(createTestrunIDConfig(tr.Name), config.LevelGlobal))
 
+	kubeconfigs, secrets, err := ParseKubeconfigs(tr)
+	if err != nil {
+		return nil, err
+	}
+
 	// create initial prepare step
 	prepareDef, err := prepare.New("Prepare", false, true)
 	if err != nil {
 		return nil, err
 	}
-	if err := prepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
-		return nil, err
-	}
+	prepareDef.TestDefinition.AddConfig(kubeconfigs)
 	tf, err := testflow.New(testflow.FlowIDTest, tr.Spec.TestFlow, locs, globalConfig, prepareDef)
 	if err != nil {
 		return nil, err
@@ -54,15 +57,18 @@ func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := postPrepareDef.AddKubeconfigs(tr.Spec.Kubeconfigs); err != nil {
-		return nil, err
-	}
+	postPrepareDef.TestDefinition.AddConfig(kubeconfigs)
 	onExitFlow, err := testflow.New(testflow.FlowIDExit, tr.Spec.OnExit, locs, globalConfig, postPrepareDef)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Testrun{Info: tr, Testflow: tf, OnExitTestflow: onExitFlow}, nil
+	return &Testrun{
+		Info:            tr,
+		Testflow:        tf,
+		OnExitTestflow:  onExitFlow,
+		HelperResources: secrets,
+	}, nil
 }
 
 // GetWorkflow returns the argo workflow object of this testrun.
