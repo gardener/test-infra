@@ -16,31 +16,36 @@ package main
 
 import (
 	"context"
+	"fmt"
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/test-infra/pkg/logger"
 	flag "github.com/spf13/pflag"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"os"
 	"time"
 
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gardenercommon "github.com/gardener/gardener/pkg/operation/common"
 )
 
 var (
 	kubeconfigPath string
-	debug          bool
 
 	pollInterval = 30 * time.Second
 	timeout      = 30 * time.Minute
 )
 
 func init() {
-	log.SetFormatter(&log.TextFormatter{})
+	logger.InitFlags(nil)
+
 	// configuration flags
 	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the gardener cluster kubeconfigPath")
-	flag.BoolVar(&debug, "debug", false, "debug output.")
 }
 
 func main() {
@@ -48,14 +53,10 @@ func main() {
 
 	ctx := context.Background()
 	defer ctx.Done()
-	if debug {
-		log.SetLevel(log.DebugLevel)
-		log.Warn("Set debug log level")
-	}
 
 	// if file does not exist we exit with 0 as this means that gardener wasn't deployed
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-		log.Infof("gardener kubeconfig at %s does not exists", kubeconfigPath)
+		logger.Log.Error(nil, "gardener kubeconfig does not exists", "file", kubeconfigPath)
 		os.Exit(0)
 	}
 
@@ -63,13 +64,15 @@ func main() {
 		Scheme: kubernetes.GardenScheme,
 	}))
 	if err != nil {
-		log.Fatalf("cannot build config from path %s: %s", kubeconfigPath, err.Error())
+		logger.Log.Error(err, "cannot build config from path", "file", kubeconfigPath)
+		os.Exit(1)
 	}
 
 	shoots := &v1beta1.ShootList{}
 	err = k8sClient.Client().List(ctx, shoots)
 	if err != nil {
-		log.Fatalf("cannot fetch shoots from gardener: %s", err.Error())
+		logger.Log.Error(err, "cannot fetch shoots from gardener")
+		os.Exit(1)
 	}
 
 	shootQueue := make(map[*v1beta1.Shoot]bool, 0)
@@ -80,11 +83,12 @@ func main() {
 
 	err = wait.PollImmediate(pollInterval, timeout, func() (bool, error) {
 		for shoot, deleted := range shootQueue {
+			log := logger.Log.WithValues("name", shoot.Name, "namespace", shoot.Namespace)
 			if !deleted {
-				log.Infof("Delete shoot %s in namespace %s", shoot.Name, shoot.Namespace)
+				log.Info("delete shoot")
 				err = deleteShoot(ctx, k8sClient, shoot)
 				if err != nil {
-					log.Infof("unable to delete shoot %s in namespace %s: %s", shoot.Name, shoot.Namespace, err.Error())
+					log.Error(err, "unable to delete shoot")
 					continue
 				}
 				shootQueue[shoot] = true
@@ -99,26 +103,27 @@ func main() {
 				}
 			}
 
-			log.Infof("%d%%: Shoot state: %s, Description: %s; Waiting for shoot %s in namespace %s to be deleted...",
-				newShoot.Status.LastOperation.Progress, newShoot.Status.LastOperation.State, newShoot.Status.LastOperation.Description, shoot.Name, shoot.Namespace)
+			log.Info(fmt.Sprintf("%d%%: Shoot state: %s, Description: %s; Waiting for shoot %s in namespace %s to be deleted...",
+				newShoot.Status.LastOperation.Progress, newShoot.Status.LastOperation.State, newShoot.Status.LastOperation.Description, shoot.Name, shoot.Namespace))
 
 		}
 		if len(shootQueue) != 0 {
-			log.Infof("%d shoots are left to cleanup...", len(shootQueue))
+			logger.Log.Info(fmt.Sprintf("%d shoots are left to cleanup...", len(shootQueue)))
 			return false, nil
 		}
 		return true, nil
 	})
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Log.Error(err, "unable to delete all shoots")
+		os.Exit(1)
 	}
 
-	log.Info("Successfully deleted all shoots")
+	logger.Log.Info("Successfully deleted all shoots")
 }
 
 func deleteShoot(ctx context.Context, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) error {
-	newShoot := &v1beta1.Shoot{}
-	err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, newShoot)
+	oldShoot := &v1beta1.Shoot{}
+	err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, oldShoot)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -126,13 +131,13 @@ func deleteShoot(ctx context.Context, k8sClient kubernetes.Interface, shoot *v1b
 		return err
 	}
 
-	// todo: replace with gardener common.ConfirmationDeletion
-	newShoot.Annotations["confirmation.garden.sapcloud.io/deletion"] = "true"
-	err = k8sClient.Client().Update(ctx, newShoot)
+	newShoot := oldShoot.DeepCopy()
+	metav1.SetMetaDataAnnotation(&newShoot.ObjectMeta, gardenercommon.ConfirmationDeletion, "true")
+	patchBytes, err := kutil.CreateTwoWayMergePatch(oldShoot, newShoot)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
+		return fmt.Errorf("failed to patch bytes")
+	}
+	if err := k8sClient.Client().Patch(ctx, oldShoot, client.ConstantPatch(types.MergePatchType, patchBytes)); err != nil {
 		return err
 	}
 

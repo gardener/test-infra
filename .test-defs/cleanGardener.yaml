@@ -32,5 +32,5 @@ spec:
   command: [bash, -c]
   args:
   - >-
-    go run -mod=vendor ./cmd/cleanup/gardener --kubeconfig=$TM_KUBECONFIG_PATH/gardener.config --debug=true
+    go run -mod=vendor ./cmd/cleanup/gardener --kubeconfig=$TM_KUBECONFIG_PATH/gardener.config
   image: golang:1.13
