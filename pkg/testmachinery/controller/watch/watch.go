@@ -122,7 +122,9 @@ func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	ch <- tr
+	select {
+	case ch <- tr:
+	}
 
 	// close the channel if the testrun is completed
 	if util.Completed(tr.Status.Phase) {

@@ -162,7 +162,9 @@ func (rl RunList) RenderTable() string {
 func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
 	for _, c := range notifyChannels {
 		go func(c chan *Run) {
-			c <- run
+			select {
+			case c <- run:
+			}
 		}(c)
 	}
 }
