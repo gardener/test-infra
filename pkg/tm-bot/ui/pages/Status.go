@@ -155,7 +155,7 @@ func NewPRStatusPage(p *Page) http.HandlerFunc {
 	}
 }
 
-func NewPRStatusDetailPage(logger logr.Logger, auth auth.Authentication, basePath string) http.HandlerFunc {
+func NewPRStatusDetailPage(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {
 	p := Page{log: logger, auth: auth, basePath: basePath}
 	return func(w http.ResponseWriter, r *http.Request) {
 		trName := mux.Vars(r)["testrun"]

@@ -33,6 +33,7 @@ var (
 	serverCertFile string
 	serverKeyFile  string
 
+	disableAuth       bool
 	authOrg           string
 	oauthClientID     string
 	oauthClientSecret string
@@ -104,6 +105,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	fs.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
 
 	ghManagerConfig = github.ManagerInitFlags(fs)
+	fs.BoolVar(&disableAuth, "disable-auth", false, "disables the authentication. WARNING: only use for local development")
 	fs.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
 	fs.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
 	fs.StringVar(&oauthRedirectURL, "oauth-redirect-url", "", "GitHub redirect url")

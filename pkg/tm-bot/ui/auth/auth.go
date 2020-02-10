@@ -32,7 +32,7 @@ const (
 	sessionName = "tm"
 )
 
-type Authentication interface {
+type Provider interface {
 	Protect(http.HandlerFunc) http.HandlerFunc
 	Redirect(w http.ResponseWriter, r *http.Request)
 	GetAuthContext(r *http.Request) (AuthContext, error)
@@ -44,7 +44,7 @@ type AuthContext struct {
 	User  string
 }
 
-type auth struct {
+type githubOAuth struct {
 	log    logr.Logger
 	store  sessions.Store
 	config *oauth2.Config
@@ -52,9 +52,9 @@ type auth struct {
 	org string
 }
 
-func NewAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSecret string) *auth {
+func NewGitHubOAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSecret string) *githubOAuth {
 	gob.Register(AuthContext{})
-	return &auth{
+	return &githubOAuth{
 		log:   log,
 		org:   org,
 		store: sessions.NewCookieStore([]byte(cookieSecret)),
@@ -71,7 +71,7 @@ func NewAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSe
 	}
 }
 
-func (a *auth) Protect(next http.HandlerFunc) http.HandlerFunc {
+func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 		defer ctx.Done()
@@ -109,7 +109,7 @@ func (a *auth) Protect(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (a *auth) Redirect(w http.ResponseWriter, r *http.Request) {
+func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	err := r.ParseForm()
@@ -160,7 +160,7 @@ func (a *auth) Redirect(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAuthContext get the Token from the cookie store
-func (a *auth) GetAuthContext(r *http.Request) (AuthContext, error) {
+func (a *githubOAuth) GetAuthContext(r *http.Request) (AuthContext, error) {
 	session, err := a.store.Get(r, sessionName)
 	if err != nil {
 		return AuthContext{}, errors.Wrap(err, "unable to get session store")
@@ -177,7 +177,7 @@ func (a *auth) GetAuthContext(r *http.Request) (AuthContext, error) {
 	}
 }
 
-func (a *auth) Login(w http.ResponseWriter, r *http.Request) {
+func (a *githubOAuth) Login(w http.ResponseWriter, r *http.Request) {
 	if a.config.ClientID == "" || a.config.ClientSecret == "" {
 		a.log.Info("oauth client id or secret is not defined")
 		http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)

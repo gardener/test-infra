@@ -57,7 +57,11 @@ func setup(log logr.Logger, stopCh chan struct{}) (*mux.Router, error) {
 	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
 	r.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
 
-	a := auth.NewAuth(log.WithName("authentication"), authOrg, oauthClientID, oauthClientSecret, oauthRedirectURL, cookieSecret)
+	a := auth.NewNoAuth()
+	if !disableAuth {
+		a = auth.NewGitHubOAuth(log.WithName("authentication"), authOrg, oauthClientID, oauthClientSecret, oauthRedirectURL, cookieSecret)
+	}
+
 	ui.Serve(log, runs, uiBasePath, a, r)
 	return r, nil
 }
