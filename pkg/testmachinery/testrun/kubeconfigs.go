@@ -15,6 +15,7 @@
 package testrun
 
 import (
+	"encoding/base64"
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -52,6 +53,12 @@ func ParseKubeconfigs(tr *tmv1beta1.Testrun) ([]*config.Element, []runtime.Objec
 func addKubeconfig(configs *[]*config.Element, secrets *[]runtime.Object, tr *tmv1beta1.Testrun, name string, kubeconfig *strconf.StringOrConfig) error {
 	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
 	if kubeconfig.Type == strconf.String {
+
+		rawKubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
+		if err != nil {
+			return fmt.Errorf("unable to decode %s kubeconfig: %s", name, err.Error())
+		}
+
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-%s", tr.Name, name),
@@ -69,7 +76,7 @@ func addKubeconfig(configs *[]*config.Element, secrets *[]runtime.Object, tr *tm
 			},
 			Type: corev1.SecretTypeOpaque,
 			Data: map[string][]byte{
-				"kubeconfig": []byte(kubeconfig.String()),
+				"kubeconfig": rawKubeconfig,
 			},
 		}
 		*secrets = append(*secrets, secret)
