@@ -180,7 +180,7 @@ func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsTo
 			Name:       assetItemName,
 			Successful: isAssetItemSuccessful,
 			Dimension: testrunner.Dimension{
-				Description:       run.Testrun.GetAnnotations()[common.AnnotationTestrunPurpose],
+				Description:       run.Metadata.FlavorDescription,
 				Cloudprovider:     run.Metadata.CloudProvider,
 				KubernetesVersion: run.Metadata.KubernetesVersion,
 				OperatingSystem:   run.Metadata.OperatingSystem,

@@ -179,7 +179,6 @@ func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 	return nil
 }
 
-
 //removeAlreadyFiledAlerts filters out tests that have already been alerted in recent n days
 func (alerter *Alert) removeAlreadyFiledAlerts(tests map[string]TestDetails, alreadyFiledAlerts AlertDocs) {
 	testsSizeBefore := len(tests)
