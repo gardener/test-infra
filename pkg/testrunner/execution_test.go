@@ -105,7 +105,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 2, 0.01))
+				Expect(b.Seconds()).To(BeNumerically("~", 2, 0.1))
 			}
 		}, 10)
 
