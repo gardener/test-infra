@@ -20,6 +20,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
+	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 	"github.com/pkg/errors"
 	"io"
@@ -398,4 +400,49 @@ func Zipit(source, target string) error {
 	}
 
 	return err
+}
+
+// DocExists checks whether an elasticsearch doc of a testrun exists in index testmachinery-* index
+func DocExists(log logr.Logger, esConfig *elasticsearch.Config, testrunID, testrunStartTime string) (docExists bool) {
+	log.Info("check if docs have already been ingested")
+
+	payload := fmt.Sprintf(`{
+			"size": 0,
+			"query": {
+				"bool": {
+					"must": [
+						{ "match": { "tm.tr.id.keyword": "%s" } },
+						{ "match": { "tm.tr.startTime": "%s" } }
+					]
+				}
+			}
+		}`, testrunID, testrunStartTime)
+
+	if esConfig == nil {
+		log.Info("no elasticsearch config available, cannot check if doc already exists")
+		return false
+	}
+	esClient, err := elasticsearch.NewClient(*esConfig)
+	if err != nil {
+		log.Error(err, "couldn't create elasticsearch client")
+		return false
+	}
+	responseBytes, err := esClient.Request(http.MethodGet, "/testmachinery-*/_search", strings.NewReader(payload))
+	if err != nil {
+		log.Error(err, "elasticsearch request failed")
+		return false
+	}
+	var esHits ESHits
+	if err = json.Unmarshal(responseBytes, &esHits); err != nil {
+		log.Error(err, fmt.Sprintf("elasticsearch hits response unmarshal failed for payload: '%s'", string(responseBytes)))
+	}
+	return esHits.Hits.Total.Value > 0
+}
+
+type ESHits struct {
+	Hits struct {
+		Total struct {
+			Value int `json:"value"`
+		} `json:"total"`
+	} `json:"hits"`
 }

@@ -16,22 +16,21 @@ package result
 
 import (
 	"fmt"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
 	"math"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
 )
 
 // Collect collects results of all testruns and writes them to a file.
@@ -90,6 +89,9 @@ func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, t
 		return nil
 	}
 	if util.HasLabel(run.Testrun.ObjectMeta, common.LabelIngested) {
+		return nil
+	}
+	if util.DocExists(runLogger, cfg.ESConfig, run.Metadata.Testrun.ID, run.Testrun.Status.StartTime.UTC().Format("2006-01-02T15:04:05Z")) {
 		return nil
 	}
 	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName, cfg.ESConfig)
