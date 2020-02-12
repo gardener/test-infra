@@ -83,7 +83,7 @@ func (c *client) Request(httpMethod, rawPath string, payload io.Reader) ([]byte,
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, errors.Wrapf(err, "request %s returned status code %d", esURL, res.StatusCode)
+		return nil, errors.Errorf("request %s returned status code %d", esURL, res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
