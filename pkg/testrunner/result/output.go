@@ -163,6 +163,7 @@ func getExportedDocuments(log logr.Logger, cfg *testmachinery.S3Config, status t
 		if step.Phase != argov1.NodeSkipped && step.ExportArtifactKey != "" {
 			stepMeta := &testrunner.StepExportMetadata{
 				Metadata:    *metadata,
+				StepName:    step.Name,
 				TestDefName: step.TestDefinition.Name,
 				Phase:       step.Phase,
 				StartTime:   step.StartTime,

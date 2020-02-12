@@ -126,6 +126,7 @@ type TestrunMetadata struct {
 // StepExportMetadata is the metadata of one step of a testrun.
 type StepExportMetadata struct {
 	Metadata
+	StepName    string           `json:"stepName,omitempty"`
 	TestDefName string           `json:"testdefinition,omitempty"`
 	Phase       argov1.NodePhase `json:"phase,omitempty"`
 	StartTime   *metav1.Time     `json:"startTime,omitempty"`
