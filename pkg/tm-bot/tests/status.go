@@ -89,8 +89,8 @@ func (u *StatusUpdater) GetCommentID() int64 {
 }
 
 // Update updates the comment and the github state of the current PR
-func (u *StatusUpdater) Update(tr *tmv1beta1.Testrun, argoUrl string) error {
-	comment := FormatStatus(tr, argoUrl)
+func (u *StatusUpdater) Update(tr *tmv1beta1.Testrun, dashboardUrl string) error {
+	comment := FormatStatus(tr, dashboardUrl)
 	if err := u.UpdateComment(comment); err != nil {
 		return err
 	}
@@ -139,17 +139,17 @@ func FormatInitStatus(tr *tmv1beta1.Testrun) string {
 	return fmt.Sprintf(format, tr.Name)
 }
 
-func FormatStatus(tr *tmv1beta1.Testrun, argoUrl string) string {
+func FormatStatus(tr *tmv1beta1.Testrun, dashboardUrl string) string {
 	var (
-		argo        = tr.Status.Workflow
+		testrunName = tr.Name
 		statusTable = &strings.Builder{}
 	)
 
 	if len(tr.Status.Steps) != 0 {
 		output.RenderStatusTable(statusTable, tr.Status.Steps)
 	}
-	if argoUrl != "" {
-		argo = fmt.Sprintf("[%s](%s)", argo, argoUrl)
+	if dashboardUrl != "" {
+		testrunName = fmt.Sprintf("[%s](%s)", tr.Name, dashboardUrl)
 	}
 
 	format := `
@@ -160,5 +160,5 @@ Phase: %s
 %s
 </pre>
 `
-	return fmt.Sprintf(format, tr.Name, argo, util.TestrunStatusPhase(tr), statusTable.String())
+	return fmt.Sprintf(format, testrunName, tr.Status.Workflow, util.TestrunStatusPhase(tr), statusTable.String())
 }

@@ -57,8 +57,8 @@ func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 		OperatingSystem:   tr.Annotations[common.AnnotationOperatingSystem],
 		FlavorDescription: tr.Annotations[common.AnnotationFlavorDescription],
 		Testrun: TestrunMetadata{
-			ID:    tr.Name,
-			RunId: tr.Annotations[common.LabelTestrunRunID],
+			ID:             tr.Name,
+			ExecutionGroup: tr.Annotations[common.LabelTestrunExecutionGroup],
 		},
 	}
 }

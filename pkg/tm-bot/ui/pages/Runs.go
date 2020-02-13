@@ -90,9 +90,9 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 			rgName   string
 			listOpts = client.MatchingLabels(map[string]string{})
 		)
-		if rg, rgOk := r.URL.Query()["runID"]; rgOk {
+		if rg, rgOk := r.URL.Query()[common.DashboardExecutionGroupParameter]; rgOk {
 			rgName = rg[0]
-			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunRunID: rgName})
+			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunExecutionGroup: rgName})
 		}
 		runs := &v1beta1.TestrunList{}
 		if err := p.runs.GetClient().List(ctx, runs, listOpts); err != nil {
@@ -122,7 +122,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				testrun:   &testrun,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
+				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
 				Phase:     PhaseIcon(util.TestrunStatusPhase(&tr)),
 				StartTime: startTime,
 				Duration:  d.String(),
@@ -190,7 +190,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				testrun:   tr,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				RunID:     tr.GetLabels()[common.LabelTestrunRunID],
+				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
 				Phase:     PhaseIcon(util.TestrunStatusPhase(tr)),
 				StartTime: startTime,
 				Duration:  d.String(),
@@ -288,7 +288,7 @@ func (l rungroupItemList) Len() int      { return len(l) }
 func (l rungroupItemList) Swap(a, b int) { l[a], l[b] = l[b], l[a] }
 func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 	list := *l
-	runId, ok := tr.GetLabels()[common.LabelTestrunRunID]
+	runId, ok := tr.GetLabels()[common.LabelTestrunExecutionGroup]
 	if !ok {
 		return
 	}

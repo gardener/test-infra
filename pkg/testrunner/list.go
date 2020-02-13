@@ -62,8 +62,16 @@ func (rl RunList) Errors() error {
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
-	runID := uuid.New().String()
-	log.Info(fmt.Sprintf("Starting testruns execution group %s", runID))
+	executiongroupID := uuid.New().String()
+	log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
+
+	// Print dashboard url if possible
+	TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
+	if err != nil {
+		log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
+	} else {
+		log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)))
+	}
 
 	executor, err := NewExecutor(log, config.ExecutorConfig)
 	if err != nil {
@@ -81,7 +89,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 			f       func()
 		)
 		f = func() {
-			rl[trI].SetRunID(runID)
+			rl[trI].SetRunID(executiongroupID)
 			triggerRunEvent(notify, rl[trI])
 			rl[trI].Exec(log, config, testrunNamePrefix)
 			if rl[trI].Metadata != nil {

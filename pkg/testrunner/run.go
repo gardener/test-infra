@@ -29,9 +29,9 @@ func (r *Run) SetRunID(id string) {
 	if r.Testrun.Labels == nil {
 		r.Testrun.Labels = make(map[string]string, 1)
 	}
-	r.Testrun.Labels[common.LabelTestrunRunID] = id
+	r.Testrun.Labels[common.LabelTestrunExecutionGroup] = id
 	if r.Metadata != nil {
-		r.Metadata.Testrun.RunId = id
+		r.Metadata.Testrun.ExecutionGroup = id
 	}
 }
 

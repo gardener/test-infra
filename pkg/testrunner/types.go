@@ -116,8 +116,8 @@ type TestrunMetadata struct {
 	// Name of the testrun crd object.
 	ID string `json:"id"`
 
-	// Name of the run this test belongs to
-	RunId string `json:"runID,omitempty"`
+	// ID of the execution group this test belongs to
+	ExecutionGroup string `json:"executionGroup,omitempty"`
 
 	// StartTime of the testrun.
 	StartTime *metav1.Time `json:"startTime"`
