@@ -56,15 +56,18 @@ const (
 	// AnnotationTestDefID is the unique name of origin TestDefinition in a specific flow and step.
 	AnnotationTestDefID = "testmachinery.sapcloud.io/ID"
 
-	// LabelTestrunRunID is the label to specify the unique name of the run (multiple testruns) this test belongs to.
+	// LabelTestrunExecutionGroup is the label to specify the unique name of the run (multiple testruns) this test belongs to.
 	// A run represents all tests that are running from one testrunner.
-	LabelTestrunRunID = "testrunner.testmachinery.sapcloud.io/runID"
+	LabelTestrunExecutionGroup = "testrunner.testmachinery.sapcloud.io/execution-group"
 
 	// LabelIngested is the label that states whether the result of a testrun is already ingested into a persistent storage (db).
 	LabelIngested = "testrunner.testmachinery.sapcloud.io/ingested"
 
 	// LabelUploadedToGithub is the label to specify whether the testrun result was uploaded to github
 	LabelUploadedToGithub = "testrunner.testmachinery.sapcloud.io/uploaded-to-github"
+
+	// LabelTMDashboardIngress is the label to identify TestMachinery ingress objects.
+	LabelTMDashboardIngress = "testmachinery.garden.cloud/tm-dashboard"
 
 	// images
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
@@ -76,6 +79,9 @@ const (
 	GardenerExtensionsRepo = "https://github.com/gardener/gardener-extensions.git"
 
 	PatternLatest = "latest"
+
+	// TM Dashboard
+	DashboardExecutionGroupParameter = "runID"
 )
 
 var (

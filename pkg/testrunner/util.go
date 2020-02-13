@@ -17,6 +17,7 @@ package testrunner
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/common"
 	"k8s.io/apimachinery/pkg/types"
 	"net/url"
 	"path"
@@ -57,12 +58,45 @@ func GetGrafanaURLFromHostForStep(host string, tr *tmv1beta1.Testrun, step *tmv1
 	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, step.TestDefinition.Name, tr.Status.Workflow)
 }
 
-// GetGrafanaHost returns the host of the grafana instance int he monitoring ns
+// GetGrafanaHost returns the host of the grafana instance in the monitoring namespace
 func GetGrafanaHost(tmClient client.Client) (string, error) {
 	return GetHostURLFromIngress(tmClient, client.ObjectKey{Namespace: "monitoring", Name: "grafana"})
 }
 
-// GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
+// GetTmDashboardURLForTestrun returns the dashboard URL to a testrun
+func GetTmDashboardURLForTestrun(tmClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
+	host, err := GetTMDashboardHost(tmClient)
+	if err != nil {
+		return "", nil
+	}
+	return GetTmDashboardURLFromHostForTestrun(host, tr), nil
+}
+
+// GetTmDashboardURLFromHostForExecutionGroup returns the dashboard URL to a execution group with a given dashboard host
+func GetTmDashboardURLFromHostForExecutionGroup(host, executiongroupID string) string {
+	return fmt.Sprintf("%s/testruns?%s=%s", host, common.DashboardExecutionGroupParameter, executiongroupID)
+}
+
+// GetTmDashboardURLFromHostForTestrun returns the dashboard URL to a testrun with a given dashboard host
+func GetTmDashboardURLFromHostForTestrun(host string, tr *tmv1beta1.Testrun) string {
+	return fmt.Sprintf("%s/testruns/%s/%s", host, tr.Namespace, tr.Name)
+}
+
+// GetTMDashboardHost returns the host of the TestMachinery Dashboard
+func GetTMDashboardHost(tmClient client.Client) (string, error) {
+	ingressList := &v1beta1.IngressList{}
+	if err := tmClient.List(context.TODO(), ingressList); err != nil {
+		return "", errors.Wrapf(err, "unable to list TestMachinery Dashboard ingress with label %s", common.LabelTMDashboardIngress)
+	}
+
+	if len(ingressList.Items) == 0 {
+		return "", errors.Errorf("no ingresses found for TestMachinery Dashboard with label %s", common.LabelTMDashboardIngress)
+	}
+
+	return GetHostURLFromIngressObject(&ingressList.Items[0])
+}
+
+// GetClusterDomainURL tries to derive the cluster domain url from a grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
 func GetClusterDomainURL(tmClient client.Client) (string, error) {
 	// try to derive the cluster domain url from grafana ingress if possible
 	// return err if the ingress cannot be found
@@ -99,6 +133,11 @@ func GetHostURLFromIngress(tmClient client.Client, obj types.NamespacedName) (st
 		return "", errors.Errorf("cannot get grafana ingress: %v", err)
 	}
 
+	return GetHostURLFromIngressObject(ingress)
+}
+
+// GetHostURLFromIngressObject tries to derive the cluster domain url from an ingeress object. Returns an error if the ingress is in unexpected form.
+func GetHostURLFromIngressObject(ingress *v1beta1.Ingress) (string, error) {
 	if len(ingress.Spec.Rules) == 0 {
 		return "", errors.New("no rules defined")
 	}

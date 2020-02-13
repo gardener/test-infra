@@ -52,9 +52,10 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 		return nil, err
 	}
 	defer runs.Remove(event)
-	argoUrl, err := testrunner.GetArgoURL(r.watch.Client(), tr)
+
+	dashboardURL, err := testrunner.GetTmDashboardURLForTestrun(r.watch.Client(), tr)
 	if err != nil {
-		log.WithValues("Testrun", tr.Name).Error(err, "unable to construct argourl")
+		log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
 	}
 
 	testrunPhase := tmv1beta1.PhaseStatusInit
@@ -68,7 +69,7 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 		}
 
 		if testrunPhase != tmv1beta1.PhaseStatusInit {
-			if err := statusUpdater.Update(tr, argoUrl); err != nil {
+			if err := statusUpdater.Update(tr, dashboardURL); err != nil {
 				log.Error(err, "unable to update comment", "Testrun", tr.Name)
 			}
 		}
