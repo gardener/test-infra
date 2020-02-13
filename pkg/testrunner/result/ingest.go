@@ -65,6 +65,7 @@ func IngestFile(log logr.Logger, file, esCfgName string, esConfig *elasticsearch
 		if err := esClient.BulkFromFile(file); err != nil {
 			return err
 		}
+		return nil
 	}
 	// keep both implementations for migration across landscapes
 	if esCfgName != "" {
