@@ -223,6 +223,10 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				startTime = step.StartTime.Format(time.RFC822)
 			}
 			d := time.Duration(step.Duration) * time.Second
+			if step.Duration == 0 {
+				d = time.Now().Sub(step.StartTime.Time)
+				d = d / time.Second * time.Second // remove unnecessary milliseconds
+			}
 			item.Steps[i] = testrunStepStatusItem{
 				step:      step,
 				Name:      step.TestDefinition.Name,
