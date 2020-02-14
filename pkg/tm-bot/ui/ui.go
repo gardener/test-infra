@@ -30,6 +30,7 @@ func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Provider, 
 
 	r.HandleFunc("/oauth/redirect", a.Redirect)
 	r.HandleFunc("/login", a.Login)
+	r.HandleFunc("/logout", a.Logout)
 
 	page := pages.New(log, runs, a, basePath)
 

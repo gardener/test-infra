@@ -121,7 +121,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 			d := time.Duration(tr.Status.Duration) * time.Second
 			if tr.Status.Duration == 0 {
 				d = time.Now().Sub(tr.Status.StartTime.Time)
-				d = d/time.Second*time.Second // remove unnecessary milliseconds
+				d = d / time.Second * time.Second // remove unnecessary milliseconds
 			}
 
 			testrunsList[i] = testrunItem{
@@ -187,7 +187,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 		d := time.Duration(tr.Status.Duration) * time.Second
 		if tr.Status.Duration == 0 {
 			d = time.Now().Sub(tr.Status.StartTime.Time)
-			d = d/time.Second*time.Second // remove unnecessary milliseconds
+			d = d / time.Second * time.Second // remove unnecessary milliseconds
 		}
 
 		statusTable := &strings.Builder{}

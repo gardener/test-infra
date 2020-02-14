@@ -67,6 +67,10 @@ ul.noBullets li {
     border: #fff 1px solid;
 }
 
+.mdl-layout__header .username {
+    margin-right: 10px;
+}
+
 .commandhelp-card-wide {
     width: 50%;
     margin: 10px auto;
