@@ -30,6 +30,8 @@ import (
 
 const (
 	sessionName = "tm"
+	// max cookie age is 48 hours
+	maxAge = 48 * 60 * 60
 )
 
 type Provider interface {
@@ -37,6 +39,7 @@ type Provider interface {
 	Redirect(w http.ResponseWriter, r *http.Request)
 	GetAuthContext(r *http.Request) (AuthContext, error)
 	Login(w http.ResponseWriter, r *http.Request)
+	Logout(w http.ResponseWriter, r *http.Request)
 }
 
 type AuthContext struct {
@@ -146,6 +149,11 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	if session.Options == nil {
+		session.Options = &sessions.Options{}
+	}
+	session.Options.MaxAge = maxAge
 	session.Values["context"] = AuthContext{
 		Token: *tok,
 		User:  user.GetLogin(),
@@ -185,4 +193,20 @@ func (a *githubOAuth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	authURL := a.config.AuthCodeURL("/", oauth2.AccessTypeOffline)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+func (a *githubOAuth) Logout(w http.ResponseWriter, r *http.Request) {
+	session, err := a.store.Get(r, sessionName)
+	if err != nil {
+		a.log.Error(err, "unable to get session store")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	session.Options.MaxAge = -1
+	if err := session.Save(r, w); err != nil {
+		a.log.Error(err, "unable to save session store")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

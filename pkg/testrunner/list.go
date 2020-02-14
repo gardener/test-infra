@@ -152,6 +152,7 @@ func (rl RunList) RenderTable() string {
 		}
 		dimensions[dimension] = append(dimensions[dimension], []string{"", name})
 
+		util.OrderStepsStatus(tr.Status.Steps)
 		for _, s := range tr.Status.Steps {
 			d := time.Duration(s.Duration) * time.Second
 			dimensions[dimension] = append(dimensions[dimension], []string{"", "", s.TestDefinition.Name, s.Position.Step, string(s.Phase), d.String()})

@@ -14,7 +14,10 @@
 
 package auth
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 // noAuth is a dummy implementation that implements the authentication interface
 // but with no authentication
@@ -28,18 +31,31 @@ func NewNoAuth() Provider {
 	return &noAuth{}
 }
 
-func (_ *noAuth) Protect(handler http.HandlerFunc) http.HandlerFunc {
-	return handler
+func (a *noAuth) Protect(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !a.loggedIn {
+			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
+		}
+		handler(w, r)
+	}
 }
 
-func (_ *noAuth) Redirect(w http.ResponseWriter, r *http.Request) {
+func (_ *noAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
 
+func (a *noAuth) GetAuthContext(r *http.Request) (AuthContext, error) {
+	if a.loggedIn {
+		return AuthContext{
+			User: "demo",
+		}, nil
+	}
+	return AuthContext{}, errors.New("user not logged in")
 }
 
-func (_ *noAuth) GetAuthContext(r *http.Request) (AuthContext, error) {
-	return AuthContext{
-		User: "demo",
-	}, nil
+func (a *noAuth) Login(w http.ResponseWriter, r *http.Request) {
+	a.loggedIn = true
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
-
-func (_ *noAuth) Login(w http.ResponseWriter, r *http.Request) {}
+func (a *noAuth) Logout(w http.ResponseWriter, r *http.Request) {
+	a.loggedIn = false
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}

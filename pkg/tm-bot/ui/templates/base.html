@@ -23,7 +23,8 @@
             <span class="mdl-layout-title header-title">{{block "pageTitle" .Arguments}}{{template "title" .}}{{end}}</span>
             <div class="mdl-layout-spacer"></div>
             {{ if .Authenticated }}
-                <div>{{ .User.Name }}</div>
+                <div class="username">{{ .User.Name }}</div>
+                <a class="mdl-button mdl-js-button login-btn" href="/logout">Logout</a>
             {{ else }}
                 <a class="mdl-button mdl-js-button login-btn" href="/login">Login</a>
             {{ end }}
