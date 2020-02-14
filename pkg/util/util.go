@@ -404,7 +404,7 @@ func Zipit(source, target string) error {
 
 // DocExists checks whether an elasticsearch doc of a testrun exists in index testmachinery-* index
 func DocExists(log logr.Logger, esConfig *elasticsearch.Config, testrunID, testrunStartTime string) (docExists bool) {
-	log.Info("check if docs have already been ingested")
+	log.V(2).Info("check if docs have already been ingested")
 
 	payload := fmt.Sprintf(`{
 			"size": 0,
