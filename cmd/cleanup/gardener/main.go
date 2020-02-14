@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
 	flag "github.com/spf13/pflag"
@@ -25,7 +26,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -54,6 +54,13 @@ func main() {
 	ctx := context.Background()
 	defer ctx.Done()
 
+	log, err := logger.NewCliLogger()
+	if err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
+	logger.SetLogger(log)
+
 	// if file does not exist we exit with 0 as this means that gardener wasn't deployed
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
 		logger.Log.Error(nil, "gardener kubeconfig does not exists", "file", kubeconfigPath)
@@ -68,14 +75,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	shoots := &v1beta1.ShootList{}
+	shoots := &gardencorev1beta1.ShootList{}
 	err = k8sClient.Client().List(ctx, shoots)
 	if err != nil {
 		logger.Log.Error(err, "cannot fetch shoots from gardener")
 		os.Exit(1)
 	}
 
-	shootQueue := make(map[*v1beta1.Shoot]bool, 0)
+	shootQueue := make(map[*gardencorev1beta1.Shoot]bool, 0)
 	for _, s := range shoots.Items {
 		shoot := s
 		shootQueue[&shoot] = false
@@ -94,7 +101,7 @@ func main() {
 				shootQueue[shoot] = true
 			}
 
-			newShoot := &v1beta1.Shoot{}
+			newShoot := &gardencorev1beta1.Shoot{}
 			err = k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, newShoot)
 			if err != nil {
 				if errors.IsNotFound(err) {
@@ -121,8 +128,8 @@ func main() {
 	logger.Log.Info("Successfully deleted all shoots")
 }
 
-func deleteShoot(ctx context.Context, k8sClient kubernetes.Interface, shoot *v1beta1.Shoot) error {
-	oldShoot := &v1beta1.Shoot{}
+func deleteShoot(ctx context.Context, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
+	oldShoot := &gardencorev1beta1.Shoot{}
 	err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, oldShoot)
 	if err != nil {
 		if errors.IsNotFound(err) {
