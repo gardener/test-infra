@@ -171,7 +171,7 @@ func init() {
 	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
-	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "DEPRECTED: The elasticsearch secret-server config name.")
+	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
 	runCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
 	runCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
 	runCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")

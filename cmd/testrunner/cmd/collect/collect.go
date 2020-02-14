@@ -21,6 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -48,6 +49,7 @@ var (
 	githubPassword          string
 	uploadStatusAsset       bool
 	assetPrefix             string
+	esConfig = elasticsearch.Config{}
 )
 
 // AddCommand adds collect to a command.
@@ -76,6 +78,11 @@ var collectCmd = &cobra.Command{
 			UploadStatusAsset:       uploadStatusAsset,
 			AssetPrefix:             assetPrefix,
 		}
+
+		if esConfig.Endpoint != "" {
+			collectConfig.ESConfig = &esConfig
+		}
+
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
 		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
@@ -129,7 +136,10 @@ func init() {
 
 	// parameter flags
 	collectCmd.Flags().StringVarP(&outputDirPath, "output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
-	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "The elasticsearch secret-server config name.")
+	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "DEPRECATED: The elasticsearch secret-server config name.")
+	collectCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
+	collectCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
+	collectCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
 	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
