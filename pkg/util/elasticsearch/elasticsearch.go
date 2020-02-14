@@ -56,6 +56,13 @@ func NewClient(cfg Config) (Client, error) {
 	}
 	u.Path = ""
 
+	if cfg.Username == "" {
+		return nil, errors.New("elasticsearch username has to be defined")
+	}
+	if cfg.Password == "" {
+		return nil, errors.New("elasticsearch password has to be defined")
+	}
+
 	return &client{
 		Client:   http.DefaultClient,
 		endpoint: u.String(),

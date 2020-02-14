@@ -50,7 +50,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 1, 0.01))
+				Expect(b.Seconds()).To(BeNumerically("~", 1, 0.1))
 			}
 		}, 10)
 
@@ -76,7 +76,7 @@ var _ = Describe("Executor tests", func() {
 				before := executions[i-1]
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 0, 0.01))
+				Expect(b.Seconds()).To(BeNumerically("~", 0, 0.1))
 			}
 		}, 10)
 
@@ -288,7 +288,7 @@ var _ = Describe("Executor tests", func() {
 
 func expectExecutionsToBe(e1, e2 *execution, expDurationSeconds int) {
 	d := e1.start.Sub(e2.start)
-	ExpectWithOffset(1, d.Seconds()).To(BeNumerically("~", expDurationSeconds, 0.01), "duration is %fs but expected %ds", d.Seconds(), expDurationSeconds)
+	ExpectWithOffset(1, d.Seconds()).To(BeNumerically("~", expDurationSeconds, 0.1), "duration is %fs but expected %ds", d.Seconds(), expDurationSeconds)
 }
 
 func newExecution(i int) *execution {
