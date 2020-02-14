@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	"math"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -110,7 +111,9 @@ func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextA
 				break
 			}
 		}
-		successful := !testFailedContinuously && int(testDoc.SuccessRate.Value) >= alerter.cfg.SuccessRateThresholdPercent
+		// use a slightly higher threshold for recovered tests too avoid failure/recovered flakyness
+		recoverThreshold := int(math.Min(float64(alerter.cfg.SuccessRateThresholdPercent + 5), float64(100)))
+		successful := !testFailedContinuously && int(testDoc.SuccessRate.Value) >= recoverThreshold
 		parsedTestDetail := TestDetails{
 			Name:                testDocDetails.Name,
 			LastFailedTimestamp: testDocDetails.LastTimestamp,
