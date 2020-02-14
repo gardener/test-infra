@@ -1,0 +1,85 @@
+body {
+    line-height: 1.4;
+    background: #f4f4f4;
+    color: #444;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 16px !important;
+}
+
+.mdl-layout__drawer footer {
+    text-align: center;
+    color: darkgray;
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    font-size: small;
+}
+
+.mdl-navigation__link .material-icons {
+    font-size: 14px;
+}
+
+.logo {
+    height: 50px;
+    margin-right: 10px;
+}
+
+.header-title a {
+    color: white;
+}
+
+.mdl-layout__header .login-btn {
+    color: #fff;
+    border: #fff 1px solid;
+}
+
+.mdl-layout__header .username {
+    margin-right: 10px;
+}
+
+.runs_container .mdl-cell {
+    width: auto;
+}
+
+/* table */
+
+table {
+    background: #fff;
+
+    border-collapse: collapse;
+    display: table;
+    width: calc(100% - 20px);
+    margin: 20px;
+}
+
+.table-card {
+    overflow: auto;
+    margin: 10px;
+    border-radius: 2px;
+    box-shadow: 0 0 4px #e0e0e0;
+}
+
+.table-card table {
+    margin: 0;
+    width: 100%;
+}
+
+ul.noBullets {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+ul.noBullets li {
+    margin: 0 8px;
+    display: inline-block;
+}
+
+.mdl-data-table__cell--numeric.actions .mdl-button {
+    margin-right: 10px;
+}
+
+.icon-cell {
+    width: 32px;
+}
+
