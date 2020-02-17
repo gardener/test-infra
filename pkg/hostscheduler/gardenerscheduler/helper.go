@@ -66,14 +66,14 @@ func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClie
 		if err != nil {
 			logger.Info("Wait for shoot to be reconciled...")
 			logger.V(3).Info(err.Error())
-			return false, nil
+			return retry.MinorError(err)
 		}
 		shoot = shootObject
 		if err := shootReady(shoot); err != nil {
 			logger.Info("Wait for shoot to be reconciled...", "status", err.Error())
-			return false, nil
+			return retry.NotOk()
 		}
-		return true, nil
+		return retry.Ok()
 	})
 	if err != nil {
 		return nil, err

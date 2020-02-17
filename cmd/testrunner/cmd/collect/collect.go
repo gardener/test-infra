@@ -49,7 +49,7 @@ var (
 	githubPassword          string
 	uploadStatusAsset       bool
 	assetPrefix             string
-	esConfig = elasticsearch.Config{}
+	esConfig                = elasticsearch.Config{}
 )
 
 // AddCommand adds collect to a command.

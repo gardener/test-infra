@@ -71,8 +71,9 @@ func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc,
 		}
 
 		labelsRequest := &containerpb.SetLabelsRequest{
-			Name:           s.getClusterName(cluster.GetName()),
-			ResourceLabels: labels,
+			Name:             s.getClusterName(cluster.GetName()),
+			ResourceLabels:   labels,
+			LabelFingerprint: cluster.LabelFingerprint,
 		}
 		o, err := s.client.SetLabels(ctx, labelsRequest)
 		if err != nil {

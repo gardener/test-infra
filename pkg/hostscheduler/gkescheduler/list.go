@@ -105,6 +105,9 @@ func printTable(log logr.Logger, clusters []*containerpb.Cluster, disableHeaders
 }
 
 func parseTimestamp(log logr.Logger, ts string) time.Time {
+	if ts == "" {
+		return time.Time{}
+	}
 	i, err := strconv.ParseInt(ts, 10, 64)
 	if err != nil {
 		log.V(3).Info(err.Error())

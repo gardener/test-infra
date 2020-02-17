@@ -17,10 +17,11 @@ import (
 	"context"
 	"fmt"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/pkg/errors"
-
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,34 +49,29 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 
-		if isLocked(shoot) && isHibernated(shoot) {
-			s.log.V(3).Info("Shoot is already locked and hibernated")
+		if isFree(shoot) && isHibernated(shoot) {
+			s.log.V(3).Info("Shoot is already free and hibernated")
 			return nil
 		}
 
 		// Do not set any hibernation schedule as hibernation should be handled automatically by this hostscheduler.
-		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot get shoot %s: %s", shoot.Name, err.Error())
-		}
 
-		err = s.client.Client().Update(ctx, shoot)
+		newShoot := shoot.DeepCopy()
+		newShoot.Spec.Hibernation = &gardencorev1beta1.Hibernation{Enabled: &hibernationTrue}
+		newShoot.Labels[ShootLabelStatus] = ShootStatusFree
+		delete(newShoot.Annotations, ShootAnnotationLockedAt)
+		delete(newShoot.Annotations, ShootAnnotationID)
+		patchBytes, err := kutil.CreateTwoWayMergePatch(shoot, newShoot)
 		if err != nil {
+			return fmt.Errorf("failed to patch bytes")
+		}
+		if err := s.client.Client().Patch(ctx, shoot, client.ConstantPatch(types.MergePatchType, patchBytes)); err != nil {
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 
 		shoot, err = WaitUntilShootIsReconciled(ctx, s.log, s.client, shoot)
 		if err != nil {
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
-		}
-
-		shoot.Spec.Hibernation = &gardencorev1beta1.Hibernation{Enabled: &hibernationTrue}
-		shoot.Labels[ShootLabelStatus] = ShootStatusFree
-		delete(shoot.Annotations, ShootAnnotationLockedAt)
-		delete(shoot.Annotations, ShootAnnotationID)
-		err = s.client.Client().Update(ctx, shoot)
-		if err != nil {
-			return fmt.Errorf("cannot update shoot annotations %s: %s", shoot.Name, err.Error())
 		}
 		return nil
 	}, nil

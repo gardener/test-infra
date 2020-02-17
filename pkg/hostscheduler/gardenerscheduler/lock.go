@@ -189,7 +189,7 @@ func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient k
 func writeHostInformationToFile(log logr.Logger, shoot *gardencorev1beta1.Shoot) error {
 	hostConfigPath, err := hostscheduler.HostConfigFilePath()
 	if err != nil {
-		log.V(3).Info("hostconfig is not written: %s", err.Error())
+		log.V(3).Info("hostconfig is not written", "error", err.Error())
 		return nil
 	}
 

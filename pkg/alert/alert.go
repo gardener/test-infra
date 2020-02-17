@@ -112,7 +112,7 @@ func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextA
 			}
 		}
 		// use a slightly higher threshold for recovered tests too avoid failure/recovered flakyness
-		recoverThreshold := int(math.Min(float64(alerter.cfg.SuccessRateThresholdPercent + 5), float64(100)))
+		recoverThreshold := int(math.Min(float64(alerter.cfg.SuccessRateThresholdPercent+5), float64(100)))
 		successful := !testFailedContinuously && int(testDoc.SuccessRate.Value) >= recoverThreshold
 		parsedTestDetail := TestDetails{
 			Name:                testDocDetails.Name,

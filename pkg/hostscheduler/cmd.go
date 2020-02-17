@@ -98,7 +98,7 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		defer ctx.Done()
 		if err := lockFunc(ctx); err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 
@@ -118,12 +118,12 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		err := releaseCleanupFunc(ctx)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 
 		if err := releaseFunc(ctx); err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 
@@ -137,7 +137,7 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		defer ctx.Done()
 		if err := cleanupFunc(ctx); err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 
@@ -151,7 +151,7 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		defer ctx.Done()
 		if err := listFunc(ctx); err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 
@@ -165,7 +165,7 @@ func AddSchedulerCommandsFromScheduler(rootCmd *cobra.Command, scheduler Interfa
 		defer ctx.Done()
 		if err := recreateFunc(ctx); err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 

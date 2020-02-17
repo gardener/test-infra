@@ -73,8 +73,9 @@ func (s *gkescheduler) Release(flagset *flag.FlagSet) (hostscheduler.SchedulerFu
 		delete(labels, ClusterLabelID)
 
 		labelsRequest := &containerpb.SetLabelsRequest{
-			Name:           s.getClusterName(s.hostname),
-			ResourceLabels: labels,
+			Name:             s.getClusterName(s.hostname),
+			ResourceLabels:   labels,
+			LabelFingerprint: cluster.LabelFingerprint,
 		}
 		o, err := s.client.SetLabels(ctx, labelsRequest)
 		if err != nil {
