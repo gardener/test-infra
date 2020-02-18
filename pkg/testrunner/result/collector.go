@@ -70,7 +70,7 @@ func (c *Collector) PreRunShoots(kubeconfigPath string, runs testrunner.RunList)
 	if err := os.MkdirAll(telemetryOutputDir, os.ModePerm); err != nil {
 		return err
 	}
-	if _, err := c.telemetry.StartForShoots(kubeconfigPath, telemetryOutputDir, shootsToWatch); err != nil {
+	if err := c.telemetry.StartForShoots(kubeconfigPath, telemetryOutputDir, shootsToWatch); err != nil {
 		return errors.Wrap(err, "unable to start telemetry controller")
 	}
 	c.log.V(3).Info("registered shoots for telemetry measurement", "num", len(shootsToWatch))
@@ -85,7 +85,7 @@ func (c *Collector) PreRunGardener(kubeconfigPath string) error {
 	if err := os.MkdirAll(telemetryOutputDir, os.ModePerm); err != nil {
 		return err
 	}
-	if _, err := c.telemetry.Start(kubeconfigPath, telemetryOutputDir); err != nil {
+	if err := c.telemetry.Start(kubeconfigPath, telemetryOutputDir); err != nil {
 		return errors.Wrap(err, "unable to start telemetry controller")
 	}
 	return nil
@@ -108,7 +108,7 @@ func (c *Collector) watchNewShoots() {
 
 			// start the controller if it is not already started
 			if !c.telemetry.IsStarted() {
-				if _, err := c.telemetry.Start(c.kubeconfigPath, path.Join(c.config.OutputDir, "telemetry")); err != nil {
+				if err := c.telemetry.Start(c.kubeconfigPath, path.Join(c.config.OutputDir, "telemetry")); err != nil {
 					c.log.Error(err, "unable to start telemetry controller")
 				}
 			}

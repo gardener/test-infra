@@ -62,9 +62,6 @@ func GetRootCommand() *cobra.Command {
 					os.Exit(1)
 				}
 
-				// Create the output file.
-				config.OutputFile = fmt.Sprintf("%s/results.csv", config.OutputDir)
-
 				// React on OS signals and init the shut down steps.
 				signalCh := make(chan os.Signal, 2)
 				signal.Notify(signalCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

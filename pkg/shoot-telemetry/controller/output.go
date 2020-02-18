@@ -16,6 +16,7 @@ package controller
 
 import (
 	"encoding/csv"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"time"
@@ -27,7 +28,27 @@ import (
 )
 
 func (c *controller) generateOutput() error {
-	outputFile, err := os.OpenFile(c.config.OutputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logger.Log.V(5).Info("Write measurements to file")
+
+	// Add an entry for every sample.
+	c.targetsMutex.Lock()
+	defer c.targetsMutex.Unlock()
+	for key, target := range c.targets {
+		if err := c.generateOutputForTarget(common.GetResultFile(c.config.OutputDir, key), key, target); err != nil {
+			return err
+		}
+	}
+
+	// Reset the in memory state.
+	for key := range c.targets {
+		c.targets[key].series = []*sample.Sample{}
+	}
+
+	return nil
+}
+
+func (c *controller) generateOutputForTarget(outputFilePath string, key string, t *target) error {
+	outputFile, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -51,16 +72,15 @@ func (c *controller) generateOutput() error {
 	}
 
 	// Add an entry for every sample.
-	c.targetsMutex.Lock()
-	for key, target := range c.targets {
-		for _, sample := range target.series {
-			record[0] = key
-			record[1] = target.provider
-			record[2] = target.seedName
-			record[3] = sample.Timestamp.Format(time.RFC3339)
-			record[4] = strconv.Itoa(sample.Status)
-			record[5] = strconv.FormatInt(sample.ResponseDuration.Nanoseconds()/1e6, 10)
-			doc.Write(record)
+	for _, sample := range t.series {
+		record[0] = key
+		record[1] = t.provider
+		record[2] = t.seedName
+		record[3] = sample.Timestamp.Format(time.RFC3339)
+		record[4] = strconv.Itoa(sample.Status)
+		record[5] = strconv.FormatInt(sample.ResponseDuration.Nanoseconds()/1e6, 10)
+		if err := doc.Write(record); err != nil {
+			log.Error(err, "unable to write target to file")
 		}
 	}
 
@@ -69,12 +89,5 @@ func (c *controller) generateOutput() error {
 	if err := doc.Error(); err != nil {
 		return err
 	}
-
-	// Reset the in memory state.
-	for key := range c.targets {
-		c.targets[key].series = []*sample.Sample{}
-	}
-	c.targetsMutex.Unlock()
-
 	return nil
 }

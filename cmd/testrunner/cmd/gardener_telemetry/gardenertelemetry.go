@@ -79,7 +79,7 @@ var gardenerTelemtryCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to initialize telemetry controller")
 			os.Exit(1)
 		}
-		if _, err := telemetry.Start(kubeconfigPath, resultDir); err != nil {
+		if err := telemetry.Start(kubeconfigPath, resultDir); err != nil {
 			logger.Log.Error(err, "unable to start telemetry controller")
 			os.Exit(1)
 		}
@@ -109,7 +109,7 @@ var gardenerTelemtryCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if _, err := analyse.Analyse(telemetry.RawResultsPath, "", common.ReportOutputFormatText); err != nil {
+		if _, err := analyse.AnalyseDir(resultDir, "", common.ReportOutputFormatText); err != nil {
 			logger.Log.Error(err, "unable to analyze measurement")
 			os.Exit(1)
 		}

@@ -48,7 +48,7 @@ func GetAnalyseCommand() *cobra.Command {
 						log.Error(err, "invalid flag input")
 						os.Exit(1)
 					}
-					if _, err := analyse.Analyse(inputPath, outputPath, outputFormat); err != nil {
+					if _, err := analyse.AnalyseDir(inputPath, outputPath, outputFormat); err != nil {
 						log.Error(err, "Error while analysing data")
 						os.Exit(1)
 					}
@@ -57,7 +57,7 @@ func GetAnalyseCommand() *cobra.Command {
 			},
 		}
 	)
-	cmd.Flags().StringVar(&inputPath, "input", "", "path to measurements file")
+	cmd.Flags().StringVar(&inputPath, "input", "", "path to output directory containing the measurements directory")
 	cmd.Flags().StringVar(&outputFormat, common.CliFlagReportFormat, common.ReportOutputFormatText, common.CliFlagHelpTextReportFormat)
 	cmd.Flags().StringVar(&outputPath, common.CliFlagReportOutput, "", common.CliFlagHelpTextReportFile)
 	cmd.Flags().StringVar(&logLevel, common.CliFlagLogLevel, common.DefaultLogLevel, common.CliFlagHelpLogLevel)

@@ -37,6 +37,18 @@ WORKDIR /
 
 ENTRYPOINT ["/testmachinery-controller"]
 
+############# telemetry-controller #############
+FROM alpine:3.10 AS telemetry-controller
+
+RUN apk add --update bash curl
+
+COPY --from=builder /go/bin/telemetry-controller /telemetry-controller
+COPY ./.env /
+
+WORKDIR /
+
+ENTRYPOINT ["/telemetry-controller"]
+
 ############# tm-run #############
 FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-run
 

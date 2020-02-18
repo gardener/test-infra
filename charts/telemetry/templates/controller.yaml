@@ -1,0 +1,85 @@
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: telemetry-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: telemetry-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemetry-controller
+  serviceName: telemetry-controller
+  template:
+    metadata:
+      annotations:
+        checksum/tls-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      labels:
+        app: telemetry-controller
+    spec:
+{{ if .Values.controller.imagePullSecretName }}
+      imagePullSecrets:
+      - name: "{{.Values.controller.imagePullSecretName}}"
+{{end}}
+      serviceAccountName: {{ required ".Values.controller.serviceAccountName is required" .Values.controller.serviceAccountName }}
+      containers:
+      - name: testmachinery-controller
+        image: "{{ .Values.controller.image }}:{{ .Values.controller.tag }}"
+        imagePullPolicy: {{ .Values.controller.pullPolicy }}
+        command: ["/telemetry-controller"]
+        args:
+        - --cache-dir=/app/cache
+        - --max-concurrent-syncs={{ .Values.controller.maxConcurrentSyncs }}
+        - -v={{ .Values.controller.verbosity }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        resources:
+          requests:
+            memory: {{ .Values.controller.resources.requests.memory }}
+            cpu: {{ .Values.controller.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.controller.resources.limits.memory }}
+            cpu: {{ .Values.controller.resources.limits.cpu }}
+        volumeMounts:
+        - name: certs
+          mountPath: /etc/telemetry-controller/srv
+          readOnly: true
+        - name: cache
+          mountPath: "/app/cache"
+      volumes:
+      - name: certs
+        secret:
+          secretName: telemetry-controller-cert
+  volumeClaimTemplates:
+  - metadata:
+      name: cache
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.controller.volume.size }}

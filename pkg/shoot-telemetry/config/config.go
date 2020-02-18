@@ -16,6 +16,7 @@ package config
 
 import (
 	"fmt"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"time"
 
@@ -25,10 +26,10 @@ import (
 // Config is an app config
 type Config struct {
 	KubeConfigPath     string
+	KubeConfig         clientcmd.ClientConfig
 	CheckIntervalInput string
 	CheckInterval      time.Duration
 	OutputDir          string
-	OutputFile         string
 	DisableAnalyse     bool
 	AnalyseFormat      string
 	AnalyseOutput      string
@@ -62,10 +63,19 @@ func (c *Config) Validate() error {
 func ValidateAnalyse(path, format string) error {
 	info, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
-		return fmt.Errorf("no file on path %s", path)
+		return fmt.Errorf("no directory on path %s", path)
 	}
-	if info.IsDir() {
-		return fmt.Errorf("can't analyse a directory %s", path)
+	if !info.IsDir() {
+		return fmt.Errorf("%s is expected be a directory", path)
+	}
+
+	measurementsDir := common.GetResultDir(path)
+	info, err = os.Stat(measurementsDir)
+	if err != nil && os.IsNotExist(err) {
+		return fmt.Errorf("no directory on path %s", measurementsDir)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("%s is expected be a directory", measurementsDir)
 	}
 
 	if err := validateOutputFormat(format); err != nil {

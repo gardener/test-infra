@@ -25,7 +25,7 @@ PROJECT_ROOT="${CURRENT_DIR}"/..
 
 cp "${CURRENT_DIR}"/code-generator/generate-*.sh "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/
 
-echo "Generating internal groups for $PROJECT_ROOT"
+echo "Generating internal groups for TestMachinery"
 "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
   all \
   $PROJECT_MOD_ROOT/pkg/client/testmachinery \
@@ -42,11 +42,20 @@ ${GOPATH}/bin/deepcopy-gen \
 
 go install ./$(dirname "${0}")/../vendor/k8s.io/kube-openapi/cmd/openapi-gen
 
+echo "Generating internal groups for Telemetry"
+"${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
+  deepcopy,defaulter,conversio \
+  $PROJECT_MOD_ROOT/pkg/client/telemetry \
+  $PROJECT_MOD_ROOT/pkg/apis \
+  $PROJECT_MOD_ROOT/pkg/apis \
+  telemetry:v1beta1 \
+  -h $(dirname $0)/boilerplate.go.txt
+
 echo "Generating openapi definitions"
 ${GOPATH}/bin/openapi-gen "$@" \
   --v 1 \
   --logtostderr \
-  --input-dirs=$PROJECT_MOD_ROOT/pkg/apis/testmachinery/v1beta1,$PROJECT_MOD_ROOT/pkg/util/strconf \
+  --input-dirs=$PROJECT_MOD_ROOT/pkg/apis/testmachinery/v1beta1,$PROJECT_MOD_ROOT/pkg/apis/telemetry/v1beta1,$PROJECT_MOD_ROOT/pkg/util/strconf \
   --report-filename=./$(dirname "${0}")/../pkg/openapi/api_violations.report \
   --output-package=$PROJECT_MOD_ROOT/pkg/openapi \
   -h $(dirname $0)/boilerplate.go.txt
