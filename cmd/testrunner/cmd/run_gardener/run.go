@@ -25,6 +25,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/gardensetup"
 	"os"
 	"time"
@@ -42,6 +43,8 @@ var testrunnerConfig = testrunner.Config{}
 var collectConfig = result.Config{}
 
 var defaultConfig = _default.Config{}
+
+var esConfig = elasticsearch.Config{}
 
 var (
 	tmKubeconfigPath string
@@ -96,6 +99,10 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			logger.Log.Error(err, "unable to render default testrun")
 			os.Exit(1)
+		}
+
+		if esConfig.Endpoint != "" {
+			collectConfig.ESConfig = &esConfig
 		}
 
 		defaultConfig.Shoots.Flavors = flavors
@@ -185,6 +192,9 @@ func init() {
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
+	runCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
+	runCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
+	runCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
 	runCmd.Flags().StringVar(&collectConfig.S3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().BoolVar(&collectConfig.S3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
@@ -207,4 +217,10 @@ func init() {
 	runCmd.Flags().StringVarP(&testLabel, "label", "l", string(testmachinery.TestLabelDefault), "Specify test label that should be fetched by the testmachinery")
 	runCmd.Flags().BoolVar(&hibernation, "hibernation", false, "test hibernation")
 
+	// status asset upload
+	runCmd.Flags().BoolVar(&collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
+	runCmd.Flags().StringVar(&collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "GitHub username.")
+	runCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	runCmd.Flags().StringArrayVar(&collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
+	runCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 }
