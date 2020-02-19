@@ -229,7 +229,7 @@ func (alerter *Alert) PostAlertMessageToSlack(client slack.Client, channel strin
 			messagePrefix = ""
 		}
 		if i == (len(splitedMessage) - 1) {
-			messageSuffix = "\nCheckout list of all active alerts and links to logs at https://kibana.ingress.cicdes.core.shoot.live.k8s-hana.ondemand.com/app/kibana#/discover/2eb705d0-339d-11ea-96c2-197bcb58cf5f?_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-7d%2Cto%3Anow))"
+			messageSuffix = "\nCheckout list of all active alerts and links to logs at https://kibana.ingress.cicdes.core.shoot.live.k8s-hana.ondemand.com/app/kibana#/dashboard/0468bda0-5300-11ea-a210-195a29182e38"
 		}
 		if err := client.PostMessage(channel, fmt.Sprintf("%s```%s```%s", messagePrefix, messageSplitItem, messageSuffix)); err != nil {
 			return err
@@ -466,9 +466,9 @@ func (alerter *Alert) generateESAggregationPayload() string {
 					},
 					"details": {
 						"top_hits": {
-							"sort": [         
+							"sort": [
 								{ "pre.phaseNum": { "order": "asc" } },
-					        	{ "startTime": { "order": "desc" } } 
+					        	{ "startTime": { "order": "desc" } }
 							],
 							"_source": {
 								"includes": [
