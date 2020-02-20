@@ -5,7 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.45.1
 	github.com/Masterminds/semver v1.4.2
-	github.com/argoproj/argo v2.3.0-rc3.0.20191216235519-788898954f7e+incompatible
+	github.com/argoproj/argo v2.5.0+incompatible
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect

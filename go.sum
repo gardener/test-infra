@@ -74,6 +74,8 @@ github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb
 github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30/go.mod h1:4AJxUpXUhv4N+ziTvIcWWXgeorXpxPZOfk9HdEVr96M=
 github.com/argoproj/argo v2.3.0-rc3.0.20191216235519-788898954f7e+incompatible h1:TJCYo34r+BNA5SgDm60AuRgQXCIg6fVTdhibxh8V0ec=
 github.com/argoproj/argo v2.3.0-rc3.0.20191216235519-788898954f7e+incompatible/go.mod h1:KJ0MB+tuhtAklR4jkPM10mIZXfRA0peTYJ1sLUnFLVU=
+github.com/argoproj/argo v2.5.0+incompatible h1:ShA00F8uF+ypZviIeOZMxEd0A7+Vbf5cLtOIbtZS640=
+github.com/argoproj/argo v2.5.0+incompatible/go.mod h1:KJ0MB+tuhtAklR4jkPM10mIZXfRA0peTYJ1sLUnFLVU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
