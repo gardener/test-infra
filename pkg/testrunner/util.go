@@ -85,7 +85,7 @@ func GetTmDashboardURLFromHostForTestrun(host string, tr *tmv1beta1.Testrun) str
 // GetTMDashboardHost returns the host of the TestMachinery Dashboard
 func GetTMDashboardHost(tmClient client.Client) (string, error) {
 	ingressList := &v1beta1.IngressList{}
-	if err := tmClient.List(context.TODO(), ingressList); err != nil {
+	if err := tmClient.List(context.TODO(), ingressList, client.MatchingLabels{common.LabelTMDashboardIngress: "true"}); err != nil {
 		return "", errors.Wrapf(err, "unable to list TestMachinery Dashboard ingress with label %s", common.LabelTMDashboardIngress)
 	}
 
