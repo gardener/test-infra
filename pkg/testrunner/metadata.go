@@ -18,6 +18,7 @@ import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"strconv"
 )
 
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
@@ -27,8 +28,11 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 		common.AnnotationK8sVersion:        m.KubernetesVersion,
 		common.AnnotationCloudProvider:     m.CloudProvider,
 		common.AnnotationOperatingSystem:   m.OperatingSystem,
+		common.AnnotationRegion:            m.Region,
+		common.AnnotationZone:              m.Zone,
 		common.AnnotationFlavorDescription: m.FlavorDescription,
 		common.AnnotationDimension:         m.GetDimensionFromMetadata("/"),
+		common.AnnotationRetries:           strconv.Itoa(m.Retries),
 	}
 }
 
@@ -50,14 +54,21 @@ func (m *Metadata) DeepCopy() *Metadata {
 
 // MetadataFromTestrun reads metadata from a testrun
 func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
+
+	retries, _ := strconv.Atoi(tr.Annotations[common.AnnotationRetries])
+
 	return &Metadata{
 		Landscape:         tr.Annotations[common.AnnotationLandscape],
 		KubernetesVersion: tr.Annotations[common.AnnotationK8sVersion],
 		CloudProvider:     tr.Annotations[common.AnnotationCloudProvider],
 		OperatingSystem:   tr.Annotations[common.AnnotationOperatingSystem],
+		Region:            tr.Annotations[common.AnnotationRegion],
+		Zone:              tr.Annotations[common.AnnotationZone],
 		FlavorDescription: tr.Annotations[common.AnnotationFlavorDescription],
+		Retries:           retries,
 		Testrun: TestrunMetadata{
 			ID:             tr.Name,
+			StartTime:      tr.Status.StartTime,
 			ExecutionGroup: tr.Annotations[common.LabelTestrunExecutionGroup],
 		},
 	}
