@@ -7,7 +7,7 @@ With the telemetry controller the measurement of shoots can be instructed using 
 ```
 go run ./cmd/telemetry-controller/main.go
   --cache-dir=/tmp/tl # specify the directory path for the measurements cache 
-  --kubeconfig=/.kube/config # optional, uses teh in cluster config if not defined
+  --kubeconfig=/.kube/config # optional, uses the in cluster config if not defined
 ```
 
 ### ShootsMeasurements

@@ -97,7 +97,7 @@ func (r *telemetryReconciler) stop(st *telv1beta1.ShootsMeasurement) error {
 		fig, err := r.controllerManager.StopAndAnalyze(st.Status.Controller, shoot)
 		if err != nil {
 			st.Status.Phase = telv1beta1.TelemetryPhaseError
-			st.Status.Message = fmt.Sprintf("unable to get measuremtn for %s", shoot.String())
+			st.Status.Message = fmt.Sprintf("unable to get measurement for %s", shoot.String())
 			return err
 		}
 		st.Status.Data = append(st.Status.Data, telv1beta1.ShootMeasurementData{

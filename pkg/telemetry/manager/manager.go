@@ -214,7 +214,7 @@ func (m *manager) getKubeconfigFromSecret(ctx context.Context, secretRef client.
 		return nil, errors.New("config is nil")
 	}
 
-	// Create a kubernets client config.
+	// Create a kubernetes client config.
 	config := clientcmd.NewDefaultClientConfig(*configObj, &clientcmd.ConfigOverrides{})
 	return config, nil
 }

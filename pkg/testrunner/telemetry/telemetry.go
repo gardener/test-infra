@@ -180,7 +180,7 @@ func (c *Telemetry) RemoveShoot(shootKey string) {
 	delete(c.shootsFilter, shootKey)
 }
 
-// HasShoot returns if a shoot is measured
+// HasShoot returns true if a shoot is measured
 func (c *Telemetry) HasShoot(shootKey string) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
