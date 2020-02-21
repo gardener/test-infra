@@ -1,3 +1,6 @@
+API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootsMeasurementList,Items
+API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootsMeasurementSpec,Shoots
+API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootsMeasurementStatus,Data
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,DAGStep,DependsOn
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,LocationSet,Locations
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepDefinition,Config
@@ -17,6 +20,10 @@ API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/te
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,LocationSets
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,TestLocations
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunStatus,Steps
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,CountRequests
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,CountTimeouts
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,DownPeriods
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,ResponseTimeDuration
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,StepStatus,TestDefinition
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,TestFlow
 API rule violation: names_match,github.com/gardener/test-infra/pkg/util/strconf,StringOrConfig,ConfigVal

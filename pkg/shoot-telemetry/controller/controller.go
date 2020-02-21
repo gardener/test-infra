@@ -20,10 +20,13 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+	"io/ioutil"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"os/signal"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
+	"syscall"
 	"time"
 
 	v1 "k8s.io/client-go/informers/core/v1"
@@ -55,24 +58,63 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 			config:  config,
 			targets: map[string]*target{},
 		}
+		k8sClient kubernetes.Interface
+		err       error
 	)
 
 	go func() {
-		<-signalCh
-		logger.Log.Info("Received interrupt signal.")
-		signal.Stop(signalCh)
-		close(stopCh)
+		for sig := range signalCh {
+			if sig == syscall.SIGUSR1 {
+				_ = controller.generateOutput()
+			} else {
+				logger.Log.Info("Received interrupt signal.")
+				signal.Stop(signalCh)
+				close(stopCh)
+				return
+			}
+		}
 	}()
 
 	// Setup the necessary informer factories to initialize the required informers.
-	k8sinformersFactory, gardenInformerFactory, err := common.SetupInformerFactory(config.KubeConfigPath)
+	if config.KubeConfigPath != "" {
+		// Read the kubeconfig from disk.
+		kubeconfigRaw, err := ioutil.ReadFile(config.KubeConfigPath)
+		if err != nil {
+			return err
+		}
+
+		// Load the kubeconfig.
+		configObj, err := clientcmd.Load(kubeconfigRaw)
+		if err != nil {
+			return err
+		} else if configObj == nil {
+			return errors.New("config is nil")
+		}
+
+		config.KubeConfig = clientcmd.NewDefaultClientConfig(*configObj, &clientcmd.ConfigOverrides{})
+
+		k8sClient, err = kubernetes.NewClientFromFile("", config.KubeConfigPath, kubernetes.WithClientOptions(client.Options{
+			Scheme: kubernetes.GardenScheme,
+		}))
+	} else {
+	}
+
+	restConfig, err := config.KubeConfig.ClientConfig()
+	if err != nil {
+		return err
+	} else if restConfig == nil {
+		return errors.New("clientConfig is nil")
+	}
+	k8sClient, err = kubernetes.NewWithConfig(kubernetes.WithRESTConfig(restConfig), kubernetes.WithClientOptions(client.Options{
+		Scheme: kubernetes.GardenScheme,
+	}))
+
+	k8sinformersFactory, gardenInformerFactory, err := common.SetupInformerFactory(restConfig)
 	if err != nil {
 		return err
 	}
-	k8sClient, err := kubernetes.NewClientFromFile("", config.KubeConfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.GardenScheme,
-	}))
-	if err != nil {
+
+	if err := os.MkdirAll(common.GetResultDir(config.OutputDir), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -129,13 +171,13 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	}, time.Second*3, true, stopCh)
 
 	<-stopCh
-	// Stop the controller. Write the in memory measurements to disk.
-	if err := controller.generateOutput(); err != nil {
-		return err
-	}
 
 	if !config.DisableAnalyse {
-		if _, err := analyse.Analyse(controller.config.OutputFile, controller.config.AnalyseOutput, controller.config.AnalyseFormat); err != nil {
+		// Stop the controller. Write the in memory measurements to disk.
+		if err := controller.generateOutput(); err != nil {
+			return err
+		}
+		if _, err := analyse.AnalyseDir(config.OutputDir, controller.config.AnalyseOutput, controller.config.AnalyseFormat); err != nil {
 			return err
 		}
 		if controller.config.AnalyseOutput != "" {

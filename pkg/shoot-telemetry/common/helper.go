@@ -15,17 +15,18 @@
 package common
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"io/ioutil"
+	"k8s.io/client-go/rest"
+	"path"
 	"time"
 
 	clientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"
 	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // GetShootKeyFromShoot return a key for a Shoot in the format <shoot-namespace>/<shoot-name>
@@ -39,6 +40,17 @@ func GetShootKeyFromShoot(shoot *gardencorev1beta1.Shoot) string {
 // GetShootKeyFromShoot return a key for a Shoot name and namespace in the format <shoot-namespace>/<shoot-name>
 func GetShootKey(name, namespace string) string {
 	return fmt.Sprintf("%s/%s", namespace, name)
+}
+
+// GetResultFile returns the name of the file for a key
+func GetResultFile(dir, key string) string {
+	file := fmt.Sprintf("%s.csv", base64.StdEncoding.EncodeToString([]byte(key)))
+	return path.Join(GetResultDir(dir), file)
+}
+
+// GetResultDir returns the name of the result directory to store measurement files
+func GetResultDir(dir string) string {
+	return path.Join(dir, "measurements")
 }
 
 // Waiter runs the passed function <f> periodically in the given interval <interval>.
@@ -61,30 +73,12 @@ func Waiter(f func(), interval time.Duration, block bool, stopCh <-chan struct{}
 }
 
 // SetupInformerFactory takes a <kubeconfig> and setup factories to produce informers for k8s v1 and garden api group.
-func SetupInformerFactory(kubeconfigPath string) (k8sinformers.SharedInformerFactory, gardeninformers.SharedInformerFactory, error) {
-	// Read the kubeconfig from disk.
-	kubeconfigRaw, err := ioutil.ReadFile(kubeconfigPath)
-	if err != nil {
-		return nil, nil, err
+func SetupInformerFactory(restConfig *rest.Config) (k8sinformers.SharedInformerFactory, gardeninformers.SharedInformerFactory, error) {
+	if restConfig == nil {
+		return nil, nil, errors.New("no kubernetes config is defined")
 	}
 
-	// Load the kubeconfig.
-	configObj, err := clientcmd.Load(kubeconfigRaw)
-	if err != nil {
-		return nil, nil, err
-	} else if configObj == nil {
-		return nil, nil, errors.New("config is nil")
-	}
-
-	// Create a kubernets client config.
-	config, err := clientcmd.NewDefaultClientConfig(*configObj, &clientcmd.ConfigOverrides{}).ClientConfig()
-	if err != nil {
-		return nil, nil, err
-	} else if config == nil {
-		return nil, nil, errors.New("clientConfig is nil")
-	}
-
-	k8sClientSet, err := kubernetes.NewForConfig(config)
+	k8sClientSet, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, nil, err
 	} else if k8sClientSet == nil {
@@ -92,7 +86,7 @@ func SetupInformerFactory(kubeconfigPath string) (k8sinformers.SharedInformerFac
 	}
 
 	// Get a client for the garden api group.
-	gardenClientSet, err := clientset.NewForConfig(config)
+	gardenClientSet, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return nil, nil, err
 	} else if gardenClientSet == nil {

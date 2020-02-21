@@ -21,14 +21,17 @@ import (
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/controller"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path"
+	"sync"
 	"syscall"
 	"time"
 )
 
 type Telemetry struct {
 	log logr.Logger
+	mut sync.Mutex
 
 	shootsFilter map[string]bool
 	interval     time.Duration
@@ -36,75 +39,94 @@ type Telemetry struct {
 	started      bool
 	stopCh       chan struct{}
 	signalCh     chan os.Signal
-
-	RawResultsPath string
 }
 
 func New(log logr.Logger, interval time.Duration) (*Telemetry, error) {
 	return &Telemetry{
 		log:          log,
+		mut:          sync.Mutex{},
 		interval:     interval,
 		shootsFilter: make(map[string]bool, 0),
 	}, nil
 }
 
 // Start starts the telemetry measurement with a specific kubeconfig to watch all shoots
-func (c *Telemetry) Start(kubeconfigPath, resultDir string) (string, error) {
+func (c *Telemetry) Start(kubeconfigPath, resultDir string) error {
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-		return "", err
+		return err
 	}
 	if _, err := os.Stat(resultDir); err != nil {
 		if !os.IsNotExist(err) {
-			return "", err
+			return err
 		}
 		if err := os.MkdirAll(resultDir, os.ModePerm); err != nil {
-			return "", err
+			return err
 		}
 	}
 
-	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
 		KubeConfigPath: kubeconfigPath,
 		CheckInterval:  c.interval,
 		OutputDir:      resultDir,
-		OutputFile:     c.RawResultsPath,
 		DisableAnalyse: true,
 	}
 
 	c.StartWithConfig(cfg)
 
-	return c.RawResultsPath, nil
+	return nil
 }
 
-// StartForShoot starts the telemetry measurement with a kubeconfig for a specific shoot
-func (c *Telemetry) StartForShoot(shootName, shootNamespace, kubeconfigPath, resultDir string) (string, error) {
-	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-		return "", err
+// StartWithKubeconfig starts the telemetry measurement with a specific kubeconfig configuration to watch all shoots
+func (c *Telemetry) StartWithKubeconfig(kubeconfig clientcmd.ClientConfig, resultDir string) error {
+	if _, err := os.Stat(resultDir); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		if err := os.MkdirAll(resultDir, os.ModePerm); err != nil {
+			return err
+		}
 	}
 
-	c.shootsFilter = map[string]bool{
-		common.GetShootKey(shootName, shootNamespace): true,
-	}
-
-	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
-		KubeConfigPath: kubeconfigPath,
+		KubeConfig:     kubeconfig,
 		CheckInterval:  c.interval,
 		OutputDir:      resultDir,
-		OutputFile:     c.RawResultsPath,
 		DisableAnalyse: true,
 		ShootsFilter:   c.shootsFilter,
 	}
 
 	c.StartWithConfig(cfg)
 
-	return c.RawResultsPath, nil
+	return nil
+}
+
+// StartForShoot starts the telemetry measurement with a kubeconfig for a specific shoot
+func (c *Telemetry) StartForShoot(shootName, shootNamespace, kubeconfigPath, resultDir string) error {
+	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+		return err
+	}
+
+	c.shootsFilter = map[string]bool{
+		common.GetShootKey(shootName, shootNamespace): true,
+	}
+
+	cfg := &config.Config{
+		KubeConfigPath: kubeconfigPath,
+		CheckInterval:  c.interval,
+		OutputDir:      resultDir,
+		DisableAnalyse: true,
+		ShootsFilter:   c.shootsFilter,
+	}
+
+	c.StartWithConfig(cfg)
+
+	return nil
 }
 
 // StartForShoots starts the telemetry measurement with a kubeconfig for specific shoots
-func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys []string) (string, error) {
+func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys []string) error {
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-		return "", err
+		return err
 	}
 
 	c.shootsFilter = make(map[string]bool, len(shootKeys))
@@ -112,24 +134,22 @@ func (c *Telemetry) StartForShoots(kubeconfigPath, resultDir string, shootKeys [
 		c.shootsFilter[key] = true
 	}
 
-	c.RawResultsPath = path.Join(resultDir, "results.csv")
 	cfg := &config.Config{
 		KubeConfigPath: kubeconfigPath,
 		CheckInterval:  c.interval,
 		OutputDir:      resultDir,
-		OutputFile:     c.RawResultsPath,
 		DisableAnalyse: true,
 		ShootsFilter:   c.shootsFilter,
 	}
 
 	c.StartWithConfig(cfg)
 
-	return c.RawResultsPath, nil
+	return nil
 }
 
 func (c *Telemetry) StartWithConfig(cfg *config.Config) {
 	c.stopCh = make(chan struct{})
-	c.signalCh = make(chan os.Signal, 2)
+	c.signalCh = make(chan os.Signal)
 	c.started = true
 
 	go func() {
@@ -148,12 +168,34 @@ func (c *Telemetry) IsStarted() bool {
 
 // AddShoot adds another shoot to watch
 func (c *Telemetry) AddShoot(shootKey string) {
+	c.mut.Lock()
+	defer c.mut.Unlock()
 	c.shootsFilter[shootKey] = true
 }
 
 // RemoveShoot removes a shoot from the telemetry watch
 func (c *Telemetry) RemoveShoot(shootKey string) {
+	c.mut.Lock()
+	defer c.mut.Unlock()
 	delete(c.shootsFilter, shootKey)
+}
+
+// HasShoot returns true if a shoot is measured
+func (c *Telemetry) HasShoot(shootKey string) bool {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	measured, ok := c.shootsFilter[shootKey]
+	if !ok {
+		return false
+	}
+	return measured
+}
+
+// WatchedShoots returns the number of monitored shoots.
+func (c *Telemetry) ShootsLen() int {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	return len(c.shootsFilter)
 }
 
 // StopAndAnalyze stops the telemetry measurement and generates a result summary
@@ -162,6 +204,11 @@ func (c *Telemetry) StopAndAnalyze(resultDir, format string) (string, map[string
 		return "", nil, err
 	}
 	return c.Analyze(resultDir, format)
+}
+
+// WriteOutput forces the telemetry controller to write in memory data to file
+func (c *Telemetry) WriteOutput() {
+	c.signalCh <- syscall.SIGUSR1
 }
 
 // Stop stops the measurement of the telemetry controller
@@ -187,7 +234,7 @@ func (c *Telemetry) Analyze(resultDir, format string) (string, map[string]*analy
 		summaryOutput = path.Join(resultDir, "summary.json")
 	}
 
-	figures, err := analyse.Analyse(c.RawResultsPath, summaryOutput, format)
+	figures, err := analyse.AnalyseDir(resultDir, summaryOutput, format)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "unable to analyze measurement")
 	}

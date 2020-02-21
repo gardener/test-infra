@@ -1,0 +1,11 @@
+apiVersion: telemetry.testmachinery.gardener.cloud/v1beta1
+kind: ShootsMeasurement
+metadata:
+  generateName: example
+  namespace: default
+spec:
+  gardenerSecretRef: "garden-dev"
+
+  shoots:
+  - Name: test
+    Namespace: garden-core

@@ -23,6 +23,7 @@ TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
 VERSION             := $(shell cat VERSION)
 IMAGE_TAG           := ${VERSION}
 
+TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
 TM_RUN_IMAGE := $(REGISTRY)/testmachinery-run
 TM_BOT_IMAGE := $(REGISTRY)/bot
 PREPARESTEP_IMAGE := $(REGISTRY)/testmachinery-prepare
@@ -167,6 +168,10 @@ docker-image-run:
 .PHONY: docker-image-bot
 docker-image-bot:
 	@docker build -t $(TM_BOT_IMAGE):$(IMAGE_TAG) -t $(TM_BOT_IMAGE):latest --target tm-bot .
+
+.PHONY: docker-image-telemetry
+docker-image-telemetry:
+	@docker build -t $(TELEMETRY_CONTROLLER_IMAGE):$(IMAGE_TAG) -t $(TELEMETRY_CONTROLLER_IMAGE):latest --target telemetry-controller .
 
 .PHONY: docker-image-prepare
 docker-image-prepare:

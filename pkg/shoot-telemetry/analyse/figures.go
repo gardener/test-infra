@@ -15,19 +15,20 @@
 package analyse
 
 import (
+	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
 	"math"
 	"sort"
 )
 
 type Figures struct {
-	Name                  string                       `json:"name"`
-	Provider              string                       `json:"provider"`
-	Seed                  string                       `json:"seed"`
-	CountUnhealthyPeriods int                          `json:"countUnhealthyPeriods"`
-	CountRequests         int                          `json:"countRequest"`
-	CountTimeouts         int                          `json:"countRequestTimeouts"`
-	DownPeriods           *FiguresDowntimePeriods      `json:"downTimesSec"`
-	ResponseTimeDuration  *FiguresResponseTimeDuration `json:"responseTimesMs"`
+	Name                  string                           `json:"name"`
+	Provider              string                           `json:"provider"`
+	Seed                  string                           `json:"seed"`
+	CountUnhealthyPeriods int                              `json:"countUnhealthyPeriods"`
+	CountRequests         int                              `json:"countRequest"`
+	CountTimeouts         int                              `json:"countRequestTimeouts"`
+	DownPeriods           *telv1beta1.DowntimePeriods      `json:"downTimesSec"`
+	ResponseTimeDuration  *telv1beta1.ResponseTimeDuration `json:"responseTimesMs"`
 
 	downPeriodsStore     durationList
 	requestDurationStore responseTimeList
@@ -49,11 +50,11 @@ type FiguresDowntimePeriods struct {
 	Std    float64 `json:"std"`
 }
 
-func (f *Figures) calculateDownPeriodStatistics() {
+func (f *Figures) CalculateDownPeriodStatistics() {
 	if f.CountUnhealthyPeriods < 1 {
 		return
 	}
-	f.DownPeriods = &FiguresDowntimePeriods{}
+	f.DownPeriods = &telv1beta1.DowntimePeriods{}
 	sort.Sort(f.downPeriodsStore)
 
 	var sum, sumSqrt, avg, variance float64
@@ -82,11 +83,11 @@ func (f *Figures) calculateDownPeriodStatistics() {
 	f.DownPeriods.Std = math.Sqrt(variance)
 }
 
-func (f *Figures) calculateResponseTimeStatistics() {
+func (f *Figures) CalculateResponseTimeStatistics() {
 	if f.CountRequests-f.CountTimeouts < 1 {
 		return
 	}
-	f.ResponseTimeDuration = &FiguresResponseTimeDuration{}
+	f.ResponseTimeDuration = &telv1beta1.ResponseTimeDuration{}
 	sort.Sort(f.requestDurationStore)
 
 	var (

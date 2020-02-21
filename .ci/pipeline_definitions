@@ -27,6 +27,12 @@ test-infra:
               dockerfile: 'Dockerfile'
               target: tm-controller
               tag_as_latest: true
+            telemetry-controller:
+              registry: 'gcr-readwrite'
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/telemetry-controller
+              dockerfile: 'Dockerfile'
+              target: telemetry-controller
+              tag_as_latest: true
             tm-run:
               registry: 'gcr-readwrite'
               image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run

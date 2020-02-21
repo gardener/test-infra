@@ -20,20 +20,71 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 )
 
+// AnalyseDir wraps Analyse to handle multiple result files in a directory
+func AnalyseDir(outputDir, outputPath, outputFormat string) (map[string]*Figures, error) {
+	inputMeasurementsDir := common.GetResultDir(outputDir)
+	if _, err := os.Stat(inputMeasurementsDir); os.IsNotExist(err) {
+		return nil, errors.New("input measurements directory does not exist")
+	}
+
+	figuresStore := make(map[string]*Figures)
+	err := filepath.Walk(inputMeasurementsDir, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) != ".csv" {
+			return nil
+		}
+
+		figures, err := Analyse(path)
+		if err != nil {
+			return err
+		}
+
+		for key, figure := range figures {
+			figuresStore[key] = figure
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new report.
+	result := report{
+		Figures: []*Figures{},
+	}
+
+	// Calculate statistical Figures per cluster and add them to the report.
+	for _, f := range figuresStore {
+		f.CalculateDownPeriodStatistics()
+		f.CalculateResponseTimeStatistics()
+		result.Figures = append(result.Figures, f)
+	}
+
+	// Export the report.
+	if outputFormat != "" {
+		if err := result.exportReport(outputFormat, outputPath); err != nil {
+			return nil, err
+		}
+	}
+
+	return figuresStore, nil
+}
+
 // Analyse reads a file with measurements on a given path <inputFilePath> and
 // detects periods when Cluster API servers were not healthy. It calculates and
 // prints some statistical key Figures for the unhealthy periods per cluster.
 // The <outputPath> parameter specifies the file to store the analysis. Empty string means stdout.
 // The <outputFormat> parameter specifies how the analysis results should be formatted.
-func Analyse(inputFilePath, outputPath, outputFormat string) (map[string]*Figures, error) {
+func Analyse(inputFilePath string) (map[string]*Figures, error) {
 	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
-		return nil, errors.New("input file does not exist")
+		return nil, err
 	}
 	inputFile, err := os.Open(inputFilePath)
 	if err != nil {
@@ -118,23 +169,6 @@ func Analyse(inputFilePath, outputPath, outputFormat string) (map[string]*Figure
 			downTimeCache[record[0]] = record[3]
 		}
 		rowCounter++
-	}
-
-	// Create a new report.
-	result := report{
-		Figures: []*Figures{},
-	}
-
-	// Calculate statistical Figures per cluster and add them to the report.
-	for _, f := range figuresStore {
-		f.calculateDownPeriodStatistics()
-		f.calculateResponseTimeStatistics()
-		result.Figures = append(result.Figures, f)
-	}
-
-	// Export the report.
-	if err := result.exportReport(outputFormat, outputPath); err != nil {
-		return nil, err
 	}
 
 	return figuresStore, nil
