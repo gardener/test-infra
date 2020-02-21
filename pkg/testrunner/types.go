@@ -90,10 +90,6 @@ type Metadata struct {
 	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
 	ComponentDescriptor interface{} `json:"bom,omitempty"`
 
-	// UpgradedComponentDescriptor describes the updated component_descriptor.
-	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
-	UpgradedComponentDescriptor interface{} `json:"upgraded_bom,omitempty"`
-
 	// Name of the testrun crd object.
 	Testrun TestrunMetadata `json:"tr"`
 

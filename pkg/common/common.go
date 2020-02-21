@@ -19,33 +19,6 @@ const (
 	// AnnotationResumeTestrun is the annotation name to trigger resume on the testrun
 	AnnotationResumeTestrun = "testmachinery.sapcloud.io/resume"
 
-	// AnnotationTestrunPurpose is the annotation name to specify a purpose of the testrun
-	AnnotationTestrunPurpose = "testmachinery.sapcloud.io/purpose"
-
-	// AnnotationTemplateIDTestrun is the annotation to specify the name of the template the testun is rendered from
-	AnnotationTemplateIDTestrun = "testrunner.testmachinery.sapcloud.io/templateID"
-
-	// AnnotationLandscape is the annotation to specify the landscape this testrun is testing
-	AnnotationLandscape = "testrunner.testmachinery.sapcloud.io/landscape"
-
-	// AnnotationK8sVersion is the annotation to specify the k8s version the testrun is testing
-	AnnotationK8sVersion = "testrunner.testmachinery.sapcloud.io/k8sVersion"
-
-	// AnnotationCloudProvider is the annotation to specify the cloudprovider the testrun is testing
-	AnnotationCloudProvider = "testrunner.testmachinery.sapcloud.io/cloudprovider"
-
-	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
-	AnnotationOperatingSystem = "testrunner.testmachinery.sapcloud.io/operating-system"
-
-	// AnnotationFlavorDescription is the annotation to describe the test flavor of the current run testrun
-	AnnotationFlavorDescription = "testrunner.testmachinery.sapcloud.io/flavor-description"
-
-	// AnnotationDimension is the annotation to specify the dimension the testrun is testing
-	AnnotationDimension = "testrunner.testmachinery.sapcloud.io/dimension"
-
-	// AnnotationGroupPurpose is the annotation to describe a run group with an arbitrary string
-	AnnotationGroupPurpose = "testrunner.testmachinery.sapcloud.io/group-purpose"
-
 	// AnnotationSystemStep is the testflow step annotation to specify that the step is a testmachinery system step.
 	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
@@ -56,9 +29,56 @@ const (
 	// AnnotationTestDefID is the unique name of origin TestDefinition in a specific flow and step.
 	AnnotationTestDefID = "testmachinery.sapcloud.io/ID"
 
+	// LabelTMDashboardIngress is the label to identify TestMachinery ingress objects.
+	LabelTMDashboardIngress = "testmachinery.garden.cloud/tm-dashboard"
+)
+
+// Metadata Annotations
+const (
+
+	// AnnotationTestrunPurpose is the annotation name to specify a purpose of the testrun
+	AnnotationTestrunPurpose = "testmachinery.sapcloud.io/purpose"
+
+	// AnnotationTemplateIDTestrun is the annotation to specify the name of the template the testrun is rendered from
+	AnnotationTemplateIDTestrun = "testrunner.testmachinery.gardener.cloud/templateID"
+
+	// AnnotationRetries is the annotation to specify the retry count of the current testrun
+	AnnotationRetries = "testrunner.testmachinery.gardener.cloud/retries"
+
+	// AnnotationLandscape is the annotation to specify the landscape this testrun is testing
+	AnnotationLandscape = "metadata.testmachinery.gardener.cloud/landscape"
+
+	// AnnotationK8sVersion is the annotation to specify the k8s version the testrun is testing
+	AnnotationK8sVersion = "metadata.testmachinery.gardener.cloud/k8sVersion"
+
+	// AnnotationCloudProvider is the annotation to specify the cloudprovider the testrun is testing
+	AnnotationCloudProvider = "metadata.testmachinery.gardener.cloud/cloudprovider"
+
+	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
+	AnnotationOperatingSystem = "metadata.testmachinery.gardener.cloud/operating-system"
+
+	// AnnotationRegion is the annotation to specify the region of the shoot the testrun is testing
+	AnnotationRegion = "metadata.testmachinery.gardener.cloud/region"
+
+	// AnnotationZone is the annotation to specify the zone of the shoot the testrun is testing
+	AnnotationZone = "metadata.testmachinery.gardener.cloud/zone"
+
+	// AnnotationFlavorDescription is the annotation to describe the test flavor of the current run testrun
+	AnnotationFlavorDescription = "metadata.testmachinery.gardener.cloud/flavor-description"
+
+	// AnnotationDimension is the annotation to specify the dimension the testrun is testing
+	AnnotationDimension = "metadata.testmachinery.gardener.cloud/dimension"
+
+	// AnnotationGroupPurpose is the annotation to describe a run group with an arbitrary string
+	AnnotationGroupPurpose = "metadata.testmachinery.gardener.cloud/group-purpose"
+
 	// LabelTestrunExecutionGroup is the label to specify the unique name of the run (multiple testruns) this test belongs to.
 	// A run represents all tests that are running from one testrunner.
-	LabelTestrunExecutionGroup = "testrunner.testmachinery.sapcloud.io/execution-group"
+	LabelTestrunExecutionGroup = "testrunner.testmachinery.gardener.cloud/execution-group"
+)
+
+// Testrunner Annotations
+const (
 
 	// LabelIngested is the label that states whether the result of a testrun is already ingested into a persistent storage (db).
 	LabelIngested = "testrunner.testmachinery.sapcloud.io/ingested"
@@ -66,17 +86,13 @@ const (
 	// LabelUploadedToGithub is the label to specify whether the testrun result was uploaded to github
 	LabelUploadedToGithub = "testrunner.testmachinery.sapcloud.io/uploaded-to-github"
 
-	// LabelTMDashboardIngress is the label to identify TestMachinery ingress objects.
-	LabelTMDashboardIngress = "testmachinery.garden.cloud/tm-dashboard"
-
 	// images
 	DockerImageGardenerApiServer = "eu.gcr.io/gardener-project/gardener/apiserver"
 
 	// Repositories
-	TestInfraRepo          = "https://github.com/gardener/test-infra.git"
-	GardenSetupRepo        = "https://github.com/gardener/garden-setup.git"
-	GardenerRepo           = "https://github.com/gardener/gardener.git"
-	GardenerExtensionsRepo = "https://github.com/gardener/gardener-extensions.git"
+	TestInfraRepo   = "https://github.com/gardener/test-infra.git"
+	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
+	GardenerRepo    = "https://github.com/gardener/gardener.git"
 
 	PatternLatest = "latest"
 
