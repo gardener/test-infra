@@ -39,16 +39,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var testrunnerConfig = testrunner.Config{}
-var collectConfig = result.Config{}
-
-var defaultConfig = _default.Config{}
-
-var esConfig = elasticsearch.Config{}
-
 var (
 	tmKubeconfigPath string
 	failOnError      bool
+
+	testrunnerConfig = testrunner.Config{}
+	collectConfig    = result.Config{}
+	defaultConfig    = _default.Config{}
+	esConfig         = elasticsearch.Config{}
+	metadata         = testrunner.Metadata{}
 
 	testrunNamePrefix       string
 	componentDescriptorPath string
@@ -127,7 +126,7 @@ var runCmd = &cobra.Command{
 		runs := testrunner.RunList{
 			&testrunner.Run{
 				Testrun:  tr,
-				Metadata: &testrunner.Metadata{},
+				Metadata: &metadata,
 				Error:    nil,
 			},
 		}
@@ -223,4 +222,7 @@ func init() {
 	runCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
 	runCmd.Flags().StringArrayVar(&collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
 	runCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
+
+	// metadata
+	runCmd.Flags().StringVar(&metadata.Landscape, "landscape", "", "gardener landscape name")
 }
