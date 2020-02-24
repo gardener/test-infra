@@ -15,9 +15,10 @@ package componentdescriptor
 
 import (
 	"fmt"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"io/ioutil"
-
 	"sigs.k8s.io/yaml"
+	"strings"
 )
 
 // GetComponents returns a list of all git/component dependencies.
@@ -50,6 +51,23 @@ func GetComponentsFromFile(file string) (ComponentList, error) {
 		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
 	}
 	return GetComponents(data)
+}
+
+// GetComponentsFromLocations parses a list of components from a testruns's locations
+func GetComponentsFromLocations(tr *tmv1beta1.Testrun) (ComponentList, error) {
+	components := components{
+		components:   make([]*Component, 0, 0),
+		componentSet: make(map[Component]bool),
+	}
+	for _, locSet := range tr.Spec.LocationSets {
+		for _, loc := range locSet.Locations {
+			components.add(Component{
+				Name:    strings.Replace(loc.Repo, "https://", "", 1),
+				Version: loc.Revision,
+			})
+		}
+	}
+	return components.components, nil
 }
 
 // JSON returns the json output for a list of components

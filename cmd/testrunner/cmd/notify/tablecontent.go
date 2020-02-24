@@ -17,7 +17,7 @@ package notifycmd
 import (
 	"fmt"
 	"github.com/Masterminds/semver"
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
@@ -34,7 +34,7 @@ func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (strin
 
 	for _, asset := range overview.AssetOverviewItems {
 		d := asset.Dimension
-		if reflect.DeepEqual(d, testrunner.Dimension{}) {
+		if reflect.DeepEqual(d, metadata.Dimension{}) {
 			continue
 		}
 		_, ok := headerKeys[d.Cloudprovider]
@@ -50,7 +50,7 @@ func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (strin
 	}
 	for _, asset := range overview.AssetOverviewItems {
 		d := asset.Dimension
-		if reflect.DeepEqual(d, testrunner.Dimension{}) {
+		if reflect.DeepEqual(d, metadata.Dimension{}) {
 			log.V(5).Info("skipped asset item", "name", asset.Name)
 			continue
 		}
@@ -74,7 +74,7 @@ func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (strin
 }
 
 type resultRow struct {
-	dimension testrunner.Dimension
+	dimension metadata.Dimension
 	content   []string
 }
 
@@ -83,7 +83,7 @@ type results struct {
 	content map[string]resultRow
 }
 
-func (r *results) AddResult(d testrunner.Dimension, success bool) {
+func (r *results) AddResult(d metadata.Dimension, success bool) {
 	// should never happen but skip to ensure no panic
 	_, ok := r.header[d.Cloudprovider]
 	if !ok {
@@ -150,7 +150,7 @@ func (l resultRows) Less(a, b int) bool {
 	return vA.GreaterThan(vB)
 }
 
-func computeDimensionKey(d testrunner.Dimension) string {
+func computeDimensionKey(d metadata.Dimension) string {
 	dimensionKey := fmt.Sprintf("%s %s", d.KubernetesVersion, d.OperatingSystem)
 	if d.Description != "" {
 		dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, d.Description)

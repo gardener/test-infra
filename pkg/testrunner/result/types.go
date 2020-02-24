@@ -18,7 +18,6 @@ import (
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/go-logr/logr"
 )
 
@@ -26,19 +25,6 @@ import (
 type Config struct {
 	// OutputDir is the path where the testresults are written to.
 	OutputDir string
-
-	// Config name of the elasticsearch instance to store the test results.
-	// Deprecated
-	ESConfigName string
-
-	// ESConfig is the elasticsearch configuration to upload the test results
-	ESConfig *elasticsearch.Config
-
-	// Endpoint of the s3 storage of the testmachinery.
-	S3Endpoint string
-
-	// S3SSL indicates whether the S3 instance is SSL secured or not.
-	S3SSL bool
 
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string

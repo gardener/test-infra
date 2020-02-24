@@ -16,6 +16,7 @@ package result
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -35,7 +36,7 @@ func GenerateNotificationConfigForAlerting(tr []*tmv1beta1.Testrun, concourseOnE
 	}
 
 	notifyConfigFilePath := fmt.Sprintf("%s/notify.cfg", concourseOnErrorDir)
-	if err := writeToFile(notifyConfigFilePath, notifyConfig); err != nil {
+	if err := ioutil.WriteFile(notifyConfigFilePath, notifyConfig, 0777); err != nil {
 		log.Warnf("Cannot write file email notification config to %s: %s", notifyConfigFilePath, err.Error())
 		return
 	}

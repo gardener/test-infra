@@ -18,7 +18,10 @@ import (
 	"context"
 	goflag "flag"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
+	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/logger"
@@ -60,7 +63,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, &maxConcurrentSyncs)
+	collect, err := collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetConfig().ElasticSearch, testmachinery.GetConfig().S3)
+	if err != nil {
+		setupLogger.Error(err, "unable to setup collector")
+		os.Exit(1)
+	}
+
+	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, collect, &maxConcurrentSyncs)
 	if err != nil {
 		setupLogger.Error(err, "unable to create controller", "controllers", "Testrun")
 		os.Exit(1)
@@ -80,6 +89,10 @@ func main() {
 }
 
 func init() {
+	viperHelper := vh.NewViperHelper(nil, "config", "$HOME/.tm-bot", ".")
+	vh.SetViper(viperHelper)
+	viperHelper.InitFlags(nil)
+
 	// Set commandline flags
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
@@ -89,7 +102,18 @@ func init() {
 	testmachinery.InitFlags(nil)
 	server.InitFlags(nil)
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	viperHelper.BindPFlags(flag.CommandLine, "")
 	flag.Parse()
+
+	if err := vh.ViperHelper.ReadInConfig(); err != nil {
+		fmt.Printf(err.Error())
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+			break
+		default:
+			os.Exit(1)
+		}
+	}
 
 	log, err := logger.New(nil)
 	if err != nil {

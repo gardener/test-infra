@@ -19,13 +19,13 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	metadata2 "github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/gardensetup"
 	"os"
 	"time"
@@ -46,8 +46,7 @@ var (
 	testrunnerConfig = testrunner.Config{}
 	collectConfig    = result.Config{}
 	defaultConfig    = _default.Config{}
-	esConfig         = elasticsearch.Config{}
-	metadata         = testrunner.Metadata{}
+	metadata         = metadata2.Metadata{}
 
 	testrunNamePrefix  string
 	kubernetesVersions []string
@@ -97,10 +96,6 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			logger.Log.Error(err, "unable to render default testrun")
 			os.Exit(1)
-		}
-
-		if esConfig.Endpoint != "" {
-			collectConfig.ESConfig = &esConfig
 		}
 
 		defaultConfig.Shoots.Flavors = flavors
@@ -189,12 +184,6 @@ func init() {
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
-	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
-	runCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
-	runCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
-	runCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
-	runCmd.Flags().StringVar(&collectConfig.S3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
-	runCmd.Flags().BoolVar(&collectConfig.S3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	runCmd.Flags().StringVar(&collectConfig.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
@@ -224,4 +213,12 @@ func init() {
 
 	// metadata
 	runCmd.Flags().StringVar(&metadata.Landscape, "landscape", "", "gardener landscape name")
+
+	// DEPRECATED FLAGS
+	runCmd.Flags().String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
+	runCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
+	runCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
+	runCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
+	runCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
+	runCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
 }

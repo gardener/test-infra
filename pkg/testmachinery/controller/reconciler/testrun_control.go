@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -34,13 +35,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// NewReconciler returns a new testmachinery reconciler
-func NewReconciler(mgr manager.Manager, log logr.Logger) reconcile.Reconciler {
+// New returns a new testmachinery reconciler
+func New(mgr manager.Manager, log logr.Logger, c collector.Interface) reconcile.Reconciler {
 	return &TestmachineryReconciler{
-		Client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		Logger: log,
-		timers: make(map[string]*time.Timer),
+		Client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		Logger:    log,
+		collector: c,
+		timers:    make(map[string]*time.Timer),
 	}
 }
 

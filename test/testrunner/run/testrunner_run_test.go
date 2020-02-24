@@ -16,6 +16,7 @@ package testrunner_run_test
 
 import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
@@ -48,7 +49,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			run := testrunner.RunList{
 				{
 					Testrun:  tr,
-					Metadata: &testrunner.Metadata{},
+					Metadata: &metadata.Metadata{},
 				},
 			}
 			err = testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")
@@ -72,11 +73,11 @@ var _ = Describe("Testrunner execution tests", func() {
 			run := testrunner.RunList{
 				{
 					Testrun:  tr,
-					Metadata: &testrunner.Metadata{},
+					Metadata: &metadata.Metadata{},
 				},
 				{
 					Testrun:  tr2,
-					Metadata: &testrunner.Metadata{},
+					Metadata: &metadata.Metadata{},
 				},
 			}
 			err = testrunner.ExecuteTestruns(operation.Log(), &testrunConfig, run, "test-")

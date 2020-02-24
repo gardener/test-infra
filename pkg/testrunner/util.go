@@ -17,16 +17,14 @@ package testrunner
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
-	"k8s.io/apimachinery/pkg/types"
-	"net/url"
-	"path"
-	"regexp"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/pkg/errors"
 	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/types"
+	"net/url"
+	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -94,30 +92,6 @@ func GetTMDashboardHost(tmClient client.Client) (string, error) {
 	}
 
 	return GetHostURLFromIngressObject(&ingressList.Items[0])
-}
-
-// GetClusterDomainURL tries to derive the cluster domain url from a grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
-func GetClusterDomainURL(tmClient client.Client) (string, error) {
-	// try to derive the cluster domain url from grafana ingress if possible
-	// return err if the ingress cannot be found
-	if tmClient == nil {
-		return "", nil
-	}
-	ingress := &v1beta1.Ingress{}
-	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
-	if err != nil {
-		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
-	}
-	if len(ingress.Spec.Rules) == 0 {
-		return "", fmt.Errorf("cannot get ingress rule from ingress %v", ingress)
-	}
-	host := ingress.Spec.Rules[0].Host
-	r, _ := regexp.Compile("[a-z]+\\.ingress\\.(.+)$")
-	matches := r.FindStringSubmatch(host)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
-	}
-	return matches[1], nil
 }
 
 // GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.

@@ -16,6 +16,7 @@ package run_testrun
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"os"
 	"time"
 
@@ -82,7 +83,7 @@ var runTestrunCmd = &cobra.Command{
 
 		run := testrunner.Run{
 			Testrun:  &tr,
-			Metadata: &testrunner.Metadata{},
+			Metadata: &metadata.Metadata{},
 		}
 
 		run.Exec(logger.Log.WithName("execute"), config, testrunNamePrefix)

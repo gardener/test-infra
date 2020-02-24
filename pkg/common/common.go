@@ -19,6 +19,9 @@ const (
 	// AnnotationResumeTestrun is the annotation name to trigger resume on the testrun
 	AnnotationResumeTestrun = "testmachinery.sapcloud.io/resume"
 
+	// AnnotationCollectTestrun is the annotation to trigger collection and persistence of testrun results
+	AnnotationCollectTestrun = "testmachinery.garden.cloud/collect"
+
 	// AnnotationSystemStep is the testflow step annotation to specify that the step is a testmachinery system step.
 	// It indicates that it should not be considered as a test and therefore should not count for a test to be failed.
 	AnnotationSystemStep = "testmachinery.sapcloud.io/system-step"
@@ -79,10 +82,6 @@ const (
 
 // Testrunner Annotations
 const (
-
-	// LabelIngested is the label that states whether the result of a testrun is already ingested into a persistent storage (db).
-	LabelIngested = "testrunner.testmachinery.sapcloud.io/ingested"
-
 	// LabelUploadedToGithub is the label to specify whether the testrun result was uploaded to github
 	LabelUploadedToGithub = "testrunner.testmachinery.sapcloud.io/uploaded-to-github"
 

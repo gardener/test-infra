@@ -20,8 +20,8 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -38,10 +38,6 @@ var (
 
 	testrunName string
 
-	outputDirPath           string
-	elasticSearchConfigName string
-	s3Endpoint              string
-	s3SSL                   bool
 	concourseOnErrorDir     string
 	assetComponents         []string
 	componentDescriptorPath string
@@ -49,7 +45,6 @@ var (
 	githubPassword          string
 	uploadStatusAsset       bool
 	assetPrefix             string
-	esConfig                = elasticsearch.Config{}
 )
 
 // AddCommand adds collect to a command.
@@ -66,10 +61,6 @@ var collectCmd = &cobra.Command{
 		logger.Log.Info("Start testmachinery testrunner")
 
 		collectConfig := result.Config{
-			OutputDir:               outputDirPath,
-			ESConfigName:            elasticSearchConfigName,
-			S3Endpoint:              s3Endpoint,
-			S3SSL:                   s3SSL,
 			ConcourseOnErrorDir:     concourseOnErrorDir,
 			ComponentDescriptorPath: componentDescriptorPath,
 			GithubUser:              githubUser,
@@ -77,10 +68,6 @@ var collectCmd = &cobra.Command{
 			AssetComponents:         assetComponents,
 			UploadStatusAsset:       uploadStatusAsset,
 			AssetPrefix:             assetPrefix,
-		}
-
-		if esConfig.Endpoint != "" {
-			collectConfig.ESConfig = &esConfig
 		}
 
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
@@ -102,7 +89,7 @@ var collectCmd = &cobra.Command{
 
 		run := &testrunner.Run{
 			Testrun:  tr,
-			Metadata: testrunner.MetadataFromTestrun(tr),
+			Metadata: metadata.FromTestrun(tr),
 		}
 
 		collector, err := result.New(logger.Log.WithName("collector"), collectConfig, tmKubeconfigPath)
@@ -135,13 +122,6 @@ func init() {
 	collectCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	// parameter flags
-	collectCmd.Flags().StringVarP(&outputDirPath, "output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
-	collectCmd.Flags().StringVar(&elasticSearchConfigName, "es-config-name", "", "DEPRECATED: The elasticsearch secret-server config name.")
-	collectCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
-	collectCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
-	collectCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
-	collectCmd.Flags().StringVar(&s3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
-	collectCmd.Flags().BoolVar(&s3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	collectCmd.Flags().BoolVar(&uploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
@@ -149,4 +129,13 @@ func init() {
 	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
 	collectCmd.Flags().StringArrayVar(&assetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
 	collectCmd.Flags().StringVar(&assetPrefix, "asset-prefix", "", "Prefix of the asset name.")
+
+	// DEPRECATED FLAGS
+	collectCmd.Flags().StringP("output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
+	collectCmd.Flags().String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
+	collectCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
+	collectCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
+	collectCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
+	collectCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
+	collectCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
 }

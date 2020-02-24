@@ -17,6 +17,7 @@ package controller
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/go-logr/logr"
@@ -31,8 +32,8 @@ import (
 )
 
 // NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
-func NewTestMachineryController(mgr manager.Manager, log logr.Logger, maxConcurrentSyncs *int) (controller.Controller, error) {
-	tmReconciler := reconciler.NewReconciler(mgr, log.WithName("controller"))
+func NewTestMachineryController(mgr manager.Manager, log logr.Logger, col collector.Interface, maxConcurrentSyncs *int) (controller.Controller, error) {
+	tmReconciler := reconciler.New(mgr, log.WithName("controller"), col)
 	c, err := New(mgr, tmReconciler, maxConcurrentSyncs)
 	if err != nil {
 		return nil, err

@@ -17,6 +17,7 @@ package testmachinery
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/version"
 	"io/ioutil"
 	"os"
@@ -31,8 +32,9 @@ import (
 )
 
 var (
-	githubSecretsPath string
-	objectStoreConfig S3Config
+	githubSecretsPath   string
+	objectStoreConfig   S3Config
+	elasticsearchConfig elasticsearch.Config
 )
 
 var tmConfig = TmConfiguration{
@@ -43,7 +45,8 @@ var tmConfig = TmConfiguration{
 	GitHub: GitHubConfig{
 		Secrets: make([]GitHubInstanceConfig, 0),
 	},
-	S3: &objectStoreConfig,
+	S3:            &objectStoreConfig,
+	ElasticSearch: &elasticsearchConfig,
 }
 
 // Setup fetches all configuration values and creates the TmConfiguration.
@@ -61,6 +64,10 @@ func Setup() error {
 	}
 	if err := ValidateS3Config(tmConfig.S3); err != nil {
 		return err
+	}
+
+	if len(elasticsearchConfig.Endpoint) == 0 {
+		tmConfig.ElasticSearch = nil
 	}
 
 	return nil
@@ -99,6 +106,10 @@ func InitFlags(flagset *flag.FlagSet) {
 		"Set the s3 bucket")
 	flagset.BoolVar(&objectStoreConfig.SSL, "s3-ssl", util.GetenvBool("S3_SSL", objectStoreConfig.SSL),
 		"Enable sll communication to s3 storage")
+
+	flagset.StringVar(&elasticsearchConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
+	flagset.StringVar(&elasticsearchConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
+	flagset.StringVar(&elasticsearchConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
 
 	tmConfig.GitHub.Cache = ghcache.InitFlags(flagset)
 

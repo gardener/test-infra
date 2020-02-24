@@ -17,7 +17,6 @@ package run_template
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/shootflavors"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"os"
 	"time"
 
@@ -37,8 +36,6 @@ import (
 var testrunnerConfig = testrunner.Config{}
 var collectConfig = result.Config{}
 var shootParameters = testrunnerTemplate.Parameters{}
-
-var esConfig = elasticsearch.Config{}
 
 var (
 	testrunNamePrefix    string
@@ -92,10 +89,6 @@ var runCmd = &cobra.Command{
 		testrunnerConfig.Timeout = time.Duration(timeout) * time.Second
 		testrunnerConfig.FlakeAttempts = testrunFlakeAttempts
 		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
-
-		if esConfig.Endpoint != "" {
-			collectConfig.ESConfig = &esConfig
-		}
 
 		if shootParameters.FlavorConfigPath != "" {
 			flavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
@@ -177,12 +170,6 @@ func init() {
 	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
 	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
-	runCmd.Flags().StringVar(&collectConfig.ESConfigName, "es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
-	runCmd.Flags().StringVar(&esConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
-	runCmd.Flags().StringVar(&esConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
-	runCmd.Flags().StringVar(&esConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
-	runCmd.Flags().StringVar(&collectConfig.S3Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
-	runCmd.Flags().BoolVar(&collectConfig.S3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// status asset upload
@@ -228,4 +215,13 @@ func init() {
 
 	runCmd.Flags().StringVar(&shootParameters.SetValues, "set", "", "setValues additional helm values")
 	runCmd.Flags().StringArrayVarP(&shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
+
+	// DEPRECATED FLAGS
+	// is now handled by the testmachinery
+	runCmd.Flags().String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
+	runCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
+	runCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
+	runCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
+	runCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
+	runCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
 }

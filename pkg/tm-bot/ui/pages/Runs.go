@@ -20,6 +20,7 @@ import (
 	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	metadata2 "github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
@@ -112,7 +113,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 			if rgName == "" {
 				runsList.Add(&testrun)
 			}
-			metadata := testrunner.MetadataFromTestrun(&tr)
+			metadata := metadata2.FromTestrun(&tr)
 			startTime := ""
 			if tr.Status.StartTime != nil {
 				startTime = tr.Status.StartTime.Format(time.RFC822)
@@ -179,7 +180,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 
 		argoHostURL, _ := testrunner.GetArgoHost(p.runs.GetClient())
 		grafanaHostURL, _ := testrunner.GetGrafanaHost(p.runs.GetClient())
-		metadata := testrunner.MetadataFromTestrun(tr)
+		metadata := metadata2.FromTestrun(tr)
 		startTime := ""
 		if tr.Status.StartTime != nil {
 			startTime = tr.Status.StartTime.Format(time.RFC822)

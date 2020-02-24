@@ -35,12 +35,6 @@ type Client interface {
 	BulkFromFile(file string) error
 }
 
-type Config struct {
-	Endpoint string
-	Username string
-	Password string
-}
-
 type client struct {
 	*http.Client
 

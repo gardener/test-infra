@@ -16,6 +16,7 @@ package testrunner
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
@@ -177,7 +178,7 @@ func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
 	}
 }
 
-func getDimensionFromMetadata(meta *Metadata) string {
+func getDimensionFromMetadata(meta *metadata.Metadata) string {
 	d := fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
 	if meta.FlavorDescription != "" {
 		d = fmt.Sprintf("%s\n(%s)", d, meta.FlavorDescription)

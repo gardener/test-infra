@@ -19,6 +19,7 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
@@ -29,7 +30,6 @@ import (
 	"github.com/pkg/errors"
 	"math"
 	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -55,18 +55,6 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 			run.Metadata.TelemetryData = telemetryData
 		}
 
-		cfg := c.config
-		cfg.OutputDir = filepath.Join(cfg.OutputDir, util.RandomString(3))
-		err := Output(runLogger, &cfg, tmClient, namespace, run.Testrun, run.Metadata)
-		if err != nil {
-			result = multierror.Append(result, err)
-			continue
-		}
-
-		if err := c.ingestIntoElasticsearch(cfg, runLogger, tmClient, run); err != nil {
-			runLogger.Error(err, "error while ingesting file")
-		}
-
 		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
 			runLogger.Info("Testrun finished successfully")
 		} else {
@@ -82,23 +70,6 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 	fmt.Println(runs.RenderTable())
 
 	return testrunsFailed, util.ReturnMultiError(result)
-}
-
-func (c *Collector) ingestIntoElasticsearch(cfg Config, runLogger logr.Logger, tmClient client.Client, run *testrunner.Run) error {
-	if cfg.OutputDir == "" && (cfg.ESConfigName == "" || cfg.ESConfig != nil) {
-		return nil
-	}
-	if util.HasLabel(run.Testrun.ObjectMeta, common.LabelIngested) {
-		return nil
-	}
-	if util.DocExists(runLogger, cfg.ESConfig, run.Metadata.Testrun.ID, run.Testrun.Status.StartTime.UTC().Format("2006-01-02T15:04:05Z")) {
-		return nil
-	}
-	err := IngestDir(runLogger, cfg.OutputDir, cfg.ESConfigName, cfg.ESConfig)
-	if err != nil {
-		return errors.Wrapf(err, "cannot persist file %s", cfg.OutputDir)
-	}
-	return MarkTestrunsAsIngested(runLogger, tmClient, run.Testrun)
 }
 
 func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescriptor.Component {
@@ -149,7 +120,7 @@ func (c *Collector) fetchTelemetryResults() {
 	}
 }
 
-func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *testrunner.TelemetryData {
+func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *metadata.TelemetryData {
 	if c.telemetry != nil && c.telemetryResults != nil {
 		var shoot *common.ExtendedShoot
 		switch s := run.Info.(type) {
@@ -164,19 +135,19 @@ func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *testrunner.T
 			return nil
 		}
 
-		dat := &testrunner.TelemetryData{}
+		dat := &metadata.TelemetryData{}
 		if figure.ResponseTimeDuration != nil {
-			dat.ResponseTime = &testrunner.TelemetryResponseTimeDuration{
+			dat.ResponseTime = &metadata.TelemetryResponseTimeDuration{
 				Min:    figure.ResponseTimeDuration.Min,
 				Max:    figure.ResponseTimeDuration.Max,
 				Avg:    int64(math.Round(figure.ResponseTimeDuration.Avg)),
 				Median: int64(math.Round(figure.ResponseTimeDuration.Median)),
 				Std:    int64(math.Round(figure.ResponseTimeDuration.Std)),
 			}
-			dat.DowntimePeriods = &testrunner.TelemetryDowntimePeriods{}
+			dat.DowntimePeriods = &metadata.TelemetryDowntimePeriods{}
 		}
 		if figure.DownPeriods != nil {
-			dat.DowntimePeriods = &testrunner.TelemetryDowntimePeriods{
+			dat.DowntimePeriods = &metadata.TelemetryDowntimePeriods{
 				Min:    int64(math.Round(figure.DownPeriods.Min)),
 				Max:    int64(math.Round(figure.DownPeriods.Max)),
 				Avg:    int64(math.Round(figure.DownPeriods.Avg)),
