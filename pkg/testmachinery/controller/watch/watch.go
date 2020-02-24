@@ -17,7 +17,6 @@ package watch
 import (
 	"context"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/apimachinery/pkg/types"
@@ -64,15 +63,19 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 	namespacedName := types.NamespacedName{Namespace: namespace, Name: name}
 
 	w.mux.Lock()
-	if _, ok := w.watches[namespacedName.String()]; !ok {
-		w.watches[namespacedName.String()] = make(chan *v1beta1.Testrun)
+	watchCh, ok := w.watches[namespacedName.String()]
+	if !ok {
+		watchCh = make(chan *v1beta1.Testrun)
+		w.watches[namespacedName.String()] = watchCh
 	}
 	w.mux.Unlock()
 
+	// remove the watch from the list of watches to not leak watching channels
+	defer w.remove(namespacedName.String())
+
 	var (
-		errs    error
-		done, _ = w.get(namespacedName.String())
-		after   <-chan time.Time
+		errs  error
+		after <-chan time.Time
 	)
 
 	if timeout != 0 {
@@ -86,7 +89,7 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 
 	for {
 		select {
-		case tr := <-done:
+		case tr := <-watchCh:
 			done, err := f(tr)
 			if err != nil {
 				if done {
@@ -113,8 +116,10 @@ func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 
 	ch, ok := w.get(r.String())
 	if !ok {
+		w.log.V(10).Info("no watch found", "namespacedName", r.String())
 		return reconcile.Result{}, nil
 	}
+	w.log.V(8).Info("reconcile", "namespacedName", r.String())
 
 	tr := &v1beta1.Testrun{}
 	if err := w.client.Get(ctx, r.NamespacedName, tr); err != nil {
@@ -124,17 +129,19 @@ func (w *watch) Reconcile(r reconcile.Request) (reconcile.Result, error) {
 
 	select {
 	case ch <- tr:
+	default:
 	}
-
-	// close the channel if the testrun is completed
-	if util.Completed(tr.Status.Phase) {
-		close(ch)
-		w.mux.Lock()
-		delete(w.watches, r.String())
-		w.mux.Unlock()
-	}
-
 	return reconcile.Result{}, nil
+}
+
+// remove closes the watch channel and removes the watch from the list of watches
+func (w *watch) remove(request string) {
+	if c, ok := w.get(request); ok {
+		close(c)
+		w.mux.Lock()
+		defer w.mux.Unlock()
+		delete(w.watches, request)
+	}
 }
 
 // get returns the watch for a reconcile request

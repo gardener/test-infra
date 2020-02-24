@@ -95,7 +95,7 @@ func (e *executor) AddItem(f func()) {
 
 // Run executes all added items in the configured order
 func (e *executor) Run() {
-	var wg = util.AdvancedWaitGroup{}
+	var wg = &util.AdvancedWaitGroup{}
 
 	var i = 0
 	for e.len() != 0 {
@@ -130,7 +130,7 @@ func (e *executor) Run() {
 			wg.Wait()
 		}
 		if e.len() == 0 {
-			e.waitForLastElement(&wg)
+			e.waitForLastElement(wg)
 		}
 		i++
 	}

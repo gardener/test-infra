@@ -16,6 +16,7 @@ package run_template
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"os"
 	"time"
@@ -67,6 +68,8 @@ var runCmd = &cobra.Command{
 		var (
 			err    error
 			stopCh = make(chan struct{})
+
+			shootFlavors []*shootflavors.ExtendedFlavorInstance
 		)
 		defer close(stopCh)
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -94,13 +97,16 @@ var runCmd = &cobra.Command{
 			collectConfig.ESConfig = &esConfig
 		}
 
-		shootFlavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
-		if err != nil {
-			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
-			os.Exit(1)
+		if shootParameters.FlavorConfigPath != "" {
+			flavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
+			if err != nil {
+				logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
+				os.Exit(1)
+			}
+			shootFlavors = flavors.GetShoots()
 		}
 
-		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &shootParameters, shootFlavors.GetShoots())
+		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &shootParameters, shootFlavors)
 		if err != nil {
 			logger.Log.Error(err, "unable to render testrun")
 			os.Exit(1)
