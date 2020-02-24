@@ -16,6 +16,7 @@ package util
 
 import (
 	"sync"
+	"time"
 )
 
 // AdvancedWaitGroup implements the same interface as sync.WaitGroup.
@@ -45,11 +46,9 @@ func (wg *AdvancedWaitGroup) Done() {
 
 // Wait waits until the counter is 0
 func (wg *AdvancedWaitGroup) Wait() {
-	for {
-		if wg.count == 0 {
-			return
-		}
-	}
+	wg.WaitWithCancelFunc(func() bool {
+		return false
+	})
 }
 
 // WaitWithCancelFunc waits until the wait group count is zero or the cancel function returns true
@@ -58,6 +57,7 @@ func (wg *AdvancedWaitGroup) WaitWithCancelFunc(cancel func() bool) {
 		if wg.count == 0 || cancel() {
 			return
 		}
+		time.Sleep(1 * time.Second)
 	}
 }
 

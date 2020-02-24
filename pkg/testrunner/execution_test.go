@@ -37,7 +37,7 @@ var _ = Describe("Executor tests", func() {
 				executions[i] = e
 				f := func() {
 					e.start = time.Now()
-					time.Sleep(1 * time.Second)
+					time.Sleep(5 * time.Second)
 				}
 				executor.AddItem(f)
 			}
@@ -50,7 +50,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 1, 0.1))
+				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
 			}
 		}, 10)
 
@@ -85,7 +85,7 @@ var _ = Describe("Executor tests", func() {
 			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
 				Serial:        true,
 				BackoffBucket: 1,
-				BackoffPeriod: 2 * time.Second,
+				BackoffPeriod: 5 * time.Second,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -105,7 +105,54 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 2, 0.1))
+				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+			}
+		}, 10)
+
+		It("should run 1 function in serial", func() {
+			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+				Serial: true,
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			e := newExecution(1)
+			f := func() {
+				e.start = time.Now()
+				time.Sleep(5 * time.Second)
+			}
+			executor.AddItem(f)
+
+			executor.Run()
+			endtime := time.Now()
+			b := endtime.Sub(e.start)
+			Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+		}, 10)
+
+		It("should run 3 functions in serial", func() {
+			executions := [3]*execution{}
+			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+				Serial: true,
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			for i := 0; i < 3; i++ {
+				e := newExecution(i)
+				executions[i] = e
+				f := func() {
+					e.start = time.Now()
+					time.Sleep(5 * time.Second)
+				}
+				executor.AddItem(f)
+			}
+
+			executor.Run()
+			for i := 1; i < 3; i++ {
+				e := executions[i]
+				before := executions[i-1]
+				Expect(e.start.After(before.start)).To(BeTrue())
+
+				b := e.start.Sub(before.start)
+				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
 			}
 		}, 10)
 
@@ -182,7 +229,7 @@ var _ = Describe("Executor tests", func() {
 			executions[i] = e
 			f := func() {
 				e.start = time.Now()
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 				if e.value == 2 {
 					executor.AddItem(func() {
 						addExecution.start = time.Now()
@@ -195,7 +242,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[2], 1)
+		expectExecutionsToBe(addExecution, executions[2], 5)
 
 	}, 10)
 
@@ -211,7 +258,7 @@ var _ = Describe("Executor tests", func() {
 			executions[i] = e
 			f := func() {
 				e.start = time.Now()
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 				if e.value == 2 {
 					executor.AddItem(func() {
 						addExecution.start = time.Now()
@@ -224,7 +271,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[2], 1)
+		expectExecutionsToBe(addExecution, executions[2], 5)
 	}, 10)
 
 	It("should add another test during execution in parallel steps that start immediately", func() {
@@ -241,7 +288,7 @@ var _ = Describe("Executor tests", func() {
 				e.start = time.Now()
 
 				if e.value == 1 {
-					time.Sleep(1 * time.Second)
+					time.Sleep(5 * time.Second)
 					executor.AddItem(func() {
 						addExecution.start = time.Now()
 					})
@@ -255,7 +302,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[0], 1)
+		expectExecutionsToBe(addExecution, executions[0], 5)
 	}, 10)
 
 	It("should add same test during execution in parallel steps", func() {
@@ -269,7 +316,7 @@ var _ = Describe("Executor tests", func() {
 			var f func()
 			f = func() {
 				e.start = time.Now()
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 				if e.value == 1 {
 					e.value = 3
 					executor.AddItem(f)
@@ -281,14 +328,14 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(executions[1].value).To(Equal(3))
-		expectExecutionsToBe(executions[1], executions[2], 1)
+		expectExecutionsToBe(executions[1], executions[2], 5)
 	}, 10)
 
 })
 
 func expectExecutionsToBe(e1, e2 *execution, expDurationSeconds int) {
 	d := e1.start.Sub(e2.start)
-	ExpectWithOffset(1, d.Seconds()).To(BeNumerically("~", expDurationSeconds, 0.1), "duration is %fs but expected %ds", d.Seconds(), expDurationSeconds)
+	ExpectWithOffset(1, d.Seconds()).To(BeNumerically("~", expDurationSeconds, 1.1), "duration is %fs but expected %ds", d.Seconds(), expDurationSeconds)
 }
 
 func newExecution(i int) *execution {
