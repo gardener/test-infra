@@ -21,8 +21,8 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
+	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
-	"github.com/minio/minio-go"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +44,7 @@ type collector struct {
 	esConfig *elasticsearch.Config
 	esClient elasticsearch.Client
 	s3Config *testmachinery.S3Config
-	s3Client *minio.Client
+	s3Client s3.Client
 }
 
 func New(log logr.Logger, k8sClient client.Client, esConfig *elasticsearch.Config, s3Config *testmachinery.S3Config) (Interface, error) {
@@ -56,20 +56,11 @@ func New(log logr.Logger, k8sClient client.Client, esConfig *elasticsearch.Confi
 	}
 
 	if s3Config != nil {
-		minioClient, err := minio.New(s3Config.Endpoint, s3Config.AccessKey, s3Config.SecretKey, s3Config.SSL)
+		s3Client, err := s3.New(s3Config)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to create s3 client for %s", s3Config.Endpoint)
+			return nil, err
 		}
-
-		ok, err := minioClient.BucketExists(c.s3Config.BucketName)
-		if err != nil {
-			c.log.Error(err, "error getting bucket name", "bucket", c.s3Config.BucketName)
-			return nil, errors.Wrapf(err, "error getting bucket %s", s3Config.BucketName)
-		}
-		if !ok {
-			return nil, errors.Errorf("bucket %s does not exist", s3Config.BucketName)
-		}
-		c.s3Client = minioClient
+		c.s3Client = s3Client
 	}
 
 	if esConfig != nil {

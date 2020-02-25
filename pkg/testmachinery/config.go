@@ -21,6 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
 )
@@ -159,6 +160,8 @@ func init() {
 	)
 
 	utilruntime.Must(testmachinerySchemeBuilder.AddToScheme(TestMachineryScheme))
+
+	decoder = serializer.NewCodecFactory(TestMachineryScheme).UniversalDecoder()
 }
 
 // String returns the sanitized TestMachinery configuration as formatted string

@@ -31,7 +31,7 @@ testrunner run-gardener [flags]
       --host-cloudprovider CloudProvider   Specify the cloudprovider of the host cluster. Optional and only affect gardener base clusters (default gcp)
       --hostprovider HostProvider          Specify the provider for selecting the base cluster (default gardener)
       --interval string                    [DEPRECTAED] Value has no effect on the testrunner (default "20s")
-      --kubeconfig string                  Path to the testmachinery cluster kubeconfig (default "/Users/d064999/.kubeconfigs/office/garden-core/tm-stg.shoot")
+      --kubeconfig string                  Path to the testmachinery cluster kubeconfig
       --kubernetes-version stringArray     Specify the kubernetes version to test
   -l, --label string                       Specify test label that should be fetched by the testmachinery (default "default")
       --landscape string                   gardener landscape name

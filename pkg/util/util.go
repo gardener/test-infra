@@ -24,7 +24,6 @@ import (
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"k8s.io/api/extensions/v1beta1"
@@ -65,37 +64,6 @@ func Completed(phase argov1.NodePhase) bool {
 		return true
 	}
 	return false
-}
-
-// ParseTestrunFromFile reads a testrun.yaml file from filePath and parses the yaml.
-func ParseTestrunFromFile(filePath string) (tmv1beta1.Testrun, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return tmv1beta1.Testrun{}, err
-	}
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-
-	return ParseTestrun(data)
-}
-
-// ParseTestrun parses testrun.
-func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
-	if len(data) == 0 {
-		return tmv1beta1.Testrun{}, errors.New("empty data")
-	}
-	jsonBody, err := yaml.YAMLToJSON(data)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-
-	var testrun tmv1beta1.Testrun
-	err = json.Unmarshal(jsonBody, &testrun)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-	return testrun, nil
 }
 
 // ParseTestDef parses a file into a TestDefinition.

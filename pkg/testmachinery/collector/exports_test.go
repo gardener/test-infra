@@ -32,17 +32,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	testdataDir = "./testdata"
-)
-
 var _ = Describe("collector summary", func() {
 
 	var (
-		tmpDir string
-		esCtrl *gomock.Controller
-		s3Ctrl *gomock.Controller
-		c      *collector
+		tmpDir   string
+		esCtrl   *gomock.Controller
+		s3Ctrl   *gomock.Controller
+		esClient *mock_elasticsearch.MockClient
+		s3Client *mock_collector.MockClient
+		c        *collector
 	)
 
 	BeforeEach(func() {
@@ -52,12 +50,13 @@ var _ = Describe("collector summary", func() {
 		esCtrl = gomock.NewController(GinkgoT())
 		s3Ctrl = gomock.NewController(GinkgoT())
 
-		esClient := mock_elasticsearch.NewMockClient(esCtrl)
-		s3Client := mock_collector.NewMockClient(s3Ctrl)
+		esClient = mock_elasticsearch.NewMockClient(esCtrl)
+		s3Client = mock_collector.NewMockClient(s3Ctrl)
 		c = &collector{
 			log:      log.NullLogger{},
 			esClient: esClient,
 			s3Client: s3Client,
+			s3Config: &testmachinery.S3Config{BucketName: "testbucket"},
 		}
 	})
 
@@ -68,53 +67,16 @@ var _ = Describe("collector summary", func() {
 		Expect(os.RemoveAll(tmpDir)).ToNot(HaveOccurred())
 	})
 
-	It("should output a summary of the testrun as elasticsearch bulk request", func() {
+	It("should add exported artifacts to the elasticsearch bulk output", func() {
 		ctx := context.Background()
 		defer ctx.Done()
 
-		tr, err := testmachinery.ParseTestrunFromFile(filepath.Join(testdataDir, "01_testrun.yaml"))
+		tr, err := testmachinery.ParseTestrunFromFile(filepath.Join(testdataDir, "02_testrun_export.yaml"))
 		Expect(err).ToNot(HaveOccurred())
 
-		err = c.collectSummaryAndExports(tmpDir, tr, &metadata.Metadata{Testrun: metadata.TestrunMetadata{ID: tr.Name}})
+		s3Object, err := mock_collector.CreateS3ObjectFromFile(filepath.Join(testdataDir, "11_export_artifact.tar.gz"))
 		Expect(err).ToNot(HaveOccurred())
-
-		files, err := ioutil.ReadDir(tmpDir)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(len(files)).To(Equal(1), "Expected 1 file output")
-
-		file, err := os.Open(filepath.Join(tmpDir, files[0].Name()))
-		Expect(err).ToNot(HaveOccurred())
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		line := 1
-		for scanner.Scan() {
-			var jsonBody map[string]interface{}
-			err = json.Unmarshal([]byte(scanner.Text()), &jsonBody)
-			Expect(err).ToNot(HaveOccurred())
-
-			// every second json should be a elastic search metadat file
-			if line%2 != 0 {
-				Expect(jsonBody["index"]).ToNot(BeNil())
-			}
-			// every data document should have of a testrun metadata information
-			if line%2 == 0 {
-				Expect(jsonBody["index"]).To(BeNil())
-				Expect(jsonBody["tm"]).ToNot(BeEmpty())
-				Expect(jsonBody["tm"].(map[string]interface{})["tr"]).ToNot(BeEmpty())
-
-			}
-			line++
-		}
-		Expect(scanner.Err()).ToNot(HaveOccurred())
-	})
-
-	It("should add environment configuration to step metadata", func() {
-		ctx := context.Background()
-		defer ctx.Done()
-
-		tr, err := testmachinery.ParseTestrunFromFile(filepath.Join(testdataDir, "01_testrun.yaml"))
-		Expect(err).ToNot(HaveOccurred())
+		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz", gomock.Any()).Return(s3Object, nil)
 
 		err = c.collectSummaryAndExports(tmpDir, tr, &metadata.Metadata{Testrun: metadata.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
@@ -142,6 +104,7 @@ var _ = Describe("collector summary", func() {
 		Expect(jsonBody["tm"].(map[string]interface{})["tr"].(map[string]interface{})["id"]).To(Equal(tr.Name))
 
 		lastDocument := documents[len(documents)-1]
-		Expect(lastDocument["tm"].(map[string]interface{})["config"].(map[string]interface{})["test"]).To(Equal("val"))
+		Expect(lastDocument["name"]).To(Equal("test-export"))
 	})
+
 })

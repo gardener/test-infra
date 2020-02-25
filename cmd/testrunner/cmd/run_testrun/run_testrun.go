@@ -16,6 +16,7 @@ package run_testrun
 
 import (
 	"fmt"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"os"
 	"time"
@@ -75,14 +76,14 @@ var runTestrunCmd = &cobra.Command{
 			},
 		}
 
-		tr, err := util.ParseTestrunFromFile(testrunPath)
+		tr, err := testmachinery.ParseTestrunFromFile(testrunPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse testrun")
 			os.Exit(1)
 		}
 
 		run := testrunner.Run{
-			Testrun:  &tr,
+			Testrun:  tr,
 			Metadata: &metadata.Metadata{},
 		}
 

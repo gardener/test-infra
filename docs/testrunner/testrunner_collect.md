@@ -21,7 +21,7 @@ testrunner collect [flags]
       --github-user string                 On error dir which is used by Concourse.
   -h, --help                               help for collect
   -n, --namespace string                   Namespace where the testrun should be deployed. (default "default")
-      --tm-kubeconfig-path string          Path to the testmachinery cluster kubeconfig (default "/Users/d064999/.kubeconfigs/office/garden-core/tm-stg.shoot")
+      --tm-kubeconfig-path string          Path to the testmachinery cluster kubeconfig
   -t, --tr-name string                     Name of the testrun to collect results.
       --upload-status-asset                Upload testrun status as a github release asset.
 ```
