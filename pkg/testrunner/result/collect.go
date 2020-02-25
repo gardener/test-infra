@@ -22,11 +22,11 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"math"
 	"os"
 	"path/filepath"
@@ -123,8 +123,9 @@ func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs t
 	}
 
 	if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
-		err := errors.New("missing github password / github user / component descriptor path argument", "")
+		err := errors.New("missing github password / github user / component descriptor path argument")
 		log.Error(err, fmt.Sprintf("components: %s, ghUser: %s, ghPasswordLength: %d", cfg.AssetComponents, cfg.GithubUser, len(cfg.GithubPassword)))
+		return
 	}
 
 	componentsForUpload := getComponentsForUpload(cfg, runLogger)

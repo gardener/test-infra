@@ -49,13 +49,12 @@ var (
 	esConfig         = elasticsearch.Config{}
 	metadata         = testrunner.Metadata{}
 
-	testrunNamePrefix       string
-	componentDescriptorPath string
-	kubernetesVersions      []string
-	cloudproviders          []common.CloudProvider
-	gardenerExtensions      string
-	testLabel               string
-	hibernation             bool
+	testrunNamePrefix  string
+	kubernetesVersions []string
+	cloudproviders     []common.CloudProvider
+	gardenerExtensions string
+	testLabel          string
+	hibernation        bool
 )
 
 // AddCommand adds run-gardener to a command.
@@ -78,7 +77,7 @@ var runCmd = &cobra.Command{
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
 
-		components, err := componentdescriptor.GetComponentsFromFile(componentDescriptorPath)
+		components, err := componentdescriptor.GetComponentsFromFile(collectConfig.ComponentDescriptorPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to render default testrun")
 			os.Exit(1)
@@ -198,7 +197,7 @@ func init() {
 	runCmd.Flags().BoolVar(&collectConfig.S3SSL, "s3-ssl", false, "S3 has SSL enabled.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
-	runCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
+	runCmd.Flags().StringVar(&collectConfig.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	runCmd.Flags().Var(cmdvalues.NewHostProviderValue(&defaultConfig.HostProvider, gardenerscheduler.Name), "hostprovider", "Specify the provider for selecting the base cluster")
 	runCmd.Flags().StringVar(&defaultConfig.GardenSetupRevision, "garden-setup-version", "master", "Specify the garden setup version to setup gardener")
