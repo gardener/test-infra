@@ -138,4 +138,11 @@ func init() {
 	collectCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
 	collectCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
+	collectCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("es-username", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("es-password", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("s3-endpoint", "DEPRECATED: will not we used anymore")
+	collectCmd.Flags().MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore")
 }

@@ -182,8 +182,6 @@ func init() {
 	runCmd.Flags().Var(cmdvalues.NewDurationValue(&testrunnerConfig.Timeout, time.Hour), "timeout", "Timout the testrunner to wait for the complete testrun to finish. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
 	runCmd.Flags().String("interval", "20s", "[DEPRECTAED] Value has no effect on the testrunner")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
-
-	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	runCmd.Flags().StringVar(&collectConfig.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
@@ -215,10 +213,21 @@ func init() {
 	runCmd.Flags().StringVar(&metadata.Landscape, "landscape", "", "gardener landscape name")
 
 	// DEPRECATED FLAGS
+
+	// DEPRECATED FLAGS
+	// is now handled by the testmachinery
+	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	runCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	runCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
 	runCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
 	runCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
+	runCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-username", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-password", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("s3-endpoint", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore")
 }

@@ -169,7 +169,6 @@ func init() {
 	runCmd.Flags().IntVar(&testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
-	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
 	// status asset upload
@@ -218,10 +217,18 @@ func init() {
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery
+	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	runCmd.Flags().String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
 	runCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	runCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
 	runCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
 	runCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	runCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
+	runCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-username", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("es-password", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("s3-endpoint", "DEPRECATED: will not we used anymore")
+	runCmd.Flags().MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore")
 }
