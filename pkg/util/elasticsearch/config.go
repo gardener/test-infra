@@ -22,6 +22,9 @@ type Config struct {
 
 // Copy returns a copy of the elastic search config
 func (c *Config) Copy() *Config {
+	if c == nil {
+		return nil
+	}
 	return &Config{
 		Endpoint: c.Endpoint,
 		Username: c.Username,
