@@ -19,7 +19,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/shootflavors"
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -47,7 +47,7 @@ func (r *defaultValueRenderer) GetValues(defaultValues map[string]interface{}) (
 	return utils.MergeMaps(defaultValues, values), nil
 }
 
-func (r *defaultValueRenderer) Render(defaultValues map[string]interface{}) (map[string]interface{}, *testrunner.Metadata, interface{}, error) {
+func (r *defaultValueRenderer) Render(defaultValues map[string]interface{}) (map[string]interface{}, *metadata.Metadata, interface{}, error) {
 	values, err := r.GetValues(defaultValues)
 	if err != nil {
 		return nil, nil, nil, err
@@ -59,8 +59,8 @@ func (r *defaultValueRenderer) Render(defaultValues map[string]interface{}) (map
 	return values, metadata, nil, nil
 }
 
-func (r *defaultValueRenderer) GetMetadata() (*testrunner.Metadata, error) {
-	return &testrunner.Metadata{
+func (r *defaultValueRenderer) GetMetadata() (*metadata.Metadata, error) {
+	return &metadata.Metadata{
 		Landscape:           r.parameters.Landscape,
 		ComponentDescriptor: r.parameters.ComponentDescriptor.JSON(),
 	}, nil
@@ -81,7 +81,7 @@ type shootValueRenderer struct {
 	parameters *internalParameters
 }
 
-func (r *shootValueRenderer) Render(defaultValues map[string]interface{}) (map[string]interface{}, *testrunner.Metadata, interface{}, error) {
+func (r *shootValueRenderer) Render(defaultValues map[string]interface{}) (map[string]interface{}, *metadata.Metadata, interface{}, error) {
 	shoot := r.shoot.New()
 	values, err := r.GetValues(shoot, defaultValues)
 	if err != nil {
@@ -153,8 +153,8 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 	return utils.MergeMaps(defaultValues, values), nil
 }
 
-func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*testrunner.Metadata, error) {
-	return &testrunner.Metadata{
+func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata.Metadata, error) {
+	return &metadata.Metadata{
 		FlavorDescription:   shoot.Description,
 		Landscape:           r.parameters.Landscape,
 		ComponentDescriptor: r.parameters.ComponentDescriptor.JSON(),

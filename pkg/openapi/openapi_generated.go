@@ -306,7 +306,7 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurementSpec(ref common.Referenc
 				Properties: map[string]spec.Schema{
 					"gardenerSecretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Secret reference to the gardener kubernettes cluster where the shoots to watch reside",
+							Description: "Secret reference to the gardener kubernetes cluster where the shoots to watch reside",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1381,6 +1381,13 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"collected": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Collected indicates if the testrun's results were successfully collected by the testmachinery",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"observedGeneration": {

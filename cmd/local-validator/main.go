@@ -25,7 +25,6 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
-	"github.com/gardener/test-infra/pkg/util"
 )
 
 // Connection to remote is needed to validate remote testdefinitions
@@ -51,13 +50,13 @@ func main() {
 	log.V(4).Info("test 4")
 	log.V(5).Info("test 5")
 
-	tr, err := util.ParseTestrunFromFile(*trFilePath)
+	tr, err := testmachinery.ParseTestrunFromFile(*trFilePath)
 	if err != nil {
 		log.Error(err, "unable to parse", "path", *trFilePath)
 		os.Exit(1)
 	}
 
-	if err := testrun.Validate(log.WithValues("testrun", internalName(tr)), &tr); err != nil {
+	if err := testrun.Validate(log.WithValues("testrun", internalName(tr)), tr); err != nil {
 		log.Error(err, "invalid Testrun", "testrun", internalName(tr))
 		os.Exit(1)
 	}
@@ -67,7 +66,7 @@ func main() {
 
 // internalName determines an internal name that can be the testruns name, generated name or
 // if none is defined it returns noName
-func internalName(tr v1beta1.Testrun) string {
+func internalName(tr *v1beta1.Testrun) string {
 	if tr.Name != "" {
 		return tr.Name
 	}

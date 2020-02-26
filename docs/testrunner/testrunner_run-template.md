@@ -15,24 +15,23 @@ testrunner run-template [flags]
 ```
       --asset-component stringArray           The github components to which the testrun status shall be attached as an asset.
       --asset-prefix string                   Prefix of the asset name.
+      --backoff-bucket int                    Number of parallel created testruns per backoff period
+      --backoff-period duration               Time to wait between the creation of testrun buckets
       --component-descriptor-path string      Path to the component descriptor (BOM) of the current landscape.
       --concourse-onError-dir string          On error dir which is used by Concourse.
       --enable-telemetry                      Enables the measurements of metrics during execution
-      --es-config-name string                 The elasticsearch secret-server config name. (default "sap_internal")
       --fail-on-error                         Testrunners exits with 1 if one testruns failed. (default true)
       --filter-patch-versions                 Filters patch versions so that only the latest patch versions per minor versions is used.
       --flavor-config string                  Path to shoot test configuration.
       --flavored-testruns-chart-path string   Path to the testruns chart to test shoots.
       --gardener-kubeconfig-path string       Path to the gardener kubeconfig.
       --github-password string                Github password.
-      --github-user string                    On error dir which is used by Concourse.
+      --github-user string                    GitHUb username.
   -h, --help                                  help for run-template
       --interval int                          Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
       --landscape string                      Current gardener landscape.
   -n, --namespace string                      Namesapce where the testrun should be deployed. (default "default")
-      --output-dir-path string                The filepath where the summary should be written to. (default "./testout")
-      --s3-endpoint string                    S3 endpoint of the testmachinery cluster.
-      --s3-ssl                                S3 has SSL enabled.
+      --serial                                executes all testruns of a bucket only after the previous bucket has finished
       --set string                            setValues additional helm values
       --shoot-name string                     Shoot name which is used to run tests.
       --testrun-flake-attempts int            Max number of testruns until testrun is successful

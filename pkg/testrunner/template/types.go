@@ -15,7 +15,7 @@
 package template
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
@@ -49,5 +49,5 @@ type internalParameters struct {
 
 // ValueRenderer renders the helm values, run metdata and info for a specific chart rendering
 type ValueRenderer interface {
-	Render(defaultValues map[string]interface{}) (values map[string]interface{}, metadata *testrunner.Metadata, info interface{}, err error)
+	Render(defaultValues map[string]interface{}) (values map[string]interface{}, metadata *metadata.Metadata, info interface{}, err error)
 }

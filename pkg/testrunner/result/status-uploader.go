@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
@@ -179,7 +180,7 @@ func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsTo
 		assetOverview.AssetOverviewItems = append(assetOverview.AssetOverviewItems, AssetOverviewItem{
 			Name:       assetItemName,
 			Successful: isAssetItemSuccessful,
-			Dimension: testrunner.Dimension{
+			Dimension: metadata.Dimension{
 				Description:       run.Metadata.FlavorDescription,
 				Cloudprovider:     run.Metadata.CloudProvider,
 				KubernetesVersion: run.Metadata.KubernetesVersion,
@@ -507,7 +508,7 @@ func (overview AssetOverview) Contains(searchAssetName string) bool {
 }
 
 type AssetOverviewItem struct {
-	Name       string               `json:"name"`
-	Successful bool                 `json:"successful"`
-	Dimension  testrunner.Dimension `json:"dimension,omitempty"`
+	Name       string             `json:"name"`
+	Successful bool               `json:"successful"`
+	Dimension  metadata.Dimension `json:"dimension,omitempty"`
 }

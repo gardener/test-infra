@@ -94,6 +94,15 @@ func (r *TestmachineryReconciler) completeTestrun(rCtx *reconcileContext) error 
 		}
 	}
 
+	// collect results
+	metadata, err := r.collector.GetMetadata(rCtx.tr)
+	if err != nil {
+		return err
+	}
+	if err := r.collector.Collect(rCtx.tr, metadata); err != nil {
+		return err
+	}
+
 	// cleanup pods to remove workload from the api server
 	// logs are still accessible through "archiveLogs" option in argo
 	if err := garbagecollection.CleanWorkflowPods(r, rCtx.wf); err != nil {

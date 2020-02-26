@@ -48,7 +48,7 @@ func NewTestLocations(log logr.Logger, testLocations []tmv1beta1.TestLocation) (
 			}
 			err = loc.SetTestDefs(testDefs)
 			if err != nil {
-				locationLog.Error(err, "unable to get testdefinitions")
+				locationLog.Info("unable to get testdefinitions", "error", err.Error())
 				continue
 			}
 		}
@@ -56,7 +56,7 @@ func NewTestLocations(log logr.Logger, testLocations []tmv1beta1.TestLocation) (
 			loc := location.NewLocalLocation(locationLog, &t)
 			err := loc.SetTestDefs(testDefs)
 			if err != nil {
-				locationLog.Error(err, "unable to get testdefinitions")
+				locationLog.Info("unable to get testdefinitions", "error", err)
 			}
 		}
 	}

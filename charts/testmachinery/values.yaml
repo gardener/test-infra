@@ -57,6 +57,11 @@ objectStorage:
   secret:
     name: "s3-secret"
 
+elasticsearch:
+  endpoint: ""
+  username: ""
+  password: ""
+
 cleanup:
   enabled: false
 

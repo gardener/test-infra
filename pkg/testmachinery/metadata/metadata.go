@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testrunner
+package metadata
 
 import (
 	"fmt"
@@ -52,11 +52,9 @@ func (m *Metadata) DeepCopy() *Metadata {
 	return &meta
 }
 
-// MetadataFromTestrun reads metadata from a testrun
-func MetadataFromTestrun(tr *tmv1beta1.Testrun) *Metadata {
-
+// FromTestrun reads metadata from a testrun
+func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	retries, _ := strconv.Atoi(tr.Annotations[common.AnnotationRetries])
-
 	return &Metadata{
 		Landscape:         tr.Annotations[common.AnnotationLandscape],
 		KubernetesVersion: tr.Annotations[common.AnnotationK8sVersion],

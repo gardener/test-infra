@@ -19,7 +19,9 @@ import (
 	tmscheme "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned/scheme"
 	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
 )
@@ -87,6 +89,8 @@ const (
 	ArtifactSharedFolder = "sharedFolder"
 )
 
+const redactedString = "--- REDACTED ---"
+
 var (
 	// TESTDEF_PATH is the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm)
 	TESTDEF_PATH string
@@ -106,6 +110,7 @@ type TmConfiguration struct {
 	CleanWorkflowPods bool
 	GitHub            GitHubConfig
 	S3                *S3Config
+	ElasticSearch     *elasticsearch.Config
 }
 
 // S3Config is an object containing the S3 specific configuration
@@ -155,6 +160,8 @@ func init() {
 	)
 
 	utilruntime.Must(testmachinerySchemeBuilder.AddToScheme(TestMachineryScheme))
+
+	decoder = serializer.NewCodecFactory(TestMachineryScheme).UniversalDecoder()
 }
 
 // String returns the sanitized TestMachinery configuration as formatted string
@@ -168,20 +175,26 @@ func (c *TmConfiguration) String() string {
 	if len(cc.GitHub.Secrets) != 0 {
 		for i := range cc.GitHub.Secrets {
 			if len(cc.GitHub.Secrets[i].TechnicalUser.AuthToken) != 0 {
-				cc.GitHub.Secrets[i].TechnicalUser.AuthToken = "--- REDACTED ---"
+				cc.GitHub.Secrets[i].TechnicalUser.AuthToken = redactedString
 			}
 			if len(cc.GitHub.Secrets[i].TechnicalUser.Password) != 0 {
-				cc.GitHub.Secrets[i].TechnicalUser.Password = "--- REDACTED ---"
+				cc.GitHub.Secrets[i].TechnicalUser.Password = redactedString
 			}
 		}
 	}
 
 	if cc.S3 != nil {
 		if len(cc.S3.SecretKey) != 0 {
-			cc.S3.SecretKey = "--- REDACTED ---"
+			cc.S3.SecretKey = redactedString
 		}
 		if len(cc.S3.AccessKey) != 0 {
-			cc.S3.AccessKey = "--- REDACTED ---"
+			cc.S3.AccessKey = redactedString
+		}
+	}
+
+	if cc.ElasticSearch != nil {
+		if len(cc.ElasticSearch.Password) != 0 {
+			cc.ElasticSearch.Password = redactedString
 		}
 	}
 
@@ -202,7 +215,8 @@ func (c *TmConfiguration) Copy() *TmConfiguration {
 			Cache:   c.GitHub.Cache.DeepCopy(),
 			Secrets: append(make([]GitHubInstanceConfig, 0, len(c.GitHub.Secrets)), c.GitHub.Secrets...),
 		},
-		S3: c.S3.Copy(),
+		S3:            c.S3.Copy(),
+		ElasticSearch: c.ElasticSearch.Copy(),
 	}
 }
 

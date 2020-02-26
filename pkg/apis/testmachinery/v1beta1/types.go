@@ -143,6 +143,10 @@ type TestrunStatus struct {
 	// It also shows all specific executed tests.
 	Steps []*StepStatus `json:"steps,omitempty"`
 
+	// Collected indicates if the testrun's results were successfully collected by the testmachinery
+	// +optional
+	Collected bool `json:"collected,omitempty"`
+
 	// ObservedGeneration is the most recent generation observed for this testrun.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`

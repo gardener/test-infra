@@ -21,6 +21,7 @@ Testrunner for Test Machinery
 
 ### SEE ALSO
 
+* [testrunner alert](testrunner_alert.md)	 - Evaluates recently completed testruns and sends alerts for failed  testruns if conditions are met.
 * [testrunner collect](testrunner_collect.md)	 - Collects results from a completed testrun.
 * [testrunner docs](testrunner_docs.md)	 - Generate docs for the testrunner
 * [testrunner gardener-telemetry](testrunner_gardener-telemetry.md)	 - Collects metrics during gardener updates until gardener is updated and all shoots are successfully reconciled

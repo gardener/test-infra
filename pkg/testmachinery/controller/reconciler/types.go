@@ -17,6 +17,7 @@ package reconciler
 import (
 	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,8 +26,10 @@ import (
 
 type TestmachineryReconciler struct {
 	client.Client
-	scheme *runtime.Scheme
-	Logger logr.Logger
+	scheme    *runtime.Scheme
+	Logger    logr.Logger
+	collector collector.Interface
+
 	timers map[string]*time.Timer
 }
 

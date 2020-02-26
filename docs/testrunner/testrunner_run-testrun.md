@@ -13,11 +13,14 @@ testrunner run-testrun [flags]
 ### Options
 
 ```
+      --backoff-bucket int           Number of parallel created testruns per backoff period
+      --backoff-period duration      Time to wait between the creation of testrun buckets
   -f, --file string                  Path to the testrun yaml
   -h, --help                         help for run-testrun
-      --interval int                 Poll interval in seconds of the testrunner to poll for the testrun status. (default 20)
+      --interval int                 [DEPRECATED] Value has no effect (default 20)
       --name-prefix string           Name prefix of the testrun (default "testrunner-")
   -n, --namespace string             Namespace where the testrun should be deployed. (default "default")
+      --serial                       executes all testruns of a bucket only after the previous bucket has finished
       --testrun-flake-attempts int   Max number of testruns until testrun is successful
       --timeout int                  Timout in seconds of the testrunner to wait for the complete testrun to finish. (default 3600)
       --tm-kubeconfig-path string    Path to the testmachinery cluster kubeconfig

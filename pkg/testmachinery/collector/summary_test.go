@@ -1,23 +1,41 @@
-package result_test
+// Copyright 2020 Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package collector
 
 import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/testrunner/result"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/test/resources"
+	"github.com/onsi/ginkgo"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"testing"
 )
 
-func TestValidationWebhook(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Result collection Integration Test Suite")
-}
-
 var _ = Describe("output generation tests", func() {
-	log := log.NullLogger{}
+	var (
+		c *collector
+	)
+
+	ginkgo.BeforeEach(func() {
+		c = &collector{
+			log: log.NullLogger{},
+		}
+	})
+
 	Context("configuration", func() {
 		It("should include environment variable configuration to in the metadata", func() {
 			configElement := v1beta1.ConfigElement{
@@ -39,7 +57,7 @@ var _ = Describe("output generation tests", func() {
 				},
 			}
 
-			_, summaries, err := result.DetermineTestrunSummary(tr, &testrunner.Metadata{}, &result.Config{}, nil, log)
+			_, summaries, err := c.generateSummary(tr, &metadata.Metadata{})
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(summaries).To(HaveLen(1))
@@ -49,7 +67,7 @@ var _ = Describe("output generation tests", func() {
 		})
 	})
 
-	It("should exnclude file variable configuration from in the metadata", func() {
+	It("should exclude file variable configuration from in the metadata", func() {
 		configElement := v1beta1.ConfigElement{
 			Type:  v1beta1.ConfigTypeFile,
 			Name:  "test",
@@ -68,7 +86,7 @@ var _ = Describe("output generation tests", func() {
 				},
 			},
 		}
-		_, summaries, err := result.DetermineTestrunSummary(tr, &testrunner.Metadata{}, &result.Config{}, nil, log)
+		_, summaries, err := c.generateSummary(tr, &metadata.Metadata{})
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(summaries).To(HaveLen(1))

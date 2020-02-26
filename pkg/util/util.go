@@ -17,15 +17,16 @@ package util
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
+	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"math"
 	"math/rand"
@@ -35,6 +36,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"strings"
 	"time"
@@ -62,37 +64,6 @@ func Completed(phase argov1.NodePhase) bool {
 		return true
 	}
 	return false
-}
-
-// ParseTestrunFromFile reads a testrun.yaml file from filePath and parses the yaml.
-func ParseTestrunFromFile(filePath string) (tmv1beta1.Testrun, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return tmv1beta1.Testrun{}, err
-	}
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-
-	return ParseTestrun(data)
-}
-
-// ParseTestrun parses testrun.
-func ParseTestrun(data []byte) (tmv1beta1.Testrun, error) {
-	if len(data) == 0 {
-		return tmv1beta1.Testrun{}, errors.New("empty data")
-	}
-	jsonBody, err := yaml.YAMLToJSON(data)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-
-	var testrun tmv1beta1.Testrun
-	err = json.Unmarshal(jsonBody, &testrun)
-	if err != nil {
-		return tmv1beta1.Testrun{}, err
-	}
-	return testrun, nil
 }
 
 // ParseTestDef parses a file into a TestDefinition.
@@ -402,8 +373,11 @@ func Zipit(source, target string) error {
 	return err
 }
 
-// DocExists checks whether an elasticsearch doc of a testrun exists in index testmachinery-* index
-func DocExists(log logr.Logger, esConfig *elasticsearch.Config, testrunID, testrunStartTime string) (docExists bool) {
+// DocExists checks whether an elasticsearch doc of a testrun exists in the testmachinery-* index
+func DocExists(log logr.Logger, esClient elasticsearch.Client, testrunID, testrunStartTime string) (docExists bool) {
+	if esClient == nil {
+		return false
+	}
 	log.V(2).Info("check if docs have already been ingested")
 
 	payload := fmt.Sprintf(`{
@@ -418,15 +392,6 @@ func DocExists(log logr.Logger, esConfig *elasticsearch.Config, testrunID, testr
 			}
 		}`, testrunID, testrunStartTime)
 
-	if esConfig == nil {
-		log.Info("no elasticsearch config available, cannot check if doc already exists")
-		return false
-	}
-	esClient, err := elasticsearch.NewClient(*esConfig)
-	if err != nil {
-		log.Error(err, "couldn't create elasticsearch client")
-		return false
-	}
 	responseBytes, err := esClient.Request(http.MethodGet, "/testmachinery-*/_search", strings.NewReader(payload))
 	if err != nil {
 		log.Error(err, "elasticsearch request failed")
@@ -445,4 +410,28 @@ type ESHits struct {
 			Value int `json:"value"`
 		} `json:"total"`
 	} `json:"hits"`
+}
+
+// GetClusterDomainURL tries to derive the cluster domain url from a grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
+func GetClusterDomainURL(tmClient client.Client) (string, error) {
+	// try to derive the cluster domain url from grafana ingress if possible
+	// return err if the ingress cannot be found
+	if tmClient == nil {
+		return "", nil
+	}
+	ingress := &v1beta1.Ingress{}
+	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
+	if err != nil {
+		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
+	}
+	if len(ingress.Spec.Rules) == 0 {
+		return "", fmt.Errorf("cannot get ingress rule from ingress %v", ingress)
+	}
+	host := ingress.Spec.Rules[0].Host
+	r, _ := regexp.Compile("[a-z]+\\.ingress\\.(.+)$")
+	matches := r.FindStringSubmatch(host)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
+	}
+	return matches[1], nil
 }

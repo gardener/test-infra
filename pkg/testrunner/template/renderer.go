@@ -6,6 +6,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
@@ -198,13 +199,13 @@ func splitTemplates(all []*chartapi.Template) ([]*chartapi.Template, []*chartapi
 func parseTestrunsFromChart(log logr.Logger, files map[string]string) []*v1beta1.Testrun {
 	testruns := make([]*v1beta1.Testrun, 0)
 	for filename, file := range files {
-		tr, err := util.ParseTestrun([]byte(file))
+		tr, err := testmachinery.ParseTestrun([]byte(file))
 		if err != nil {
 			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
 			continue
 		}
 		metav1.SetMetaDataAnnotation(&tr.ObjectMeta, common.AnnotationTemplateIDTestrun, filename)
-		testruns = append(testruns, &tr)
+		testruns = append(testruns, tr)
 	}
 	return testruns
 }
