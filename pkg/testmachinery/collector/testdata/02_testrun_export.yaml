@@ -17,6 +17,8 @@ kind: Testrun
 metadata:
   name: test
   namespace: default
+  annotations:
+    testmachinery.garden.cloud/collect: "true"
 spec:
   locationSets:
   - name: github-locations
@@ -35,6 +37,7 @@ spec:
     definition:
       name: delete-shoot
 status:
+  startTime: "2020-02-25T08:43:31Z"
   steps:
   - name: create-shoot-create-testflow
     phase: Succeeded

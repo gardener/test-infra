@@ -17,6 +17,8 @@ kind: Testrun
 metadata:
   name: test
   namespace: default
+  annotations:
+    testmachinery.garden.cloud/collect: "true"
 spec:
   locationSets:
   - name: github-locations

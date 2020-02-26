@@ -24,6 +24,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/json"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -39,10 +40,12 @@ var (
 var _ = Describe("collector summary", func() {
 
 	var (
-		tmpDir string
-		esCtrl *gomock.Controller
-		s3Ctrl *gomock.Controller
-		c      *collector
+		tmpDir   string
+		esCtrl   *gomock.Controller
+		s3Ctrl   *gomock.Controller
+		esClient *mock_elasticsearch.MockClient
+		s3Client *mock_collector.MockClient
+		c        *collector
 	)
 
 	BeforeEach(func() {
@@ -52,12 +55,13 @@ var _ = Describe("collector summary", func() {
 		esCtrl = gomock.NewController(GinkgoT())
 		s3Ctrl = gomock.NewController(GinkgoT())
 
-		esClient := mock_elasticsearch.NewMockClient(esCtrl)
-		s3Client := mock_collector.NewMockClient(s3Ctrl)
+		esClient = mock_elasticsearch.NewMockClient(esCtrl)
+		s3Client = mock_collector.NewMockClient(s3Ctrl)
 		c = &collector{
 			log:      log.NullLogger{},
 			esClient: esClient,
 			s3Client: s3Client,
+			s3Config: &testmachinery.S3Config{BucketName: "testbucket"},
 		}
 	})
 
@@ -143,5 +147,27 @@ var _ = Describe("collector summary", func() {
 
 		lastDocument := documents[len(documents)-1]
 		Expect(lastDocument["tm"].(map[string]interface{})["config"].(map[string]interface{})["test"]).To(Equal("val"))
+	})
+
+	It("should upload a summary of the testrun and exports as elasticsearch bulk request", func() {
+		ctx := context.Background()
+		defer ctx.Done()
+
+		tr, err := testmachinery.ParseTestrunFromFile(filepath.Join(testdataDir, "02_testrun_export.yaml"))
+		Expect(err).ToNot(HaveOccurred())
+		s3Object, err := mock_collector.CreateS3ObjectFromFile(filepath.Join(testdataDir, "11_export_artifact.tar.gz"))
+		Expect(err).ToNot(HaveOccurred())
+		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz", gomock.Any()).Return(s3Object, nil)
+
+		// esClient.Request(http.MethodGet, "/testmachinery-*/_search", strings.NewReader(payload))
+		hits := `{ "hits": { "total": { "value": 0 } } }`
+		esClient.EXPECT().Request(http.MethodGet, "/testmachinery-*/_search", gomock.Any()).Return([]byte(hits), nil)
+		esClient.EXPECT().BulkFromFile(gomock.AssignableToTypeOf("")).Return(nil)
+
+		err = c.Collect(tr, &metadata.Metadata{Testrun: metadata.TestrunMetadata{ID: tr.Name}})
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(tr.Status.Collected).To(BeTrue())
+
 	})
 })
