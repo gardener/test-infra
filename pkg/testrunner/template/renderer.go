@@ -98,6 +98,9 @@ func (r *templateRenderer) Render(parameters *internalParameters, chartPath stri
 			// Add runtime annotations to the testrun
 			addAnnotationsToTestrun(tr, meta.CreateAnnotations())
 
+			// add collect annotation
+			metav1.SetMetaDataAnnotation(&tr.ObjectMeta, common.AnnotationCollectTestrun, "true")
+
 			runs = append(runs, &testrunner.Run{
 				Info:       info,
 				Testrun:    tr,
