@@ -86,7 +86,11 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 
 	for _, step := range status.Steps {
 
-		stepMetadata := *meta
+		stepMetadata := &metadata.StepSummaryMetadata{
+			Metadata:    *meta,
+			StepName:    step.Name,
+			TestDefName: step.TestDefinition.Name,
+		}
 		stepMetadata.Configuration = make(map[string]string, 0)
 		stepMetadata.Annotations = utils.MergeStringMaps(stepMetadata.Annotations, step.Annotations)
 		for _, elem := range step.TestDefinition.Config {
@@ -94,10 +98,10 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 				stepMetadata.Configuration[elem.Name] = elem.Value
 			}
 		}
-		pre := c.preComputeTeststepFields(step, stepMetadata)
+		pre := c.preComputeTeststepFields(step, stepMetadata.Metadata)
 
 		summary := metadata.StepSummary{
-			Metadata:    &stepMetadata,
+			Metadata:    stepMetadata,
 			Type:        metadata.SummaryTypeTeststep,
 			Name:        step.TestDefinition.Name,
 			StepName:    step.Position.Step,

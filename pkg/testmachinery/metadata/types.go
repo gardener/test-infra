@@ -62,13 +62,11 @@ type TestrunMetadata struct {
 
 // StepExportMetadata is the metadata of one step of a testrun.
 type StepExportMetadata struct {
-	Metadata
-	StepName    string             `json:"stepName,omitempty"`
-	TestDefName string             `json:"testdefinition,omitempty"`
-	Phase       v1alpha1.NodePhase `json:"phase,omitempty"`
-	StartTime   *v1.Time           `json:"startTime,omitempty"`
-	Duration    int64              `json:"duration,omitempty"`
-	PodName     string             `json:"podName"`
+	StepSummaryMetadata
+	Phase     v1alpha1.NodePhase `json:"phase,omitempty"`
+	StartTime *v1.Time           `json:"startTime,omitempty"`
+	Duration  int64              `json:"duration,omitempty"`
+	PodName   string             `json:"podName"`
 }
 
 // TestrunSummary is the result of the overall testrun.
@@ -82,17 +80,24 @@ type TestrunSummary struct {
 	TelemetryData *TelemetryData     `json:"telemetry,omitempty"`
 }
 
+// StepSummaryMetadata is the metadta for a specific step result.
+type StepSummaryMetadata struct {
+	Metadata
+	StepName    string `json:"stepName,omitempty"`
+	TestDefName string `json:"testdefinition,omitempty"`
+}
+
 // StepSummary is the result of a specific step.
 type StepSummary struct {
-	Metadata    *Metadata          `json:"tm,omitempty"`
-	Type        SummaryType        `json:"type,omitempty"`
-	Name        string             `json:"name,omitempty"`
-	StepName    string             `json:"stepName,omitempty"`
-	Labels      []string           `json:"labels,omitempty"`
-	Phase       v1alpha1.NodePhase `json:"phase,omitempty"`
-	StartTime   *v1.Time           `json:"startTime,omitempty"`
-	Duration    int64              `json:"duration,omitempty"`
-	PreComputed *StepPreComputed   `json:"pre,omitempty"`
+	Metadata    *StepSummaryMetadata `json:"tm,omitempty"`
+	Type        SummaryType          `json:"type,omitempty"`
+	Name        string               `json:"name,omitempty"`
+	StepName    string               `json:"stepName,omitempty"`
+	Labels      []string             `json:"labels,omitempty"`
+	Phase       v1alpha1.NodePhase   `json:"phase,omitempty"`
+	StartTime   *v1.Time             `json:"startTime,omitempty"`
+	Duration    int64                `json:"duration,omitempty"`
+	PreComputed *StepPreComputed     `json:"pre,omitempty"`
 }
 
 // StepPreComputed contains fields that could be created at runtime via scripted fields, but are created statically for better performance and better support of grafana

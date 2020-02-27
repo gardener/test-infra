@@ -33,13 +33,15 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 	for _, step := range status.Steps {
 		if step.Phase != argov1.NodeSkipped && step.ExportArtifactKey != "" {
 			stepMeta := &metadata.StepExportMetadata{
-				Metadata:    *meta,
-				StepName:    step.Name,
-				TestDefName: step.TestDefinition.Name,
-				Phase:       step.Phase,
-				StartTime:   step.StartTime,
-				Duration:    step.Duration,
-				PodName:     step.PodName,
+				StepSummaryMetadata: metadata.StepSummaryMetadata{
+					Metadata:    *meta,
+					StepName:    step.Name,
+					TestDefName: step.TestDefinition.Name,
+				},
+				Phase:     step.Phase,
+				StartTime: step.StartTime,
+				Duration:  step.Duration,
+				PodName:   step.PodName,
 			}
 			reader, err := c.s3Client.GetObject(c.s3Config.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 			if err != nil {
