@@ -26,7 +26,7 @@ import (
 	"github.com/google/go-github/v27/github"
 	"io"
 	"io/ioutil"
-	"k8s.io/api/extensions/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"math"
 	"math/rand"
@@ -229,11 +229,11 @@ func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
 
 // GetGitHubClient returns a new github enterprise client with basic auth and optional tls verification
 func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool) (*github.Client, error) {
-	client, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
+	ghClient, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
 	if err != nil {
 		return nil, err
 	}
-	return client, nil
+	return ghClient, nil
 }
 
 // GetHTTPClient returns a new http client with basic auth and optional tls verification
@@ -419,7 +419,7 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 	if tmClient == nil {
 		return "", nil
 	}
-	ingress := &v1beta1.Ingress{}
+	ingress := &netv1beta1.Ingress{}
 	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
 	if err != nil {
 		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
