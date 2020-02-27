@@ -130,7 +130,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
 				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
-				Phase:     PhaseIcon(util.TestrunStatusPhase(&tr)),
+				Phase:     PhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(&tr),
@@ -202,7 +202,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
 				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
-				Phase:     PhaseIcon(util.TestrunStatusPhase(tr)),
+				Phase:     PhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(tr),
@@ -326,7 +326,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 
 	*l = append(*l, rungroupItem{
 		testruns:    []*v1beta1.Testrun{tr},
-		phase:       util.TestrunStatusPhase(tr),
+		phase:       tr.Status.Phase,
 		startTime:   tr.Status.StartTime,
 		completed:   1,
 		DisplayName: testgroupDisplayName(tr),
