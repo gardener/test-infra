@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
+	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -32,8 +33,8 @@ import (
 )
 
 // NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
-func NewTestMachineryController(mgr manager.Manager, log logr.Logger, col collector.Interface, maxConcurrentSyncs *int) (controller.Controller, error) {
-	tmReconciler := reconciler.New(mgr, log.WithName("controller"), col)
+func NewTestMachineryController(mgr manager.Manager, log logr.Logger, s3Client s3.Client, col collector.Interface, maxConcurrentSyncs *int) (controller.Controller, error) {
+	tmReconciler := reconciler.New(mgr, log.WithName("controller"), s3Client, col)
 	c, err := New(mgr, tmReconciler, maxConcurrentSyncs)
 	if err != nil {
 		return nil, err

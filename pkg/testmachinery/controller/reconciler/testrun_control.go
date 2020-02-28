@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
+	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -36,11 +37,12 @@ import (
 )
 
 // New returns a new testmachinery reconciler
-func New(mgr manager.Manager, log logr.Logger, c collector.Interface) reconcile.Reconciler {
+func New(mgr manager.Manager, log logr.Logger, s3Client s3.Client, c collector.Interface) reconcile.Reconciler {
 	return &TestmachineryReconciler{
 		Client:    mgr.GetClient(),
 		scheme:    mgr.GetScheme(),
 		Logger:    log,
+		s3Client:  s3Client,
 		collector: c,
 		timers:    make(map[string]*time.Timer),
 	}

@@ -24,6 +24,7 @@ import (
 // Client is a interface to interact with a S3 object store
 type Client interface {
 	GetObject(bucketName, objectName string, opts minio.GetObjectOptions) (Object, error)
+	RemoveObject(bucketName, key string) error
 }
 
 // Object represents an s3 object that can be retrieved from an object store
@@ -34,7 +35,8 @@ type Object interface {
 }
 
 type client struct {
-	minioClient *minio.Client
+	minioClient       *minio.Client
+	defaultBucketName string
 }
 
 // New creates a new s3 client which is a wrapper of the minio client
@@ -51,9 +53,22 @@ func New(config *testmachinery.S3Config) (Client, error) {
 	if !ok {
 		return nil, errors.Errorf("bucket %s does not exist", config.BucketName)
 	}
-	return &client{minioClient: minioClient}, nil
+	return &client{
+		minioClient:       minioClient,
+		defaultBucketName: config.BucketName,
+	}, nil
 }
 
 func (c *client) GetObject(bucketName, objectName string, opts minio.GetObjectOptions) (Object, error) {
+	if bucketName == "" {
+		bucketName = c.defaultBucketName
+	}
 	return c.minioClient.GetObject(bucketName, objectName, opts)
+}
+
+func (c *client) RemoveObject(bucketName, key string) error {
+	if bucketName == "" {
+		bucketName = c.defaultBucketName
+	}
+	return c.minioClient.RemoveObject(bucketName, key)
 }

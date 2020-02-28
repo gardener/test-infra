@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
+	"github.com/gardener/test-infra/pkg/util/s3"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"os"
@@ -63,13 +64,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	var s3Client s3.Client
+	if testmachinery.GetConfig().S3 != nil {
+		s3Client, err = s3.New(testmachinery.GetConfig().S3)
+		if err != nil {
+			setupLogger.Error(err, "unable to create s3 client")
+			os.Exit(1)
+		}
+	}
+
 	collect, err := collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetConfig().ElasticSearch, testmachinery.GetConfig().S3)
 	if err != nil {
 		setupLogger.Error(err, "unable to setup collector")
 		os.Exit(1)
 	}
 
-	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, collect, &maxConcurrentSyncs)
+	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, s3Client, collect, &maxConcurrentSyncs)
 	if err != nil {
 		setupLogger.Error(err, "unable to create controller", "controllers", "Testrun")
 		os.Exit(1)

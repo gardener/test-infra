@@ -18,6 +18,7 @@ import (
 	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
+	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,6 +30,7 @@ type TestmachineryReconciler struct {
 	scheme    *runtime.Scheme
 	Logger    logr.Logger
 	collector collector.Interface
+	s3Client  s3.Client
 
 	timers map[string]*time.Timer
 }
