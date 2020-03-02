@@ -17,7 +17,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
-	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
 	"os"
 
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
@@ -63,7 +62,6 @@ func init() {
 	run_testrun.AddCommand(rootCmd)
 	run_gardener.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
-	notifycmd.AddCommand(rootCmd)
 	gardener_telemetry.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)
