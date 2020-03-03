@@ -65,6 +65,8 @@ rules:
   - workflows/finalizers
   - workflowtemplates
   - workflowtemplates/finalizers
+  - cronworkflows
+  - cronworkflows/finalizers
   verbs:
   - get
   - list
@@ -79,6 +81,20 @@ kind: ClusterRole
 metadata:
   name: argo-ui-role
 rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
 - apiGroups:
   - ""
   resources:
@@ -99,10 +115,16 @@ rules:
   - argoproj.io
   resources:
   - workflows
+  - workflowtemplates
+  - cronworkflows
   verbs:
+  - create
   - get
   - list
   - watch
+  - update
+  - patch
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

@@ -41,6 +41,8 @@ data:
             secretKeySecret:                #omit if accessing via AWS IAM
               name: {{.Values.objectStorage.secret.name}}
               key: secretKey
+        persistence:
+
         metricsConfig:
           enabled: true # fixed in 2.4.2
           path: /metrics
@@ -55,7 +57,7 @@ spec:
     type: {{.Values.argoui.serviceType}}
     ports:
     - port: 80
-      targetPort: 8001
+      targetPort: 2746
     selector:
         app: argo-ui
 ---
@@ -74,20 +76,19 @@ spec:
         app: argo-ui
     spec:
       containers:
-      - env:
-        - name: ARGO_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-        - name: IN_CLUSTER
-          value: "true"
-        - name: ENABLE_WEB_CONSOLE
-          value: "false"
-        - name: BASE_HREF
-          value: /
-        image: argoproj/argoui:{{ .Values.argo.tag }}
+      - image: argoproj/argocli:{{ .Values.argo.tag }}
         name: argo-ui
+        args:
+        - server
+        ports:
+        - containerPort: 2746
+        readinessProbe:
+            httpGet:
+                path: /
+                port: 2746
+                scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 20
       serviceAccountName: argo-ui
 ---
 apiVersion: apps/v1
