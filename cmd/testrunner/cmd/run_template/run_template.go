@@ -212,7 +212,7 @@ func init() {
 	runCmd.Flags().StringVar(&shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	runCmd.Flags().StringVar(&shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
 
-	runCmd.Flags().StringVar(&shootParameters.SetValues, "set", "", "setValues additional helm values")
+	runCmd.Flags().StringArrayVar(&shootParameters.SetValues, "set", make([]string, 0), "setValues additional helm values")
 	runCmd.Flags().StringArrayVarP(&shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
 
 	// DEPRECATED FLAGS

@@ -32,7 +32,7 @@ type Parameters struct {
 	Landscape               string
 	ComponentDescriptorPath string
 
-	SetValues  string
+	SetValues  []string
 	FileValues []string
 }
 
