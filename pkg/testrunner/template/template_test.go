@@ -40,7 +40,18 @@ var _ = Describe("default templates", func() {
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
 			ComponentDescriptorPath: componentDescriptorPath,
-			SetValues:               "addValue1=test,addValue2=test2",
+			SetValues:               []string{"addValue1=test,addValue2=test2"},
+		}
+		_, err := RenderTestruns(log.NullLogger{}, params, nil)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("should render multiple additional values to the chart", func() {
+		params := &Parameters{
+			GardenKubeconfigPath:    gardenerKubeconfig,
+			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
+			ComponentDescriptorPath: componentDescriptorPath,
+			SetValues:               []string{"addValue1=test", "addValue2=test2"},
 		}
 		_, err := RenderTestruns(log.NullLogger{}, params, nil)
 		Expect(err).ToNot(HaveOccurred())

@@ -38,7 +38,7 @@ type renderState struct {
 	parameters *internalParameters
 }
 
-func newTemplateRenderer(log logr.Logger, setValues string, fileValues []string) (*templateRenderer, error) {
+func newTemplateRenderer(log logr.Logger, setValues, fileValues []string) (*templateRenderer, error) {
 	chartRenderer := engine.New()
 	values, err := determineDefaultValues(setValues, fileValues)
 	if err != nil {
@@ -169,16 +169,19 @@ func (s *renderState) Rerender(tr *v1beta1.Testrun) (*testrunner.Run, error) {
 
 // determineDefaultValues fetches values from all specified files and set values.
 // The values are merged whereas set values overwrite file values.
-func determineDefaultValues(setValues string, fileValues []string) (map[string]interface{}, error) {
+func determineDefaultValues(setValues []string, fileValues []string) (map[string]interface{}, error) {
 	values, err := readFileValues(fileValues)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read values from file")
 	}
-	newSetValues, err := strvals.ParseString(setValues)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse set values")
+
+	for _, val := range setValues {
+		newSetValues, err := strvals.ParseString(val)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse set values")
+		}
+		values = utils.MergeMaps(values, newSetValues)
 	}
-	values = utils.MergeMaps(values, newSetValues)
 	return values, nil
 }
 
