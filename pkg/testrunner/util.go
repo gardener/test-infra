@@ -77,7 +77,7 @@ func GetTmDashboardURLFromHostForExecutionGroup(host, executiongroupID string) s
 
 // GetTmDashboardURLFromHostForTestrun returns the dashboard URL to a testrun with a given dashboard host
 func GetTmDashboardURLFromHostForTestrun(host string, tr *tmv1beta1.Testrun) string {
-	return fmt.Sprintf("%s/testruns/%s/%s", host, tr.Namespace, tr.Name)
+	return fmt.Sprintf("%s/testrun/%s/%s", host, tr.Namespace, tr.Name)
 }
 
 // GetTMDashboardHost returns the host of the TestMachinery Dashboard
