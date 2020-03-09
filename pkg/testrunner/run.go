@@ -19,7 +19,7 @@ import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
-	trerrors "github.com/gardener/test-infra/pkg/testrunner/error"
+	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 )

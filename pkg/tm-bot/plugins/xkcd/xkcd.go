@@ -15,6 +15,7 @@
 package xkcd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -101,7 +102,7 @@ func (x *xkcd) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		return nil
 	}
 
-	_, err = client.Comment(event, formatResponse(info))
+	_, err = client.Comment(context.TODO(), event, formatResponse(info))
 	return err
 }
 

@@ -15,13 +15,9 @@
 package plugins
 
 import (
-	"bufio"
-	"io"
-	"strings"
-
+	"context"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
-	"github.com/kballard/go-shellquote"
 )
 
 // HandleRequest parses a github event and executes the found Plugins
@@ -53,7 +49,7 @@ func (p *Plugins) runPlugin(client github.Client, event *github.GenericRequestEv
 
 	if !client.IsAuthorized(plugin.Authorization(), event) {
 		p.log.V(3).Info("user not authorized", "user", event.GetAuthorName(), "plugin", plugin.Command())
-		_, _ = client.Comment(event, FormatUnauthorizedResponse(event.GetAuthorName(), args[0]))
+		_, _ = client.Comment(context.TODO(), event, FormatUnauthorizedResponse(event.GetAuthorName(), args[0]))
 		return
 	}
 
@@ -112,41 +108,9 @@ func (p *Plugins) Error(client github.Client, event *github.GenericRequestEvent,
 	}
 
 	if plugin != nil {
-		_, err := client.Comment(event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))
+		_, err := client.Comment(context.TODO(), event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))
 		return err
 	}
-	_, err = client.Comment(event, FormatSimpleErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err)))
+	_, err = client.Comment(context.TODO(), event, FormatSimpleErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err)))
 	return err
-}
-
-// ParseCommands parses a message and returns a string of commands and arguments
-func ParseCommands(message string) ([][]string, error) {
-	r := bufio.NewReader(strings.NewReader(message))
-	var (
-		commands = make([][]string, 0)
-		line     string
-		err      error
-	)
-	for {
-		line, err = r.ReadString('\n')
-
-		trimmedLine := strings.Trim(line, " \n\t")
-		if strings.HasPrefix(trimmedLine, "/") {
-			args, err := shellquote.Split(trimmedLine)
-			if err != nil {
-				continue
-			}
-			args[0] = strings.TrimPrefix(args[0], "/")
-			commands = append(commands, args)
-		}
-
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
-			break
-		}
-	}
-
-	return commands, nil
 }

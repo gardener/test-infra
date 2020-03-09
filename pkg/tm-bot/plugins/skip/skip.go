@@ -15,6 +15,7 @@
 package skip
 
 import (
+	"context"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
@@ -68,13 +69,16 @@ func (e *skip) Flags() *pflag.FlagSet {
 }
 
 func (e *skip) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
+	ctx := context.Background()
+	defer ctx.Done()
+
 	updater := tests.NewStatusUpdater(e.log, client, event)
-	if err := updater.UpdateStatus(github.StateSuccess, "skipped"); err != nil {
+	if err := updater.UpdateStatus(context.TODO(), github.StateSuccess, "skipped"); err != nil {
 		e.log.Error(err, "unable to update github status to skipped")
-		_, err = client.Comment(event, plugins.FormatErrorResponse(event.GetAuthorName(), "I was unable to skip the tests. Please try again", ""))
+		_, err = client.Comment(ctx, event, plugins.FormatErrorResponse(event.GetAuthorName(), "I was unable to skip the tests. Please try again", ""))
 		return err
 	}
 
-	_, err := client.Comment(event, plugins.FormatSimpleResponse(event.GetAuthorName(), "I skipped all necessary testmachinery tests"))
+	_, err := client.Comment(ctx, event, plugins.FormatSimpleResponse(event.GetAuthorName(), "I skipped all necessary testmachinery tests"))
 	return err
 }

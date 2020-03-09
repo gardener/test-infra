@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver"
+	comerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
@@ -29,12 +30,13 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func NewClient(log logr.Logger, ghClient *github.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
+func NewClient(log logr.Logger, ghClient *github.Client, httpClient *http.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {
 	c := &client{
-		log:    log,
-		config: config,
-		client: ghClient,
-		owner:  owner,
+		log:        log,
+		config:     config,
+		client:     ghClient,
+		httpClient: httpClient,
+		owner:      owner,
 	}
 
 	if defaultTeamName != "" {
@@ -53,50 +55,46 @@ func (c *client) Client() *github.Client {
 	return c.client
 }
 
-// GetConfig returns the repository configuration for a specific command
-func (c *client) GetConfig(name string) (json.RawMessage, error) {
+// GetRawConfig returns the repository configuration for a specific command
+func (c *client) GetRawConfig(name string) (json.RawMessage, error) {
 	config, ok := c.config[name]
 	if !ok {
 		c.log.V(3).Info("no config found", "plugin", name)
-		return nil, fmt.Errorf("config not found for command %s", name)
+		return nil, comerrors.NewNotFoundError(fmt.Sprintf("no config found for %s", name))
 	}
 	return config, nil
 }
 
+// GetConfig parses the repository configuration for a specific command
+func (c *client) GetConfig(name string, obj interface{}) error {
+	raw, err := c.GetRawConfig(name)
+	if err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal(raw, obj); err != nil {
+		return errors.Wrapf(err, "unable to unmarshal config for %s", name)
+	}
+
+	return nil
+}
+
 // ResolveConfigValue determines a GitHub config value and returns the referenced
 // raw value, file content or commit hash as string
-func (c *client) ResolveConfigValue(event *GenericRequestEvent, value *ghval.GitHubValue) (string, error) {
+func (c *client) ResolveConfigValue(ctx context.Context, event *GenericRequestEvent, value *ghval.GitHubValue) (string, error) {
 	if value.Value != nil {
 		return *value.Value, nil
 	}
 	if value.PRHead != nil && *value.PRHead {
-		pr, err := c.GetPullRequest(event)
-		if err != nil {
-			return "", pluginerr.New("unable to get pr", err.Error())
-		}
-		return pr.GetHead().GetSHA(), nil
+		return event.Head, nil
 	}
 	if value.Path != nil {
-		pr, err := c.GetPullRequest(event)
+		rawContent, err := c.GetContent(ctx, event, *value.Path)
 		if err != nil {
-			return "", pluginerr.New(fmt.Sprintf("unable to get pr for config in path %s", *value.Path), err.Error())
-		}
-		file, dir, req, err := c.client.Repositories.GetContents(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), *value.Path, &github.RepositoryContentGetOptions{Ref: pr.GetHead().GetSHA()})
-		if err != nil {
-			if req != nil && req.StatusCode == http.StatusNotFound {
-				return "nil", pluginerr.New(fmt.Sprintf("config path %s cannot be found in %s", *value.Path, pr.GetHead().GetSHA()), err.Error())
-			}
-			return "", pluginerr.New(fmt.Sprintf("unable to get config in path %s", *value.Path), err.Error())
-		}
-		if len(dir) != 0 {
-			return "", pluginerr.New(fmt.Sprintf("config path %s is a directory not a file", *value.Path), "config path is a directory not a file")
+			return "", err
 		}
 
-		content, err := file.GetContent()
-		if err != nil {
-			return "", pluginerr.New(fmt.Sprintf("unable to get config in path %s", *value.Path), err.Error())
-		}
-
+		content := string(rawContent)
 		if value.StructuredJSONPath != nil {
 			var val interface{}
 			_, err := util.RawJSONPath([]byte(content), *value.StructuredJSONPath, &val)
@@ -134,8 +132,8 @@ func (c *client) UpdateComment(event *GenericRequestEvent, commentID int64, mess
 }
 
 // Comment responds to an event
-func (c *client) Comment(event *GenericRequestEvent, message string) (int64, error) {
-	comment, _, err := c.client.Issues.CreateComment(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number, &github.IssueComment{
+func (c *client) Comment(ctx context.Context, event *GenericRequestEvent, message string) (int64, error) {
+	comment, _, err := c.client.Issues.CreateComment(ctx, event.GetOwnerName(), event.GetRepositoryName(), event.Number, &github.IssueComment{
 		Body: &message,
 	})
 	if err != nil {
@@ -146,14 +144,9 @@ func (c *client) Comment(event *GenericRequestEvent, message string) (int64, err
 }
 
 // UpdateStatus updates the status check for a pull request
-func (c *client) UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error {
-	pr, err := c.GetPullRequest(event)
-	if err != nil {
-		return err
-	}
-
+func (c *client) UpdateStatus(ctx context.Context, event *GenericRequestEvent, state State, statusContext, description string) error {
 	stateString := string(state)
-	_, _, err = c.client.Repositories.CreateStatus(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), pr.GetHead().GetSHA(), &github.RepoStatus{
+	_, _, err := c.client.Repositories.CreateStatus(ctx, event.GetOwnerName(), event.GetRepositoryName(), event.Head, &github.RepoStatus{
 		State:       &stateString,
 		Description: &description,
 		Context:     &statusContext,
@@ -161,112 +154,36 @@ func (c *client) UpdateStatus(event *GenericRequestEvent, state State, statusCon
 	return err
 }
 
-// IsAuthorized checks if the author of the event is authorized to perform actions on the service
-func (c *client) IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool {
-	if UserType(*event.Author.Type) == UserTypeBot {
-		return false
-	}
-
-	switch authorizationType {
-	case AuthorizationAll:
-		return true
-	case AuthorizationOrg:
-		return c.isInOrganization(event)
-	case AuthorizationTeam:
-		return c.isInDefaultTeam(event)
-	case AuthorizationCodeOwners:
-		// todo: update to really parse the codeowners file with fallback to default team or org
-		return c.isInRequestedTeam(event)
-	}
-	return false
-}
-
-// isOrgAdmin checks if the author is organization admin
-func (c *client) isOrgAdmin(event *GenericRequestEvent) bool {
-	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
+// GetContent downloads the content of the file for the given path
+func (c *client) GetContent(ctx context.Context, event *GenericRequestEvent, path string) ([]byte, error) {
+	contentRes, _, _, err := c.client.Repositories.GetContents(ctx, event.GetOwnerName(), event.GetRepositoryName(), path, &github.RepositoryContentGetOptions{Ref: event.Head})
 	if err != nil {
-		c.log.V(3).Info(err.Error())
-		return false
-	}
-	if MembershipStatus(membership.GetState()) != MembershipStatusActive {
-		return false
-	}
-	if MembershipRole(membership.GetRole()) == MembershipRoleAdmin {
-		return true
-	}
-	return false
-}
-
-// isInOrganization checks if the author is in the organization
-func (c *client) isInOrganization(event *GenericRequestEvent) bool {
-	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
-	if err != nil {
-		c.log.V(3).Info(err.Error())
-		return false
-	}
-	if MembershipStatus(membership.GetState()) == MembershipStatusActive {
-		return true
-	}
-	return false
-}
-
-// isInRequestedTeam checks if the author is in the requested PR team
-func (c *client) isInRequestedTeam(event *GenericRequestEvent) bool {
-	pr, err := c.GetPullRequest(event)
-	if err != nil {
-		return false
+		return nil, err
 	}
 
-	// use default team if there is no requested team
-	if c.defaultTeam != nil && len(pr.RequestedTeams) == 0 {
-		membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), c.defaultTeam.GetID(), event.GetAuthorName())
-		if err != nil {
-			c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
-			return false
-		}
-		if MembershipStatus(membership.GetState()) != MembershipStatusActive {
-			return true
-		}
-		return false
+	if contentRes.Type == nil || *contentRes.Type != ContentTypeFile {
+		return nil, comerrors.NewWrongTypeError("found file is not of expected type")
 	}
 
-	for _, team := range pr.RequestedTeams {
-		membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), team.GetID(), event.GetAuthorName())
-		if err != nil {
-			c.log.V(3).Info(err.Error(), "team", team.GetName())
-			return false
-		}
-		if MembershipStatus(membership.GetState()) == MembershipStatusActive {
-			return true
-		}
-	}
-	return false
-}
-
-// isInRequestedTeam checks if the author is in the requested PR team
-func (c *client) isInDefaultTeam(event *GenericRequestEvent) bool {
-	if c.defaultTeam == nil {
-		c.log.Info("no default team defined", "repository", event.GetRepositoryName(), "owner", event.GetOwnerName())
-		return false
-	}
-	membership, _, err := c.client.Teams.GetTeamMembership(context.TODO(), c.defaultTeam.GetID(), event.GetAuthorName())
-	if err != nil {
-		c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
-		return false
-	}
-	if MembershipStatus(membership.GetState()) == MembershipStatusActive {
-		return true
-	}
-	return false
+	return util.DownloadFile(c.httpClient, *contentRes.DownloadURL)
 }
 
 // GetPullRequest fetches the pull request for a event
-func (c *client) GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error) {
-	pr, _, err := c.client.PullRequests.Get(context.TODO(), event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+func (c *client) GetPullRequest(ctx context.Context, event *GenericRequestEvent) (*github.PullRequest, error) {
+	pr, _, err := c.client.PullRequests.Get(ctx, event.GetOwnerName(), event.GetRepositoryName(), event.Number)
 	if err != nil {
 		return nil, err
 	}
 	return pr, nil
+}
+
+// GetHead returns the head commit for the event
+func (c *client) GetHead(ctx context.Context, event *GenericRequestEvent) (string, error) {
+	pr, err := c.GetPullRequest(ctx, event)
+	if err != nil {
+		return "", err
+	}
+	return pr.GetHead().GetSHA(), nil
 }
 
 // GetPullRequest fetches the issue for a event

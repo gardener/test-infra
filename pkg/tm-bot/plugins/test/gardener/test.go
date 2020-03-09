@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tests
+package gardener
 
 import (
+	"fmt"
 	"github.com/gardener/test-infra/pkg/common"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -61,7 +62,7 @@ func (t *test) New(runID string) plugins.Plugin {
 }
 
 func (t *test) Command() string {
-	return "test"
+	return "test-gardener"
 }
 
 func (_ *test) Authorization() github.AuthorizationType {
@@ -73,12 +74,12 @@ func (t *test) Description() string {
 }
 
 func (t *test) Example() string {
-	return "/test "
+	return fmt.Sprintf("/%s ", t.Command())
 }
 
 func (t *test) Config() string {
 	return `
-test:
+test-gardener:
   hostprovider: gardener # gardener or gke
   baseClusterCloudprovider: gcp # Cloudprovider of the selected host. Only applicable for hostprovider gardener
 

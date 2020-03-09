@@ -15,12 +15,14 @@
 package hook
 
 import (
+	"context"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/resume"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/skip"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins/tests"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/gardener"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/single"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
 	testsmanager "github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/pkg/errors"
@@ -55,7 +57,8 @@ func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sC
 	}
 	plugins.Register(xkcdPlugin)
 
-	plugins.Register(tests.New(log, runs))
+	plugins.Register(gardener.New(log, runs))
+	plugins.Register(single.New(log, runs))
 	plugins.Register(skip.New(log))
 	plugins.Register(resume.New(log, watch.Client()))
 
@@ -116,15 +119,23 @@ func (h *Handler) handleGenericEvent(w http.ResponseWriter, event *ghutils.Gener
 		return
 	}
 
-	client, err := h.ghMgr.GetClient(event)
+	ghClient, err := h.ghMgr.GetClient(event)
 	if err != nil {
 		h.log.Error(err, "unable to build client", "user", event.GetAuthorName())
 		http.Error(w, "internal error", http.StatusUnauthorized)
 		return
 	}
 
+	// add head commit sha to the event
+	head, err := ghClient.GetHead(context.TODO(), event)
+	if err != nil {
+		h.log.Error(err, "unable to get head of event", "number", event.Number)
+		return
+	}
+	event.Head = head
+
 	go func() {
-		if err := plugins.HandleRequest(client, event); err != nil {
+		if err := plugins.HandleRequest(ghClient, event); err != nil {
 			h.log.Error(err, "")
 		}
 	}()

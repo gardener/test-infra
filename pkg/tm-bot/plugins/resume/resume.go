@@ -78,7 +78,7 @@ func (r *resume) Run(flagset *pflag.FlagSet, client github.Client, event *github
 	defer ctx.Done()
 	run, ok := tests.GetRunning(event)
 	if !ok {
-		if _, err := client.Comment(event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "There are no running tests for this PR")); err != nil {
+		if _, err := client.Comment(ctx, event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "There are no running tests for this PR")); err != nil {
 			r.log.Error(err, "unable to comment to github")
 		}
 	}
@@ -87,19 +87,19 @@ func (r *resume) Run(flagset *pflag.FlagSet, client github.Client, event *github
 	tr := &v1beta1.Testrun{}
 	if err := r.k8sClient.Get(ctx, kclient.ObjectKey{Name: run.Testrun.Name, Namespace: run.Testrun.Namespace}, tr); err != nil {
 		logger.Error(err, "unable to to fetch testrun")
-		if _, err := client.Comment(event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "There are no running tests for this PR")); err != nil {
+		if _, err := client.Comment(ctx, event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "There are no running tests for this PR")); err != nil {
 			logger.Error(err, "unable to comment to github")
 		}
 	}
 
 	if err := util.ResumeTestrun(ctx, r.k8sClient, tr); err != nil {
 		logger.Error(err, "unable to resume testrun")
-		if _, err := client.Comment(event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "I was unable to resume the test.\n Please try again later.")); err != nil {
+		if _, err := client.Comment(ctx, event, plugins.FormatSimpleErrorResponse(event.GetAuthorName(), "I was unable to resume the test.\n Please try again later.")); err != nil {
 			logger.Error(err, "unable to comment to github")
 		}
 	}
 
-	if _, err := client.Comment(event, plugins.FormatSimpleResponse(event.GetAuthorName(), fmt.Sprintf("I resumed the testrun %s", run.Testrun.GetName()))); err != nil {
+	if _, err := client.Comment(ctx, event, plugins.FormatSimpleResponse(event.GetAuthorName(), fmt.Sprintf("I resumed the testrun %s", run.Testrun.GetName()))); err != nil {
 		logger.Error(err, "unable to comment to github")
 	}
 	return nil

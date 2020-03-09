@@ -14,6 +14,10 @@
 
 package github
 
+func (e *GenericRequestEvent) GetRepositoryKey() RepositoryKey {
+	return RepositoryKey{Owner: e.GetOwnerName(), Repository: e.GetRepositoryName()}
+}
+
 func (e *GenericRequestEvent) GetRepositoryName() string {
 	return e.Repository.GetName()
 }
