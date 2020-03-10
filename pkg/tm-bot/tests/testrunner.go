@@ -40,7 +40,7 @@ func (r *Runs) CreateTestrun(log logr.Logger, ctx context.Context, ghClient gith
 
 	statusUpdater := NewStatusUpdater(log, ghClient, event)
 
-	if err := statusUpdater.Init(tr); err != nil {
+	if err := statusUpdater.Init(ctx, tr); err != nil {
 		log.Error(err, "unable to create comment", "Testrun", tr.Name)
 	}
 
@@ -69,7 +69,7 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 		}
 
 		if testrunPhase != tmv1beta1.PhaseStatusInit {
-			if err := statusUpdater.Update(tr, dashboardURL); err != nil {
+			if err := statusUpdater.Update(ctx, tr, dashboardURL); err != nil {
 				log.Error(err, "unable to update comment", "Testrun", tr.Name)
 			}
 		}
@@ -77,7 +77,7 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 		return util.Completed(testrunPhase), nil
 	})
 	if err != nil {
-		if err := statusUpdater.UpdateStatus(github.StateFailure, "timeout"); err != nil {
+		if err := statusUpdater.UpdateStatus(ctx, github.StateFailure, "timeout"); err != nil {
 			log.Error(err, "unable to update comment", "Testrun", tr.Name)
 		}
 		return nil, pluginerr.New(fmt.Sprintf("maximum wait time of %s is exceeded", maxWaitTime.String()), "")

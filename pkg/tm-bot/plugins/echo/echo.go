@@ -15,6 +15,7 @@
 package echo
 
 import (
+	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
@@ -65,7 +66,7 @@ func (e *echo) Flags() *pflag.FlagSet {
 }
 
 func (e *echo) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
-	cfg, err := client.GetConfig(e.Command())
+	cfg, err := client.GetRawConfig(e.Command())
 	if err == nil {
 		fmt.Println(string(cfg))
 	}
@@ -79,6 +80,6 @@ func (e *echo) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 	val = flagset.Arg(0)
 
-	_, err = client.Comment(event, fmt.Sprintf("@%s: %s\n%s", event.GetAuthorName(), val, e.runID))
+	_, err = client.Comment(context.TODO(), event, fmt.Sprintf("@%s: %s\n%s", event.GetAuthorName(), val, e.runID))
 	return err
 }

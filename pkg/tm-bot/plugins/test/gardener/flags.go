@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tests
+package gardener
 
 import (
+	"context"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
@@ -75,16 +76,14 @@ func (t *test) Flags() *pflag.FlagSet {
 	return flagset
 }
 
-func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericRequestEvent, flagset *pflag.FlagSet) error {
-	raw, err := client.GetConfig(t.Command())
-	if err != nil {
+func (t *test) ApplyDefaultConfig(ctx context.Context, client github.Client, event *github.GenericRequestEvent, flagset *pflag.FlagSet) error {
+	var (
+		defaultConfig DefaultsConfig
+		err           error
+	)
+	if err := client.GetConfig(t.Command(), &defaultConfig); err != nil {
 		t.log.Error(err, "cannot get default config")
 		return nil
-	}
-	var defaultConfig DefaultsConfig
-	if err := yaml.Unmarshal(raw, &defaultConfig); err != nil {
-		t.log.Error(err, "unable to parse default config")
-		return errors.New("unable to parse default config", err.Error())
 	}
 
 	if !flagset.Changed(hostprovider) && defaultConfig.HostProvider != nil {
@@ -94,21 +93,21 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		t.config.BaseClusterCloudprovider = *defaultConfig.BaseClusterCloudProvider
 	}
 	if !flagset.Changed(gardensetupRevision) && defaultConfig.GardenSetup != nil && defaultConfig.GardenSetup.Revision != nil {
-		val, err := client.ResolveConfigValue(event, defaultConfig.GardenSetup.Revision.Value())
+		val, err := client.ResolveConfigValue(ctx, event, defaultConfig.GardenSetup.Revision.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for garden setup revision", err.Error())
 		}
 		t.config.GardenSetupRevision = val
 	}
 	if !flagset.Changed(gardenerVersion) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Version != nil {
-		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Version.Value())
+		val, err := client.ResolveConfigValue(ctx, event, defaultConfig.Gardener.Version.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener version", err.Error())
 		}
 		t.config.Gardener.Version = val
 	}
 	if !flagset.Changed(gardenerCommit) && defaultConfig.Gardener != nil && defaultConfig.Gardener.Commit != nil {
-		val, err := client.ResolveConfigValue(event, defaultConfig.Gardener.Commit.Value())
+		val, err := client.ResolveConfigValue(ctx, event, defaultConfig.Gardener.Commit.Value())
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener commit", err.Error())
 		}
@@ -119,7 +118,7 @@ func (t *test) ApplyDefaultConfig(client github.Client, event *github.GenericReq
 		}
 	}
 
-	if err := t.applyDefaultExtensions(client, event, defaultConfig, flagset); err != nil {
+	if err := t.applyDefaultExtensions(ctx, client, event, defaultConfig, flagset); err != nil {
 		return err
 	}
 
@@ -177,7 +176,7 @@ func (t *test) applyDefaultShootFlavors(defaultConfig *DefaultsConfig, flagset *
 	return errors.New("At least one cloudprovider and one kubernetes version has to be defined", "neither a default configuration nor cloudprovider and kubernetes flags are defined.")
 }
 
-func (t *test) applyDefaultExtensions(client github.Client, event *github.GenericRequestEvent, defaultConfig DefaultsConfig, flagset *pflag.FlagSet) error {
+func (t *test) applyDefaultExtensions(ctx context.Context, client github.Client, event *github.GenericRequestEvent, defaultConfig DefaultsConfig, flagset *pflag.FlagSet) error {
 	var (
 		err        error
 		defaultExt common.GSExtensions
@@ -190,7 +189,7 @@ func (t *test) applyDefaultExtensions(client github.Client, event *github.Generi
 		}
 	}
 	if defaultConfig.GardenerExtensions != nil {
-		val, err := client.ResolveConfigValue(event, defaultConfig.GardenerExtensions)
+		val, err := client.ResolveConfigValue(ctx, event, defaultConfig.GardenerExtensions)
 		if err != nil {
 			return errors.New("unable to resolve default config value for gardener extensions", err.Error())
 		}

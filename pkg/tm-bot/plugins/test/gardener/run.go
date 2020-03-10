@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tests
+package gardener
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	testutil "github.com/gardener/test-infra/pkg/tm-bot/plugins/test"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
@@ -40,7 +41,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	ctx := context.Background()
 	defer ctx.Done()
 
-	if err := t.ApplyDefaultConfig(client, event, flagset); err != nil {
+	if err := t.ApplyDefaultConfig(ctx, client, event, flagset); err != nil {
 		return err
 	}
 	if err := t.ValidateConfig(); err != nil {
@@ -65,7 +66,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	if t.dryRun {
 		stepsTable := &strings.Builder{}
 		output.RenderTestflowTable(stepsTable, tr.Spec.TestFlow)
-		_, err := client.Comment(event, plugins.FormatResponseWithReason(event.GetAuthorName(),
+		_, err := client.Comment(ctx, event, plugins.FormatResponseWithReason(event.GetAuthorName(),
 			fmt.Sprintf("I rendered the testrun for you.\nView the full test in the details section.\n<pre>%s</pre>", stepsTable.String()),
 			fmt.Sprintf("<pre>%s</pre>", util.PrettyPrintStruct(tr))))
 		return err
@@ -77,7 +78,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		return err
 	}
 
-	var state interface{} = State{
+	var state interface{} = testutil.State{
 		TestrunID: tr.Name,
 		Namespace: tr.Namespace,
 		CommentID: updater.GetCommentID(),
@@ -99,7 +100,7 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 	logger := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
 	ctx := context.Background()
 	defer ctx.Done()
-	state := State{}
+	state := testutil.State{}
 	if err := yaml.Unmarshal([]byte(stateString), &state); err != nil {
 		t.log.Error(err, "unable to parse state")
 		return pluginerr.NewRecoverable("unable to recover state", err.Error())

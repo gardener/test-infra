@@ -115,6 +115,10 @@ run-it-tests:
 code-gen:
 	@./hack/generate-code
 
+.PHONY: mock-gen
+mock-gen:
+	@./hack/generate-mocks
+
 .PHONY: validate
 validate:
 	@go run cmd/local-validator/main.go -testrun=${TESTRUN}

@@ -15,11 +15,13 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
+	"net/http"
 )
 
 type Manager interface {
@@ -30,28 +32,51 @@ type Manager interface {
 type Client interface {
 	Client() *github.Client
 
+	GetHead(ctx context.Context, event *GenericRequestEvent) (string, error)
 	GetIssue(event *GenericRequestEvent) (*github.Issue, error)
-	GetPullRequest(event *GenericRequestEvent) (*github.PullRequest, error)
+	GetPullRequest(ctx context.Context, event *GenericRequestEvent) (*github.PullRequest, error)
 	GetVersions(owner, repo string) ([]*semver.Version, error)
+	GetContent(ctx context.Context, event *GenericRequestEvent, path string) ([]byte, error)
 
 	IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool
 
-	GetConfig(name string) (json.RawMessage, error)
-	ResolveConfigValue(event *GenericRequestEvent, value *ghval.GitHubValue) (string, error)
+	GetConfig(name string, obj interface{}) error
+	GetRawConfig(name string) (json.RawMessage, error)
+	ResolveConfigValue(ctx context.Context, event *GenericRequestEvent, value *ghval.GitHubValue) (string, error)
 
 	UpdateComment(event *GenericRequestEvent, commentID int64, message string) error
-	Comment(event *GenericRequestEvent, message string) (int64, error)
-	UpdateStatus(event *GenericRequestEvent, state State, statusContext, description string) error
+	Comment(ctx context.Context, event *GenericRequestEvent, message string) (int64, error)
+	UpdateStatus(ctx context.Context, event *GenericRequestEvent, state State, statusContext, description string) error
 }
 
 // GenericRequestEvent is the generic request from github triggering the tm bot
 type GenericRequestEvent struct {
+	// InstallationID is the github app ID
 	InstallationID int64
-	ID             int64
-	Number         int
-	Repository     *github.Repository
-	Body           string
-	Author         *github.User
+
+	// ID is the unique github id of the comment
+	ID int64
+
+	// Number is the number of the PR
+	Number int
+
+	// Head is the sha of the current PR's head commit
+	Head string
+
+	// Repository is the event's source repository
+	Repository *github.Repository
+
+	// Body comprises the message body of the commit
+	Body string
+
+	// Author is the event's author
+	Author *github.User
+}
+
+// RepositoryKey is the unique name for a repository
+type RepositoryKey struct {
+	Owner      string
+	Repository string
 }
 
 type manager struct {
@@ -61,14 +86,15 @@ type manager struct {
 	apiURL      string
 	appId       int
 	keyFile     string
-	clients     map[int64]*github.Client
+	clients     map[int64]*internalClientItem
 	defaultTeam string
 }
 
 type client struct {
-	log    logr.Logger
-	config map[string]json.RawMessage
-	client *github.Client
+	log        logr.Logger
+	config     map[string]json.RawMessage
+	client     *github.Client
+	httpClient *http.Client
 
 	owner       string
 	defaultTeam *github.Team
@@ -126,4 +152,12 @@ type MembershipStatus string
 
 const (
 	MembershipStatusActive MembershipStatus = "active"
+)
+
+// ContentType represents the type of a content response
+type ContentType string
+
+const (
+	ContentTypeFile = "file"
+	ContentTypeDir  = "dir"
 )

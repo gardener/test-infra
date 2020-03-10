@@ -36,6 +36,11 @@ type ManagerConfig struct {
 	defaultTeam string
 }
 
+type internalClientItem struct {
+	ghClient   *github.Client
+	httpClient *http.Client
+}
+
 func NewManager(log logr.Logger, cfg *ManagerConfig) (Manager, error) {
 	return &manager{
 		log:         log,
@@ -44,22 +49,22 @@ func NewManager(log logr.Logger, cfg *ManagerConfig) (Manager, error) {
 		appId:       cfg.appID,
 		keyFile:     cfg.keyFile,
 		defaultTeam: cfg.defaultTeam,
-		clients:     make(map[int64]*github.Client, 0),
+		clients:     make(map[int64]*internalClientItem, 0),
 	}, nil
 }
 
 func (m *manager) GetClient(event *GenericRequestEvent) (Client, error) {
 
-	ghClient, err := m.getGitHubClient(event.InstallationID)
+	intClient, err := m.getGitHubClient(event.InstallationID)
 	if err != nil {
 		return nil, err
 	}
-	config, err := m.getConfig(ghClient, event.GetOwnerName(), event.GetRepositoryName(), event.Repository.GetDefaultBranch())
+	config, err := m.getConfig(intClient.ghClient, event.GetOwnerName(), event.GetRepositoryName(), event.Repository.GetDefaultBranch())
 	if err != nil {
 		return nil, err
 	}
 
-	return NewClient(m.log, ghClient, event.GetOwnerName(), m.defaultTeam, config)
+	return NewClient(m.log, intClient.ghClient, intClient.httpClient, event.GetOwnerName(), m.defaultTeam, config)
 }
 
 func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map[string]json.RawMessage, error) {
@@ -88,7 +93,7 @@ func (m *manager) getConfig(c *github.Client, repo, owner, revision string) (map
 	return config, err
 }
 
-func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) {
+func (m *manager) getGitHubClient(installationID int64) (*internalClientItem, error) {
 	if ghClient, ok := m.clients[installationID]; ok {
 		return ghClient, nil
 	}
@@ -103,11 +108,15 @@ func (m *manager) getGitHubClient(installationID int64) (*github.Client, error) 
 	}
 	itr.BaseURL = m.apiURL
 
-	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", &http.Client{Transport: itr})
+	httpClient := &http.Client{Transport: itr}
+	ghClient, err := github.NewEnterpriseClient(m.apiURL, "", httpClient)
 	if err != nil {
 		return nil, err
 	}
-	m.clients[installationID] = ghClient
+	m.clients[installationID] = &internalClientItem{
+		ghClient:   ghClient,
+		httpClient: httpClient,
+	}
 
 	return m.clients[installationID], nil
 }

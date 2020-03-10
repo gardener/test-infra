@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tests
+package gardener
 
 import (
 	"github.com/gardener/test-infra/pkg/common"
@@ -38,11 +38,4 @@ type DefaultsConfig struct {
 	GardenerExtensions *ghval.GitHubValue `json:"gardener-extensions"`
 
 	ShootFlavors *[]*common.ShootFlavor `json:"shootFlavors"`
-}
-
-type State struct {
-	TestrunID string
-	Namespace string
-
-	CommentID int64
 }

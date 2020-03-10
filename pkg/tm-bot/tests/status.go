@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/util/output"
@@ -70,14 +71,14 @@ func NewStatusUpdaterFromCommentID(log logr.Logger, ghClient github.Client, even
 	}
 }
 
-func (u *StatusUpdater) Init(tr *tmv1beta1.Testrun) error {
-	commentID, err := u.client.Comment(u.event, FormatInitStatus(tr))
+func (u *StatusUpdater) Init(ctx context.Context, tr *tmv1beta1.Testrun) error {
+	commentID, err := u.client.Comment(ctx, u.event, FormatInitStatus(tr))
 	if err != nil {
 		return err
 	}
 	u.commentID = commentID
 
-	if err := u.client.UpdateStatus(u.event, github.StatePending, githubContext, tr.Name); err != nil {
+	if err := u.client.UpdateStatus(ctx, u.event, github.StatePending, githubContext, tr.Name); err != nil {
 		return err
 	}
 
@@ -89,14 +90,14 @@ func (u *StatusUpdater) GetCommentID() int64 {
 }
 
 // Update updates the comment and the github state of the current PR
-func (u *StatusUpdater) Update(tr *tmv1beta1.Testrun, dashboardUrl string) error {
+func (u *StatusUpdater) Update(ctx context.Context, tr *tmv1beta1.Testrun, dashboardUrl string) error {
 	comment := FormatStatus(tr, dashboardUrl)
 	if err := u.UpdateComment(comment); err != nil {
 		return err
 	}
 
 	state := GitHubState[util.TestrunStatusPhase(tr)]
-	if err := u.UpdateStatus(state, tr.Name); err != nil {
+	if err := u.UpdateStatus(ctx, state, tr.Name); err != nil {
 		return err
 	}
 
@@ -123,9 +124,9 @@ func (u *StatusUpdater) UpdateComment(comment string) error {
 }
 
 // UpdateStatus updates the GitHub status of the current PR
-func (u *StatusUpdater) UpdateStatus(state github.State, description string) error {
+func (u *StatusUpdater) UpdateStatus(ctx context.Context, state github.State, description string) error {
 	if state != u.lastState {
-		if err := u.client.UpdateStatus(u.event, state, githubContext, description); err != nil {
+		if err := u.client.UpdateStatus(ctx, u.event, state, githubContext, description); err != nil {
 			return err
 		}
 		u.log.V(3).Info("updated commit status")
