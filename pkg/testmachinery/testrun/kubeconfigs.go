@@ -65,7 +65,7 @@ func addKubeconfig(configs *[]*config.Element, secrets *[]runtime.Object, tr *tm
 				Namespace: tr.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					{
-						APIVersion:         tr.GroupVersionKind().Group,
+						APIVersion:         tr.GroupVersionKind().GroupVersion().String(),
 						Kind:               tr.Kind,
 						Name:               tr.GetName(),
 						UID:                tr.GetUID(),
