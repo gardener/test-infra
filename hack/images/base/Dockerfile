@@ -2,6 +2,7 @@ FROM golang:1.13-alpine3.11
 
 ENV HELM_TILLER_VERSION=v2.13.0
 ENV KUBECTL_VERSION=v1.14.0
+ENV HELM_V3_VERSION=v3.1.1
 
 RUN  \
   apk update \
@@ -49,6 +50,9 @@ RUN  \
     https://kubernetes-helm.storage.googleapis.com/helm-${HELM_TILLER_VERSION}-linux-amd64.tar.gz \
     | tar xz -C /bin --strip=1 \
   && chmod +x /bin/helm \
+  && curl -L \
+    https://get.helm.sh/helm-${HELM_V3_VERSION}-linux-amd64.tar.gz | tar xz -C /tmp --strip=1 \
+  && mv /tmp/helm /bin/helm3 \
   && curl -Lo /bin/yaml2json \
     https://github.com/bronze1man/yaml2json/releases/download/v1.2/yaml2json_linux_amd64 \
   && chmod +x /bin/yaml2json \
