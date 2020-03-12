@@ -13,9 +13,9 @@
 # limitations under the License.
 
 argo:
-  tag: v2.6.1
+  tag: v2.6.2
   executor:
-    tag: v2.4.3
+    tag: v2.6.2
     containerRuntimeExecutor: docker
   resources: {}
   # requests:
@@ -29,7 +29,7 @@ configmap:
 
 argoui:
   serviceType: ClusterIP
-  tag: 2.6.1
+  tag: v2.6.2
 
 objectStorage:
   minio:
