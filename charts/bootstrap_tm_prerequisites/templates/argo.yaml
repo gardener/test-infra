@@ -19,7 +19,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
     config: |
-        containerRuntimeExecutor: {{ .Values.argo.containerRuntimeExecutor }}
+        containerRuntimeExecutor: {{ .Values.argo.executor.containerRuntimeExecutor }}
         executor:
           resources:
             requests:
@@ -76,7 +76,7 @@ spec:
         app: argo-ui
     spec:
       containers:
-      - image: argoproj/argocli:{{ .Values.argo.tag }}
+      - image: argoproj/argocli:{{ .Values.argoui.tag }}
         name: argo-ui
         args:
         - server
@@ -112,7 +112,7 @@ spec:
         - --configmap
         - workflow-controller-configmap
         - --executor-image
-        - argoproj/argoexec:{{ .Values.argo.tag }}
+        - argoproj/argoexec:{{ .Values.argo.executor.tag }}
         command:
         - workflow-controller
         image: argoproj/workflow-controller:{{ .Values.argo.tag }}

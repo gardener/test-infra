@@ -13,8 +13,10 @@
 # limitations under the License.
 
 argo:
-  tag: v2.6.0
-  containerRuntimeExecutor: docker
+  tag: v2.6.1
+  executor:
+    tag: v2.4.3
+    containerRuntimeExecutor: docker
   resources: {}
   # requests:
   #   cpu: 200m
@@ -27,6 +29,7 @@ configmap:
 
 argoui:
   serviceType: ClusterIP
+  tag: 2.6.1
 
 objectStorage:
   minio:
