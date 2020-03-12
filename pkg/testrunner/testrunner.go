@@ -17,6 +17,7 @@ package testrunner
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
@@ -60,9 +61,12 @@ func StartWatchController(log logr.Logger, kubeconfigPath string, stopCh chan st
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to build kubernetes client from file %s", kubeconfigPath)
 	}
+
+	syncPeriod := 10 * time.Minute
 	mgr, err := manager.New(tmClient.RESTConfig(), manager.Options{
 		MetricsBindAddress: "0",
 		Scheme:             testmachinery.TestMachineryScheme,
+		SyncPeriod:         &syncPeriod,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to setup manager")
