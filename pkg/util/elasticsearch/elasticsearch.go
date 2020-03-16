@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	defaulterrors "errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -106,14 +107,18 @@ func (c *client) Bulk(data []byte) error {
 	}
 
 	if bulkRes.Errors {
-		if len(bulkRes.Items) == 0 {
+		items := make([]map[string]BulkResponseItem, 0)
+		if err := json.Unmarshal(bulkRes.Items, &items); err != nil {
+			return errors.Wrap(err, "unable to parse bulk items")
+		}
+		if len(items) == 0 {
 			return errors.New("elastic search returned an error")
 		}
 		var allErrors *multierror.Error
-		for _, action := range bulkRes.Items {
+		for _, action := range items {
 			for _, item := range action {
 				if item.Status < 200 || item.Status > 299 {
-					allErrors = multierror.Append(allErrors, defaulterrors.New(item.Error))
+					allErrors = multierror.Append(allErrors, defaulterrors.New(fmt.Sprintf("%#v", item.Error)))
 				}
 			}
 		}
@@ -142,16 +147,16 @@ func (c *client) parseUrl(rawPath string) (string, error) {
 
 // BulkResponse is the response that is returned by elastic search when doing a bulk request
 type BulkResponse struct {
-	Took   int                           `json:"took"`
-	Errors bool                          `json:"errors"`
-	Items  []map[string]BulkResponseItem `json:"items"`
+	Took   int             `json:"took"`
+	Errors bool            `json:"errors"`
+	Items  json.RawMessage `json:"items"`
 }
 
 // BulkResponseItem is response of one document from a bulk request
 type BulkResponseItem struct {
-	Index  string `json:"_index"`
-	Type   string `json:"_type"`
-	ID     string `json:"_id"`
-	Status int    `json:"status"`
-	Error  string `json:"error"`
+	Index  string      `json:"_index"`
+	Type   string      `json:"_type"`
+	ID     string      `json:"_id"`
+	Status int         `json:"status"`
+	Error  interface{} `json:"error"`
 }
