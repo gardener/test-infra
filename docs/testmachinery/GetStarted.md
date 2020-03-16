@@ -14,6 +14,7 @@
     - [Types](#types)
     - [Sources](#sources)
     - [Location](#location)
+    - [Kubeconfigs](#kubeconfigs)
 
 ## Create a Test
 
@@ -515,5 +516,26 @@ This configuration can be defined in 3 possible section:
     namespace: default
   spec:
     config: # Specify configuration here
+  ```
+
+### Kubeconfigs
+Specific kubeconfigs can be defined in the testrun and automatically mounted into all teststeps.
+
+Kubeconfigs can be defined by specifying a base64 encoded kubeconfig or a refrerence to a configmap or secret.
+Note that if a step is untrusted, only the shoot kubeconfig is mounted.<br>
+:warning: The kubeconfigs can be overwritten by serial steps.
+  ```yaml
+  spec:
+    kubeconfigs:
+      host: "abc" # base64 encoded kubeconfig
+      gardener:  # define kubeconfig from secret
+        secretKeyRef:
+          name: "mygardenersecret"
+          key: "kubeconfig"
+      seed: # define kubeconfig from configmap
+        configMapKeyRef:
+          name: "mygardenerconfigmap"
+          key: "kubeconfig"
+      shoot: "abc"
   ```
 

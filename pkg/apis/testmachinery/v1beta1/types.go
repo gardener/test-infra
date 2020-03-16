@@ -211,6 +211,7 @@ type LocationSet struct {
 
 // TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.
 type TestrunKubeconfigs struct {
+	Host     *strconf.StringOrConfig `json:"host,omitempty"`
 	Gardener *strconf.StringOrConfig `json:"gardener,omitempty"`
 	Seed     *strconf.StringOrConfig `json:"seed,omitempty"`
 	Shoot    *strconf.StringOrConfig `json:"shoot,omitempty"`

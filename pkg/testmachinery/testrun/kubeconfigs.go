@@ -31,6 +31,11 @@ import (
 func ParseKubeconfigs(tr *tmv1beta1.Testrun) ([]*config.Element, []runtime.Object, error) {
 	configs := make([]*config.Element, 0)
 	secrets := make([]runtime.Object, 0)
+	if tr.Spec.Kubeconfigs.Host != nil {
+		if err := addKubeconfig(&configs, &secrets, tr, "host", tr.Spec.Kubeconfigs.Host); err != nil {
+			return nil, nil, err
+		}
+	}
 	if tr.Spec.Kubeconfigs.Gardener != nil {
 		if err := addKubeconfig(&configs, &secrets, tr, "gardener", tr.Spec.Kubeconfigs.Gardener); err != nil {
 			return nil, nil, err
