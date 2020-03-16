@@ -58,7 +58,7 @@ var _ = Describe("Testflow execution tests", func() {
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
 								Name:  "FILE",
-								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.ShootKubeconfigName),
 							},
 						},
 					},
@@ -117,7 +117,7 @@ var _ = Describe("Testflow execution tests", func() {
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
 								Name:  "FILE",
-								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.ShootKubeconfigName),
 							},
 						},
 					},
@@ -151,7 +151,7 @@ var _ = Describe("Testflow execution tests", func() {
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
 								Name:  "FILE",
-								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "gardener.config"),
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.GardenerKubeconfigName),
 							},
 						},
 					},
@@ -165,7 +165,7 @@ var _ = Describe("Testflow execution tests", func() {
 							{
 								Type:  tmv1beta1.ConfigTypeEnv,
 								Name:  "FILE",
-								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, "gardener.config"),
+								Value: filepath.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.GardenerKubeconfigName),
 							},
 						},
 					},

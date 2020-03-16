@@ -24,10 +24,13 @@ import (
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	restclient "k8s.io/client-go/rest"
+	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"math"
 	"math/rand"
 	"net/http"
@@ -254,6 +257,37 @@ func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
+}
+
+// CreateKubeconfigFromClient creates a new kubeocnfig file from a resclient config
+func CreateKubeconfigFromInternal() ([]byte, error) {
+	config, err := restclient.InClusterConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get in-cluster kubeconfig")
+	}
+	kubeconfig := clientv1.Config{
+		CurrentContext: "default",
+		Clusters: []clientv1.NamedCluster{
+			{
+				Name: "default",
+				Cluster: clientv1.Cluster{
+					Server:                   config.Host,
+					InsecureSkipTLSVerify:    config.Insecure,
+					CertificateAuthorityData: config.CAData,
+				},
+			},
+		},
+		AuthInfos: []clientv1.NamedAuthInfo{
+			{
+				Name: "default",
+				AuthInfo: clientv1.AuthInfo{
+					Token: config.BearerToken,
+				},
+			},
+		},
+	}
+
+	return yaml.Marshal(kubeconfig)
 }
 
 // Unzip unpacks the given archive to the specified target path

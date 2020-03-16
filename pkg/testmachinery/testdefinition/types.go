@@ -60,7 +60,7 @@ func GetUntrustedInputArtifacts() []argov1.Artifact {
 	return []argov1.Artifact{
 		{
 			Name:     testmachinery.ArtifactUntrustedKubeconfigs,
-			Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
+			Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.ShootKubeconfigName),
 			Optional: true,
 		},
 	}
@@ -76,7 +76,7 @@ func GetStdOutputArtifacts(global bool) []argov1.Artifact {
 	}
 	untrustedKubeconfigArtifact := argov1.Artifact{
 		Name:     testmachinery.ArtifactUntrustedKubeconfigs,
-		Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, "shoot.config"),
+		Path:     path.Join(testmachinery.TM_KUBECONFIG_PATH, tmv1beta1.ShootKubeconfigName),
 		Optional: true,
 	}
 	sharedFolderArtifact := argov1.Artifact{
