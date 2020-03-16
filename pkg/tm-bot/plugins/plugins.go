@@ -16,6 +16,7 @@ package plugins
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sync"
 
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
@@ -126,10 +127,17 @@ func (p *Plugins) Get(name string) (string, Plugin, error) {
 
 // GetAll returns all registered plugins
 func GetAll() []Plugin {
-	list := make([]Plugin, 0)
+	pluginSet := sets.NewString()
 	for _, plugin := range plugins.registered {
-		list = append(list, plugin)
+		pluginSet.Insert(plugin.Command())
 	}
+
+	list := make([]Plugin, pluginSet.Len())
+	for i, name := range pluginSet.List() {
+		_, plugin, _ := plugins.Get(name)
+		list[i] = plugin
+	}
+
 	return list
 }
 
