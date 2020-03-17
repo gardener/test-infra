@@ -1156,6 +1156,11 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunKubeconfigs(ref common.Referen
 				Description: "TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"host": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"),
+						},
+					},
 					"gardener": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig"),

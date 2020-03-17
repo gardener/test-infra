@@ -14,6 +14,7 @@
     - [Types](#types)
     - [Sources](#sources)
     - [Location](#location)
+    - [Kubeconfigs](#kubeconfigs)
 
 ## Create a Test
 
@@ -84,7 +85,7 @@ spec:
 #### Default
 | Environment Variable Name        | Description           |
 | ------------- |-------------|
-| TM_KUBECONFIG_PATH      | points to a directory containing all kubeconfig files (defaults to `/tmp/env/kubeconfig`). </br> The files contained in this dir depend on the concrete TestRun and can contain up to 3 files: <ul><li>_host.config_: the kubeconfig pointing to the cluster hosting the gardener (not available for every Testrun)</li><li>_gardener.config_: the kubeconfig pointing to the gardener cluster created by TM (or predefined/given by a TestRun)</li><li>_seed.config_: the kubeconfig pointing to the seed cluster configured by TM (or predefined/given by a TestRun)</li><li>_shoot.config_: the kubeconfig pointing to the shoot cluster created by TM (or predefined/given by a TestRun)</li></ul>|
+| TM_KUBECONFIG_PATH      | points to a directory containing all kubeconfig files (defaults to `/tmp/env/kubeconfig`). </br> The files contained in this dir depend on the concrete TestRun and can contain up to 5 files: <ul><li>_testmachinery.config_: the kubeconfig pointing to the testmachinery cluster</li><li>_host.config_: the kubeconfig pointing to the cluster hosting the gardener (not available for untrusted steps)</li><li>_gardener.config_: the kubeconfig pointing to the gardener cluster created by TM (or predefined/given by a TestRun, not available for untrusted steps)</li><li>_seed.config_: the kubeconfig pointing to the seed cluster configured by TM (or predefined/given by a TestRun, not available for untrusted steps)</li><li>_shoot.config_: the kubeconfig pointing to the shoot cluster created by TM (or predefined/given by a TestRun)</li></ul>|
 | TM_EXPORT_PATH | points to a directory where the test can place arbitrary test-run data which will be archived at the end. Useful if some postprocessing needs to be done on that data. Further information can be found [here](#export-contract) |
 | TM_TESTRUN_ID | Name of the testrun |
 
@@ -517,3 +518,23 @@ This configuration can be defined in 3 possible section:
     config: # Specify configuration here
   ```
 
+### Kubeconfigs
+Specific kubeconfigs can be defined in the testrun and automatically mounted into all teststeps.
+
+Kubeconfigs can be defined by specifying a base64 encoded kubeconfig or a refrerence to a configmap or secret.
+Note that if a step is untrusted, only the shoot kubeconfig is mounted.<br>
+:warning: The kubeconfigs can be overwritten by serial steps.
+  ```yaml
+  spec:
+    kubeconfigs:
+      host: "abc" # base64 encoded kubeconfig
+      gardener:  # define kubeconfig from secret
+        secretKeyRef:
+          name: "mygardenersecret"
+          key: "kubeconfig"
+      seed: # define kubeconfig from configmap
+        configMapKeyRef:
+          name: "mygardenerconfigmap"
+          key: "kubeconfig"
+      shoot: "abc"
+  ```

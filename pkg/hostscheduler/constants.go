@@ -15,6 +15,7 @@ package hostscheduler
 
 import (
 	"fmt"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func ShootKubeconfigSecretName(shootName string) string {
 
 func HostKubeconfigPath() (string, error) {
 	if tmKubeconfigPath := os.Getenv("TM_KUBECONFIG_PATH"); len(tmKubeconfigPath) != 0 {
-		return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), "host.config"), nil
+		return filepath.Join(os.Getenv("TM_KUBECONFIG_PATH"), tmv1beta1.HostKubeconfigName), nil
 	}
 	return "", errors.New("TM_KUBECONFIG_PATH is not defined")
 }

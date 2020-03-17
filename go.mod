@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.51.0
+	cloud.google.com/go/storage v1.0.0
 	github.com/Masterminds/semver v1.4.2
 	github.com/argoproj/argo v0.0.0-20200228233152-5d3bdd56607e // argo v2.6.0
 	github.com/bradleyfalzon/ghinstallation v0.1.2
