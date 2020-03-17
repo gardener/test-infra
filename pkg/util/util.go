@@ -267,6 +267,16 @@ func CreateKubeconfigFromInternal() ([]byte, error) {
 	}
 	kubeconfig := clientv1.Config{
 		CurrentContext: "default",
+		Contexts: []clientv1.NamedContext{
+			{
+				Name: "default",
+				Context: clientv1.Context{
+					Cluster:   "default",
+					AuthInfo:  "default",
+					Namespace: "default",
+				},
+			},
+		},
 		Clusters: []clientv1.NamedCluster{
 			{
 				Name: "default",
