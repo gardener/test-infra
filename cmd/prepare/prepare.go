@@ -84,6 +84,7 @@ func createTMKubeconfigFile(log logr.Logger) error {
 		return err
 	}
 
+	log.Info("Write TestMachinery kubeconfig to file", "file", tmFilePath)
 	return ioutil.WriteFile(tmFilePath, kubeconfig, os.ModePerm)
 }
 

@@ -60,6 +60,14 @@ func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error)
 					Name:  testmachinery.TM_REPO_PATH_NAME,
 					Value: testmachinery.TM_REPO_PATH,
 				},
+				{
+					Name:  testmachinery.TM_KUBECONFIG_PATH_NAME,
+					Value: testmachinery.TM_KUBECONFIG_PATH,
+				},
+				{
+					Name:  testmachinery.TM_SHARED_PATH_NAME,
+					Value: testmachinery.TM_SHARED_PATH,
+				},
 			},
 		},
 		Inputs: argov1.Inputs{
