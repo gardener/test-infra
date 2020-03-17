@@ -42,6 +42,7 @@ func GetRootCommand() *cobra.Command {
 					fmt.Println(err.Error())
 					os.Exit(1)
 				}
+				logger.SetLogger(log)
 
 				// Parse the check interval duration.
 				duration, err := time.ParseDuration(config.CheckIntervalInput)
