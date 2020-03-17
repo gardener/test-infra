@@ -265,6 +265,13 @@ func CreateKubeconfigFromInternal() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get in-cluster kubeconfig")
 	}
+
+	rootCAFile := "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	caCert, err := ioutil.ReadFile(rootCAFile)
+	if err != nil {
+		return nil, err
+	}
+
 	kubeconfig := clientv1.Config{
 		CurrentContext: "default",
 		Contexts: []clientv1.NamedContext{
@@ -283,7 +290,7 @@ func CreateKubeconfigFromInternal() ([]byte, error) {
 				Cluster: clientv1.Cluster{
 					Server:                   config.Host,
 					InsecureSkipTLSVerify:    config.Insecure,
-					CertificateAuthorityData: config.CAData,
+					CertificateAuthorityData: caCert,
 				},
 			},
 		},
