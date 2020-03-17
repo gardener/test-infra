@@ -35,10 +35,13 @@ func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*Confi
 		}
 	}
 
+	if flagset.Arg(0) != "" {
+		cfg.FilePath = flagset.Arg(0)
+	}
+
 	if cfg.FilePath == "" && flagset.NArg() != 1 {
 		return nil, errors.New("No path to a testrun was specified", "")
 	}
 
-	cfg.FilePath = flagset.Arg(0)
 	return &cfg, nil
 }
