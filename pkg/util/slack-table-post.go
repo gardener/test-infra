@@ -12,55 +12,79 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package notifycmd
+package util
 
 import (
 	"fmt"
 	"github.com/Masterminds/semver"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
-	"reflect"
 	"sort"
 	"strings"
 )
 
-func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (string, error) {
+var SucessSymbols = map[bool]string{
+	true:  "✅",
+	false: "❌",
+}
+
+const NA = "N/A"
+
+//
+type resultRow struct {
+	dimension ItemMeta
+	content   []string
+}
+
+type results struct {
+	header  map[string]int
+	content map[string]resultRow
+}
+
+type TableItems []*TableItem
+
+type TableItem struct {
+	Meta    ItemMeta
+	Success bool
+}
+
+type ItemMeta struct {
+	CloudProvider     string
+	TestrunID         string
+	OperatingSystem   string
+	KubernetesVersion string
+	FlavorDescription string
+}
+
+// RenderTableForSlack renders a string table of given table items
+func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 	writer := &strings.Builder{}
 	table := tablewriter.NewWriter(writer)
 	headerKeys := make(map[string]int, 0) // maps the header values to their index
 	header := []string{""}
 
-	for _, asset := range overview.AssetOverviewItems {
-		d := asset.Dimension
-		if reflect.DeepEqual(d, metadata.Dimension{}) {
-			continue
-		}
-		_, ok := headerKeys[d.Cloudprovider]
-		if !ok {
-			header = append(header, d.Cloudprovider)
-			headerKeys[d.Cloudprovider] = len(header) - 1
-		}
+	for _, item := range items {
+		header = append(header, item.Meta.CloudProvider)
+		headerKeys[item.Meta.CloudProvider] = len(header) - 1
 	}
 
 	res := results{
 		header:  headerKeys,
 		content: make(map[string]resultRow),
 	}
-	for _, asset := range overview.AssetOverviewItems {
-		d := asset.Dimension
-		if reflect.DeepEqual(d, metadata.Dimension{}) {
-			log.V(5).Info("skipped asset item", "name", asset.Name)
+
+	for _, item := range items {
+		meta := item.Meta
+		if meta.CloudProvider == "" {
+			log.V(5).Info("skipped testrun", "id", meta.TestrunID)
 			continue
 		}
 
-		dimensionKey := fmt.Sprintf("%s %s", d.KubernetesVersion, d.OperatingSystem)
-		if d.Description != "" {
-			dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, d.Description)
+		dimensionKey := fmt.Sprintf("%s %s", meta.KubernetesVersion, meta.OperatingSystem)
+		if meta.FlavorDescription != "" {
+			dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
 		}
-
-		res.AddResult(d, asset.Successful)
+		res.AddResult(meta, item.Success)
 	}
 	if res.Len() == 0 {
 		return "", nil
@@ -73,23 +97,13 @@ func renderTableFromAsset(log logr.Logger, overview result.AssetOverview) (strin
 	return writer.String(), nil
 }
 
-type resultRow struct {
-	dimension metadata.Dimension
-	content   []string
-}
-
-type results struct {
-	header  map[string]int
-	content map[string]resultRow
-}
-
-func (r *results) AddResult(d metadata.Dimension, success bool) {
+func (r *results) AddResult(meta ItemMeta, success bool) {
 	// should never happen but skip to ensure no panic
-	_, ok := r.header[d.Cloudprovider]
+	_, ok := r.header[meta.CloudProvider]
 	if !ok {
 		return
 	}
-	key := computeDimensionKey(d)
+	key := computeDimensionKey(meta)
 	if _, ok := r.content[key]; !ok {
 		content := make([]string, len(r.header)+1)
 		content[0] = key
@@ -97,11 +111,19 @@ func (r *results) AddResult(d metadata.Dimension, success bool) {
 			content[i] = NA
 		}
 		r.content[key] = resultRow{
-			dimension: d,
+			dimension: meta,
 			content:   content,
 		}
 	}
-	r.content[key].content[r.header[d.Cloudprovider]] = SucessSymbols[success]
+	r.content[key].content[r.header[meta.CloudProvider]] = SucessSymbols[success]
+}
+
+func computeDimensionKey(meta ItemMeta) string {
+	dimensionKey := fmt.Sprintf("%s %s", meta.KubernetesVersion, meta.OperatingSystem)
+	if meta.FlavorDescription != "" {
+		dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
+	}
+	return dimensionKey
 }
 
 func (r *results) GetContent() [][]string {
@@ -148,12 +170,4 @@ func (l resultRows) Less(a, b int) bool {
 	}
 
 	return vA.GreaterThan(vB)
-}
-
-func computeDimensionKey(d metadata.Dimension) string {
-	dimensionKey := fmt.Sprintf("%s %s", d.KubernetesVersion, d.OperatingSystem)
-	if d.Description != "" {
-		dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, d.Description)
-	}
-	return dimensionKey
 }
