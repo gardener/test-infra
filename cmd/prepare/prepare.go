@@ -131,7 +131,7 @@ func cloneRepository(log logr.Logger, repo *prepare.Repository, repoBasePath str
 		return err
 	}
 
-	if err := runCommand(log, repoPath, "git", "checkout", repo.Revision); err != nil {
+	if err := runCommand(log, repoPath, "git", "checkout", repo.Revision, "--"); err != nil {
 		return err
 	}
 
