@@ -45,6 +45,10 @@ var (
 	githubPassword          string
 	uploadStatusAsset       bool
 	assetPrefix             string
+	slackToken              string
+	slackChannel            string
+	concourseURL            string
+	postSummaryInSlack      bool
 )
 
 // AddCommand adds collect to a command.
@@ -68,6 +72,10 @@ var collectCmd = &cobra.Command{
 			AssetComponents:         assetComponents,
 			UploadStatusAsset:       uploadStatusAsset,
 			AssetPrefix:             assetPrefix,
+			SlackToken:              slackToken,
+			SlackChannel:            slackChannel,
+			ConcourseURL:            concourseURL,
+			PostSummaryInSlack:      postSummaryInSlack,
 		}
 
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
@@ -129,6 +137,10 @@ func init() {
 	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
 	collectCmd.Flags().StringArrayVar(&assetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
 	collectCmd.Flags().StringVar(&assetPrefix, "asset-prefix", "", "Prefix of the asset name.")
+	collectCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
+	collectCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
+	collectCmd.Flags().StringVar(&concourseURL, "concourse-url", "", "Concourse job URL.")
+	collectCmd.Flags().BoolVar(&postSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
 	// DEPRECATED FLAGS
 	collectCmd.Flags().StringP("output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")

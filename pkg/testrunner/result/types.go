@@ -48,6 +48,18 @@ type Config struct {
 
 	// AssetPrefix defines the asset name prefix
 	AssetPrefix string
+
+	// ConcourseURL provides the concourse URL as reference for testruns summary results
+	ConcourseURL string
+
+	// SlackToken is the slack token for slack API operations
+	SlackToken string
+
+	// SlackChannel defines in which slack channel the testruns summary shall be posted
+	SlackChannel string
+
+	// PostSummaryInSlack states whether the summary of testruns shall be posted in slack
+	PostSummaryInSlack bool
 }
 
 type Collector struct {

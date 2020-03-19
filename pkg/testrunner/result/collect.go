@@ -66,7 +66,8 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 		fmt.Println(":---------------------------------------------------------------------------------------------:")
 	}
 
-	c.uploadStatusAssets(c.config, log, runs, tmClient, log)
+	c.uploadStatusAssets(c.config, log, runs, tmClient)
+	c.postTestrunsSummaryInSlack(c.config, log, runs)
 	fmt.Println(runs.RenderTable())
 
 	return testrunsFailed, util.ReturnMultiError(result)
@@ -88,7 +89,7 @@ func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescr
 	return componentsForUpload
 }
 
-func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs testrunner.RunList, tmClient client.Client, log logr.Logger) {
+func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrunner.RunList, tmClient client.Client) {
 	if !cfg.UploadStatusAsset {
 		return
 	}
@@ -99,10 +100,10 @@ func (c *Collector) uploadStatusAssets(cfg Config, runLogger logr.Logger, runs t
 		return
 	}
 
-	componentsForUpload := getComponentsForUpload(cfg, runLogger)
+	componentsForUpload := getComponentsForUpload(cfg, log)
 	if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err == nil {
-		if err := MarkTestrunsAsUploadedToGithub(runLogger, tmClient, runs); err != nil {
-			runLogger.Error(err, "unable to mark testrun status as uploaded to github")
+		if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
+			log.Error(err, "unable to mark testrun status as uploaded to github")
 		}
 	}
 	return

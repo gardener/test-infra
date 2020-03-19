@@ -17,6 +17,7 @@ package notifycmd
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/util"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/logger"
@@ -76,7 +77,8 @@ var notifyCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		table, err := renderTableFromAsset(logger.Log, overview)
+		tableItems := parseOverviewToTableItems(overview)
+		table, err := util.RenderTableForSlack(logger.Log, tableItems)
 		if err != nil {
 			return err
 		}
@@ -111,11 +113,28 @@ func init() {
 }
 
 func header() string {
-	return "Integration Test Results:"
+	return "Integration Test results:"
 }
 
 func legend() string {
 	return fmt.Sprintf(`
 %s: Tests succeeded | %s: Tests failed | %s: Tests not applicable
 `, SucessSymbols[true], SucessSymbols[false], NA)
+}
+
+func parseOverviewToTableItems(overview result.AssetOverview) (tableItems util.TableItems) {
+	for _, overviewItem := range overview.AssetOverviewItems {
+		meta := overviewItem.Dimension
+		if meta.Cloudprovider == "" {
+			// skip gardener tests
+			continue
+		} else {
+			item := &util.TableItem{
+				Meta:    util.ItemMeta{CloudProvider: meta.Cloudprovider, TestrunID: overviewItem.Name, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.Description},
+				Success: overviewItem.Successful,
+			}
+			tableItems = append(tableItems, item)
+		}
+	}
+	return tableItems
 }
