@@ -65,6 +65,8 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 	w.mux.Lock()
 	watchCh, ok := w.watches[namespacedName.String()]
 	if !ok {
+		// if there is no watch registered for the resource
+		// we create a new watch channel and register it for watches
 		watchCh = make(chan *v1beta1.Testrun)
 		w.watches[namespacedName.String()] = watchCh
 	}
@@ -74,9 +76,13 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 	defer w.remove(namespacedName.String())
 
 	var (
-		errs  error
-		after <-chan time.Time
+		errs         error
+		after        <-chan time.Time
+		resyncPeriod = 10 * time.Minute
+		resyncTimer  = time.NewTimer(resyncPeriod)
 	)
+
+	defer resyncTimer.Stop()
 
 	if timeout != 0 {
 		// time.After is more convenient, but it
@@ -90,6 +96,10 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 	for {
 		select {
 		case tr := <-watchCh:
+			// reset resync timer
+			resyncTimer.Stop()
+			resyncTimer.Reset(resyncPeriod)
+
 			done, err := f(tr)
 			if err != nil {
 				if done {
@@ -100,6 +110,9 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 			} else if done {
 				return nil
 			}
+		case <-resyncTimer.C:
+			w.log.Info("Resync item after 10 minutes", "name", name, "namespace", namespace)
+			_, _ = w.Reconcile(reconcile.Request{NamespacedName: namespacedName})
 		case <-after:
 			return wait.ErrWaitTimeout
 		}
