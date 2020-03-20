@@ -89,9 +89,11 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 
 		var (
 			rgName   string
+			hasRunGroup bool
 			listOpts = client.MatchingLabels(map[string]string{})
 		)
 		if rg, rgOk := r.URL.Query()[common.DashboardExecutionGroupParameter]; rgOk {
+			hasRunGroup = true
 			rgName = rg[0]
 			listOpts = client.MatchingLabels(map[string]string{common.LabelTestrunExecutionGroup: rgName})
 		}
@@ -151,8 +153,12 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 			"tests":     testrunsList,
 			"rungroups": runsList,
 		}
-		if len(testrunsList) > 50 {
-			params["tests"] = testrunsList[:50] // todo add pagination to not cut at 50 items
+
+		// TODO: add pagination
+		if !hasRunGroup {
+			if len(testrunsList) > 50 {
+				params["tests"] = testrunsList[:50] // todo add pagination to not cut at 50 items
+			}
 		}
 		if len(runsList) > 6 {
 			params["rungroups"] = runsList[:6]
