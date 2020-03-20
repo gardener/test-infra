@@ -180,7 +180,7 @@ def get_provider_k8s_version_tuples():
             if provider not in provider_list:
                 continue  # if the provider is not supported, continue
             k8s_version = re.search('-(v\d+\.\d+)\/', blob_name).group(1)
-            if k8s_version == 'v1.13':
+            if k8s_version == 'v1.13': # TODO: use semver and skip all older versions, only recent 3 versions shall be considered
                 continue  # k8s release 1.13 can't be added anymore, since only recent 3 release versions are considered
             provider_version_tuples.append((provider, k8s_version))
     return provider_version_tuples
@@ -214,6 +214,7 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
     downloadingE2eLogFileSuccessful = download_files_from_gcloud_storage(provider, k8s_version)
     os.chdir('../..')
     if not downloadingE2eLogFileSuccessful:
+        # TODO: sysexit 1, since we need results from all providers
         try:
             subprocess.run(['rm', '-Rf', provider_path])
             print('Deleted unclean directory: ' + provider_path)
