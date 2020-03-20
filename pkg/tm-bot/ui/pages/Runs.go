@@ -88,9 +88,9 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		defer ctx.Done()
 
 		var (
-			rgName   string
+			rgName      string
 			hasRunGroup bool
-			listOpts = client.MatchingLabels(map[string]string{})
+			listOpts    = client.MatchingLabels(map[string]string{})
 		)
 		if rg, rgOk := r.URL.Query()[common.DashboardExecutionGroupParameter]; rgOk {
 			hasRunGroup = true
