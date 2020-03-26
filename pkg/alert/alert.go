@@ -24,7 +24,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
-	"math"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -64,7 +63,7 @@ func New(log logr.Logger, cfg Config) *Alert {
 	}
 }
 
-//FindFailedAndRecoveredTests finds distinct, failed tests, that has not yet been posted on slack in recent n days
+// FindFailedAndRecoveredTests finds distinct, failed tests, that has not yet been posted on slack in recent n days
 func (alerter *Alert) FindFailedAndRecoveredTests() (map[string]TestDetails, map[string]TestDetails, error) {
 	testAggregationsRaw, err := alerter.retrieveTestAggregations()
 	if err != nil {
@@ -87,9 +86,9 @@ func (alerter *Alert) FindFailedAndRecoveredTests() (map[string]TestDetails, map
 	return newFailedTests, recoveredTests, nil
 }
 
-//retrieveTestAggregations retrieves test aggregations from elasticsearch
+// retrieveTestAggregations retrieves test aggregations from elasticsearch
 func (alerter *Alert) retrieveTestAggregations() (TestContextAggregation, error) {
-	payloadFormated := alerter.generateESAggregationPayload()
+	payloadFormated := alerter.printESAggregationPayload()
 	var testContextAggregation TestContextAggregation
 	if err := alerter.elasticRequest("/testmachinery-*/_search", http.MethodGet, payloadFormated, &testContextAggregation); err != nil {
 		return TestContextAggregation{}, errors.Wrap(err, "failed to retrieve testmachinery test aggregations from elasticsearch")
@@ -99,7 +98,7 @@ func (alerter *Alert) retrieveTestAggregations() (TestContextAggregation, error)
 	return testContextAggregation, nil
 }
 
-//extractTestDetailItems parses raw elasticsearch test aggregations into test details
+// extractTestDetailItems parses raw elasticsearch test aggregations into test details
 func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextAggregation) map[string]TestDetails {
 	contextToTestDetailMap := make(map[string]TestDetails)
 	for _, testDoc := range testContextAggregation.Aggs.TestContext.TestDetailsRaw {
@@ -111,9 +110,7 @@ func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextA
 				break
 			}
 		}
-		// use a slightly higher threshold for recovered tests too avoid failure/recovered flakyness
-		recoverThreshold := int(math.Min(float64(alerter.cfg.SuccessRateThresholdPercent+5), float64(100)))
-		successful := !testFailedContinuously && int(testDoc.SuccessRate.Value) >= recoverThreshold
+		successful := !testFailedContinuously && int(testDoc.SuccessRate.Value) >= alerter.cfg.SuccessRateThresholdPercent
 		parsedTestDetail := TestDetails{
 			Name:                testDocDetails.Name,
 			LastFailedTimestamp: testDocDetails.LastTimestamp,
@@ -132,7 +129,7 @@ func (alerter *Alert) extractTestDetailItems(testContextAggregation TestContextA
 	return contextToTestDetailMap
 }
 
-//removeSuccessfulTests removes tests from input map, that are not exceeding given thresholds and are therefore considered successful
+// removeSuccessfulTests removes tests from input map, that are not exceeding given thresholds and are therefore considered successful
 func (alerter *Alert) removeSuccessfulTests(contextToTestDetailMap map[string]TestDetails) map[string]TestDetails {
 	testsSizeBefore := len(contextToTestDetailMap)
 	for key, value := range contextToTestDetailMap {
@@ -144,7 +141,7 @@ func (alerter *Alert) removeSuccessfulTests(contextToTestDetailMap map[string]Te
 	return contextToTestDetailMap
 }
 
-//removeAlreadyFiledAlerts removes tests based on given test exclude regexp patterns
+// removeAlreadyFiledAlerts removes tests based on given test exclude regexp patterns
 func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 	testsSizeBefore := len(*tests)
 	for _, patternStr := range alerter.cfg.TestsSkip {
@@ -411,7 +408,7 @@ func (alerter *Alert) extractRecoveredTests(testContextToTestMap map[string]Test
 	return recoveredTests
 }
 
-//generatePostedAlertsPayload generates a bulk payload of test context docs
+// generatePostedAlertsPayload generates a bulk payload of test context docs
 func (alerter *Alert) generatePostedAlertsPayload(tests map[string]TestDetails) string {
 	datetime := time.Now().UTC().Format(time.RFC3339)
 	payload := ""
@@ -426,8 +423,8 @@ func (alerter *Alert) generatePostedAlertsPayload(tests map[string]TestDetails) 
 	return payload
 }
 
-//generateESAggregationPayload format elasticsearch aggregation payload
-func (alerter *Alert) generateESAggregationPayload() string {
+// printESAggregationPayload format elasticsearch aggregation payload
+func (alerter *Alert) printESAggregationPayload() string {
 	return fmt.Sprintf(`{
 		"size": 0,
 		"query": {
@@ -441,7 +438,7 @@ func (alerter *Alert) generateESAggregationPayload() string {
 					{ "term": { "phase.keyword": "Succeeded" } },
 					{ "term": { "phase.keyword": "Skipped" } }
 				],
-				"must_not": { "match": { "stepName.keyword":   "beta-tests" }},
+				"must_not": { "match": { "tm.annotations.testmachinery.sapcloud.io/purpose.keyword":   "beta" }},
 				"minimum_should_match": 1
 			}
 		},

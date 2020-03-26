@@ -117,8 +117,11 @@ func validate() error {
 	if continuousFailureThreshold == 0 {
 		return errors.New("min-continuous-failures=0 is not allowed")
 	}
-	if evalTimeDays == 0 {
-		return errors.New("eval-time-days=0 is not allowed")
+	if evalTimeDays <= 0 {
+		return errors.New("eval-time-days <= 0 is not allowed")
+	}
+	if minSuccessRate < 0 || minSuccessRate > 100 {
+		return errors.New("min-success-rate must have a value between 0 and 100")
 	}
 	return nil
 }
@@ -131,7 +134,7 @@ func init() {
 	alertCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
 	alertCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
 	alertCmd.Flags().IntVar(&continuousFailureThreshold, "min-continuous-failures", 3, "if test fails >=n times send alert")
-	alertCmd.Flags().IntVar(&evalTimeDays, "eval-time-days", 3, "if test fails >=n times send alert")
+	alertCmd.Flags().IntVar(&evalTimeDays, "eval-time-days", 3, "time period to evaluate")
 	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate % falls below threshold, then post an alert")
 	alertCmd.Flags().StringArrayVar(&testsSkip, "skip", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
 	alertCmd.Flags().StringArrayVar(&testsFocus, "focus", make([]string, 0), "regexp to keep context test names e.g. 'e2e-untracked.*aws. Is executed after skip filter.'")

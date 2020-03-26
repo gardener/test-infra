@@ -13,15 +13,15 @@ testrunner alert [flags]
 ### Options
 
 ```
+  -h, --help                            help for alert
       --elasticsearch-endpoint string   Elasticsearch endpoint URL
       --elasticsearch-pass string       Elasticsearch password
       --elasticsearch-user string       Elasticsearch username
-      --eval-time-days int              if test fails >=n times send alert (default 3)
-      --focus stringArray               regexp to keep context test names e.g. 'e2e-untracked.*aws. Is executed after skip filter.'
-  -h, --help                            help for alert
+      --eval-time-days int              time period to evaluate
+      --focus stringArray               regexp to keep context test names e.g. 'e2e-untracked.*aws'. Is executed after skip filter.
+      --skip stringArray                regexp to filter context test names e.g. 'e2e-untracked.*aws'
       --min-continuous-failures int     if test fails >=n times send alert (default 3)
       --min-success-rate int            if test success rate % falls below threshold, then post an alert (default 50)
-      --skip stringArray                regexp to filter context test names e.g. 'e2e-untracked.*aws'
       --slack-channel string            Client channel id to send the message to.
       --slack-token string              Client token to authenticate
 ```
