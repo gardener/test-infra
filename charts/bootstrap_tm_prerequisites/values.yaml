@@ -13,9 +13,9 @@
 # limitations under the License.
 
 argo:
-  tag: v2.6.2
+  tag: v2.6.3
   executor:
-    tag: v2.6.2
+    tag: v2.6.3
     containerRuntimeExecutor: docker
   resources: {}
   # requests:
