@@ -15,6 +15,7 @@
 package pages
 
 import (
+	"github.com/Masterminds/sprig"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/version"
@@ -33,6 +34,7 @@ type Page struct {
 
 type globalSettings struct {
 	Authenticated bool
+	URL           string
 	User          user
 }
 
@@ -55,16 +57,6 @@ func New(logger logr.Logger, runs *tests.Runs, auth auth.Provider, basePath stri
 	}
 }
 
-func makeBaseTemplateSettings(global globalSettings) func(string, interface{}) baseTemplateSettings {
-	return func(pageName string, arguments interface{}) baseTemplateSettings {
-		return baseTemplateSettings{
-			globalSettings: global,
-			PageName:       pageName,
-			Arguments:      arguments,
-		}
-	}
-}
-
 func (p *Page) handleSimplePage(templateName string, param interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		isAuthenticated := true
@@ -78,16 +70,25 @@ func (p *Page) handleSimplePage(templateName string, param interface{}) http.Han
 			User: user{
 				Name: aCtx.User,
 			},
+			URL: r.URL.String(),
 		}
 
 		base := filepath.Join(p.basePath, "templates", "base.html")
+		components := filepath.Join(p.basePath, "templates", "components/*")
 		fp := filepath.Join(p.basePath, "templates", templateName)
 
 		tmpl := template.New(templateName)
 		tmpl.Funcs(map[string]interface{}{
-			"settings": makeBaseTemplateSettings(global),
-			"version":  func() string { return version.Get().String() },
+			"settings":     makeBaseTemplateSettings(global),
+			"urlAddParams": addURLParams,
+			"version":      func() string { return version.Get().String() },
 		})
+		tmpl.Funcs(sprig.FuncMap())
+		tmpl, err = tmpl.ParseGlob(components)
+		if err != nil {
+			p.log.Error(err, "unable to parse components")
+			return
+		}
 		tmpl, err = tmpl.ParseFiles(base, fp)
 		if err != nil {
 			p.log.Error(err, "unable to parse files")
