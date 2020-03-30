@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine3.11
+FROM golang:1.14-alpine3.11
 
 ENV HELM_TILLER_VERSION=v2.13.0
 ENV KUBECTL_VERSION=v1.14.0
