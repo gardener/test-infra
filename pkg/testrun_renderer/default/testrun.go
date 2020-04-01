@@ -53,6 +53,11 @@ func testrun(cfg *Config, shoots []*shoot) (*v1beta1.Testrun, error) {
 			},
 			Config: []v1beta1.ConfigElement{
 				templates.GetConfigGardenerPrefix(),
+				{
+					Type:  v1beta1.ConfigTypeEnv,
+					Name:  "FENCED",
+					Value: "false", // todo: schrodit - currently only public cloudproviders are supported.
+				},
 			},
 			TestFlow: v1beta1.TestFlow{
 				&prepareHostCluster,

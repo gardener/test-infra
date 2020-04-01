@@ -17,7 +17,6 @@ package templates
 import (
 	"path"
 
-	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -56,24 +55,8 @@ type CreateShootConfig struct {
 // GetStepCreateShoot generates the shoot creation step for a specific cloudprovider
 // A shoot in a specific version is created depending on the gardener configuration whereas
 // the default for commits is the new api.
-func GetStepCreateShoot(gardenerConfig GardenerConfig, cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
-	if gardenerConfig.Version != "" {
-		// all tests before gardener 0.31.0 have to use the old shoot test structure
-		// tests afterwards use the new gardener v1alpha1 api which also results in a different tm structure
-		oldShootVersion, err := semver.NewVersion("0.31.0")
-		if err != nil {
-			return nil, "", err
-		}
-
-		v, err := semver.NewVersion(gardenerConfig.Version)
-		if err != nil {
-			return nil, "", err
-		}
-		if v.LessThan(oldShootVersion) {
-			return stepCreateShootV1beta1(cloudprovider, name, dependencies, cfg)
-		}
-	}
-	return stepCreateShootV1alpha1(cloudprovider, name, dependencies, cfg)
+func GetStepCreateShoot(_ GardenerConfig, cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
+	return stepCreateShootV1beta1(cloudprovider, name, dependencies, cfg)
 }
 
 func GetStepDeleteShoot(name, createShootStepName, shootName string, dependencies []string) v1beta1.DAGStep {

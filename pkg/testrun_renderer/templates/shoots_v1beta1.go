@@ -22,30 +22,32 @@ import (
 
 func stepCreateShootV1beta1(cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
 	stepConfig := defaultShootConfig(cfg)
+	var generatorStep *v1beta1.DAGStep
 	switch cloudprovider {
 	case common.CloudProviderAWS:
 		if name == "" {
 			name = "create-shoot-aws"
 		}
-		stepConfig = V1beta1AWSShootConfig(stepConfig)
+		generatorStep, stepConfig = v1beta1AWSShootConfig(name, dependencies, stepConfig)
 		break
 	case common.CloudProviderGCP:
 		if name == "" {
 			name = "create-shoot-gcp"
 		}
-		stepConfig = V1beta1GCPShootConfig(stepConfig)
+		generatorStep, stepConfig = v1beta1GCPShootConfig(name, dependencies, stepConfig)
 		break
 	case common.CloudProviderAzure:
 		if name == "" {
 			name = "create-shoot-azure"
 		}
-		stepConfig = V1beta1AzureShootConfig(stepConfig)
+		generatorStep, stepConfig = v1beta1AzureShootConfig(name, dependencies, stepConfig)
 		break
 	default:
 		return []*v1beta1.DAGStep{}, "", fmt.Errorf("unsupported cloudprovider %s", cloudprovider)
 	}
 
 	return []*v1beta1.DAGStep{
+		generatorStep,
 		{
 			Name: name,
 			Definition: v1beta1.StepDefinition{
@@ -53,11 +55,24 @@ func stepCreateShootV1beta1(cloudprovider common.CloudProvider, name string, dep
 				Config: stepConfig,
 			},
 			UseGlobalArtifacts: false,
-			DependsOn:          dependencies,
+			DependsOn:          []string{generatorStep.Name},
 			ArtifactsFrom:      "",
 			Annotations:        nil,
 		},
 	}, name, nil
+}
+
+var defaultProviderConfig = []v1beta1.ConfigElement{
+	{
+		Type:  v1beta1.ConfigTypeEnv,
+		Name:  ConfigControlplaneProviderPathName,
+		Value: ConfigControlplaneProviderPath,
+	},
+	{
+		Type:  v1beta1.ConfigTypeEnv,
+		Name:  ConfigInfrastructureProviderPathName,
+		Value: ConfigInfrastructureProviderPath,
+	},
 }
 
 func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
@@ -85,11 +100,35 @@ func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
 	}
 }
 
-func V1beta1GCPShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
+func v1beta1GCPShootConfig(name string, dependencies []string, cfg []v1beta1.ConfigElement) (*v1beta1.DAGStep, []v1beta1.ConfigElement) {
+
+	step := &v1beta1.DAGStep{
+		Name: fmt.Sprintf("%s-gen", name),
+		Definition: v1beta1.StepDefinition{
+			Name: "gen-provider-gcp",
+			Config: append(defaultProviderConfig,
+				v1beta1.ConfigElement{
+					Type:  v1beta1.ConfigTypeEnv,
+					Name:  ConfigZoneName,
+					Value: "europe-west1-b",
+				},
+			),
+		},
+		UseGlobalArtifacts: false,
+		DependsOn:          dependencies,
+		ArtifactsFrom:      "",
+		Annotations:        nil,
+	}
+
+	return step, append(cfg, []v1beta1.ConfigElement{
 		{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudproviderName,
+			Value: "gcp",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
 			Value: "gcp",
 		},
 		{
@@ -115,11 +154,35 @@ func V1beta1GCPShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement 
 	}...)
 }
 
-func V1beta1AWSShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
+func v1beta1AWSShootConfig(name string, dependencies []string, cfg []v1beta1.ConfigElement) (*v1beta1.DAGStep, []v1beta1.ConfigElement) {
+
+	step := &v1beta1.DAGStep{
+		Name: fmt.Sprintf("%s-gen", name),
+		Definition: v1beta1.StepDefinition{
+			Name: "gen-provider-aws",
+			Config: append(defaultProviderConfig,
+				v1beta1.ConfigElement{
+					Type:  v1beta1.ConfigTypeEnv,
+					Name:  ConfigZoneName,
+					Value: "eu-west-1b",
+				},
+			),
+		},
+		UseGlobalArtifacts: false,
+		DependsOn:          dependencies,
+		ArtifactsFrom:      "",
+		Annotations:        nil,
+	}
+
+	return step, append(cfg, []v1beta1.ConfigElement{
 		{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudproviderName,
+			Value: "aws",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
 			Value: "aws",
 		},
 		{
@@ -145,11 +208,29 @@ func V1beta1AWSShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement 
 	}...)
 }
 
-func V1beta1AzureShootConfig(cfg []v1beta1.ConfigElement) []v1beta1.ConfigElement {
-	return append(cfg, []v1beta1.ConfigElement{
+func v1beta1AzureShootConfig(name string, dependencies []string, cfg []v1beta1.ConfigElement) (*v1beta1.DAGStep, []v1beta1.ConfigElement) {
+
+	step := &v1beta1.DAGStep{
+		Name: fmt.Sprintf("%s-gen", name),
+		Definition: v1beta1.StepDefinition{
+			Name:   "gen-provider-azure",
+			Config: defaultProviderConfig,
+		},
+		UseGlobalArtifacts: false,
+		DependsOn:          dependencies,
+		ArtifactsFrom:      "",
+		Annotations:        nil,
+	}
+
+	return step, append(cfg, []v1beta1.ConfigElement{
 		{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigCloudproviderName,
+			Value: "azure",
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigProviderTypeName,
 			Value: "azure",
 		},
 		{
