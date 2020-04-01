@@ -5,6 +5,13 @@
         Testruns
     {{ end }}
 {{end}}
+{{define "baseURL"}}
+    {{ if .page.rungroup }}
+        /testruns?runID={{ .page.rungroup }}
+    {{ else }}
+        /testruns?
+    {{ end }}
+{{ end }}
 {{define "content"}}
     <div class="runs_container">
         <div class="mdl-grid">
@@ -78,6 +85,7 @@
             {{ end }}
             </tbody>
         </table>
+        {{ template "pagination" (dict "URL" .global.URL "pages" .page.pages ) }}
     </div>
 {{end}}
 

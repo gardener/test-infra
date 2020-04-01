@@ -1,0 +1,45 @@
+{{/*
+  Expects:
+      URL: ""
+      pages:
+          Pages:
+          - from: 0
+            to: 5
+          - from: x
+          - to: y
+          Current: 2
+  */}}
+
+{{define "pagination"}}
+{{ if not (eq (len .pages.Pages) 0) }}
+<div class="pagination mdl-shadow--2dp">
+<div class="mdl-grid">
+    <div class="mdl--cell mdl-cell--4-col pagination-next">
+        {{- if not (eq .pages.Current 0) }}
+        {{ $page := (index .pages.Pages (sub .pages.Current 1) ) }}
+        <a class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" aria-label="Back"
+           href="{{ urlAddParams .URL "from" $page.From "to" $page.To }}">
+            <i class="material-icons">navigate_before</i>
+        </a>
+        {{- end }}
+    </div>
+
+    <div class="mdl--cell mdl-cell--4-col pagination-current">
+        {{ $page := (index .pages.Pages .pages.Current) }}
+        {{ $page.From }} .. {{ $page.To }}<br>
+        ({{ .pages.ItemCount }})
+    </div>
+
+    <div class="mdl--cell mdl-cell--4-col pagination-back">
+        {{- if not (eq .pages.Current (sub (len .pages.Pages) 1)) }}
+        {{ $page := (index .pages.Pages (add .pages.Current 1) ) }}
+        <a class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" aria-label="Next"
+           href="{{ urlAddParams .URL "from" $page.From "to" $page.To }}">
+            <i class="material-icons">navigate_next</i>
+        </a>
+        {{- end }}
+    </div>
+</div>
+</div>
+{{ end }}
+{{ end }}

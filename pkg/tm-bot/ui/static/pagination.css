@@ -1,0 +1,21 @@
+
+.pagination {
+    background: #fff;
+
+    border-collapse: collapse;
+    width: calc(100% - 40px);
+    margin: 20px;
+}
+
+.pagination-next {
+    text-align: left
+}
+
+.pagination-current {
+    text-align: center;
+    margin: auto;
+}
+
+.pagination-back {
+    text-align: right;
+}

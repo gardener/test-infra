@@ -97,6 +97,12 @@ const (
 
 	// TM Dashboard
 	DashboardExecutionGroupParameter = "runID"
+
+	// DashboardPaginationFrom is the name of the http parameter for the pagination from index.
+	DashboardPaginationFrom = "from"
+
+	// DashboardPaginationTo is the name of the http parameter for the pagination from index.
+	DashboardPaginationTo = "to"
 )
 
 var (
