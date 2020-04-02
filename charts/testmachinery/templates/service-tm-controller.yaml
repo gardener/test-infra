@@ -23,11 +23,11 @@ spec:
   selector:
     app: tm-controller
   ports:
-  - name: http
+  - name: metrics
     protocol: TCP
-    port: 80
-    targetPort: {{.Values.controller.webhook.http.port}}
-  - name: https
+    port: {{.Values.controller.metricsEndpointPort}}
+    targetPort: {{.Values.controller.metricsEndpointPort}}
+  - name: webhook
     protocol: TCP
     port: 443
-    targetPort: {{.Values.controller.webhook.https.port}}
+    targetPort: {{.Values.controller.webhook.port}}

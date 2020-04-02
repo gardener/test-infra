@@ -43,10 +43,10 @@ spec:
         imagePullPolicy: {{ .Values.controller.pullPolicy }}
         command: ["/testmachinery-controller"]
         args:
-        - --webhook-http-address=0.0.0.0:{{.Values.controller.webhook.http.port}}
-        - --webhook-https-address=0.0.0.0:{{.Values.controller.webhook.https.port}}
-        - --cert-file=/etc/testmachinery-controller/srv/tls.crt
-        - --key-file=/etc/testmachinery-controller/srv/tls.key
+        - --webhook-port={{.Values.controller.webhook.port}}
+        - --webhook-cert-dir=/etc/testmachinery-controller/srv
+        - --health-addr=:{{.Values.controller.healthEndpointPort}}
+        - --metrics-addr=:{{.Values.controller.metricsEndpointPort}}
         - --github-cache-dir=/cache
         - --namespace={{ .Release.Namespace }}
         - --max-concurrent-syncs={{ .Values.controller.maxConcurrentSyncs }}
@@ -104,16 +104,23 @@ spec:
               name: testmachinery-elasticsearch
               key: password
         {{- end }}
+        ports:
+        - name: webhook-server
+          containerPort: {{ .Values.controller.webhook.port }}
+          protocol: TCP
+        - name: metrics-server
+          containerPort: {{ .Values.controller.metricsEndpointPort }}
+          protocol: TCP
         livenessProbe:
           httpGet:
             path: /healthz
-            port: {{.Values.controller.webhook.http.port}}
+            port: {{.Values.controller.healthEndpointPort}}
           initialDelaySeconds: 3
           periodSeconds: 5
         readinessProbe:
           httpGet:
             path: /healthz
-            port: {{.Values.controller.webhook.http.port}}
+            port: {{.Values.controller.healthEndpointPort}}
           initialDelaySeconds: 3
           periodSeconds: 3
         volumeMounts:

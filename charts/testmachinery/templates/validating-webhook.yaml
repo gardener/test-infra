@@ -29,4 +29,4 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       name: testmachinery-controller
       path: /webhooks/validate-testrun
-    caBundle: {{ required ".Values.controller.tls.key is required" (b64enc .Values.controller.tls.caBundle) }}
+    caBundle: {{ required ".Values.controller.tls.caBundle is required" (b64enc .Values.controller.tls.caBundle) }}

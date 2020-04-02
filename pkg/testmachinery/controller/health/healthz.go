@@ -12,16 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package webhooks
+package health
 
 import (
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"errors"
+	"net/http"
+	"sync"
 )
 
-type TestrunWebhook struct {
-	log    logr.Logger
-	d      admission.Decoder
-	codecs serializer.CodecFactory
+var (
+	mutex   sync.Mutex
+	healthy = false
+)
+
+func UpdateHealth(isHealthy bool) {
+	mutex.Lock()
+	healthy = isHealthy
+	mutex.Unlock()
+}
+
+func Healthz() func(req *http.Request) error {
+	return func(req *http.Request) error {
+		mutex.Lock()
+		isHealthy := healthy
+		mutex.Unlock()
+
+		if isHealthy {
+			return nil
+		}
+		return errors.New("unhealthy")
+	}
 }
