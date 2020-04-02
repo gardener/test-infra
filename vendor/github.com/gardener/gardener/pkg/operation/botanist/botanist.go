@@ -22,12 +22,10 @@ import (
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
-	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation"
 	"github.com/gardener/gardener/pkg/operation/common"
+	shootpkg "github.com/gardener/gardener/pkg/operation/shoot"
 
-	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -63,13 +61,23 @@ func New(o *operation.Operation) (*Botanist, error) {
 }
 
 // RequiredExtensionsExist checks whether all required extensions needed for an shoot operation exist.
-func (b *Botanist) RequiredExtensionsExist() error {
-	controllerInstallationList := &gardencorev1beta1.ControllerInstallationList{}
-	if err := b.K8sGardenClient.Client().List(context.TODO(), controllerInstallationList); err != nil {
+func (b *Botanist) RequiredExtensionsExist(ctx context.Context) error {
+	controllerRegistrationList := &gardencorev1beta1.ControllerRegistrationList{}
+	if err := b.K8sGardenClient.Client().List(ctx, controllerRegistrationList); err != nil {
 		return err
 	}
 
-	requiredExtensions := b.computeRequiredExtensions()
+	controllerInstallationList := &gardencorev1beta1.ControllerInstallationList{}
+	if err := b.K8sGardenClient.Client().List(ctx, controllerInstallationList); err != nil {
+		return err
+	}
+
+	var controllerRegistrations []*gardencorev1beta1.ControllerRegistration
+	for _, controllerRegistration := range controllerRegistrationList.Items {
+		controllerRegistrations = append(controllerRegistrations, controllerRegistration.DeepCopy())
+	}
+
+	requiredExtensions := shootpkg.ComputeRequiredExtensions(b.Shoot.Info, b.Seed.Info, controllerRegistrations, b.Garden.InternalDomain, b.Shoot.ExternalDomain)
 
 	for _, controllerInstallation := range controllerInstallationList.Items {
 		if controllerInstallation.Spec.SeedRef.Name != b.Seed.Info.Name {
@@ -77,18 +85,19 @@ func (b *Botanist) RequiredExtensionsExist() error {
 		}
 
 		controllerRegistration := &gardencorev1beta1.ControllerRegistration{}
-		if err := b.K8sGardenClient.Client().Get(context.TODO(), client.ObjectKey{Name: controllerInstallation.Spec.RegistrationRef.Name}, controllerRegistration); err != nil {
+		if err := b.K8sGardenClient.Client().Get(ctx, client.ObjectKey{Name: controllerInstallation.Spec.RegistrationRef.Name}, controllerRegistration); err != nil {
 			return err
 		}
 
-		for extensionKind, extensionTypes := range requiredExtensions {
-			for extensionType := range extensionTypes {
-				if helper.IsResourceSupported(controllerRegistration.Spec.Resources, extensionKind, extensionType) && helper.IsControllerInstallationSuccessful(controllerInstallation) {
-					extensionTypes.Delete(extensionType)
-				}
+		for _, kindType := range requiredExtensions.UnsortedList() {
+			split := strings.Split(kindType, "/")
+			if len(split) != 2 {
+				return fmt.Errorf("unexpected required extension: %q", kindType)
 			}
-			if extensionTypes.Len() == 0 {
-				delete(requiredExtensions, extensionKind)
+			extensionKind, extensionType := split[0], split[1]
+
+			if helper.IsResourceSupported(controllerRegistration.Spec.Resources, extensionKind, extensionType) && helper.IsControllerInstallationSuccessful(controllerInstallation) {
+				requiredExtensions.Delete(kindType)
 			}
 		}
 	}
@@ -98,51 +107,4 @@ func (b *Botanist) RequiredExtensionsExist() error {
 	}
 
 	return nil
-}
-
-func (b *Botanist) computeRequiredExtensions() map[string]sets.String {
-	requiredExtensions := make(map[string]sets.String)
-
-	machineImagesSet := sets.NewString()
-	for _, worker := range b.Shoot.Info.Spec.Provider.Workers {
-		if worker.Machine.Image != nil {
-			machineImagesSet.Insert(string(worker.Machine.Image.Name))
-		}
-	}
-	requiredExtensions[extensionsv1alpha1.OperatingSystemConfigResource] = machineImagesSet
-
-	if !helper.TaintsHave(b.Seed.Info.Spec.Taints, gardencorev1beta1.SeedTaintDisableDNS) {
-		if b.Garden.InternalDomain.Provider != "unmanaged" {
-			if requiredExtensions[dnsv1alpha1.DNSProviderKind] == nil {
-				requiredExtensions[dnsv1alpha1.DNSProviderKind] = sets.NewString()
-			}
-			requiredExtensions[dnsv1alpha1.DNSProviderKind].Insert(b.Garden.InternalDomain.Provider)
-		}
-
-		if b.Shoot.ExternalDomain != nil && b.Shoot.ExternalDomain.Provider != "unmanaged" {
-			if requiredExtensions[dnsv1alpha1.DNSProviderKind] == nil {
-				requiredExtensions[dnsv1alpha1.DNSProviderKind] = sets.NewString()
-			}
-			requiredExtensions[dnsv1alpha1.DNSProviderKind].Insert(b.Shoot.ExternalDomain.Provider)
-		}
-	}
-
-	for extensionType := range b.Shoot.Extensions {
-		if requiredExtensions[extensionsv1alpha1.ExtensionResource] == nil {
-			requiredExtensions[extensionsv1alpha1.ExtensionResource] = sets.NewString()
-		}
-		requiredExtensions[extensionsv1alpha1.ExtensionResource].Insert(extensionType)
-	}
-
-	requiredExtensions[extensionsv1alpha1.InfrastructureResource] = sets.NewString(string(b.Shoot.Info.Spec.Provider.Type))
-	requiredExtensions[extensionsv1alpha1.ControlPlaneResource] = sets.NewString(string(b.Shoot.Info.Spec.Provider.Type))
-	requiredExtensions[extensionsv1alpha1.NetworkResource] = sets.NewString(b.Shoot.Info.Spec.Networking.Type)
-	requiredExtensions[extensionsv1alpha1.WorkerResource] = sets.NewString(string(b.Shoot.Info.Spec.Provider.Type))
-
-	if b.Seed.Info.Spec.Backup != nil {
-		requiredExtensions[extensionsv1alpha1.BackupBucketResource] = sets.NewString(string(b.Seed.Info.Spec.Backup.Provider))
-		requiredExtensions[extensionsv1alpha1.BackupEntryResource] = sets.NewString(string(b.Seed.Info.Spec.Backup.Provider))
-	}
-
-	return requiredExtensions
 }

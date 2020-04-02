@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -34,6 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // DeployExtensionResources creates the `Extension` extension resource in the shoot namespace in the seed
@@ -53,13 +55,14 @@ func (b *Botanist) DeployExtensionResources(ctx context.Context) error {
 		)
 
 		fns = append(fns, func(ctx context.Context) error {
-			return kutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), &toApply, func() error {
+			_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), &toApply, func() error {
 				metav1.SetMetaDataAnnotation(&toApply.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
 
 				toApply.Spec.Type = extensionType
 				toApply.Spec.ProviderConfig = providerConfig
 				return nil
 			})
+			return err
 		})
 	}
 
@@ -120,7 +123,7 @@ func (b *Botanist) WaitUntilExtensionResourcesReady(ctx context.Context) error {
 
 				return retry.Ok()
 			}); err != nil {
-				return gardencorev1beta1helper.DetermineError(fmt.Sprintf("failed waiting for extension %s to be ready: %v", name, err))
+				return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("failed waiting for extension %s to be ready: %v", name, err))
 			}
 			return nil
 		})
@@ -175,9 +178,9 @@ func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error
 			}); err != nil {
 				message := fmt.Sprintf("Failed waiting for extension delete")
 				if lastError != nil {
-					return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
+					return gardencorev1beta1helper.DetermineError(errors.New(lastError.Description), fmt.Sprintf("%s: %s", message, lastError.Description))
 				}
-				return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, err.Error()))
+				return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("%s: %s", message, err.Error()))
 			}
 			return nil
 		})

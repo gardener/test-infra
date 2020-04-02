@@ -32,14 +32,15 @@ import (
 	"github.com/gardener/gardener-resource-manager/pkg/manager"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// DNSPurposeIngress is a constant for a DNS record used for the ingress domain name.
-const DNSPurposeIngress = "ingress"
+// DNSIngressName is a constant for a DNS resources used for the ingress domain name.
+const DNSIngressName = "ingress"
 
 // EnsureIngressDNSRecord creates the respective wildcard DNS record for the nginx-ingress-controller.
 func (b *Botanist) EnsureIngressDNSRecord(ctx context.Context) error {
-	if !b.Shoot.NginxIngressEnabled() || b.Shoot.HibernationEnabled {
+	if !b.Shoot.NginxIngressEnabled() {
 		return b.DestroyIngressDNSRecord(ctx)
 	}
 
@@ -48,16 +49,16 @@ func (b *Botanist) EnsureIngressDNSRecord(ctx context.Context) error {
 		return err
 	}
 
-	if err := b.waitUntilDNSProviderReady(ctx, DNSPurposeExternal); err != nil {
+	if err := b.waitUntilDNSProviderReady(ctx, DNSExternalName); err != nil {
 		return err
 	}
 
-	return b.deployDNSEntry(ctx, DNSPurposeIngress, b.Shoot.GetIngressFQDN("*"), loadBalancerIngress)
+	return b.deployDNSEntry(ctx, DNSIngressName, b.Shoot.GetIngressFQDN("*"), loadBalancerIngress)
 }
 
 // DestroyIngressDNSRecord destroys the nginx-ingress resources created by Terraform.
 func (b *Botanist) DestroyIngressDNSRecord(ctx context.Context) error {
-	return b.deleteDNSEntry(ctx, DNSPurposeIngress)
+	return b.deleteDNSEntry(ctx, DNSIngressName)
 }
 
 // GenerateKubernetesDashboardConfig generates the values which are required to render the chart of
@@ -183,20 +184,17 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 		vpnTLSAuthSecret = b.Secrets["vpn-seed-tlsauth"]
 		global           = map[string]interface{}{
 			"kubernetesVersion": b.Shoot.Info.Spec.Kubernetes.Version,
-			"podNetwork":        b.Shoot.GetPodNetwork(),
+			"podNetwork":        b.Shoot.Networks.Pods.String(),
 		}
 		coreDNSConfig = map[string]interface{}{
 			"service": map[string]interface{}{
-				"clusterDNS": common.ComputeClusterIP(b.Shoot.GetServiceNetwork(), 10),
+				"clusterDNS": b.Shoot.Networks.CoreDNS.String(),
 				// TODO: resolve conformance test issue before changing:
 				// https://github.com/kubernetes/kubernetes/blob/master/test/e2e/network/dns.go#L44
 				"domain": map[string]interface{}{
 					"clusterDomain": gardencorev1beta1.DefaultDomain,
 				},
 			},
-		}
-		clusterAutoscaler = map[string]interface{}{
-			"enabled": b.Shoot.WantsClusterAutoscaler,
 		}
 		podSecurityPolicies = map[string]interface{}{
 			"allowPrivilegedContainers": *b.Shoot.Info.Spec.Kubernetes.AllowPrivilegedContainers,
@@ -218,8 +216,8 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 			},
 		}
 		vpnShootConfig = map[string]interface{}{
-			"podNetwork":     b.Shoot.GetPodNetwork(),
-			"serviceNetwork": b.Shoot.GetServiceNetwork(),
+			"podNetwork":     b.Shoot.Networks.Pods.String(),
+			"serviceNetwork": b.Shoot.Networks.Services.String(),
 			"tlsAuth":        vpnTLSAuthSecret.Data["vpn.tlsauth"],
 			"podAnnotations": map[string]interface{}{
 				"checksum/secret-vpn-shoot": b.CheckSums["vpn-shoot"],
@@ -232,8 +230,8 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 			"provider":          b.Shoot.Info.Spec.Provider.Type,
 			"region":            b.Shoot.Info.Spec.Region,
 			"kubernetesVersion": b.Shoot.Info.Spec.Kubernetes.Version,
-			"podNetwork":        b.Shoot.GetPodNetwork(),
-			"serviceNetwork":    b.Shoot.GetServiceNetwork(),
+			"podNetwork":        b.Shoot.Networks.Pods.String(),
+			"serviceNetwork":    b.Shoot.Networks.Services.String(),
 			"maintenanceBegin":  b.Shoot.Info.Spec.Maintenance.TimeWindow.Begin,
 			"maintenanceEnd":    b.Shoot.Info.Spec.Maintenance.TimeWindow.End,
 		}
@@ -306,7 +304,7 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 			Namespace: metav1.NamespaceSystem,
 		},
 	}
-	if err := kutil.CreateOrUpdate(context.TODO(), b.K8sShootClient.Client(), newVpnShootSecret, func() error {
+	if _, err := controllerutil.CreateOrUpdate(context.TODO(), b.K8sShootClient.Client(), newVpnShootSecret, func() error {
 		newVpnShootSecret.Type = corev1.SecretTypeOpaque
 		newVpnShootSecret.Data = vpnShootSecret.Data
 		return nil
@@ -315,20 +313,23 @@ func (b *Botanist) generateCoreAddonsChart() (*chartrenderer.RenderedChart, erro
 	}
 
 	return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-core", "components"), "shoot-core", metav1.NamespaceSystem, map[string]interface{}{
-		"global":              global,
-		"cluster-autoscaler":  clusterAutoscaler,
-		"podsecuritypolicies": podSecurityPolicies,
-		"coredns":             coreDNS,
-		"kube-proxy":          kubeProxy,
-		"vpn-shoot":           vpnShoot,
-		"metrics-server":      metricsServer,
-		"monitoring": map[string]interface{}{
+		"global":                  global,
+		"cluster-autoscaler":      common.GenerateAddonConfig(nil, b.Shoot.WantsClusterAutoscaler),
+		"coredns":                 coreDNS,
+		"kube-apiserver-kubelet":  common.GenerateAddonConfig(nil, true),
+		"kube-controller-manager": common.GenerateAddonConfig(nil, true),
+		"kube-proxy":              common.GenerateAddonConfig(kubeProxy, true),
+		"kube-scheduler":          common.GenerateAddonConfig(nil, true),
+		"metrics-server":          common.GenerateAddonConfig(metricsServer, true),
+		"monitoring": common.GenerateAddonConfig(map[string]interface{}{
 			"node-exporter":     nodeExporter,
 			"blackbox-exporter": blackboxExporter,
-		},
-		"network-policies":      networkPolicyConfig,
-		"node-problem-detector": nodeProblemDetector,
-		"shoot-info":            shootInfo,
+		}, b.Shoot.GetPurpose() != gardencorev1beta1.ShootPurposeTesting),
+		"network-policies":      common.GenerateAddonConfig(networkPolicyConfig, true),
+		"node-problem-detector": common.GenerateAddonConfig(nodeProblemDetector, true),
+		"podsecuritypolicies":   common.GenerateAddonConfig(podSecurityPolicies, true),
+		"shoot-info":            common.GenerateAddonConfig(shootInfo, true),
+		"vpn-shoot":             common.GenerateAddonConfig(vpnShoot, true),
 	})
 }
 

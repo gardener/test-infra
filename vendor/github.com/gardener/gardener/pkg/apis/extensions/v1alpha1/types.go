@@ -22,6 +22,8 @@ import (
 
 // Status is the status of an Object.
 type Status interface {
+	// GetProviderStatus retrieves the provider status.
+	GetProviderStatus() *runtime.RawExtension
 	// GetConditions retrieves the Conditions of a status.
 	// Conditions may be nil.
 	GetConditions() []gardencorev1beta1.Condition
@@ -46,7 +48,7 @@ type LastOperation interface {
 	// GetLastUpdateTime returns the last update time of the last operation.
 	GetLastUpdateTime() metav1.Time
 	// GetProgress returns progress of the last operation.
-	GetProgress() int
+	GetProgress() int32
 	// GetState returns the LastOperationState of the last operation.
 	GetState() gardencorev1beta1.LastOperationState
 	// GetType returns the LastOperationType of the last operation.
@@ -69,9 +71,10 @@ type LastError interface {
 type Spec interface {
 	// GetExtensionType retrieves the extension type.
 	GetExtensionType() string
-
 	// GetExtensionPurpose retrieves the extension purpose.
 	GetExtensionPurpose() *string
+	// GetProviderConfig retrieves the provider config.
+	GetProviderConfig() *runtime.RawExtension
 }
 
 // Object is an extension object resource.

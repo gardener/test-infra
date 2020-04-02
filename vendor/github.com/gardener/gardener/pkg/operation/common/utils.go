@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"regexp"
 	"sort"
@@ -63,13 +64,41 @@ func GetSecretKeysWithPrefix(kind string, m map[string]*corev1.Secret) []string 
 	return result
 }
 
-// ComputeClusterIP parses the provided <cidr> and sets the last byte to the value of <lastByte>.
-// For example, <cidr> = 100.64.0.0/11 and <lastByte> = 10 the result would be 100.64.0.10
-func ComputeClusterIP(cidr string, lastByte byte) string {
-	ip, _, _ := net.ParseCIDR(cidr)
-	ip = ip.To4()
-	ip[3] = lastByte
-	return ip.String()
+// ComputeOffsetIP parses the provided <subnet> and offsets with the value of <offset>.
+// For example, <subnet> = 100.64.0.0/11 and <offset> = 10 the result would be 100.64.0.10
+// IPv6 and IPv4 is supported.
+func ComputeOffsetIP(subnet *net.IPNet, offset int64) (net.IP, error) {
+	if subnet == nil {
+		return nil, fmt.Errorf("subnet is nil")
+	}
+
+	isIPv6 := false
+
+	bytes := subnet.IP.To4()
+	if bytes == nil {
+		isIPv6 = true
+		bytes = subnet.IP.To16()
+	}
+
+	ip := net.IP(big.NewInt(0).Add(big.NewInt(0).SetBytes(bytes), big.NewInt(offset)).Bytes())
+
+	if !subnet.Contains(ip) {
+		return nil, fmt.Errorf("cannot compute IP with offset %d - subnet %q too small", offset, subnet)
+	}
+
+	// there is no broadcast address on IPv6
+	if isIPv6 {
+		return ip, nil
+	}
+
+	for i := range ip {
+		// IP address is not the same, so it's not the broadcast ip.
+		if ip[i] != ip[i]|^subnet.Mask[i] {
+			return ip.To4(), nil
+		}
+	}
+
+	return nil, fmt.Errorf("computed IPv4 address %q is broadcast for subnet %q", ip, subnet)
 }
 
 // GenerateAddonConfig returns the provided <values> in case <enabled> is true. Otherwise, nil is
@@ -188,16 +217,16 @@ func ReadLeaderElectionRecord(k8sClient kubernetes.Interface, lock, namespace, n
 		}
 		annotations = configmap.Annotations
 	default:
-		return nil, fmt.Errorf("Unknown lock type: %s", lock)
+		return nil, fmt.Errorf("unknown lock type: %s", lock)
 	}
 
 	leaderElection, ok := annotations[resourcelock.LeaderElectionRecordAnnotationKey]
 	if !ok {
-		return nil, fmt.Errorf("Could not find key %s in annotations", resourcelock.LeaderElectionRecordAnnotationKey)
+		return nil, fmt.Errorf("could not find key %s in annotations", resourcelock.LeaderElectionRecordAnnotationKey)
 	}
 
 	if err := json.Unmarshal([]byte(leaderElection), &leaderElectionRecord); err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal leader election record: %+v", err)
+		return nil, fmt.Errorf("failed to unmarshal leader election record: %+v", err)
 	}
 
 	return &leaderElectionRecord, nil
@@ -321,6 +350,16 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		}
 	}
 
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "elasticsearch-logging-elasticsearch-logging-0",
+			Namespace: namespace,
+		},
+	}
+	if err := k8sClient.Delete(ctx, pvc); client.IgnoreNotFound(err) != nil && !meta.IsNoMatchError(err) {
+		return err
+	}
+
 	return nil
 }
 
@@ -366,6 +405,12 @@ func DeleteAlertmanager(ctx context.Context, k8sClient client.Client, namespace 
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "alertmanager-config",
+				Namespace: namespace,
+			},
+		},
+		&corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "alertmanager-db-alertmanager-0",
 				Namespace: namespace,
 			},
 		},
@@ -480,7 +525,7 @@ func ShouldIgnoreShoot(respectSyncPeriodOverwrite bool, shoot *gardencorev1beta1
 		return false
 	}
 
-	value, ok := shoot.Annotations[ShootIgnore]
+	value, ok := GetShootIgnoreAnnotation(shoot.Annotations)
 	if !ok {
 		return false
 	}
@@ -522,7 +567,7 @@ func SyncPeriodOfShoot(respectSyncPeriodOverwrite bool, defaultMinSyncPeriod tim
 		return defaultMinSyncPeriod
 	}
 
-	syncPeriodOverwrite, ok := shoot.Annotations[ShootSyncPeriod]
+	syncPeriodOverwrite, ok := GetShootSyncPeriodAnnotation(shoot.Annotations)
 	if !ok {
 		return defaultMinSyncPeriod
 	}
@@ -600,4 +645,49 @@ func GetSecretFromSecretRef(ctx context.Context, c client.Client, secretRef *cor
 		return nil, err
 	}
 	return secret, nil
+}
+
+// GetConfirmationDeletionAnnotation fetches the value for ConfirmationDeletion annotation.
+// If not present, it fallbacks to ConfirmationDeletionDeprecated.
+func GetConfirmationDeletionAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, ConfirmationDeletion, ConfirmationDeletionDeprecated)
+}
+
+// GetShootExpirationTimestampAnnotation fetches the value for ShootExpirationTimestamp annotation.
+// If not present, it fallbacks to ShootExpirationTimestampDeprecated.
+func GetShootExpirationTimestampAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, ShootExpirationTimestamp, ShootExpirationTimestampDeprecated)
+}
+
+// GetShootOperationAnnotation fetches the value for v1beta1constants.GardenerOperation annotation.
+// If not present, it fallbacks to ShootOperationDeprecated.
+func GetShootOperationAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, v1beta1constants.GardenerOperation, ShootOperationDeprecated)
+}
+
+// GetShootSyncPeriodAnnotation fetches the value for ShootSyncPeriod annotation.
+// If not present, it fallbacks to ShootSyncPeriodDeprecated.
+func GetShootSyncPeriodAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, ShootSyncPeriod, ShootSyncPeriodDeprecated)
+}
+
+// GetShootIgnoreAnnotation fetches the value for ShootIgnore annotation.
+// If not present, it fallbacks to ShootIgnoreDeprecated.
+func GetShootIgnoreAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, ShootIgnore, ShootIgnoreDeprecated)
+}
+
+// GetTasksAnnotation fetches the value for ShootTasks annotation.
+// If not present, it fallbacks to ShootTasksDeprecated.
+func GetTasksAnnotation(annotations map[string]string) (string, bool) {
+	return getDeprecatedAnnotation(annotations, ShootTasks, ShootTasksDeprecated)
+}
+
+func getDeprecatedAnnotation(annotations map[string]string, annotationKey, deprecatedAnnotationKey string) (string, bool) {
+	val, ok := annotations[annotationKey]
+	if !ok {
+		val, ok = annotations[deprecatedAnnotationKey]
+	}
+
+	return val, ok
 }

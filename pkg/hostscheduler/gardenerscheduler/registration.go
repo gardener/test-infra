@@ -24,7 +24,6 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/pkg/errors"
 
-	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/spf13/cobra"
@@ -83,9 +82,9 @@ func (r *registration) PreRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if gardenv1beta1.CloudProvider(r.cloudprovider) == "" {
+	if r.cloudprovider == "" {
 		return fmt.Errorf("%s is not a supported cloudprovider. Use one of %s, %s, %s, %s, %s, %s, %s", r.cloudprovider, CloudProviderAll,
-			gardenv1beta1.CloudProviderAWS, gardenv1beta1.CloudProviderGCP, gardenv1beta1.CloudProviderAzure, gardenv1beta1.CloudProviderAlicloud, gardenv1beta1.CloudProviderOpenStack, gardenv1beta1.CloudProviderPacket)
+			common.CloudProviderAWS, common.CloudProviderGCP, common.CloudProviderAzure, common.CloudProviderAlicloud, common.CloudProviderOpenStack, common.CloudProviderPacket)
 	}
 
 	r.scheduler.cloudprovider = r.cloudprovider

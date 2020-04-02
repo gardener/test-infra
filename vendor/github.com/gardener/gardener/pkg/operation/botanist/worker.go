@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -23,7 +24,6 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/pkg/utils/secrets"
@@ -33,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // WorkerDefaultTimeout is the default timeout and defines how long Gardener should wait
@@ -57,8 +58,22 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 		var volume *extensionsv1alpha1.Volume
 		if worker.Volume != nil {
 			volume = &extensionsv1alpha1.Volume{
-				Type: worker.Volume.Type,
-				Size: worker.Volume.Size,
+				Name:      worker.Volume.Name,
+				Type:      worker.Volume.Type,
+				Size:      worker.Volume.Size,
+				Encrypted: worker.Volume.Encrypted,
+			}
+		}
+
+		var dataVolumes []extensionsv1alpha1.Volume
+		if len(worker.DataVolumes) > 0 {
+			for _, dataVolume := range worker.DataVolumes {
+				dataVolumes = append(dataVolumes, extensionsv1alpha1.Volume{
+					Name:      dataVolume.Name,
+					Type:      dataVolume.Type,
+					Size:      dataVolume.Size,
+					Encrypted: dataVolume.Encrypted,
+				})
 			}
 		}
 
@@ -71,8 +86,8 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 
 		pools = append(pools, extensionsv1alpha1.WorkerPool{
 			Name:           worker.Name,
-			Minimum:        int(worker.Minimum),
-			Maximum:        int(worker.Maximum),
+			Minimum:        worker.Minimum,
+			Maximum:        worker.Maximum,
 			MaxSurge:       *worker.MaxSurge,
 			MaxUnavailable: *worker.MaxUnavailable,
 			Annotations:    worker.Annotations,
@@ -83,14 +98,16 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 				Name:    worker.Machine.Image.Name,
 				Version: worker.Machine.Image.Version,
 			},
-			ProviderConfig: pConfig,
-			UserData:       []byte(b.Shoot.OperatingSystemConfigsMap[worker.Name].Downloader.Data.Content),
-			Volume:         volume,
-			Zones:          worker.Zones,
+			ProviderConfig:        pConfig,
+			UserData:              []byte(b.Shoot.OperatingSystemConfigsMap[worker.Name].Downloader.Data.Content),
+			Volume:                volume,
+			DataVolumes:           dataVolumes,
+			KubeletDataVolumeName: worker.KubeletDataVolumeName,
+			Zones:                 worker.Zones,
 		})
 	}
 
-	return kutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), worker, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), worker, func() error {
 		metav1.SetMetaDataAnnotation(&worker.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
 
 		worker.Spec = extensionsv1alpha1.WorkerSpec{
@@ -110,6 +127,7 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 		}
 		return nil
 	})
+	return err
 }
 
 // DestroyWorker deletes the `Worker` extension resource in the shoot namespace in the seed cluster,
@@ -141,7 +159,7 @@ func (b *Botanist) WaitUntilWorkerReady(ctx context.Context) error {
 		b.Shoot.MachineDeployments = worker.Status.MachineDeployments
 		return retry.Ok()
 	}); err != nil {
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("Error while waiting for worker object to become ready: %v", err))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("Error while waiting for worker object to become ready: %v", err))
 	}
 	return nil
 }
@@ -169,9 +187,9 @@ func (b *Botanist) WaitUntilWorkerDeleted(ctx context.Context) error {
 	}); err != nil {
 		message := fmt.Sprintf("Error while waiting for worker object to be deleted")
 		if lastError != nil {
-			return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
+			return gardencorev1beta1helper.DetermineError(errors.New(lastError.Description), fmt.Sprintf("%s: %s", message, lastError.Description))
 		}
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, err.Error()))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("%s: %s", message, err.Error()))
 	}
 
 	return nil

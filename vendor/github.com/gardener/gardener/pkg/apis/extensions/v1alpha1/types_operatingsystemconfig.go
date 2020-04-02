@@ -17,7 +17,6 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ Object = (*OperatingSystemConfig)(nil)
@@ -68,11 +67,13 @@ type OperatingSystemConfigList struct {
 
 // OperatingSystemConfigSpec is the spec for a OperatingSystemConfig resource.
 type OperatingSystemConfigSpec struct {
+	// CRI config is a structure contains configurations of the CRI library
+	// +optional
+	CRIConfig *CRIConfig `json:"criConfig,omitempty"`
 	// DefaultSpec is a structure containing common fields used by all extension resources.
 	DefaultSpec `json:",inline"`
-
 	// Purpose describes how the result of this OperatingSystemConfig is used by Gardener. Either it
-	// gets sent to the machine-controller-manager to bootstrap a VM, or it is downloaded by the
+	// gets sent to the `Worker` extension controller to bootstrap a VM, or it is downloaded by the
 	// cloud-config-downloader script already running on a bootstrapped VM.
 	Purpose OperatingSystemConfigPurpose `json:"purpose"`
 	// ReloadConfigFilePath is the path to the generated operating system configuration. If set, controllers
@@ -91,9 +92,6 @@ type OperatingSystemConfigSpec struct {
 	// +patchStrategy=merge
 	// +optional
 	Files []File `json:"files,omitempty" patchStrategy:"merge" patchMergeKey:"path"`
-	// ProviderConfig is the configuration passed to extension resource.
-	// +optional
-	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty"`
 }
 
 // Unit is a unit for the operating system configuration (usually, a systemd unit).
@@ -167,7 +165,6 @@ type FileContentInline struct {
 type OperatingSystemConfigStatus struct {
 	// DefaultStatus is a structure containing common fields used by all extension resources.
 	DefaultStatus `json:",inline"`
-
 	// CloudConfig is a structure for containing the generated output for the given operating system
 	// config spec. It contains a reference to a secret as the result may contain confidential data.
 	// +optional
@@ -207,3 +204,20 @@ const (
 	// results of a computed cloud config.
 	OperatingSystemConfigSecretDataKey = "cloud_config"
 )
+
+// CRI config is a structure contains configurations of the CRI library
+type CRIConfig struct {
+	// Name is a mandatory string containing the name of the CRI library.
+	Name CRIName `json:"name"`
+}
+
+// CRIName is a type alias for the CRI name string.
+type CRIName string
+
+const (
+	// CRINameContainerD is a constant for ContainerD CRI name
+	CRINameContainerD = "containerd"
+)
+
+// ContainerDRuntimeContainersBinFolder is the folder where Container Runtime binaries should be saved for ContainerD usage
+const ContainerDRuntimeContainersBinFolder = "/var/bin/containerruntimes"

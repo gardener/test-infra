@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -23,13 +24,13 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // NetworkDefaultTimeout is the default timeout and defines how long Gardener should wait
@@ -46,14 +47,14 @@ func (b *Botanist) DeployNetwork(ctx context.Context) error {
 		},
 	}
 
-	return kutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), network, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), network, func() error {
 		metav1.SetMetaDataAnnotation(&network.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
 		network.Spec = extensionsv1alpha1.NetworkSpec{
 			DefaultSpec: extensionsv1alpha1.DefaultSpec{
 				Type: string(b.Shoot.Info.Spec.Networking.Type),
 			},
-			PodCIDR:     string(b.Shoot.GetPodNetwork()),
-			ServiceCIDR: string(b.Shoot.GetServiceNetwork()),
+			PodCIDR:     b.Shoot.Networks.Pods.String(),
+			ServiceCIDR: b.Shoot.Networks.Services.String(),
 		}
 
 		if b.Shoot.Info.Spec.Networking.ProviderConfig != nil {
@@ -62,6 +63,7 @@ func (b *Botanist) DeployNetwork(ctx context.Context) error {
 
 		return nil
 	})
+	return err
 }
 
 // DestroyNetwork deletes the `Network` extension resource in the shoot namespace in the seed cluster,
@@ -83,7 +85,7 @@ func (b *Botanist) WaitUntilNetworkIsReady(ctx context.Context) error {
 		}
 		return retry.Ok()
 	}); err != nil {
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("failed to create network: %v", err))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("failed to create network: %v", err))
 	}
 	return nil
 }
@@ -111,9 +113,9 @@ func (b *Botanist) WaitUntilNetworkIsDeleted(ctx context.Context) error {
 	}); err != nil {
 		message := fmt.Sprintf("Failed to delete Network")
 		if lastError != nil {
-			return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
+			return gardencorev1beta1helper.DetermineError(errors.New(lastError.Description), fmt.Sprintf("%s: %s", message, lastError.Description))
 		}
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, err.Error()))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("%s: %s", message, err.Error()))
 	}
 
 	return nil

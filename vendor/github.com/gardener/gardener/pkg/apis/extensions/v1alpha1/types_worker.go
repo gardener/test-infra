@@ -88,7 +88,7 @@ type WorkerPool struct {
 	// MachineType contains information about the machine type that should be used for this worker pool.
 	MachineType string `json:"machineType"`
 	// Maximum is the maximum size of the worker pool.
-	Maximum int `json:"maximum"`
+	Maximum int32 `json:"maximum"`
 	// MaxSurge is maximum number of VMs that are created during an update.
 	MaxSurge intstr.IntOrString `json:"maxSurge"`
 	// MaxUnavailable is the maximum number of VMs that can be unavailable during an update.
@@ -107,7 +107,7 @@ type WorkerPool struct {
 	// AMIs, ...) by the provider itself.
 	MachineImage MachineImage `json:"machineImage,omitempty"`
 	// Minimum is the minimum size of the worker pool.
-	Minimum int `json:"minimum"`
+	Minimum int32 `json:"minimum"`
 	// Name is the name of this worker pool.
 	Name string `json:"name"`
 	// ProviderConfig is a provider specific configuration for the worker pool.
@@ -119,6 +119,12 @@ type WorkerPool struct {
 	// Volume contains information about the root disks that should be used for this worker pool.
 	// +optional
 	Volume *Volume `json:"volume,omitempty"`
+	// DataVolumes contains a list of additional worker volumes.
+	// +optional
+	DataVolumes []Volume `json:"dataVolumes,omitempty"`
+	// KubeletDataVolumeName contains the name of a dataVolume that should be used for storing kubelet state.
+	// +optional
+	KubeletDataVolumeName *string `json:"kubeletDataVolumeName,omitempty"`
 	// Zones contains information about availability zones for this worker pool.
 	// +optional
 	Zones []string `json:"zones,omitempty"`
@@ -136,26 +142,28 @@ type MachineImage struct {
 
 // Volume contains information about the root disks that should be used for worker pools.
 type Volume struct {
+	// Name of the volume to make it referencable.
+	// +optional
+	Name *string `json:"name,omitempty"`
 	// Type is the type of the volume.
 	// +optional
 	Type *string `json:"type,omitempty"`
-	// Size is the size of the volume.
+	// Size is the of the root volume.
 	Size string `json:"size"`
+	// Encrypted determines if the volume should be encrypted.
+	// +optional
+	Encrypted *bool `json:"encrypted,omitempty"`
 }
 
 // WorkerStatus is the status for a Worker resource.
 type WorkerStatus struct {
 	// DefaultStatus is a structure containing common fields used by all extension resources.
 	DefaultStatus `json:",inline"`
-
 	// MachineDeployments is a list of created machine deployments. It will be used to e.g. configure
 	// the cluster-autoscaler properly.
 	// +patchMergeKey=name
 	// +patchStrategy=merge
 	MachineDeployments []MachineDeployment `json:"machineDeployments,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
-	// ProviderStatus contains provider-specific output for this worker.
-	// +optional
-	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 }
 
 // MachineDeployment is a created machine deployment.
@@ -163,7 +171,7 @@ type MachineDeployment struct {
 	// Name is the name of the `MachineDeployment` resource.
 	Name string `json:"name"`
 	// Minimum is the minimum number for this machine deployment.
-	Minimum int `json:"minimum"`
+	Minimum int32 `json:"minimum"`
 	// Maximum is the maximum number for this machine deployment.
-	Maximum int `json:"maximum"`
+	Maximum int32 `json:"maximum"`
 }

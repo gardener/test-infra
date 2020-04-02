@@ -15,7 +15,6 @@
 package v1beta1
 
 import (
-	"encoding/json"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -82,6 +81,9 @@ type ShootSpec struct {
 	Monitoring *Monitoring `json:"monitoring,omitempty"`
 	// Provider contains all provider-specific and provider-relevant information.
 	Provider Provider `json:"provider"`
+	// Purpose is the purpose class for this cluster.
+	// +optional
+	Purpose *ShootPurpose `json:"purpose,omitempty"`
 	// Region is a name of a region.
 	Region string `json:"region"`
 	// SecretBindingName is the name of the a SecretBinding that has a reference to the provider secret.
@@ -148,7 +150,7 @@ type Addons struct {
 	NginxIngress *NginxIngress `json:"nginxIngress,omitempty"`
 }
 
-// Addon also enabling or disabling a specific addon and is used to derive from.
+// Addon allows enabling or disabling a specific addon and is used to derive from.
 type Addon struct {
 	// Enabled indicates whether the addon is enabled or not.
 	Enabled bool `json:"enabled"`
@@ -208,14 +210,16 @@ type DNSProvider struct {
 	// Domains contains information about which domains shall be included/excluded for this provider.
 	// +optional
 	Domains *DNSIncludeExclude `json:"domains,omitempty"`
+	// Primary indicates that this DNSProvider is used for shoot related domains.
+	// +optional
+	Primary *bool `json:"primary,omitempty"`
 	// SecretName is a name of a secret containing credentials for the stated domain and the
 	// provider. When not specified, the Gardener will use the cloud provider credentials referenced
-	// by the Shoot and try to find respective credentials there. Specifying this field may override
+	// by the Shoot and try to find respective credentials there (primary provider only). Specifying this field may override
 	// this behavior, i.e. forcing the Gardener to only look into the given secret.
 	// +optional
 	SecretName *string `json:"secretName,omitempty"`
-	// Type is the DNS provider type for the Shoot. Only relevant if not the default domain is used for
-	// this shoot.
+	// Type is the DNS provider type.
 	// +optional
 	Type *string `json:"type,omitempty"`
 	// Zones contains information about which hosted zones shall be included/excluded for this provider.
@@ -311,7 +315,7 @@ type Kubernetes struct {
 
 // ClusterAutoscaler contains the configration flags for the Kubernetes cluster autoscaler.
 type ClusterAutoscaler struct {
-	// ScaleDownDelayAfterAdd defines how long after scale up that scale down evaluation resumes (default: 10 mins).
+	// ScaleDownDelayAfterAdd defines how long after scale up that scale down evaluation resumes (default: 1 hour).
 	// +optional
 	ScaleDownDelayAfterAdd *metav1.Duration `json:"scaleDownDelayAfterAdd,omitempty"`
 	// ScaleDownDelayAfterDelete how long after node deletion that scale down evaluation resumes, defaults to scanInterval (defaults to ScanInterval).
@@ -320,7 +324,7 @@ type ClusterAutoscaler struct {
 	// ScaleDownDelayAfterFailure how long after scale down failure that scale down evaluation resumes (default: 3 mins).
 	// +optional
 	ScaleDownDelayAfterFailure *metav1.Duration `json:"scaleDownDelayAfterFailure,omitempty"`
-	// ScaleDownUnneededTime defines how long a node should be unneeded before it is eligible for scale down (default: 10 mins).
+	// ScaleDownUnneededTime defines how long a node should be unneeded before it is eligible for scale down (default: 30 mins).
 	// +optional
 	ScaleDownUnneededTime *metav1.Duration `json:"scaleDownUnneededTime,omitempty"`
 	// ScaleDownUtilizationThreshold defines the threshold in % under which a node is being removed
@@ -349,8 +353,7 @@ type KubeAPIServerConfig struct {
 	AdmissionPlugins []AdmissionPlugin `json:"admissionPlugins,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 	// APIAudiences are the identifiers of the API. The service account token authenticator will
 	// validate that tokens used against the API are bound to at least one of these audiences.
-	// If `serviceAccountConfig.issuer` is configured and this is not, this defaults to a single
-	// element list containing the issuer URL.
+	// Defaults to ["kubernetes"].
 	// +optional
 	APIAudiences []string `json:"apiAudiences,omitempty"`
 	// AuditConfig contains configuration settings for the audit of the kube-apiserver.
@@ -375,11 +378,12 @@ type KubeAPIServerConfig struct {
 type ServiceAccountConfig struct {
 	// Issuer is the identifier of the service account token issuer. The issuer will assert this
 	// identifier in "iss" claim of issued tokens. This value is a string or URI.
+	// Defaults to URI of the API server.
 	// +optional
 	Issuer *string `json:"issuer,omitempty"`
-	// SigningKeySecret is a reference to a secret that contains the current private key of the
+	// SigningKeySecret is a reference to a secret that contains an optional private key of the
 	// service account token issuer. The issuer will sign issued ID tokens with this private key.
-	// (Requires the 'TokenRequest' feature gate.)
+	// Only useful if service account tokens are also issued by another external system.
 	// +optional
 	SigningKeySecret *corev1.LocalObjectReference `json:"signingKeySecretName,omitempty"`
 }
@@ -466,66 +470,30 @@ type KubeControllerManagerConfig struct {
 	NodeCIDRMaskSize *int32 `json:"nodeCIDRMaskSize,omitempty"`
 }
 
-// GardenerDuration is a workaround for missing OpenAPI functions on metav1.Duration struct.
-type GardenerDuration struct {
-	time.Duration `protobuf:"varint,1,opt,name=duration,casttype=time.Duration"`
-}
-
-// OpenAPISchemaType is used by the kube-openapi generator when constructing
-// the OpenAPI spec of this type.
-//
-// See: https://github.com/kubernetes/kube-openapi/tree/master/pkg/generators
-func (GardenerDuration) OpenAPISchemaType() []string { return []string{"string"} }
-
-// OpenAPISchemaFormat is used by the kube-openapi generator when constructing
-// the OpenAPI spec of this type.
-func (GardenerDuration) OpenAPISchemaFormat() string { return "date-time" }
-
-// UnmarshalJSON implements the json.Unmarshaller interface.
-func (d *GardenerDuration) UnmarshalJSON(b []byte) error {
-	var str string
-	if err := json.Unmarshal(b, &str); err != nil {
-		return err
-	}
-
-	pd, err := time.ParseDuration(str)
-	if err != nil {
-		return err
-	}
-	d.Duration = pd
-
-	return nil
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (d *GardenerDuration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.Duration.String())
-}
-
 // HorizontalPodAutoscalerConfig contains horizontal pod autoscaler configuration settings for the kube-controller-manager.
 // Note: Descriptions were taken from the Kubernetes documentation.
 type HorizontalPodAutoscalerConfig struct {
 	// The period after which a ready pod transition is considered to be the first.
 	// +optional
-	CPUInitializationPeriod *GardenerDuration `json:"cpuInitializationPeriod,omitempty"`
+	CPUInitializationPeriod *metav1.Duration `json:"cpuInitializationPeriod,omitempty"`
 	// The period since last downscale, before another downscale can be performed in horizontal pod autoscaler.
 	// +optional
-	DownscaleDelay *GardenerDuration `json:"downscaleDelay,omitempty"`
+	DownscaleDelay *metav1.Duration `json:"downscaleDelay,omitempty"`
 	// The configurable window at which the controller will choose the highest recommendation for autoscaling.
 	// +optional
-	DownscaleStabilization *GardenerDuration `json:"downscaleStabilization,omitempty"`
+	DownscaleStabilization *metav1.Duration `json:"downscaleStabilization,omitempty"`
 	// The configurable period at which the horizontal pod autoscaler considers a Pod “not yet ready” given that it’s unready and it has  transitioned to unready during that time.
 	// +optional
-	InitialReadinessDelay *GardenerDuration `json:"initialReadinessDelay,omitempty"`
+	InitialReadinessDelay *metav1.Duration `json:"initialReadinessDelay,omitempty"`
 	// The period for syncing the number of pods in horizontal pod autoscaler.
 	// +optional
-	SyncPeriod *GardenerDuration `json:"syncPeriod,omitempty"`
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
 	// The minimum change (from 1.0) in the desired-to-actual metrics ratio for the horizontal pod autoscaler to consider scaling.
 	// +optional
 	Tolerance *float64 `json:"tolerance,omitempty"`
 	// The period since last upscale, before another upscale can be performed in horizontal pod autoscaler.
 	// +optional
-	UpscaleDelay *GardenerDuration `json:"upscaleDelay,omitempty"`
+	UpscaleDelay *metav1.Duration `json:"upscaleDelay,omitempty"`
 }
 
 const (
@@ -629,6 +597,10 @@ type KubeletConfig struct {
 	// PodPIDsLimit is the maximum number of process IDs per pod allowed by the kubelet.
 	// +optional
 	PodPIDsLimit *int64 `json:"podPidsLimit,omitempty"`
+	// ImagePullProgressDeadline describes the time limit under which if no pulling progress is made, the image pulling will be cancelled.
+	// +optional
+	// Default: 1m
+	ImagePullProgressDeadline *metav1.Duration `json:"imagePullProgressDeadline,omitempty"`
 }
 
 // KubeletConfigEviction contains kubelet eviction thresholds supporting either a resource.Quantity or a percentage based value.
@@ -799,6 +771,9 @@ type Worker struct {
 	// CABundle is a certificate bundle which will be installed onto every machine of this worker pool.
 	// +optional
 	CABundle *string `json:"caBundle,omitempty"`
+	// CRI contains configurations of CRI support of every machine in the worker pool
+	// +optional
+	CRI *CRI `json:"cri,omitempty"`
 	// Kubernetes contains configuration for Kubernetes components related to this worker pool.
 	// +optional
 	Kubernetes *WorkerKubernetes `json:"kubernetes,omitempty"`
@@ -828,6 +803,12 @@ type Worker struct {
 	// Volume contains information about the volume type and size.
 	// +optional
 	Volume *Volume `json:"volume,omitempty"`
+	// DataVolumes contains a list of additional worker volumes.
+	// +optional
+	DataVolumes []Volume `json:"dataVolumes,omitempty"`
+	// KubeletDataVolumeName contains the name of a dataVolume that should be used for storing kubelet state.
+	// +optional
+	KubeletDataVolumeName *string `json:"kubeletDataVolumeName,omitempty"`
 	// Zones is a list of availability zones that are used to evenly distribute this worker pool. Optional
 	// as not every provider may support availability zones.
 	// +optional
@@ -865,11 +846,43 @@ type ShootMachineImage struct {
 
 // Volume contains information about the volume type and size.
 type Volume struct {
-	// Type is the machine type of the worker group.
+	// Name of the volume to make it referencable.
+	// +optional
+	Name *string `json:"name,omitempty"`
+	// Type is the type of the volume.
 	// +optional
 	Type *string `json:"type,omitempty"`
-	// Size is the size of the root volume.
+	// Size is the size of the volume.
 	Size string `json:"size"`
+	// Encrypted determines if the volume should be encrypted.
+	// +optional
+	Encrypted *bool `json:"encrypted,omitempty"`
+}
+
+// CRI contains information about the Container Runtimes.
+type CRI struct {
+	// The name of the CRI library
+	Name CRIName `json:"name"`
+	// ContainerRuntimes is the list of the required container runtimes supported for a worker pool.
+	// +optional
+	ContainerRuntimes []ContainerRuntime `json:"containerRuntimes,omitempty"`
+}
+
+// CRIName is a type alias for the CRI name string.
+type CRIName string
+
+const (
+	CRINameContainerD CRIName = "containerd"
+)
+
+// ContainerRuntime contains information about worker's available container runtime
+type ContainerRuntime struct {
+	// Type is the type of the Container Runtime.
+	Type string `json:"type"`
+
+	// ProviderConfig is the configuration passed to container runtime resource.
+	// +optional
+	ProviderConfig *ProviderConfig `json:"providerConfig,omitempty"`
 }
 
 var (
@@ -906,4 +919,20 @@ const (
 	ShootSystemComponentsHealthy ConditionType = "SystemComponentsHealthy"
 	// ShootHibernationPossible is a constant for a condition type indicating whether the Shoot can be hibernated.
 	ShootHibernationPossible ConditionType = "HibernationPossible"
+)
+
+// ShootPurpose is a type alias for string.
+type ShootPurpose string
+
+const (
+	// ShootPurposeEvaluation is a constant for the evaluation purpose.
+	ShootPurposeEvaluation ShootPurpose = "evaluation"
+	// ShootPurposeTesting is a constant for the testing purpose.
+	ShootPurposeTesting ShootPurpose = "testing"
+	// ShootPurposeDevelopment is a constant for the development purpose.
+	ShootPurposeDevelopment ShootPurpose = "development"
+	// ShootPurposeProduction is a constant for the production purpose.
+	ShootPurposeProduction ShootPurpose = "production"
+	// ShootPurposeInfrastructure is a constant for the infrastructure purpose.
+	ShootPurposeInfrastructure ShootPurpose = "infrastructure"
 )

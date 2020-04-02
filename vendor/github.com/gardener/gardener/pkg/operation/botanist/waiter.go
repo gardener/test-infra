@@ -25,9 +25,12 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/operation/common"
+	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
+	druidv1alpha1 "github.com/gardener/etcd-druid/api/v1alpha1"
+	"github.com/hashicorp/go-multierror"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -57,54 +60,42 @@ func (b *Botanist) WaitUntilKubeAPIServerServiceIsReady(ctx context.Context) err
 // WaitUntilEtcdReady waits until the etcd statefulsets indicate readiness in their statuses.
 func (b *Botanist) WaitUntilEtcdReady(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 300*time.Second, func(ctx context.Context) (done bool, err error) {
-		statefulSetList := &appsv1.StatefulSetList{}
-		err = b.K8sSeedClient.Client().List(ctx, statefulSetList,
+		etcdList := &druidv1alpha1.EtcdList{}
+		if err := b.K8sSeedClient.Client().List(ctx, etcdList,
 			client.InNamespace(b.Shoot.SeedNamespace),
-			client.MatchingLabels{"app": "etcd-statefulset"})
-		if err != nil {
-			return retry.SevereError(err)
-		}
-		if n := len(statefulSetList.Items); n < 2 {
-			b.Logger.Info("Waiting until the etcd statefulsets gets created...")
-			return retry.MinorError(fmt.Errorf("only %d/%d etcd stateful sets found", n, 2))
-		}
-
-		bothEtcdStatefulSetsReady := true
-		for _, statefulSet := range statefulSetList.Items {
-			if statefulSet.DeletionTimestamp != nil {
-				continue
-			}
-
-			if statefulSet.Status.ReadyReplicas < 1 {
-				bothEtcdStatefulSetsReady = false
-				break
-			}
-		}
-
-		if bothEtcdStatefulSetsReady {
-			return retry.Ok()
-		}
-
-		b.Logger.Info("Waiting until the both etcd statefulsets are ready...")
-		return retry.MinorError(fmt.Errorf("not all etcd stateful sets are ready"))
-	})
-}
-
-// WaitUntilEtcdMainReady waits until the etcd-main statefulsets indicate readiness in its status.
-func (b *Botanist) WaitUntilEtcdMainReady(ctx context.Context) error {
-	return retry.UntilTimeout(ctx, 5*time.Second, 300*time.Second, func(ctx context.Context) (done bool, err error) {
-		b.Logger.Info("Waiting until the etcd-main statefulset is ready...")
-		sts := &appsv1.StatefulSet{}
-		err = b.K8sSeedClient.Client().Get(ctx, kutil.Key(b.Shoot.SeedNamespace, "etcd-main"), sts)
-		if err != nil {
+			client.MatchingLabels{"garden.sapcloud.io/role": "controlplane"},
+		); err != nil {
 			return retry.SevereError(err)
 		}
 
-		if sts.Generation == sts.Status.ObservedGeneration && sts.DeletionTimestamp == nil && sts.Status.ReadyReplicas == 1 {
+		if n := len(etcdList.Items); n < 2 {
+			b.Logger.Info("Waiting until the etcd gets created...")
+			return retry.MinorError(fmt.Errorf("only %d/%d etcd resources found", n, 2))
+		}
+
+		var lastErrors error
+
+		for _, etcd := range etcdList.Items {
+			switch {
+			case etcd.DeletionTimestamp != nil:
+				lastErrors = multierror.Append(lastErrors, fmt.Errorf("%s unexpectedly has a deletion timestamp", etcd.Name))
+			case etcd.Status.ObservedGeneration == nil || etcd.Generation != *etcd.Status.ObservedGeneration:
+				lastErrors = multierror.Append(lastErrors, fmt.Errorf("%s reconciliation pending", etcd.Name))
+			case metav1.HasAnnotation(etcd.ObjectMeta, v1beta1constants.GardenerOperation):
+				lastErrors = multierror.Append(lastErrors, fmt.Errorf("%s reconciliation in process", etcd.Name))
+			case etcd.Status.LastError != nil:
+				lastErrors = multierror.Append(lastErrors, fmt.Errorf("%s reconciliation errored with %s", etcd.Name, err))
+			case !utils.IsTrue(etcd.Status.Ready):
+				lastErrors = multierror.Append(lastErrors, fmt.Errorf("%s is not ready yet", etcd.Name))
+			}
+		}
+
+		if lastErrors == nil {
 			return retry.Ok()
 		}
 
-		return retry.MinorError(fmt.Errorf("etcd-main stateful set is not ready"))
+		b.Logger.Info("Waiting until the both etcds are ready...")
+		return retry.MinorError(lastErrors)
 	})
 }
 
@@ -145,32 +136,7 @@ func (b *Botanist) WaitUntilKubeAPIServerReady(ctx context.Context) error {
 // namespace of the Shoot cluster can be established.
 func (b *Botanist) WaitUntilVPNConnectionExists(ctx context.Context) error {
 	return retry.UntilTimeout(ctx, 5*time.Second, 900*time.Second, func(ctx context.Context) (done bool, err error) {
-		podList := &corev1.PodList{}
-		err = b.K8sShootClient.Client().List(ctx, podList,
-			client.InNamespace(metav1.NamespaceSystem),
-			client.MatchingLabels{"app": "vpn-shoot"})
-		if err != nil {
-			return retry.SevereError(err)
-		}
-		var vpnPod *corev1.Pod
-		for _, pod := range podList.Items {
-			if pod.Status.Phase == corev1.PodRunning {
-				vpnPod = &pod
-				break
-			}
-		}
-		if vpnPod == nil {
-			b.Logger.Info("Waiting until a running vpn-shoot pod exists in the Shoot cluster...")
-			return retry.MinorError(fmt.Errorf("no vpn-shoot pod running in the Shoot cluster"))
-		}
-
-		if err := b.K8sShootClient.CheckForwardPodPort(vpnPod.ObjectMeta.Namespace, vpnPod.ObjectMeta.Name, 0, 22); err != nil {
-			b.Logger.Info("Waiting until the VPN connection has been established...")
-			return retry.MinorError(fmt.Errorf("could not forward to vpn-shoot pod: %v", err))
-		}
-
-		b.Logger.Info("VPN connection has been established.")
-		return retry.Ok()
+		return b.CheckVPNConnection(ctx, b.Logger)
 	})
 }
 
@@ -281,7 +247,7 @@ func (b *Botanist) WaitForControllersToBeActive(ctx context.Context) error {
 					return
 				}
 
-				if delta := metav1.Now().Sub(leaderElectionRecord.RenewTime.Time); delta <= pollInterval-time.Second {
+				if delta := metav1.Now().UTC().Sub(leaderElectionRecord.RenewTime.Time.UTC()); delta <= pollInterval-time.Second {
 					out <- &checkOutput{controllerName: controller.name, ready: true}
 					return
 				}
