@@ -84,6 +84,25 @@ func nestedString(obj map[string]interface{}, fields ...string) string {
 	return v
 }
 
+func nestedInt32(obj map[string]interface{}, fields ...string) int32 {
+	v, ok, err := unstructured.NestedFieldNoCopy(obj, fields...)
+	if err != nil || !ok {
+		return 0
+	}
+
+	switch x := v.(type) {
+	case int64:
+		// safe, as the DefaultUnstructuredConverter uses int64 to store int16, int32, etc.
+		return int32(x)
+	case int32:
+		return x
+	case int:
+		return int32(x)
+	default:
+		return 0
+	}
+}
+
 func nestedInt64(obj map[string]interface{}, fields ...string) int64 {
 	v, ok, err := unstructured.NestedInt64(obj, fields...)
 	if err != nil || !ok {
@@ -101,22 +120,23 @@ func nestedStringReference(obj map[string]interface{}, fields ...string) *string
 	return &v
 }
 
-func nestedInt(obj map[string]interface{}, fields ...string) int {
-	v, ok, err := unstructured.NestedFieldNoCopy(obj, fields...)
+func nestedRawExtension(obj map[string]interface{}, fields ...string) *runtime.RawExtension {
+	val, ok, err := unstructured.NestedFieldNoCopy(obj, fields...)
 	if err != nil || !ok {
-		return 0
+		return nil
 	}
 
-	switch x := v.(type) {
-	case int64:
-		return int(x)
-	case int32:
-		return int(x)
-	case int:
-		return x
-	default:
-		return 0
+	data, ok := val.(map[string]interface{})
+	if !ok {
+		return nil
 	}
+
+	rawExtension := &runtime.RawExtension{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(data, rawExtension); err != nil {
+		return nil
+	}
+
+	return rawExtension
 }
 
 // GetDescription implements LastOperation.
@@ -132,8 +152,8 @@ func (u unstructuredLastOperationAccessor) GetLastUpdateTime() metav1.Time {
 }
 
 // GetProgress implements LastOperation.
-func (u unstructuredLastOperationAccessor) GetProgress() int {
-	return nestedInt(u.UnstructuredContent(), "status", "lastOperation", "progress")
+func (u unstructuredLastOperationAccessor) GetProgress() int32 {
+	return nestedInt32(u.UnstructuredContent(), "status", "lastOperation", "progress")
 }
 
 // GetState implements LastOperation.
@@ -151,9 +171,19 @@ func (u unstructuredSpecAccessor) GetExtensionType() string {
 	return nestedString(u.UnstructuredContent(), "spec", "type")
 }
 
+// GetExtensionPurpose implements Spec.
 func (u unstructuredSpecAccessor) GetExtensionPurpose() *string {
-
 	return nestedStringReference(u.UnstructuredContent(), "spec", "purpose")
+}
+
+// GetProviderConfig implements Spec.
+func (u unstructuredSpecAccessor) GetProviderConfig() *runtime.RawExtension {
+	return nestedRawExtension(u.UnstructuredContent(), "spec", "providerConfig")
+}
+
+// GetProviderStatus implements Status.
+func (u unstructuredStatusAccessor) GetProviderStatus() *runtime.RawExtension {
+	return nestedRawExtension(u.UnstructuredContent(), "status", "providerStatus")
 }
 
 // GetConditions implements Status.
@@ -167,8 +197,7 @@ func (u unstructuredStatusAccessor) GetConditions() []gardencorev1beta1.Conditio
 	for _, interfaceCondition := range interfaceConditionSlice {
 		new := interfaceCondition.(map[string]interface{})
 		condition := &gardencorev1beta1.Condition{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(new, condition)
-		if err != nil {
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(new, condition); err != nil {
 			return nil
 		}
 		conditions = append(conditions, *condition)

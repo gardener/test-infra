@@ -44,14 +44,26 @@ func SetDefaults_SecretBinding(obj *SecretBinding) {
 
 // SetDefaults_Project sets default values for Project objects.
 func SetDefaults_Project(obj *Project) {
-	if obj.Spec.Owner != nil && len(obj.Spec.Owner.APIGroup) == 0 {
-		switch obj.Spec.Owner.Kind {
+	defaultSubject(obj.Spec.Owner)
+
+	for i, member := range obj.Spec.Members {
+		defaultSubject(&obj.Spec.Members[i].Subject)
+
+		if len(member.Role) == 0 && len(member.Roles) == 0 {
+			obj.Spec.Members[i].Role = ProjectMemberViewer
+		}
+	}
+}
+
+func defaultSubject(obj *rbacv1.Subject) {
+	if obj != nil && len(obj.APIGroup) == 0 {
+		switch obj.Kind {
 		case rbacv1.ServiceAccountKind:
-			obj.Spec.Owner.APIGroup = ""
+			obj.APIGroup = ""
 		case rbacv1.UserKind:
-			obj.Spec.Owner.APIGroup = rbacv1.GroupName
+			obj.APIGroup = rbacv1.GroupName
 		case rbacv1.GroupKind:
-			obj.Spec.Owner.APIGroup = rbacv1.GroupName
+			obj.APIGroup = rbacv1.GroupName
 		}
 	}
 }
@@ -119,12 +131,17 @@ func SetDefaults_Shoot(obj *Shoot) {
 	}
 	if obj.Spec.Addons.KubernetesDashboard.AuthenticationMode == nil {
 		var defaultAuthMode string
-		if k8sVersionLessThan116 {
+		if *obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication {
 			defaultAuthMode = KubernetesDashboardAuthModeBasic
 		} else {
 			defaultAuthMode = KubernetesDashboardAuthModeToken
 		}
 		obj.Spec.Addons.KubernetesDashboard.AuthenticationMode = &defaultAuthMode
+	}
+
+	if obj.Spec.Purpose == nil {
+		p := ShootPurposeEvaluation
+		obj.Spec.Purpose = &p
 	}
 }
 

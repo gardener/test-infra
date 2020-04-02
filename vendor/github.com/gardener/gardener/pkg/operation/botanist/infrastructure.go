@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/operation/common"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/gardener/gardener/pkg/utils/secrets"
@@ -65,14 +65,15 @@ func (b *Botanist) DeployInfrastructure(ctx context.Context) error {
 		}
 	}
 
-	return kutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), infrastructure, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), infrastructure, func() error {
 		if requestInfrastructureReconciliation {
 			metav1.SetMetaDataAnnotation(&infrastructure.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
 		}
 
 		infrastructure.Spec = extensionsv1alpha1.InfrastructureSpec{
 			DefaultSpec: extensionsv1alpha1.DefaultSpec{
-				Type: b.Shoot.Info.Spec.Provider.Type,
+				Type:           b.Shoot.Info.Spec.Provider.Type,
+				ProviderConfig: providerConfig,
 			},
 			Region:       b.Shoot.Info.Spec.Region,
 			SSHPublicKey: b.Secrets[v1beta1constants.SecretNameSSHKeyPair].Data[secrets.DataKeySSHAuthorizedKeys],
@@ -80,10 +81,10 @@ func (b *Botanist) DeployInfrastructure(ctx context.Context) error {
 				Name:      v1beta1constants.SecretNameCloudProvider,
 				Namespace: infrastructure.Namespace,
 			},
-			ProviderConfig: providerConfig,
 		}
 		return nil
 	})
+	return err
 }
 
 // DestroyInfrastructure deletes the `Infrastructure` extension resource in the shoot namespace in the seed cluster,
@@ -124,7 +125,7 @@ func (b *Botanist) WaitUntilInfrastructureReady(ctx context.Context) error {
 
 		return retry.Ok()
 	}); err != nil {
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("failed to create infrastructure: %v", err))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("failed to create infrastructure: %v", err))
 	}
 	return nil
 }
@@ -152,9 +153,9 @@ func (b *Botanist) WaitUntilInfrastructureDeleted(ctx context.Context) error {
 	}); err != nil {
 		message := fmt.Sprintf("Failed to delete infrastructure")
 		if lastError != nil {
-			return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, lastError.Description))
+			return gardencorev1beta1helper.DetermineError(errors.New(lastError.Description), fmt.Sprintf("%s: %s", message, lastError.Description))
 		}
-		return gardencorev1beta1helper.DetermineError(fmt.Sprintf("%s: %s", message, err.Error()))
+		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("%s: %s", message, err.Error()))
 	}
 
 	return nil

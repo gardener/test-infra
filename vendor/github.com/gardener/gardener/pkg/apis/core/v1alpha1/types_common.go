@@ -75,6 +75,8 @@ const (
 	LastOperationTypeReconcile LastOperationType = "Reconcile"
 	// LastOperationTypeDelete indicates a 'delete' operation.
 	LastOperationTypeDelete LastOperationType = "Delete"
+	// LastOperationTypeMigrate indicates a 'migrate' operation.
+	LastOperationTypeMigrate LastOperationType = "Migrate"
 )
 
 // LastOperationState is a string alias.
@@ -103,7 +105,7 @@ type LastOperation struct {
 	// Last time the operation state transitioned from one to another.
 	LastUpdateTime metav1.Time `json:"lastUpdateTime"`
 	// The progress in percentage (0-100) of the last operation.
-	Progress int `json:"progress"`
+	Progress int32 `json:"progress"`
 	// Status of the last operation, one of Aborted, Processing, Succeeded, Error, Failed.
 	State LastOperationState `json:"state"`
 	// Type of the last operation, one of Create, Reconcile, Delete.
@@ -121,7 +123,7 @@ func (l *LastOperation) GetLastUpdateTime() metav1.Time {
 }
 
 // GetProgress implements LastOperation.
-func (l *LastOperation) GetProgress() int {
+func (l *LastOperation) GetProgress() int32 {
 	return l.Progress
 }
 
@@ -151,7 +153,12 @@ const (
 	GardenerName = "gardener"
 	// ExternalGardenerName is the value in a Kubernetes core resources `.metadata.finalizers[]` array on which the
 	// Gardener will react when performing a delete request on a resource.
-	ExternalGardenerName = "garden.sapcloud.io/gardener"
+	ExternalGardenerName = "gardener.cloud/gardener"
+	// ExternalGardenerNameDeprecated is the value in a Kubernetes core resources `.metadata.finalizers[]` array on which the
+	// Gardener will react when performing a delete request on a resource.
+	//
+	// Deprecated: Use `ExternalGardenerName` instead.
+	ExternalGardenerNameDeprecated = "garden.sapcloud.io/gardener"
 )
 
 const (

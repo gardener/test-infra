@@ -36,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kubeinformers "k8s.io/client-go/informers"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // New creates a new Garden object (based on a Shoot object).
@@ -109,7 +110,7 @@ func constructDomainFromSecret(secret *corev1.Secret) (*Domain, error) {
 // DomainIsDefaultDomain identifies whether the given domain is a default domain.
 func DomainIsDefaultDomain(domain string, defaultDomains []*Domain) *Domain {
 	for _, defaultDomain := range defaultDomains {
-		if strings.HasSuffix(domain, defaultDomain.Domain) {
+		if strings.HasSuffix(domain, "."+defaultDomain.Domain) {
 			return defaultDomain
 		}
 	}
@@ -204,7 +205,7 @@ func ReadGardenSecrets(k8sInformers kubeinformers.SharedInformerFactory, k8sGard
 		if secret.Labels[v1beta1constants.GardenRole] == common.GardenRoleAlerting {
 			authType := string(secret.Data["auth_type"])
 			if authType != "smtp" && authType != "none" && authType != "basic" && authType != "certificate" {
-				return nil, fmt.Errorf("Invalid or missing field 'auth_type' in secret %s", secret.Name)
+				return nil, fmt.Errorf("invalid or missing field 'auth_type' in secret %s", secret.Name)
 			}
 			alertingSecret := secret
 			secretsMap[common.GardenRoleAlerting] = alertingSecret
@@ -271,12 +272,14 @@ func VerifyInternalDomainSecret(k8sGardenClient kubernetes.Interface, numberOfSh
 				Namespace: v1beta1constants.GardenNamespace,
 			},
 		}
-		return kutil.CreateOrUpdate(context.TODO(), k8sGardenClient.Client(), configMap, func() error {
+
+		_, err := controllerutil.CreateOrUpdate(context.TODO(), k8sGardenClient.Client(), configMap, func() error {
 			configMap.Data = map[string]string{
 				common.GardenRoleInternalDomain: currentDomain,
 			}
 			return nil
 		})
+		return err
 	}
 	if err != nil {
 		return err
@@ -331,7 +334,7 @@ func generateMonitoringSecret(k8sGardenClient kubernetes.Interface, gardenNamesp
 			Namespace: gardenNamespace,
 		},
 	}
-	if err := kutil.CreateOrUpdate(context.TODO(), k8sGardenClient.Client(), secret, func() error {
+	if _, err := controllerutil.CreateOrUpdate(context.TODO(), k8sGardenClient.Client(), secret, func() error {
 		secret.Labels = map[string]string{
 			v1beta1constants.DeprecatedGardenRole: common.GardenRoleGlobalMonitoring,
 		}

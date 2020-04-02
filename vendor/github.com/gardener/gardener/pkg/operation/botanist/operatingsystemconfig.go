@@ -25,6 +25,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/operation/shoot"
 	"github.com/gardener/gardener/pkg/utils"
@@ -89,7 +90,7 @@ func (b *Botanist) ComputeShootOperatingSystemConfig(ctx context.Context) error 
 			defer wg.Done()
 
 			downloaderConfig := b.generateDownloaderConfig(worker.Machine.Image.Name)
-			oscs, err := b.deployOperatingSystemConfigsForWorker(b.Shoot.CloudProfile.Spec.MachineTypes, worker.Machine.Image, utils.MergeMaps(downloaderConfig, nil), utils.MergeMaps(originalConfig, nil), worker)
+			oscs, err := b.deployOperatingSystemConfigsForWorker(ctx, b.Shoot.CloudProfile.Spec.MachineTypes, worker.Machine.Image, utils.MergeMaps(downloaderConfig, nil), utils.MergeMaps(originalConfig, nil), worker)
 			results <- &oscOutput{worker.Name, oscs, err}
 		}(worker)
 	}
@@ -122,17 +123,15 @@ func (b *Botanist) generateDownloaderConfig(machineImageName string) map[string]
 	return map[string]interface{}{
 		"type":    machineImageName,
 		"purpose": extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
-		"server":  fmt.Sprintf("https://%s", b.Shoot.ComputeAPIServerURL(false, true, b.APIServerAddress)),
+		"server":  fmt.Sprintf("https://%s", b.Shoot.ComputeOutOfClusterAPIServerAddress(b.APIServerAddress, true)),
 	}
 }
 
 func (b *Botanist) generateOriginalConfig() (map[string]interface{}, error) {
 	var (
-		serviceNetwork = b.Shoot.GetServiceNetwork()
-
 		originalConfig = map[string]interface{}{
 			"kubernetes": map[string]interface{}{
-				"clusterDNS": common.ComputeClusterIP(serviceNetwork, 10),
+				"clusterDNS": b.Shoot.Networks.CoreDNS.String(),
 				"domain":     gardencorev1beta1.DefaultDomain,
 				"version":    b.Shoot.Info.Spec.Kubernetes.Version,
 			},
@@ -147,10 +146,10 @@ func (b *Botanist) generateOriginalConfig() (map[string]interface{}, error) {
 	}
 	originalConfig["caBundle"] = caBundle
 
-	return b.InjectShootShootImages(originalConfig, common.PauseContainerImageName)
+	return b.InjectShootShootImages(originalConfig, common.PauseContainerImageName, common.HyperkubeImageName)
 }
 
-func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardencorev1beta1.MachineType, machineImage *gardencorev1beta1.ShootMachineImage, downloaderConfig, originalConfig map[string]interface{}, worker gardencorev1beta1.Worker) (*shoot.OperatingSystemConfigs, error) {
+func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, machineTypes []gardencorev1beta1.MachineType, machineImage *gardencorev1beta1.ShootMachineImage, downloaderConfig, originalConfig map[string]interface{}, worker gardencorev1beta1.Worker) (*shoot.OperatingSystemConfigs, error) {
 	secretName := b.Shoot.ComputeCloudConfigSecretName(worker.Name)
 
 	downloaderConfig["secretName"] = secretName
@@ -165,6 +164,20 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenco
 
 	sshKey := b.Secrets[v1beta1constants.SecretNameSSHKeyPair].Data[secrets.DataKeySSHAuthorizedKeys]
 
+	criNamesConfig := map[string]interface{}{
+		"containerd": extensionsv1alpha1.CRINameContainerD,
+	}
+
+	workerNameLabel := map[string]interface{}{
+		"workerLabel": extensionsv1alpha1.CRINameWorkerLabel,
+	}
+
+	criConfig := map[string]interface{}{
+		"containerRuntimesBinaryPath": extensionsv1alpha1.ContainerDRuntimeContainersBinFolder,
+		"names":                       criNamesConfig,
+		"labels":                      workerNameLabel,
+	}
+
 	originalConfig["osc"] = map[string]interface{}{
 		"type":                 machineImage.Name,
 		"purpose":              extensionsv1alpha1.OperatingSystemConfigPurposeReconcile,
@@ -172,6 +185,7 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenco
 		"secretName":           secretName,
 		"customization":        customization,
 		"sshKey":               string(sshKey),
+		"cri":                  criConfig,
 	}
 
 	if data := worker.CABundle; data != nil {
@@ -291,6 +305,9 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenco
 		if podPIDsLimit := kubeletConfig.PodPIDsLimit; podPIDsLimit != nil {
 			kubelet["podPIDsLimit"] = *podPIDsLimit
 		}
+		if imagePullProgressDeadline := kubeletConfig.ImagePullProgressDeadline; imagePullProgressDeadline != nil {
+			kubelet["imagePullProgressDeadline"] = *imagePullProgressDeadline
+		}
 		if cpuCFSQuota := kubeletConfig.CPUCFSQuota; cpuCFSQuota != nil {
 			kubelet["cpuCFSQuota"] = *cpuCFSQuota
 		}
@@ -308,20 +325,37 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenco
 		}
 	}
 
-	originalConfig["worker"] = map[string]interface{}{
-		"name":    worker.Name,
-		"kubelet": kubelet,
+	workerConfig := map[string]interface{}{
+		"name":              worker.Name,
+		"kubelet":           kubelet,
+		"kubeletDataVolume": worker.KubeletDataVolumeName,
 	}
+
+	if worker.CRI != nil {
+		criConfig := map[string]interface{}{
+			"name": worker.CRI.Name,
+		}
+		if len(worker.CRI.ContainerRuntimes) > 0 {
+			crWorkerLabels := make([]string, len(worker.CRI.ContainerRuntimes))
+			for i, cr := range worker.CRI.ContainerRuntimes {
+				crWorkerLabels[i] = fmt.Sprintf(extensionsv1alpha1.ContainerRuntimeNameWorkerLabel, cr.Type) + "=true"
+			}
+			criConfig["labels"] = crWorkerLabels
+		}
+		workerConfig["cri"] = criConfig
+	}
+
+	originalConfig["worker"] = workerConfig
 
 	var (
 		downloaderName = fmt.Sprintf("%s-downloader", secretName)
 		originalName   = fmt.Sprintf("%s-original", secretName)
 	)
-	downloaderData, err := b.applyAndWaitForShootOperatingSystemConfig(filepath.Join(operatingSystemConfigChartPath, "downloader"), downloaderName, downloaderConfig)
+	downloaderData, err := b.applyAndWaitForShootOperatingSystemConfig(ctx, filepath.Join(operatingSystemConfigChartPath, "downloader"), downloaderName, downloaderConfig)
 	if err != nil {
 		return nil, err
 	}
-	originalData, err := b.applyAndWaitForShootOperatingSystemConfig(filepath.Join(operatingSystemConfigChartPath, "original"), originalName, originalConfig)
+	originalData, err := b.applyAndWaitForShootOperatingSystemConfig(ctx, filepath.Join(operatingSystemConfigChartPath, "original"), originalName, originalConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +372,8 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(machineTypes []gardenco
 	}, nil
 }
 
-func (b *Botanist) applyAndWaitForShootOperatingSystemConfig(chartPath, name string, values map[string]interface{}) (*shoot.OperatingSystemConfigData, error) {
-	if err := b.ApplyChartSeed(chartPath, b.Shoot.SeedNamespace, name, values, nil); err != nil {
+func (b *Botanist) applyAndWaitForShootOperatingSystemConfig(ctx context.Context, chartPath, name string, values map[string]interface{}) (*shoot.OperatingSystemConfigData, error) {
+	if err := b.ChartApplierSeed.Apply(ctx, chartPath, b.Shoot.SeedNamespace, name, kubernetes.Values(values)); err != nil {
 		return nil, err
 	}
 
@@ -379,9 +413,9 @@ func (b *Botanist) generateCloudConfigExecutionChart() (*chartrenderer.RenderedC
 	if err != nil {
 		return nil, err
 	}
-
 	workers := make([]map[string]interface{}, 0, len(b.Shoot.Info.Spec.Provider.Workers))
 	for _, worker := range b.Shoot.Info.Spec.Provider.Workers {
+
 		oscData := b.Shoot.OperatingSystemConfigsMap[worker.Name]
 
 		w := map[string]interface{}{
@@ -393,6 +427,31 @@ func (b *Botanist) generateCloudConfigExecutionChart() (*chartrenderer.RenderedC
 
 		if cmd := oscData.Original.Data.Command; cmd != nil {
 			w["command"] = *cmd
+		}
+
+		if worker.KubeletDataVolumeName != nil && worker.DataVolumes != nil {
+			kubeletDataVolName := worker.KubeletDataVolumeName
+			for _, dataVolume := range worker.DataVolumes {
+				volName := dataVolume.Name
+				if *volName == *kubeletDataVolName {
+					size, err := resource.ParseQuantity(dataVolume.Size)
+					if err != nil {
+						return nil, err
+					}
+					sizeInBytes, ok := size.AsInt64()
+					if !ok {
+						sizeInBytes, ok = size.AsDec().Unscaled()
+						if !ok {
+							return nil, fmt.Errorf("failed to parse volume size %s", dataVolume.Size)
+						}
+					}
+					w["kubeletDataVolume"] = map[string]interface{}{
+						"name": volName,
+						"type": dataVolume.Type,
+						"size": fmt.Sprintf("%d", sizeInBytes),
+					}
+				}
+			}
 		}
 
 		workers = append(workers, w)

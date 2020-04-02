@@ -81,9 +81,25 @@ type LastOperation struct {
 	// Last time the operation state transitioned from one to another.
 	LastUpdateTime metav1.Time
 	// The progress in percentage (0-100) of the last operation.
-	Progress int
+	Progress int32
 	// Status of the last operation, one of Aborted, Processing, Succeeded, Error, Failed.
 	State LastOperationState
 	// Type of the last operation, one of Create, Reconcile, Delete.
 	Type LastOperationType
 }
+
+// Gardener holds the information about the Gardener.
+type Gardener struct {
+	// ID is the Docker container id of the Gardener which last acted on a Shoot cluster.
+	ID string
+	// Name is the hostname (pod name) of the Gardener which last acted on a Shoot cluster.
+	Name string
+	// Version is the version of the Gardener which last acted on a Shoot cluster.
+	Version string
+}
+
+const (
+	// GardenerName is the value in a Garden resource's `.metadata.finalizers[]` array on which the Gardener will react
+	// when performing a delete request on a resource.
+	GardenerName = "gardener"
+)

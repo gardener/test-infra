@@ -18,8 +18,10 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"strings"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
@@ -49,6 +51,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // New creates a new operation object with a Shoot resource object.
@@ -189,12 +192,32 @@ func (o *Operation) InitializeShootClients() error {
 		}
 	}
 
-	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, gardencorev1beta1.GardenerName,
+	secretName := v1beta1constants.SecretNameGardener
+	// If the gardenlet runs in the same cluster like the API server of the shoot then use the internal kubeconfig
+	// and communicate internally. Otherwise, fall back to the "external" kubeconfig and communicate via the
+	// load balancer of the shoot API server.
+	addr, err := net.LookupHost(o.Shoot.ComputeInClusterAPIServerAddress(false))
+	if err != nil {
+		o.Logger.Warnf("service DNS name lookup of kube-apiserver failed (%+v), falling back to external kubeconfig", err)
+	} else if len(addr) > 0 {
+		secretName = v1beta1constants.SecretNameGardenerInternal
+	}
+
+	k8sShootClient, err := kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, secretName,
 		kubernetes.WithClientConnectionOptions(o.Config.ShootClientConnection.ClientConnectionConfiguration),
 		kubernetes.WithClientOptions(client.Options{
 			Scheme: kubernetes.ShootScheme,
 		}),
 	)
+	// TODO: This if-condition can be removed in a future version when all shoots were reconciled with Gardener v1.1 version.
+	if secretName == v1beta1constants.SecretNameGardenerInternal && err != nil && apierrors.IsNotFound(err) {
+		k8sShootClient, err = kubernetes.NewClientFromSecret(o.K8sSeedClient, o.Shoot.SeedNamespace, v1beta1constants.SecretNameGardener,
+			kubernetes.WithClientConnectionOptions(o.Config.ShootClientConnection.ClientConnectionConfiguration),
+			kubernetes.WithClientOptions(client.Options{
+				Scheme: kubernetes.ShootScheme,
+			}),
+		)
+	}
 	if err != nil {
 		return err
 	}
@@ -262,20 +285,6 @@ func (o *Operation) InitializeMonitoringClient() error {
 	}
 	o.MonitoringClient = prometheusclient.NewAPI(client)
 	return nil
-}
-
-// ApplyChartGarden takes a path to a chart <chartPath>, name of the release <name>, release's namespace <namespace>
-// and two maps <defaultValues>, <additionalValues>, and renders the template based on the merged result of both value maps.
-// The resulting manifest will be applied to the Garden cluster.
-func (o *Operation) ApplyChartGarden(chartPath, namespace, name string, defaultValues, additionalValues map[string]interface{}) error {
-	return o.ChartApplierGarden.ApplyChart(context.TODO(), chartPath, namespace, name, defaultValues, additionalValues)
-}
-
-// ApplyChartSeed takes a path to a chart <chartPath>, name of the release <name>, release's namespace <namespace>
-// and two maps <defaultValues>, <additionalValues>, and renders the template based on the merged result of both value maps.
-// The resulting manifest will be applied to the Seed cluster.
-func (o *Operation) ApplyChartSeed(chartPath, namespace, name string, defaultValues, additionalValues map[string]interface{}) error {
-	return o.ChartApplierSeed.ApplyChart(context.TODO(), chartPath, namespace, name, defaultValues, additionalValues)
 }
 
 // GetSecretKeysOfRole returns a list of keys which are present in the Garden Secrets map and which
@@ -353,23 +362,19 @@ func (o *Operation) ShootVersion() string {
 	return o.Shoot.Info.Spec.Kubernetes.Version
 }
 
-func (o *Operation) injectImages(values map[string]interface{}, names []string, opts ...imagevector.FindOptionFunc) (map[string]interface{}, error) {
-	return chart.InjectImages(values, o.ImageVector, names, opts...)
-}
-
 // InjectSeedSeedImages injects images that shall run on the Seed and target the Seed's Kubernetes version.
 func (o *Operation) InjectSeedSeedImages(values map[string]interface{}, names ...string) (map[string]interface{}, error) {
-	return o.injectImages(values, names, imagevector.RuntimeVersion(o.SeedVersion()), imagevector.TargetVersion(o.SeedVersion()))
+	return chart.InjectImages(values, o.ImageVector, names, imagevector.RuntimeVersion(o.SeedVersion()), imagevector.TargetVersion(o.SeedVersion()))
 }
 
 // InjectSeedShootImages injects images that shall run on the Seed but target the Shoot's Kubernetes version.
 func (o *Operation) InjectSeedShootImages(values map[string]interface{}, names ...string) (map[string]interface{}, error) {
-	return o.injectImages(values, names, imagevector.RuntimeVersion(o.SeedVersion()), imagevector.TargetVersion(o.ShootVersion()))
+	return chart.InjectImages(values, o.ImageVector, names, imagevector.RuntimeVersion(o.SeedVersion()), imagevector.TargetVersion(o.ShootVersion()))
 }
 
 // InjectShootShootImages injects images that shall run on the Shoot and target the Shoot's Kubernetes version.
 func (o *Operation) InjectShootShootImages(values map[string]interface{}, names ...string) (map[string]interface{}, error) {
-	return o.injectImages(values, names, imagevector.RuntimeVersion(o.ShootVersion()), imagevector.TargetVersion(o.ShootVersion()))
+	return chart.InjectImages(values, o.ImageVector, names, imagevector.RuntimeVersion(o.ShootVersion()), imagevector.TargetVersion(o.ShootVersion()))
 }
 
 // SyncClusterResourceToSeed creates or updates the `Cluster` extension resource for the shoot in the seed cluster.
@@ -405,12 +410,37 @@ func (o *Operation) SyncClusterResourceToSeed(ctx context.Context) error {
 		Kind:       "Shoot",
 	}
 
-	return kutil.CreateOrUpdate(ctx, o.K8sSeedClient.Client(), cluster, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, o.K8sSeedClient.Client(), cluster, func() error {
 		cluster.Spec.CloudProfile = runtime.RawExtension{Object: cloudProfileObj}
 		cluster.Spec.Seed = runtime.RawExtension{Object: seedObj}
 		cluster.Spec.Shoot = runtime.RawExtension{Object: shootObj}
 		return nil
 	})
+	return err
+}
+
+// EnsureShootStateExists creates the ShootState resource for the corresponding shoot and sets its ownerReferences to the Shoot.
+func (o *Operation) EnsureShootStateExists(ctx context.Context) error {
+	shootState := &gardencorev1alpha1.ShootState{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      o.Shoot.Info.Name,
+			Namespace: o.Shoot.Info.Namespace,
+		},
+	}
+	ownerReference := metav1.NewControllerRef(o.Shoot.Info, gardencorev1beta1.SchemeGroupVersion.WithKind("Shoot"))
+	blockOwnerDeletion := false
+	ownerReference.BlockOwnerDeletion = &blockOwnerDeletion
+
+	_, err := controllerutil.CreateOrUpdate(ctx, o.K8sGardenClient.Client(), shootState, func() error {
+		shootState.OwnerReferences = []metav1.OwnerReference{*ownerReference}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	o.ShootState = shootState
+	return nil
 }
 
 // DeleteClusterResourceFromSeed deletes the `Cluster` extension resource for the shoot in the seed cluster.

@@ -17,9 +17,11 @@ package shoot
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
+	"github.com/gardener/gardener/pkg/apis/core"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
@@ -32,8 +34,10 @@ import (
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
 	"github.com/Masterminds/semver"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -63,7 +67,7 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenCoreInformers gardencore
 
 	extensions, err := calculateExtensions(k8sGardenClient.Client(), shoot, seedNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot calculate required extensions for shoot %s: %v", shoot.Name, err)
+		return nil, fmt.Errorf("cannot calculate required extensions for shoot %s: %v", shoot.Name, err)
 	}
 
 	shootObj := &Shoot{
@@ -86,7 +90,7 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenCoreInformers gardencore
 
 	// Determine information about external domain for shoot cluster.
 	externalDomain, err := ConstructExternalDomain(context.TODO(), k8sGardenClient.Client(), shoot, secret, defaultDomains)
-	if err != nil && !(IsIncompleteDNSConfigError(err) && shoot.DeletionTimestamp != nil && len(shoot.Status.UID) == 0) {
+	if err != nil {
 		return nil, err
 	}
 	shootObj.ExternalDomain = externalDomain
@@ -102,7 +106,15 @@ func New(k8sGardenClient kubernetes.Interface, k8sGardenCoreInformers gardencore
 	if err != nil {
 		return nil, err
 	}
+
 	shootObj.WantsClusterAutoscaler = needsAutoscaler
+
+	nwkrs, err := ToNetworks(shoot)
+	if err != nil {
+		return nil, err
+	}
+
+	shootObj.Networks = nwkrs
 
 	return shootObj, nil
 }
@@ -124,6 +136,14 @@ func (s *Shoot) GetIngressFQDN(subDomain string) string {
 	return fmt.Sprintf("%s.%s.%s", subDomain, common.IngressPrefix, *(s.Info.Spec.DNS.Domain))
 }
 
+// GetPurpose returns the purpose of the shoot or 'evaluation' if it's nil.
+func (s *Shoot) GetPurpose() gardencorev1beta1.ShootPurpose {
+	if v := s.Info.Spec.Purpose; v != nil {
+		return *v
+	}
+	return gardencorev1beta1.ShootPurposeEvaluation
+}
+
 // GetWorkerNames returns a list of names of the worker groups in the Shoot manifest.
 func (s *Shoot) GetWorkerNames() []string {
 	var workerNames []string
@@ -133,31 +153,22 @@ func (s *Shoot) GetWorkerNames() []string {
 	return workerNames
 }
 
-// GetNodeCount returns the sum of all 'maximum' fields of all worker groups of the Shoot.
-func (s *Shoot) GetNodeCount() int32 {
+// GetMinNodeCount returns the sum of all 'minimum' fields of all worker groups of the Shoot.
+func (s *Shoot) GetMinNodeCount() int32 {
+	var nodeCount int32
+	for _, worker := range s.Info.Spec.Provider.Workers {
+		nodeCount += worker.Minimum
+	}
+	return nodeCount
+}
+
+// GetMaxNodeCount returns the sum of all 'maximum' fields of all worker groups of the Shoot.
+func (s *Shoot) GetMaxNodeCount() int32 {
 	var nodeCount int32
 	for _, worker := range s.Info.Spec.Provider.Workers {
 		nodeCount += worker.Maximum
 	}
 	return nodeCount
-}
-
-// GetPodNetwork returns the pod network CIDR for the Shoot cluster. If no CIDR was specified then an
-// empty string is returned.
-func (s *Shoot) GetPodNetwork() string {
-	if val := s.Info.Spec.Networking.Pods; val != nil {
-		return *val
-	}
-	return ""
-}
-
-// GetServiceNetwork returns the service network CIDR for the Shoot cluster. If no CIDR was specified then an
-// empty string is returned.
-func (s *Shoot) GetServiceNetwork() string {
-	if val := s.Info.Spec.Networking.Services; val != nil {
-		return *val
-	}
-	return ""
 }
 
 // GetNodeNetwork returns the nodes network CIDR for the Shoot cluster. If the infrastructure extension
@@ -195,14 +206,19 @@ func (s *Shoot) GetReplicas(wokenUp int) int {
 	return wokenUp
 }
 
-// ComputeAPIServerURL takes a boolean value identifying whether the component connecting to the API server
-// runs in the Seed cluster <runsInSeed>, and a boolean value <useInternalClusterDomain> which determines whether the
-// internal or the external cluster domain should be used.
-func (s *Shoot) ComputeAPIServerURL(runsInSeed, useInternalClusterDomain bool, apiServerAddress string) string {
-	if runsInSeed {
-		return v1beta1constants.DeploymentNameKubeAPIServer
+// ComputeInClusterAPIServerAddress returns the internal address for the shoot API server depending on whether
+// the caller runs in the shoot namespace or not.
+func (s *Shoot) ComputeInClusterAPIServerAddress(runsInShootNamespace bool) string {
+	url := v1beta1constants.DeploymentNameKubeAPIServer
+	if !runsInShootNamespace {
+		url = fmt.Sprintf("%s.%s.svc", url, s.SeedNamespace)
 	}
+	return url
+}
 
+// ComputeOutOfClusterAPIServerAddress returns the external address for the shoot API server depending on whether
+// the caller wants to use the internal cluster domain and whether DNS is disabled on this seed.
+func (s *Shoot) ComputeOutOfClusterAPIServerAddress(apiServerAddress string, useInternalClusterDomain bool) string {
 	if s.DisableDNS {
 		return apiServerAddress
 	}
@@ -242,27 +258,6 @@ func ComputeTechnicalID(projectName string, shoot *gardencorev1beta1.Shoot) stri
 	return fmt.Sprintf("%s%s--%s", TechnicalIDPrefix, projectName, shoot.Name)
 }
 
-// UnfoldTechnicalID extracts the project and shoot names from Shoot's TechnicalID which is also used
-// for namespace
-func UnfoldTechnicalID(technicalID string) (projectName, shootName string) {
-	if len(technicalID) == 0 {
-		return
-	}
-
-	var technicalIDComponents []string
-	if strings.HasPrefix(technicalID, "shoot--") {
-		technicalIDComponents = strings.Split(technicalID, "--")
-	} else if strings.HasPrefix(technicalID, "shoot-") {
-		technicalIDComponents = strings.Split(technicalID, "-")
-	} else {
-		return
-	}
-
-	projectName = technicalIDComponents[1]
-	shootName = technicalIDComponents[2]
-	return
-}
-
 // ConstructInternalClusterDomain constructs the internal base domain pof this shoot cluster.
 // It is only used for internal purposes (all kubeconfigs except the one which is received by the
 // user will only talk with the kube-apiserver via a DNS record of domain). In case the given <internalDomain>
@@ -297,27 +292,12 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 	}
 
 	var (
-		externalDomain = &garden.Domain{Domain: *shoot.Spec.DNS.Domain}
-		defaultDomain  = garden.DomainIsDefaultDomain(*externalClusterDomain, defaultDomains)
+		externalDomain  = &garden.Domain{Domain: *shoot.Spec.DNS.Domain}
+		defaultDomain   = garden.DomainIsDefaultDomain(*externalClusterDomain, defaultDomains)
+		primaryProvider = gardencorev1beta1helper.FindPrimaryDNSProvider(shoot.Spec.DNS.Providers)
 	)
 
 	switch {
-	case len(shoot.Spec.DNS.Providers) > 0 && shoot.Spec.DNS.Providers[0].SecretName != nil:
-		secret := &corev1.Secret{}
-		if err := client.Get(ctx, kutil.Key(shoot.Namespace, *shoot.Spec.DNS.Providers[0].SecretName), secret); err != nil {
-			return nil, fmt.Errorf("could not get dns provider secret \"%s\": %+v", *shoot.Spec.DNS.Providers[0].SecretName, err)
-		}
-		externalDomain.SecretData = secret.Data
-		externalDomain.Provider = *shoot.Spec.DNS.Providers[0].Type
-		if domains := shoot.Spec.DNS.Providers[0].Domains; domains != nil {
-			externalDomain.IncludeDomains = domains.Include
-			externalDomain.ExcludeDomains = domains.Exclude
-		}
-		if zones := shoot.Spec.DNS.Providers[0].Zones; zones != nil {
-			externalDomain.IncludeZones = zones.Include
-			externalDomain.ExcludeZones = zones.Exclude
-		}
-
 	case defaultDomain != nil:
 		externalDomain.SecretData = defaultDomain.SecretData
 		externalDomain.Provider = defaultDomain.Provider
@@ -326,14 +306,24 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 		externalDomain.IncludeZones = defaultDomain.IncludeZones
 		externalDomain.ExcludeZones = defaultDomain.ExcludeZones
 
-	case len(shoot.Spec.DNS.Providers) > 0 && shoot.Spec.DNS.Providers[0].SecretName == nil:
-		externalDomain.SecretData = shootSecret.Data
-		externalDomain.Provider = *shoot.Spec.DNS.Providers[0].Type
-		if domains := shoot.Spec.DNS.Providers[0].Domains; domains != nil {
+	case primaryProvider != nil:
+		if primaryProvider.SecretName != nil {
+			secret := &corev1.Secret{}
+			if err := client.Get(ctx, kutil.Key(shoot.Namespace, *primaryProvider.SecretName), secret); err != nil {
+				return nil, fmt.Errorf("could not get dns provider secret %q: %+v", *shoot.Spec.DNS.Providers[0].SecretName, err)
+			}
+			externalDomain.SecretData = secret.Data
+		} else {
+			externalDomain.SecretData = shootSecret.Data
+		}
+		if primaryProvider.Type != nil {
+			externalDomain.Provider = *primaryProvider.Type
+		}
+		if domains := primaryProvider.Domains; domains != nil {
 			externalDomain.IncludeDomains = domains.Include
 			externalDomain.ExcludeDomains = domains.Exclude
 		}
-		if zones := shoot.Spec.DNS.Providers[0].Zones; zones != nil {
+		if zones := primaryProvider.Zones; zones != nil {
 			externalDomain.IncludeZones = zones.Include
 			externalDomain.ExcludeZones = zones.Exclude
 		}
@@ -362,11 +352,9 @@ func MergeExtensions(registrations []gardencorev1beta1.ControllerRegistration, e
 				continue
 			}
 
-			var timeout time.Duration
+			timeout := ExtensionDefaultTimeout
 			if res.ReconcileTimeout != nil {
 				timeout = res.ReconcileTimeout.Duration
-			} else {
-				timeout = ExtensionDefaultTimeout
 			}
 
 			typeToExtension[res.Type] = Extension{
@@ -404,4 +392,106 @@ func MergeExtensions(registrations []gardencorev1beta1.ControllerRegistration, e
 	}
 
 	return requiredExtensions, nil
+}
+
+// ToNetworks return a network with computed cidrs and ClusterIPs
+// for a Shoot
+func ToNetworks(s *gardencorev1beta1.Shoot) (*Networks, error) {
+	if s.Spec.Networking.Services == nil {
+		return nil, fmt.Errorf("shoot's service cidr is empty")
+	}
+
+	if s.Spec.Networking.Pods == nil {
+		return nil, fmt.Errorf("shoot's pods cidr is empty")
+	}
+
+	_, svc, err := net.ParseCIDR(*s.Spec.Networking.Services)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse shoot's network cidr %v", err)
+	}
+
+	_, pods, err := net.ParseCIDR(*s.Spec.Networking.Pods)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse shoot's network cidr %v", err)
+	}
+
+	apiserver, err := common.ComputeOffsetIP(svc, 1)
+	if err != nil {
+		return nil, fmt.Errorf("cannot calculate default/kubernetes ClusterIP: %v", err)
+	}
+
+	coreDNS, err := common.ComputeOffsetIP(svc, 10)
+	if err != nil {
+		return nil, fmt.Errorf("cannot calculate CoreDNS ClusterIP: %v", err)
+	}
+
+	return &Networks{
+		CoreDNS:   coreDNS,
+		Pods:      pods,
+		Services:  svc,
+		APIServer: apiserver,
+	}, nil
+}
+
+// ComputeRequiredExtensions compute the extension kind/type combinations that are required for the
+// reconciliation flow.
+func ComputeRequiredExtensions(shoot *gardencorev1beta1.Shoot, seed *gardencorev1beta1.Seed, controllerRegistrationList []*gardencorev1beta1.ControllerRegistration, internalDomain, externalDomain *garden.Domain) sets.String {
+	requiredExtensions := sets.NewString()
+
+	if seed.Spec.Backup != nil {
+		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.BackupBucketResource, seed.Spec.Backup.Provider))
+		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.BackupEntryResource, seed.Spec.Backup.Provider))
+	}
+	// Hint: This is actually a temporary work-around to request the control plane extension of the seed provider type as
+	// it might come with webhooks that are configuring the exposure of shoot control planes. The ControllerRegistration resource
+	// does not reflect this today.
+	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ControlPlaneResource, seed.Spec.Provider.Type))
+
+	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ControlPlaneResource, shoot.Spec.Provider.Type))
+	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.InfrastructureResource, shoot.Spec.Provider.Type))
+	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.NetworkResource, shoot.Spec.Networking.Type))
+	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.WorkerResource, shoot.Spec.Provider.Type))
+
+	for _, extension := range shoot.Spec.Extensions {
+		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ExtensionResource, extension.Type))
+	}
+
+	for _, pool := range shoot.Spec.Provider.Workers {
+		if pool.Machine.Image != nil {
+			requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.OperatingSystemConfigResource, pool.Machine.Image.Name))
+		}
+		if pool.CRI != nil {
+			for _, cr := range pool.CRI.ContainerRuntimes {
+				requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ContainerRuntimeResource, cr.Type))
+			}
+		}
+	}
+
+	if !gardencorev1beta1helper.TaintsHave(seed.Spec.Taints, gardencorev1beta1.SeedTaintDisableDNS) {
+		if shoot.Spec.DNS != nil {
+			for _, provider := range shoot.Spec.DNS.Providers {
+				if provider.Type != nil && *provider.Type != core.DNSUnmanaged {
+					requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, *provider.Type))
+				}
+			}
+		}
+
+		if internalDomain != nil && internalDomain.Provider != core.DNSUnmanaged {
+			requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, internalDomain.Provider))
+		}
+
+		if externalDomain != nil && externalDomain.Provider != core.DNSUnmanaged {
+			requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, externalDomain.Provider))
+		}
+	}
+
+	for _, controllerRegistration := range controllerRegistrationList {
+		for _, resource := range controllerRegistration.Spec.Resources {
+			if resource.Kind == extensionsv1alpha1.ExtensionResource && resource.GloballyEnabled != nil && *resource.GloballyEnabled {
+				requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ExtensionResource, resource.Type))
+			}
+		}
+	}
+
+	return requiredExtensions
 }
