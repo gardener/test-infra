@@ -64,8 +64,10 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 	header := []string{""}
 
 	for _, item := range items {
-		header = append(header, item.Meta.CloudProvider)
-		headerKeys[item.Meta.CloudProvider] = len(header) - 1
+		if _, ok := headerKeys[item.Meta.CloudProvider]; !ok {
+			header = append(header, item.Meta.CloudProvider)
+			headerKeys[item.Meta.CloudProvider] = len(header) - 1
+		}
 	}
 
 	res := results{
@@ -99,7 +101,7 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 
 func (r *results) AddResult(meta ItemMeta, success bool) {
 	// should never happen but skip to ensure no panic
-	_, ok := r.header[meta.CloudProvider]
+	cpIndex, ok := r.header[meta.CloudProvider]
 	if !ok {
 		return
 	}
@@ -115,7 +117,7 @@ func (r *results) AddResult(meta ItemMeta, success bool) {
 			content:   content,
 		}
 	}
-	r.content[key].content[r.header[meta.CloudProvider]] = SucessSymbols[success]
+	r.content[key].content[cpIndex] = SucessSymbols[success]
 }
 
 func computeDimensionKey(meta ItemMeta) string {
