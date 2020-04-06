@@ -43,6 +43,7 @@ LD_FLAGS := $(shell ./hack/get-build-ld-flags)
 revendor:
 	@GO111MODULE=on go mod vendor
 	@GO111MODULE=on go mod tidy
+<<<<<<< HEAD
 
 .PHONY: code-gen
 code-gen:
@@ -56,6 +57,21 @@ mock-gen:
 generate:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/generate.sh ./...
 
+=======
+
+.PHONY: code-gen
+code-gen:
+	@./hack/generate-code
+
+.PHONY: mock-gen
+mock-gen:
+	@./hack/generate-mocks
+
+.PHONY: generate
+generate:
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/generate.sh ./...
+
+>>>>>>> a13a36b7... Refactor prerequisites to use resource manager
 .PHONY: format
 format:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/format.sh ./cmd ./pkg
