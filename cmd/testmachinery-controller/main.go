@@ -16,12 +16,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/gardener/gardener-extensions/pkg/controller"
 	"github.com/gardener/test-infra/cmd/testmachinery-controller/app"
 	"os"
 )
 
 func main() {
-	cmd := app.NewTestMachineryControllerCommand()
+	cmd := app.NewTestMachineryControllerCommand(controller.SetupSignalHandlerContext())
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Print(err)

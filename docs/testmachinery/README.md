@@ -83,12 +83,18 @@ Furthermore, generated artifacts that are stored in the s3 storage are deleted a
 ### TestMachinery Deployment
 
 1. Setup a k8s cluster (min. Version 1.10.x, preferred Version: 1.12.x, minikube is also suitable)
-2. Install prerequisites ([argo](https://github.com/argoproj/argo), [minio](https://www.minio.io/) and the Testrun CRD) with `make install`
-    * The default namespace is `default`; another namespace can be defined with `make install NS=namespace-name`
 3. Install the TestMachinery with `make install-controller`. Then the controller alongside to a service, validation webhooks and needed rbac permissions is installed.
+    * Needed prerequisites like [argo](https://github.com/argoproj/argo) and optional [minio](https://www.minio.io/) blob store will then be automatically deployed and reconciled by the testmachinery.
+    * For proper deployment the testmachinery has to be configured accordingly. For more information have a look at the configuration section below.
 4. `TestRun`s can be executed by creating them with `kubectl create -f path/to/testrun.yaml` (examples can be found in the [examples folder](examples))
 
-**Prerequisite**: the TestMachinery and the `TestRun`s have to reside in the same namespace due to cross-namespace issues of the argo workflow engine.
+### Configuration
+The testmachinery can be configured with a custom Configuration file (an example can be found [here](../../examples/01-configuration.yaml)).
+The configuration file can be configured by specifying the config flag(`--config`).
+The configuration is automatically watched and updated on changes during runtime.
+
+This configuration can also be configured via the values.yaml if the testmachinery is deployed via the helm chart.
+Have a look [here](../../charts/testmachinery).
 
 ### Developing tests locally
 

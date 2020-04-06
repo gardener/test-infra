@@ -40,10 +40,10 @@ func (o *Operation) EnsureTestNamespace(ctx context.Context) error {
 		return errors.Wrapf(err, "unable to create new test namespace")
 	}
 
-	if err := o.copyDefaultSecretsToNamespace(ctx, o.config.Namespace); err != nil {
+	if err := o.copyDefaultSecretsToNamespace(ctx, o.testConfig.Namespace); err != nil {
 		return errors.Wrapf(err, "unable to copy secrets to new namespace")
 	}
-	if err := o.setupNamespace(ctx, o.config.Namespace); err != nil {
+	if err := o.setupNamespace(ctx, o.testConfig.Namespace); err != nil {
 		return errors.Wrapf(err, "unable to setup new namespace")
 	}
 
@@ -53,10 +53,10 @@ func (o *Operation) EnsureTestNamespace(ctx context.Context) error {
 
 func (o *Operation) createNewTestNamespace(ctx context.Context) error {
 	var ns *corev1.Namespace
-	if len(o.config.Namespace) != 0 {
+	if len(o.testConfig.Namespace) != 0 {
 		ns = &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: o.config.Namespace,
+				Name: o.testConfig.Namespace,
 			},
 		}
 	} else {
@@ -71,7 +71,7 @@ func (o *Operation) createNewTestNamespace(ctx context.Context) error {
 		return errors.Wrapf(err, "unable to create new test namespace")
 	}
 	o.State.AppendObject(ns)
-	o.config.Namespace = ns.Name
+	o.testConfig.Namespace = ns.Name
 	return nil
 }
 
@@ -104,8 +104,8 @@ func (o *Operation) setupNamespace(ctx context.Context, namespace string) error 
 func (o *Operation) copyDefaultSecretsToNamespace(ctx context.Context, namespace string) error {
 	for _, secretName := range CoreSecrets {
 		secret := &corev1.Secret{}
-		if err := o.Client().Client().Get(ctx, client.ObjectKey{Name: secretName, Namespace: o.config.TmNamespace}, secret); err != nil {
-			return errors.Wrapf(err, "unable to fetch secret %s from namespace %s", secretName, o.config.TmNamespace)
+		if err := o.Client().Client().Get(ctx, client.ObjectKey{Name: secretName, Namespace: o.testConfig.TmNamespace}, secret); err != nil {
+			return errors.Wrapf(err, "unable to fetch secret %s from namespace %s", secretName, o.testConfig.TmNamespace)
 		}
 
 		newSecret := &corev1.Secret{

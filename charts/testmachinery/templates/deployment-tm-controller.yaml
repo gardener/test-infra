@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,8 +27,14 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/tls-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/config-secret: {{ include (print $.Template.BasePath "/secret-tm-config.yaml") . | sha256sum }}
+        checksum/tls-secret: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
+        {{ if .Values.testmachinery.github.credentials }}
         checksum/github-secret: {{ include (print $.Template.BasePath "/gh-secrets.yaml") . | sha256sum }}
+        {{ end }}
+        {{- if .Values.imageVectorOverwrite }}
+        checksum/configmap-imagevector-overwrite: {{ include (print $.Template.BasePath "/configmap-imagevector-overwrite.yaml") . | sha256sum }}
+        {{- end }}
       labels:
         app: tm-controller
     spec:
@@ -43,66 +49,12 @@ spec:
         imagePullPolicy: {{ .Values.controller.pullPolicy }}
         command: ["/testmachinery-controller"]
         args:
-        - --webhook-port={{.Values.controller.webhook.port}}
-        - --webhook-cert-dir=/etc/testmachinery-controller/srv
-        - --health-addr=:{{.Values.controller.healthEndpointPort}}
-        - --metrics-addr=:{{.Values.controller.metricsEndpointPort}}
-        - --github-cache-dir=/cache
-        - --namespace={{ .Release.Namespace }}
-        - --max-concurrent-syncs={{ .Values.controller.maxConcurrentSyncs }}
-        - --enable-pod-gc={{ .Values.cleanup.enabled }}
+        - --config=/etc/testmachinery/config/config.yaml
         - -v={{ .Values.controller.verbosity }}
-        {{- if .Values.secrets.github.data }}
-        - --github-secrets-path={{ .Values.secrets.github.path }}/github-secrets.yaml
-        {{- end }}
-        {{- if .Values.elasticsearch.endpoint }}
-        - --es-endpoint={{ .Values.elasticsearch.endpoint }}
-        - --es-username=$(ES_USERNAME)
-        - --es-password=$(ES_PASSWORD)
-        {{- end }}
-        {{- if .Values.local.enabled }}
-        - --insecure=true
-        {{- end}}
-        {{- if .Values.controller.testDefPath }}
-        - --testdef-path={{ .Values.controller.testDefPath }}
-        {{- end }}
+        {{- if .Values.imageVectorOverwrite }}
         env:
-        - name: S3_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              name: {{.Values.config.name}}
-              key: objectstore.endpoint
-        - name: S3_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{.Values.objectStorage.secret.name}}
-              key: accessKey
-        - name: S3_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{.Values.objectStorage.secret.name}}
-              key: secretKey
-        - name: S3_BUCKET_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: {{.Values.config.name}}
-              key: objectstore.bucketName
-        - name: S3_SSL
-          valueFrom:
-            configMapKeyRef:
-              name: {{.Values.config.name}}
-              key: objectstore.ssl
-        {{- if .Values.elasticsearch.endpoint }}
-        - name: ES_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: testmachinery-elasticsearch
-              key: username
-        - name: ES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: testmachinery-elasticsearch
-              key: password
+        - name: IMAGEVECTOR_OVERWRITE
+          value: /charts_overwrite/images_overwrite.yaml
         {{- end }}
         ports:
         - name: webhook-server
@@ -124,29 +76,35 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 3
         volumeMounts:
+        - name: config
+          mountPath: /etc/testmachinery/config
+          readOnly: true
         - name: certs
           mountPath: /etc/testmachinery-controller/srv
           readOnly: true
-        {{- if .Values.secrets.github.data }}
+        {{- if .Values.testmachinery.github.credentials }}
         - name: github-secrets
-          mountPath: {{ .Values.secrets.github.path }}
+          mountPath: /etc/testmachinery-controller/secrets/git
           readOnly: true
         {{- end}}
-        {{- if and (.Values.local.enabled) (.Values.local.hostPath) }}
+        {{- if and (.Values.testmachinery.local) (.Values.controller.hostPath) }}
         - name: local-host
-          mountPath: "{{.Values.local.hostPath}}"
+          mountPath: "{{.Values.controller.hostPath}}"
         {{- end }}
       volumes:
+      - name: config
+        secret:
+          secretName: tm-configuration
       - name: certs
         secret:
           secretName: testmachinery-controller-cert
-      {{- if .Values.secrets.github.data }}
+      {{- if .Values.testmachinery.github.credentials }}
       - name: github-secrets
         secret:
           secretName: tm-github
       {{- end }}
-      {{- if and (.Values.local.enabled) (.Values.local.hostPath) }}
+      {{- if and (.Values.testmachinery.local) (.Values.controller.hostPath) }}
       - name: local-host
         hostPath:
-          path: "{{.Values.local.hostPath}}"
+          path: "{{.Values.controller.hostPath}}"
       {{- end }}

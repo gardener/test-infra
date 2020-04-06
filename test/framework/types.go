@@ -16,6 +16,7 @@ package framework
 
 import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -38,16 +39,18 @@ type Config struct {
 	TmNamespace      string
 	S3Endpoint       string
 
-	Local bool
+	Local        bool
+	TMConfigPath string
 }
 
 // Operation is a common set of configuration and functions for running testmachinery integration tests.
 type Operation struct {
-	config   *Config
-	log      logr.Logger
-	tmClient kubernetes.Interface
+	testConfig *Config
+	log        logr.Logger
+	tmClient   kubernetes.Interface
 
-	State OperationState
+	tmConfig *intconfig.Configuration
+	State    OperationState
 }
 
 type OperationState struct {

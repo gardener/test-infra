@@ -33,7 +33,7 @@ const (
 	InitializationTimeout = 10 * time.Minute
 	CleanupTimeout        = 1 * time.Minute
 
-	TestrunDurationTimeout = 3 * time.Minute
+	TestrunDurationTimeout = 6 * time.Minute
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 )
 
 func init() {
-	cfg = framework.InitFlags(nil)
+	cfg = framework.RegisterFlags(nil)
 }
 
 var _ = BeforeSuite(func() {

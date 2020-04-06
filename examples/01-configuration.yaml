@@ -1,0 +1,54 @@
+apiVersion: config.testmachinery.gardener.cloud/v1beta1
+kind: Configuration
+
+controller:
+  healthAddr: ":8081"
+  metricsAddr: ":8081"
+  enableLeaderElection: false
+  maxConcurrentSyncs: 1
+  webhook:
+    port: 443
+    certDir: ""
+
+testmachinery:
+  namespace: default
+  testdefPath: .test-defs
+  prepareImage: "eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:latest"
+  baseImage: "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest"
+  local: false
+  insecure: false
+  disableCollector: false
+  cleanWorkflowPods: false
+
+argo:
+  argoUI:
+    ingress:
+      enabled: true
+      host: argoui.example.com
+  chartValues: {}
+
+github:
+  cache:
+    cacheDir: /tmp/tm/cache
+    cacheDiskSizeGB: 5
+    maxAgeSeconds: 60
+  secretsPath: "" # mount secrets and specify the path
+
+s3Configuration:
+  server:
+#    minio:
+#      distributed: false
+#      ingress:
+#        enabled: true
+#        host: minio.example.com
+#      chartValues: {}
+    endpoint: s3.bucket.europe.aws.com # will be automatically determined if minio is specified
+    ssl: false
+  bucketName: testmachinery
+  accessKey: AIasdf
+  secretKey: abc
+
+esConfiguration:
+  endpoint: https:...:9200
+  username: user
+  password: my-password

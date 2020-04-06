@@ -18,8 +18,12 @@
 package tools
 
 import (
+	_ "github.com/gardener/gardener-extensions/hack"
+	_ "github.com/gardener/gardener-extensions/hack/.ci"
+
 	_ "github.com/onsi/ginkgo/ginkgo"
 	_ "golang.org/x/lint/golint"
+	_ "github.com/gobuffalo/packr/v2/packr2"
 	_ "k8s.io/code-generator/cmd/client-gen"
 	_ "k8s.io/code-generator/cmd/conversion-gen"
 	_ "k8s.io/code-generator/cmd/deepcopy-gen"

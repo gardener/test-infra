@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -24,12 +24,22 @@ rules:
   verbs:
   - get
   - create
+  - update
   - list
   - watch
 - apiGroups:
   - ""
   resources:
   - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
   verbs:
   - get
   - list
@@ -43,6 +53,13 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - resources.gardener.cloud
+  resources:
+  - managedresources
+  - managedresources/status
+  verbs:
+  - "*"
 - apiGroups:
   - argoproj.io
   resources:
@@ -58,7 +75,7 @@ rules:
   - testruns/finalizers
   verbs:
   - "*"
-{{if .Values.cleanup.enabled }}
+{{if .Values.testmachinery.cleanWorkflowPods }}
 - apiGroups:
   - ""
   resources:

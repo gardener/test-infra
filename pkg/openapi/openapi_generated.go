@@ -29,6 +29,19 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration":               schema_pkg_apis_config_v1beta1_ArgoConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration":             schema_pkg_apis_config_v1beta1_ArgoUIConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Configuration":                   schema_pkg_apis_config_v1beta1_Configuration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig":                schema_pkg_apis_config_v1beta1_ControllerConfig(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration":      schema_pkg_apis_config_v1beta1_ElasticSearchConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig":               schema_pkg_apis_config_v1beta1_GitHubCacheConfig(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig":                    schema_pkg_apis_config_v1beta1_GitHubConfig(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration":            schema_pkg_apis_config_v1beta1_IngressConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration":                 schema_pkg_apis_config_v1beta1_S3Configuration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration":           schema_pkg_apis_config_v1beta1_S3ServerConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration":      schema_pkg_apis_config_v1beta1_TestMachineryConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig":                   schema_pkg_apis_config_v1beta1_WebhookConfig(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.DowntimePeriods":              schema_pkg_apis_telemetry_v1beta1_DowntimePeriods(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ResponseTimeDuration":         schema_pkg_apis_telemetry_v1beta1_ResponseTimeDuration(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootMeasurementData":         schema_pkg_apis_telemetry_v1beta1_ShootMeasurementData(ref),
@@ -55,6 +68,483 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus":            schema_pkg_apis_testmachinery_v1beta1_TestrunStatus(ref),
 		"github.com/gardener/test-infra/pkg/util/strconf.ConfigSource":                           schema_test_infra_pkg_util_strconf_ConfigSource(ref),
 		"github.com/gardener/test-infra/pkg/util/strconf.StringOrConfig":                         schema_test_infra_pkg_util_strconf_StringOrConfig(ref),
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_ArgoConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ArgoConfiguration holds configuration for the argo installation",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"argoUI": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ingress holds the argo ui ingress configuration",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration"),
+						},
+					},
+					"chartValues": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specify additional values that are passed to the argo helm chart",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+				},
+				Required: []string{"argoUI"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_ArgoUIConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ArgoUIConfiguration holds information about the argo ui to deploy",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ingress": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ingress holds the argo ui ingress configuration",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"),
+						},
+					},
+				},
+				Required: []string{"ingress"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Configuration contains the testmachinery configuration values",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"controller": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig"),
+						},
+					},
+					"testmachinery": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration"),
+						},
+					},
+					"github": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig"),
+						},
+					},
+					"s3Configuration": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration"),
+						},
+					},
+					"esConfiguration": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration"),
+						},
+					},
+					"argo": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration"),
+						},
+					},
+				},
+				Required: []string{"controller", "testmachinery", "argo"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_ControllerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ControllerConfig holds information about the testmachinery controller",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"healthAddr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HealthAddr is the address of the healtcheck endpoint",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metricsAddr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MetricsAddr is the address of the metrics endpoint",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enableLeaderElection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnableLeaderElection enables leader election for the controller",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"maxConcurrentSyncs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxConcurrentSyncs is the max concurrent reconciles the controller does.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookConfig holds the validating webhook configuration",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_ElasticSearchConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ElasticSearchConfiguration holds information about the elastic instance to write data to.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"endpoint": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_GitHubCacheConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubCacheConfig is the github cache configuration",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cacheDir": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"cacheDiskSizeGB": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"maxAgeSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_GitHubConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubConfig holds all github related information needed in the testmachinery.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cache": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig"),
+						},
+					},
+					"secretsPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SecretsPath is the path to the github secrets file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_IngressConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "IngressConfiguration holds information about a ingress",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"host": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"enabled", "host"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MinioConfiguration configures optional minio deployment",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"distributed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Distributed specified that minio should be deployed in cluster mode",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"ingress": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ingress is the ingress configuration to expose minio",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"),
+						},
+					},
+					"chartValues": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specify additional values that are passed to the minio helm chart",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+				},
+				Required: []string{"distributed"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_S3Configuration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "S3Configuration holds information about the s3 endpoint",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"server": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration"),
+						},
+					},
+					"bucketName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"accessKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"secretKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"server"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_S3ServerConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "S3ServerConfiguration defines the used s3 server The endpoint and ssl is not needed if minio should be deployed. Minio is deployed when the struct is defined",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"minio": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration"),
+						},
+					},
+					"endpoint": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"ssl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_TestMachineryConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TestMachineryConfiguration holds information about the testmachinery",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the namespace the testmachinery is deployed to.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"testdefPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TestDefPath is the repository path where the Test Machinery should search for testdefinitions.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"prepareImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrepareImage is the prepare image that is used in the prepare and postprepare step.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"baseImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrepareImage is the base image that is used as the default image if a TestDefinition does not define a image.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"local": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Local indicates if the controller is run locally.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"insecure": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Insecure indicates that the testmachinery runs insecure.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"disableCollector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisableCollector disables the collection of test results and their ingestion into elasticsearch.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"cleanWorkflowPods": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CleanWorkflowPods indicates if workflow pods should be directly cleaned up by the testmachinery.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"testdefPath", "prepareImage", "baseImage", "disableCollector"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_WebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "WebhookConfig holds the validating webhook configuration",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"certDir": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

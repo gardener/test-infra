@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	defaulterrors "errors"
 	"fmt"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -44,7 +45,7 @@ type client struct {
 	password string
 }
 
-func NewClient(cfg Config) (Client, error) {
+func NewClient(cfg config.ElasticSearchConfiguration) (Client, error) {
 	u, err := url.Parse(cfg.Endpoint)
 	if err != nil {
 		return nil, err

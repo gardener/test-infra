@@ -108,7 +108,7 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 	}
 
 	_, directoryContent, _, err := client.Repositories.GetContents(context.Background(), l.repoOwner, l.repoName,
-		testmachinery.TESTDEF_PATH, &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
+		testmachinery.TestDefPath(), &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
 		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
 	}
@@ -154,7 +154,7 @@ func (l *GitLocation) getGitHubClient() (*github.Client, *http.Client, error) {
 
 func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	if l.config != nil {
-		trp, err := ghcache.Cache(l.log.WithName("ghCache"), nil, &http.Transport{
+		trp, err := ghcache.Cache(l.log.WithName("ghCache"), testmachinery.GetConfig().GitHub.Cache, &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
 		})
 		if err != nil {
@@ -171,7 +171,7 @@ func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	}
 
 	l.log.V(3).Info("insecure and unauthenticated git connection is used")
-	trp, err := ghcache.Cache(l.log.WithName("ghCache"), nil, &http.Transport{
+	trp, err := ghcache.Cache(l.log.WithName("ghCache"), testmachinery.GetConfig().GitHub.Cache, &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	})
 	if err != nil {
@@ -203,7 +203,7 @@ func getGitConfig(log logr.Logger, gitURL *url.URL) *testmachinery.GitHubInstanc
 		log.V(5).Info("no testmachinery config defined")
 		return nil
 	}
-	for i, secret := range testmachinery.GetConfig().GitHub.Secrets {
+	for i, secret := range testmachinery.GetGitHubSecrets() {
 		if secret.HttpUrl == httpURL {
 			log.V(5).Info(fmt.Sprintf("found secret %d for github %s", i, gitURL))
 			return &secret

@@ -40,7 +40,7 @@ var _ = Describe("TestDefinition Validation", func() {
 				Revision: "master",
 				HostPath: "/home/testing",
 			}
-			testmachinery.GetConfig().Insecure = false
+			testmachinery.GetConfig().TestMachineryConfiguration.Insecure = false
 		})
 
 		It("should fail when no type is defined", func() {
@@ -61,7 +61,7 @@ var _ = Describe("TestDefinition Validation", func() {
 		Context("when location type is local", func() {
 			It("should succeed when hostPath is defined and the application running in insecure mode", func() {
 				location.Type = "local"
-				testmachinery.GetConfig().Insecure = true
+				testmachinery.GetConfig().TestMachineryConfiguration.Insecure = true
 				Expect(locations.ValidateTestLocation("identifier", location)).ToNot(HaveOccurred())
 			})
 

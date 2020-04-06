@@ -15,31 +15,43 @@
 package health
 
 import (
-	"errors"
+	"context"
+	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"net/http"
 	"sync"
 )
 
 var (
-	mutex   sync.Mutex
-	healthy = false
+	mutex      sync.Mutex
+	conditions = map[string]Condition{}
 )
 
-func UpdateHealth(isHealthy bool) {
+// Condition defines a interface to check a specific health condition
+type Condition interface {
+	CheckHealth(ctx context.Context) error
+}
+
+func AddHealthCondition(name string, condition Condition) {
 	mutex.Lock()
-	healthy = isHealthy
+	conditions[name] = condition
 	mutex.Unlock()
 }
 
 func Healthz() func(req *http.Request) error {
 	return func(req *http.Request) error {
+		var (
+			ctx     = context.Background()
+			allErrs *multierror.Error
+		)
+		defer ctx.Done()
 		mutex.Lock()
-		isHealthy := healthy
-		mutex.Unlock()
-
-		if isHealthy {
-			return nil
+		for name, condition := range conditions {
+			if err := condition.CheckHealth(ctx); err != nil {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s: %s", name, err.Error()))
+			}
 		}
-		return errors.New("unhealthy")
+		mutex.Unlock()
+		return allErrs.ErrorOrNil()
 	}
 }

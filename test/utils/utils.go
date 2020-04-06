@@ -17,11 +17,13 @@ package utils
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
+	mrhealth "github.com/gardener/gardener-resource-manager/pkg/health"
 	"github.com/gardener/gardener/pkg/utils/retry"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"reflect"
@@ -31,8 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 
@@ -187,35 +187,26 @@ func DumpState(ctx context.Context, log logr.Logger, client kubernetes.Interface
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
 func WaitForClusterReadiness(log logr.Logger, clusterClient kubernetes.Interface, namespace string, maxWaitTime time.Duration) error {
+	ctx := context.Background()
+	defer ctx.Done()
 	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
 		var (
-			tmControllerStatus    = deploymentIsReady(log, clusterClient, namespace, "testmachinery-controller")
-			wfControllerStatus    = deploymentIsReady(log, clusterClient, namespace, "workflow-controller")
-			minioDeploymentStatus = deploymentIsReady(log, clusterClient, namespace, "minio-deployment")
+			tmControllerStatus = deploymentIsReady(ctx, log, clusterClient, namespace, "testmachinery-controller")
+			argoStatus         = managedresourceIsReady(ctx, log, clusterClient, namespace, config.ArgoManagedResourceName)
+			minioStatus        = managedresourceIsReady(ctx, log, clusterClient, namespace, config.MinioManagedResourceName)
 		)
-		if tmControllerStatus && wfControllerStatus && minioDeploymentStatus {
+		if tmControllerStatus && argoStatus && minioStatus {
 			return true, nil
 		}
-		log.Info("waiting for Test Machinery components to become ready", "TestMachinery-controller", tmControllerStatus, "workflow-controller", wfControllerStatus, "minio", minioDeploymentStatus)
+		log.Info("waiting for Test Machinery components to become ready", "TestMachinery-controller", tmControllerStatus, "argo", argoStatus, "minio", minioStatus)
 		return false, nil
 	})
 }
 
 // WaitForMinioService waits for the minio service to get an external IP and return the minio config.
-func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, namespace string, maxWaitTime time.Duration) (*testmachinery.S3Config, error) {
-	ctx := context.Background()
-	defer ctx.Done()
-
-	minioConfig := &corev1.ConfigMap{}
-	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: "tm-config"}, minioConfig)
-	Expect(err).ToNot(HaveOccurred())
-
-	minioSecret := &corev1.Secret{}
-	err = clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: minioConfig.Data["objectstore.secretName"]}, minioSecret)
-	Expect(err).ToNot(HaveOccurred())
-
+func WaitForMinioService(minioEndpoint string, maxWaitTime time.Duration) error {
 	// wait for service to get endpoint ip
-	err = wait.PollImmediate(10*time.Second, maxWaitTime, func() (bool, error) {
+	return wait.PollImmediate(10*time.Second, maxWaitTime, func() (bool, error) {
 		_, err := HTTPGet("http://" + minioEndpoint)
 		if err != nil {
 			return retry.MinorError(err)
@@ -223,26 +214,30 @@ func WaitForMinioService(clusterClient kubernetes.Interface, minioEndpoint, name
 
 		return retry.Ok()
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &testmachinery.S3Config{
-		Endpoint:   minioEndpoint,
-		AccessKey:  string(minioSecret.Data["accessKey"]),
-		SecretKey:  string(minioSecret.Data["secretKey"]),
-		BucketName: minioConfig.Data["objectstore.bucketName"],
-	}, nil
 }
 
-func deploymentIsReady(log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
+func deploymentIsReady(ctx context.Context, log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
 	deployment := &appsv1.Deployment{}
-	err := clusterClient.Client().Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deployment)
+	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	if err != nil {
 		log.V(3).Info(err.Error())
 		return false
 	}
 	err = health.CheckDeployment(deployment)
+	if err == nil {
+		return true
+	}
+	return false
+}
+
+func managedresourceIsReady(ctx context.Context, log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
+	mr := &v1alpha1.ManagedResource{}
+	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, mr)
+	if err != nil {
+		log.V(3).Info(err.Error())
+		return false
+	}
+	err = mrhealth.CheckManagedResource(mr)
 	if err == nil {
 		return true
 	}

@@ -47,7 +47,7 @@ var (
 )
 
 func init() {
-	cfg = framework.InitFlags(nil)
+	cfg = framework.RegisterFlags(nil)
 }
 
 var _ = BeforeSuite(func() {
@@ -57,11 +57,11 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(operation.WaitForClusterReadiness(ClusterReadinessTimeout)).ToNot(HaveOccurred())
 
-	osConfig, err := operation.WaitForMinioServiceReadiness(MinioServiceReadinessTimeout)
+	s3Config, err := operation.WaitForMinioServiceReadiness(MinioServiceReadinessTimeout)
 	Expect(err).ToNot(HaveOccurred())
 
-	minioBucket = osConfig.BucketName
-	minioClient, err = minio.New(osConfig.Endpoint, osConfig.AccessKey, osConfig.SecretKey, false)
+	minioBucket = s3Config.BucketName
+	minioClient, err = minio.New(s3Config.Server.Endpoint, s3Config.AccessKey, s3Config.SecretKey, false)
 	Expect(err).ToNot(HaveOccurred())
 }, InitializationTimeout.Seconds())
 

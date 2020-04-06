@@ -25,9 +25,9 @@ import (
 
 func (r *TestmachineryReconciler) getImagePullSecrets(ctx context.Context) []string {
 	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetConfig().Namespace}, configMap)
+	err := r.Get(ctx, types.NamespacedName{Name: testmachinery.ConfigMapName, Namespace: testmachinery.GetNamespace()}, configMap)
 	if err != nil {
-		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetConfig().Namespace))
+		r.Logger.WithName("setup").Error(err, fmt.Sprintf("unable to fetch Test Machinery config %s in namespace %s", testmachinery.ConfigMapName, testmachinery.GetNamespace()))
 		return nil
 	}
 

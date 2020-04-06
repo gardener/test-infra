@@ -13,6 +13,7 @@
 # limitations under the License.
 
 SHELL = /bin/sh
+REPO_ROOT   := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(shell dirname $(mkfile_path))
 current_sha := $(shell GIT_DIR=${current_dir}/.git git rev-parse @)
@@ -20,45 +21,56 @@ current_sha := $(shell GIT_DIR=${current_dir}/.git git rev-parse @)
 REGISTRY            := eu.gcr.io/gardener-project/gardener/testmachinery
 
 TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
-VERSION             := $(shell cat VERSION)
+VERSION             := $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
 TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
-TM_RUN_IMAGE := $(REGISTRY)/testmachinery-run
-TM_BOT_IMAGE := $(REGISTRY)/bot
-PREPARESTEP_IMAGE := $(REGISTRY)/testmachinery-prepare
+TM_RUN_IMAGE               := $(REGISTRY)/testmachinery-run
+TM_BOT_IMAGE               := $(REGISTRY)/bot
+PREPARESTEP_IMAGE          := $(REGISTRY)/testmachinery-prepare
 
 NS ?= default
 KUBECONFIG ?= "~/.kube/config"
 TESTRUN ?= "examples/int-testrun.yaml"
 LD_FLAGS := $(shell ./hack/get-build-ld-flags)
 
+#####################
+# Utils             #
+#####################
 
-################################
-# Prerequisistes, Installation #
-################################
+
+.PHONY: revendor
+revendor:
+	@GO111MODULE=on go mod vendor
+	@GO111MODULE=on go mod tidy
+
+.PHONY: code-gen
+code-gen:
+	@./hack/generate-code
+
+.PHONY: mock-gen
+mock-gen:
+	@./hack/generate-mocks
+
+.PHONY: generate
+generate:
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/generate.sh ./...
+
+.PHONY: format
+format:
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/format.sh ./cmd ./pkg
 
 .PHONY: install
-install: create-ns install-prerequisites
+install:
+	@./hack/install
 
-.PHONY: clean
-clean: remove-prerequisites delete-ns
+.PHONY: all
+all: format generate install
 
-.PHONY: install-controller
-install-controller:
-	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml --set "controller.tag=${VERSION}" ./charts/testmachinery | kubectl create -f -
-
-.PHONY: remove-controller
-remove-controller:
-	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml ./charts/testmachinery | kubectl delete -f -
-
-.PHONY: install-prerequisites
-install-prerequisites:
-	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites | kubectl apply -f -
-
-.PHONY: remove-prerequisites
-remove-prerequisites:
-	helm template --namespace ${NS} ./charts/bootstrap_tm_prerequisites | kubectl delete -f -
+.PHONY: install-requirements
+install-requirements:
+	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/gobuffalo/packr/v2/packr2
+	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
 
 .PHONY: gen-certs
 gen-certs:
@@ -73,17 +85,19 @@ gen-certs:
 		-subj "/C=DE/O=SAP SE/OU=testmachinery/CN=testmachinery-controller.default.svc"
 	@openssl x509 -req -sha256 -days 365 -in assets/tls.csr -CA assets/ca.crt -CAkey assets/ca.key -CAcreateserial -out assets/tls.crt
 
-.PHONY: create-ns
-create-ns:
-	@ if [ ${NS} != "default" ] && [ ! kubectl get ns ${NS} &> /dev/null ]; then \
-		kubectl create ns ${NS}; \
-	fi
 
-.PHONY: delete-ns
-delete-ns:
-	@ if [ ${NS} != "default" ] && [ kubectl get ns ${NS} ]; then \
-		kubectl delete ns ${NS}; \
-	fi
+################################
+# Prerequisistes, Installation #
+################################
+
+.PHONY: deploy-controller
+deploy-controller:
+	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml --set "controller.tag=${VERSION}" ./charts/testmachinery | kubectl apply -f -
+
+.PHONY: remove-controller
+remove-controller:
+	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml ./charts/testmachinery | kubectl delete -f -
+
 
 #####################
 # Local development #
@@ -111,14 +125,6 @@ run-it-tests:
 	GIT_COMMIT_SHA=${current_sha} ginkgo ./test/... -v -progress -- \
 		--kubecfg=${KUBECONFIG} --tm-namespace=${NS} --namespace="" --git-commit-sha=master --s3-endpoint=""
 
-.PHONY: code-gen
-code-gen:
-	@./hack/generate-code
-
-.PHONY: mock-gen
-mock-gen:
-	@./hack/generate-mocks
-
 .PHONY: validate
 validate:
 	@go run cmd/local-validator/main.go -testrun=${TESTRUN}
@@ -127,11 +133,6 @@ validate:
 ##################################
 # Binary build and docker image  #
 ##################################
-
-.PHONY: revendor
-revendor:
-	@GO111MODULE=on go mod vendor
-	@GO111MODULE=on go mod tidy
 
 .PHONY: testrunner
 testrunner:

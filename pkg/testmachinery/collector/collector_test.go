@@ -17,6 +17,7 @@ package collector
 import (
 	"bufio"
 	"context"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	mock_elasticsearch "github.com/gardener/test-infra/pkg/util/elasticsearch/mocks"
@@ -61,7 +62,7 @@ var _ = Describe("collector summary", func() {
 			log:      log.NullLogger{},
 			esClient: esClient,
 			s3Client: s3Client,
-			s3Config: &testmachinery.S3Config{BucketName: "testbucket"},
+			s3Config: &config.S3Configuration{BucketName: "testbucket"},
 		}
 	})
 

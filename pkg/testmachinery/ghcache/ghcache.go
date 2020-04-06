@@ -15,26 +15,28 @@
 package ghcache
 
 import (
-	"github.com/go-logr/logr"
-	"github.com/gregjones/httpcache"
-	"github.com/gregjones/httpcache/diskcache"
-	"github.com/peterbourgon/diskv"
 	"net/http"
 	"os"
 	"path"
 
+	"github.com/gardener/test-infra/pkg/apis/config"
+
+	"github.com/go-logr/logr"
+	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
+	"github.com/peterbourgon/diskv"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 )
 
 // Cache adds github caching to a http client.
 // It returns a mem cache by default and a disk cache if a directory is defined
-func Cache(log logr.Logger, cfg *Config, delegate http.RoundTripper) (http.RoundTripper, error) {
-	if cfg == nil && config == nil {
+func Cache(log logr.Logger, cfg *config.GitHubCacheConfig, delegate http.RoundTripper) (http.RoundTripper, error) {
+	if cfg == nil && internalConfig == nil {
 		return nil, errors.New("no configuration is provided for the github cache")
 	}
 	if cfg == nil {
-		cfg = config
+		cfg = internalConfig
 	}
 
 	githubCache, err := getCache(cfg)
@@ -55,7 +57,7 @@ func Cache(log logr.Logger, cfg *Config, delegate http.RoundTripper) (http.Round
 
 }
 
-func getCache(cfg *Config) (httpcache.Cache, error) {
+func getCache(cfg *config.GitHubCacheConfig) (httpcache.Cache, error) {
 	if cfg.CacheDir == "" {
 		return httpcache.NewMemoryCache(), nil
 	}
@@ -75,34 +77,18 @@ func getCache(cfg *Config) (httpcache.Cache, error) {
 		})), nil
 }
 
-// Config is the github cache configuration
-type Config struct {
-	CacheDir        string
-	CacheDiskSizeGB int
-	MaxAgeSeconds   int
-}
+var internalConfig *config.GitHubCacheConfig
 
-var config *Config
-
-// DeepCopy copies the configuration object
-func (c *Config) DeepCopy() *Config {
-	if c == nil {
-		return &Config{}
-	}
-	cfg := *c
-	return &cfg
-}
-
-func InitFlags(flagset *flag.FlagSet) *Config {
+func AddFlags(flagset *flag.FlagSet) *config.GitHubCacheConfig {
 	if flagset == nil {
 		flagset = flag.CommandLine
 	}
-	config = &Config{}
-	flagset.StringVar(&config.CacheDir, "github-cache-dir", "",
+	internalConfig = &config.GitHubCacheConfig{}
+	flagset.StringVar(&internalConfig.CacheDir, "github-cache-dir", "",
 		"Path directory that should be used to cache github requests")
-	flagset.IntVar(&config.CacheDiskSizeGB, "github-cache-size", 1,
+	flagset.IntVar(&internalConfig.CacheDiskSizeGB, "github-cache-size", 1,
 		"Size of the github cache in GB")
-	flagset.IntVar(&config.MaxAgeSeconds, "github-cache-max-age", 600,
+	flagset.IntVar(&internalConfig.MaxAgeSeconds, "github-cache-max-age", 600,
 		"Maximum age of a failed github response in seconds")
-	return config
+	return internalConfig
 }

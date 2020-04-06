@@ -17,6 +17,10 @@ package framework
 import (
 	"context"
 	"flag"
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"os"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -29,8 +33,9 @@ import (
 
 // New creates a new test operation with a logger and a framework configuration.
 func New(log logr.Logger, config *Config) (*Operation, error) {
-
 	flag.Parse()
+	ctx := context.Background()
+	defer ctx.Done()
 
 	if err := ValidateConfig(config); err != nil {
 		return nil, err
@@ -44,20 +49,53 @@ func New(log logr.Logger, config *Config) (*Operation, error) {
 	}
 
 	operation := &Operation{
-		config:   config,
-		log:      log,
-		tmClient: tmClient,
+		testConfig: config,
+		log:        log,
+		tmClient:   tmClient,
 	}
 
-	if err := operation.EnsureTestNamespace(context.TODO()); err != nil {
+	if err := operation.setTestMachineryConfig(ctx); err != nil {
+		return nil, err
+	}
+
+	if err := operation.EnsureTestNamespace(ctx); err != nil {
 		return nil, err
 	}
 
 	return operation, nil
 }
 
-// InitFlags adds all framework operation specific flags to the provided flagset.
-func InitFlags(flagset *flag.FlagSet) *Config {
+func (o *Operation) setTestMachineryConfig(ctx context.Context) error {
+	var (
+		data    []byte
+		err     error
+		decoder = serializer.NewCodecFactory(testmachinery.ConfigScheme).UniversalDecoder()
+	)
+
+	if len(o.testConfig.TMConfigPath) != 0 {
+		data, err = ioutil.ReadFile(o.testConfig.TMConfigPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		secret := &corev1.Secret{}
+		if err := o.Client().Client().Get(ctx, client.ObjectKey{Name: "tm-configuration", Namespace: o.TestMachineryNamespace()}, secret); err != nil {
+			return err
+		}
+		data = secret.Data["config.yaml"]
+	}
+
+	cfg := &config.Configuration{}
+	if _, _, err := decoder.Decode(data, nil, cfg); err != nil {
+		return err
+	}
+
+	o.tmConfig = cfg
+	return nil
+}
+
+// RegisterFlags adds all framework operation specific flags to the provided flagset.
+func RegisterFlags(flagset *flag.FlagSet) *Config {
 	if flagset == nil {
 		flagset = flag.CommandLine
 	}
@@ -77,6 +115,8 @@ func InitFlags(flagset *flag.FlagSet) *Config {
 
 	flagset.BoolVar(&cfg.Local, "local", false,
 		"test runs locally which means that prerequisites like readyness of controller and minio is not checked")
+	flagset.StringVar(&cfg.TMConfigPath, "tm-config", "",
+		"path to the testmachinery kubeconfig. It will be read from the cluster if not specified")
 
 	return &cfg
 }

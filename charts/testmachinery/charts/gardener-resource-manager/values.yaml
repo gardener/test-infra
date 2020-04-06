@@ -1,0 +1,22 @@
+images:
+  gardener-resource-manager: eu.gcr.io/gardener-project/gardener/gardener-resource-manager:v0.12.0
+
+resources:
+  requests:
+    cpu: 30m
+    memory: 50Mi
+  limits:
+    cpu: 400m
+    memory: 512Mi
+
+replicas: 1
+
+controllers:
+  managedResource:
+    syncPeriod: 1m0s
+    concurrentSyncs: 20
+  managedResourceHealth:
+    syncPeriod: 1m0s
+    concurrentSyncs: 10
+
+podAnnotations: {}

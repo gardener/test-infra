@@ -17,6 +17,7 @@ package alert
 import (
 	"errors"
 	"github.com/gardener/test-infra/pkg/alert"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/slack"
@@ -60,7 +61,7 @@ var alertCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		esClient, err := elasticsearch.NewClient(elasticsearch.Config{
+		esClient, err := elasticsearch.NewClient(config.ElasticSearchConfiguration{
 			Endpoint: elasticsearchEndpoint,
 			Username: elasticsearchUser,
 			Password: elasticsearchPass,

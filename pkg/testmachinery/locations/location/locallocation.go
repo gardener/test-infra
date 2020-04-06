@@ -48,7 +48,7 @@ func NewLocalLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) 
 	return &LocalLocation{
 		Info:        testDefLocation,
 		log:         log,
-		testdefPath: fmt.Sprintf("%s/%s", testDefLocation.HostPath, testmachinery.TESTDEF_PATH),
+		testdefPath: fmt.Sprintf("%s/%s", testDefLocation.HostPath, testmachinery.TestDefPath()),
 		name:        strings.ToLower(b32[0:5]),
 	}
 }

@@ -18,20 +18,13 @@ FROM golang:1.14.1 AS builder
 WORKDIR /go/src/github.com/gardener/test-infra
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install -mod=vendor \
-   -ldflags "-X github.com/gardener/test-infra/pkg/version.gitVersion=$(cat VERSION) \
-               -X github.com/gardener/test-infra/pkg/version.gitTreeState=$([ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty) \
-               -X github.com/gardener/test-infra/pkg/version.gitCommit=$(git rev-parse --verify HEAD) \
-               -X github.com/gardener/test-infra/pkg/version.buildDate=$(date --rfc-3339=seconds | sed 's/ /T/')" \
-  ./cmd/...
+RUN make install-requirements && make all
 
 ############# tm-controller #############
 FROM alpine:3.10 AS tm-controller
 
-RUN apk add --update bash curl
-
+COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
-COPY ./.env /
 
 WORKDIR /
 

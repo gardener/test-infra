@@ -16,13 +16,13 @@ package framework
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"k8s.io/apimachinery/pkg/runtime"
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/test/utils"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -35,26 +35,26 @@ func (o *Operation) Client() kubernetes.Interface {
 
 // GetKubeconfigPath returns the path to the current kubeconfig
 func (o *Operation) GetKubeconfigPath() string {
-	return o.config.TmKubeconfigPath
+	return o.testConfig.TmKubeconfigPath
 }
 
 // TestMachineryNamespace returns the current namespace where the testmachinery components are running.
 func (o *Operation) TestMachineryNamespace() string {
-	return o.config.TmNamespace
+	return o.testConfig.TmNamespace
 }
 
 // TestNamespace returns the name of the current test namespace
 func (o *Operation) TestNamespace() string {
-	return o.config.Namespace
+	return o.testConfig.Namespace
 }
 
 // Commit returns the current commit sha of the test-infra repo
 func (o *Operation) Commit() string {
-	return o.config.CommitSha
+	return o.testConfig.CommitSha
 }
 
 func (o *Operation) S3Endpoint() string {
-	return o.config.S3Endpoint
+	return o.testConfig.S3Endpoint
 }
 
 // Log returns the test logger
@@ -64,7 +64,25 @@ func (o *Operation) Log() logr.Logger {
 
 // IsLocal indicates if the test is running against a local testmachinery controller
 func (o *Operation) IsLocal() bool {
-	return o.config.Local
+	return o.testConfig.Local
+}
+
+// S3Config returns the s3 testConfig that is used by the testmachinery to test
+func (o *Operation) S3Config() (*config.S3Configuration, error) {
+	if len(o.testConfig.S3Endpoint) == 0 {
+		return nil, errors.New("no s3 endpoint is defined")
+	}
+	if o.tmConfig.S3Configuration == nil {
+		return nil, errors.New("no s3 config is defined")
+	}
+	return &config.S3Configuration{
+		Server: config.S3ServerConfiguration{
+			Endpoint: o.testConfig.S3Endpoint,
+		},
+		AccessKey:  o.tmConfig.S3Configuration.AccessKey,
+		SecretKey:  o.tmConfig.S3Configuration.SecretKey,
+		BucketName: o.tmConfig.S3Configuration.BucketName,
+	}, nil
 }
 
 // WaitForClusterReadiness waits until all Test Machinery components are ready
@@ -72,18 +90,21 @@ func (o *Operation) WaitForClusterReadiness(maxWaitTime time.Duration) error {
 	if o.IsLocal() {
 		return nil
 	}
-	return utils.WaitForClusterReadiness(o.Log(), o.tmClient, o.config.TmNamespace, maxWaitTime)
+	return utils.WaitForClusterReadiness(o.Log(), o.tmClient, o.testConfig.TmNamespace, maxWaitTime)
 }
 
 // WaitForMinioServiceReadiness waits until the minio service in the testcluster is ready
-func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*testmachinery.S3Config, error) {
+func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*config.S3Configuration, error) {
 	if o.IsLocal() {
 		return nil, nil
 	}
-	if len(o.config.S3Endpoint) == 0 {
-		return nil, errors.New("no s3 endpoint is defined")
+
+	s3Config, err := o.S3Config()
+	if err != nil {
+		return nil, err
 	}
-	return utils.WaitForMinioService(o.Client(), o.config.S3Endpoint, o.config.TmNamespace, maxWaitTime)
+
+	return s3Config, utils.WaitForMinioService(s3Config.Server.Endpoint, maxWaitTime)
 }
 
 func (o *Operation) RunTestrunUntilCompleted(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
