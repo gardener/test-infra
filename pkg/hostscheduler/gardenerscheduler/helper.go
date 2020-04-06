@@ -59,7 +59,7 @@ func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
 func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) (*gardencorev1beta1.Shoot, error) {
 	interval := 1 * time.Minute
-	timeout := 30 * time.Minute
+	timeout := 2 * time.Hour
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &gardencorev1beta1.Shoot{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
@@ -84,7 +84,7 @@ func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClie
 // WaitUntilShootIsDeleted waits until a cluster is deleted
 func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
 	interval := 1 * time.Minute
-	timeout := 30 * time.Minute
+	timeout := 3 * time.Hour
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &gardencorev1beta1.Shoot{}
 		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
