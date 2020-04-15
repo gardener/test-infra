@@ -669,5 +669,6 @@
   { "testcase": "[sig-api-machinery] AdmissionWebhook Should honor timeout"},
   { "testcase": "[sig-storage] Pod Disks schedule pods each with a PD, delete pod and verify detach [Slow] for read-only PD with pod delete grace period of \"immediate (0s)\""},
   { "testcase": "[sig-storage] Zone Support Verify a pod is created on a non-Workspace zone and attached to a dynamically created PV, based on the allowed zones and storage policy specified in storage class"},
-  { "testcase": "[sig-storage] PersistentVolumes-local  [Volume type: dir-link] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted"}
+  { "testcase": "[sig-storage] PersistentVolumes-local  [Volume type: dir-link] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted"},
+  { "testcase": "[k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 100 pods per node", "comment": "false positive: we already have some system pods running on some nodes, hence adding 100 pods exceeds the podlimit of 110 sometimes, hence this test cannot work" }
 ]
