@@ -49,7 +49,7 @@ func SliceFromValues(list Interface, values url.Values) (Interface, Pages) {
 	indexLength := list.Len() - 1
 
 	pages := Pages{Pages: []Page{}, Current: 0, ItemCount: list.Len()}
-	for i := 0; i < (pages.ItemCount / itemsPerPage); i++ {
+	for i := 0; i <= (pages.ItemCount / itemsPerPage); i++ {
 		from := i * itemsPerPage
 		to := from + itemsPerPage - 1
 		if to > indexLength {
