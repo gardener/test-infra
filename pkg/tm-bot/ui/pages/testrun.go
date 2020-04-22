@@ -68,8 +68,8 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			return
 		}
 
-		argoHostURL, _ := testrunner.GetArgoHost(p.runs.GetClient())
-		grafanaHostURL, _ := testrunner.GetGrafanaHost(p.runs.GetClient())
+		argoHostURL, _ := testrunner.GetArgoHost(ctx, p.runs.GetClient())
+		grafanaHostURL, _ := testrunner.GetGrafanaHost(ctx, p.runs.GetClient())
 		metadata := metadata2.FromTestrun(tr)
 		startTime := ""
 		if tr.Status.StartTime != nil {
@@ -105,7 +105,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			item.ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, tr)
 		}
 		if grafanaHostURL != "" {
-			item.GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, tr)
+			item.GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, tr.Status.Workflow)
 		}
 
 		for i, step := range tr.Status.Steps {
@@ -129,7 +129,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				IsSystem:  util.IsSystemStep(step),
 			}
 			if grafanaHostURL != "" {
-				item.Steps[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForStep(grafanaHostURL, tr, step)
+				item.Steps[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForStep(grafanaHostURL, tr.Status.Workflow, step.TestDefinition.Name)
 			}
 		}
 

@@ -55,7 +55,7 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	r.Metadata.Testrun.ID = newTR.GetName()
 	log.Info(fmt.Sprintf("Testrun %s deployed", newTR.Name))
 
-	if argoUrl, err := GetArgoURL(config.Watch.Client(), r.Testrun); err == nil {
+	if argoUrl, err := GetArgoURL(ctx, config.Watch.Client(), r.Testrun); err == nil {
 		log.WithValues("testrun", r.Testrun.GetName()).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
 	}
 

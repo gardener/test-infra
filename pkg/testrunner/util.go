@@ -28,8 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetArgoURL(k8sClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
-	argoBaseURL, err := GetArgoHost(k8sClient)
+func GetArgoURL(ctx context.Context, k8sClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
+	argoBaseURL, err := GetArgoHost(ctx, k8sClient)
 	if err != nil {
 		return "", nil
 	}
@@ -42,23 +42,28 @@ func GetArgoURLFromHost(host string, tr *tmv1beta1.Testrun) string {
 }
 
 // GetArgoHost returns the host of the argo ui
-func GetArgoHost(tmClient client.Client) (string, error) {
-	return GetHostURLFromIngress(tmClient, client.ObjectKey{Name: "argo-ui", Namespace: "default"})
+func GetArgoHost(ctx context.Context, tmClient client.Client) (string, error) {
+	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Name: "argo-ui", Namespace: "default"})
 }
 
 // GetGrafanaURLFromHostForWorkflow returns the path to the logs in grafana for a whole workflow
-func GetGrafanaURLFromHostForWorkflow(host string, tr *tmv1beta1.Testrun) string {
-	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, tr.Status.Workflow)
+func GetGrafanaURLFromHostForWorkflow(host string, workflowName string) string {
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, workflowName)
 }
 
 // GetGrafanaURLFromHostForStep returns the path to the logs in grafana for a specific step
-func GetGrafanaURLFromHostForStep(host string, tr *tmv1beta1.Testrun, step *tmv1beta1.StepStatus) string {
-	return fmt.Sprintf(`%s/explore?left=["now-7d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, step.TestDefinition.Name, tr.Status.Workflow)
+func GetGrafanaURLFromHostForStep(host string, workflowName, testdefName string) string {
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, testdefName, workflowName)
+}
+
+// GetGrafanaURLFromHostForPod returns the path to the logs in grafana for a specific pod
+func GetGrafanaURLFromHostForPod(host string, podname string) string {
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",instance%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, podname)
 }
 
 // GetGrafanaHost returns the host of the grafana instance in the monitoring namespace
-func GetGrafanaHost(tmClient client.Client) (string, error) {
-	return GetHostURLFromIngress(tmClient, client.ObjectKey{Namespace: "monitoring", Name: "grafana"})
+func GetGrafanaHost(ctx context.Context, tmClient client.Client) (string, error) {
+	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Namespace: "monitoring", Name: "grafana"})
 }
 
 // GetTmDashboardURLForTestrun returns the dashboard URL to a testrun
@@ -95,14 +100,14 @@ func GetTMDashboardHost(tmClient client.Client) (string, error) {
 }
 
 // GetClusterDomainURL tries to derive the cluster domain url from an grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
-func GetHostURLFromIngress(tmClient client.Client, obj types.NamespacedName) (string, error) {
+func GetHostURLFromIngress(ctx context.Context, tmClient client.Client, obj types.NamespacedName) (string, error) {
 	// try to derive the cluster domain url from grafana ingress if possible
 	// return err if the ingress cannot be found
 	if tmClient == nil {
 		return "", nil
 	}
 	ingress := &netv1beta1.Ingress{}
-	err := tmClient.Get(context.TODO(), obj, ingress)
+	err := tmClient.Get(ctx, obj, ingress)
 	if err != nil {
 		return "", errors.Errorf("cannot get grafana ingress: %v", err)
 	}
