@@ -15,7 +15,7 @@
 package s3
 
 import (
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/minio/minio-go"
 	"github.com/pkg/errors"
 	"io"
@@ -39,8 +39,17 @@ type client struct {
 	defaultBucketName string
 }
 
+// Config holds connection information for a s3 object storage
+type Config struct {
+	Endpoint   string
+	SSL        bool
+	BucketName string
+	AccessKey  string
+	SecretKey  string
+}
+
 // New creates a new s3 client which is a wrapper of the minio client
-func New(config *testmachinery.S3Config) (Client, error) {
+func New(config *Config) (Client, error) {
 	minioClient, err := minio.New(config.Endpoint, config.AccessKey, config.SecretKey, config.SSL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create s3 client for %s", config.Endpoint)
@@ -71,4 +80,14 @@ func (c *client) RemoveObject(bucketName, key string) error {
 		bucketName = c.defaultBucketName
 	}
 	return c.minioClient.RemoveObject(bucketName, key)
+}
+
+func FromConfig(s3 *config.S3Configuration) *Config {
+	return &Config{
+		Endpoint:   s3.Server.Endpoint,
+		SSL:        s3.Server.SSL,
+		BucketName: s3.BucketName,
+		AccessKey:  s3.AccessKey,
+		SecretKey:  s3.SecretKey,
+	}
 }

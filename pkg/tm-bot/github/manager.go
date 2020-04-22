@@ -133,6 +133,6 @@ func ManagerInitFlags(flagset *flag.FlagSet) *ManagerConfig {
 	flagset.StringVar(&cfg.configFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
 	flagset.StringVar(&cfg.defaultTeam, "github-default-team", "", "Slug name of the default team to grant access")
 
-	ghcache.InitFlags(flagset)
+	ghcache.AddFlags(flagset)
 	return cfg
 }

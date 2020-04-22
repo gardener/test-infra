@@ -53,10 +53,10 @@ func GCWorkflowArtifacts(log logr.Logger, s3Client s3.Client, wf *argov1.Workflo
 // logs are still accessible through "archiveLogs" option in argo
 func CleanWorkflowPods(c client.Client, wf *argov1.Workflow) error {
 	var result *multierror.Error
-	if testmachinery.GetConfig().CleanWorkflowPods {
+	if testmachinery.CleanWorkflowPods() {
 		for nodeName, node := range wf.Status.Nodes {
 			if node.Type == argov1.NodeTypePod {
-				if err := deletePod(c, testmachinery.GetConfig().Namespace, nodeName); err != nil {
+				if err := deletePod(c, testmachinery.GetNamespace(), nodeName); err != nil {
 					result = multierror.Append(result, fmt.Errorf("unable delete pod %s: %s", nodeName, err.Error()))
 				}
 			}

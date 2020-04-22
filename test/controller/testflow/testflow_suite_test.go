@@ -44,7 +44,7 @@ var (
 )
 
 func init() {
-	cfg = framework.InitFlags(nil)
+	cfg = framework.RegisterFlags(nil)
 }
 
 var _ = BeforeSuite(func() {

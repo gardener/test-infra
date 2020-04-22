@@ -16,26 +16,20 @@ package app
 
 import (
 	goflag "flag"
-	"fmt"
 	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 type options struct {
-	log                  logr.Logger
-	MetricsAddr          string
-	HealthProbeAddr      string
-	EnableLeaderElection bool
-	MaxConcurrentSyncs   int
-	WebhookServerPort    int
-	WebhookCertDir       string
+	log           logr.Logger
+	configwatcher *configwatcher.ConfigWatcher
+	configPath    string
 }
 
 func NewOptions() *options {
@@ -43,35 +37,14 @@ func NewOptions() *options {
 }
 
 func (o *options) AddFlags(fs *flag.FlagSet) {
-	viperHelper := vh.NewViperHelper(nil, "config", "$HOME/.tm-bot", ".")
-	vh.SetViper(viperHelper)
-	viperHelper.InitFlags(fs)
-
-	fs.StringVar(&o.MetricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	fs.StringVar(&o.HealthProbeAddr, "health-addr", ":8081", "The address the metric endpoint binds to.")
-	fs.BoolVar(&o.EnableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	fs.IntVar(&o.MaxConcurrentSyncs, "max-concurrent-syncs", 1, "Max number of concurrent reconciliations.")
-	fs.IntVar(&o.WebhookServerPort, "webhook-port", 443, "Specify the port where the webhook should be created")
-	fs.StringVar(&o.WebhookCertDir, "webhook-cert-dir", "", "The directory that contains the webhook server key and certificate.")
+	fs.StringVar(&o.configPath, "config", "", "Specify the path to the configuration file")
 	logger.InitFlags(fs)
-	testmachinery.InitFlags(fs)
 
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-	viperHelper.BindPFlags(fs, "")
 }
 
 // Complete parses all options and flags and initializes the basic functions
 func (o *options) Complete() error {
-	if err := vh.ViperHelper.ReadInConfig(); err != nil {
-		switch err.(type) {
-		case viper.ConfigFileNotFoundError:
-			break
-		default:
-			return err
-		}
-	}
-
 	log, err := logger.New(nil)
 	if err != nil {
 		return err
@@ -80,23 +53,35 @@ func (o *options) Complete() error {
 	logger.SetLogger(log)
 	ctrl.SetLogger(log)
 
-	if err = testmachinery.Setup(); err != nil {
-		return errors.Wrap(err, "unable to setup testmachinery")
+	o.configwatcher, err = configwatcher.New(o.log, o.configPath)
+	if err != nil {
+		return err
 	}
-
-	fmt.Println(testmachinery.GetConfig().String())
 	return nil
 }
 
+func (o *options) ApplyWebhooks(mgr manager.Manager) {
+	config := o.configwatcher.GetConfiguration()
+	if !config.TestMachineryConfiguration.Local {
+		o.log.Info("Setup webhooks")
+		hookServer := mgr.GetWebhookServer()
+		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidator(logger.Log.WithName("validator"))})
+	}
+}
+
 func (o *options) GetManagerOptions() manager.Options {
-	opts := ctrl.Options{
-		LeaderElection: o.EnableLeaderElection,
-		CertDir:        o.WebhookCertDir,
+	c := o.configwatcher.GetConfiguration()
+	opts := manager.Options{
+		LeaderElection:     c.ControllerConfig.EnableLeaderElection,
+		CertDir:            c.ControllerConfig.WebhookConfig.CertDir,
+		MetricsBindAddress: "0", // disable the metrics serving by default
 	}
 
-	if !testmachinery.GetConfig().Local {
-		opts.HealthProbeBindAddress = o.HealthProbeAddr
-		opts.MetricsBindAddress = o.MetricsAddr
+	if len(c.ControllerConfig.HealthAddr) != 0 {
+		opts.HealthProbeBindAddress = c.ControllerConfig.HealthAddr
+	}
+	if len(c.ControllerConfig.MetricsAddr) != 0 {
+		opts.MetricsBindAddress = c.ControllerConfig.MetricsAddr
 	}
 
 	return opts

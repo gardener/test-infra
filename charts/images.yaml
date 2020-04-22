@@ -1,0 +1,17 @@
+images:
+- name: argo-ui
+  sourceRepository: github.com/argoproj/argo
+  repository: argoproj/argocli
+  tag: "v2.6.3"
+- name: argo-workflow-controller
+  sourceRepository: github.com/argoproj/argo
+  repository: argoproj/workflow-controller
+  tag: "v2.6.3"
+- name: argo-executor
+  sourceRepository: github.com/argoproj/argo
+  repository: argoproj/argoexec
+  tag: "v2.6.3"
+- name: minio
+  sourceRepository: github.com/minio/minio
+  repository: minio/minio
+  tag: "RELEASE.2020-04-04T05-39-31Z"

@@ -15,23 +15,21 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/health"
-	"github.com/gardener/test-infra/pkg/util/s3"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/version"
 	"github.com/spf13/cobra"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-func NewTestMachineryControllerCommand() *cobra.Command {
+func NewTestMachineryControllerCommand(ctx context.Context) *cobra.Command {
 	options := NewOptions()
 
 	cmd := &cobra.Command{
@@ -43,7 +41,7 @@ func NewTestMachineryControllerCommand() *cobra.Command {
 				fmt.Print(err)
 				os.Exit(1)
 			}
-			options.run()
+			options.run(ctx)
 		},
 	}
 
@@ -52,7 +50,7 @@ func NewTestMachineryControllerCommand() *cobra.Command {
 	return cmd
 }
 
-func (o *options) run() {
+func (o *options) run(ctx context.Context) {
 	o.log.Info(fmt.Sprintf("start Test Machinery with version %s", version.Get().String()))
 
 	if testmachinery.IsRunInsecure() {
@@ -66,41 +64,43 @@ func (o *options) run() {
 		os.Exit(1)
 	}
 
-	var s3Client s3.Client
-	if testmachinery.GetConfig().S3 != nil {
-		s3Client, err = s3.New(testmachinery.GetConfig().S3)
-		if err != nil {
-			o.log.Error(err, "unable to create s3 client")
-			os.Exit(1)
-		}
-	}
-
-	collect, err := collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetConfig().ElasticSearch, testmachinery.GetConfig().S3)
-	if err != nil {
-		o.log.Error(err, "unable to setup collector")
+	if err := o.ensureDependencies(ctx, mgr); err != nil {
+		o.log.Error(err, "error during ensureDependencies")
 		os.Exit(1)
 	}
 
-	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, s3Client, collect, &o.MaxConcurrentSyncs)
+	fmt.Println(testmachinery.GetConfig().String())
+
+	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, o.configwatcher.GetConfiguration())
 	if err != nil {
 		o.log.Error(err, "unable to create controller", "controllers", "Testrun")
 		os.Exit(1)
 	}
 
-	if !testmachinery.GetConfig().Local {
+	if len(o.configwatcher.GetConfiguration().ControllerConfig.HealthAddr) != 0 {
 		if err := mgr.AddHealthzCheck("default", health.Healthz()); err != nil {
 			o.log.Error(err, "unable to register default health check")
 			os.Exit(1)
 		}
-		o.log.Info("Setup webhooks")
-		hookServer := mgr.GetWebhookServer()
-		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidator(logger.Log.WithName("validator"))})
-		health.UpdateHealth(true)
 	}
 
+	o.ApplyWebhooks(mgr)
+
 	o.log.Info("starting the controller", "controllers", "Testrun")
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx.Done()); err != nil {
 		o.log.Error(err, "error while running manager")
 		os.Exit(1)
 	}
+}
+
+func (o *options) ensureDependencies(ctx context.Context, mgr manager.Manager) error {
+	be, err := dependencies.New(o.log.WithName("ensureDependencies"), o.configwatcher)
+	if err != nil {
+		return errors.Wrap(err, "unable to create ensureDependencies ensurer")
+	}
+
+	if err := be.Start(ctx, mgr); err != nil {
+		return err
+	}
+	return nil
 }

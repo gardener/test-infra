@@ -16,117 +16,100 @@ package testmachinery
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
-	"github.com/gardener/test-infra/pkg/version"
+	"github.com/gardener/test-infra/pkg/apis/config"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/pkg/errors"
-	flag "github.com/spf13/pflag"
-
-	"github.com/gardener/test-infra/pkg/util"
-
-	"gopkg.in/yaml.v2"
-)
-
-var (
-	githubSecretsPath   string
-	objectStoreConfig   S3Config
-	elasticsearchConfig elasticsearch.Config
 )
 
 var tmConfig = TmConfiguration{
-	Local:             false,
-	Insecure:          false,
-	Namespace:         "default",
-	CleanWorkflowPods: false,
-	GitHub: GitHubConfig{
-		Secrets: make([]GitHubInstanceConfig, 0),
-	},
-	S3:            &objectStoreConfig,
-	ElasticSearch: &elasticsearchConfig,
+	Configuration: &config.Configuration{},
 }
 
 // Setup fetches all configuration values and creates the TmConfiguration.
-func Setup() error {
+func Setup(config *config.Configuration) error {
+	tmConfig = TmConfiguration{
+		Configuration: config,
+	}
+
 	var err error
-	tmConfig.GitHub.Secrets, err = readSecretsFromFile(githubSecretsPath)
+	tmConfig.GitHubSecrets, err = readSecretsFromFile(config.GitHub.SecretsPath)
 	if err != nil {
 		return err
 	}
 
 	// if no endpoint is defined we assume that no cleanup should happen
 	// this should only happen in local environments
-	if tmConfig.Local && len(objectStoreConfig.Endpoint) == 0 {
-		tmConfig.S3 = nil
-	}
-	if err := ValidateS3Config(tmConfig.S3); err != nil {
-		return err
-	}
+	//if tmConfig.TestMachineryConfiguration.Local && config.S3Configuration.Server == nil {
+	//	tmConfig.S3Configuration = nil
+	//}
 
-	if len(elasticsearchConfig.Endpoint) == 0 {
-		tmConfig.ElasticSearch = nil
+	if config.ElasticSearchConfiguration == nil || len(config.ElasticSearchConfiguration.Endpoint) == 0 {
+		tmConfig.ElasticSearchConfiguration = nil
 	}
 
 	return nil
 }
 
-func InitFlags(flagset *flag.FlagSet) {
-	if flagset == nil {
-		flagset = flag.CommandLine
-	}
-
-	flagset.StringVar(&TESTDEF_PATH, "testdef-path", util.Getenv("TESTDEF_PATH", ".test-defs"),
-		"Set repository path where the Test Machinery should search for testdefinition")
-	flagset.StringVar(&PREPARE_IMAGE, "prepare-image", util.Getenv("PREPARE_IMAGE", fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:%s", version.Get().GitVersion)),
-		"Set the prepare image that is used in the prepare and postprepare step")
-	flagset.StringVar(&BASE_IMAGE, "base-image", util.Getenv("BASE_IMAGE", fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/base-step:%s", version.Get().GitVersion)),
-		"Set the base image that is used as the default image if a TestDefinition does not define a image")
-
-	flagset.BoolVar(&tmConfig.Local, "local", false, "The controller runs outside of a cluster.")
-	flagset.BoolVar(&tmConfig.Insecure, "insecure", tmConfig.Insecure,
-		"Enable insecure mode. The test machinery runs in insecure mode which means that local testdefs are allowed and therefore hostPaths are mounted.")
-	flagset.StringVar(&tmConfig.Namespace, "namespace", util.Getenv("TM_NAMESPACE", tmConfig.Namespace),
-		"Set the namespace of the testmachinery")
-	flagset.BoolVar(&tmConfig.CleanWorkflowPods, "enable-pod-gc", util.GetenvBool("CLEAN_WORKFLOW_PODS", tmConfig.CleanWorkflowPods),
-		"Enable garbage collection of pods after a testrun has finished")
-
-	flagset.StringVar(&githubSecretsPath, "github-secrets-path", "",
-		"Path to the github secrets configuration")
-
-	flagset.StringVar(&objectStoreConfig.Endpoint, "s3-endpoint", os.Getenv("S3_ENDPOINT"),
-		"Set the s3 object storage endpoint")
-	flagset.StringVar(&objectStoreConfig.AccessKey, "s3-access-key", os.Getenv("S3_ACCESS_KEY"),
-		"Set the s3 object storage access key")
-	flagset.StringVar(&objectStoreConfig.SecretKey, "s3-secret-key", os.Getenv("S3_SECRET_KEY"),
-		"Set the s3 object storage secret key")
-	flagset.StringVar(&objectStoreConfig.BucketName, "s3-bucket", os.Getenv("S3_BUCKET_NAME"),
-		"Set the s3 bucket")
-	flagset.BoolVar(&objectStoreConfig.SSL, "s3-ssl", util.GetenvBool("S3_SSL", objectStoreConfig.SSL),
-		"Enable sll communication to s3 storage")
-
-	flagset.StringVar(&elasticsearchConfig.Endpoint, "es-endpoint", "", "endpoint of the elasticsearch instance")
-	flagset.StringVar(&elasticsearchConfig.Username, "es-username", "", "username to authenticate against a elasticsearch instance")
-	flagset.StringVar(&elasticsearchConfig.Password, "es-password", "", "password to authenticate against a elasticsearch instance")
-
-	tmConfig.GitHub.Cache = ghcache.InitFlags(flagset)
-
-}
-
-// GetConfig returns the current testmachinery configuration
+// GetConfig returns the current testmachinery configuration.
 func GetConfig() *TmConfiguration {
 	return &tmConfig
 }
 
+// GetNamespace returns the current testmachinery namespace.
+func GetNamespace() string {
+	return tmConfig.TestMachineryConfiguration.Namespace
+}
+
+// CleanWorkflowPods returns whether pod gc is enabled.
+func CleanWorkflowPods() bool {
+	return tmConfig.TestMachineryConfiguration.CleanWorkflowPods
+}
+
+// TestDefPath returns the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm).
+func TestDefPath() string {
+	return tmConfig.TestMachineryConfiguration.TestDefPath
+}
+
+// Prepare Image returns the image of the prepare step.
+func PrepareImage() string {
+	return tmConfig.TestMachineryConfiguration.PrepareImage
+}
+
+// BaseImage returns the default image that is used if no image is specified by a TestDefinition.
+func BaseImage() string {
+	return tmConfig.TestMachineryConfiguration.BaseImage
+}
+
+// GetGitHubSecrets returns all github secrets
+func GetGitHubSecrets() []GitHubInstanceConfig {
+	return tmConfig.GitHubSecrets
+}
+
+// GetS3Configuration returns the current s3 configuration
+func GetS3Configuration() *config.S3Configuration {
+	return tmConfig.S3Configuration
+}
+
+// GetElasticsearchConfiguration returns the current elasticsearch configuration
+func GetElasticsearchConfiguration() *config.ElasticSearchConfiguration {
+	return tmConfig.ElasticSearchConfiguration
+}
+
+// IsRunLocal returns if the testmachinery is currently running locally
+func IsRunLocal() bool {
+	return tmConfig.TestMachineryConfiguration.Local
+}
+
 // IsRunInsecure returns if the testmachinery is run locally
 func IsRunInsecure() bool {
-	return tmConfig.Insecure
+	return tmConfig.TestMachineryConfiguration.Insecure
 }
 
 // GetWorkflowName returns the workflow name of a testruns
-func GetWorkflowName(tr *v1beta1.Testrun) string {
+func GetWorkflowName(tr *tmv1beta1.Testrun) string {
 	return fmt.Sprintf("%s-wf", tr.Name)
 }
 
@@ -139,12 +122,12 @@ func readSecretsFromFile(path string) ([]GitHubInstanceConfig, error) {
 	if len(path) == 0 {
 		return make([]GitHubInstanceConfig, 0), nil
 	}
-	if _, err := os.Stat(githubSecretsPath); err != nil {
+	if _, err := os.Stat(path); err != nil {
 		return nil, errors.Wrapf(err, "file %s does not exist", path)
 	}
-	rawSecrets, err := ioutil.ReadFile(githubSecretsPath)
+	rawSecrets, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read file from %s", githubSecretsPath)
+		return nil, errors.Wrapf(err, "unable to read file from %s", path)
 	}
 	gitSecrets := GitHubSecrets{}
 	err = yaml.Unmarshal(rawSecrets, &gitSecrets)

@@ -15,9 +15,9 @@
 package collector
 
 import (
+	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
@@ -41,13 +41,13 @@ type collector struct {
 	log    logr.Logger
 	client client.Client
 
-	esConfig *elasticsearch.Config
+	esConfig *config.ElasticSearchConfiguration
 	esClient elasticsearch.Client
-	s3Config *testmachinery.S3Config
+	s3Config *config.S3Configuration
 	s3Client s3.Client
 }
 
-func New(log logr.Logger, k8sClient client.Client, esConfig *elasticsearch.Config, s3Config *testmachinery.S3Config) (Interface, error) {
+func New(log logr.Logger, k8sClient client.Client, esConfig *config.ElasticSearchConfiguration, s3Config *config.S3Configuration) (Interface, error) {
 	c := &collector{
 		log:      log,
 		client:   k8sClient,
@@ -56,7 +56,7 @@ func New(log logr.Logger, k8sClient client.Client, esConfig *elasticsearch.Confi
 	}
 
 	if s3Config != nil {
-		s3Client, err := s3.New(s3Config)
+		s3Client, err := s3.New(s3.FromConfig(s3Config))
 		if err != nil {
 			return nil, err
 		}

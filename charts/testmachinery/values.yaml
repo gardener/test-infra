@@ -15,23 +15,22 @@
 
 
 controller:
-  local: false
   hostPath: ""
   image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
   tag: latest
   pullPolicy: IfNotPresent
-  imagePullSecretName: ""
-  testDefPath: ""
-  maxConcurrentSyncs: 5
-  verbosity: 2
+
+  verbosity: 3
 
   serviceAccountName: testmachinery-controller
 
-  metricsEndpointPort: 8080
   healthEndpointPort: 8081
-
+  metricsEndpointPort: 8080
+  enableLeaderElection: false
+  maxConcurrentSyncs: 1
   webhook:
     port: 443
+
   tls:
     caBundle: |
       -----BEGIN CERTIFICATE-----
@@ -46,26 +45,63 @@ controller:
       ...
       -----END RSA PRIVATE KEY-----
 
-secrets:
+testmachinery:
+  testdefPath: .test-defs
+  local: false
+  insecure: false
+  disableCollector: false
+  cleanWorkflowPods: false
+
   github:
-    path: /etc/testmachinery-controller/secrets/git
-    data: "" # base64 encoded secrets
+    cache:
+      cacheDir: /tmp/tm/cache
+      cacheDiskSizeGB: 5
+      maxAgeSeconds: 60
+    credentials: "" # base64 encoded secrets
 
-config:
-  name: tm-config
+  argo:
+    argoUI:
+      ingress:
+        enabled: false
+        host: argoui.example.com
+    chartValues: {}
 
-objectStorage:
-  secret:
-    name: "s3-secret"
+  s3Configuration:
+    server:
+#      minio:
+#        distributed: false
+#        ingress:
+#          enabled: false
+#          host: argoui.example.com
+      endpoint: ""
+      ssl: false
+    bucketName: testmachinery
+    accessKey: AIasdf
+    secretKey: abc
 
-elasticsearch:
-  endpoint: ""
-  username: ""
-  password: ""
+#  esConfiguration:
+#    endpoint: https:...:9200
+#    username: user
+#    password: my-password
 
-cleanup:
-  enabled: false
+gardener-resource-manager:
+  images:
+    gardener-resource-manager: eu.gcr.io/gardener-project/gardener/gardener-resource-manager:v0.12.0
 
-local:
-  enabled: false
-  hostPath: ""
+# imageVectorOverwrite: |
+#  - name: argo-ui
+#    sourceRepository: github.com/argoproj/argo
+#    repository: argoproj/argocli
+#    tag: "v2.6.3"
+#  - name: argo-workflow-controller
+#    sourceRepository: github.com/argoproj/argo
+#    repository: argoproj/workflow-controller
+#    tag: "v2.6.3"
+#  - name: argo-executor
+#    sourceRepository: github.com/argoproj/argo
+#    repository: argoproj/argoexec
+#    tag: "v2.6.3"
+#  - name: minio
+#    sourceRepository: github.com/minio/minio
+#    repository: minio/minio
+#    tag: "RELEASE.2020-04-04T05-39-31Z"

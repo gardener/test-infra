@@ -44,7 +44,7 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 	}
 
 	if def.Spec.Image == "" {
-		def.Spec.Image = testmachinery.BASE_IMAGE
+		def.Spec.Image = testmachinery.BaseImage()
 	}
 	if def.Spec.ActiveDeadlineSeconds == nil {
 		def.Spec.ActiveDeadlineSeconds = &DefaultActiveDeadlineSeconds

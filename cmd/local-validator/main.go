@@ -16,7 +16,10 @@ package main
 
 import (
 	"fmt"
+	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"os"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -30,11 +33,23 @@ import (
 // Connection to remote is needed to validate remote testdefinitions
 func main() {
 	logger.InitFlags(nil)
-	testmachinery.InitFlags(nil)
+	configPath := flag.String("config", "", "Filepath to configuration")
 	trFilePath := flag.String("testrun", "examples/int-testrun.yaml", "Filepath to the testrun")
 	flag.Parse()
 
-	if err := testmachinery.Setup(); err != nil {
+	data, err := ioutil.ReadFile(*configPath)
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+	decoder := serializer.NewCodecFactory(testmachinery.ConfigScheme).UniversalDecoder()
+	config := &intconfig.Configuration{}
+	if _, _, err := decoder.Decode(data, nil, config); err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+	if err := testmachinery.Setup(config); err != nil {
 		fmt.Print(err.Error())
 		os.Exit(1)
 	}

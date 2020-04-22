@@ -16,13 +16,17 @@ package controller
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"reflect"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -33,9 +37,28 @@ import (
 )
 
 // NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
-func NewTestMachineryController(mgr manager.Manager, log logr.Logger, s3Client s3.Client, col collector.Interface, maxConcurrentSyncs *int) (controller.Controller, error) {
-	tmReconciler := reconciler.New(mgr, log.WithName("controller"), s3Client, col)
-	c, err := New(mgr, tmReconciler, maxConcurrentSyncs)
+func NewTestMachineryController(mgr manager.Manager, log logr.Logger, config *config.Configuration) (controller.Controller, error) {
+	var (
+		err      error
+		collect  collector.Interface
+		s3Client s3.Client
+	)
+	if !config.TestMachineryConfiguration.DisableCollector {
+		collect, err = collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetElasticsearchConfiguration(), testmachinery.GetS3Configuration())
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to setup collector")
+		}
+	}
+
+	if !config.TestMachineryConfiguration.Local {
+		s3Client, err = s3.New(s3.FromConfig(testmachinery.GetS3Configuration()))
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to setup s3 client")
+		}
+	}
+
+	tmReconciler := reconciler.New(mgr, log.WithName("controller"), s3Client, collect)
+	c, err := New(mgr, tmReconciler, &config.ControllerConfig.MaxConcurrentSyncs)
 	if err != nil {
 		return nil, err
 	}

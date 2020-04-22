@@ -16,10 +16,11 @@ package testmachinery
 
 import (
 	argoscheme "github.com/argoproj/argo/pkg/client/clientset/versioned/scheme"
-	tmscheme "github.com/gardener/test-infra/pkg/client/testmachinery/clientset/versioned/scheme"
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+	mrscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
+	"github.com/gardener/test-infra/pkg/apis/config"
+	configinstall "github.com/gardener/test-infra/pkg/apis/config/install"
+	tminstall "github.com/gardener/test-infra/pkg/apis/testmachinery/install"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -91,40 +92,15 @@ const (
 
 const redactedString = "--- REDACTED ---"
 
-var (
-	// TESTDEF_PATH is the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm)
-	TESTDEF_PATH string
-
-	// PREPARE_IMAGE is image of the prepare step.
-	PREPARE_IMAGE string
-
-	// BASE_IMAGE is used default image if non is specified by TestDefinition.
-	BASE_IMAGE string
-)
-
 // TmConfiguration is an object containing the actual configuration of the Testmachinery
 type TmConfiguration struct {
-	Namespace         string
-	Local             bool
-	Insecure          bool
-	CleanWorkflowPods bool
-	GitHub            GitHubConfig
-	S3                *S3Config
-	ElasticSearch     *elasticsearch.Config
-}
-
-// S3Config is an object containing the S3 specific configuration
-type S3Config struct {
-	Endpoint   string
-	SSL        bool
-	AccessKey  string
-	SecretKey  string
-	BucketName string
+	*config.Configuration
+	GitHubSecrets []GitHubInstanceConfig
 }
 
 // GitHubConfig represents the github configuration for the testmachinery
 type GitHubConfig struct {
-	Cache   *ghcache.Config
+	Cache   *config.GitHubCacheConfig
 	Secrets []GitHubInstanceConfig
 }
 
@@ -152,14 +128,19 @@ type TechnicalUser struct {
 // TestMachineryScheme is the scheme used in the testmachinery and testrunner.
 var TestMachineryScheme = runtime.NewScheme()
 
+// ConfigScheme is the core testmachinery scheme
+var ConfigScheme = runtime.NewScheme()
+
 func init() {
 	testmachinerySchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
-		tmscheme.AddToScheme,
+		tminstall.AddToScheme,
 		argoscheme.AddToScheme,
+		mrscheme.AddToScheme,
 	)
 
 	utilruntime.Must(testmachinerySchemeBuilder.AddToScheme(TestMachineryScheme))
+	configinstall.Install(ConfigScheme)
 
 	decoder = serializer.NewCodecFactory(TestMachineryScheme).UniversalDecoder()
 }
@@ -172,29 +153,29 @@ func (c *TmConfiguration) String() string {
 
 	cc := c.Copy()
 
-	if len(cc.GitHub.Secrets) != 0 {
-		for i := range cc.GitHub.Secrets {
-			if len(cc.GitHub.Secrets[i].TechnicalUser.AuthToken) != 0 {
-				cc.GitHub.Secrets[i].TechnicalUser.AuthToken = redactedString
+	if len(cc.GitHubSecrets) != 0 {
+		for i := range cc.GitHubSecrets {
+			if len(cc.GitHubSecrets[i].TechnicalUser.AuthToken) != 0 {
+				cc.GitHubSecrets[i].TechnicalUser.AuthToken = redactedString
 			}
-			if len(cc.GitHub.Secrets[i].TechnicalUser.Password) != 0 {
-				cc.GitHub.Secrets[i].TechnicalUser.Password = redactedString
+			if len(cc.GitHubSecrets[i].TechnicalUser.Password) != 0 {
+				cc.GitHubSecrets[i].TechnicalUser.Password = redactedString
 			}
 		}
 	}
 
-	if cc.S3 != nil {
-		if len(cc.S3.SecretKey) != 0 {
-			cc.S3.SecretKey = redactedString
+	if cc.S3Configuration != nil {
+		if len(cc.S3Configuration.SecretKey) != 0 {
+			cc.S3Configuration.SecretKey = redactedString
 		}
-		if len(cc.S3.AccessKey) != 0 {
-			cc.S3.AccessKey = redactedString
+		if len(cc.S3Configuration.AccessKey) != 0 {
+			cc.S3Configuration.AccessKey = redactedString
 		}
 	}
 
-	if cc.ElasticSearch != nil {
-		if len(cc.ElasticSearch.Password) != 0 {
-			cc.ElasticSearch.Password = redactedString
+	if cc.ElasticSearchConfiguration != nil {
+		if len(cc.ElasticSearchConfiguration.Password) != 0 {
+			cc.ElasticSearchConfiguration.Password = redactedString
 		}
 	}
 
@@ -207,29 +188,7 @@ func (c *TmConfiguration) Copy() *TmConfiguration {
 		return nil
 	}
 	return &TmConfiguration{
-		Namespace:         c.Namespace,
-		Local:             c.Local,
-		Insecure:          c.Insecure,
-		CleanWorkflowPods: c.CleanWorkflowPods,
-		GitHub: GitHubConfig{
-			Cache:   c.GitHub.Cache.DeepCopy(),
-			Secrets: append(make([]GitHubInstanceConfig, 0, len(c.GitHub.Secrets)), c.GitHub.Secrets...),
-		},
-		S3:            c.S3.Copy(),
-		ElasticSearch: c.ElasticSearch.Copy(),
-	}
-}
-
-// New creates a deep copy of the s3 config.
-func (c *S3Config) Copy() *S3Config {
-	if c == nil {
-		return nil
-	}
-	return &S3Config{
-		Endpoint:   c.Endpoint,
-		SSL:        c.SSL,
-		AccessKey:  c.AccessKey,
-		SecretKey:  c.SecretKey,
-		BucketName: c.BucketName,
+		Configuration: c.Configuration.DeepCopy(),
+		GitHubSecrets: append(make([]GitHubInstanceConfig, 0, len(c.GitHubSecrets)), c.GitHubSecrets...),
 	}
 }

@@ -49,7 +49,7 @@ func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error)
 		},
 		ActiveDeadlineSeconds: &testdefinition.DefaultActiveDeadlineSeconds,
 		Container: &corev1.Container{
-			Image:   testmachinery.PREPARE_IMAGE,
+			Image:   testmachinery.PrepareImage(),
 			Command: []string{"/tm/prepare", PrepareConfigPath},
 			Env: []corev1.EnvVar{
 				{
@@ -134,7 +134,7 @@ func (p *Definition) AddRepositoriesAsArtifacts() error {
 func (p *Definition) addNetrcFile() error {
 	netrc := ""
 
-	for _, secret := range testmachinery.GetConfig().GitHub.Secrets {
+	for _, secret := range testmachinery.GetGitHubSecrets() {
 		u, err := url.Parse(secret.HttpUrl)
 		if err != nil {
 			return errors.Wrapf(err, "%s is not a valid URL", secret.HttpUrl)
