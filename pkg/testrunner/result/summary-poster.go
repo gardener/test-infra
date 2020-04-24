@@ -16,7 +16,8 @@ package result
 
 import (
 	"fmt"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/slack"
@@ -59,8 +60,8 @@ func header() string {
 
 func legend() string {
 	return fmt.Sprintf(`
-%s: Tests succeeded | %s: Tests failed | %s: Tests not applicable
-`, util.SucessSymbols[true], util.SucessSymbols[false], util.NA)
+%s: Tests succeeded | %s: Tests failed | %s: Test execution error | %s: Tests not applicable
+`, util.StatusSymbolSuccess, util.StatusSymbolError, util.StatusSymbolError, util.StatusSymbolNA)
 }
 
 func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableItems) {
@@ -70,9 +71,21 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			// skip gardener tests
 			continue
 		} else {
+
+			status := util.StatusSymbolUnknown
+			if run.Error != nil && !trerrors.IsTimeout(run.Error) {
+				status = util.StatusSymbolError
+			} else {
+				if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+					status = util.StatusSymbolSuccess
+				} else {
+					status = util.StatusSymbolFailure
+				}
+			}
+
 			item := &util.TableItem{
-				Meta:    util.ItemMeta{CloudProvider: meta.CloudProvider, TestrunID: meta.Testrun.ID, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.FlavorDescription},
-				Success: run.Testrun.Status.Phase == argov1.NodeSucceeded,
+				Meta:         util.ItemMeta{CloudProvider: meta.CloudProvider, TestrunID: meta.Testrun.ID, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.FlavorDescription},
+				StatusSymbol: status,
 			}
 			tableItems = append(tableItems, item)
 		}

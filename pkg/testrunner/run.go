@@ -17,11 +17,13 @@ package testrunner
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
+	"time"
 )
 
 // SetRunID sets the provided run id as annotation and adds it to the metadata
@@ -44,9 +46,16 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	newTR.Name = ""
 	newTR.GenerateName = prefix
 	newTR.Namespace = config.Namespace
-	err := config.Watch.Client().Create(ctx, newTR)
+
+	err := retry.UntilTimeout(ctx, 30*time.Second, 5*time.Minute, func(ctx context.Context) (bool, error) {
+		err := config.Watch.Client().Create(ctx, newTR)
+		if err != nil {
+			log.Error(err, "unable to create testrun. Retrying...")
+			return retry.MinorError(err)
+		}
+		return retry.Ok()
+	})
 	if err != nil {
-		log.Error(err, "unable to create testrun")
 		r.Error = trerrors.NewNotCreatedError(fmt.Sprintf("cannot create testrun: %s", err.Error()))
 		return
 	}

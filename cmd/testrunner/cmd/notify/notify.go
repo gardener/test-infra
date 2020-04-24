@@ -129,9 +129,13 @@ func parseOverviewToTableItems(overview result.AssetOverview) (tableItems util.T
 			// skip gardener tests
 			continue
 		} else {
+			status := util.StatusSymbolFailure
+			if overviewItem.Successful {
+				status = util.StatusSymbolSuccess
+			}
 			item := &util.TableItem{
-				Meta:    util.ItemMeta{CloudProvider: meta.Cloudprovider, TestrunID: overviewItem.Name, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.Description},
-				Success: overviewItem.Successful,
+				Meta:         util.ItemMeta{CloudProvider: meta.Cloudprovider, TestrunID: overviewItem.Name, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.Description},
+				StatusSymbol: status,
 			}
 			tableItems = append(tableItems, item)
 		}

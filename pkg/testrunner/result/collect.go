@@ -73,20 +73,20 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 	return testrunsFailed, util.ReturnMultiError(result)
 }
 
-func getComponentsForUpload(cfg Config, runLogger logr.Logger) []*componentdescriptor.Component {
-	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(cfg.ComponentDescriptorPath)
+func getComponentsForUpload(runLogger logr.Logger, componentdescriptorPath string, assetComponents []string) ([]*componentdescriptor.Component, error) {
+	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(componentdescriptorPath)
 	if err != nil {
-		runLogger.Error(err, fmt.Sprintf("Unable to get component '%s'", cfg.ComponentDescriptorPath))
+		return nil, errors.Wrap(err, fmt.Sprintf("Unable to get component '%s'", componentdescriptorPath))
 	}
 	var componentsForUpload []*componentdescriptor.Component
-	for _, componentName := range cfg.AssetComponents {
+	for _, componentName := range assetComponents {
 		if component := componentsFromFile.Get(componentName); component == nil {
-			runLogger.Error(err, "can't find component", "component", cfg.AssetComponents)
+			runLogger.Error(err, "can't find component", "component", assetComponents)
 		} else {
 			componentsForUpload = append(componentsForUpload, component)
 		}
 	}
-	return componentsForUpload
+	return componentsForUpload, nil
 }
 
 func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrunner.RunList, tmClient client.Client) {
@@ -100,7 +100,11 @@ func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrun
 		return
 	}
 
-	componentsForUpload := getComponentsForUpload(cfg, log)
+	componentsForUpload, err := getComponentsForUpload(log, cfg.ComponentDescriptorPath, cfg.AssetComponents)
+	if err != nil {
+		log.Error(err, "unable to get component for upload")
+		return
+	}
 	if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err == nil {
 		if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
 			log.Error(err, "unable to mark testrun status as uploaded to github")
