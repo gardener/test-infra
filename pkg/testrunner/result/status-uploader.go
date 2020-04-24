@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	"github.com/gardener/test-infra/pkg/common"
+	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
@@ -27,44 +28,49 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
-var prefix string
-
 // uploads status results as assets to github component releases
 func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
-	prefix = assetPrefix
-	dest := "/tmp/"
-	log.Info(fmt.Sprintf("Storing asset files temporary to directory '%s'", dest))
-	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", prefix, (runs)[0].Metadata.Landscape))
+	var (
+		prefix = assetPrefix
+		dest   = "/tmp/"
+	)
+
+	log.V(3).Info(fmt.Sprintf("Storing asset files temporary to directory '%s'", dest))
+	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", prefix, runs[0].Metadata.Landscape))
 	extendedComponents, err := parseComponents(components, githubUser, githubPassword)
 	if err != nil {
-		log.Error(err, "failed to parse components")
-		return err
+		return errors.Wrap(err, "failed to parse components")
 	}
 
 	for _, component := range extendedComponents {
 		assetOverview, err := DownloadAssetOverview(log, component, overviewFilepath)
+
 		// remove previously failed items, to avoid that after component patch, failed items are kept forever
 		removedTestrunItems := removeFailedItems(&assetOverview)
 		if err := writeOverviewToFile(assetOverview, overviewFilepath); err != nil {
 			return err
 		}
-		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview)
+		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview, prefix)
 		if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
 			log.Info("no testrun updates, therefore not assets to upload")
 			continue
 		}
 		log.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(testrunsToUpload)))
 
-		archiveFilename := fmt.Sprintf("%s%s.zip", prefix, (runs)[0].Metadata.Landscape)
-		extension := filepath.Ext(archiveFilename)
-		archiveFilenameWithoutExtension := archiveFilename[0 : len(archiveFilename)-len(extension)]
-		archiveContentDir := path.Join(dest, archiveFilenameWithoutExtension)
+		const fileExtension = ".zip"
+		archiveName := prefix + testrunsToUpload[0].Metadata.Landscape
+		archiveFilename := archiveName + fileExtension
+
+		archiveContentDir := path.Join(dest, archiveName)
 		archiveFilepath := filepath.Join(dest, archiveFilename)
-		_ = os.Remove(archiveFilepath)
-		_ = os.RemoveAll(archiveContentDir)
-		if err := os.MkdirAll(archiveContentDir, 0777); err != nil {
-			log.Error(err, fmt.Sprintf("failed to create dir: %s", archiveContentDir))
+		if err := os.Remove(archiveFilepath); err != nil {
 			return err
+		}
+		if err := os.RemoveAll(archiveContentDir); err != nil {
+			return err
+		}
+		if err := os.MkdirAll(archiveContentDir, 0777); err != nil {
+			return errors.Wrapf(err, "failed to create dir: %s", archiveContentDir)
 		}
 		remoteArchiveAssetID, err := getAssetIDByName(component, archiveFilename)
 		if err != nil {
@@ -88,7 +94,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 				}
 			}
 		}
-		if err := storeRunsStatusAsFiles(log, testrunsToUpload, archiveContentDir); err != nil {
+		if err := storeRunsStatusAsFiles(log, testrunsToUpload, prefix, archiveContentDir); err != nil {
 			log.Error(err, "Failed to store testrun status as files")
 			continue
 		}
@@ -96,7 +102,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 			log.Error(err, fmt.Sprintf("Failed to zip %s", archiveContentDir))
 			continue
 		}
-		if err := createOrUpdateOverview(log, overviewFilepath, testrunsToUpload); err != nil {
+		if err := createOrUpdateOverview(log, overviewFilepath, testrunsToUpload, prefix); err != nil {
 			log.Error(err, fmt.Sprintf("Failed to create/update %s", overviewFilepath))
 			continue
 		}
@@ -158,7 +164,7 @@ func parseComponents(components []*componentdescriptor.Component, githubUser, gi
 }
 
 // Either creates a new overview file and feeds it with current testrun results, or downloads the overview file from github and extends it
-func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsToUpload testrunner.RunList) error {
+func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsToUpload testrunner.RunList, prefix string) error {
 	assetOverview := AssetOverview{}
 	_, err := os.Stat(overviewFilepath) // checks if file exists
 	if err == nil {
@@ -171,7 +177,7 @@ func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsTo
 		log.Info("no assets exist on remote")
 	}
 	for _, run := range testrunsToUpload {
-		assetItemName := generateTestrunAssetName(*run)
+		assetItemName := generateTestrunAssetName(*run, prefix)
 		isAssetItemSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
 		assetOverviewItem := assetOverview.Get(assetItemName)
 		if assetOverviewItem.Name != "" {
@@ -206,14 +212,14 @@ func writeOverviewToFile(assetOverview AssetOverview, overviewFilepath string) e
 }
 
 // renders testrun statuses and saves them as files
-func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, dest string) error {
+func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, prefix, dest string) error {
 	log.Info(fmt.Sprintf("storing testruns status as files in %s", dest))
 	for _, run := range runs {
 		tr := run.Testrun
 		tableString := strings.Builder{}
 		output.RenderStatusTable(&tableString, tr.Status.Steps)
 		statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
-		assetFilepath := filepath.Join(dest, generateTestrunAssetName(*run))
+		assetFilepath := filepath.Join(dest, generateTestrunAssetName(*run, prefix))
 		if err := ioutil.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
 			return errors.Wrapf(err, "failed to write file %s", assetFilepath)
 		}
@@ -221,16 +227,22 @@ func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, dest strin
 	return nil
 }
 
-func generateTestrunAssetName(testrun testrunner.Run) string {
+func generateTestrunAssetName(testrun testrunner.Run, prefix string) string {
 	md := testrun.Metadata
 	return fmt.Sprintf("%s%s-%s.txt", prefix, md.Landscape, md.GetDimensionFromMetadata("-"))
 }
 
 // compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
-func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOverview) (testrunner.RunList, error) {
+func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOverview, prefix string) (testrunner.RunList, error) {
 	var testrunsToUpload testrunner.RunList
 	for _, run := range runs {
-		testrunAssetName := generateTestrunAssetName(*run)
+
+		// do not consider testruns with a error that are not a timeout error
+		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
+			continue
+		}
+
+		testrunAssetName := generateTestrunAssetName(*run, prefix)
 		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
 		if !assetOverview.Contains(testrunAssetName) || testrunSuccessful && !assetOverview.Get(testrunAssetName).Successful {
 			testrunsToUpload = append(testrunsToUpload, run)
@@ -239,7 +251,7 @@ func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOvervi
 	return testrunsToUpload, nil
 }
 
-// DownloadAssetOverview downloads and parses the asset overview from a component
+// DownloadAssetOverview downloads and parses the asset overview from a component from github
 func DownloadAssetOverview(log logr.Logger, component ComponentExtended, overviewFilepath string) (AssetOverview, error) {
 	_ = os.Remove(overviewFilepath) // try to remove previously downloaded file
 	emptyOverview := AssetOverview{}

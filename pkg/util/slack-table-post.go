@@ -23,29 +23,22 @@ import (
 	"strings"
 )
 
-var SucessSymbols = map[bool]string{
-	true:  "✅",
-	false: "❌",
-}
+// StatusSymbol is a unicode symbol for dieplaying in a table
+type StatusSymbol string
 
-const NA = "N/A"
-
-//
-type resultRow struct {
-	dimension ItemMeta
-	content   []string
-}
-
-type results struct {
-	header  map[string]int
-	content map[string]resultRow
-}
+const (
+	StatusSymbolSuccess StatusSymbol = "✅"
+	StatusSymbolFailure StatusSymbol = "❌"
+	StatusSymbolNA      StatusSymbol = "N/A"
+	StatusSymbolError   StatusSymbol = "🔥"
+	StatusSymbolUnknown StatusSymbol = "❓"
+)
 
 type TableItems []*TableItem
 
 type TableItem struct {
-	Meta    ItemMeta
-	Success bool
+	Meta         ItemMeta
+	StatusSymbol StatusSymbol
 }
 
 type ItemMeta struct {
@@ -54,6 +47,16 @@ type ItemMeta struct {
 	OperatingSystem   string
 	KubernetesVersion string
 	FlavorDescription string
+}
+
+type resultRow struct {
+	dimension ItemMeta
+	content   []string
+}
+
+type results struct {
+	header  map[string]int
+	content map[string]resultRow
 }
 
 // RenderTableForSlack renders a string table of given table items
@@ -86,7 +89,7 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 		if meta.FlavorDescription != "" {
 			dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
 		}
-		res.AddResult(meta, item.Success)
+		res.AddResult(meta, item.StatusSymbol)
 	}
 	if res.Len() == 0 {
 		return "", nil
@@ -99,7 +102,7 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 	return writer.String(), nil
 }
 
-func (r *results) AddResult(meta ItemMeta, success bool) {
+func (r *results) AddResult(meta ItemMeta, symbol StatusSymbol) {
 	// should never happen but skip to ensure no panic
 	cpIndex, ok := r.header[meta.CloudProvider]
 	if !ok {
@@ -110,14 +113,14 @@ func (r *results) AddResult(meta ItemMeta, success bool) {
 		content := make([]string, len(r.header)+1)
 		content[0] = key
 		for i := 1; i < len(content); i++ {
-			content[i] = NA
+			content[i] = string(StatusSymbolNA)
 		}
 		r.content[key] = resultRow{
 			dimension: meta,
 			content:   content,
 		}
 	}
-	r.content[key].content[cpIndex] = SucessSymbols[success]
+	r.content[key].content[cpIndex] = string(symbol)
 }
 
 func computeDimensionKey(meta ItemMeta) string {
