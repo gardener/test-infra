@@ -31,28 +31,28 @@ import (
 )
 
 // checkResourceManager checks if a resource manager ist deployed
-func (b *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
-	b.log.Info("Ensuring object store")
+func (e *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+	e.log.Info("Ensuring object store")
 	// ensure secret deployment
-	if err := b.ensureS3Secret(ctx, s3, namespace); err != nil {
+	if err := e.ensureS3Secret(ctx, s3, namespace); err != nil {
 		return err
 	}
 
 	if s3.Server.Minio != nil {
-		if err := b.validateMinioDeployment(ctx, namespace, s3); err != nil {
+		if err := e.validateMinioDeployment(ctx, namespace, s3); err != nil {
 			return err
 		}
-		return b.ensureMinio(ctx, namespace, s3)
+		return e.ensureMinio(ctx, namespace, s3)
 	}
 
 	return nil
 }
 
 // validateMinioDeployment validates if the minio deployment method has not changed
-func (b *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+func (e *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
 	// check if the minio deployment has changed (distributed or not)
 	sts := &appsv1.StatefulSet{}
-	if err := b.client.Get(ctx, client.ObjectKey{Name: config.MinioDeploymentName, Namespace: namespace}, sts); err != nil {
+	if err := e.client.Get(ctx, client.ObjectKey{Name: config.MinioDeploymentName, Namespace: namespace}, sts); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -72,8 +72,8 @@ func (b *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespa
 	return errors.New("Deployment method of minio cannot be changed")
 }
 
-func (b *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
-	b.log.Info("Ensuring minio deployment")
+func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+	e.log.Info("Ensuring minio deployment")
 	values := map[string]interface{}{
 		"minio": map[string]interface{}{
 			"name": config.MinioDeploymentName,
@@ -110,7 +110,7 @@ func (b *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s
 		return fmt.Errorf("failed to find image version %v", err)
 	}
 
-	err = b.createManagedResource(ctx, namespace, config.MinioManagedResourceName, b.renderer,
+	err = e.createManagedResource(ctx, namespace, config.MinioManagedResourceName, e.renderer,
 		config.MinioChartName, values, nil)
 	if err != nil {
 		return errors.Wrap(err, "unable to create managed resource")
@@ -124,12 +124,12 @@ func (b *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s
 	return nil
 }
 
-func (b *DependencyEnsurer) ensureS3Secret(ctx context.Context, s3 *config.S3Configuration, namespace string) error {
+func (e *DependencyEnsurer) ensureS3Secret(ctx context.Context, s3 *config.S3Configuration, namespace string) error {
 	secret := &corev1.Secret{}
 	secret.Name = config.S3SecretName
 	secret.Namespace = namespace
 
-	_, err := controllerruntime.CreateOrUpdate(ctx, b.client, secret, func() error {
+	_, err := controllerruntime.CreateOrUpdate(ctx, e.client, secret, func() error {
 		secret.StringData = map[string]string{
 			"accessKey": s3.AccessKey,
 			"secretKey": s3.SecretKey,

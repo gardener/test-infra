@@ -2,15 +2,15 @@ images:
 - name: argo-ui
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/argocli
-  tag: "v2.6.3"
+  tag: "v2.7.5"
 - name: argo-workflow-controller
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/workflow-controller
-  tag: "v2.6.3"
+  tag: "v2.7.5"
 - name: argo-executor
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/argoexec
-  tag: "v2.6.3"
+  tag: "v2.7.5"
 - name: minio
   sourceRepository: github.com/minio/minio
   repository: minio/minio

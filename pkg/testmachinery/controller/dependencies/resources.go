@@ -26,18 +26,18 @@ import (
 )
 
 // checkResourceManager checks if a resource manager ist deployed
-func (b *DependencyEnsurer) checkResourceManager(ctx context.Context, namespace string) error {
+func (e *DependencyEnsurer) checkResourceManager(ctx context.Context, namespace string) error {
 	deployment := &appsv1.Deployment{}
-	if err := b.client.Get(ctx, client.ObjectKey{Name: config.ResourceManagerDeploymentName, Namespace: namespace}, deployment); err != nil {
+	if err := e.client.Get(ctx, client.ObjectKey{Name: config.ResourceManagerDeploymentName, Namespace: namespace}, deployment); err != nil {
 		return err
 	}
 	return health.CheckDeployment(deployment)
 }
 
 // createManagedResource creates or updates a managed resource
-func (b *DependencyEnsurer) createManagedResource(ctx context.Context, namespace, name string, renderer chartrenderer.Interface, chartName string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
+func (e *DependencyEnsurer) createManagedResource(ctx context.Context, namespace, name string, renderer chartrenderer.Interface, chartName string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
 	return controller.CreateManagedResourceFromFileChart(
-		ctx, b.client, namespace, name, "",
+		ctx, e.client, namespace, name, "",
 		renderer, filepath.Join(config.ChartsPath, chartName), chartName,
 		chartValues, injectedLabels,
 	)

@@ -76,8 +76,8 @@ testmachinery:
       endpoint: ""
       ssl: false
     bucketName: testmachinery
-    accessKey: AIasdf
-    secretKey: abc
+    accessKey: IbnGHa4V6ypsm
+    secretKey: l9rJ0XR65Rkvc9g9fyOf
 
 #  esConfiguration:
 #    endpoint: https:...:9200

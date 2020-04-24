@@ -28,6 +28,14 @@ data:
         limits:
           cpu: "100m"
           memory: "150Mi"
+    {{ if .Values.argo.logging.links }}
+    links:
+    {{ range .Values.argo.logging.links }}
+    - name: {{ .name }}
+      scope: {{ .scope }}
+      url: {{ .url }}
+    {{ end }}
+    {{ end }}
     artifactRepository:
       archiveLogs: true
       s3:

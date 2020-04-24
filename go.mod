@@ -3,14 +3,14 @@ module github.com/gardener/test-infra
 go 1.14
 
 require (
-	cloud.google.com/go v0.51.0
-	cloud.google.com/go/storage v1.0.0
+	cloud.google.com/go v0.55.0
+	cloud.google.com/go/storage v1.6.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/argoproj/argo v0.0.0-20200228233152-5d3bdd56607e // argo v2.6.0
+	github.com/argoproj/argo v0.0.0-20200421005415-ede163e1af83 // argo v2.7.5
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gardener/gardener v1.2.1-0.20200402092110-3e4c4917c83f
 	github.com/gardener/gardener-extensions v1.6.0
 	github.com/gardener/gardener-resource-manager v0.10.0
@@ -18,9 +18,9 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/jsonreference v0.19.3 // indirect
-	github.com/go-openapi/spec v0.19.4
+	github.com/go-openapi/spec v0.19.7
 	github.com/gobuffalo/packr/v2 v2.8.0
-	github.com/golang/mock v1.3.1
+	github.com/golang/mock v1.4.3
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.6.2
@@ -37,19 +37,19 @@ require (
 	github.com/onsi/gomega v1.7.0
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8 // indirect
-	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
-	golang.org/x/oauth2 v0.0.0-20200107160858-eca82077e2d1
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
-	google.golang.org/api v0.15.0
-	google.golang.org/genproto v0.0.0-20191230161307-f3c370f40bfb
-	gopkg.in/yaml.v2 v2.2.7
+	google.golang.org/api v0.20.0
+	google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
+	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.0
 	k8s.io/apiextensions-apiserver v0.17.0
 	k8s.io/apimachinery v0.17.0

@@ -81,8 +81,8 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 			return
 		}
 
-		argoHostURL, _ := testrunner.GetArgoHost(p.runs.GetClient())
-		grafanaHostURL, _ := testrunner.GetGrafanaHost(p.runs.GetClient())
+		argoHostURL, _ := testrunner.GetArgoHost(ctx, p.runs.GetClient())
+		grafanaHostURL, _ := testrunner.GetGrafanaHost(ctx, p.runs.GetClient())
 
 		testrunsList := make(testrunItemList, len(runs.Items))
 		runsList := make(rungroupItemList, 0)
@@ -119,7 +119,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				testrunsList[i].ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, &tr)
 			}
 			if grafanaHostURL != "" {
-				testrunsList[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, &tr)
+				testrunsList[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForWorkflow(grafanaHostURL, tr.Status.Workflow)
 			}
 		}
 

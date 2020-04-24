@@ -15,6 +15,7 @@
 package pages
 
 import (
+	"context"
 	"fmt"
 	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -120,6 +121,7 @@ type runDetailedItem struct {
 
 func NewPRStatusPage(p *Page) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		isAuthenticated := true
 		_, err := p.auth.GetAuthContext(r)
 		if err != nil {
@@ -143,7 +145,7 @@ func NewPRStatusPage(p *Page) http.HandlerFunc {
 				Progress:     util.TestrunProgress(run.Testrun),
 			}
 			if isAuthenticated {
-				rawList[i].ArgoURL, _ = testrunner.GetArgoURL(p.runs.GetClient(), run.Testrun)
+				rawList[i].ArgoURL, _ = testrunner.GetArgoURL(context.TODO(), p.runs.GetClient(), run.Testrun)
 			}
 
 		}
