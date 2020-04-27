@@ -73,7 +73,7 @@ var notifyCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if len(overview.AssetOverviewItems) == 0 {
-			logger.Log.Error(nil, "overview sset does not exist")
+			logger.Log.Error(nil, "overview asset does not exist")
 			os.Exit(1)
 		}
 
