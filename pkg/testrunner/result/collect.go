@@ -105,10 +105,13 @@ func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrun
 		log.Error(err, "unable to get component for upload")
 		return
 	}
-	if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err == nil {
-		if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
-			log.Error(err, "unable to mark testrun status as uploaded to github")
-		}
+	if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
+		log.Error(err, "unable to upload status to github")
+		return
+	}
+
+	if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
+		log.Error(err, "unable to mark testrun status as uploaded to github")
 	}
 	return
 }

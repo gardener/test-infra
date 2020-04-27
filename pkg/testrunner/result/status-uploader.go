@@ -44,6 +44,9 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 
 	for _, component := range extendedComponents {
 		assetOverview, err := DownloadAssetOverview(log, component, overviewFilepath)
+		if err != nil {
+			return err
+		}
 
 		// remove previously failed items, to avoid that after component patch, failed items are kept forever
 		removedTestrunItems := removeFailedItems(&assetOverview)
@@ -63,10 +66,10 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 
 		archiveContentDir := path.Join(dest, archiveName)
 		archiveFilepath := filepath.Join(dest, archiveFilename)
-		if err := os.Remove(archiveFilepath); err != nil {
+		if err := os.Remove(archiveFilepath); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if err := os.RemoveAll(archiveContentDir); err != nil {
+		if err := os.RemoveAll(archiveContentDir); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 		if err := os.MkdirAll(archiveContentDir, 0777); err != nil {
@@ -264,6 +267,7 @@ func DownloadAssetOverview(log logr.Logger, component ComponentExtended, overvie
 		return emptyOverview, nil
 	}
 	if err := downloadReleaseAssetByName(log, component, filepath.Base(overviewFilepath), overviewFilepath); err != nil {
+		log.Error(err, "unable to download release asset")
 		return emptyOverview, err
 	}
 	assetOverview, err := unmarshalOverview(overviewFilepath)
