@@ -23,6 +23,9 @@ import (
 	"strings"
 )
 
+// SymbolOffset is the offset that the symbol is prefixed for better readability
+const SymbolOffset = " "
+
 // StatusSymbol is a unicode symbol for dieplaying in a table
 type StatusSymbol string
 
@@ -97,7 +100,8 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 
 	table.SetHeader(header)
 	table.AppendBulk(res.GetContent())
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetHeaderAlignment(tablewriter.ALIGN_CENTER)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.Render()
 	return writer.String(), nil
 }
@@ -113,14 +117,14 @@ func (r *results) AddResult(meta ItemMeta, symbol StatusSymbol) {
 		content := make([]string, len(r.header)+1)
 		content[0] = key
 		for i := 1; i < len(content); i++ {
-			content[i] = string(StatusSymbolNA)
+			content[i] = SymbolOffset + string(StatusSymbolNA)
 		}
 		r.content[key] = resultRow{
 			dimension: meta,
 			content:   content,
 		}
 	}
-	r.content[key].content[cpIndex] = string(symbol)
+	r.content[key].content[cpIndex] = SymbolOffset + string(symbol)
 }
 
 func computeDimensionKey(meta ItemMeta) string {
