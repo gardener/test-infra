@@ -31,7 +31,7 @@ import (
 )
 
 // checkResourceManager checks if a resource manager ist deployed
-func (e *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+func (e *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace string, s3 *config.S3) error {
 	e.log.Info("Ensuring object store")
 	// ensure secret deployment
 	if err := e.ensureS3Secret(ctx, s3, namespace); err != nil {
@@ -49,7 +49,7 @@ func (e *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace str
 }
 
 // validateMinioDeployment validates if the minio deployment method has not changed
-func (e *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+func (e *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespace string, s3 *config.S3) error {
 	// check if the minio deployment has changed (distributed or not)
 	sts := &appsv1.StatefulSet{}
 	if err := e.client.Get(ctx, client.ObjectKey{Name: config.MinioDeploymentName, Namespace: namespace}, sts); err != nil {
@@ -72,7 +72,7 @@ func (e *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespa
 	return errors.New("Deployment method of minio cannot be changed")
 }
 
-func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s3 *config.S3Configuration) error {
+func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s3 *config.S3) error {
 	e.log.Info("Ensuring minio deployment")
 	values := map[string]interface{}{
 		"minio": map[string]interface{}{
@@ -124,7 +124,7 @@ func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s
 	return nil
 }
 
-func (e *DependencyEnsurer) ensureS3Secret(ctx context.Context, s3 *config.S3Configuration, namespace string) error {
+func (e *DependencyEnsurer) ensureS3Secret(ctx context.Context, s3 *config.S3, namespace string) error {
 	secret := &corev1.Secret{}
 	secret.Name = config.S3SecretName
 	secret.Namespace = namespace

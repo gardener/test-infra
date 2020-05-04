@@ -41,13 +41,13 @@ type collector struct {
 	log    logr.Logger
 	client client.Client
 
-	esConfig *config.ElasticSearchConfiguration
+	esConfig *config.ElasticSearch
 	esClient elasticsearch.Client
-	s3Config *config.S3Configuration
+	s3Config *config.S3
 	s3Client s3.Client
 }
 
-func New(log logr.Logger, k8sClient client.Client, esConfig *config.ElasticSearchConfiguration, s3Config *config.S3Configuration) (Interface, error) {
+func New(log logr.Logger, k8sClient client.Client, esConfig *config.ElasticSearch, s3Config *config.S3) (Interface, error) {
 	c := &collector{
 		log:      log,
 		client:   k8sClient,

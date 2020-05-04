@@ -32,6 +32,5 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 }
 
 func SetObjectDefaults_Configuration(in *Configuration) {
-	SetDefaults_ControllerConfig(&in.ControllerConfig)
-	SetDefaults_TestMachineryConfiguration(&in.TestMachineryConfiguration)
+	SetDefaults_Configuration(in)
 }

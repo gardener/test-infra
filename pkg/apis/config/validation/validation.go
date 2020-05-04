@@ -23,19 +23,19 @@ import (
 func ValidateConfiguration(config *config.Configuration) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if !config.TestMachineryConfiguration.DisableCollector {
-		if config.ElasticSearchConfiguration == nil {
+	if !config.TestMachinery.DisableCollector {
+		if config.ElasticSearch == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("elasticsearchConfiguration"), "elastic search config is required if collector is enabled"))
 		}
 	}
 
-	allErrs = append(allErrs, validateS3Config(config.S3Configuration, field.NewPath("s3Configuration"))...)
+	allErrs = append(allErrs, validateS3Config(config.S3, field.NewPath("s3Configuration"))...)
 
 	return allErrs
 }
 
 // validateS3Config validates the passed s3 configuration instance
-func validateS3Config(s3 *config.S3Configuration, fldPath *field.Path) field.ErrorList {
+func validateS3Config(s3 *config.S3, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if s3.Server.Minio == nil && len(s3.Server.Endpoint) == 0 {

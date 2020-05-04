@@ -52,3 +52,9 @@ esConfiguration:
   endpoint: https:...:9200
   username: user
   password: my-password
+
+observability:
+  logging:
+    namespace: default
+    storageClass: default
+    chartValues: {}

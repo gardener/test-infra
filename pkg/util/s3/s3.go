@@ -82,7 +82,7 @@ func (c *client) RemoveObject(bucketName, key string) error {
 	return c.minioClient.RemoveObject(bucketName, key)
 }
 
-func FromConfig(s3 *config.S3Configuration) *Config {
+func FromConfig(s3 *config.S3) *Config {
 	return &Config{
 		Endpoint:   s3.Server.Endpoint,
 		SSL:        s3.Server.SSL,

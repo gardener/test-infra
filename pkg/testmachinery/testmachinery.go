@@ -42,12 +42,12 @@ func Setup(config *config.Configuration) error {
 
 	// if no endpoint is defined we assume that no cleanup should happen
 	// this should only happen in local environments
-	//if tmConfig.TestMachineryConfiguration.Local && config.S3Configuration.Server == nil {
-	//	tmConfig.S3Configuration = nil
+	//if tmConfig.TestMachinery.Local && config.S3.Server == nil {
+	//	tmConfig.S3 = nil
 	//}
 
-	if config.ElasticSearchConfiguration == nil || len(config.ElasticSearchConfiguration.Endpoint) == 0 {
-		tmConfig.ElasticSearchConfiguration = nil
+	if config.ElasticSearch == nil || len(config.ElasticSearch.Endpoint) == 0 {
+		tmConfig.ElasticSearch = nil
 	}
 
 	return nil
@@ -60,27 +60,27 @@ func GetConfig() *TmConfiguration {
 
 // GetNamespace returns the current testmachinery namespace.
 func GetNamespace() string {
-	return tmConfig.TestMachineryConfiguration.Namespace
+	return tmConfig.TestMachinery.Namespace
 }
 
 // CleanWorkflowPods returns whether pod gc is enabled.
 func CleanWorkflowPods() bool {
-	return tmConfig.TestMachineryConfiguration.CleanWorkflowPods
+	return tmConfig.TestMachinery.CleanWorkflowPods
 }
 
 // TestDefPath returns the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm).
 func TestDefPath() string {
-	return tmConfig.TestMachineryConfiguration.TestDefPath
+	return tmConfig.TestMachinery.TestDefPath
 }
 
 // Prepare Image returns the image of the prepare step.
 func PrepareImage() string {
-	return tmConfig.TestMachineryConfiguration.PrepareImage
+	return tmConfig.TestMachinery.PrepareImage
 }
 
 // BaseImage returns the default image that is used if no image is specified by a TestDefinition.
 func BaseImage() string {
-	return tmConfig.TestMachineryConfiguration.BaseImage
+	return tmConfig.TestMachinery.BaseImage
 }
 
 // GetGitHubSecrets returns all github secrets
@@ -89,23 +89,23 @@ func GetGitHubSecrets() []GitHubInstanceConfig {
 }
 
 // GetS3Configuration returns the current s3 configuration
-func GetS3Configuration() *config.S3Configuration {
-	return tmConfig.S3Configuration
+func GetS3Configuration() *config.S3 {
+	return tmConfig.S3
 }
 
 // GetElasticsearchConfiguration returns the current elasticsearch configuration
-func GetElasticsearchConfiguration() *config.ElasticSearchConfiguration {
-	return tmConfig.ElasticSearchConfiguration
+func GetElasticsearchConfiguration() *config.ElasticSearch {
+	return tmConfig.ElasticSearch
 }
 
 // IsRunLocal returns if the testmachinery is currently running locally
 func IsRunLocal() bool {
-	return tmConfig.TestMachineryConfiguration.Local
+	return tmConfig.TestMachinery.Local
 }
 
 // IsRunInsecure returns if the testmachinery is run locally
 func IsRunInsecure() bool {
-	return tmConfig.TestMachineryConfiguration.Insecure
+	return tmConfig.TestMachinery.Insecure
 }
 
 // GetWorkflowName returns the workflow name of a testruns

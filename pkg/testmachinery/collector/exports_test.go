@@ -57,7 +57,7 @@ var _ = Describe("collector summary", func() {
 			log:      log.NullLogger{},
 			esClient: esClient,
 			s3Client: s3Client,
-			s3Config: &config.S3Configuration{BucketName: "testbucket"},
+			s3Config: &config.S3{BucketName: "testbucket"},
 		}
 	})
 

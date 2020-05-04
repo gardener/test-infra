@@ -45,7 +45,7 @@ type client struct {
 	password string
 }
 
-func NewClient(cfg config.ElasticSearchConfiguration) (Client, error) {
+func NewClient(cfg config.ElasticSearch) (Client, error) {
 	u, err := url.Parse(cfg.Endpoint)
 	if err != nil {
 		return nil, err

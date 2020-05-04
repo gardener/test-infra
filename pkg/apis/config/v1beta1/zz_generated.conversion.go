@@ -35,23 +35,23 @@ func init() {
 // RegisterConversions adds conversion functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterConversions(s *runtime.Scheme) error {
-	if err := s.AddGeneratedConversionFunc((*ArgoConfiguration)(nil), (*config.ArgoConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration(a.(*ArgoConfiguration), b.(*config.ArgoConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*Argo)(nil), (*config.Argo)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Argo_To_config_Argo(a.(*Argo), b.(*config.Argo), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.ArgoConfiguration)(nil), (*ArgoConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration(a.(*config.ArgoConfiguration), b.(*ArgoConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.Argo)(nil), (*Argo)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Argo_To_v1beta1_Argo(a.(*config.Argo), b.(*Argo), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*ArgoUIConfiguration)(nil), (*config.ArgoUIConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration(a.(*ArgoUIConfiguration), b.(*config.ArgoUIConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*ArgoUI)(nil), (*config.ArgoUI)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ArgoUI_To_config_ArgoUI(a.(*ArgoUI), b.(*config.ArgoUI), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.ArgoUIConfiguration)(nil), (*ArgoUIConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration(a.(*config.ArgoUIConfiguration), b.(*ArgoUIConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.ArgoUI)(nil), (*ArgoUI)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_ArgoUI_To_v1beta1_ArgoUI(a.(*config.ArgoUI), b.(*ArgoUI), scope)
 	}); err != nil {
 		return err
 	}
@@ -65,53 +65,63 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*ControllerConfig)(nil), (*config.ControllerConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ControllerConfig_To_config_ControllerConfig(a.(*ControllerConfig), b.(*config.ControllerConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*Controller)(nil), (*config.Controller)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Controller_To_config_Controller(a.(*Controller), b.(*config.Controller), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.ControllerConfig)(nil), (*ControllerConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_ControllerConfig_To_v1beta1_ControllerConfig(a.(*config.ControllerConfig), b.(*ControllerConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*config.Controller)(nil), (*Controller)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Controller_To_v1beta1_Controller(a.(*config.Controller), b.(*Controller), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*ElasticSearchConfiguration)(nil), (*config.ElasticSearchConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ElasticSearchConfiguration_To_config_ElasticSearchConfiguration(a.(*ElasticSearchConfiguration), b.(*config.ElasticSearchConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*ElasticSearch)(nil), (*config.ElasticSearch)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ElasticSearch_To_config_ElasticSearch(a.(*ElasticSearch), b.(*config.ElasticSearch), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.ElasticSearchConfiguration)(nil), (*ElasticSearchConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_ElasticSearchConfiguration_To_v1beta1_ElasticSearchConfiguration(a.(*config.ElasticSearchConfiguration), b.(*ElasticSearchConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.ElasticSearch)(nil), (*ElasticSearch)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_ElasticSearch_To_v1beta1_ElasticSearch(a.(*config.ElasticSearch), b.(*ElasticSearch), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*GitHubCacheConfig)(nil), (*config.GitHubCacheConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_GitHubCacheConfig_To_config_GitHubCacheConfig(a.(*GitHubCacheConfig), b.(*config.GitHubCacheConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*GitHub)(nil), (*config.GitHub)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_GitHub_To_config_GitHub(a.(*GitHub), b.(*config.GitHub), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.GitHubCacheConfig)(nil), (*GitHubCacheConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_GitHubCacheConfig_To_v1beta1_GitHubCacheConfig(a.(*config.GitHubCacheConfig), b.(*GitHubCacheConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*config.GitHub)(nil), (*GitHub)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_GitHub_To_v1beta1_GitHub(a.(*config.GitHub), b.(*GitHub), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*GitHubConfig)(nil), (*config.GitHubConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_GitHubConfig_To_config_GitHubConfig(a.(*GitHubConfig), b.(*config.GitHubConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*GitHubCache)(nil), (*config.GitHubCache)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_GitHubCache_To_config_GitHubCache(a.(*GitHubCache), b.(*config.GitHubCache), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.GitHubConfig)(nil), (*GitHubConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_GitHubConfig_To_v1beta1_GitHubConfig(a.(*config.GitHubConfig), b.(*GitHubConfig), scope)
+	if err := s.AddGeneratedConversionFunc((*config.GitHubCache)(nil), (*GitHubCache)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_GitHubCache_To_v1beta1_GitHubCache(a.(*config.GitHubCache), b.(*GitHubCache), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*IngressConfiguration)(nil), (*config.IngressConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(a.(*IngressConfiguration), b.(*config.IngressConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*Ingress)(nil), (*config.Ingress)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Ingress_To_config_Ingress(a.(*Ingress), b.(*config.Ingress), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.IngressConfiguration)(nil), (*IngressConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(a.(*config.IngressConfiguration), b.(*IngressConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.Ingress)(nil), (*Ingress)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Ingress_To_v1beta1_Ingress(a.(*config.Ingress), b.(*Ingress), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*Logging)(nil), (*config.Logging)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Logging_To_config_Logging(a.(*Logging), b.(*config.Logging), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.Logging)(nil), (*Logging)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Logging_To_v1beta1_Logging(a.(*config.Logging), b.(*Logging), scope)
 	}); err != nil {
 		return err
 	}
@@ -125,33 +135,43 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*S3Configuration)(nil), (*config.S3Configuration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_S3Configuration_To_config_S3Configuration(a.(*S3Configuration), b.(*config.S3Configuration), scope)
+	if err := s.AddGeneratedConversionFunc((*Observability)(nil), (*config.Observability)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Observability_To_config_Observability(a.(*Observability), b.(*config.Observability), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.S3Configuration)(nil), (*S3Configuration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_S3Configuration_To_v1beta1_S3Configuration(a.(*config.S3Configuration), b.(*S3Configuration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.Observability)(nil), (*Observability)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Observability_To_v1beta1_Observability(a.(*config.Observability), b.(*Observability), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*S3ServerConfiguration)(nil), (*config.S3ServerConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration(a.(*S3ServerConfiguration), b.(*config.S3ServerConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*S3)(nil), (*config.S3)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_S3_To_config_S3(a.(*S3), b.(*config.S3), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.S3ServerConfiguration)(nil), (*S3ServerConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration(a.(*config.S3ServerConfiguration), b.(*S3ServerConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.S3)(nil), (*S3)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_S3_To_v1beta1_S3(a.(*config.S3), b.(*S3), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*TestMachineryConfiguration)(nil), (*config.TestMachineryConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration(a.(*TestMachineryConfiguration), b.(*config.TestMachineryConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*S3Server)(nil), (*config.S3Server)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_S3Server_To_config_S3Server(a.(*S3Server), b.(*config.S3Server), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*config.TestMachineryConfiguration)(nil), (*TestMachineryConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration(a.(*config.TestMachineryConfiguration), b.(*TestMachineryConfiguration), scope)
+	if err := s.AddGeneratedConversionFunc((*config.S3Server)(nil), (*S3Server)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_S3Server_To_v1beta1_S3Server(a.(*config.S3Server), b.(*S3Server), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*TestMachinery)(nil), (*config.TestMachinery)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_TestMachinery_To_config_TestMachinery(a.(*TestMachinery), b.(*config.TestMachinery), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.TestMachinery)(nil), (*TestMachinery)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_TestMachinery_To_v1beta1_TestMachinery(a.(*config.TestMachinery), b.(*TestMachinery), scope)
 	}); err != nil {
 		return err
 	}
@@ -168,69 +188,72 @@ func RegisterConversions(s *runtime.Scheme) error {
 	return nil
 }
 
-func autoConvert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration(in *ArgoConfiguration, out *config.ArgoConfiguration, s conversion.Scope) error {
-	if err := Convert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration(&in.ArgoUI, &out.ArgoUI, s); err != nil {
+func autoConvert_v1beta1_Argo_To_config_Argo(in *Argo, out *config.Argo, s conversion.Scope) error {
+	if err := Convert_v1beta1_ArgoUI_To_config_ArgoUI(&in.ArgoUI, &out.ArgoUI, s); err != nil {
 		return err
 	}
 	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
 	return nil
 }
 
-// Convert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration(in *ArgoConfiguration, out *config.ArgoConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration(in, out, s)
+// Convert_v1beta1_Argo_To_config_Argo is an autogenerated conversion function.
+func Convert_v1beta1_Argo_To_config_Argo(in *Argo, out *config.Argo, s conversion.Scope) error {
+	return autoConvert_v1beta1_Argo_To_config_Argo(in, out, s)
 }
 
-func autoConvert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration(in *config.ArgoConfiguration, out *ArgoConfiguration, s conversion.Scope) error {
-	if err := Convert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration(&in.ArgoUI, &out.ArgoUI, s); err != nil {
+func autoConvert_config_Argo_To_v1beta1_Argo(in *config.Argo, out *Argo, s conversion.Scope) error {
+	if err := Convert_config_ArgoUI_To_v1beta1_ArgoUI(&in.ArgoUI, &out.ArgoUI, s); err != nil {
 		return err
 	}
 	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
 	return nil
 }
 
-// Convert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration is an autogenerated conversion function.
-func Convert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration(in *config.ArgoConfiguration, out *ArgoConfiguration, s conversion.Scope) error {
-	return autoConvert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration(in, out, s)
+// Convert_config_Argo_To_v1beta1_Argo is an autogenerated conversion function.
+func Convert_config_Argo_To_v1beta1_Argo(in *config.Argo, out *Argo, s conversion.Scope) error {
+	return autoConvert_config_Argo_To_v1beta1_Argo(in, out, s)
 }
 
-func autoConvert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration(in *ArgoUIConfiguration, out *config.ArgoUIConfiguration, s conversion.Scope) error {
-	if err := Convert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(&in.Ingress, &out.Ingress, s); err != nil {
+func autoConvert_v1beta1_ArgoUI_To_config_ArgoUI(in *ArgoUI, out *config.ArgoUI, s conversion.Scope) error {
+	if err := Convert_v1beta1_Ingress_To_config_Ingress(&in.Ingress, &out.Ingress, s); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Convert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration(in *ArgoUIConfiguration, out *config.ArgoUIConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_ArgoUIConfiguration_To_config_ArgoUIConfiguration(in, out, s)
+// Convert_v1beta1_ArgoUI_To_config_ArgoUI is an autogenerated conversion function.
+func Convert_v1beta1_ArgoUI_To_config_ArgoUI(in *ArgoUI, out *config.ArgoUI, s conversion.Scope) error {
+	return autoConvert_v1beta1_ArgoUI_To_config_ArgoUI(in, out, s)
 }
 
-func autoConvert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration(in *config.ArgoUIConfiguration, out *ArgoUIConfiguration, s conversion.Scope) error {
-	if err := Convert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(&in.Ingress, &out.Ingress, s); err != nil {
+func autoConvert_config_ArgoUI_To_v1beta1_ArgoUI(in *config.ArgoUI, out *ArgoUI, s conversion.Scope) error {
+	if err := Convert_config_Ingress_To_v1beta1_Ingress(&in.Ingress, &out.Ingress, s); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Convert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration is an autogenerated conversion function.
-func Convert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration(in *config.ArgoUIConfiguration, out *ArgoUIConfiguration, s conversion.Scope) error {
-	return autoConvert_config_ArgoUIConfiguration_To_v1beta1_ArgoUIConfiguration(in, out, s)
+// Convert_config_ArgoUI_To_v1beta1_ArgoUI is an autogenerated conversion function.
+func Convert_config_ArgoUI_To_v1beta1_ArgoUI(in *config.ArgoUI, out *ArgoUI, s conversion.Scope) error {
+	return autoConvert_config_ArgoUI_To_v1beta1_ArgoUI(in, out, s)
 }
 
 func autoConvert_v1beta1_Configuration_To_config_Configuration(in *Configuration, out *config.Configuration, s conversion.Scope) error {
-	if err := Convert_v1beta1_ControllerConfig_To_config_ControllerConfig(&in.ControllerConfig, &out.ControllerConfig, s); err != nil {
+	if err := Convert_v1beta1_Controller_To_config_Controller(&in.Controller, &out.Controller, s); err != nil {
 		return err
 	}
-	if err := Convert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration(&in.TestMachineryConfiguration, &out.TestMachineryConfiguration, s); err != nil {
+	if err := Convert_v1beta1_TestMachinery_To_config_TestMachinery(&in.TestMachinery, &out.TestMachinery, s); err != nil {
 		return err
 	}
-	if err := Convert_v1beta1_GitHubConfig_To_config_GitHubConfig(&in.GitHub, &out.GitHub, s); err != nil {
+	if err := Convert_v1beta1_GitHub_To_config_GitHub(&in.GitHub, &out.GitHub, s); err != nil {
 		return err
 	}
-	out.S3Configuration = (*config.S3Configuration)(unsafe.Pointer(in.S3Configuration))
-	out.ElasticSearchConfiguration = (*config.ElasticSearchConfiguration)(unsafe.Pointer(in.ElasticSearchConfiguration))
-	if err := Convert_v1beta1_ArgoConfiguration_To_config_ArgoConfiguration(&in.Argo, &out.Argo, s); err != nil {
+	out.S3 = (*config.S3)(unsafe.Pointer(in.S3))
+	out.ElasticSearch = (*config.ElasticSearch)(unsafe.Pointer(in.ElasticSearch))
+	if err := Convert_v1beta1_Argo_To_config_Argo(&in.Argo, &out.Argo, s); err != nil {
+		return err
+	}
+	if err := Convert_v1beta1_Observability_To_config_Observability(&in.Observability, &out.Observability, s); err != nil {
 		return err
 	}
 	return nil
@@ -242,18 +265,21 @@ func Convert_v1beta1_Configuration_To_config_Configuration(in *Configuration, ou
 }
 
 func autoConvert_config_Configuration_To_v1beta1_Configuration(in *config.Configuration, out *Configuration, s conversion.Scope) error {
-	if err := Convert_config_ControllerConfig_To_v1beta1_ControllerConfig(&in.ControllerConfig, &out.ControllerConfig, s); err != nil {
+	if err := Convert_config_Controller_To_v1beta1_Controller(&in.Controller, &out.Controller, s); err != nil {
 		return err
 	}
-	if err := Convert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration(&in.TestMachineryConfiguration, &out.TestMachineryConfiguration, s); err != nil {
+	if err := Convert_config_TestMachinery_To_v1beta1_TestMachinery(&in.TestMachinery, &out.TestMachinery, s); err != nil {
 		return err
 	}
-	if err := Convert_config_GitHubConfig_To_v1beta1_GitHubConfig(&in.GitHub, &out.GitHub, s); err != nil {
+	if err := Convert_config_GitHub_To_v1beta1_GitHub(&in.GitHub, &out.GitHub, s); err != nil {
 		return err
 	}
-	out.S3Configuration = (*S3Configuration)(unsafe.Pointer(in.S3Configuration))
-	out.ElasticSearchConfiguration = (*ElasticSearchConfiguration)(unsafe.Pointer(in.ElasticSearchConfiguration))
-	if err := Convert_config_ArgoConfiguration_To_v1beta1_ArgoConfiguration(&in.Argo, &out.Argo, s); err != nil {
+	out.S3 = (*S3)(unsafe.Pointer(in.S3))
+	out.ElasticSearch = (*ElasticSearch)(unsafe.Pointer(in.ElasticSearch))
+	if err := Convert_config_Argo_To_v1beta1_Argo(&in.Argo, &out.Argo, s); err != nil {
+		return err
+	}
+	if err := Convert_config_Observability_To_v1beta1_Observability(&in.Observability, &out.Observability, s); err != nil {
 		return err
 	}
 	return nil
@@ -264,7 +290,7 @@ func Convert_config_Configuration_To_v1beta1_Configuration(in *config.Configurat
 	return autoConvert_config_Configuration_To_v1beta1_Configuration(in, out, s)
 }
 
-func autoConvert_v1beta1_ControllerConfig_To_config_ControllerConfig(in *ControllerConfig, out *config.ControllerConfig, s conversion.Scope) error {
+func autoConvert_v1beta1_Controller_To_config_Controller(in *Controller, out *config.Controller, s conversion.Scope) error {
 	out.HealthAddr = in.HealthAddr
 	out.MetricsAddr = in.MetricsAddr
 	out.EnableLeaderElection = in.EnableLeaderElection
@@ -275,12 +301,12 @@ func autoConvert_v1beta1_ControllerConfig_To_config_ControllerConfig(in *Control
 	return nil
 }
 
-// Convert_v1beta1_ControllerConfig_To_config_ControllerConfig is an autogenerated conversion function.
-func Convert_v1beta1_ControllerConfig_To_config_ControllerConfig(in *ControllerConfig, out *config.ControllerConfig, s conversion.Scope) error {
-	return autoConvert_v1beta1_ControllerConfig_To_config_ControllerConfig(in, out, s)
+// Convert_v1beta1_Controller_To_config_Controller is an autogenerated conversion function.
+func Convert_v1beta1_Controller_To_config_Controller(in *Controller, out *config.Controller, s conversion.Scope) error {
+	return autoConvert_v1beta1_Controller_To_config_Controller(in, out, s)
 }
 
-func autoConvert_config_ControllerConfig_To_v1beta1_ControllerConfig(in *config.ControllerConfig, out *ControllerConfig, s conversion.Scope) error {
+func autoConvert_config_Controller_To_v1beta1_Controller(in *config.Controller, out *Controller, s conversion.Scope) error {
 	out.HealthAddr = in.HealthAddr
 	out.MetricsAddr = in.MetricsAddr
 	out.EnableLeaderElection = in.EnableLeaderElection
@@ -291,106 +317,130 @@ func autoConvert_config_ControllerConfig_To_v1beta1_ControllerConfig(in *config.
 	return nil
 }
 
-// Convert_config_ControllerConfig_To_v1beta1_ControllerConfig is an autogenerated conversion function.
-func Convert_config_ControllerConfig_To_v1beta1_ControllerConfig(in *config.ControllerConfig, out *ControllerConfig, s conversion.Scope) error {
-	return autoConvert_config_ControllerConfig_To_v1beta1_ControllerConfig(in, out, s)
+// Convert_config_Controller_To_v1beta1_Controller is an autogenerated conversion function.
+func Convert_config_Controller_To_v1beta1_Controller(in *config.Controller, out *Controller, s conversion.Scope) error {
+	return autoConvert_config_Controller_To_v1beta1_Controller(in, out, s)
 }
 
-func autoConvert_v1beta1_ElasticSearchConfiguration_To_config_ElasticSearchConfiguration(in *ElasticSearchConfiguration, out *config.ElasticSearchConfiguration, s conversion.Scope) error {
+func autoConvert_v1beta1_ElasticSearch_To_config_ElasticSearch(in *ElasticSearch, out *config.ElasticSearch, s conversion.Scope) error {
 	out.Endpoint = in.Endpoint
 	out.Username = in.Username
 	out.Password = in.Password
 	return nil
 }
 
-// Convert_v1beta1_ElasticSearchConfiguration_To_config_ElasticSearchConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_ElasticSearchConfiguration_To_config_ElasticSearchConfiguration(in *ElasticSearchConfiguration, out *config.ElasticSearchConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_ElasticSearchConfiguration_To_config_ElasticSearchConfiguration(in, out, s)
+// Convert_v1beta1_ElasticSearch_To_config_ElasticSearch is an autogenerated conversion function.
+func Convert_v1beta1_ElasticSearch_To_config_ElasticSearch(in *ElasticSearch, out *config.ElasticSearch, s conversion.Scope) error {
+	return autoConvert_v1beta1_ElasticSearch_To_config_ElasticSearch(in, out, s)
 }
 
-func autoConvert_config_ElasticSearchConfiguration_To_v1beta1_ElasticSearchConfiguration(in *config.ElasticSearchConfiguration, out *ElasticSearchConfiguration, s conversion.Scope) error {
+func autoConvert_config_ElasticSearch_To_v1beta1_ElasticSearch(in *config.ElasticSearch, out *ElasticSearch, s conversion.Scope) error {
 	out.Endpoint = in.Endpoint
 	out.Username = in.Username
 	out.Password = in.Password
 	return nil
 }
 
-// Convert_config_ElasticSearchConfiguration_To_v1beta1_ElasticSearchConfiguration is an autogenerated conversion function.
-func Convert_config_ElasticSearchConfiguration_To_v1beta1_ElasticSearchConfiguration(in *config.ElasticSearchConfiguration, out *ElasticSearchConfiguration, s conversion.Scope) error {
-	return autoConvert_config_ElasticSearchConfiguration_To_v1beta1_ElasticSearchConfiguration(in, out, s)
+// Convert_config_ElasticSearch_To_v1beta1_ElasticSearch is an autogenerated conversion function.
+func Convert_config_ElasticSearch_To_v1beta1_ElasticSearch(in *config.ElasticSearch, out *ElasticSearch, s conversion.Scope) error {
+	return autoConvert_config_ElasticSearch_To_v1beta1_ElasticSearch(in, out, s)
 }
 
-func autoConvert_v1beta1_GitHubCacheConfig_To_config_GitHubCacheConfig(in *GitHubCacheConfig, out *config.GitHubCacheConfig, s conversion.Scope) error {
+func autoConvert_v1beta1_GitHub_To_config_GitHub(in *GitHub, out *config.GitHub, s conversion.Scope) error {
+	out.Cache = (*config.GitHubCache)(unsafe.Pointer(in.Cache))
+	out.SecretsPath = in.SecretsPath
+	return nil
+}
+
+// Convert_v1beta1_GitHub_To_config_GitHub is an autogenerated conversion function.
+func Convert_v1beta1_GitHub_To_config_GitHub(in *GitHub, out *config.GitHub, s conversion.Scope) error {
+	return autoConvert_v1beta1_GitHub_To_config_GitHub(in, out, s)
+}
+
+func autoConvert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s conversion.Scope) error {
+	out.Cache = (*GitHubCache)(unsafe.Pointer(in.Cache))
+	out.SecretsPath = in.SecretsPath
+	return nil
+}
+
+// Convert_config_GitHub_To_v1beta1_GitHub is an autogenerated conversion function.
+func Convert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s conversion.Scope) error {
+	return autoConvert_config_GitHub_To_v1beta1_GitHub(in, out, s)
+}
+
+func autoConvert_v1beta1_GitHubCache_To_config_GitHubCache(in *GitHubCache, out *config.GitHubCache, s conversion.Scope) error {
 	out.CacheDir = in.CacheDir
 	out.CacheDiskSizeGB = in.CacheDiskSizeGB
 	out.MaxAgeSeconds = in.MaxAgeSeconds
 	return nil
 }
 
-// Convert_v1beta1_GitHubCacheConfig_To_config_GitHubCacheConfig is an autogenerated conversion function.
-func Convert_v1beta1_GitHubCacheConfig_To_config_GitHubCacheConfig(in *GitHubCacheConfig, out *config.GitHubCacheConfig, s conversion.Scope) error {
-	return autoConvert_v1beta1_GitHubCacheConfig_To_config_GitHubCacheConfig(in, out, s)
+// Convert_v1beta1_GitHubCache_To_config_GitHubCache is an autogenerated conversion function.
+func Convert_v1beta1_GitHubCache_To_config_GitHubCache(in *GitHubCache, out *config.GitHubCache, s conversion.Scope) error {
+	return autoConvert_v1beta1_GitHubCache_To_config_GitHubCache(in, out, s)
 }
 
-func autoConvert_config_GitHubCacheConfig_To_v1beta1_GitHubCacheConfig(in *config.GitHubCacheConfig, out *GitHubCacheConfig, s conversion.Scope) error {
+func autoConvert_config_GitHubCache_To_v1beta1_GitHubCache(in *config.GitHubCache, out *GitHubCache, s conversion.Scope) error {
 	out.CacheDir = in.CacheDir
 	out.CacheDiskSizeGB = in.CacheDiskSizeGB
 	out.MaxAgeSeconds = in.MaxAgeSeconds
 	return nil
 }
 
-// Convert_config_GitHubCacheConfig_To_v1beta1_GitHubCacheConfig is an autogenerated conversion function.
-func Convert_config_GitHubCacheConfig_To_v1beta1_GitHubCacheConfig(in *config.GitHubCacheConfig, out *GitHubCacheConfig, s conversion.Scope) error {
-	return autoConvert_config_GitHubCacheConfig_To_v1beta1_GitHubCacheConfig(in, out, s)
+// Convert_config_GitHubCache_To_v1beta1_GitHubCache is an autogenerated conversion function.
+func Convert_config_GitHubCache_To_v1beta1_GitHubCache(in *config.GitHubCache, out *GitHubCache, s conversion.Scope) error {
+	return autoConvert_config_GitHubCache_To_v1beta1_GitHubCache(in, out, s)
 }
 
-func autoConvert_v1beta1_GitHubConfig_To_config_GitHubConfig(in *GitHubConfig, out *config.GitHubConfig, s conversion.Scope) error {
-	out.Cache = (*config.GitHubCacheConfig)(unsafe.Pointer(in.Cache))
-	out.SecretsPath = in.SecretsPath
-	return nil
-}
-
-// Convert_v1beta1_GitHubConfig_To_config_GitHubConfig is an autogenerated conversion function.
-func Convert_v1beta1_GitHubConfig_To_config_GitHubConfig(in *GitHubConfig, out *config.GitHubConfig, s conversion.Scope) error {
-	return autoConvert_v1beta1_GitHubConfig_To_config_GitHubConfig(in, out, s)
-}
-
-func autoConvert_config_GitHubConfig_To_v1beta1_GitHubConfig(in *config.GitHubConfig, out *GitHubConfig, s conversion.Scope) error {
-	out.Cache = (*GitHubCacheConfig)(unsafe.Pointer(in.Cache))
-	out.SecretsPath = in.SecretsPath
-	return nil
-}
-
-// Convert_config_GitHubConfig_To_v1beta1_GitHubConfig is an autogenerated conversion function.
-func Convert_config_GitHubConfig_To_v1beta1_GitHubConfig(in *config.GitHubConfig, out *GitHubConfig, s conversion.Scope) error {
-	return autoConvert_config_GitHubConfig_To_v1beta1_GitHubConfig(in, out, s)
-}
-
-func autoConvert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(in *IngressConfiguration, out *config.IngressConfiguration, s conversion.Scope) error {
+func autoConvert_v1beta1_Ingress_To_config_Ingress(in *Ingress, out *config.Ingress, s conversion.Scope) error {
 	out.Enabled = in.Enabled
 	out.Host = in.Host
 	return nil
 }
 
-// Convert_v1beta1_IngressConfiguration_To_config_IngressConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(in *IngressConfiguration, out *config.IngressConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(in, out, s)
+// Convert_v1beta1_Ingress_To_config_Ingress is an autogenerated conversion function.
+func Convert_v1beta1_Ingress_To_config_Ingress(in *Ingress, out *config.Ingress, s conversion.Scope) error {
+	return autoConvert_v1beta1_Ingress_To_config_Ingress(in, out, s)
 }
 
-func autoConvert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(in *config.IngressConfiguration, out *IngressConfiguration, s conversion.Scope) error {
+func autoConvert_config_Ingress_To_v1beta1_Ingress(in *config.Ingress, out *Ingress, s conversion.Scope) error {
 	out.Enabled = in.Enabled
 	out.Host = in.Host
 	return nil
 }
 
-// Convert_config_IngressConfiguration_To_v1beta1_IngressConfiguration is an autogenerated conversion function.
-func Convert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(in *config.IngressConfiguration, out *IngressConfiguration, s conversion.Scope) error {
-	return autoConvert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(in, out, s)
+// Convert_config_Ingress_To_v1beta1_Ingress is an autogenerated conversion function.
+func Convert_config_Ingress_To_v1beta1_Ingress(in *config.Ingress, out *Ingress, s conversion.Scope) error {
+	return autoConvert_config_Ingress_To_v1beta1_Ingress(in, out, s)
+}
+
+func autoConvert_v1beta1_Logging_To_config_Logging(in *Logging, out *config.Logging, s conversion.Scope) error {
+	out.Namespace = in.Namespace
+	out.StorageClass = in.StorageClass
+	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
+	return nil
+}
+
+// Convert_v1beta1_Logging_To_config_Logging is an autogenerated conversion function.
+func Convert_v1beta1_Logging_To_config_Logging(in *Logging, out *config.Logging, s conversion.Scope) error {
+	return autoConvert_v1beta1_Logging_To_config_Logging(in, out, s)
+}
+
+func autoConvert_config_Logging_To_v1beta1_Logging(in *config.Logging, out *Logging, s conversion.Scope) error {
+	out.Namespace = in.Namespace
+	out.StorageClass = in.StorageClass
+	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
+	return nil
+}
+
+// Convert_config_Logging_To_v1beta1_Logging is an autogenerated conversion function.
+func Convert_config_Logging_To_v1beta1_Logging(in *config.Logging, out *Logging, s conversion.Scope) error {
+	return autoConvert_config_Logging_To_v1beta1_Logging(in, out, s)
 }
 
 func autoConvert_v1beta1_MinioConfiguration_To_config_MinioConfiguration(in *MinioConfiguration, out *config.MinioConfiguration, s conversion.Scope) error {
 	out.Distributed = in.Distributed
-	if err := Convert_v1beta1_IngressConfiguration_To_config_IngressConfiguration(&in.Ingress, &out.Ingress, s); err != nil {
+	if err := Convert_v1beta1_Ingress_To_config_Ingress(&in.Ingress, &out.Ingress, s); err != nil {
 		return err
 	}
 	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
@@ -404,7 +454,7 @@ func Convert_v1beta1_MinioConfiguration_To_config_MinioConfiguration(in *MinioCo
 
 func autoConvert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in *config.MinioConfiguration, out *MinioConfiguration, s conversion.Scope) error {
 	out.Distributed = in.Distributed
-	if err := Convert_config_IngressConfiguration_To_v1beta1_IngressConfiguration(&in.Ingress, &out.Ingress, s); err != nil {
+	if err := Convert_config_Ingress_To_v1beta1_Ingress(&in.Ingress, &out.Ingress, s); err != nil {
 		return err
 	}
 	out.ChartValues = *(*json.RawMessage)(unsafe.Pointer(&in.ChartValues))
@@ -416,8 +466,28 @@ func Convert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in *config.
 	return autoConvert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in, out, s)
 }
 
-func autoConvert_v1beta1_S3Configuration_To_config_S3Configuration(in *S3Configuration, out *config.S3Configuration, s conversion.Scope) error {
-	if err := Convert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration(&in.Server, &out.Server, s); err != nil {
+func autoConvert_v1beta1_Observability_To_config_Observability(in *Observability, out *config.Observability, s conversion.Scope) error {
+	out.Logging = (*config.Logging)(unsafe.Pointer(in.Logging))
+	return nil
+}
+
+// Convert_v1beta1_Observability_To_config_Observability is an autogenerated conversion function.
+func Convert_v1beta1_Observability_To_config_Observability(in *Observability, out *config.Observability, s conversion.Scope) error {
+	return autoConvert_v1beta1_Observability_To_config_Observability(in, out, s)
+}
+
+func autoConvert_config_Observability_To_v1beta1_Observability(in *config.Observability, out *Observability, s conversion.Scope) error {
+	out.Logging = (*Logging)(unsafe.Pointer(in.Logging))
+	return nil
+}
+
+// Convert_config_Observability_To_v1beta1_Observability is an autogenerated conversion function.
+func Convert_config_Observability_To_v1beta1_Observability(in *config.Observability, out *Observability, s conversion.Scope) error {
+	return autoConvert_config_Observability_To_v1beta1_Observability(in, out, s)
+}
+
+func autoConvert_v1beta1_S3_To_config_S3(in *S3, out *config.S3, s conversion.Scope) error {
+	if err := Convert_v1beta1_S3Server_To_config_S3Server(&in.Server, &out.Server, s); err != nil {
 		return err
 	}
 	out.BucketName = in.BucketName
@@ -426,13 +496,13 @@ func autoConvert_v1beta1_S3Configuration_To_config_S3Configuration(in *S3Configu
 	return nil
 }
 
-// Convert_v1beta1_S3Configuration_To_config_S3Configuration is an autogenerated conversion function.
-func Convert_v1beta1_S3Configuration_To_config_S3Configuration(in *S3Configuration, out *config.S3Configuration, s conversion.Scope) error {
-	return autoConvert_v1beta1_S3Configuration_To_config_S3Configuration(in, out, s)
+// Convert_v1beta1_S3_To_config_S3 is an autogenerated conversion function.
+func Convert_v1beta1_S3_To_config_S3(in *S3, out *config.S3, s conversion.Scope) error {
+	return autoConvert_v1beta1_S3_To_config_S3(in, out, s)
 }
 
-func autoConvert_config_S3Configuration_To_v1beta1_S3Configuration(in *config.S3Configuration, out *S3Configuration, s conversion.Scope) error {
-	if err := Convert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration(&in.Server, &out.Server, s); err != nil {
+func autoConvert_config_S3_To_v1beta1_S3(in *config.S3, out *S3, s conversion.Scope) error {
+	if err := Convert_config_S3Server_To_v1beta1_S3Server(&in.Server, &out.Server, s); err != nil {
 		return err
 	}
 	out.BucketName = in.BucketName
@@ -441,36 +511,36 @@ func autoConvert_config_S3Configuration_To_v1beta1_S3Configuration(in *config.S3
 	return nil
 }
 
-// Convert_config_S3Configuration_To_v1beta1_S3Configuration is an autogenerated conversion function.
-func Convert_config_S3Configuration_To_v1beta1_S3Configuration(in *config.S3Configuration, out *S3Configuration, s conversion.Scope) error {
-	return autoConvert_config_S3Configuration_To_v1beta1_S3Configuration(in, out, s)
+// Convert_config_S3_To_v1beta1_S3 is an autogenerated conversion function.
+func Convert_config_S3_To_v1beta1_S3(in *config.S3, out *S3, s conversion.Scope) error {
+	return autoConvert_config_S3_To_v1beta1_S3(in, out, s)
 }
 
-func autoConvert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration(in *S3ServerConfiguration, out *config.S3ServerConfiguration, s conversion.Scope) error {
+func autoConvert_v1beta1_S3Server_To_config_S3Server(in *S3Server, out *config.S3Server, s conversion.Scope) error {
 	out.Minio = (*config.MinioConfiguration)(unsafe.Pointer(in.Minio))
 	out.Endpoint = in.Endpoint
 	out.SSL = in.SSL
 	return nil
 }
 
-// Convert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration(in *S3ServerConfiguration, out *config.S3ServerConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_S3ServerConfiguration_To_config_S3ServerConfiguration(in, out, s)
+// Convert_v1beta1_S3Server_To_config_S3Server is an autogenerated conversion function.
+func Convert_v1beta1_S3Server_To_config_S3Server(in *S3Server, out *config.S3Server, s conversion.Scope) error {
+	return autoConvert_v1beta1_S3Server_To_config_S3Server(in, out, s)
 }
 
-func autoConvert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration(in *config.S3ServerConfiguration, out *S3ServerConfiguration, s conversion.Scope) error {
+func autoConvert_config_S3Server_To_v1beta1_S3Server(in *config.S3Server, out *S3Server, s conversion.Scope) error {
 	out.Minio = (*MinioConfiguration)(unsafe.Pointer(in.Minio))
 	out.Endpoint = in.Endpoint
 	out.SSL = in.SSL
 	return nil
 }
 
-// Convert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration is an autogenerated conversion function.
-func Convert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration(in *config.S3ServerConfiguration, out *S3ServerConfiguration, s conversion.Scope) error {
-	return autoConvert_config_S3ServerConfiguration_To_v1beta1_S3ServerConfiguration(in, out, s)
+// Convert_config_S3Server_To_v1beta1_S3Server is an autogenerated conversion function.
+func Convert_config_S3Server_To_v1beta1_S3Server(in *config.S3Server, out *S3Server, s conversion.Scope) error {
+	return autoConvert_config_S3Server_To_v1beta1_S3Server(in, out, s)
 }
 
-func autoConvert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration(in *TestMachineryConfiguration, out *config.TestMachineryConfiguration, s conversion.Scope) error {
+func autoConvert_v1beta1_TestMachinery_To_config_TestMachinery(in *TestMachinery, out *config.TestMachinery, s conversion.Scope) error {
 	out.Namespace = in.Namespace
 	out.TestDefPath = in.TestDefPath
 	out.PrepareImage = in.PrepareImage
@@ -482,12 +552,12 @@ func autoConvert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfi
 	return nil
 }
 
-// Convert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration is an autogenerated conversion function.
-func Convert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration(in *TestMachineryConfiguration, out *config.TestMachineryConfiguration, s conversion.Scope) error {
-	return autoConvert_v1beta1_TestMachineryConfiguration_To_config_TestMachineryConfiguration(in, out, s)
+// Convert_v1beta1_TestMachinery_To_config_TestMachinery is an autogenerated conversion function.
+func Convert_v1beta1_TestMachinery_To_config_TestMachinery(in *TestMachinery, out *config.TestMachinery, s conversion.Scope) error {
+	return autoConvert_v1beta1_TestMachinery_To_config_TestMachinery(in, out, s)
 }
 
-func autoConvert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration(in *config.TestMachineryConfiguration, out *TestMachineryConfiguration, s conversion.Scope) error {
+func autoConvert_config_TestMachinery_To_v1beta1_TestMachinery(in *config.TestMachinery, out *TestMachinery, s conversion.Scope) error {
 	out.Namespace = in.Namespace
 	out.TestDefPath = in.TestDefPath
 	out.PrepareImage = in.PrepareImage
@@ -499,9 +569,9 @@ func autoConvert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfi
 	return nil
 }
 
-// Convert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration is an autogenerated conversion function.
-func Convert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration(in *config.TestMachineryConfiguration, out *TestMachineryConfiguration, s conversion.Scope) error {
-	return autoConvert_config_TestMachineryConfiguration_To_v1beta1_TestMachineryConfiguration(in, out, s)
+// Convert_config_TestMachinery_To_v1beta1_TestMachinery is an autogenerated conversion function.
+func Convert_config_TestMachinery_To_v1beta1_TestMachinery(in *config.TestMachinery, out *TestMachinery, s conversion.Scope) error {
+	return autoConvert_config_TestMachinery_To_v1beta1_TestMachinery(in, out, s)
 }
 
 func autoConvert_v1beta1_WebhookConfig_To_config_WebhookConfig(in *WebhookConfig, out *config.WebhookConfig, s conversion.Scope) error {

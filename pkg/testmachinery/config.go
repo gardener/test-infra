@@ -98,9 +98,9 @@ type TmConfiguration struct {
 	GitHubSecrets []GitHubInstanceConfig
 }
 
-// GitHubConfig represents the github configuration for the testmachinery
+// GitHub represents the github configuration for the testmachinery
 type GitHubConfig struct {
-	Cache   *config.GitHubCacheConfig
+	Cache   *config.GitHubCache
 	Secrets []GitHubInstanceConfig
 }
 
@@ -164,18 +164,18 @@ func (c *TmConfiguration) String() string {
 		}
 	}
 
-	if cc.S3Configuration != nil {
-		if len(cc.S3Configuration.SecretKey) != 0 {
-			cc.S3Configuration.SecretKey = redactedString
+	if cc.S3 != nil {
+		if len(cc.S3.SecretKey) != 0 {
+			cc.S3.SecretKey = redactedString
 		}
-		if len(cc.S3Configuration.AccessKey) != 0 {
-			cc.S3Configuration.AccessKey = redactedString
+		if len(cc.S3.AccessKey) != 0 {
+			cc.S3.AccessKey = redactedString
 		}
 	}
 
-	if cc.ElasticSearchConfiguration != nil {
-		if len(cc.ElasticSearchConfiguration.Password) != 0 {
-			cc.ElasticSearchConfiguration.Password = redactedString
+	if cc.ElasticSearch != nil {
+		if len(cc.ElasticSearch.Password) != 0 {
+			cc.ElasticSearch.Password = redactedString
 		}
 	}
 

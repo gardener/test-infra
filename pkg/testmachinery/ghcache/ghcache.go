@@ -31,7 +31,7 @@ import (
 
 // Cache adds github caching to a http client.
 // It returns a mem cache by default and a disk cache if a directory is defined
-func Cache(log logr.Logger, cfg *config.GitHubCacheConfig, delegate http.RoundTripper) (http.RoundTripper, error) {
+func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper) (http.RoundTripper, error) {
 	if cfg == nil && internalConfig == nil {
 		return nil, errors.New("no configuration is provided for the github cache")
 	}
@@ -57,7 +57,7 @@ func Cache(log logr.Logger, cfg *config.GitHubCacheConfig, delegate http.RoundTr
 
 }
 
-func getCache(cfg *config.GitHubCacheConfig) (httpcache.Cache, error) {
+func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
 	if cfg.CacheDir == "" {
 		return httpcache.NewMemoryCache(), nil
 	}
@@ -77,13 +77,13 @@ func getCache(cfg *config.GitHubCacheConfig) (httpcache.Cache, error) {
 		})), nil
 }
 
-var internalConfig *config.GitHubCacheConfig
+var internalConfig *config.GitHubCache
 
-func AddFlags(flagset *flag.FlagSet) *config.GitHubCacheConfig {
+func AddFlags(flagset *flag.FlagSet) *config.GitHubCache {
 	if flagset == nil {
 		flagset = flag.CommandLine
 	}
-	internalConfig = &config.GitHubCacheConfig{}
+	internalConfig = &config.GitHubCache{}
 	flagset.StringVar(&internalConfig.CacheDir, "github-cache-dir", "",
 		"Path directory that should be used to cache github requests")
 	flagset.IntVar(&internalConfig.CacheDiskSizeGB, "github-cache-size", 1,

@@ -66,4 +66,10 @@ s3Configuration:
 esConfiguration:
 {{ toYaml .Values.testmachinery.esConfiguration | indent 2 }}
 {{- end }}
+
+{{- if .Values.testmachinery.observability }}
+esConfiguration:
+{{ toYaml .Values.testmachinery.observability | indent 2 }}
+{{- end }}
+
 {{- end }}
