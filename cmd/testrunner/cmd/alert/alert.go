@@ -61,7 +61,7 @@ var alertCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		esClient, err := elasticsearch.NewClient(config.ElasticSearchConfiguration{
+		esClient, err := elasticsearch.NewClient(config.ElasticSearch{
 			Endpoint: elasticsearchEndpoint,
 			Username: elasticsearchUser,
 			Password: elasticsearchPass,

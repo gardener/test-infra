@@ -43,14 +43,14 @@ func NewTestMachineryController(mgr manager.Manager, log logr.Logger, config *co
 		collect  collector.Interface
 		s3Client s3.Client
 	)
-	if !config.TestMachineryConfiguration.DisableCollector {
+	if !config.TestMachinery.DisableCollector {
 		collect, err = collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetElasticsearchConfiguration(), testmachinery.GetS3Configuration())
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to setup collector")
 		}
 	}
 
-	if !config.TestMachineryConfiguration.Local {
+	if !config.TestMachinery.Local {
 		s3Client, err = s3.New(s3.FromConfig(testmachinery.GetS3Configuration()))
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to setup s3 client")
@@ -58,7 +58,7 @@ func NewTestMachineryController(mgr manager.Manager, log logr.Logger, config *co
 	}
 
 	tmReconciler := reconciler.New(mgr, log.WithName("controller"), s3Client, collect)
-	c, err := New(mgr, tmReconciler, &config.ControllerConfig.MaxConcurrentSyncs)
+	c, err := New(mgr, tmReconciler, &config.Controller.MaxConcurrentSyncs)
 	if err != nil {
 		return nil, err
 	}

@@ -77,7 +77,7 @@ func (o *options) run(ctx context.Context) {
 		os.Exit(1)
 	}
 
-	if len(o.configwatcher.GetConfiguration().ControllerConfig.HealthAddr) != 0 {
+	if len(o.configwatcher.GetConfiguration().Controller.HealthAddr) != 0 {
 		if err := mgr.AddHealthzCheck("default", health.Healthz()); err != nil {
 			o.log.Error(err, "unable to register default health check")
 			os.Exit(1)

@@ -15,3 +15,11 @@ images:
   sourceRepository: github.com/minio/minio
   repository: minio/minio
   tag: "RELEASE.2020-04-04T05-39-31Z"
+- name: loki
+  sourceRepository: https://github.com/grafana/loki
+  repository: grafana/loki
+  tag: "v1.3.0"
+- name: promtail
+  sourceRepository: https://github.com/grafana/loki/tree/master/docs/clients/promtail
+  repository: grafana/promtail
+  tag: "v1.3.0"

@@ -20,12 +20,12 @@ API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/te
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,LocationSets
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunSpec,TestLocations
 API rule violation: list_type_missing,github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1,TestrunStatus,Steps
-API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,ControllerConfig
-API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,ElasticSearchConfiguration
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,ElasticSearch
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,GitHub
-API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,TestMachineryConfiguration
-API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,ControllerConfig,WebhookConfig
-API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,TestMachineryConfiguration,TestDefPath
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,S3
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Configuration,TestMachinery
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,Controller,WebhookConfig
+API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/config/v1beta1,TestMachinery,TestDefPath
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,CountRequests
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,CountTimeouts
 API rule violation: names_match,github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1,ShootMeasurementData,DownPeriods

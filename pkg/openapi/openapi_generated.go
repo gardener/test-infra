@@ -29,18 +29,20 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration":               schema_pkg_apis_config_v1beta1_ArgoConfiguration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration":             schema_pkg_apis_config_v1beta1_ArgoUIConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo":                            schema_pkg_apis_config_v1beta1_Argo(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUI":                          schema_pkg_apis_config_v1beta1_ArgoUI(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Configuration":                   schema_pkg_apis_config_v1beta1_Configuration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig":                schema_pkg_apis_config_v1beta1_ControllerConfig(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration":      schema_pkg_apis_config_v1beta1_ElasticSearchConfiguration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig":               schema_pkg_apis_config_v1beta1_GitHubCacheConfig(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig":                    schema_pkg_apis_config_v1beta1_GitHubConfig(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration":            schema_pkg_apis_config_v1beta1_IngressConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller":                      schema_pkg_apis_config_v1beta1_Controller(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch":                   schema_pkg_apis_config_v1beta1_ElasticSearch(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub":                          schema_pkg_apis_config_v1beta1_GitHub(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache":                     schema_pkg_apis_config_v1beta1_GitHubCache(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress":                         schema_pkg_apis_config_v1beta1_Ingress(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging":                         schema_pkg_apis_config_v1beta1_Logging(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration":                 schema_pkg_apis_config_v1beta1_S3Configuration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration":           schema_pkg_apis_config_v1beta1_S3ServerConfiguration(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration":      schema_pkg_apis_config_v1beta1_TestMachineryConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability":                   schema_pkg_apis_config_v1beta1_Observability(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3":                              schema_pkg_apis_config_v1beta1_S3(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server":                        schema_pkg_apis_config_v1beta1_S3Server(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery":                   schema_pkg_apis_config_v1beta1_TestMachinery(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig":                   schema_pkg_apis_config_v1beta1_WebhookConfig(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.DowntimePeriods":              schema_pkg_apis_telemetry_v1beta1_DowntimePeriods(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ResponseTimeDuration":         schema_pkg_apis_telemetry_v1beta1_ResponseTimeDuration(ref),
@@ -71,17 +73,17 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_ArgoConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_Argo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ArgoConfiguration holds configuration for the argo installation",
+				Description: "Argo holds configuration for the argo installation",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"argoUI": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress holds the argo ui ingress configuration",
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration"),
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUI"),
 						},
 					},
 					"chartValues": {
@@ -96,21 +98,21 @@ func schema_pkg_apis_config_v1beta1_ArgoConfiguration(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUIConfiguration"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUI"},
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_ArgoUIConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_ArgoUI(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ArgoUIConfiguration holds information about the argo ui to deploy",
+				Description: "ArgoUI holds information about the argo ui to deploy",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress holds the argo ui ingress configuration",
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"),
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"),
 						},
 					},
 				},
@@ -118,7 +120,7 @@ func schema_pkg_apis_config_v1beta1_ArgoUIConfiguration(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"},
 	}
 }
 
@@ -145,32 +147,37 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 					},
 					"controller": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller"),
 						},
 					},
 					"testmachinery": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub"),
 						},
 					},
 					"s3Configuration": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3"),
 						},
 					},
 					"esConfiguration": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch"),
 						},
 					},
 					"argo": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo"),
+						},
+					},
+					"observability": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability"),
 						},
 					},
 				},
@@ -178,15 +185,15 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoConfiguration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ControllerConfig", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearchConfiguration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubConfig", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Configuration", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachineryConfiguration"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"},
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_ControllerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ControllerConfig holds information about the testmachinery controller",
+				Description: "Controller holds information about the testmachinery controller",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"healthAddr": {
@@ -231,11 +238,11 @@ func schema_pkg_apis_config_v1beta1_ControllerConfig(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_ElasticSearchConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_ElasticSearch(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ElasticSearchConfiguration holds information about the elastic instance to write data to.",
+				Description: "ElasticSearch holds information about the elastic instance to write data to.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"endpoint": {
@@ -262,11 +269,38 @@ func schema_pkg_apis_config_v1beta1_ElasticSearchConfiguration(ref common.Refere
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_GitHubCacheConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_GitHub(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "GitHubCacheConfig is the github cache configuration",
+				Description: "GitHub holds all github related information needed in the testmachinery.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cache": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"),
+						},
+					},
+					"secretsPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SecretsPath is the path to the github secrets file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_GitHubCache(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubCache is the github cache configuration",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"cacheDir": {
@@ -293,38 +327,11 @@ func schema_pkg_apis_config_v1beta1_GitHubCacheConfig(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_GitHubConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_Ingress(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "GitHubConfig holds all github related information needed in the testmachinery.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"cache": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig"),
-						},
-					},
-					"secretsPath": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SecretsPath is the path to the github secrets file",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCacheConfig"},
-	}
-}
-
-func schema_pkg_apis_config_v1beta1_IngressConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "IngressConfiguration holds information about a ingress",
+				Description: "Ingress holds information about a ingress",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"enabled": {
@@ -341,6 +348,41 @@ func schema_pkg_apis_config_v1beta1_IngressConfiguration(ref common.ReferenceCal
 					},
 				},
 				Required: []string{"enabled", "host"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_Logging(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Logging holds the configuration for the loki/promtail logging stack",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace configures the namespace the logging stack is deployed to.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"storageClass": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StorageClass configures the storage class for the loki deployment",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"chartValues": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specify additional values that are passed to the minio helm chart",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+				},
+				Required: []string{"namespace", "storageClass"},
 			},
 		},
 	}
@@ -363,7 +405,7 @@ func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallb
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress is the ingress configuration to expose minio",
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"),
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"),
 						},
 					},
 					"chartValues": {
@@ -378,20 +420,41 @@ func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.IngressConfiguration"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"},
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_S3Configuration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_Observability(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "S3Configuration holds information about the s3 endpoint",
+				Description: "Observability holds the configuration for logging and monitoring tooling",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"logging": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Logging configures the logging stack will not be deployed if empty",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_S3(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "S3 holds information about the s3 endpoint",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"server": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server"),
 						},
 					},
 					"bucketName": {
@@ -417,15 +480,15 @@ func schema_pkg_apis_config_v1beta1_S3Configuration(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3ServerConfiguration"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server"},
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_S3ServerConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_S3Server(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "S3ServerConfiguration defines the used s3 server The endpoint and ssl is not needed if minio should be deployed. Minio is deployed when the struct is defined",
+				Description: "S3Server defines the used s3 server The endpoint and ssl is not needed if minio should be deployed. Minio is deployed when the struct is defined",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"minio": {
@@ -453,11 +516,11 @@ func schema_pkg_apis_config_v1beta1_S3ServerConfiguration(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_TestMachineryConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TestMachineryConfiguration holds information about the testmachinery",
+				Description: "TestMachinery holds information about the testmachinery",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"namespace": {
@@ -483,7 +546,7 @@ func schema_pkg_apis_config_v1beta1_TestMachineryConfiguration(ref common.Refere
 					},
 					"baseImage": {
 						SchemaProps: spec.SchemaProps{
-							Description: "PrepareImage is the base image that is used as the default image if a TestDefinition does not define a image.",
+							Description: "PrepareImage is the base image that is used as the default image if a TestDefinition does not define an image.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

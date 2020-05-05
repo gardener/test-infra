@@ -22,47 +22,68 @@ var ChartsPath = filepath.Join("charts", "internal")
 // GitHubSecretKeyName is the name of the secret key that contains the github secrets
 const GitHubSecretKeyName = "config.yaml"
 
-// ArgoChartName is the name of the chart to bootstrap argo
-const ArgoChartName = "argo"
-
-// MinioChartName is the name of the chart to bootstrap minio
-const MinioChartName = "minio"
-
-// ArgoManagedResourceName is the name of the managed resource deployment
-const ArgoManagedResourceName = "argo"
-
-// MinioManagedResourceName is the name of the managed resource deployment
-const MinioManagedResourceName = "minio"
-
-// ArgoUIImageName is the name of the argo ui image in the image vector
-const ArgoUIImageName = "argo-ui"
-
-// ArgoWorkflowControllerImageName is the name of the argo workflow controller image in the image vector
-const ArgoWorkflowControllerImageName = "argo-workflow-controller"
-
-// ArgoExecutorImageName is the name of the argo executor image in the image vector
-const ArgoExecutorImageName = "argo-executor"
-
-// MinioImageName is the name of the minio image in the image vector
-const MinioImageName = "minio"
-
-// ArgoUIIngressName is the name of the argo ui ingress resource deployed to the cluster
-const ArgoUIIngressName = "argo-ui"
-
-// MinioDeploymentName is the name of the minio deployment or statefulset in the cluster
-const MinioDeploymentName = "minio"
-
-// MinioServiceName is the name of the minio service in the cluster
-const MinioServiceName = "minio"
-
-// MinioServicePort is the port of the minio service in the cluster
-const MinioServicePort = 9000
-
 // S3SecretName is the name of the secret containing the s3 credentials
 const S3SecretName = "s3-secret"
 
-// ArgoWorkflowControllerDeploymentName is the name workflow controller deployment
-const ArgoWorkflowControllerDeploymentName = "workflow-controller"
-
 // ResourceManagerDeploymentName is the name of the gardener resource manager deployment
 const ResourceManagerDeploymentName = "gardener-resource-manager"
+
+// Argo constants
+const (
+	// ArgoChartName is the name of the chart to bootstrap argo
+	ArgoChartName = "argo"
+
+	// ArgoManagedResourceName is the name of the managed resource deployment
+	ArgoManagedResourceName = "argo"
+
+	// ArgoUIImageName is the name of the argo ui image in the image vector
+	ArgoUIImageName = "argo-ui"
+
+	// ArgoWorkflowControllerImageName is the name of the argo workflow controller image in the image vector
+	ArgoWorkflowControllerImageName = "argo-workflow-controller"
+
+	// ArgoExecutorImageName is the name of the argo executor image in the image vector
+	ArgoExecutorImageName = "argo-executor"
+
+	// ArgoUIIngressName is the name of the argo ui ingress resource deployed to the cluster
+	ArgoUIIngressName = "argo-ui"
+
+	// ArgoWorkflowControllerDeploymentName is the name workflow controller deployment
+	ArgoWorkflowControllerDeploymentName = "workflow-controller"
+)
+
+// Minio constants
+const (
+	// MinioChartName is the name of the chart to bootstrap minio
+	MinioChartName = "minio"
+
+	// MinioManagedResourceName is the name of the managed resource deployment
+	MinioManagedResourceName = "minio"
+
+	// MinioImageName is the name of the minio image in the image vector
+	MinioImageName = "minio"
+
+	// MinioDeploymentName is the name of the minio deployment or statefulset in the cluster
+	MinioDeploymentName = "minio"
+
+	// MinioServiceName is the name of the minio service in the cluster
+	MinioServiceName = "minio"
+
+	// MinioServicePort is the port of the minio service in the cluster
+	MinioServicePort = 9000
+)
+
+// Logging constants
+const (
+	// LoggingChartName is the name of the chart to bootstrap logging
+	LoggingChartName = "logging"
+
+	// LoggingManagedResourceName is the name of the managed resource deployment
+	LoggingManagedResourceName = "logging"
+
+	// LokiImageName is the name of the loki image in the image vector
+	LokiImageName = "loki"
+
+	// PromtailImageName is the name of the promtail image in the image vector
+	PromtailImageName = "promtail"
+)

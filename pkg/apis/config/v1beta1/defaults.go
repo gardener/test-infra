@@ -24,8 +24,22 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 	return RegisterDefaults(scheme)
 }
 
-// SetDefaults_ControllerConfig sets default values for the ControllerConfig objects
-func SetDefaults_ControllerConfig(obj *ControllerConfig) {
+// SetDefaults_Configuration sets default values for the Configuration objects
+func SetDefaults_Configuration(obj *Configuration) {
+	SetDefaults_ControllerConfig(&obj.Controller)
+	SetDefaults_TestMachineryConfiguration(&obj.TestMachinery)
+	if obj.Observability.Logging != nil {
+		if len(obj.Observability.Logging.Namespace) == 0 {
+			obj.Observability.Logging.Namespace = obj.TestMachinery.Namespace
+		}
+		if len(obj.Observability.Logging.StorageClass) == 0 {
+			obj.Observability.Logging.StorageClass = "default"
+		}
+	}
+}
+
+// SetDefaults_ControllerConfig sets default values for the Controller objects
+func SetDefaults_ControllerConfig(obj *Controller) {
 	if obj.MaxConcurrentSyncs == 0 {
 		obj.MaxConcurrentSyncs = 1
 	}
@@ -43,8 +57,8 @@ func SetDefaults_ControllerConfig(obj *ControllerConfig) {
 	}
 }
 
-// SetDefaults_TestMachineryConfiguration sets default values for the TestMachineryConfiguration objects
-func SetDefaults_TestMachineryConfiguration(obj *TestMachineryConfiguration) {
+// SetDefaults_TestMachineryConfiguration sets default values for the TestMachinery objects
+func SetDefaults_TestMachineryConfiguration(obj *TestMachinery) {
 	if len(obj.TestDefPath) == 0 {
 		obj.TestDefPath = ".test-defs"
 	}

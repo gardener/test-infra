@@ -62,7 +62,7 @@ func (o *options) Complete() error {
 
 func (o *options) ApplyWebhooks(mgr manager.Manager) {
 	config := o.configwatcher.GetConfiguration()
-	if !config.TestMachineryConfiguration.Local {
+	if !config.TestMachinery.Local {
 		o.log.Info("Setup webhooks")
 		hookServer := mgr.GetWebhookServer()
 		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidator(logger.Log.WithName("validator"))})
@@ -72,16 +72,16 @@ func (o *options) ApplyWebhooks(mgr manager.Manager) {
 func (o *options) GetManagerOptions() manager.Options {
 	c := o.configwatcher.GetConfiguration()
 	opts := manager.Options{
-		LeaderElection:     c.ControllerConfig.EnableLeaderElection,
-		CertDir:            c.ControllerConfig.WebhookConfig.CertDir,
+		LeaderElection:     c.Controller.EnableLeaderElection,
+		CertDir:            c.Controller.WebhookConfig.CertDir,
 		MetricsBindAddress: "0", // disable the metrics serving by default
 	}
 
-	if len(c.ControllerConfig.HealthAddr) != 0 {
-		opts.HealthProbeBindAddress = c.ControllerConfig.HealthAddr
+	if len(c.Controller.HealthAddr) != 0 {
+		opts.HealthProbeBindAddress = c.Controller.HealthAddr
 	}
-	if len(c.ControllerConfig.MetricsAddr) != 0 {
-		opts.MetricsBindAddress = c.ControllerConfig.MetricsAddr
+	if len(c.Controller.MetricsAddr) != 0 {
+		opts.MetricsBindAddress = c.Controller.MetricsAddr
 	}
 
 	return opts

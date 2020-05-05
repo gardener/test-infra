@@ -68,20 +68,20 @@ func (o *Operation) IsLocal() bool {
 }
 
 // S3Config returns the s3 testConfig that is used by the testmachinery to test
-func (o *Operation) S3Config() (*config.S3Configuration, error) {
+func (o *Operation) S3Config() (*config.S3, error) {
 	if len(o.testConfig.S3Endpoint) == 0 {
 		return nil, errors.New("no s3 endpoint is defined")
 	}
-	if o.tmConfig.S3Configuration == nil {
+	if o.tmConfig.S3 == nil {
 		return nil, errors.New("no s3 config is defined")
 	}
-	return &config.S3Configuration{
-		Server: config.S3ServerConfiguration{
+	return &config.S3{
+		Server: config.S3Server{
 			Endpoint: o.testConfig.S3Endpoint,
 		},
-		AccessKey:  o.tmConfig.S3Configuration.AccessKey,
-		SecretKey:  o.tmConfig.S3Configuration.SecretKey,
-		BucketName: o.tmConfig.S3Configuration.BucketName,
+		AccessKey:  o.tmConfig.S3.AccessKey,
+		SecretKey:  o.tmConfig.S3.SecretKey,
+		BucketName: o.tmConfig.S3.BucketName,
 	}, nil
 }
 
@@ -94,7 +94,7 @@ func (o *Operation) WaitForClusterReadiness(maxWaitTime time.Duration) error {
 }
 
 // WaitForMinioServiceReadiness waits until the minio service in the testcluster is ready
-func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*config.S3Configuration, error) {
+func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*config.S3, error) {
 	if o.IsLocal() {
 		return nil, nil
 	}

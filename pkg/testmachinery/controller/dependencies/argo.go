@@ -43,8 +43,8 @@ func (e *DependencyEnsurer) ensureArgo(ctx context.Context, namespace string, co
 			},
 		},
 		"objectStorage": map[string]interface{}{
-			"bucketName": config.S3Configuration.BucketName,
-			"endpoint":   config.S3Configuration.Server.Endpoint,
+			"bucketName": config.S3.BucketName,
+			"endpoint":   config.S3.Server.Endpoint,
 			"secret": map[string]string{
 				"name": intconfig.S3SecretName,
 			},

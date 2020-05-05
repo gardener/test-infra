@@ -96,15 +96,25 @@ func (e *DependencyEnsurer) CheckHealth(ctx context.Context) error {
 		return nil
 	}
 
-	namespace := config.TestMachineryConfiguration.Namespace
+	namespace := config.TestMachinery.Namespace
 
 	if err := e.checkResourceManager(ctx, namespace); err != nil {
 		return err
 	}
 
-	if config.S3Configuration.Server.Minio != nil {
+	if config.S3.Server.Minio != nil {
 		mr := &v1alpha1.ManagedResource{}
 		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.ArgoManagedResourceName, Namespace: namespace}, mr); err != nil {
+			return err
+		}
+		if err := health.CheckManagedResourceHealthy(mr); err != nil {
+			return err
+		}
+	}
+
+	if config.Observability.Logging != nil {
+		mr := &v1alpha1.ManagedResource{}
+		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.LoggingManagedResourceName, Namespace: namespace}, mr); err != nil {
 			return err
 		}
 		if err := health.CheckManagedResourceHealthy(mr); err != nil {
@@ -127,18 +137,22 @@ func (e *DependencyEnsurer) Reconcile(ctx context.Context, config *intconfig.Con
 		return errs.ToAggregate()
 	}
 
-	namespace := config.TestMachineryConfiguration.Namespace
+	namespace := config.TestMachinery.Namespace
 
 	if err := e.checkResourceManager(ctx, namespace); err != nil {
 		e.log.Error(err, "resource manager not ready")
 		return err
 	}
 
-	if err := e.ensureObjectStore(ctx, namespace, config.S3Configuration); err != nil {
+	if err := e.ensureObjectStore(ctx, namespace, config.S3); err != nil {
 		return err
 	}
 
 	if err := e.ensureArgo(ctx, namespace, config); err != nil {
+		return err
+	}
+
+	if err := e.ensureLoggingStack(ctx, config.Observability.Logging); err != nil {
 		return err
 	}
 

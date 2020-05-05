@@ -25,21 +25,17 @@ import (
 // Configuration contains the testmachinery configuration values
 type Configuration struct {
 	metav1.TypeMeta `json:",inline"`
-
-	ControllerConfig ControllerConfig `json:"controller"`
-
-	TestMachineryConfiguration TestMachineryConfiguration `json:"testmachinery"`
-
-	GitHub GitHubConfig `json:"github,omitempty"`
-
-	S3Configuration            *S3Configuration            `json:"s3Configuration,omitempty"`
-	ElasticSearchConfiguration *ElasticSearchConfiguration `json:"esConfiguration,omitempty"`
-
-	Argo ArgoConfiguration `json:"argo"`
+	Controller      Controller     `json:"controller"`
+	TestMachinery   TestMachinery  `json:"testmachinery"`
+	GitHub          GitHub         `json:"github,omitempty"`
+	S3              *S3            `json:"s3Configuration,omitempty"`
+	ElasticSearch   *ElasticSearch `json:"esConfiguration,omitempty"`
+	Argo            Argo           `json:"argo"`
+	Observability   Observability  `json:"observability,omitempty"`
 }
 
-// ControllerConfig holds information about the testmachinery controller
-type ControllerConfig struct {
+// Controller holds information about the testmachinery controller
+type Controller struct {
 	// HealthAddr is the address of the healtcheck endpoint
 	HealthAddr string `json:"healthAddr,omitempty"`
 
@@ -62,8 +58,8 @@ type WebhookConfig struct {
 	CertDir string `json:"certDir,omitempty"`
 }
 
-// TestMachineryConfiguration holds information about the testmachinery
-type TestMachineryConfiguration struct {
+// TestMachinery holds information about the testmachinery
+type TestMachinery struct {
 	// Namespace is the namespace the testmachinery is deployed to.
 	Namespace string `json:"namespace,omitempty"`
 
@@ -79,7 +75,7 @@ type TestMachineryConfiguration struct {
 	// Local indicates if the controller is run locally.
 	Local bool `json:"local,omitempty"`
 
-	// Insecure indicates that the testmachinery runs in insecure mode.
+	// Insecure indicates that the testmachinery runs insecure.
 	Insecure bool `json:"insecure,omitempty"`
 
 	// DisableCollector disables the collection of test results and their ingestion into elasticsearch.
@@ -89,55 +85,49 @@ type TestMachineryConfiguration struct {
 	CleanWorkflowPods bool `json:"cleanWorkflowPods,omitempty"`
 }
 
-// GitHubConfig holds all github related information needed in the testmachinery.
-type GitHubConfig struct {
-	Cache *GitHubCacheConfig `json:"cache,omitempty"`
+// GitHub holds all github related information needed in the testmachinery.
+type GitHub struct {
+	Cache *GitHubCache `json:"cache,omitempty"`
 
 	// SecretsPath is the path to the github secrets file
 	SecretsPath string `json:"secretsPath,omitempty"`
 }
 
-// GitHubCacheConfig is the github cache configuration
-type GitHubCacheConfig struct {
+// GitHubCache is the github cache configuration
+type GitHubCache struct {
 	CacheDir        string `json:"cacheDir,omitempty"`
 	CacheDiskSizeGB int    `json:"cacheDiskSizeGB,omitempty"`
 	MaxAgeSeconds   int    `json:"maxAgeSeconds,omitempty"`
 }
 
-// ArgoConfiguration holds configuration for the argo installation
-type ArgoConfiguration struct {
+// Argo holds configuration for the argo installation
+type Argo struct {
 	// Ingress holds the argo ui ingress configuration
-	ArgoUI ArgoUIConfiguration `json:"argoUI"`
+	ArgoUI ArgoUI `json:"argoUI"`
 
 	// Specify additional values that are passed to the argo helm chart
 	// +optional
 	ChartValues json.RawMessage `json:"chartValues,omitempty"`
 }
 
-// ArgoUIConfiguration holds information about the argo ui to deploy
-type ArgoUIConfiguration struct {
+// ArgoUI holds information about the argo ui to deploy
+type ArgoUI struct {
 	// Ingress holds the argo ui ingress configuration
-	Ingress IngressConfiguration `json:"ingress"`
+	Ingress Ingress `json:"ingress"`
 }
 
-// IngressConfiguration holds information about a ingress
-type IngressConfiguration struct {
-	Enabled bool   `json:"enabled"`
-	Host    string `json:"host"`
+// S3 holds information about the s3 endpoint
+type S3 struct {
+	Server     S3Server `json:"server"`
+	BucketName string   `json:"bucketName,omitempty"`
+	AccessKey  string   `json:"accessKey,omitempty"`
+	SecretKey  string   `json:"secretKey,omitempty"`
 }
 
-// S3Configuration holds information about the s3 endpoint
-type S3Configuration struct {
-	Server     S3ServerConfiguration `json:"server"`
-	BucketName string                `json:"bucketName,omitempty"`
-	AccessKey  string                `json:"accessKey,omitempty"`
-	SecretKey  string                `json:"secretKey,omitempty"`
-}
-
-// S3ServerConfiguration defines the used s3 server
+// S3Server defines the used s3 server
 // The endpoint and ssl is not needed if minio should be deployed.
 // Minio is deployed when the struct is defined
-type S3ServerConfiguration struct {
+type S3Server struct {
 	// +optional
 	Minio *MinioConfiguration `json:"minio"`
 
@@ -152,16 +142,42 @@ type MinioConfiguration struct {
 
 	// Ingress is the ingress configuration to expose minio
 	// +optional
-	Ingress IngressConfiguration `json:"ingress,omitempty"`
+	Ingress Ingress `json:"ingress,omitempty"`
 
 	// Specify additional values that are passed to the minio helm chart
 	// +optional
 	ChartValues json.RawMessage `json:"chartValues,omitempty"`
 }
 
-// ElasticSearchConfiguration holds information about the elastic instance to write data to.
-type ElasticSearchConfiguration struct {
+// ElasticSearch holds information about the elastic instance to write data to.
+type ElasticSearch struct {
 	Endpoint string `json:"endpoint,omitempty"`
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
+}
+
+// Observability holds the configuration for logging and monitoring tooling
+type Observability struct {
+	// Logging configures the logging stack
+	// will not be deployed if empty
+	Logging *Logging `json:"logging,omitempty"`
+}
+
+// Logging holds the configuration for the loki/promtail logging stack
+type Logging struct {
+	// Namespace configures the namespace the logging stack is deployed to.
+	Namespace string `json:"namespace"`
+
+	// StorageClass configures the storage class for the loki deployment
+	StorageClass string `json:"storageClass"`
+
+	// Specify additional values that are passed to the minio helm chart
+	// +optional
+	ChartValues json.RawMessage `json:"chartValues,omitempty"`
+}
+
+// Ingress holds information about a ingress
+type Ingress struct {
+	Enabled bool   `json:"enabled"`
+	Host    string `json:"host"`
 }
