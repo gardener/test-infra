@@ -155,13 +155,14 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 
 func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata.Metadata, error) {
 	return &metadata.Metadata{
-		FlavorDescription:   shoot.Description,
-		Landscape:           r.parameters.Landscape,
-		ComponentDescriptor: r.parameters.ComponentDescriptor.JSON(),
-		CloudProvider:       string(shoot.Provider),
-		KubernetesVersion:   shoot.KubernetesVersion.Version,
-		Region:              shoot.Region,
-		Zone:                shoot.Zone,
-		OperatingSystem:     shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
+		FlavorDescription:      shoot.Description,
+		Landscape:              r.parameters.Landscape,
+		ComponentDescriptor:    r.parameters.ComponentDescriptor.JSON(),
+		CloudProvider:          string(shoot.Provider),
+		KubernetesVersion:      shoot.KubernetesVersion.Version,
+		Region:                 shoot.Region,
+		Zone:                   shoot.Zone,
+		OperatingSystem:        shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
+		OperatingSystemVersion: shoot.Workers[0].Machine.Image.Version,
 	}, nil
 }

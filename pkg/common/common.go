@@ -60,6 +60,9 @@ const (
 	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
 	AnnotationOperatingSystem = "metadata.testmachinery.gardener.cloud/operating-system"
 
+	// AnnotationOperatingSystemVersion is the annotation to specify the version of the operating system of the shoot nodes the testrun is testing
+	AnnotationOperatingSystemVersion = "metadata.testmachinery.gardener.cloud/operating-system-version"
+
 	// AnnotationRegion is the annotation to specify the region of the shoot the testrun is testing
 	AnnotationRegion = "metadata.testmachinery.gardener.cloud/region"
 

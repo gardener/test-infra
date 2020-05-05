@@ -23,9 +23,12 @@ type Metadata struct {
 	Landscape         string `json:"landscape,omitempty"`
 	CloudProvider     string `json:"cloudprovider,omitempty"`
 	KubernetesVersion string `json:"k8s_version,omitempty"`
-	OperatingSystem   string `json:"operating_system,omitempty"`
 	Region            string `json:"region,omitempty"`
-	Zone              string `json:"zone,omitempty"`
+
+	// todo: schrodit - add support to better persist multiple worker pools with multiple oss, versions and zones
+	OperatingSystem        string `json:"operating_system,omitempty"`
+	OperatingSystemVersion string `json:"operating_system_version,omitempty"`
+	Zone                   string `json:"zone,omitempty"`
 
 	// ComponentDescriptor describes the current component_descriptor of the direct landscape-setup components.
 	// It is formatted as an array of components: { name: "my_component", version: "0.0.1" }
