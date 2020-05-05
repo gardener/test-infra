@@ -24,15 +24,16 @@ import (
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
 	return map[string]string{
-		common.AnnotationLandscape:         m.Landscape,
-		common.AnnotationK8sVersion:        m.KubernetesVersion,
-		common.AnnotationCloudProvider:     m.CloudProvider,
-		common.AnnotationOperatingSystem:   m.OperatingSystem,
-		common.AnnotationRegion:            m.Region,
-		common.AnnotationZone:              m.Zone,
-		common.AnnotationFlavorDescription: m.FlavorDescription,
-		common.AnnotationDimension:         m.GetDimensionFromMetadata("/"),
-		common.AnnotationRetries:           strconv.Itoa(m.Retries),
+		common.AnnotationLandscape:              m.Landscape,
+		common.AnnotationK8sVersion:             m.KubernetesVersion,
+		common.AnnotationCloudProvider:          m.CloudProvider,
+		common.AnnotationOperatingSystem:        m.OperatingSystem,
+		common.AnnotationOperatingSystemVersion: m.OperatingSystemVersion,
+		common.AnnotationRegion:                 m.Region,
+		common.AnnotationZone:                   m.Zone,
+		common.AnnotationFlavorDescription:      m.FlavorDescription,
+		common.AnnotationDimension:              m.GetDimensionFromMetadata("/"),
+		common.AnnotationRetries:                strconv.Itoa(m.Retries),
 	}
 }
 
@@ -56,14 +57,15 @@ func (m *Metadata) DeepCopy() *Metadata {
 func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	retries, _ := strconv.Atoi(tr.Annotations[common.AnnotationRetries])
 	return &Metadata{
-		Landscape:         tr.Annotations[common.AnnotationLandscape],
-		KubernetesVersion: tr.Annotations[common.AnnotationK8sVersion],
-		CloudProvider:     tr.Annotations[common.AnnotationCloudProvider],
-		OperatingSystem:   tr.Annotations[common.AnnotationOperatingSystem],
-		Region:            tr.Annotations[common.AnnotationRegion],
-		Zone:              tr.Annotations[common.AnnotationZone],
-		FlavorDescription: tr.Annotations[common.AnnotationFlavorDescription],
-		Retries:           retries,
+		Landscape:              tr.Annotations[common.AnnotationLandscape],
+		KubernetesVersion:      tr.Annotations[common.AnnotationK8sVersion],
+		CloudProvider:          tr.Annotations[common.AnnotationCloudProvider],
+		OperatingSystem:        tr.Annotations[common.AnnotationOperatingSystem],
+		OperatingSystemVersion: tr.Annotations[common.AnnotationOperatingSystemVersion],
+		Region:                 tr.Annotations[common.AnnotationRegion],
+		Zone:                   tr.Annotations[common.AnnotationZone],
+		FlavorDescription:      tr.Annotations[common.AnnotationFlavorDescription],
+		Retries:                retries,
 		Testrun: TestrunMetadata{
 			ID:             tr.Name,
 			StartTime:      tr.Status.StartTime,
