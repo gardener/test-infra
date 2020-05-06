@@ -68,7 +68,7 @@ esConfiguration:
 {{- end }}
 
 {{- if .Values.testmachinery.observability }}
-esConfiguration:
+observability:
 {{ toYaml .Values.testmachinery.observability | indent 2 }}
 {{- end }}
 
