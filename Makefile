@@ -19,8 +19,10 @@ current_dir := $(shell dirname $(mkfile_path))
 current_sha := $(shell GIT_DIR=${current_dir}/.git git rev-parse @)
 
 REGISTRY            := eu.gcr.io/gardener-project/gardener/testmachinery
+HELM_REGISTRY       := eu.gcr.io/gardener-project/charts/gardener/testmachinery
 
 TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
+TM_CONTROLLER_CHART := $(HELM_REGISTRY)/testmachinery-controller
 VERSION             := $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
@@ -189,3 +191,15 @@ docker-image-base:
 .PHONY: docker-image-golang
 docker-image-golang:
 	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/golang/Dockerfile ./hack/images/golang
+
+##################################
+# Helm charts                    #
+##################################
+
+.PHONY: build-tm-chart
+build-tm-chart:
+	@helm chart save $(REPO_ROOT)/charts/testmachinery $(TM_CONTROLLER_CHART):$(VERSION)
+
+.PHONY: publish-tm-chart
+publish-tm-chart: build-tm-chart
+	@helm chart push $(TM_CONTROLLER_CHART):$(VERSION)
