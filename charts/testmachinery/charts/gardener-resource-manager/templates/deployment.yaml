@@ -51,7 +51,6 @@ spec:
         - --max-concurrent-workers={{ .Values.controllers.managedResource.concurrentSyncs }}
         - --health-sync-period={{ .Values.controllers.managedResourceHealth.syncPeriod }}
         - --health-max-concurrent-workers={{ .Values.controllers.managedResourceHealth.concurrentSyncs }}
-        - --namespace={{ .Release.Namespace }}
         {{- if .Values.resources }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
