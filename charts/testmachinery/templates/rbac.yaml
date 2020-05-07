@@ -21,6 +21,7 @@ rules:
   - ""
   resources:
   - secrets
+  - namespaces
   verbs:
   - get
   - create
