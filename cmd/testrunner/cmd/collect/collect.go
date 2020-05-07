@@ -37,19 +37,9 @@ var (
 	namespace        string
 
 	testrunName string
-
-	concourseOnErrorDir     string
-	assetComponents         []string
-	componentDescriptorPath string
-	githubUser              string
-	githubPassword          string
-	uploadStatusAsset       bool
-	assetPrefix             string
-	slackToken              string
-	slackChannel            string
-	concourseURL            string
-	postSummaryInSlack      bool
 )
+
+var collectConfig = result.Config{}
 
 // AddCommand adds collect to a command.
 func AddCommand(cmd *cobra.Command) {
@@ -63,20 +53,6 @@ var collectCmd = &cobra.Command{
 		ctx := context.Background()
 		defer ctx.Done()
 		logger.Log.Info("Start testmachinery testrunner")
-
-		collectConfig := result.Config{
-			ConcourseOnErrorDir:     concourseOnErrorDir,
-			ComponentDescriptorPath: componentDescriptorPath,
-			GithubUser:              githubUser,
-			GithubPassword:          githubPassword,
-			AssetComponents:         assetComponents,
-			UploadStatusAsset:       uploadStatusAsset,
-			AssetPrefix:             assetPrefix,
-			SlackToken:              slackToken,
-			SlackChannel:            slackChannel,
-			ConcourseURL:            concourseURL,
-			PostSummaryInSlack:      postSummaryInSlack,
-		}
 
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
@@ -127,20 +103,23 @@ func init() {
 	if err := collectCmd.MarkFlagRequired("tr-name"); err != nil {
 		logger.Log.Error(err, "mark flag required", "flag", "tr-name")
 	}
-	collectCmd.Flags().StringVar(&componentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
+	collectCmd.Flags().StringVar(&collectConfig.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 
 	// parameter flags
-	collectCmd.Flags().StringVar(&concourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
+	collectCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 
-	collectCmd.Flags().BoolVar(&uploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
-	collectCmd.Flags().StringVar(&githubUser, "github-user", os.Getenv("GITHUB_USER"), "On error dir which is used by Concourse.")
-	collectCmd.Flags().StringVar(&githubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
-	collectCmd.Flags().StringArrayVar(&assetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
-	collectCmd.Flags().StringVar(&assetPrefix, "asset-prefix", "", "Prefix of the asset name.")
-	collectCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
-	collectCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
-	collectCmd.Flags().StringVar(&concourseURL, "concourse-url", "", "Concourse job URL.")
-	collectCmd.Flags().BoolVar(&postSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
+	// asset upload
+	collectCmd.Flags().BoolVar(&collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
+	collectCmd.Flags().StringVar(&collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "On error dir which is used by Concourse.")
+	collectCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	collectCmd.Flags().StringArrayVar(&collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
+	collectCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
+
+	// slack notification
+	collectCmd.Flags().StringVar(&collectConfig.SlackToken, "slack-token", "", "Client token to authenticate")
+	collectCmd.Flags().StringVar(&collectConfig.SlackChannel, "slack-channel", "", "Client channel id to send the message to.")
+	collectCmd.Flags().StringVar(&collectConfig.ConcourseURL, "concourse-url", "", "Concourse job URL.")
+	collectCmd.Flags().BoolVar(&collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
 	// DEPRECATED FLAGS
 	collectCmd.Flags().StringP("output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
