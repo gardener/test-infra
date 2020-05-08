@@ -61,7 +61,7 @@ func header() string {
 func legend() string {
 	return fmt.Sprintf(`
 %s: Tests succeeded | %s: Tests failed | %s: Test execution error | %s: Tests not applicable
-`, util.StatusSymbolSuccess, util.StatusSymbolError, util.StatusSymbolError, util.StatusSymbolNA)
+`, util.StatusSymbolSuccess, util.StatusSymbolFailure, util.StatusSymbolError, util.StatusSymbolNA)
 }
 
 func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableItems) {
