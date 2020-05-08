@@ -114,6 +114,12 @@ test-infra:
         <<: *ti_docker_images
       steps:
         <<: *ti_test_steps
+        publish-helm:
+          execute:
+          - ./publish-helm
+          depends:
+          - release
+
 
     #####################
     #      Images       #
