@@ -1,0 +1,5 @@
+test-infra:
+  jobs:
+    head-update:
+      traits:
+        version: ~
