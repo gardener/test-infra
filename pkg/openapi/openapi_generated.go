@@ -40,6 +40,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging":                         schema_pkg_apis_config_v1beta1_Logging(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability":                   schema_pkg_apis_config_v1beta1_Observability(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity":          schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3":                              schema_pkg_apis_config_v1beta1_S3(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server":                        schema_pkg_apis_config_v1beta1_S3Server(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery":                   schema_pkg_apis_config_v1beta1_TestMachinery(ref),
@@ -155,6 +156,11 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"),
 						},
 					},
+					"argo": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo"),
+						},
+					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub"),
@@ -170,9 +176,9 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch"),
 						},
 					},
-					"argo": {
+					"reservedExcessCapacity": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo"),
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity"),
 						},
 					},
 					"observability": {
@@ -185,7 +191,7 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"},
 	}
 }
 
@@ -445,6 +451,35 @@ func schema_pkg_apis_config_v1beta1_Observability(ref common.ReferenceCallback) 
 	}
 }
 
+func schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReservedExcessCapacity holds information about additionally deployed reserved excess capacity pods.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Replicas is the amount of reserve excess capacity pods.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources specifies the resources of the single excess capacity pods",
+							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
+						},
+					},
+				},
+				Required: []string{"replicas"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.ResourceRequirements"},
+	}
+}
+
 func schema_pkg_apis_config_v1beta1_S3(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -595,14 +630,16 @@ func schema_pkg_apis_config_v1beta1_WebhookConfig(ref common.ReferenceCallback) 
 				Properties: map[string]spec.Schema{
 					"port": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Description: "Port is the port to serve validating webhooks",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"certDir": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "CertDir is the directory that contains the certificates that is used by the webhook",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

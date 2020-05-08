@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-{{- if .Values.reserveExcessCapacity.enabled }}
+
 ---
 apiVersion: scheduling.k8s.io/v1beta1
 kind: PriorityClass
@@ -30,7 +30,7 @@ metadata:
     app: reserve-excess-capacity
 spec:
   revisionHistoryLimit: 0
-  replicas: {{ .Values.reserveExcessCapacity.replicas }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app: reserve-excess-capacity
@@ -57,14 +57,13 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: pause-container
-        image: gcr.io/google_containers/pause-amd64:3.1
+        image: {{ index .Values.images "reserve-excess-capacity" }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            cpu: 1000m
-            memory: 1000Mi
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
           limits:
-            cpu: 1000m
-            memory: 1000Mi
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
       priorityClassName: tm-reserve-excess-capacity
-{{- end }}

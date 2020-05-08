@@ -33,4 +33,7 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 
 func SetObjectDefaults_Configuration(in *Configuration) {
 	SetDefaults_Configuration(in)
+	if in.ReservedExcessCapacity != nil {
+		SetDefaults_ReservedExcessCapacity(in.ReservedExcessCapacity)
+	}
 }

@@ -11,6 +11,10 @@ images:
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/argoexec
   tag: "v2.7.5"
+- name: reserve-excess-capacity
+  sourceRepository: github.com/argoproj/argo
+  repository: gcr.io/google_containers/pause-amd64
+  tag: "3.1"
 - name: minio
   sourceRepository: github.com/minio/minio
   repository: minio/minio

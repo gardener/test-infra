@@ -17,6 +17,8 @@ package v1beta1
 import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/version"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -28,6 +30,7 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 func SetDefaults_Configuration(obj *Configuration) {
 	SetDefaults_ControllerConfig(&obj.Controller)
 	SetDefaults_TestMachineryConfiguration(&obj.TestMachinery)
+	SetDefaults_ReservedExcessCapacity(obj.ReservedExcessCapacity)
 	if obj.Observability.Logging != nil {
 		if len(obj.Observability.Logging.Namespace) == 0 {
 			obj.Observability.Logging.Namespace = obj.TestMachinery.Namespace
@@ -71,5 +74,29 @@ func SetDefaults_TestMachineryConfiguration(obj *TestMachinery) {
 
 	if len(obj.Namespace) == 0 {
 		obj.Namespace = "default"
+	}
+}
+
+// SetDefaults_Configuration sets default values for the Configuration objects
+func SetDefaults_ReservedExcessCapacity(obj *ReservedExcessCapacity) {
+	if obj == nil {
+		return
+	}
+
+	if obj.Replicas == 0 {
+		obj.Replicas = 5
+	}
+
+	if obj.Resources == nil {
+		obj.Resources = &corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.Quantity{Format: "1000m"},
+				corev1.ResourceMemory: resource.Quantity{Format: "1000Mi"},
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.Quantity{Format: "1000m"},
+				corev1.ResourceMemory: resource.Quantity{Format: "1000Mi"},
+			},
+		}
 	}
 }

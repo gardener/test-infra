@@ -15,7 +15,7 @@
 package config
 
 import (
-	"encoding/json"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,14 +24,15 @@ import (
 
 // Configuration contains the testmachinery configuration values
 type Configuration struct {
-	metav1.TypeMeta `json:",inline"`
-	Controller      Controller     `json:"controller"`
-	TestMachinery   TestMachinery  `json:"testmachinery"`
-	GitHub          GitHub         `json:"github,omitempty"`
-	S3              *S3            `json:"s3Configuration,omitempty"`
-	ElasticSearch   *ElasticSearch `json:"esConfiguration,omitempty"`
-	Argo            Argo           `json:"argo"`
-	Observability   Observability  `json:"observability,omitempty"`
+	metav1.TypeMeta        `json:",inline"`
+	Controller             Controller              `json:"controller"`
+	TestMachinery          TestMachinery           `json:"testmachinery"`
+	Argo                   Argo                    `json:"argo"`
+	GitHub                 GitHub                  `json:"github,omitempty"`
+	S3                     *S3                     `json:"s3Configuration,omitempty"`
+	ElasticSearch          *ElasticSearch          `json:"esConfiguration,omitempty"`
+	ReservedExcessCapacity *ReservedExcessCapacity `json:"reservedExcessCapacity,omitempty"`
+	Observability          Observability           `json:"observability,omitempty"`
 }
 
 // Controller holds information about the testmachinery controller
@@ -54,99 +55,11 @@ type Controller struct {
 
 // WebhookConfig holds the validating webhook configuration
 type WebhookConfig struct {
-	Port    int    `json:"port,omitempty"`
+	// Port is the port to serve validating webhooks
+	Port int `json:"port,omitempty"`
+
+	// CertDir is the directory that contains the certificates that is used by the webhook
 	CertDir string `json:"certDir,omitempty"`
-}
-
-// TestMachinery holds information about the testmachinery
-type TestMachinery struct {
-	// Namespace is the namespace the testmachinery is deployed to.
-	Namespace string `json:"namespace,omitempty"`
-
-	// TestDefPath is the repository path where the Test Machinery should search for testdefinitions.
-	TestDefPath string `json:"testdefPath"`
-
-	// PrepareImage is the prepare image that is used in the prepare and postprepare step.
-	PrepareImage string `json:"prepareImage"`
-
-	// PrepareImage is the base image that is used as the default image if a TestDefinition does not define an image.
-	BaseImage string `json:"baseImage"`
-
-	// Local indicates if the controller is run locally.
-	Local bool `json:"local,omitempty"`
-
-	// Insecure indicates that the testmachinery runs insecure.
-	Insecure bool `json:"insecure,omitempty"`
-
-	// DisableCollector disables the collection of test results and their ingestion into elasticsearch.
-	DisableCollector bool `json:"disableCollector"`
-
-	// CleanWorkflowPods indicates if workflow pods should be directly cleaned up by the testmachinery.
-	CleanWorkflowPods bool `json:"cleanWorkflowPods,omitempty"`
-}
-
-// GitHub holds all github related information needed in the testmachinery.
-type GitHub struct {
-	Cache *GitHubCache `json:"cache,omitempty"`
-
-	// SecretsPath is the path to the github secrets file
-	SecretsPath string `json:"secretsPath,omitempty"`
-}
-
-// GitHubCache is the github cache configuration
-type GitHubCache struct {
-	CacheDir        string `json:"cacheDir,omitempty"`
-	CacheDiskSizeGB int    `json:"cacheDiskSizeGB,omitempty"`
-	MaxAgeSeconds   int    `json:"maxAgeSeconds,omitempty"`
-}
-
-// Argo holds configuration for the argo installation
-type Argo struct {
-	// Ingress holds the argo ui ingress configuration
-	ArgoUI ArgoUI `json:"argoUI"`
-
-	// Specify additional values that are passed to the argo helm chart
-	// +optional
-	ChartValues json.RawMessage `json:"chartValues,omitempty"`
-}
-
-// ArgoUI holds information about the argo ui to deploy
-type ArgoUI struct {
-	// Ingress holds the argo ui ingress configuration
-	Ingress Ingress `json:"ingress"`
-}
-
-// S3 holds information about the s3 endpoint
-type S3 struct {
-	Server     S3Server `json:"server"`
-	BucketName string   `json:"bucketName,omitempty"`
-	AccessKey  string   `json:"accessKey,omitempty"`
-	SecretKey  string   `json:"secretKey,omitempty"`
-}
-
-// S3Server defines the used s3 server
-// The endpoint and ssl is not needed if minio should be deployed.
-// Minio is deployed when the struct is defined
-type S3Server struct {
-	// +optional
-	Minio *MinioConfiguration `json:"minio"`
-
-	Endpoint string `json:"endpoint,omitempty"`
-	SSL      bool   `json:"ssl,omitempty"`
-}
-
-// MinioConfiguration configures optional minio deployment
-type MinioConfiguration struct {
-	// Distributed specified that minio should be deployed in cluster mode
-	Distributed bool `json:"distributed"`
-
-	// Ingress is the ingress configuration to expose minio
-	// +optional
-	Ingress Ingress `json:"ingress,omitempty"`
-
-	// Specify additional values that are passed to the minio helm chart
-	// +optional
-	ChartValues json.RawMessage `json:"chartValues,omitempty"`
 }
 
 // ElasticSearch holds information about the elastic instance to write data to.
@@ -156,24 +69,14 @@ type ElasticSearch struct {
 	Password string `json:"password,omitempty"`
 }
 
-// Observability holds the configuration for logging and monitoring tooling
-type Observability struct {
-	// Logging configures the logging stack
-	// will not be deployed if empty
-	Logging *Logging `json:"logging,omitempty"`
-}
+// ReservedExcessCapacity holds information about additionally deployed reserved excess capacity pods.
+type ReservedExcessCapacity struct {
+	// Replicas is the amount of reserve excess capacity pods.
+	Replicas int32 `json:"replicas"`
 
-// Logging holds the configuration for the loki/promtail logging stack
-type Logging struct {
-	// Namespace configures the namespace the logging stack is deployed to.
-	Namespace string `json:"namespace"`
-
-	// StorageClass configures the storage class for the loki deployment
-	StorageClass string `json:"storageClass"`
-
-	// Specify additional values that are passed to the minio helm chart
-	// +optional
-	ChartValues json.RawMessage `json:"chartValues,omitempty"`
+	// Resources specifies the resources of the single excess capacity pods
+	// + optional
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // Ingress holds information about a ingress

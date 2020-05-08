@@ -152,6 +152,10 @@ func (e *DependencyEnsurer) Reconcile(ctx context.Context, config *intconfig.Con
 		return err
 	}
 
+	if err := e.ensureReserveExcessCapacityPods(ctx, namespace, config.ReservedExcessCapacity); err != nil {
+		return err
+	}
+
 	if err := e.ensureLoggingStack(ctx, config.Observability.Logging); err != nil {
 		return err
 	}
