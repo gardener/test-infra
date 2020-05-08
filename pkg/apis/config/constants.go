@@ -87,3 +87,15 @@ const (
 	// PromtailImageName is the name of the promtail image in the image vector
 	PromtailImageName = "promtail"
 )
+
+// Reserve excess capacity
+const (
+	// ReserveExcessCapacityChartName is the name of the chart to deploy reserved excess capacity pods
+	ReserveExcessCapacityChartName = "reserve-excess-capacity"
+
+	// ReserveExcessCapacityManagedResourceName is the name of the managed resource for reserved excess capicity pods
+	ReserveExcessCapacityManagedResourceName = "reserve-excess-capacity"
+
+	// ReserveExcessCapacityImageName is the name of the image for reserved excess capicity
+	ReserveExcessCapacityImageName = "reserve-excess-capacity"
+)

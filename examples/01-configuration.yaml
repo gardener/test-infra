@@ -53,6 +53,16 @@ esConfiguration:
   username: user
   password: my-password
 
+reservedExcessCapacity:
+  replicas: 5
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1000Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1000Mi"
+
 observability:
   logging:
     namespace: default

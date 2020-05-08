@@ -83,6 +83,17 @@ testmachinery:
 #    endpoint: https:...:9200
 #    username: user
 #    password: my-password
+
+#  reservedExcessCapacity:
+#    replicas: 5
+#    resources:
+#      requests:
+#        cpu: "1000m"
+#        memory: "1000Mi"
+#      limits:
+#        cpu: "1000m"
+#        memory: "1000Mi"
+
   observability: {}
 #    logging:
 #      namespace: default
@@ -106,6 +117,10 @@ gardener-resource-manager:
 #    sourceRepository: github.com/argoproj/argo
 #    repository: argoproj/argoexec
 #    tag: "v2.6.3"
+#  - name: reserve-excess-capacity
+#    sourceRepository: github.com/argoproj/argo
+#    repository: gcr.io/google_containers/pause-amd64
+#    tag: "3.1"
 #  - name: minio
 #    sourceRepository: github.com/minio/minio
 #    repository: minio/minio

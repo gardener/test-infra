@@ -67,6 +67,11 @@ esConfiguration:
 {{ toYaml .Values.testmachinery.esConfiguration | indent 2 }}
 {{- end }}
 
+{{- if .Values.testmachinery.reservedExcessCapacity }}
+reservedExcessCapacity:
+{{ toYaml .Values.testmachinery.reservedExcessCapacity | indent 2 }}
+{{- end }}
+
 {{- if .Values.testmachinery.observability }}
 observability:
 {{ toYaml .Values.testmachinery.observability | indent 2 }}
