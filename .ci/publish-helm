@@ -15,7 +15,7 @@
 # limitations under the License.
 set -e
 
-export DESIRED_VERSION=3.2.0
+export DESIRED_VERSION=v3.2.1
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
 cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite --key password > /tmp/serviceaccount.yaml
