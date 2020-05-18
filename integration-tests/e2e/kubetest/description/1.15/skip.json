@@ -625,7 +625,7 @@
   { "testcase": "[sig-storage] In-tree Volumes [Driver: hostPath] [Testpattern: Dynamic PV (default fs)] subPath should verify container cannot write to subpath readonly volumes [Slow]"},
   { "testcase": "[sig-windows]"},
   { "testcase": "multiVolume"},
-    { "testcase": "[sig-storage] CSI Volumes CSI Topology test using GCE PD driver [Serial] should provision zonal PD with immediate volume binding and AllowedTopologies set and mount the volume to a pod"},
+  { "testcase": "[sig-storage] CSI Volumes CSI Topology test using GCE PD driver [Serial] should provision zonal PD with immediate volume binding and AllowedTopologies set and mount the volume to a pod"},
   { "testcase": "[sig-storage] CSI Volumes CSI Topology test using GCE PD driver [Serial] should provision zonal PD with delayed volume binding and mount the volume to a pod"},
   { "testcase": "[sig-storage] [Serial] Volume metrics should create prometheus metrics for volume provisioning errors [Slow]"},
   { "testcase": "[sig-storage] CSI Volumes CSI Topology test using GCE PD driver [Serial] should fail to schedule a pod with a zone missing from AllowedTopologies; PD is provisioned with delayed volume binding"},
@@ -670,5 +670,6 @@
   { "testcase": "[sig-storage] Pod Disks schedule pods each with a PD, delete pod and verify detach [Slow] for read-only PD with pod delete grace period of \"immediate (0s)\""},
   { "testcase": "[sig-storage] Zone Support Verify a pod is created on a non-Workspace zone and attached to a dynamically created PV, based on the allowed zones and storage policy specified in storage class"},
   { "testcase": "[sig-storage] PersistentVolumes-local  [Volume type: dir-link] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted"},
+  { "testcase": "[sig-storage] EmptyDir wrapper volumes should not cause race condition when used for git_repo", "description": "Fails on GL (not investigated why), but test looks for a race condition in K8S which was fixed in K8S v1.9.x and uses GitRepo type volumes which are deprecated since K8S v1.11.0" },
   { "testcase": "[k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 100 pods per node", "comment": "false positive: we already have some system pods running on some nodes, hence adding 100 pods exceeds the podlimit of 110 sometimes, hence this test cannot work" }
 ]
