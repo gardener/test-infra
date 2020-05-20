@@ -16,9 +16,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/gardener/gardener-extensions/pkg/controller"
-	"github.com/gardener/test-infra/cmd/testmachinery-controller/app"
 	"os"
+
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/test-infra/cmd/testmachinery-controller/app"
 )
 
 func main() {

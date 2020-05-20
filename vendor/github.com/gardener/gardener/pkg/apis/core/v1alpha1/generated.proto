@@ -357,6 +357,10 @@ message Condition {
 
   // A human readable message indicating details about the transition.
   optional string message = 6;
+
+  // Well-defined error codes in case the condition reports a problem.
+  // +optional
+  repeated string codes = 7;
 }
 
 // ContainerRuntime contains information about worker's available container runtime
@@ -542,6 +546,10 @@ message ExpirableVersion {
   // ExpirationDate defines the time at which this version expires.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time expirationDate = 2;
+
+  // Classification defines the state of a version (preview, supported, deprecated)
+  // +optional
+  optional string classification = 3;
 }
 
 // Extension contains type and provider information for Shoot extensions.
@@ -1034,6 +1042,12 @@ message Maintenance {
   // TimeWindow contains information about the time window for maintenance operations.
   // +optional
   optional MaintenanceTimeWindow timeWindow = 2;
+
+  // ConfineSpecUpdateRollout prevents that changes/updates to the shoot specification will be rolled out immediately.
+  // Instead, they are rolled out during the shoot's maintenance time window. There is one exception that will trigger
+  // an immediate roll out which is changes to the Spec.Hibernation.Enabled field.
+  // +optional
+  optional bool confineSpecUpdateRollout = 3;
 }
 
 // MaintenanceAutoUpdate contains information about which constraints should be automatically updated.
@@ -1467,8 +1481,12 @@ message SeedProvider {
   // Type is the name of the provider.
   optional string type = 1;
 
+  // ProviderConfig is the configuration passed to Seed resource.
+  // +optional
+  optional ProviderConfig providerConfig = 2;
+
   // Region is a name of a region.
-  optional string region = 2;
+  optional string region = 3;
 }
 
 // SeedSpec is the specification of a Seed.
@@ -1612,6 +1630,8 @@ message ShootMachineImage {
   optional ProviderConfig providerConfig = 2;
 
   // Version is the version of the shoot's image.
+  // If version is not provided, it will be defaulted to the latest version from the CloudProfile.
+  // +optional
   optional string version = 3;
 }
 

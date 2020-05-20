@@ -16,13 +16,15 @@ package dependencies
 
 import (
 	"context"
-	"github.com/gardener/gardener-extensions/pkg/controller"
-	"github.com/gardener/gardener-resource-manager/pkg/health"
-	"github.com/gardener/gardener/pkg/chartrenderer"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	appsv1 "k8s.io/api/apps/v1"
 	"path/filepath"
+
+	"github.com/gardener/gardener-resource-manager/pkg/health"
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/gardener/pkg/chartrenderer"
+	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 )
 
 // checkResourceManager checks if a resource manager ist deployed

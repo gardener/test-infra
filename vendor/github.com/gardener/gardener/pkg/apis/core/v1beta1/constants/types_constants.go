@@ -109,6 +109,8 @@ const (
 	// GardenerOperationRestore is a constant for the value of the operation annotation describing a restoration
 	// operation.
 	GardenerOperationRestore = "restore"
+	// GardenerOperationWaitForState is a constant for the value of the operation annotation for waiting a state
+	GardenerOperationWaitForState = "wait-for-state"
 
 	// DeprecatedGardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
 	//
@@ -270,4 +272,9 @@ const (
 
 	// LabelPodMaintenanceRestart is a constant for a label that describes that a pod should be restarted during maintenance.
 	LabelPodMaintenanceRestart = "maintenance.gardener.cloud/restart"
+
+	// LabelWorkerPool is a constant for a label that indicates the worker pool the node belongs to
+	LabelWorkerPool = "worker.gardener.cloud/pool"
+	// LabelWorkerPool is a deprecated constant for a label that indicates the worker pool the node belongs to
+	LabelWorkerPoolDeprecated = "worker.garden.sapcloud.io/group"
 )

@@ -131,6 +131,9 @@ const (
 	// is accepted.
 	GardenerDeletionProtected = "gardener.cloud/deletion-protected"
 
+	// ETCDEncryptionConfigDataName is the name of ShootState data entry holding the current key and encryption state used to encrypt shoot resources
+	ETCDEncryptionConfigDataName = "etcdEncryptionConfiguration"
+
 	// GardenRoleDefaultDomain is the value of the GardenRole key indicating type 'default-domain'.
 	GardenRoleDefaultDomain = "default-domain"
 
@@ -439,12 +442,6 @@ const (
 
 	// KubeStateMetricsImageName is the name of the KubeStateMetrics image.
 	KubeStateMetricsImageName = "kube-state-metrics"
-
-	// ETCDImageName is the name of the ETCD image.
-	ETCDImageName = "etcd"
-
-	// ETCDBackupRestoreImageName is the name of the ETCD backup-restore image.
-	ETCDBackupRestoreImageName = "etcd-backup-restore"
 
 	// EtcdDruidImageName is the name of Etcd Druid image
 	EtcdDruidImageName = "etcd-druid"

@@ -16,7 +16,7 @@
 // +k8s:deepcopy-gen=package,register
 // +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=testmachinery.gardener.cloud
+// +groupName=config.testmachinery.gardener.cloud
 package v1beta1
 
 import (

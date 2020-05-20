@@ -78,7 +78,7 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 			if len(rawFlavor.Workers) != 0 {
 				for _, workers := range rawFlavor.Workers {
 					for _, pool := range workers.WorkerPools {
-						addMachineImage(rawFlavor.Provider, pool.Machine.Image.Name, pool.Machine.Image.Version)
+						addMachineImage(rawFlavor.Provider, pool.Machine.Image.Name, *pool.Machine.Image.Version)
 					}
 
 					shoots = append(shoots, &common.Shoot{
@@ -147,7 +147,7 @@ func addKubernetesVersionFunc(versions map[common.CloudProvider]gardencorev1beta
 	}
 }
 
-// addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
+// addMachineImagesFunc adds a new machine image version to a list of unique versions per cloudprovider.
 func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.MachineImage) func(common.CloudProvider, string, string) {
 	used := make(map[common.CloudProvider]map[string]map[string]interface{}, 0)
 	indexMapping := make(map[common.CloudProvider]map[string]int, 0)
@@ -194,7 +194,7 @@ func ParseKubernetesVersions(versions common.ShootKubernetesVersionFlavor) ([]ga
 		for _, v := range *versions.Versions {
 			_, err := semver.NewVersion(v.Version)
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid version %s", v)
+				return nil, errors.Wrapf(err, "invalid version %s", v.Version)
 			}
 		}
 		return *versions.Versions, nil

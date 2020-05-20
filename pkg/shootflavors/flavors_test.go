@@ -19,6 +19,7 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/utils/pointer"
 )
 
 var _ = Describe("flavor test", func() {
@@ -28,7 +29,7 @@ var _ = Describe("flavor test", func() {
 	BeforeEach(func() {
 		defaultMachine = gardencorev1beta1.Machine{
 			Type:  "test-machine",
-			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: "0.0.1"},
+			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.StringPtr("0.0.1")},
 		}
 	})
 	It("should return no shoots if no flavors are defined", func() {
@@ -430,6 +431,6 @@ var _ = Describe("flavor test", func() {
 func newMachineImage(imageName, version string) gardencorev1beta1.Machine {
 	return gardencorev1beta1.Machine{
 		Type:  "test-machine",
-		Image: &gardencorev1beta1.ShootMachineImage{Name: imageName, Version: version},
+		Image: &gardencorev1beta1.ShootMachineImage{Name: imageName, Version: &version},
 	}
 }

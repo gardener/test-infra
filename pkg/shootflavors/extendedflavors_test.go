@@ -22,6 +22,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -215,7 +216,7 @@ var _ = Describe("extended flavor test", func() {
 							Machine: gardencorev1beta1.Machine{
 								Image: &gardencorev1beta1.ShootMachineImage{
 									Name:    "test-os",
-									Version: "latest",
+									Version: pointer.StringPtr("latest"),
 								},
 							},
 						}},
@@ -232,7 +233,7 @@ var _ = Describe("extended flavor test", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
-		Expect(flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
+		Expect(*flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
 	})
 
 })

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Deprecated: this is the deprecated gardener testframework.
+// Use gardener/test/framework instead
 package framework
 
 import (
@@ -105,7 +107,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [INFRASTRUCTURE]", ctxIdentifier)
 	infrastructures := &v1alpha1.InfrastructureList{}
 	err := k8sClient.Client().List(ctx, infrastructures, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err != nil {
 		for _, infra := range infrastructures.Items {
 			o.dumpGardenerExtension(&infra)
@@ -126,7 +128,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [OS]", ctxIdentifier)
 	operatingSystems := &v1alpha1.OperatingSystemConfigList{}
 	err = k8sClient.Client().List(ctx, operatingSystems, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err == nil {
 		for _, os := range operatingSystems.Items {
 			o.dumpGardenerExtension(&os)
@@ -137,7 +139,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [WORKER]", ctxIdentifier)
 	workers := &v1alpha1.WorkerList{}
 	err = k8sClient.Client().List(ctx, workers, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err == nil {
 		for _, worker := range workers.Items {
 			o.dumpGardenerExtension(&worker)
@@ -148,7 +150,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [BACKUPBUCKET]", ctxIdentifier)
 	backupBuckets := &v1alpha1.BackupBucketList{}
 	err = k8sClient.Client().List(ctx, backupBuckets, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err == nil {
 		for _, bucket := range backupBuckets.Items {
 			o.dumpGardenerExtension(&bucket)
@@ -159,7 +161,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [BACKUPENTRY]", ctxIdentifier)
 	backupEntries := &v1alpha1.BackupEntryList{}
 	err = k8sClient.Client().List(ctx, backupEntries, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err == nil {
 		for _, entry := range backupEntries.Items {
 			o.dumpGardenerExtension(&entry)
@@ -170,7 +172,7 @@ func (o *GardenerTestOperation) dumpGardenerExtensionsInNamespace(ctx context.Co
 	o.Logger.Infof("%s [EXTENSIONS] [NETWORK]", ctxIdentifier)
 	networks := &v1alpha1.NetworkList{}
 	err = k8sClient.Client().List(ctx, networks, client.InNamespace(namespace))
-	result = multierror.Append(err)
+	result = multierror.Append(result, err)
 	if err == nil {
 		for _, network := range networks.Items {
 			o.dumpGardenerExtension(&network)
@@ -188,9 +190,9 @@ func (o *GardenerTestOperation) dumpGardenerExtension(extension v1alpha1.Object)
 	} else {
 		o.Logger.Printf("%s of type %s is %s", extension.GetName(), extension.GetExtensionSpec().GetExtensionType(), healthy)
 	}
-	o.Logger.Printf("At %v - last operation %s %s: %s", extension.GetExtensionStatus().GetLastOperation().GetLastUpdateTime(), extension.GetExtensionStatus().GetLastOperation().GetType(), extension.GetExtensionStatus().GetLastOperation().GetState(), extension.GetExtensionStatus().GetLastOperation().GetDescription())
+	o.Logger.Printf("At %v - last operation %s %s: %s", extension.GetExtensionStatus().GetLastOperation().LastUpdateTime, extension.GetExtensionStatus().GetLastOperation().Type, extension.GetExtensionStatus().GetLastOperation().State, extension.GetExtensionStatus().GetLastOperation().Description)
 	if extension.GetExtensionStatus().GetLastError() != nil {
-		o.Logger.Printf("At %v - last error: %s", extension.GetExtensionStatus().GetLastError().GetLastUpdateTime(), extension.GetExtensionStatus().GetLastError().GetDescription())
+		o.Logger.Printf("At %v - last error: %s", extension.GetExtensionStatus().GetLastError().LastUpdateTime, extension.GetExtensionStatus().GetLastError().Description)
 	}
 }
 
