@@ -17,16 +17,16 @@ package dependencies
 import (
 	"context"
 	"encoding/json"
-	"github.com/gardener/gardener-extensions/pkg/controller"
-	"github.com/gardener/gardener/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
 	"path/filepath"
+
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/gardener/pkg/utils"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
-
 	intconfig "github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/pkg/errors"
+	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 )
 
 func (e *DependencyEnsurer) ensureLoggingStack(ctx context.Context, config *intconfig.Logging) error {

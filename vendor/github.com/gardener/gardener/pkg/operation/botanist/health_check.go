@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -32,7 +33,6 @@ import (
 	"github.com/gardener/gardener/pkg/operation/common"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
-	versionutils "github.com/gardener/gardener/pkg/utils/version"
 
 	druidv1alpha1 "github.com/gardener/etcd-druid/api/v1alpha1"
 	prometheusmodel "github.com/prometheus/common/model"
@@ -76,7 +76,8 @@ var Now = time.Now
 
 // HealthChecker contains the condition thresholds.
 type HealthChecker struct {
-	conditionThresholds map[gardencorev1beta1.ConditionType]time.Duration
+	conditionThresholds                map[gardencorev1beta1.ConditionType]time.Duration
+	staleExtensionHealthCheckThreshold *metav1.Duration
 }
 
 func (b *HealthChecker) checkRequiredDeployments(condition gardencorev1beta1.Condition, requiredNames sets.String, objects []*appsv1.Deployment) *gardencorev1beta1.Condition {
@@ -121,7 +122,17 @@ func (b *HealthChecker) checkRequiredEtcds(condition gardencorev1beta1.Condition
 func (b *HealthChecker) checkEtcds(condition gardencorev1beta1.Condition, objects []*druidv1alpha1.Etcd) *gardencorev1beta1.Condition {
 	for _, object := range objects {
 		if err := health.CheckEtcd(object); err != nil {
-			c := b.FailedCondition(condition, "EtcdUnhealthy", fmt.Sprintf("Etcd %s is unhealthy: %v", object.Name, err.Error()))
+			var (
+				message = fmt.Sprintf("Etcd %s is unhealthy: %v", object.Name, err.Error())
+				codes   []gardencorev1beta1.ErrorCode
+			)
+
+			if lastError := object.Status.LastError; lastError != nil {
+				codes = gardencorev1beta1helper.ExtractErrorCodes(gardencorev1beta1helper.DetermineError(errors.New(*lastError), ""))
+				message = fmt.Sprintf("%s (%s)", message, *lastError)
+			}
+
+			c := b.FailedCondition(condition, "EtcdUnhealthy", message, codes...)
 			return &c
 		}
 	}
@@ -157,7 +168,12 @@ func (b *HealthChecker) checkStatefulSets(condition gardencorev1beta1.Condition,
 func (b *HealthChecker) checkNodes(condition gardencorev1beta1.Condition, objects []*corev1.Node, workerGroupName string) *gardencorev1beta1.Condition {
 	for _, object := range objects {
 		if err := health.CheckNode(object); err != nil {
-			c := b.FailedCondition(condition, "NodeUnhealthy", fmt.Sprintf("Node '%s' in worker group '%s' is unhealthy: %v", object.Name, workerGroupName, err))
+			var (
+				message = fmt.Sprintf("Node '%s' in worker group '%s' is unhealthy: %v", object.Name, workerGroupName, err)
+				codes   = gardencorev1beta1helper.ExtractErrorCodes(gardencorev1beta1helper.DetermineError(err, ""))
+			)
+
+			c := b.FailedCondition(condition, "NodeUnhealthy", message, codes...)
 			return &c
 		}
 	}
@@ -240,20 +256,13 @@ func computeRequiredMonitoringStatefulSets(wantsAlertmanager bool) sets.String {
 
 // CheckControlPlane checks whether the control plane components in the given listers are complete and healthy.
 func (b *HealthChecker) CheckControlPlane(
-	gardenerVersion string,
 	shoot *gardencorev1beta1.Shoot,
 	namespace string,
 	condition gardencorev1beta1.Condition,
 	deploymentLister kutil.DeploymentLister,
-	statefulSetLister kutil.StatefulSetLister,
 	etcdLister kutil.EtcdLister,
 	workerLister kutil.WorkerLister,
 ) (*gardencorev1beta1.Condition, error) {
-
-	gardenerVersionLessThan120, err := versionutils.CompareVersions(gardenerVersion, "<", "v1.2.0")
-	if err != nil {
-		return nil, err
-	}
 
 	requiredControlPlaneDeployments, err := computeRequiredControlPlaneDeployments(shoot, workerLister)
 	if err != nil {
@@ -264,7 +273,6 @@ func (b *HealthChecker) CheckControlPlane(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDeployments(condition, requiredControlPlaneDeployments, deployments); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -272,29 +280,15 @@ func (b *HealthChecker) CheckControlPlane(
 		return exitCondition, nil
 	}
 
-	// TODO (georgekuruvillak): remove this once all shoots have been reconciled to version 1.2.0
-	if gardenerVersionLessThan120 {
-		statefulSets, err := statefulSetLister.StatefulSets(namespace).List(controlPlaneSelector)
-		if err != nil {
-			return nil, err
-		}
-		if exitCondition := b.checkRequiredStatefulSets(condition, common.RequiredControlPlaneEtcds, statefulSets); exitCondition != nil {
-			return exitCondition, nil
-		}
-		if exitCondition := b.checkStatefulSets(condition, statefulSets); exitCondition != nil {
-			return exitCondition, nil
-		}
-	} else {
-		etcds, err := etcdLister.Etcds(namespace).List(controlPlaneSelector)
-		if err != nil {
-			return nil, err
-		}
-		if exitCondition := b.checkRequiredEtcds(condition, common.RequiredControlPlaneEtcds, etcds); exitCondition != nil {
-			return exitCondition, nil
-		}
-		if exitCondition := b.checkEtcds(condition, etcds); exitCondition != nil {
-			return exitCondition, nil
-		}
+	etcds, err := etcdLister.Etcds(namespace).List(controlPlaneSelector)
+	if err != nil {
+		return nil, err
+	}
+	if exitCondition := b.checkRequiredEtcds(condition, common.RequiredControlPlaneEtcds, etcds); exitCondition != nil {
+		return exitCondition, nil
+	}
+	if exitCondition := b.checkEtcds(condition, etcds); exitCondition != nil {
+		return exitCondition, nil
 	}
 
 	return nil, nil
@@ -312,7 +306,6 @@ func (b *HealthChecker) CheckSystemComponents(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDeployments(condition, common.RequiredSystemComponentDeployments, deploymentList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -324,39 +317,39 @@ func (b *HealthChecker) CheckSystemComponents(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDaemonSets(condition, common.RequiredSystemComponentDaemonSets, daemonSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
 	if exitCondition := b.checkDaemonSets(condition, daemonSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
+
 	return nil, nil
 }
 
 // FailedCondition returns a progressing or false condition depending on the progressing threshold.
-func (b *HealthChecker) FailedCondition(condition gardencorev1beta1.Condition, reason, message string) gardencorev1beta1.Condition {
+func (b *HealthChecker) FailedCondition(condition gardencorev1beta1.Condition, reason, message string, codes ...gardencorev1beta1.ErrorCode) gardencorev1beta1.Condition {
 	switch condition.Status {
 	case gardencorev1beta1.ConditionTrue:
 		_, ok := b.conditionThresholds[condition.Type]
 		if !ok {
-			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message)
+			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message, codes...)
 		}
 
-		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, reason, message)
+		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, reason, message, codes...)
 	case gardencorev1beta1.ConditionProgressing:
 		threshold, ok := b.conditionThresholds[condition.Type]
 		if !ok {
-			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message)
+			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message, codes...)
 		}
 
-		delta := Now().Sub(condition.LastTransitionTime.Time)
+		delta := Now().UTC().Sub(condition.LastTransitionTime.Time.UTC())
 		if delta > threshold {
-			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message)
+			return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message, codes...)
 		}
-		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, reason, message)
+		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, reason, message, codes...)
 	}
-	return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message)
+	return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionFalse, reason, message, codes...)
 }
 
 // checkAPIServerAvailability checks if the API server of a Shoot cluster is reachable and measure the response time.
@@ -496,7 +489,6 @@ func (b *HealthChecker) CheckMonitoringSystemComponents(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDaemonSets(condition, common.RequiredMonitoringShootDaemonSets, daemonSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -525,7 +517,6 @@ func (b *HealthChecker) CheckMonitoringControlPlane(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDeployments(condition, common.RequiredMonitoringSeedDeployments, deploymentList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -537,13 +528,13 @@ func (b *HealthChecker) CheckMonitoringControlPlane(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredStatefulSets(condition, computeRequiredMonitoringStatefulSets(wantsAlertmanager), statefulSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
 	if exitCondition := b.checkStatefulSets(condition, statefulSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
+
 	return nil, nil
 }
 
@@ -559,7 +550,6 @@ func (b *HealthChecker) CheckOptionalAddonsSystemComponents(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkDeployments(condition, deploymentList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -568,10 +558,10 @@ func (b *HealthChecker) CheckOptionalAddonsSystemComponents(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkDaemonSets(condition, daemonSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
+
 	return nil, nil
 }
 
@@ -592,7 +582,6 @@ func (b *HealthChecker) CheckLoggingControlPlane(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredDeployments(condition, common.RequiredLoggingDeployments, deploymentList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -604,7 +593,6 @@ func (b *HealthChecker) CheckLoggingControlPlane(
 	if err != nil {
 		return nil, err
 	}
-
 	if exitCondition := b.checkRequiredStatefulSets(condition, common.RequiredLoggingStatefulSets, statefulSetList); exitCondition != nil {
 		return exitCondition, nil
 	}
@@ -616,10 +604,15 @@ func (b *HealthChecker) CheckLoggingControlPlane(
 }
 
 // CheckExtensionCondition checks whether the conditions provided by extensions are healthy.
-func (b *HealthChecker) CheckExtensionCondition(condition gardencorev1beta1.Condition, extensionsCondition []extensionCondition) *gardencorev1beta1.Condition {
-	for _, cond := range extensionsCondition {
-		if cond.condition.Status == gardencorev1beta1.ConditionFalse || cond.condition.Status == gardencorev1beta1.ConditionUnknown {
-			c := b.FailedCondition(condition, fmt.Sprintf("%sUnhealthyReport", cond.extensionType), cond.condition.Message)
+func (b *HealthChecker) CheckExtensionCondition(condition gardencorev1beta1.Condition, extensionsConditions []ExtensionCondition) *gardencorev1beta1.Condition {
+	for _, cond := range extensionsConditions {
+		// check if the health check condition.lastUpdateTime is older than the configured staleExtensionHealthCheckThreshold
+		if b.staleExtensionHealthCheckThreshold != nil && Now().UTC().Sub(cond.Condition.LastUpdateTime.UTC()) > b.staleExtensionHealthCheckThreshold.Duration {
+			c := gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionUnknown, fmt.Sprintf("%sOutdatedHealthCheckReport", cond.ExtensionType), fmt.Sprintf("%q CRD (%s/%s) reports an outdated health status (last updated: %s ago at %s).", cond.ExtensionType, cond.ExtensionNamespace, cond.ExtensionName, time.Now().UTC().Sub(cond.Condition.LastUpdateTime.UTC()).Round(time.Minute).String(), cond.Condition.LastUpdateTime.UTC().Round(time.Minute).String()))
+			return &c
+		}
+		if cond.Condition.Status == gardencorev1beta1.ConditionFalse || cond.Condition.Status == gardencorev1beta1.ConditionUnknown {
+			c := b.FailedCondition(condition, fmt.Sprintf("%sUnhealthyReport", cond.ExtensionType), fmt.Sprintf("%q CRD (%s/%s) reports failing health check: %s", cond.ExtensionType, cond.ExtensionNamespace, cond.ExtensionName, cond.Condition.Message), cond.Condition.Codes...)
 			return &c
 		}
 	}
@@ -634,10 +627,10 @@ func (b *Botanist) checkControlPlane(
 	seedStatefulSetLister kutil.StatefulSetLister,
 	seedEtcdLister kutil.EtcdLister,
 	seedWorkerLister kutil.WorkerLister,
-	extensionConditions []extensionCondition,
+	extensionConditions []ExtensionCondition,
 ) (*gardencorev1beta1.Condition, error) {
 
-	if exitCondition, err := checker.CheckControlPlane(b.Shoot.Info.Status.Gardener.Version, b.Shoot.Info, b.Shoot.SeedNamespace, condition, seedDeploymentLister, seedStatefulSetLister, seedEtcdLister, seedWorkerLister); err != nil || exitCondition != nil {
+	if exitCondition, err := checker.CheckControlPlane(b.Shoot.Info, b.Shoot.SeedNamespace, condition, seedDeploymentLister, seedEtcdLister, seedWorkerLister); err != nil || exitCondition != nil {
 		return exitCondition, err
 	}
 	if exitCondition, err := checker.CheckMonitoringControlPlane(b.Shoot.SeedNamespace, b.Shoot.GetPurpose() == gardencorev1beta1.ShootPurposeTesting, b.Shoot.WantsAlertmanager, condition, seedDeploymentLister, seedStatefulSetLister); err != nil || exitCondition != nil {
@@ -663,7 +656,7 @@ func (b *Botanist) checkSystemComponents(
 	condition gardencorev1beta1.Condition,
 	shootDeploymentLister kutil.DeploymentLister,
 	shootDaemonSetLister kutil.DaemonSetLister,
-	extensionConditions []extensionCondition,
+	extensionConditions []ExtensionCondition,
 ) (*gardencorev1beta1.Condition, error) {
 
 	if exitCondition, err := checker.CheckSystemComponents(metav1.NamespaceSystem, condition, shootDeploymentLister, shootDaemonSetLister); err != nil || exitCondition != nil {
@@ -697,7 +690,7 @@ func (b *Botanist) checkClusterNodes(
 	checker *HealthChecker,
 	condition gardencorev1beta1.Condition,
 	shootNodeLister kutil.NodeLister,
-	extensionConditions []extensionCondition,
+	extensionConditions []ExtensionCondition,
 ) (*gardencorev1beta1.Condition, error) {
 	if exitCondition, err := checker.CheckClusterNodes(b.Shoot.Info.Spec.Provider.Workers, condition, shootNodeLister); err != nil || exitCondition != nil {
 		return exitCondition, err
@@ -890,13 +883,14 @@ var (
 )
 
 // NewHealthChecker creates a new health checker.
-func NewHealthChecker(conditionThresholds map[gardencorev1beta1.ConditionType]time.Duration) *HealthChecker {
+func NewHealthChecker(conditionThresholds map[gardencorev1beta1.ConditionType]time.Duration, healthCheckOutdatedThreshold *metav1.Duration) *HealthChecker {
 	return &HealthChecker{
-		conditionThresholds: conditionThresholds,
+		conditionThresholds:                conditionThresholds,
+		staleExtensionHealthCheckThreshold: healthCheckOutdatedThreshold,
 	}
 }
 
-func (b *Botanist) healthChecks(initializeShootClients func() error, thresholdMappings map[gardencorev1beta1.ConditionType]time.Duration, apiserverAvailability, controlPlane, nodes, systemComponents gardencorev1beta1.Condition) (gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition) {
+func (b *Botanist) healthChecks(initializeShootClients func() error, thresholdMappings map[gardencorev1beta1.ConditionType]time.Duration, healthCheckOutdatedThreshold *metav1.Duration, apiserverAvailability, controlPlane, nodes, systemComponents gardencorev1beta1.Condition) (gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition) {
 	if b.Shoot.HibernationEnabled || b.Shoot.Info.Status.IsHibernated {
 		return shootHibernatedCondition(apiserverAvailability), shootHibernatedCondition(controlPlane), shootHibernatedCondition(nodes), shootHibernatedCondition(systemComponents)
 	}
@@ -907,13 +901,14 @@ func (b *Botanist) healthChecks(initializeShootClients func() error, thresholdMa
 		seedEtcdLister        = makeEtcdLister(b.K8sSeedClient.Client(), b.Shoot.SeedNamespace)
 		seedWorkerLister      = makeWorkerLister(b.K8sSeedClient.Client(), b.Shoot.SeedNamespace)
 
-		checker = NewHealthChecker(thresholdMappings)
+		checker = NewHealthChecker(thresholdMappings, healthCheckOutdatedThreshold)
 	)
 
 	extensionConditionsControlPlaneHealthy, extensionConditionsEveryNodeReady, extensionConditionsSystemComponentsHealthy, err := b.getAllExtensionConditions(context.TODO())
 	if err != nil {
 		b.Logger.Errorf("error getting extension conditions: %+v", err)
 	}
+
 	if err := initializeShootClients(); err != nil {
 		message := fmt.Sprintf("Could not initialize Shoot client for health check: %+v", err)
 		b.Logger.Error(message)
@@ -959,6 +954,10 @@ func (b *Botanist) healthChecks(initializeShootClients func() error, thresholdMa
 	return apiserverAvailability, controlPlane, nodes, systemComponents
 }
 
+func isUnstableLastOperation(lastOperation *gardencorev1beta1.LastOperation) bool {
+	return isUnstableOperationType(lastOperation.Type) && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded
+}
+
 var unstableOperationTypes = map[gardencorev1beta1.LastOperationType]struct{}{
 	gardencorev1beta1.LastOperationTypeCreate: {},
 	gardencorev1beta1.LastOperationTypeDelete: {},
@@ -969,23 +968,19 @@ func isUnstableOperationType(lastOperationType gardencorev1beta1.LastOperationTy
 	return ok
 }
 
-// pardonCondition pardons the given condition if there was no last error and the Shoot is either
-// in create or delete state.
-func (b *Botanist) pardonCondition(condition gardencorev1beta1.Condition) gardencorev1beta1.Condition {
-	shoot := b.Shoot.Info
-	if len(shoot.Status.LastErrors) > 0 {
-		return condition
-	}
-	if lastOp := shoot.Status.LastOperation; (lastOp == nil || (lastOp != nil && isUnstableOperationType(lastOp.Type))) && condition.Status == gardencorev1beta1.ConditionFalse {
-		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, condition.Reason, condition.Message)
+// PardonCondition pardons the given condition if the Shoot is either in create (except successful create) or delete state.
+func PardonCondition(lastOp *gardencorev1beta1.LastOperation, condition gardencorev1beta1.Condition) gardencorev1beta1.Condition {
+	if (lastOp == nil || (lastOp != nil && isUnstableLastOperation(lastOp))) && condition.Status == gardencorev1beta1.ConditionFalse {
+		return gardencorev1beta1helper.UpdatedCondition(condition, gardencorev1beta1.ConditionProgressing, condition.Reason, condition.Message, condition.Codes...)
 	}
 	return condition
 }
 
 // HealthChecks conducts the health checks on all the given conditions.
-func (b *Botanist) HealthChecks(initializeShootClients func() error, thresholdMappings map[gardencorev1beta1.ConditionType]time.Duration, apiserverAvailability, controlPlane, nodes, systemComponents gardencorev1beta1.Condition) (gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition) {
-	apiServerAvailable, controlPlaneHealthy, everyNodeReady, systemComponentsHealthy := b.healthChecks(initializeShootClients, thresholdMappings, apiserverAvailability, controlPlane, nodes, systemComponents)
-	return b.pardonCondition(apiServerAvailable), b.pardonCondition(controlPlaneHealthy), b.pardonCondition(everyNodeReady), b.pardonCondition(systemComponentsHealthy)
+func (b *Botanist) HealthChecks(initializeShootClients func() error, thresholdMappings map[gardencorev1beta1.ConditionType]time.Duration, healthCheckOutdatedThreshold *metav1.Duration, apiserverAvailability, controlPlane, nodes, systemComponents gardencorev1beta1.Condition) (gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition, gardencorev1beta1.Condition) {
+	apiServerAvailable, controlPlaneHealthy, everyNodeReady, systemComponentsHealthy := b.healthChecks(initializeShootClients, thresholdMappings, healthCheckOutdatedThreshold, apiserverAvailability, controlPlane, nodes, systemComponents)
+	lastOp := b.Shoot.Info.Status.LastOperation
+	return PardonCondition(lastOp, apiServerAvailable), PardonCondition(lastOp, controlPlaneHealthy), PardonCondition(lastOp, everyNodeReady), PardonCondition(lastOp, systemComponentsHealthy)
 }
 
 // MonitoringHealthChecks performs the monitoring related health checks.
@@ -1001,21 +996,24 @@ func (b *Botanist) MonitoringHealthChecks(checker *HealthChecker, inactiveAlerts
 	return b.checkAlerts(checker, inactiveAlerts)
 }
 
-type extensionCondition struct {
-	condition     gardencorev1beta1.Condition
-	extensionType string
-	extensionName string
+// ExtensionCondition contains information about the extension type, name, namespace and the respective condition object.
+type ExtensionCondition struct {
+	Condition          gardencorev1beta1.Condition
+	ExtensionType      string
+	ExtensionName      string
+	ExtensionNamespace string
 }
 
-func (b *Botanist) getAllExtensionConditions(ctx context.Context) ([]extensionCondition, []extensionCondition, []extensionCondition, error) {
+func (b *Botanist) getAllExtensionConditions(ctx context.Context) ([]ExtensionCondition, []ExtensionCondition, []ExtensionCondition, error) {
 	var (
-		conditionsControlPlaneHealthy     []extensionCondition
-		conditionsEveryNodeReady          []extensionCondition
-		conditionsSystemComponentsHealthy []extensionCondition
+		conditionsControlPlaneHealthy     []ExtensionCondition
+		conditionsEveryNodeReady          []ExtensionCondition
+		conditionsSystemComponentsHealthy []ExtensionCondition
 	)
 
 	for _, listObj := range []runtime.Object{
 		&extensionsv1alpha1.BackupEntryList{},
+		&extensionsv1alpha1.ContainerRuntimeList{},
 		&extensionsv1alpha1.ControlPlaneList{},
 		&extensionsv1alpha1.ExtensionList{},
 		&extensionsv1alpha1.InfrastructureList{},
@@ -1036,15 +1034,16 @@ func (b *Botanist) getAllExtensionConditions(ctx context.Context) ([]extensionCo
 
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
 			name := acc.GetName()
+			namespace := acc.GetNamespace()
 
 			for _, condition := range acc.GetExtensionStatus().GetConditions() {
 				switch condition.Type {
 				case gardencorev1beta1.ShootControlPlaneHealthy:
-					conditionsControlPlaneHealthy = append(conditionsControlPlaneHealthy, extensionCondition{condition, kind, name})
+					conditionsControlPlaneHealthy = append(conditionsControlPlaneHealthy, ExtensionCondition{condition, kind, name, namespace})
 				case gardencorev1beta1.ShootEveryNodeReady:
-					conditionsEveryNodeReady = append(conditionsEveryNodeReady, extensionCondition{condition, kind, name})
+					conditionsEveryNodeReady = append(conditionsEveryNodeReady, ExtensionCondition{condition, kind, name, namespace})
 				case gardencorev1beta1.ShootSystemComponentsHealthy:
-					conditionsSystemComponentsHealthy = append(conditionsSystemComponentsHealthy, extensionCondition{condition, kind, name})
+					conditionsSystemComponentsHealthy = append(conditionsSystemComponentsHealthy, ExtensionCondition{condition, kind, name, namespace})
 				}
 			}
 

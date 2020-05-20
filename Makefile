@@ -34,29 +34,27 @@ PREPARESTEP_IMAGE          := $(REGISTRY)/testmachinery-prepare
 NS ?= default
 KUBECONFIG ?= "~/.kube/config"
 TESTRUN ?= "examples/int-testrun.yaml"
-LD_FLAGS := $(shell ./hack/get-build-ld-flags)
 
 #####################
 # Utils             #
 #####################
 
-
 .PHONY: revendor
 revendor:
 	@GO111MODULE=on go mod vendor
 	@GO111MODULE=on go mod tidy
+	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
+	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/.ci/*
+	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/extensions/hack/*
+	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
 
 .PHONY: code-gen
 code-gen:
 	@./hack/generate-code
 
-.PHONY: mock-gen
-mock-gen:
-	@./hack/generate-mocks
-
 .PHONY: generate
 generate:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/generate.sh ./...
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/generate.sh ./charts/... ./cmd/... ./pkg/... ./test/...
 
 .PHONY: format
 format:

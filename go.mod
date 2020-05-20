@@ -11,13 +11,11 @@ require (
 	github.com/bradleyfalzon/ghinstallation v0.1.2
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/gardener v1.2.1-0.20200402092110-3e4c4917c83f
-	github.com/gardener/gardener-extensions v1.6.0
+	github.com/gardener/gardener v1.4.1
 	github.com/gardener/gardener-resource-manager v0.10.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
-	github.com/go-openapi/jsonreference v0.19.3 // indirect
 	github.com/go-openapi/spec v0.19.7
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/mock v1.4.3
@@ -30,12 +28,10 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/karrick/godirwalk v1.15.5 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/minio/minio-go v6.0.14+incompatible
-	github.com/olekukonko/tablewriter v0.0.1
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
-	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
@@ -54,10 +50,10 @@ require (
 	k8s.io/apiextensions-apiserver v0.17.0
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
-	k8s.io/code-generator v0.16.7-beta.0
+	k8s.io/code-generator v0.16.8
 	k8s.io/helm v2.16.1+incompatible
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/utils v0.0.0-20191218082557-f07c713de883
+	k8s.io/utils v0.0.0-20200327001022-6496210b90e8
 	sigs.k8s.io/controller-runtime v0.4.0
 	sigs.k8s.io/yaml v1.1.0
 )

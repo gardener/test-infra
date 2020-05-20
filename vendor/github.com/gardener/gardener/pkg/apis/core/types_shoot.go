@@ -82,6 +82,10 @@ type ShootSpec struct {
 	SeedName *string
 }
 
+func (s *Shoot) GetProviderType() string {
+	return s.Spec.Provider.Type
+}
+
 // ShootStatus holds the most recently observed status of the Shoot cluster.
 type ShootStatus struct {
 	// Conditions represents the latest available observations of a Shoots's current state.
@@ -575,6 +579,10 @@ type Maintenance struct {
 	AutoUpdate *MaintenanceAutoUpdate
 	// TimeWindow contains information about the time window for maintenance operations.
 	TimeWindow *MaintenanceTimeWindow
+	// ConfineSpecUpdateRollout prevents that changes/updates to the shoot specification will be rolled out immediately.
+	// Instead, they are rolled out during the shoot's maintenance time window. There is one exception that will trigger
+	// an immediate roll out which is changes to the Spec.Hibernation.Enabled field.
+	ConfineSpecUpdateRollout *bool
 }
 
 // MaintenanceAutoUpdate contains information about which constraints should be automatically updated.
@@ -692,6 +700,7 @@ type ShootMachineImage struct {
 	// ProviderConfig is the shoot's individual configuration passed to an extension resource.
 	ProviderConfig *ProviderConfig
 	// Version is the version of the shoot's image.
+	// If version is not provided, it will be defaulted to the latest version from the CloudProfile.
 	Version string
 }
 

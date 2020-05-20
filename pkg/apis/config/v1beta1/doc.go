@@ -19,5 +19,5 @@
 // +k8s:defaulter-gen=TypeMeta
 
 // Package v1beta1 is a version of the API.
-// +groupName=testmachinery.gardener.cloud
+// +groupName=config.testmachinery.gardener.cloud
 package v1beta1
