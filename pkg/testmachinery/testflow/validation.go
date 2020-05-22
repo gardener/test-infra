@@ -81,6 +81,11 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 			return err
 		}
 
+		// fail if there are no testdefinitions found
+		if len(testDefinitions) == 0 {
+			return fmt.Errorf("%s.Definition: no TestDefinition found", identifier)
+		}
+
 		for _, td := range testDefinitions {
 			if err := testdefinition.Validate(fmt.Sprintf("%s; Location: \"%s\"; File: \"%s\"", identifier, td.Location.Name(), td.FileName), td.Info); err != nil {
 				return err

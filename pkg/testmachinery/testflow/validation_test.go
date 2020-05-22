@@ -50,6 +50,24 @@ var _ = Describe("Testflow", func() {
 			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
 		})
 
+		It("should fail when a test step specifies a label with non existent testdefinitions", func() {
+			tf := tmv1beta1.TestFlow{
+				{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
+						Label: "somelabel",
+					},
+				},
+				{
+					Name: "int-test",
+					Definition: tmv1beta1.StepDefinition{
+						Name: "testdefname",
+					},
+				},
+			}
+			Expect(testflow.Validate("identifier", tf, emptyMockLocation, true)).To(HaveOccurred())
+		})
+
 		It("should fail when dependent steps do not exist", func() {
 			tf := tmv1beta1.TestFlow{
 				{
@@ -292,6 +310,12 @@ func (l *locationMock) SetTestDefs(_ map[string]*testdefinition.TestDefinition) 
 
 func (l *locationMock) GetLocation() *tmv1beta1.TestLocation {
 	return nil
+}
+
+var emptyMockLocation = &testDefinitionsMock{
+	getTestDefinitions: func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
+		return []*testdefinition.TestDefinition{}, nil
+	},
 }
 
 var defaultMockLocation = &testDefinitionsMock{
