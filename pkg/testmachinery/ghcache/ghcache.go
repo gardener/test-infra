@@ -79,6 +79,12 @@ func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
 
 var internalConfig *config.GitHubCache
 
+// SetConfig sets the internal github cache configuration
+func SetConfig(cfg *config.GitHubCache) {
+	internalConfig = cfg
+}
+
+// AddFlags adds github cache flags to the given flagset
 func AddFlags(flagset *flag.FlagSet) *config.GitHubCache {
 	if flagset == nil {
 		flagset = flag.CommandLine

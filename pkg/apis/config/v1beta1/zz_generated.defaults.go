@@ -27,8 +27,16 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&BotConfiguration{}, func(obj interface{}) { SetObjectDefaults_BotConfiguration(obj.(*BotConfiguration)) })
 	scheme.AddTypeDefaultingFunc(&Configuration{}, func(obj interface{}) { SetObjectDefaults_Configuration(obj.(*Configuration)) })
 	return nil
+}
+
+func SetObjectDefaults_BotConfiguration(in *BotConfiguration) {
+	SetDefaults_Webserver(&in.Webserver)
+	SetDefaults_Dashboard(&in.Dashboard)
+	SetDefaults_DashboardAuthentication(&in.Dashboard.Authentication)
+	SetDefaults_GitHubBot(&in.GitHubBot)
 }
 
 func SetObjectDefaults_Configuration(in *Configuration) {

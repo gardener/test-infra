@@ -20,17 +20,9 @@ bot:
   tag: latest
   pullPolicy: IfNotPresent
   imagePullSecretName: ""
-
-  configFilePath: ""
-  defaultTeamName: "core"
   verbosity: 2
 
   serviceAccountName: tm-bot
-  webhook:
-    http:
-      port: 80
-    https:
-      port: 443
 
   tls:
     caBundle: |
@@ -46,15 +38,36 @@ bot:
       ...
       -----END RSA PRIVATE KEY-----
 
-secrets:
-  oauth:
-    clientID: ""
-    clientSecret: ""
-    redirectUrl: ""
-    cookieSecret: ""
-    org: "gardener"
-  github:
-    apiUrl: ""
-    webhookSecretToken: "" # secret token configured for the github app
-    appID: "" # app installation id
-    key: "" # base64 encoded private key
+githubAppPrivateKey: ""
+
+configuration:
+  webserver:
+    httpPort: 80
+    httpsPort: 443
+    certificate:
+      cert: /etc/tm-bot/srv/tls.crt
+      privateKey: /etc/tm-bot/srv/tls.key
+
+  githubBot:
+    enabled: true
+    #  configurationFilePath: ".ci/tm-config.yaml"
+    defaultTeam: core
+    #  apiUrl: "https://api.github.com"
+    appId: 123
+    appPrivateKeyPath: /etc/tm-bot/gh/key
+    webhookSecret: "testing"
+
+  dashboard:
+    UIBasePath: "/app"
+    authentication:
+      enabled: true
+      organization: gardener
+      cookieSecret: abc
+      oAuth:
+        clientId: ""
+        clientSecret: ""
+        redirectUrl: "http://test.example.local/oauth/redirect"
+    cache:
+      cacheDir: /cache
+#      cacheDiskSizeGB: 5
+#      maxAgeSeconds: 60

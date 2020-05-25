@@ -72,7 +72,7 @@ var runCmd = &cobra.Command{
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
 
-		testrunnerConfig.Watch, err = testrunner.StartWatchController(logger.Log, tmKubeconfigPath, stopCh)
+		testrunnerConfig.Watch, err = testrunner.StartWatchControllerFromFile(logger.Log, tmKubeconfigPath, stopCh)
 		if err != nil {
 			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)

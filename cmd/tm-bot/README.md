@@ -75,9 +75,11 @@ and events:
 The github bot exposes its webhook handler at `/event/handler`
 ```
 go run ./cmd/tm-bot
-  --github-app-id=<appid>
-  --github-key-file=<path to github app private key>
+  --config=/path/to/config
+  --kubeconfig=/path/to/config # optional
 ```
+
+See the full Bot Configuration [here](/examples/50-bot-configuration.yaml)
 
 ### Plugins
 

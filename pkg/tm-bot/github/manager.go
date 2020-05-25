@@ -17,38 +17,31 @@ package github
 import (
 	"context"
 	"encoding/json"
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
-	flag "github.com/spf13/pflag"
 	"net/http"
-	"sigs.k8s.io/yaml"
-
-	"github.com/go-logr/logr"
 
 	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
-)
+	"sigs.k8s.io/yaml"
 
-type ManagerConfig struct {
-	apiURL      string
-	appID       int
-	keyFile     string
-	configFile  string
-	defaultTeam string
-}
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+)
 
 type internalClientItem struct {
 	ghClient   *github.Client
 	httpClient *http.Client
 }
 
-func NewManager(log logr.Logger, cfg *ManagerConfig) (Manager, error) {
+func NewManager(log logr.Logger, cfg config.GitHubBot) (Manager, error) {
 	return &manager{
 		log:         log,
-		configFile:  cfg.configFile,
-		apiURL:      cfg.apiURL,
-		appId:       cfg.appID,
-		keyFile:     cfg.keyFile,
-		defaultTeam: cfg.defaultTeam,
+		cacheConfig: &cfg.GitHubCache,
+		configFile:  cfg.ConfigurationFilePath,
+		apiURL:      cfg.ApiUrl,
+		appId:       cfg.AppID,
+		keyFile:     cfg.AppPrivateKeyPath,
+		defaultTeam: cfg.DefaultTeam,
 		clients:     make(map[int64]*internalClientItem, 0),
 	}, nil
 }
@@ -98,7 +91,7 @@ func (m *manager) getGitHubClient(installationID int64) (*internalClientItem, er
 		return ghClient, nil
 	}
 
-	trp, err := ghcache.Cache(m.log.WithName("ghCache"), nil, http.DefaultTransport)
+	trp, err := ghcache.Cache(m.log.WithName("ghCache"), m.cacheConfig, http.DefaultTransport)
 	if err != nil {
 		return nil, err
 	}
@@ -119,20 +112,4 @@ func (m *manager) getGitHubClient(installationID int64) (*internalClientItem, er
 	}
 
 	return m.clients[installationID], nil
-}
-
-func ManagerInitFlags(flagset *flag.FlagSet) *ManagerConfig {
-	if flagset == nil {
-		flagset = flag.CommandLine
-	}
-	cfg := &ManagerConfig{}
-
-	flagset.StringVar(&cfg.apiURL, "github-api-url", "https://api.github.com", "GitHub api endpoint url")
-	flagset.IntVar(&cfg.appID, "github-app-id", 0, "GitHub app installation id")
-	flagset.StringVar(&cfg.keyFile, "github-key-file", "", "GitHub app private key file path")
-	flagset.StringVar(&cfg.configFile, "config-file-path", ".ci/tm-config.yaml", "Path the bot configuration in the repository")
-	flagset.StringVar(&cfg.defaultTeam, "github-default-team", "", "Slug name of the default team to grant access")
-
-	ghcache.AddFlags(flagset)
-	return cfg
 }

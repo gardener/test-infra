@@ -100,3 +100,38 @@ func SetDefaults_ReservedExcessCapacity(obj *ReservedExcessCapacity) {
 		}
 	}
 }
+
+// SetDefaults_Webserver sets default values for the Webserver objects
+func SetDefaults_Webserver(obj *Webserver) {
+	if obj.HTTPPort == 0 {
+		obj.HTTPPort = 80
+	}
+	if obj.HTTPSPort == 0 {
+		obj.HTTPSPort = 443
+	}
+}
+
+// SetDefaults_GitHubBot sets default values for the GitHubBot objects
+func SetDefaults_GitHubBot(obj *GitHubBot) {
+	if len(obj.ApiUrl) == 0 {
+		obj.ApiUrl = "https://api.github.com"
+	}
+	if len(obj.ConfigurationFilePath) == 0 {
+		obj.ConfigurationFilePath = ".ci/tm-config.yaml"
+	}
+}
+
+// SetDefaults_Dashboard sets default values for the Dashboard objects
+func SetDefaults_Dashboard(obj *Dashboard) {
+	if len(obj.UIBasePath) == 0 {
+		obj.UIBasePath = "/app"
+	}
+	SetDefaults_DashboardAuthentication(&obj.Authentication)
+}
+
+// SetDefaults_DashboardAuthentication sets default values for the DashboardAuthentication objects
+func SetDefaults_DashboardAuthentication(obj *DashboardAuthentication) {
+	if len(obj.Organization) == 0 {
+		obj.Organization = "gardener"
+	}
+}

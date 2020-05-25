@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/Masterminds/semver"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
@@ -80,8 +81,9 @@ type RepositoryKey struct {
 }
 
 type manager struct {
-	log        logr.Logger
-	configFile string
+	log         logr.Logger
+	cacheConfig *config.GitHubCache
+	configFile  string
 
 	apiURL      string
 	appId       int

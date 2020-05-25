@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: tm-bot-github
-  namespace: {{ .Release.Namespace }}
-type: Opaque
-data:
-  webhookSecretToken: {{ .Values.secrets.github.webhookSecretToken }}
-  appID: {{ .Values.secrets.github.appID }}
-  key: {{ .Values.secrets.github.key }}
+{{- define "config" -}}
+---
+apiVersion: config.testmachinery.gardener.cloud/v1beta1
+kind: BotConfiguration
+{{ toYaml .Values.configuration }}
+
+{{- end }}

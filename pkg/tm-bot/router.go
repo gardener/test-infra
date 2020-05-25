@@ -15,8 +15,7 @@
 package tm_bot
 
 import (
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
@@ -26,44 +25,62 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"k8s.io/client-go/rest"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func setup(log logr.Logger, stopCh chan struct{}) (*mux.Router, error) {
-	tmClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: testmachinery.TestMachineryScheme,
-	}))
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to build kubernetes client from file %s", kubeconfigPath)
-	}
-	w, err := testrunner.StartWatchController(log, kubeconfigPath, stopCh)
+type options struct {
+	log        logr.Logger
+	restConfig *rest.Config
+	cfg        *config.BotConfiguration
+}
+
+func (o *options) Complete(stopCh chan struct{}) (*mux.Router, error) {
+	w, err := testrunner.StartWatchController(o.log, o.restConfig, stopCh)
 	if err != nil {
 		return nil, err
 	}
+
 	runs := tests.NewRuns(w)
 
-	ghClient, err := github.NewManager(log.WithName("github"), ghManagerConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to initialize github client")
-	}
-	hooks, err := hook.New(log.WithName("hooks"), ghClient, webhookSecretToken, tmClient.Client(), w, runs)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to initialize webhooks handler")
-	}
-
 	r := mux.NewRouter()
-	r.Use(loggingMiddleware(log.WithName("trace")))
-	r.HandleFunc("/healthz", healthz(log.WithName("health"))).Methods(http.MethodGet)
-	r.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
+	r.Use(loggingMiddleware(o.log.WithName("trace")))
+	r.HandleFunc("/healthz", healthz(o.log.WithName("health"))).Methods(http.MethodGet)
 
-	a := auth.NewNoAuth()
-	if !disableAuth {
-		a = auth.NewGitHubOAuth(log.WithName("authentication"), authOrg, oauthClientID, oauthClientSecret, oauthRedirectURL, cookieSecret)
+	if err := o.setupGitHubBot(r, runs); err != nil {
+		return nil, err
 	}
 
-	ui.Serve(log, runs, uiBasePath, a, r)
+	o.setupDashboard(r, runs)
 	return r, nil
+}
+
+func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) {
+	a := auth.NewNoAuth()
+	if o.cfg.Dashboard.Authentication.Enabled {
+		authCfg := o.cfg.Dashboard.Authentication
+		a = auth.NewGitHubOAuth(o.log.WithName("authentication"), authCfg.Organization, authCfg.OAuth.ClientID, authCfg.OAuth.ClientSecret, authCfg.OAuth.RedirectURL, authCfg.CookieSecret)
+	}
+
+	ui.Serve(o.log, runs, o.cfg.Dashboard.UIBasePath, a, router)
+}
+
+func (o *options) setupGitHubBot(router *mux.Router, runs *tests.Runs) error {
+	cfg := o.cfg.GitHubBot
+	if !cfg.Enabled {
+		return nil
+	}
+	ghClient, err := github.NewManager(o.log.WithName("github"), cfg)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize github client")
+	}
+	hooks, err := hook.New(o.log.WithName("hooks"), ghClient, cfg.WebhookSecret, runs)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize webhooks handler")
+	}
+
+	router.HandleFunc("/events", hooks.HandleWebhook).Methods(http.MethodPost)
+	return nil
 }
 
 func loggingMiddleware(log logr.Logger) mux.MiddlewareFunc {
