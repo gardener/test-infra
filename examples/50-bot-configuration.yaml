@@ -1,0 +1,33 @@
+apiVersion: config.testmachinery.gardener.cloud/v1beta1
+kind: BotConfiguration
+
+webserver:
+  httpPort: 80
+  httpsPort: 443
+  certificate:
+    cert: "path/to/cert"
+    privateKey: "/path/to/privKey"
+
+githubBot:
+#  enabled: false
+#  configurationFilePath: ".ci/tm-config.yaml"
+  defaultTeam: ""
+#  apiUrl: "https://api.github.com"
+  appId: 123
+  appPrivateKeyPath: "my/priv/key"
+  webhookSecret: "testing"
+
+dashboard:
+  UIBasePath: "/app"
+  authentication:
+  #  enabled: false
+    organization: gardener
+    cookieSecret: abc
+    oAuth:
+      clientId: ""
+      clientSecret: ""
+      redirectUrl: "http://test.example.local/oauth/redirect"
+#  cache:
+#    cacheDir: /tmp/tm/cache
+#    cacheDiskSizeGB: 5
+#    maxAgeSeconds: 60

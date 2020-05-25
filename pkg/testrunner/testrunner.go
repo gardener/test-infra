@@ -16,17 +16,17 @@ package testrunner
 
 import (
 	"fmt"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"time"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/test-infra/pkg/util"
@@ -41,8 +41,23 @@ func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNameP
 	return runs.Run(log.WithValues("namespace", config.Namespace), config, testrunNamePrefix, notify...)
 }
 
+// StartWatchControllerFromFile starts a new controller that watches testruns from a kubeconfig file
+func StartWatchControllerFromFile(log logr.Logger, kubeconfigPath string, stopCh chan struct{}) (watch.Watch, error) {
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
+		&clientcmd.ConfigOverrides{},
+	)
+
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return StartWatchController(log, restConfig, stopCh)
+}
+
 // StartWatchController starts a new controller that watches testruns
-func StartWatchController(log logr.Logger, kubeconfigPath string, stopCh chan struct{}) (watch.Watch, error) {
+func StartWatchController(log logr.Logger, restConfig *rest.Config, stopCh chan struct{}) (watch.Watch, error) {
 	cLogger, err := logger.New(&logger.Config{
 		Development:       false,
 		Cli:               true,
@@ -55,15 +70,9 @@ func StartWatchController(log logr.Logger, kubeconfigPath string, stopCh chan st
 		return nil, err
 	}
 	ctrl.SetLogger(cLogger)
-	tmClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: testmachinery.TestMachineryScheme,
-	}))
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to build kubernetes client from file %s", kubeconfigPath)
-	}
 
 	syncPeriod := 10 * time.Minute
-	mgr, err := manager.New(tmClient.RESTConfig(), manager.Options{
+	mgr, err := manager.New(restConfig, manager.Options{
 		MetricsBindAddress: "0",
 		Scheme:             testmachinery.TestMachineryScheme,
 		SyncPeriod:         &syncPeriod,

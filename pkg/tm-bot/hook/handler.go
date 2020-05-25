@@ -16,7 +16,7 @@ package hook
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
+	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/resume"
@@ -25,13 +25,10 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/single"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
 	testsmanager "github.com/gardener/test-infra/pkg/tm-bot/tests"
-	"github.com/pkg/errors"
-	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
+	"github.com/pkg/errors"
+	"net/http"
 )
 
 type Handler struct {
@@ -41,9 +38,9 @@ type Handler struct {
 	webhookSecretToken []byte
 }
 
-func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sClient client.Client, watch watch.Watch, runs *testsmanager.Runs) (*Handler, error) {
+func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, runs *testsmanager.Runs) (*Handler, error) {
 
-	persistence, err := plugins.NewKubernetesPersistence(k8sClient, "state", "tm-bot")
+	persistence, err := plugins.NewKubernetesPersistence(runs.GetClient(), "state", "tm-bot")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to setup plugin persistence")
 	}
@@ -60,7 +57,7 @@ func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, k8sC
 	plugins.Register(gardener.New(log, runs))
 	plugins.Register(single.New(log, runs))
 	plugins.Register(skip.New(log))
-	plugins.Register(resume.New(log, watch.Client()))
+	plugins.Register(resume.New(log, runs.GetClient()))
 
 	if err := plugins.ResumePlugins(ghMgr); err != nil {
 		return nil, errors.Wrap(err, "unable to resume running plugins")

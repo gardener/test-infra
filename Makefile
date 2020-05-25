@@ -65,7 +65,7 @@ install:
 	@./hack/install
 
 .PHONY: all
-all: format generate install
+all: generate install
 
 .PHONY: install-requirements
 install-requirements:

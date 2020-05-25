@@ -81,7 +81,10 @@ $SOURCE_PATH/.ci/scripts/pull_secrets.py > $pull_secrets_value_file_path
 
 
 bot_chart="$(helm template --namespace ${NAMESPACE} \
-  --set "secrets.github.appID=${GITHUB_APP_ID},secrets.github.key=${GITHUB_KEY},secrets.github.webhookSecretToken=${GITHUB_WEBHOOK_SECRET_TOKEN},ingress.host=${GITHUB_WEBHOOK_URL},bot.verbosity=5,bot.tag=${VERSION},bot.tls.caBundle=${ca_bundle},bot.tls.crt=${crt},bot.tls.key=${key}" $SOURCE_PATH/charts/tm-bot)"
+  --set "configuration.githubBot.appID=${GITHUB_APP_ID},githubAppPrivateKey=${GITHUB_KEY},configuration.githubBot.webhookSecret=${GITHUB_WEBHOOK_SECRET_TOKEN}" \
+  --set "ingress.host=${GITHUB_WEBHOOK_URL},bot.verbosity=5,bot.tag=${VERSION}" \
+  --set "bot.tls.caBundle=${ca_bundle},bot.tls.crt=${crt},bot.tls.key=${key}" \
+  $SOURCE_PATH/charts/tm-bot)"
 
 
 ################################

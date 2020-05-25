@@ -56,6 +56,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*BotConfiguration)(nil), (*config.BotConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_BotConfiguration_To_config_BotConfiguration(a.(*BotConfiguration), b.(*config.BotConfiguration), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.BotConfiguration)(nil), (*BotConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_BotConfiguration_To_v1beta1_BotConfiguration(a.(*config.BotConfiguration), b.(*BotConfiguration), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*Certificate)(nil), (*config.Certificate)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Certificate_To_config_Certificate(a.(*Certificate), b.(*config.Certificate), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.Certificate)(nil), (*Certificate)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Certificate_To_v1beta1_Certificate(a.(*config.Certificate), b.(*Certificate), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Configuration)(nil), (*config.Configuration)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_Configuration_To_config_Configuration(a.(*Configuration), b.(*config.Configuration), scope)
 	}); err != nil {
@@ -76,6 +96,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Dashboard)(nil), (*config.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Dashboard_To_config_Dashboard(a.(*Dashboard), b.(*config.Dashboard), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.Dashboard)(nil), (*Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Dashboard_To_v1beta1_Dashboard(a.(*config.Dashboard), b.(*Dashboard), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*DashboardAuthentication)(nil), (*config.DashboardAuthentication)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(a.(*DashboardAuthentication), b.(*config.DashboardAuthentication), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.DashboardAuthentication)(nil), (*DashboardAuthentication)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(a.(*config.DashboardAuthentication), b.(*DashboardAuthentication), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ElasticSearch)(nil), (*config.ElasticSearch)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_ElasticSearch_To_config_ElasticSearch(a.(*ElasticSearch), b.(*config.ElasticSearch), scope)
 	}); err != nil {
@@ -93,6 +133,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*config.GitHub)(nil), (*GitHub)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_config_GitHub_To_v1beta1_GitHub(a.(*config.GitHub), b.(*GitHub), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*GitHubBot)(nil), (*config.GitHubBot)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_GitHubBot_To_config_GitHubBot(a.(*GitHubBot), b.(*config.GitHubBot), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.GitHubBot)(nil), (*GitHubBot)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_GitHubBot_To_v1beta1_GitHubBot(a.(*config.GitHubBot), b.(*GitHubBot), scope)
 	}); err != nil {
 		return err
 	}
@@ -133,6 +183,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*config.MinioConfiguration)(nil), (*MinioConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(a.(*config.MinioConfiguration), b.(*MinioConfiguration), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*OAuth)(nil), (*config.OAuth)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_OAuth_To_config_OAuth(a.(*OAuth), b.(*config.OAuth), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.OAuth)(nil), (*OAuth)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_OAuth_To_v1beta1_OAuth(a.(*config.OAuth), b.(*OAuth), scope)
 	}); err != nil {
 		return err
 	}
@@ -196,6 +256,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Webserver)(nil), (*config.Webserver)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Webserver_To_config_Webserver(a.(*Webserver), b.(*config.Webserver), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*config.Webserver)(nil), (*Webserver)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_Webserver_To_v1beta1_Webserver(a.(*config.Webserver), b.(*Webserver), scope)
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -247,6 +317,64 @@ func autoConvert_config_ArgoUI_To_v1beta1_ArgoUI(in *config.ArgoUI, out *ArgoUI,
 // Convert_config_ArgoUI_To_v1beta1_ArgoUI is an autogenerated conversion function.
 func Convert_config_ArgoUI_To_v1beta1_ArgoUI(in *config.ArgoUI, out *ArgoUI, s conversion.Scope) error {
 	return autoConvert_config_ArgoUI_To_v1beta1_ArgoUI(in, out, s)
+}
+
+func autoConvert_v1beta1_BotConfiguration_To_config_BotConfiguration(in *BotConfiguration, out *config.BotConfiguration, s conversion.Scope) error {
+	if err := Convert_v1beta1_Webserver_To_config_Webserver(&in.Webserver, &out.Webserver, s); err != nil {
+		return err
+	}
+	if err := Convert_v1beta1_Dashboard_To_config_Dashboard(&in.Dashboard, &out.Dashboard, s); err != nil {
+		return err
+	}
+	if err := Convert_v1beta1_GitHubBot_To_config_GitHubBot(&in.GitHubBot, &out.GitHubBot, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1beta1_BotConfiguration_To_config_BotConfiguration is an autogenerated conversion function.
+func Convert_v1beta1_BotConfiguration_To_config_BotConfiguration(in *BotConfiguration, out *config.BotConfiguration, s conversion.Scope) error {
+	return autoConvert_v1beta1_BotConfiguration_To_config_BotConfiguration(in, out, s)
+}
+
+func autoConvert_config_BotConfiguration_To_v1beta1_BotConfiguration(in *config.BotConfiguration, out *BotConfiguration, s conversion.Scope) error {
+	if err := Convert_config_Webserver_To_v1beta1_Webserver(&in.Webserver, &out.Webserver, s); err != nil {
+		return err
+	}
+	if err := Convert_config_Dashboard_To_v1beta1_Dashboard(&in.Dashboard, &out.Dashboard, s); err != nil {
+		return err
+	}
+	if err := Convert_config_GitHubBot_To_v1beta1_GitHubBot(&in.GitHubBot, &out.GitHubBot, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_config_BotConfiguration_To_v1beta1_BotConfiguration is an autogenerated conversion function.
+func Convert_config_BotConfiguration_To_v1beta1_BotConfiguration(in *config.BotConfiguration, out *BotConfiguration, s conversion.Scope) error {
+	return autoConvert_config_BotConfiguration_To_v1beta1_BotConfiguration(in, out, s)
+}
+
+func autoConvert_v1beta1_Certificate_To_config_Certificate(in *Certificate, out *config.Certificate, s conversion.Scope) error {
+	out.Cert = in.Cert
+	out.PrivateKey = in.PrivateKey
+	return nil
+}
+
+// Convert_v1beta1_Certificate_To_config_Certificate is an autogenerated conversion function.
+func Convert_v1beta1_Certificate_To_config_Certificate(in *Certificate, out *config.Certificate, s conversion.Scope) error {
+	return autoConvert_v1beta1_Certificate_To_config_Certificate(in, out, s)
+}
+
+func autoConvert_config_Certificate_To_v1beta1_Certificate(in *config.Certificate, out *Certificate, s conversion.Scope) error {
+	out.Cert = in.Cert
+	out.PrivateKey = in.PrivateKey
+	return nil
+}
+
+// Convert_config_Certificate_To_v1beta1_Certificate is an autogenerated conversion function.
+func Convert_config_Certificate_To_v1beta1_Certificate(in *config.Certificate, out *Certificate, s conversion.Scope) error {
+	return autoConvert_config_Certificate_To_v1beta1_Certificate(in, out, s)
 }
 
 func autoConvert_v1beta1_Configuration_To_config_Configuration(in *Configuration, out *config.Configuration, s conversion.Scope) error {
@@ -335,6 +463,58 @@ func Convert_config_Controller_To_v1beta1_Controller(in *config.Controller, out 
 	return autoConvert_config_Controller_To_v1beta1_Controller(in, out, s)
 }
 
+func autoConvert_v1beta1_Dashboard_To_config_Dashboard(in *Dashboard, out *config.Dashboard, s conversion.Scope) error {
+	out.UIBasePath = in.UIBasePath
+	if err := Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1beta1_Dashboard_To_config_Dashboard is an autogenerated conversion function.
+func Convert_v1beta1_Dashboard_To_config_Dashboard(in *Dashboard, out *config.Dashboard, s conversion.Scope) error {
+	return autoConvert_v1beta1_Dashboard_To_config_Dashboard(in, out, s)
+}
+
+func autoConvert_config_Dashboard_To_v1beta1_Dashboard(in *config.Dashboard, out *Dashboard, s conversion.Scope) error {
+	out.UIBasePath = in.UIBasePath
+	if err := Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_config_Dashboard_To_v1beta1_Dashboard is an autogenerated conversion function.
+func Convert_config_Dashboard_To_v1beta1_Dashboard(in *config.Dashboard, out *Dashboard, s conversion.Scope) error {
+	return autoConvert_config_Dashboard_To_v1beta1_Dashboard(in, out, s)
+}
+
+func autoConvert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(in *DashboardAuthentication, out *config.DashboardAuthentication, s conversion.Scope) error {
+	out.Enabled = in.Enabled
+	out.OAuth = (*config.OAuth)(unsafe.Pointer(in.OAuth))
+	out.Organization = in.Organization
+	out.CookieSecret = in.CookieSecret
+	return nil
+}
+
+// Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication is an autogenerated conversion function.
+func Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(in *DashboardAuthentication, out *config.DashboardAuthentication, s conversion.Scope) error {
+	return autoConvert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(in, out, s)
+}
+
+func autoConvert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(in *config.DashboardAuthentication, out *DashboardAuthentication, s conversion.Scope) error {
+	out.Enabled = in.Enabled
+	out.OAuth = (*OAuth)(unsafe.Pointer(in.OAuth))
+	out.Organization = in.Organization
+	out.CookieSecret = in.CookieSecret
+	return nil
+}
+
+// Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication is an autogenerated conversion function.
+func Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(in *config.DashboardAuthentication, out *DashboardAuthentication, s conversion.Scope) error {
+	return autoConvert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(in, out, s)
+}
+
 func autoConvert_v1beta1_ElasticSearch_To_config_ElasticSearch(in *ElasticSearch, out *config.ElasticSearch, s conversion.Scope) error {
 	out.Endpoint = in.Endpoint
 	out.Username = in.Username
@@ -379,6 +559,44 @@ func autoConvert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub,
 // Convert_config_GitHub_To_v1beta1_GitHub is an autogenerated conversion function.
 func Convert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s conversion.Scope) error {
 	return autoConvert_config_GitHub_To_v1beta1_GitHub(in, out, s)
+}
+
+func autoConvert_v1beta1_GitHubBot_To_config_GitHubBot(in *GitHubBot, out *config.GitHubBot, s conversion.Scope) error {
+	out.Enabled = in.Enabled
+	out.ConfigurationFilePath = in.ConfigurationFilePath
+	out.DefaultTeam = in.DefaultTeam
+	out.ApiUrl = in.ApiUrl
+	out.AppID = in.AppID
+	out.AppPrivateKeyPath = in.AppPrivateKeyPath
+	out.WebhookSecret = in.WebhookSecret
+	if err := Convert_v1beta1_GitHubCache_To_config_GitHubCache(&in.GitHubCache, &out.GitHubCache, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1beta1_GitHubBot_To_config_GitHubBot is an autogenerated conversion function.
+func Convert_v1beta1_GitHubBot_To_config_GitHubBot(in *GitHubBot, out *config.GitHubBot, s conversion.Scope) error {
+	return autoConvert_v1beta1_GitHubBot_To_config_GitHubBot(in, out, s)
+}
+
+func autoConvert_config_GitHubBot_To_v1beta1_GitHubBot(in *config.GitHubBot, out *GitHubBot, s conversion.Scope) error {
+	out.Enabled = in.Enabled
+	out.ConfigurationFilePath = in.ConfigurationFilePath
+	out.DefaultTeam = in.DefaultTeam
+	out.ApiUrl = in.ApiUrl
+	out.AppID = in.AppID
+	out.AppPrivateKeyPath = in.AppPrivateKeyPath
+	out.WebhookSecret = in.WebhookSecret
+	if err := Convert_config_GitHubCache_To_v1beta1_GitHubCache(&in.GitHubCache, &out.GitHubCache, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_config_GitHubBot_To_v1beta1_GitHubBot is an autogenerated conversion function.
+func Convert_config_GitHubBot_To_v1beta1_GitHubBot(in *config.GitHubBot, out *GitHubBot, s conversion.Scope) error {
+	return autoConvert_config_GitHubBot_To_v1beta1_GitHubBot(in, out, s)
 }
 
 func autoConvert_v1beta1_GitHubCache_To_config_GitHubCache(in *GitHubCache, out *config.GitHubCache, s conversion.Scope) error {
@@ -477,6 +695,30 @@ func autoConvert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in *con
 // Convert_config_MinioConfiguration_To_v1beta1_MinioConfiguration is an autogenerated conversion function.
 func Convert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in *config.MinioConfiguration, out *MinioConfiguration, s conversion.Scope) error {
 	return autoConvert_config_MinioConfiguration_To_v1beta1_MinioConfiguration(in, out, s)
+}
+
+func autoConvert_v1beta1_OAuth_To_config_OAuth(in *OAuth, out *config.OAuth, s conversion.Scope) error {
+	out.ClientID = in.ClientID
+	out.ClientSecret = in.ClientSecret
+	out.RedirectURL = in.RedirectURL
+	return nil
+}
+
+// Convert_v1beta1_OAuth_To_config_OAuth is an autogenerated conversion function.
+func Convert_v1beta1_OAuth_To_config_OAuth(in *OAuth, out *config.OAuth, s conversion.Scope) error {
+	return autoConvert_v1beta1_OAuth_To_config_OAuth(in, out, s)
+}
+
+func autoConvert_config_OAuth_To_v1beta1_OAuth(in *config.OAuth, out *OAuth, s conversion.Scope) error {
+	out.ClientID = in.ClientID
+	out.ClientSecret = in.ClientSecret
+	out.RedirectURL = in.RedirectURL
+	return nil
+}
+
+// Convert_config_OAuth_To_v1beta1_OAuth is an autogenerated conversion function.
+func Convert_config_OAuth_To_v1beta1_OAuth(in *config.OAuth, out *OAuth, s conversion.Scope) error {
+	return autoConvert_config_OAuth_To_v1beta1_OAuth(in, out, s)
 }
 
 func autoConvert_v1beta1_Observability_To_config_Observability(in *Observability, out *config.Observability, s conversion.Scope) error {
@@ -629,4 +871,32 @@ func autoConvert_config_WebhookConfig_To_v1beta1_WebhookConfig(in *config.Webhoo
 // Convert_config_WebhookConfig_To_v1beta1_WebhookConfig is an autogenerated conversion function.
 func Convert_config_WebhookConfig_To_v1beta1_WebhookConfig(in *config.WebhookConfig, out *WebhookConfig, s conversion.Scope) error {
 	return autoConvert_config_WebhookConfig_To_v1beta1_WebhookConfig(in, out, s)
+}
+
+func autoConvert_v1beta1_Webserver_To_config_Webserver(in *Webserver, out *config.Webserver, s conversion.Scope) error {
+	out.HTTPPort = in.HTTPPort
+	out.HTTPSPort = in.HTTPSPort
+	if err := Convert_v1beta1_Certificate_To_config_Certificate(&in.Certificate, &out.Certificate, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1beta1_Webserver_To_config_Webserver is an autogenerated conversion function.
+func Convert_v1beta1_Webserver_To_config_Webserver(in *Webserver, out *config.Webserver, s conversion.Scope) error {
+	return autoConvert_v1beta1_Webserver_To_config_Webserver(in, out, s)
+}
+
+func autoConvert_config_Webserver_To_v1beta1_Webserver(in *config.Webserver, out *Webserver, s conversion.Scope) error {
+	out.HTTPPort = in.HTTPPort
+	out.HTTPSPort = in.HTTPSPort
+	if err := Convert_config_Certificate_To_v1beta1_Certificate(&in.Certificate, &out.Certificate, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_config_Webserver_To_v1beta1_Webserver is an autogenerated conversion function.
+func Convert_config_Webserver_To_v1beta1_Webserver(in *config.Webserver, out *Webserver, s conversion.Scope) error {
+	return autoConvert_config_Webserver_To_v1beta1_Webserver(in, out, s)
 }

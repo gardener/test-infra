@@ -31,20 +31,27 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo":                            schema_pkg_apis_config_v1beta1_Argo(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUI":                          schema_pkg_apis_config_v1beta1_ArgoUI(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.BotConfiguration":                schema_pkg_apis_config_v1beta1_BotConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Certificate":                     schema_pkg_apis_config_v1beta1_Certificate(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Configuration":                   schema_pkg_apis_config_v1beta1_Configuration(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller":                      schema_pkg_apis_config_v1beta1_Controller(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Dashboard":                       schema_pkg_apis_config_v1beta1_Dashboard(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication":         schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch":                   schema_pkg_apis_config_v1beta1_ElasticSearch(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub":                          schema_pkg_apis_config_v1beta1_GitHub(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot":                       schema_pkg_apis_config_v1beta1_GitHubBot(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache":                     schema_pkg_apis_config_v1beta1_GitHubCache(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress":                         schema_pkg_apis_config_v1beta1_Ingress(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging":                         schema_pkg_apis_config_v1beta1_Logging(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth":                           schema_pkg_apis_config_v1beta1_OAuth(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability":                   schema_pkg_apis_config_v1beta1_Observability(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity":          schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3":                              schema_pkg_apis_config_v1beta1_S3(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server":                        schema_pkg_apis_config_v1beta1_S3Server(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery":                   schema_pkg_apis_config_v1beta1_TestMachinery(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig":                   schema_pkg_apis_config_v1beta1_WebhookConfig(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver":                       schema_pkg_apis_config_v1beta1_Webserver(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.DowntimePeriods":              schema_pkg_apis_telemetry_v1beta1_DowntimePeriods(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ResponseTimeDuration":         schema_pkg_apis_telemetry_v1beta1_ResponseTimeDuration(ref),
 		"github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootMeasurementData":         schema_pkg_apis_telemetry_v1beta1_ShootMeasurementData(ref),
@@ -122,6 +129,79 @@ func schema_pkg_apis_config_v1beta1_ArgoUI(ref common.ReferenceCallback) common.
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_BotConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Configuration contains the testmachinery configuration values",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"webserver": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver"),
+						},
+					},
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Dashboard"),
+						},
+					},
+					"githubBot": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot"),
+						},
+					},
+				},
+				Required: []string{"webserver", "dashboard", "githubBot"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Dashboard", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_Certificate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Certificate holds the certificate and its the private key",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cert": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cert specifies the path to the certificate file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"privateKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrivateKey specifies the path to the private key file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"cert", "privateKey"},
+			},
+		},
 	}
 }
 
@@ -244,6 +324,78 @@ func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_pkg_apis_config_v1beta1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dashboard contains configuration values for the TestMachinery Dashboard",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"UIBasePath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UIBasePath specifies the base path for static files and templates",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authentication": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Authentication to restrict access to specific parts in the dashboard",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication"),
+						},
+					},
+				},
+				Required: []string{"UIBasePath", "authentication"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DashboardAuthentication to restrict access to specific parts in the dashboard",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled defined if the dashboard should be protected",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"oAuth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "OAuth Github configuration that is used to protect parts of the dashboard",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"),
+						},
+					},
+					"organization": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Organization is the GitHub organization to restrict access to the bot",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"cookieSecret": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CookieSecret is the secret for the cookie store",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"enabled"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"},
+	}
+}
+
 func schema_pkg_apis_config_v1beta1_ElasticSearch(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -295,6 +447,77 @@ func schema_pkg_apis_config_v1beta1_GitHub(ref common.ReferenceCallback) common.
 						},
 					},
 				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubBot contains the configuration for the github integration",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled defines if the GitHub Bot integration should be enabled",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"configurationFilePath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigurationFilePath specifies the path to the configuration inside a repository that is watched by the bot",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"defaultTeam": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DefaultTeam is the slug name of the default team to grant permissions to perform bot commands",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ApiUrl specifies the github api endpoint",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"appId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppID holds the ID of the GitHub App.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"appPrivateKeyPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppPrivateKeyPath is the path to the private key for the GitHub app.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"webhookSecret": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub webhook secret to verify payload",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"cache": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHubCache configures the cache for the github api",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"),
+						},
+					},
+				},
+				Required: []string{"enabled", "configurationFilePath", "defaultTeam", "apiUrl", "appId", "appPrivateKeyPath", "webhookSecret", "cache"},
 			},
 		},
 		Dependencies: []string{
@@ -427,6 +650,37 @@ func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_OAuth(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"clientSecret": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"redirectUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"clientId", "clientSecret", "redirectUrl"},
+			},
+		},
 	}
 }
 
@@ -645,6 +899,42 @@ func schema_pkg_apis_config_v1beta1_WebhookConfig(ref common.ReferenceCallback) 
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_Webserver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Webserver configures the webserver that servres the bot and the dashboard",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"httpPort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HTTPPort specifies the port to listen for http traffic",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"httpsPort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HTTPSPort specifies the port to listen for https traffic",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"certificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Certificate holds the certificate the should be used to server the https traffic",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Certificate"),
+						},
+					},
+				},
+				Required: []string{"httpPort", "httpsPort"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Certificate"},
 	}
 }
 

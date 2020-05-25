@@ -58,7 +58,7 @@ var runTestrunCmd = &cobra.Command{
 		stopCh := make(chan struct{})
 		defer close(stopCh)
 
-		w, err := testrunner.StartWatchController(logger.Log, tmKubeconfigPath, stopCh)
+		w, err := testrunner.StartWatchControllerFromFile(logger.Log, tmKubeconfigPath, stopCh)
 		if err != nil {
 			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)

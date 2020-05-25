@@ -15,42 +15,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
-	tm_bot "github.com/gardener/test-infra/pkg/tm-bot"
-	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
-	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"os"
 )
 
-func init() {
-	viperHelper := vh.NewViperHelper(nil, "config", "$HOME/.tm-bot", ".")
-	vh.SetViper(viperHelper)
-	viperHelper.InitFlags(nil)
-	tm_bot.InitFlags(nil)
-	logger.InitFlags(nil)
-	viperHelper.BindPFlags(flag.CommandLine, "")
-}
+import (
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/test-infra/cmd/tm-bot/app"
+)
 
 func main() {
-	flag.Parse()
-	if err := vh.ViperHelper.ReadInConfig(); err != nil {
-		fmt.Printf(err.Error())
-		switch err.(type) {
-		case viper.ConfigFileNotFoundError:
-			break
-		default:
-			os.Exit(1)
-		}
-	}
-	ctx := context.Background()
-	log, err := logger.New(nil)
-	if err != nil {
-		fmt.Printf(err.Error())
+	cmd := app.NewTestMachineryBotCommand(controller.SetupSignalHandlerContext())
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Print(err)
 		os.Exit(1)
 	}
-	logger.SetLogger(log)
-	tm_bot.Serve(ctx, log)
 }

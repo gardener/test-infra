@@ -16,59 +16,46 @@ package tm_bot
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
+	"fmt"
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-logr/logr"
-	flag "github.com/spf13/pflag"
-)
-
-var (
-	listenAddressHTTP  string
-	listenAddressHTTPS string
-
-	serverCertFile string
-	serverKeyFile  string
-
-	disableAuth       bool
-	authOrg           string
-	oauthClientID     string
-	oauthClientSecret string
-	oauthRedirectURL  string
-	cookieSecret      string
-	uiBasePath        string
-
-	ghManagerConfig    *github.ManagerConfig
-	webhookSecretToken string
-	kubeconfigPath     string
 )
 
 // Serve starts the webhook server for testrun validation
-func Serve(ctx context.Context, log logr.Logger) {
+func Serve(ctx context.Context, log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) {
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
-	r, err := setup(log, stopCh)
+	opts := &options{
+		log:        log,
+		restConfig: restConfig,
+		cfg:        cfg,
+	}
+
+	r, err := opts.Complete(stopCh)
 	if err != nil {
 		log.Error(err, "unable to setup components")
 		os.Exit(1)
 	}
 
-	serverHTTP := &http.Server{Addr: listenAddressHTTP, Handler: r}
-	serverHTTPS := &http.Server{Addr: listenAddressHTTPS, Handler: r}
+	serverHTTP := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Webserver.HTTPPort), Handler: r}
+	serverHTTPS := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Webserver.HTTPSPort), Handler: r}
 	go func() {
-		log.Info("starting HTTP server", "port", listenAddressHTTP)
+		log.Info("starting HTTP server", "port", cfg.Webserver.HTTPPort)
 		if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error(err, "unable to start HTTP server")
+			os.Exit(1)
 		}
 	}()
 
 	go func() {
-		log.Info("starting HTTPS server", "port", listenAddressHTTPS)
-		if err := serverHTTPS.ListenAndServeTLS(serverCertFile, serverKeyFile); err != nil && err != http.ErrServerClosed {
+		log.Info("starting HTTPS server", "port", cfg.Webserver.HTTPSPort)
+		if err := serverHTTPS.ListenAndServeTLS(cfg.Webserver.Certificate.Cert, cfg.Webserver.Certificate.PrivateKey); err != nil && err != http.ErrServerClosed {
 			log.Error(err, "unable to start HTTPS server")
 		}
 	}()
@@ -84,36 +71,4 @@ func Serve(ctx context.Context, log logr.Logger) {
 		log.Error(err, "unable to shut down HTTPS server")
 	}
 	log.Info("HTTP(S) servers stopped.")
-}
-
-func InitFlags(flagset *flag.FlagSet) {
-	if flagset == nil {
-		flagset = flag.CommandLine
-	}
-
-	fs := flag.NewFlagSet("bot", flag.ExitOnError)
-
-	fs.StringVar(&listenAddressHTTP, "webhook-http-address", ":80",
-		"Webhook HTTP address to bind")
-	fs.StringVar(&listenAddressHTTPS, "webhook-https-address", ":443",
-		"Webhook HTTPS address to bind")
-
-	fs.StringVar(&serverCertFile, "cert-file", os.Getenv("WEBHOOK_CERT_FILE"),
-		"Path to server certificate")
-	fs.StringVar(&serverKeyFile, "key-file", os.Getenv("WEBHOOK_KEY_FILE"),
-		"Path to private key")
-	fs.StringVar(&uiBasePath, "ui-base-path", "/app", "specifiy the base path for static files and templates")
-
-	ghManagerConfig = github.ManagerInitFlags(fs)
-	fs.BoolVar(&disableAuth, "disable-auth", false, "disables the authentication. WARNING: only use for local development")
-	fs.StringVar(&oauthClientID, "oauth-client-id", "", "GitHub oauth clientId")
-	fs.StringVar(&oauthClientSecret, "oauth-client-secret", "", "GitHub oauth clientSecret")
-	fs.StringVar(&oauthRedirectURL, "oauth-redirect-url", "", "GitHub redirect url")
-	fs.StringVar(&cookieSecret, "cookie-secret", "", "Cookie store secret")
-	fs.StringVar(&authOrg, "auth-org", "gardener", "GitHub organization to restrict access to the bot")
-	fs.StringVar(&webhookSecretToken, "webhook-secret-token", "testing", "GitHub webhook secret to verify payload")
-	fs.StringVar(&kubeconfigPath, "kubeconfig", os.Getenv("KUBECONFIG"), "Kubeconfig path to a testmachinery cluster")
-
-	viper.PrefixFlagSetConfigs(fs, "bot")
-	flagset.AddFlagSet(fs)
 }
