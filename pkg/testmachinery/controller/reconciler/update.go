@@ -80,7 +80,7 @@ func (r *TestmachineryReconciler) completeTestrun(rCtx *reconcileContext) error 
 	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 	log.Info("start collecting node status of Testrun")
 
-	rCtx.tr.Status.Phase = rCtx.wf.Status.Phase
+	rCtx.tr.Status.Phase = util.WorkflowPhase(rCtx.wf)
 	rCtx.tr.Status.CompletionTime = &rCtx.wf.Status.FinishedAt
 	trDuration := rCtx.tr.Status.CompletionTime.Sub(rCtx.tr.Status.StartTime.Time)
 	rCtx.tr.Status.Duration = int64(trDuration.Seconds())
