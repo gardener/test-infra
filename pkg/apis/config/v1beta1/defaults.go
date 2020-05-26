@@ -126,11 +126,14 @@ func SetDefaults_Dashboard(obj *Dashboard) {
 	if len(obj.UIBasePath) == 0 {
 		obj.UIBasePath = "/app"
 	}
-	SetDefaults_DashboardAuthentication(&obj.Authentication)
+
+	if obj.Authentication.GitHub != nil {
+		SetDefaults_GitHubAuthentication(obj.Authentication.GitHub)
+	}
 }
 
-// SetDefaults_DashboardAuthentication sets default values for the DashboardAuthentication objects
-func SetDefaults_DashboardAuthentication(obj *DashboardAuthentication) {
+// SetDefaults_GitHubAuthentication sets default values for the GitHubAuthentication objects
+func SetDefaults_GitHubAuthentication(obj *GitHubAuthentication) {
 	if len(obj.Organization) == 0 {
 		obj.Organization = "gardener"
 	}

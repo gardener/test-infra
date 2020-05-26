@@ -15,15 +15,12 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 )
 
 // noAuth is a dummy implementation that implements the authentication interface
 // but with no authentication
-type noAuth struct {
-	loggedIn bool
-}
+type noAuth struct{}
 
 // NewNoAuth returns the noAuth authentication provider that is a dummy implementation that implements the authentication interface
 // but with no authentication
@@ -33,29 +30,23 @@ func NewNoAuth() Provider {
 
 func (a *noAuth) Protect(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !a.loggedIn {
-			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
-		}
 		handler(w, r)
 	}
 }
 
+func (a *noAuth) GetAuthContext(r *http.Request) (AuthContext, error) {
+	return AuthContext{}, nil
+}
+
+func (a *noAuth) DisplayLogin() bool {
+	return false
+}
+
+// Redirect is a noop redirect implementation
 func (_ *noAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
 
-func (a *noAuth) GetAuthContext(r *http.Request) (AuthContext, error) {
-	if a.loggedIn {
-		return AuthContext{
-			User: "demo",
-		}, nil
-	}
-	return AuthContext{}, errors.New("user not logged in")
-}
+// Login is a the noop Login implementation
+func (a *noAuth) Login(w http.ResponseWriter, r *http.Request) {}
 
-func (a *noAuth) Login(w http.ResponseWriter, r *http.Request) {
-	a.loggedIn = true
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-}
-func (a *noAuth) Logout(w http.ResponseWriter, r *http.Request) {
-	a.loggedIn = false
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-}
+// Logout is a the noop Logout implementation
+func (a *noAuth) Logout(w http.ResponseWriter, r *http.Request) {}

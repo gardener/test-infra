@@ -15,6 +15,7 @@
 package tm_bot
 
 import (
+	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -51,18 +52,33 @@ func (o *options) Complete(stopCh chan struct{}) (*mux.Router, error) {
 		return nil, err
 	}
 
-	o.setupDashboard(r, runs)
+	if err := o.setupDashboard(r, runs); err != nil {
+		return nil, err
+	}
 	return r, nil
 }
 
-func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) {
-	a := auth.NewNoAuth()
-	if o.cfg.Dashboard.Authentication.Enabled {
-		authCfg := o.cfg.Dashboard.Authentication
-		a = auth.NewGitHubOAuth(o.log.WithName("authentication"), authCfg.Organization, authCfg.OAuth.ClientID, authCfg.OAuth.ClientSecret, authCfg.OAuth.RedirectURL, authCfg.CookieSecret)
+func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) error {
+	var (
+		authCfg      = o.cfg.Dashboard.Authentication
+		authProvider auth.Provider
+	)
+
+	switch authCfg.Provider {
+	case config.NoAuthProvider:
+		authProvider = auth.NewNoAuth()
+	case config.DummyAuthProvider:
+		authProvider = auth.NewDummyAuth()
+	case config.GitHubAuthProvider:
+		authProvider = auth.NewGitHubOAuth(o.log.WithName("authentication"),
+			authCfg.GitHub.Organization, authCfg.GitHub.OAuth.ClientID, authCfg.GitHub.OAuth.ClientSecret,
+			authCfg.GitHub.OAuth.RedirectURL, authCfg.CookieSecret)
+	default:
+		return fmt.Errorf("no authentication provider with name %s", authCfg.Provider)
 	}
 
-	ui.Serve(o.log, runs, o.cfg.Dashboard.UIBasePath, a, router)
+	ui.Serve(o.log, runs, o.cfg.Dashboard.UIBasePath, authProvider, router)
+	return nil
 }
 
 func (o *options) setupGitHubBot(router *mux.Router, runs *tests.Runs) error {
