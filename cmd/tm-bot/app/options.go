@@ -47,7 +47,7 @@ func (o *options) AddFlags(fs *flag.FlagSet) {
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }
 
-// Complete parses all options and flags and initializes the basic functions
+// Run parses all options and flags and initializes the basic functions
 func (o *options) Complete() error {
 	log, err := logger.New(nil)
 	if err != nil {

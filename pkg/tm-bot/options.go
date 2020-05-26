@@ -16,46 +16,38 @@ package tm_bot
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/go-logr/logr"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
-	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"k8s.io/client-go/rest"
-	"net/http"
 )
 
 type options struct {
 	log        logr.Logger
 	restConfig *rest.Config
 	cfg        *config.BotConfiguration
+
+	mgr manager.Manager
+	w   watch.Watch
 }
 
-func (o *options) Complete(stopCh chan struct{}) (*mux.Router, error) {
-	w, err := testrunner.StartWatchController(o.log, o.restConfig, stopCh)
-	if err != nil {
-		return nil, err
+func NewOptions(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) *options {
+	return &options{
+		log:        log,
+		restConfig: restConfig,
+		cfg:        cfg,
 	}
-
-	runs := tests.NewRuns(w)
-
-	r := mux.NewRouter()
-	r.Use(loggingMiddleware(o.log.WithName("trace")))
-	r.HandleFunc("/healthz", healthz(o.log.WithName("health"))).Methods(http.MethodGet)
-
-	if err := o.setupGitHubBot(r, runs); err != nil {
-		return nil, err
-	}
-
-	if err := o.setupDashboard(r, runs); err != nil {
-		return nil, err
-	}
-	return r, nil
 }
 
 func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) error {

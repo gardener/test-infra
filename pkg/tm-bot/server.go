@@ -17,58 +17,110 @@ package tm_bot
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller"
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 )
 
 // Serve starts the webhook server for testrun validation
-func Serve(ctx context.Context, log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) {
+func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) {
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
-	opts := &options{
-		log:        log,
-		restConfig: restConfig,
-		cfg:        cfg,
-	}
+	opts := NewOptions(log, restConfig, cfg)
 
-	r, err := opts.Complete(stopCh)
-	if err != nil {
+	if err := opts.Run(stopCh); err != nil {
 		log.Error(err, "unable to setup components")
 		os.Exit(1)
 	}
+}
 
-	serverHTTP := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Webserver.HTTPPort), Handler: r}
-	serverHTTPS := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Webserver.HTTPSPort), Handler: r}
+func (o *options) Run(stopCh chan struct{}) error {
+	ctrl.SetLogger(o.log.WithName("watch"))
+
+	syncPeriod := 10 * time.Minute
+	mgr, err := manager.New(o.restConfig, manager.Options{
+		MetricsBindAddress: "0",
+		Scheme:             testmachinery.TestMachineryScheme,
+		SyncPeriod:         &syncPeriod,
+	})
+	if err != nil {
+		return errors.Wrap(err, "unable to setup manager")
+	}
+	_, o.w, err = controller.NewWatchController(mgr, o.log)
+	if err != nil {
+		return errors.Wrap(err, "unable to setup controller")
+	}
+
+	if err := mgr.Add(o); err != nil {
+		return err
+	}
+	if err := mgr.Start(stopCh); err != nil {
+		return errors.Wrap(err, "error while running manager")
+	}
+	return nil
+}
+
+func (o *options) Start(stop <-chan struct{}) error {
+	o.log.Info("Start TM Bot")
+	runs := tests.NewRuns(o.w)
+
+	r := mux.NewRouter()
+	r.Use(loggingMiddleware(o.log.WithName("trace")))
+	r.HandleFunc("/healthz", healthz(o.log.WithName("health"))).Methods(http.MethodGet)
+
+	if err := o.setupGitHubBot(r, runs); err != nil {
+		return err
+	}
+
+	if err := o.setupDashboard(r, runs); err != nil {
+		return err
+	}
+
+	return o.startWebserver(r, stop)
+}
+
+func (o *options) startWebserver(router *mux.Router, stop <-chan struct{}) error {
+	cfg := o.cfg.Webserver
+	serverHTTP := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPPort), Handler: router}
+	serverHTTPS := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPSPort), Handler: router}
 	go func() {
-		log.Info("starting HTTP server", "port", cfg.Webserver.HTTPPort)
+		o.log.Info("starting HTTP server", "port", cfg.HTTPPort)
 		if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error(err, "unable to start HTTP server")
+			o.log.Error(err, "unable to start HTTP server")
 			os.Exit(1)
 		}
 	}()
 
 	go func() {
-		log.Info("starting HTTPS server", "port", cfg.Webserver.HTTPSPort)
-		if err := serverHTTPS.ListenAndServeTLS(cfg.Webserver.Certificate.Cert, cfg.Webserver.Certificate.PrivateKey); err != nil && err != http.ErrServerClosed {
-			log.Error(err, "unable to start HTTPS server")
+		o.log.Info("starting HTTPS server", "port", cfg.HTTPSPort)
+		if err := serverHTTPS.ListenAndServeTLS(o.cfg.Webserver.Certificate.Cert, cfg.Certificate.PrivateKey); err != nil && err != http.ErrServerClosed {
+			o.log.Error(err, "unable to start HTTPS server")
 		}
 	}()
 
 	UpdateHealth(true)
-	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	<-stop
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := serverHTTP.Shutdown(ctx); err != nil {
-		log.Error(err, "unable to shut down HTTP server")
+		o.log.Error(err, "unable to shut down HTTP server")
 	}
 	if err := serverHTTPS.Shutdown(ctx); err != nil {
-		log.Error(err, "unable to shut down HTTPS server")
+		o.log.Error(err, "unable to shut down HTTPS server")
 	}
-	log.Info("HTTP(S) servers stopped.")
+	o.log.Info("HTTP(S) servers stopped.")
+	return nil
 }

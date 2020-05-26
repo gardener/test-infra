@@ -19,6 +19,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     garden.sapcloud.io/purpose: managed-cert
+    {{- range $key, $value := .Values.ingress.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
 spec:
   tls:
   - hosts:

@@ -37,7 +37,7 @@ func NewTestMachineryBotCommand(ctx context.Context) *cobra.Command {
 				fmt.Print(err)
 				os.Exit(1)
 			}
-			options.run(ctx)
+			options.run()
 		},
 	}
 
@@ -46,8 +46,7 @@ func NewTestMachineryBotCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func (o *options) run(ctx context.Context) {
+func (o *options) run() {
 	o.log.Info(fmt.Sprintf("start Test Machinery Bot with version %s", version.Get().String()))
-
-	tm_bot.Serve(ctx, o.log, o.restConfig, o.config)
+	tm_bot.Serve(o.log, o.restConfig, o.config)
 }
