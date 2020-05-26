@@ -35,11 +35,23 @@ const (
 )
 
 type Provider interface {
+	// Protect is a middleware to protect a page to unauthorized access
 	Protect(http.HandlerFunc) http.HandlerFunc
+
+	// Redirect is the function that is called on a callback
 	Redirect(w http.ResponseWriter, r *http.Request)
+
+	// GetAuthContext should return the current AuthContext
 	GetAuthContext(r *http.Request) (AuthContext, error)
+
+	// Login should login a user and maybe redirect the request to a IDP
 	Login(w http.ResponseWriter, r *http.Request)
+
+	// Logout should logout a user and delete the session
 	Logout(w http.ResponseWriter, r *http.Request)
+
+	// DisplayLogin should return true if a login should be doable.
+	DisplayLogin() bool
 }
 
 type AuthContext struct {
@@ -72,6 +84,10 @@ func NewGitHubOAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, c
 			Scopes:      []string{"read:org"},
 		},
 	}
+}
+
+func (a *githubOAuth) DisplayLogin() bool {
+	return true
 }
 
 func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {

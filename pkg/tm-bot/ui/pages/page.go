@@ -33,6 +33,7 @@ type Page struct {
 }
 
 type globalSettings struct {
+	DisplayLogin  bool
 	Authenticated bool
 	URL           string
 	User          user
@@ -66,6 +67,7 @@ func (p *Page) handleSimplePage(templateName string, param interface{}) http.Han
 			isAuthenticated = false
 		}
 		global := globalSettings{
+			DisplayLogin:  p.auth.DisplayLogin(),
 			Authenticated: isAuthenticated,
 			User: user{
 				Name: aCtx.User,

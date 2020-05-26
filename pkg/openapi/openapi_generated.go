@@ -39,6 +39,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication":         schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ElasticSearch":                   schema_pkg_apis_config_v1beta1_ElasticSearch(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub":                          schema_pkg_apis_config_v1beta1_GitHub(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubAuthentication":            schema_pkg_apis_config_v1beta1_GitHubAuthentication(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot":                       schema_pkg_apis_config_v1beta1_GitHubBot(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache":                     schema_pkg_apis_config_v1beta1_GitHubCache(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress":                         schema_pkg_apis_config_v1beta1_Ingress(ref),
@@ -360,22 +361,9 @@ func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.Reference
 				Description: "DashboardAuthentication to restrict access to specific parts in the dashboard",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"enabled": {
+					"provider": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Enabled defined if the dashboard should be protected",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"oAuth": {
-						SchemaProps: spec.SchemaProps{
-							Description: "OAuth Github configuration that is used to protect parts of the dashboard",
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"),
-						},
-					},
-					"organization": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Organization is the GitHub organization to restrict access to the bot",
+							Description: "Provider defines the authentication provider that should be used to authenticate and authorize users to view testruns.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -387,12 +375,18 @@ func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.Reference
 							Format:      "",
 						},
 					},
+					"githubConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub holds the github provider specific configuration",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubAuthentication"),
+						},
+					},
 				},
-				Required: []string{"enabled"},
+				Required: []string{"provider"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubAuthentication"},
 	}
 }
 
@@ -451,6 +445,33 @@ func schema_pkg_apis_config_v1beta1_GitHub(ref common.ReferenceCallback) common.
 		},
 		Dependencies: []string{
 			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_GitHubAuthentication(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"oAuth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "OAuth Github configuration that is used to protect parts of the dashboard",
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"),
+						},
+					},
+					"organization": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Organization is the GitHub organization to restrict access to the bot",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"},
 	}
 }
 

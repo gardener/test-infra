@@ -60,11 +60,31 @@ type Dashboard struct {
 	Authentication DashboardAuthentication `json:"authentication"`
 }
 
+// DashboardAuthenticationProvider is a enum to specify a dashboard authentication method
+type DashboardAuthenticationProvider string
+
+const (
+	GitHubAuthProvider DashboardAuthenticationProvider = "github"
+	NoAuthProvider     DashboardAuthenticationProvider = "noauth"
+	DummyAuthProvider  DashboardAuthenticationProvider = "dummy"
+)
+
 // DashboardAuthentication to restrict access to specific parts in the dashboard
 type DashboardAuthentication struct {
-	// Enabled defined if the dashboard should be protected
-	Enabled bool `json:"enabled"`
+	// Provider defines the authentication provider that should be used to authenticate and authorize users
+	// to view testruns.
+	Provider DashboardAuthenticationProvider `json:"provider"`
 
+	// CookieSecret is the secret for the cookie store
+	// +optional
+	CookieSecret string `json:"cookieSecret"`
+
+	// GitHub holds the github provider specific configuration
+	// +optional
+	GitHub *GitHubAuthentication `json:"githubConfig"`
+}
+
+type GitHubAuthentication struct {
 	// OAuth Github configuration that is used to protect parts of the dashboard
 	// +optional
 	OAuth *OAuth `json:"oAuth"`
@@ -72,10 +92,6 @@ type DashboardAuthentication struct {
 	// Organization is the GitHub organization to restrict access to the bot
 	// +optional
 	Organization string `json:"organization"`
-
-	// CookieSecret is the secret for the cookie store
-	// +optional
-	CookieSecret string `json:"cookieSecret"`
 }
 
 type OAuth struct {

@@ -9,3 +9,5 @@ venv
 assets
 
 **/*.coverprofile
+
+**/*.report

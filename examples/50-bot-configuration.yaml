@@ -20,13 +20,16 @@ githubBot:
 dashboard:
   UIBasePath: "/app"
   authentication:
-  #  enabled: false
-    organization: gardener
-    cookieSecret: abc
-    oAuth:
-      clientId: ""
-      clientSecret: ""
-      redirectUrl: "http://test.example.local/oauth/redirect"
+    provider: github | dummy | noauth
+    cookieSecret: sdfasdf
+
+    github:
+      organization: gardener
+      oAuth:
+        clientId: ""
+        clientSecret: ""
+        redirectUrl: "http://test.example.local/oauth/redirect"
+
 #  cache:
 #    cacheDir: /tmp/tm/cache
 #    cacheDiskSizeGB: 5

@@ -35,7 +35,9 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 func SetObjectDefaults_BotConfiguration(in *BotConfiguration) {
 	SetDefaults_Webserver(&in.Webserver)
 	SetDefaults_Dashboard(&in.Dashboard)
-	SetDefaults_DashboardAuthentication(&in.Dashboard.Authentication)
+	if in.Dashboard.Authentication.GitHub != nil {
+		SetDefaults_GitHubAuthentication(in.Dashboard.Authentication.GitHub)
+	}
 	SetDefaults_GitHubBot(&in.GitHubBot)
 }
 

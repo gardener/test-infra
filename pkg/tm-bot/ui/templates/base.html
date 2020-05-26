@@ -22,11 +22,13 @@
                class="logo"><img src="/static/img/gardener-test-machinery.svg" alt="gardener testmachinery logo" class="logo"/></a>
             <span class="mdl-layout-title header-title">{{block "pageTitle" .Arguments}}{{template "title" .}}{{end}}</span>
             <div class="mdl-layout-spacer"></div>
+            {{ if .DisplayLogin }}
             {{ if .Authenticated }}
                 <div class="username">{{ .User.Name }}</div>
                 <a class="mdl-button mdl-js-button login-btn" href="/logout">Logout</a>
             {{ else }}
                 <a class="mdl-button mdl-js-button login-btn" href="/login">Login</a>
+            {{ end }}
             {{ end }}
         </div>
     </header>
