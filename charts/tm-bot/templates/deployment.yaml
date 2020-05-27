@@ -76,7 +76,7 @@ spec:
           secretName: tm-bot-configuration
       - name: certs
         secret:
-          secretName: tm-bot-cert
+          secretName: tm-bot-tls
       {{ if .Values.githubAppPrivateKey }}
       - name: gh
         secret:
