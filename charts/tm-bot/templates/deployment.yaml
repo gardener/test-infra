@@ -65,9 +65,11 @@ spec:
         - name: certs
           mountPath: /etc/tm-bot/srv
           readOnly: true
+        {{ if .Values.githubAppPrivateKey }}
         - name: gh
           mountPath: /etc/tm-bot/gh
           readOnly: true
+        {{ end }}
       volumes:
       - name: config
         secret:
@@ -75,6 +77,8 @@ spec:
       - name: certs
         secret:
           secretName: tm-bot-cert
+      {{ if .Values.githubAppPrivateKey }}
       - name: gh
         secret:
           secretName: tm-bot-github
+      {{ end }}
