@@ -64,7 +64,7 @@ configuration:
       provider: github # | dummy | noauth
       cookieSecret: sdfasdf
 
-      github:
+      githubConfig:
         organization: gardener
         oAuth:
           clientId: ""
