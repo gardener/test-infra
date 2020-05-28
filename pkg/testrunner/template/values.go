@@ -126,22 +126,22 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 
 	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
-			"name":                   shoot.Name,
-			"projectNamespace":       shoot.Namespace,
-			"cloudprovider":          shoot.Provider,
-			"cloudprofile":           shoot.CloudprofileName,
-			"secretBinding":          shoot.SecretBinding,
-			"region":                 shoot.Region,
-			"zone":                   shoot.Zone,
-			"workers":                workers,
-			"k8sVersion":             shoot.KubernetesVersion.Version,
-			"k8sPrevPrePatchVersion": prevPrePatchVersion.Version,
-			"k8sPrevPatchVersion":    prevPatchVersion.Version,
-			"floatingPoolName":       shoot.FloatingPoolName,
-			"loadbalancerProvider":   shoot.LoadbalancerProvider,
-			"infrastructureConfig":   infrastructure,
-			"networkingConfig":       networkingConfig,
-			"controlplaneConfig":     controlplane,
+			"name":                      shoot.Name,
+			"projectNamespace":          shoot.Namespace,
+			"cloudprovider":             shoot.Provider,
+			"cloudprofile":              shoot.CloudprofileName,
+			"secretBinding":             shoot.SecretBinding,
+			"region":                    shoot.Region,
+			"zone":                      shoot.Zone,
+			"workers":                   workers,
+			"k8sVersion":                shoot.KubernetesVersion.Version,
+			"k8sPrevPrePatchVersion":    prevPrePatchVersion.Version,
+			"k8sPrevPatchVersion":       prevPatchVersion.Version,
+			"floatingPoolName":          shoot.FloatingPoolName,
+			"loadbalancerProvider":      shoot.LoadbalancerProvider,
+			"infrastructureConfig":      infrastructure,
+			"networkingConfig":          networkingConfig,
+			"controlplaneConfig":        controlplane,
 		},
 		"gardener": map[string]interface{}{
 			"version": r.parameters.GardenerVersion,
@@ -149,6 +149,9 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 		"kubeconfigs": map[string]interface{}{
 			"gardener": string(r.parameters.GardenerKubeconfig),
 		},
+	}
+	if shoot.AllowPrivilegedContainers != "" {
+		values["shoot"].(map[string]interface{})["allowPrivilegedContainers"] = shoot.AllowPrivilegedContainers
 	}
 	return utils.MergeMaps(defaultValues, values), nil
 }
