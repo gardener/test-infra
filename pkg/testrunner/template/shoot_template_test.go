@@ -17,6 +17,7 @@ package template
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"k8s.io/utils/pointer"
 	"path/filepath"
 
 	"github.com/gardener/test-infra/pkg/common"
@@ -38,7 +39,7 @@ var _ = Describe("shoot templates", func() {
 					Provider:                  common.CloudProviderGCP,
 					KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
 					Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
-					AllowPrivilegedContainers: "false",
+					AllowPrivilegedContainers: pointer.BoolPtr(false),
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",

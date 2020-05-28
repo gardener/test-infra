@@ -150,7 +150,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 			"gardener": string(r.parameters.GardenerKubeconfig),
 		},
 	}
-	if shoot.AllowPrivilegedContainers != "" {
+	if shoot.AllowPrivilegedContainers != nil {
 		values["shoot"].(map[string]interface{})["allowPrivilegedContainers"] = shoot.AllowPrivilegedContainers
 	}
 	return utils.MergeMaps(defaultValues, values), nil

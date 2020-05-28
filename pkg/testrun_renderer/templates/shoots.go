@@ -51,7 +51,7 @@ type CreateShootConfig struct {
 	ShootName                 string
 	Namespace                 string
 	K8sVersion                string
-	AllowPrivilegedContainers string
+	AllowPrivilegedContainers *bool
 }
 
 // GetStepCreateShoot generates the shoot creation step for a specific cloudprovider

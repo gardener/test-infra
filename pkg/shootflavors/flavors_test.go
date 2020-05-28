@@ -80,7 +80,7 @@ var _ = Describe("flavor test", func() {
 		rawFlavors := []*common.ShootFlavor{
 			{
 				Provider: common.CloudProviderGCP,
-				AllowPrivilegedContainers: "false",
+				AllowPrivilegedContainers: pointer.BoolPtr(false),
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
 					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
@@ -96,7 +96,7 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
-				AllowPrivilegedContainers: "false",
+				AllowPrivilegedContainers: pointer.BoolPtr(false),
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))

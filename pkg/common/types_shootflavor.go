@@ -48,7 +48,7 @@ type Shoot struct {
 	KubernetesVersion gardencorev1beta1.ExpirableVersion
 
 	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
-	AllowPrivilegedContainers string
+	AllowPrivilegedContainers *bool
 
 	// Worker pools to test
 	Workers []gardencorev1beta1.Worker
@@ -68,7 +68,7 @@ type ShootFlavor struct {
 
 	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
 	// +optional
-	AllowPrivilegedContainers string `json:"allowPrivilegedContainers"`
+	AllowPrivilegedContainers *bool `json:"allowPrivilegedContainers"`
 
 	// Worker pools to test
 	Workers []ShootWorkerFlavor `json:"workers"`
