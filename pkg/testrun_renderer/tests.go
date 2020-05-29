@@ -16,7 +16,7 @@ package testrun_renderer
 
 import "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
-// WithTests connects mumtiple test functions to one
+// WithTests connects multiple test functions to one
 func WithTests(funcs ...TestsFunc) TestsFunc {
 	return func(suffix string, parents []string) ([]*v1beta1.DAGStep, []string, error) {
 		steps := make([]*v1beta1.DAGStep, 0)

@@ -104,9 +104,10 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 			Suffix:    fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
 			TestsFunc: cfg.Shoots.DefaultTest,
 			Config: &templates.CreateShootConfig{
-				ShootName:  fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
-				Namespace:  cfg.Shoots.Namespace,
-				K8sVersion: flavor.KubernetesVersion.Version,
+				ShootName:                 fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
+				Namespace:                 cfg.Shoots.Namespace,
+				K8sVersion:                flavor.KubernetesVersion.Version,
+				AllowPrivilegedContainers: flavor.AllowPrivilegedContainers,
 			},
 		})
 		for _, test := range cfg.Shoots.Tests {
@@ -115,9 +116,10 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 				Suffix:    fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
 				TestsFunc: test,
 				Config: &templates.CreateShootConfig{
-					ShootName:  fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
-					Namespace:  cfg.Shoots.Namespace,
-					K8sVersion: flavor.KubernetesVersion.Version,
+					ShootName:                 fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
+					Namespace:                 cfg.Shoots.Namespace,
+					K8sVersion:                flavor.KubernetesVersion.Version,
+					AllowPrivilegedContainers: flavor.AllowPrivilegedContainers,
 				},
 			})
 		}

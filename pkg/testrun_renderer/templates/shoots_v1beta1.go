@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"strconv"
 )
 
 func stepCreateShootV1beta1(cloudprovider common.CloudProvider, name string, dependencies []string, cfg *CreateShootConfig) ([]*v1beta1.DAGStep, string, error) {
@@ -76,7 +77,7 @@ var defaultProviderConfig = []v1beta1.ConfigElement{
 }
 
 func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
-	return []v1beta1.ConfigElement{
+	var defaultShootConfig = []v1beta1.ConfigElement{
 		{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigShootName,
@@ -98,6 +99,17 @@ func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
 			Value: ConfigSeedValue,
 		},
 	}
+
+	if cfg.AllowPrivilegedContainers != nil {
+		ce := v1beta1.ConfigElement{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigAllowPrivilegedContainers,
+			Value: strconv.FormatBool(*cfg.AllowPrivilegedContainers),
+		}
+		defaultShootConfig = append(defaultShootConfig, ce)
+	}
+
+	return defaultShootConfig
 }
 
 func v1beta1GCPShootConfig(name string, dependencies []string, cfg []v1beta1.ConfigElement) (*v1beta1.DAGStep, []v1beta1.ConfigElement) {

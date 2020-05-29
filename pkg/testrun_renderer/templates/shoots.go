@@ -29,15 +29,16 @@ const (
 	ConfigControlplaneProviderPathName   = "CONTROLPLANE_PROVIDER_CONFIG_FILEPATH"
 	ConfigInfrastructureProviderPathName = "INFRASTRUCTURE_PROVIDER_CONFIG_FILEPATH"
 
-	ConfigShootName            = "SHOOT_NAME"
-	ConfigProjectNamespaceName = "PROJECT_NAMESPACE"
-	ConfigK8sVersionName       = "K8S_VERSION"
-	ConfigCloudproviderName    = "CLOUDPROVIDER"
-	ConfigProviderTypeName     = "PROVIDER_TYPE"
-	ConfigCloudprofileName     = "CLOUDPROFILE"
-	ConfigSecretBindingName    = "SECRET_BINDING"
-	ConfigRegionName           = "REGION"
-	ConfigZoneName             = "ZONE"
+	ConfigShootName                 = "SHOOT_NAME"
+	ConfigProjectNamespaceName      = "PROJECT_NAMESPACE"
+	ConfigK8sVersionName            = "K8S_VERSION"
+	ConfigCloudproviderName         = "CLOUDPROVIDER"
+	ConfigProviderTypeName          = "PROVIDER_TYPE"
+	ConfigAllowPrivilegedContainers = "ALLOW_PRIVILEGED_CONTAINERS"
+	ConfigCloudprofileName          = "CLOUDPROFILE"
+	ConfigSecretBindingName         = "SECRET_BINDING"
+	ConfigRegionName                = "REGION"
+	ConfigZoneName                  = "ZONE"
 )
 
 var (
@@ -47,9 +48,10 @@ var (
 
 // CreateShootConfig describes the configuration for a create-shoot step
 type CreateShootConfig struct {
-	ShootName  string
-	Namespace  string
-	K8sVersion string
+	ShootName                 string
+	Namespace                 string
+	K8sVersion                string
+	AllowPrivilegedContainers *bool
 }
 
 // GetStepCreateShoot generates the shoot creation step for a specific cloudprovider

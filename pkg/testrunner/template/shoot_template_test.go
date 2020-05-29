@@ -17,6 +17,7 @@ package template
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"k8s.io/utils/pointer"
 	"path/filepath"
 
 	"github.com/gardener/test-infra/pkg/common"
@@ -35,9 +36,10 @@ var _ = Describe("shoot templates", func() {
 		shoots = []*shootflavors.ExtendedFlavorInstance{
 			shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
-					Provider:          common.CloudProviderGCP,
-					KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
-					Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
+					Provider:                  common.CloudProviderGCP,
+					KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
+					Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
+					AllowPrivilegedContainers: pointer.BoolPtr(false),
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
@@ -74,6 +76,7 @@ var _ = Describe("shoot templates", func() {
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.secretBinding", "test-sb"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.allowPrivilegedContainers", "false"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
@@ -97,6 +100,7 @@ var _ = Describe("shoot templates", func() {
 			Expect(meta.CloudProvider).To(Equal("gcp"))
 			Expect(meta.Region).To(Equal("region-1"))
 			Expect(meta.Zone).To(Equal("region-1-1"))
+			Expect(meta.AllowPrivilegedContainers).To(Equal(pointer.BoolPtr(false)))
 			Expect(meta.OperatingSystem).To(Equal("core-os"))
 		})
 

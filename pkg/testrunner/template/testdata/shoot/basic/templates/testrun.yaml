@@ -12,6 +12,9 @@ metadata:
         shoot.secretBinding: {{ required "secretBinding is required" .Values.shoot.secretBinding }}
         shoot.region: {{ required "region is required" .Values.shoot.region }}
         shoot.zone: {{ required "zone is required" .Values.shoot.zone }}
+        {{- if  hasKey .Values.shoot "allowPrivilegedContainers" }}
+        shoot.allowPrivilegedContainers: "{{ .Values.shoot.allowPrivilegedContainers }}"
+        {{- end }}
         shoot.workers: {{ required "workers is required" .Values.shoot.workers }}
         shoot.k8sVersion: {{ required "k8sVersion is required" .Values.shoot.k8sVersion }}
         shoot.k8sPrevPrePatchVersion: {{ required "k8sPrevPrePatchVersion is required" .Values.shoot.k8sPrevPrePatchVersion }}

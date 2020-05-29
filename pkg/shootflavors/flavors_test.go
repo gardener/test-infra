@@ -76,6 +76,32 @@ var _ = Describe("flavor test", func() {
 		))
 	})
 
+	It("should return one shoot with disabled allowPrivilegeContainers", func() {
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider: common.CloudProviderGCP,
+				AllowPrivilegedContainers: pointer.BoolPtr(false),
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+			},
+		}
+		flavors, err := New(rawFlavors)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+		Expect(flavors.GetShoots()).To(ConsistOf(
+			&common.Shoot{
+				Provider:          common.CloudProviderGCP,
+				AllowPrivilegedContainers: pointer.BoolPtr(false),
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			},
+		))
+	})
+
 	It("should return 2 gcp shoots with the specified 2 versions", func() {
 		rawFlavors := []*common.ShootFlavor{
 			{

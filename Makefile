@@ -127,7 +127,7 @@ run-it-tests:
 
 .PHONY: validate
 validate:
-	@go run cmd/local-validator/main.go -testrun=${TESTRUN}
+	@go run cmd/local-validator/main.go --testrun=${TESTRUN}
 
 
 ##################################
