@@ -69,6 +69,9 @@ const (
 	// AnnotationZone is the annotation to specify the zone of the shoot the testrun is testing
 	AnnotationZone = "metadata.testmachinery.gardener.cloud/zone"
 
+	// AnnotationAllowPrivilegedContainers is the annotation describing whether and how created shoots will have allowPrivilegedContainers configured
+	AnnotationAllowPrivilegedContainers = "metadata.testmachinery.gardener.cloud/allow-privileged-containers"
+
 	// AnnotationFlavorDescription is the annotation to describe the test flavor of the current run testrun
 	AnnotationFlavorDescription = "metadata.testmachinery.gardener.cloud/flavor-description"
 

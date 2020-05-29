@@ -100,6 +100,7 @@ var _ = Describe("shoot templates", func() {
 			Expect(meta.CloudProvider).To(Equal("gcp"))
 			Expect(meta.Region).To(Equal("region-1"))
 			Expect(meta.Zone).To(Equal("region-1-1"))
+			Expect(meta.AllowPrivilegedContainers).To(Equal(pointer.BoolPtr(false)))
 			Expect(meta.OperatingSystem).To(Equal("core-os"))
 		})
 

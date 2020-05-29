@@ -23,23 +23,30 @@ import (
 
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
-	return map[string]string{
-		common.AnnotationLandscape:              m.Landscape,
-		common.AnnotationK8sVersion:             m.KubernetesVersion,
-		common.AnnotationCloudProvider:          m.CloudProvider,
-		common.AnnotationOperatingSystem:        m.OperatingSystem,
-		common.AnnotationOperatingSystemVersion: m.OperatingSystemVersion,
-		common.AnnotationRegion:                 m.Region,
-		common.AnnotationZone:                   m.Zone,
-		common.AnnotationFlavorDescription:      m.FlavorDescription,
-		common.AnnotationDimension:              m.GetDimensionFromMetadata("/"),
-		common.AnnotationRetries:                strconv.Itoa(m.Retries),
+	annotations := map[string]string{
+		common.AnnotationLandscape:                 m.Landscape,
+		common.AnnotationK8sVersion:                m.KubernetesVersion,
+		common.AnnotationCloudProvider:             m.CloudProvider,
+		common.AnnotationOperatingSystem:           m.OperatingSystem,
+		common.AnnotationOperatingSystemVersion:    m.OperatingSystemVersion,
+		common.AnnotationRegion:                    m.Region,
+		common.AnnotationZone:                      m.Zone,
+		common.AnnotationFlavorDescription:         m.FlavorDescription,
+		common.AnnotationDimension:                 m.GetDimensionFromMetadata("/"),
+		common.AnnotationRetries:                   strconv.Itoa(m.Retries),
 	}
+	if m.AllowPrivilegedContainers != nil {
+		annotations[common.AnnotationAllowPrivilegedContainers] = strconv.FormatBool(*m.AllowPrivilegedContainers)
+	}
+	return annotations
 }
 
 // GetDimensionFromMetadata returns a string describing the dimension of the metadata
 func (m *Metadata) GetDimensionFromMetadata(sep string) string {
 	d := fmt.Sprintf("%s"+sep+"%s"+sep+"%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
+	if m.AllowPrivilegedContainers != nil && !*m.AllowPrivilegedContainers {
+		d = fmt.Sprintf("%s"+sep+"%s", d, "NoPrivCtrs")
+	}
 	if m.FlavorDescription != "" {
 		d = fmt.Sprintf("%s"+sep+"%s", d, m.FlavorDescription)
 	}
@@ -56,7 +63,7 @@ func (m *Metadata) DeepCopy() *Metadata {
 // FromTestrun reads metadata from a testrun
 func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	retries, _ := strconv.Atoi(tr.Annotations[common.AnnotationRetries])
-	return &Metadata{
+	metadata := &Metadata{
 		Landscape:              tr.Annotations[common.AnnotationLandscape],
 		KubernetesVersion:      tr.Annotations[common.AnnotationK8sVersion],
 		CloudProvider:          tr.Annotations[common.AnnotationCloudProvider],
@@ -72,4 +79,10 @@ func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 			ExecutionGroup: tr.Annotations[common.LabelTestrunExecutionGroup],
 		},
 	}
+	if a, ok := tr.Annotations[common.AnnotationAllowPrivilegedContainers]; ok {
+		if b, err := strconv.ParseBool(a); err == nil {
+			metadata.AllowPrivilegedContainers = &b
+		}
+	}
+	return metadata
 }

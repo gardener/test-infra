@@ -126,22 +126,22 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 
 	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
-			"name":                      shoot.Name,
-			"projectNamespace":          shoot.Namespace,
-			"cloudprovider":             shoot.Provider,
-			"cloudprofile":              shoot.CloudprofileName,
-			"secretBinding":             shoot.SecretBinding,
-			"region":                    shoot.Region,
-			"zone":                      shoot.Zone,
-			"workers":                   workers,
-			"k8sVersion":                shoot.KubernetesVersion.Version,
-			"k8sPrevPrePatchVersion":    prevPrePatchVersion.Version,
-			"k8sPrevPatchVersion":       prevPatchVersion.Version,
-			"floatingPoolName":          shoot.FloatingPoolName,
-			"loadbalancerProvider":      shoot.LoadbalancerProvider,
-			"infrastructureConfig":      infrastructure,
-			"networkingConfig":          networkingConfig,
-			"controlplaneConfig":        controlplane,
+			"name":                   shoot.Name,
+			"projectNamespace":       shoot.Namespace,
+			"cloudprovider":          shoot.Provider,
+			"cloudprofile":           shoot.CloudprofileName,
+			"secretBinding":          shoot.SecretBinding,
+			"region":                 shoot.Region,
+			"zone":                   shoot.Zone,
+			"workers":                workers,
+			"k8sVersion":             shoot.KubernetesVersion.Version,
+			"k8sPrevPrePatchVersion": prevPrePatchVersion.Version,
+			"k8sPrevPatchVersion":    prevPatchVersion.Version,
+			"floatingPoolName":       shoot.FloatingPoolName,
+			"loadbalancerProvider":   shoot.LoadbalancerProvider,
+			"infrastructureConfig":   infrastructure,
+			"networkingConfig":       networkingConfig,
+			"controlplaneConfig":     controlplane,
 		},
 		"gardener": map[string]interface{}{
 			"version": r.parameters.GardenerVersion,
@@ -162,14 +162,15 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 		operatingsystemversion = *shoot.Workers[0].Machine.Image.Version
 	}
 	return &metadata.Metadata{
-		FlavorDescription:      shoot.Description,
-		Landscape:              r.parameters.Landscape,
-		ComponentDescriptor:    r.parameters.ComponentDescriptor.JSON(),
-		CloudProvider:          string(shoot.Provider),
-		KubernetesVersion:      shoot.KubernetesVersion.Version,
-		Region:                 shoot.Region,
-		Zone:                   shoot.Zone,
-		OperatingSystem:        shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
-		OperatingSystemVersion: operatingsystemversion,
+		FlavorDescription:         shoot.Description,
+		Landscape:                 r.parameters.Landscape,
+		ComponentDescriptor:       r.parameters.ComponentDescriptor.JSON(),
+		CloudProvider:             string(shoot.Provider),
+		KubernetesVersion:         shoot.KubernetesVersion.Version,
+		Region:                    shoot.Region,
+		Zone:                      shoot.Zone,
+		AllowPrivilegedContainers: shoot.AllowPrivilegedContainers,
+		OperatingSystem:           shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
+		OperatingSystemVersion:    operatingsystemversion,
 	}, nil
 }
