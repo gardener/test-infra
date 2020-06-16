@@ -169,6 +169,11 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		}
 	}
 
+	startTime := &metav1.Time{}
+	if tr.Status.StartTime != nil {
+		startTime = tr.Status.StartTime
+	}
+
 	*l = append(*l, rungroupItem{
 		testruns:    []*v1beta1.Testrun{tr},
 		phase:       tr.Status.Phase,
@@ -176,7 +181,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		completed:   1,
 		DisplayName: testgroupDisplayName(tr),
 		Name:        runId,
-		StartTime:   tr.Status.StartTime.Format(time.RFC822),
+		StartTime:   startTime.Format(time.RFC822),
 		State:       fmt.Sprintf("%d/%d Testruns are completed", isCompleted, 1),
 		Phase:       PhaseIcon(util.TestrunStatusPhase(tr)),
 	})
