@@ -59,12 +59,20 @@ func init() {
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 
 	alert.AddCommand(rootCmd)
-	run_template.AddCommand(rootCmd)
-	run_testrun.AddCommand(rootCmd)
+	addCommand(run_template.NewRunTemplateCommand)
+	addCommand(run_testrun.NewRunTestrunCommand)
 	run_gardener.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
 	notifycmd.AddCommand(rootCmd)
 	gardener_telemetry.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)
+}
+
+func addCommand(add func() (*cobra.Command, error)) {
+	cmd, err := add()
+	if err != nil {
+		panic(err)
+	}
+	rootCmd.AddCommand(cmd)
 }

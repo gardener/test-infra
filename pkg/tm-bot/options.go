@@ -22,7 +22,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
@@ -38,8 +37,7 @@ type options struct {
 	restConfig *rest.Config
 	cfg        *config.BotConfiguration
 
-	mgr manager.Manager
-	w   watch.Watch
+	w watch.Watch
 }
 
 func NewOptions(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) *options {

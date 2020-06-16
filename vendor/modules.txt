@@ -152,8 +152,6 @@ github.com/gardener/gardener/pkg/utils/version
 github.com/gardener/gardener/pkg/version
 github.com/gardener/gardener/test/framework
 github.com/gardener/gardener/test/integration/framework
-# github.com/gardener/gardener-extensions v1.6.0
-## explicit
 # github.com/gardener/gardener-resource-manager v0.10.0
 ## explicit
 github.com/gardener/gardener-resource-manager/pkg/apis/resources
@@ -421,6 +419,8 @@ github.com/onsi/ginkgo/types
 ## explicit
 github.com/onsi/gomega
 github.com/onsi/gomega/format
+github.com/onsi/gomega/gbytes
+github.com/onsi/gomega/gexec
 github.com/onsi/gomega/internal/assertion
 github.com/onsi/gomega/internal/asyncassertion
 github.com/onsi/gomega/internal/oraclematcher
@@ -1196,17 +1196,17 @@ sigs.k8s.io/controller-runtime/pkg/cache/internal
 sigs.k8s.io/controller-runtime/pkg/client
 sigs.k8s.io/controller-runtime/pkg/client/apiutil
 sigs.k8s.io/controller-runtime/pkg/client/config
-sigs.k8s.io/controller-runtime/pkg/client/fake
 sigs.k8s.io/controller-runtime/pkg/controller
 sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
 sigs.k8s.io/controller-runtime/pkg/conversion
+sigs.k8s.io/controller-runtime/pkg/envtest
+sigs.k8s.io/controller-runtime/pkg/envtest/printer
 sigs.k8s.io/controller-runtime/pkg/event
 sigs.k8s.io/controller-runtime/pkg/handler
 sigs.k8s.io/controller-runtime/pkg/healthz
 sigs.k8s.io/controller-runtime/pkg/internal/controller
 sigs.k8s.io/controller-runtime/pkg/internal/controller/metrics
 sigs.k8s.io/controller-runtime/pkg/internal/log
-sigs.k8s.io/controller-runtime/pkg/internal/objectutil
 sigs.k8s.io/controller-runtime/pkg/internal/recorder
 sigs.k8s.io/controller-runtime/pkg/leaderelection
 sigs.k8s.io/controller-runtime/pkg/log
@@ -1227,6 +1227,10 @@ sigs.k8s.io/controller-runtime/pkg/webhook/admission
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/certwatcher
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
+# sigs.k8s.io/testing_frameworks v0.1.2
+sigs.k8s.io/testing_frameworks/integration
+sigs.k8s.io/testing_frameworks/integration/addr
+sigs.k8s.io/testing_frameworks/integration/internal
 # sigs.k8s.io/yaml v1.1.0
 ## explicit
 sigs.k8s.io/yaml

@@ -24,16 +24,16 @@ import (
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow
 func (m *Metadata) CreateAnnotations() map[string]string {
 	annotations := map[string]string{
-		common.AnnotationLandscape:                 m.Landscape,
-		common.AnnotationK8sVersion:                m.KubernetesVersion,
-		common.AnnotationCloudProvider:             m.CloudProvider,
-		common.AnnotationOperatingSystem:           m.OperatingSystem,
-		common.AnnotationOperatingSystemVersion:    m.OperatingSystemVersion,
-		common.AnnotationRegion:                    m.Region,
-		common.AnnotationZone:                      m.Zone,
-		common.AnnotationFlavorDescription:         m.FlavorDescription,
-		common.AnnotationDimension:                 m.GetDimensionFromMetadata("/"),
-		common.AnnotationRetries:                   strconv.Itoa(m.Retries),
+		common.AnnotationLandscape:              m.Landscape,
+		common.AnnotationK8sVersion:             m.KubernetesVersion,
+		common.AnnotationCloudProvider:          m.CloudProvider,
+		common.AnnotationOperatingSystem:        m.OperatingSystem,
+		common.AnnotationOperatingSystemVersion: m.OperatingSystemVersion,
+		common.AnnotationRegion:                 m.Region,
+		common.AnnotationZone:                   m.Zone,
+		common.AnnotationFlavorDescription:      m.FlavorDescription,
+		common.AnnotationDimension:              m.GetDimensionFromMetadata("/"),
+		common.AnnotationRetries:                strconv.Itoa(m.Retries),
 	}
 	if m.AllowPrivilegedContainers != nil {
 		annotations[common.AnnotationAllowPrivilegedContainers] = strconv.FormatBool(*m.AllowPrivilegedContainers)

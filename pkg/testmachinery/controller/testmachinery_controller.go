@@ -15,17 +15,11 @@
 package controller
 
 import (
+	"reflect"
+
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/collector"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
-	"github.com/gardener/test-infra/pkg/util/s3"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -34,6 +28,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
+	"github.com/gardener/test-infra/pkg/util/s3"
 )
 
 // NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
@@ -66,22 +67,6 @@ func NewTestMachineryController(mgr manager.Manager, log logr.Logger, config *co
 		return nil, err
 	}
 	return c, nil
-}
-
-// NewWatchController creates new controller with th watch reconciler that watches testruns
-func NewWatchController(mgr manager.Manager, log logr.Logger) (controller.Controller, watch.Watch, error) {
-	w, err := watch.New(log.WithName("watch"), mgr.GetClient())
-	if err != nil {
-		return nil, nil, err
-	}
-	c, err := New(mgr, w, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err := RegisterTestrunWatch(c); err != nil {
-		return nil, nil, err
-	}
-	return c, w, nil
 }
 
 // New creates a new Testmachinery controller for handling testruns and argo workflows.

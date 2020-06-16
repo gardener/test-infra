@@ -15,10 +15,15 @@
 package run_gardener
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	metadata2 "github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
@@ -27,16 +32,15 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"github.com/gardener/test-infra/pkg/util/gardensetup"
-	"os"
-	"time"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -69,10 +73,10 @@ var runCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			err    error
-			stopCh = make(chan struct{})
+			err           error
+			ctx, stopFunc = context.WithCancel(context.Background())
 		)
-		defer close(stopCh)
+		defer stopFunc()
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
 
@@ -133,12 +137,25 @@ var runCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		testrunnerConfig.Watch, err = testrunner.StartWatchControllerFromFile(logger.Log, tmKubeconfigPath, stopCh)
+		watcher, err := watch.NewFromFile(logger.Log, tmKubeconfigPath, nil)
 		if err != nil {
 			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)
 		}
 
+		go func() {
+			if err := watcher.Start(ctx.Done()); err != nil {
+				logger.Log.Error(err, "unable to start testrun watch controller")
+				os.Exit(1)
+			}
+		}()
+
+		if err := watch.WaitForCacheSyncWithTimeout(watcher, 2*time.Minute); err != nil {
+			logger.Log.Error(err, "unable to wait for cache")
+			os.Exit(1)
+		}
+
+		testrunnerConfig.Watch = watcher
 		testrunName := fmt.Sprintf("%s-", testrunNamePrefix)
 
 		collector, err := result.New(logger.Log.WithName("collector"), collectConfig, tmKubeconfigPath)

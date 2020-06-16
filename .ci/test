@@ -25,6 +25,23 @@ fi
 
 cd "${SOURCE_PATH}"
 
+# Download kubernetes binaries
+K8S_VERSION=1.18.0
+ETCD_VER=v3.3.11
+
+mkdir -p /usr/local/kubebuilder/bin
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
+chmod +x kubectl
+mv kubectl /usr/local/kubebuilder/bin/kubectl
+
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kube-apiserver
+chmod +x kube-apiserver
+mv kube-apiserver /usr/local/kubebuilder/bin/kube-apiserver
+
+curl -L https://storage.googleapis.com/etcd/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz -o /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
+tar xzvf /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz  etcd-${ETCD_VER}-linux-amd64/etcd
+mv etcd-${ETCD_VER}-linux-amd64/etcd /usr/local/kubebuilder/bin/etcd
+
 # Install Ginkgo (test framework) to be able to execute the tests.
 go install -mod=vendor ./vendor/github.com/onsi/ginkgo/ginkgo
 

@@ -15,11 +15,17 @@
 package testrunner_run_test
 
 import (
+	"time"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
+
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -41,8 +47,17 @@ var _ = Describe("Testrunner execution tests", func() {
 		It("should run a single testrun", func() {
 			stopCh := make(chan struct{})
 			defer close(stopCh)
-			w, err := testrunner.StartWatchControllerFromFile(operation.Log(), operation.GetKubeconfigPath(), stopCh)
+
+			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
+
+			func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				defer cancel()
+				ok := w.WaitForCacheSync(ctx.Done())
+				Expect(ok).To(BeTrue())
+			}()
+
 			testrunConfig.Watch = w
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
@@ -64,8 +79,15 @@ var _ = Describe("Testrunner execution tests", func() {
 		It("should run 2 testruns", func() {
 			stopCh := make(chan struct{})
 			defer close(stopCh)
-			w, err := testrunner.StartWatchControllerFromFile(operation.Log(), operation.GetKubeconfigPath(), stopCh)
+
+			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
+			func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				defer cancel()
+				ok := w.WaitForCacheSync(ctx.Done())
+				Expect(ok).To(BeTrue())
+			}()
 			testrunConfig.Watch = w
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())

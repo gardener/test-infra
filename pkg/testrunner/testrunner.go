@@ -16,22 +16,10 @@ package testrunner
 
 import (
 	"fmt"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"os"
-	"time"
 
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/test-infra/pkg/util"
-
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // ExecuteTestruns deploys it to a testmachinery cluster and waits for the testruns results
@@ -39,56 +27,4 @@ func ExecuteTestruns(log logr.Logger, config *Config, runs RunList, testrunNameP
 	log.V(3).Info(fmt.Sprintf("Config: %+v", util.PrettyPrintStruct(config)))
 
 	return runs.Run(log.WithValues("namespace", config.Namespace), config, testrunNamePrefix, notify...)
-}
-
-// StartWatchControllerFromFile starts a new controller that watches testruns from a kubeconfig file
-func StartWatchControllerFromFile(log logr.Logger, kubeconfigPath string, stopCh chan struct{}) (watch.Watch, error) {
-	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
-		&clientcmd.ConfigOverrides{},
-	)
-
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return StartWatchController(log, restConfig, stopCh)
-}
-
-// StartWatchController starts a new controller that watches testruns
-func StartWatchController(log logr.Logger, restConfig *rest.Config, stopCh chan struct{}) (watch.Watch, error) {
-	cLogger, err := logger.New(&logger.Config{
-		Development:       false,
-		Cli:               true,
-		Verbosity:         -3,
-		DisableStacktrace: true,
-		DisableCaller:     true,
-		DisableTimestamp:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	ctrl.SetLogger(cLogger)
-
-	syncPeriod := 10 * time.Minute
-	mgr, err := manager.New(restConfig, manager.Options{
-		MetricsBindAddress: "0",
-		Scheme:             testmachinery.TestMachineryScheme,
-		SyncPeriod:         &syncPeriod,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to setup manager")
-	}
-	_, w, err := controller.NewWatchController(mgr, log)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to setup controller")
-	}
-	go func() {
-		if err := mgr.Start(stopCh); err != nil {
-			log.Error(err, "error while running manager")
-			os.Exit(1)
-		}
-	}()
-	return w, nil
 }
