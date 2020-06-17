@@ -139,7 +139,6 @@
   { "testcase": "[sig-scheduling] SchedulerPredicates [Serial] validates that there exists conflict between pods with same hostPort and protocol but one using 0.0.0.0 hostIP", "groups": ["slow"] },
   { "testcase": "[sig-scheduling] SchedulerPredicates [Serial] validates that there is no conflict between pods with same hostPort but different hostIP and protocol", "groups": ["slow"] },
   { "testcase": "[sig-storage] Dynamic Provisioning DynamicProvisioner should provision storage with different parameters [Slow]", "groups": ["slow"] },
-  { "testcase": "[sig-storage] EmptyDir wrapper volumes should not cause race condition when used for git_repo [Serial] [Slow]", "groups": ["slow"] },
   { "testcase": "[sig-storage] PersistentVolumes NFS with multiple PVs and PVCs all in same ns should create 4 PVs and 2 PVCs: test write access [Slow]", "groups": ["slow"] },
   { "testcase": "[sig-storage] PersistentVolumes-local  Local volume that cannot be mounted [Slow] should fail due to non-existent path", "groups": ["slow"] },
   { "testcase": "[sig-apps] StatefulSet [k8s.io] Basic StatefulSet functionality [StatefulSetBasic] should implement legacy replacement when the update strategy is OnDelete", "groups": ["slow"] },

@@ -483,7 +483,7 @@
   { "testcase": "[sig-storage] PersistentVolumes-local  [Volume type: block] Set fsGroup for local volume should not set different fsGroups for two pods simultaneously" },
   { "testcase": "[sig-storage] PersistentVolumes-local  StatefulSet with pod affinity [Slow] should use volumes spread across nodes when pod management is parallel and pod has anti-affinity" },
   { "testcase": "[sig-storage] PersistentVolumes-local  StatefulSet with pod affinity [Slow] should use volumes spread across nodes when pod has anti-affinity" },
-  { "testcase": "[sig-storage] EmptyDir wrapper volumes should not cause race condition when used for git_repo", "description": "Fails on GL (not investigated why), but test looks for a race condition in K8S which was fixed in K8S v1.9.x and uses GitRepo type volumes which are deprecated since K8S v1.11.0" },
+  { "testcase": "[sig-storage] EmptyDir wrapper volumes should not cause race condition when used for git_repo [Serial] [Slow]", "description": "Fails on GL (not investigated why), but test looks for a race condition in K8S which was fixed in K8S v1.9.x and uses GitRepo type volumes which are deprecated since K8S v1.11.0" },
   { "testcase": "[sig-scheduling] TaintBasedEvictions [Serial] Checks that the node becomes unreachable" },
   { "testcase": "[Driver: gcepd]" },
   { "testcase": "[Driver: pd.csi.storage.gke.io]" },
