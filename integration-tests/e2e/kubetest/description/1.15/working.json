@@ -292,7 +292,6 @@
   { "testcase": "[sig-storage] Dynamic Provisioning DynamicProvisioner delayed binding [Slow] should create persistent volumes in the same zone as node after a pod mounting the claims is started", "groups": ["slow", "slow2"] },
   { "testcase": "[sig-storage] Dynamic Provisioning DynamicProvisioner delayed binding with allowedTopologies [Slow] should create persistent volumes in the same zone as specified in allowedTopologies after a pod mounting the claims is started", "groups": ["slow", "slow2"] },
   { "testcase": "[sig-storage] Dynamic Provisioning DynamicProvisioner External should let an external dynamic provisioner create and delete persistent volumes [Slow]", "groups": ["slow", "slow2"] },
-  { "testcase": "[sig-storage] EmptyDir wrapper volumes should not cause race condition when used for git_repo [Serial] [Slow]", "groups": ["slow", "slow2"] },
   { "testcase": "[sig-storage] PersistentVolumes NFS with multiple PVs and PVCs all in same ns should create 4 PVs and 2 PVCs: test write access [Slow]", "groups": ["slow", "slow2"] },
   { "testcase": "[sig-storage] PersistentVolumes-local  Local volume that cannot be mounted [Slow] should fail due to non-existent path", "groups": ["slow", "slow2"] },
   { "testcase": "[sig-storage] PersistentVolumes-local  Local volume that cannot be mounted [Slow] should fail due to wrong node", "groups": ["slow", "slow2"] },
