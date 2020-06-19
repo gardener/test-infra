@@ -86,7 +86,7 @@ var _ = Describe("extended flavor test", func() {
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
 				AllowPrivilegedContainers: pointer.BoolPtr(true),
-				Provider: common.CloudProviderGCP,
+				Provider:                  common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
 					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
@@ -109,10 +109,10 @@ var _ = Describe("extended flavor test", func() {
 
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
-			Provider:          common.CloudProviderGCP,
+			Provider:                  common.CloudProviderGCP,
 			AllowPrivilegedContainers: pointer.BoolPtr(true),
-			KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-			Workers:           []gardencorev1beta1.Worker{{Name: "wp1"}},
+			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1"}},
 		}))
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
