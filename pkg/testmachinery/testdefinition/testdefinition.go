@@ -16,6 +16,7 @@ package testdefinition
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/common"
 	"path"
@@ -297,13 +298,19 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 				},
 			},
 		})
-	} else if element.Info.ValueFrom != nil {
+		return nil
+	}
+	if element.Info.ValueFrom != nil {
+		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
+		// Add the file path as env var with the config name to the pod
+		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
 		td.AddVolumeMount(element.Name(), element.Info.Path, path.Base(element.Info.Path), true)
 		return td.AddVolumeFromConfig(element)
 	}
 
-	return nil
+	// this should never happen as it is already validated
+	return errors.New("either value or value from has to be defined")
 }
 
 func (td *TestDefinition) AddVolumeFromConfig(cfg *config.Element) error {
