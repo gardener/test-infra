@@ -74,19 +74,19 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.IntVar(&o.testrunnerConfig.ExecutorConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.ExecutorConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
-	fs.Int64("interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	if err := fs.MarkDeprecated("interval", "no interval "); err != nil {
-		return err
-	}
-
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery
-	fs.String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
+	fs.Int64("interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
+	fs.String("output-dir-path", "./testout", "The filepath where the summary should be written to.")
+	fs.String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	fs.String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	fs.String("es-username", "", "username to authenticate against a elasticsearch instance")
 	fs.String("es-password", "", "password to authenticate against a elasticsearch instance")
 	fs.String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	fs.Bool("s3-ssl", false, "S3 has SSL enabled.")
+	if err := fs.MarkDeprecated("interval", "no interval "); err != nil {
+		return err
+	}
 	if err := fs.MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore"); err != nil {
 		return err
 	}

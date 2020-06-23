@@ -6,7 +6,7 @@ import (
 
 	"net/url"
 
-	"sigs.k8s.io/testing_frameworks/integration/internal"
+	"sigs.k8s.io/controller-runtime/pkg/internal/testing/integration/internal"
 )
 
 // Etcd knows how to run an etcd server.
@@ -30,7 +30,7 @@ type Etcd struct {
 	// struct (e.g. "--data-dir={{ .Dir }}").
 	// Those templates will be evaluated after the defaulting of the Etcd's
 	// fields has already happened and just before the binary actually gets
-	// started. Thus you have access to caluclated fields like `URL` and others.
+	// started. Thus you have access to calculated fields like `URL` and others.
 	//
 	// If not specified, the minimal set of arguments to run the Etcd will be
 	// used.
@@ -109,6 +109,6 @@ func (e *Etcd) Stop() error {
 // EtcdDefaultArgs exposes the default args for Etcd so that you
 // can use those to append your own additional arguments.
 //
-// The internal default arguments are explicitely copied here, we don't want to
+// The internal default arguments are explicitly copied here, we don't want to
 // allow users to change the internal ones.
 var EtcdDefaultArgs = append([]string{}, internal.EtcdDefaultArgs...)

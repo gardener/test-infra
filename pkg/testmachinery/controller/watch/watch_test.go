@@ -71,7 +71,7 @@ var _ = Describe("Watch", func() {
 			Status: &v1beta1.CustomResourceSubresourceStatus{},
 		}
 		testenv = &envtest.Environment{
-			CRDs: []*v1beta1.CustomResourceDefinition{crd},
+			CRDs: []runtime.Object{crd},
 		}
 
 		restConfig, err = testenv.Start()
@@ -217,13 +217,10 @@ var _ = Describe("Watch", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
-		count := 0
 		err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
 			Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
-			count++
 			return false, errors.New("error")
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(count).To(Equal(1))
 	})
 })

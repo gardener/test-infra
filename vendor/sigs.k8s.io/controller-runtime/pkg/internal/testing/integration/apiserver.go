@@ -3,11 +3,14 @@ package integration
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
-	"sigs.k8s.io/testing_frameworks/integration/addr"
-	"sigs.k8s.io/testing_frameworks/integration/internal"
+	"sigs.k8s.io/controller-runtime/pkg/internal/testing/integration/addr"
+	"sigs.k8s.io/controller-runtime/pkg/internal/testing/integration/internal"
 )
 
 // APIServer knows how to run a kubernetes apiserver.
@@ -34,7 +37,7 @@ type APIServer struct {
 	// APIServer struct (e.g. "--cert-dir={{ .Dir }}").
 	// Those templates will be evaluated after the defaulting of the APIServer's
 	// fields has already happened and just before the binary actually gets
-	// started. Thus you have access to caluclated fields like `URL` and others.
+	// started. Thus you have access to calculated fields like `URL` and others.
 	//
 	// If not specified, the minimal set of arguments to run the APIServer will
 	// be used.
@@ -116,21 +119,59 @@ func (s *APIServer) setProcessState() error {
 	s.StartTimeout = s.processState.StartTimeout
 	s.StopTimeout = s.processState.StopTimeout
 
+	if err := s.populateAPIServerCerts(); err != nil {
+		return err
+	}
+
 	s.processState.Args, err = internal.RenderTemplates(
 		internal.DoAPIServerArgDefaulting(s.Args), s,
 	)
 	return err
 }
 
+func (s *APIServer) populateAPIServerCerts() error {
+	_, statErr := os.Stat(filepath.Join(s.CertDir, "apiserver.crt"))
+	if !os.IsNotExist(statErr) {
+		return statErr
+	}
+
+	ca, err := internal.NewTinyCA()
+	if err != nil {
+		return err
+	}
+
+	certs, err := ca.NewServingCert()
+	if err != nil {
+		return err
+	}
+
+	certData, keyData, err := certs.AsBytes()
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(filepath.Join(s.CertDir, "apiserver.crt"), certData, 0640); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(s.CertDir, "apiserver.key"), keyData, 0640); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Stop stops this process gracefully, waits for its termination, and cleans up
 // the CertDir if necessary.
 func (s *APIServer) Stop() error {
-	return s.processState.Stop()
+	if s.processState != nil {
+		return s.processState.Stop()
+	}
+	return nil
 }
 
 // APIServerDefaultArgs exposes the default args for the APIServer so that you
 // can use those to append your own additional arguments.
 //
-// The internal default arguments are explicitely copied here, we don't want to
+// The internal default arguments are explicitly copied here, we don't want to
 // allow users to change the internal ones.
 var APIServerDefaultArgs = append([]string{}, internal.APIServerDefaultArgs...)

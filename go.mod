@@ -30,8 +30,8 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/onsi/ginkgo v1.10.1
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/gomega v1.10.1
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
@@ -46,15 +46,15 @@ require (
 	google.golang.org/api v0.20.0
 	google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.0
-	k8s.io/apiextensions-apiserver v0.17.0
-	k8s.io/apimachinery v0.17.0
+	k8s.io/api v0.17.7
+	k8s.io/apiextensions-apiserver v0.17.7
+	k8s.io/apimachinery v0.17.7
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
 	k8s.io/code-generator v0.16.8
 	k8s.io/helm v2.16.1+incompatible
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/utils v0.0.0-20200327001022-6496210b90e8
-	sigs.k8s.io/controller-runtime v0.4.0
+	k8s.io/utils v0.0.0-20200603063816-c1c6865ac451
+	sigs.k8s.io/controller-runtime v0.5.7
 	sigs.k8s.io/yaml v1.1.0
 )
 

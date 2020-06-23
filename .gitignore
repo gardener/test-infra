@@ -8,6 +8,10 @@ venv
 # Generated secrets
 assets
 
+# envtest generated kubernetes certs
+**/kubernetes/*.crt
+**/kubernetes/*.key
+
 **/*.coverprofile
 
 **/*.report

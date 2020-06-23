@@ -137,7 +137,6 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 
 	fs.StringVar(&o.collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
-	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 
 	// status asset upload
 	fs.BoolVar(&o.collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
@@ -172,7 +171,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	// is now handled by the testmachinery
 	fs.Int64("interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
 	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
-	fs.String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
+	fs.String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	fs.String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	fs.String("es-username", "", "username to authenticate against a elasticsearch instance")
 	fs.String("es-password", "", "password to authenticate against a elasticsearch instance")

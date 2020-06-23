@@ -27,8 +27,8 @@ func isSecureScheme(scheme string) bool {
 	return false
 }
 
-func GetEtcdStartMessage(listenUrl url.URL) string {
-	if isSecureScheme(listenUrl.Scheme) {
+func GetEtcdStartMessage(listenURL url.URL) string {
+	if isSecureScheme(listenURL.Scheme) {
 		// https://github.com/coreos/etcd/blob/a7f1fbe00ec216fcb3a1919397a103b41dca8413/embed/serve.go#L167
 		return "serving client requests on "
 	}

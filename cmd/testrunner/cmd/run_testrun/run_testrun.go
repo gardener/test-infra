@@ -80,6 +80,7 @@ func (o *options) run(ctx context.Context) error {
 	if err := watch.WaitForCacheSyncWithTimeout(watcher, 2*time.Minute); err != nil {
 		return err
 	}
+	o.testrunnerConfig.Watch = watcher
 
 	tr, err := testmachinery.ParseTestrunFromFile(o.testrunPath)
 	if err != nil {

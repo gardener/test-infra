@@ -100,13 +100,6 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				},
 				&tmv1beta1.DAGStep{
-					Name:      "C",
-					DependsOn: []string{"A"},
-					Definition: tmv1beta1.StepDefinition{
-						Label: "tm-no-testdefs",
-					},
-				},
-				&tmv1beta1.DAGStep{
 					Name:      "D",
 					DependsOn: []string{"A"},
 					Definition: tmv1beta1.StepDefinition{

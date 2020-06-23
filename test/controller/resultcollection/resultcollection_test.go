@@ -105,14 +105,8 @@ var _ = Describe("Result collection tests", func() {
 					},
 				},
 				{
-					Name: "B",
-					Definition: tmv1beta1.StepDefinition{
-						Label: "tm-no-testdefs",
-					},
-				},
-				{
 					Name:      "C",
-					DependsOn: []string{"A", "B"},
+					DependsOn: []string{"A"},
 					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},

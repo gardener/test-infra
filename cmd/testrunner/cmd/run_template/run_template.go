@@ -103,6 +103,7 @@ func (o *options) run(ctx context.Context) error {
 	if err := watch.WaitForCacheSyncWithTimeout(watcher, 2*time.Minute); err != nil {
 		return err
 	}
+	o.testrunnerConfig.Watch = watcher
 
 	collector, err := result.New(logger.Log.WithName("collector"), o.collectConfig, o.tmKubeconfigPath)
 	if err != nil {

@@ -24,8 +24,6 @@ import (
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
 
-	"context"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -50,13 +48,12 @@ var _ = Describe("Testrunner execution tests", func() {
 
 			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
-
-			func() {
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-				defer cancel()
-				ok := w.WaitForCacheSync(ctx.Done())
-				Expect(ok).To(BeTrue())
+			go func() {
+				Expect(w.Start(stopCh)).ToNot(HaveOccurred())
 			}()
+
+			err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+			Expect(err).ToNot(HaveOccurred())
 
 			testrunConfig.Watch = w
 
@@ -82,12 +79,12 @@ var _ = Describe("Testrunner execution tests", func() {
 
 			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
-			func() {
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-				defer cancel()
-				ok := w.WaitForCacheSync(ctx.Done())
-				Expect(ok).To(BeTrue())
+			go func() {
+				Expect(w.Start(stopCh)).ToNot(HaveOccurred())
 			}()
+
+			err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+			Expect(err).ToNot(HaveOccurred())
 			testrunConfig.Watch = w
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
