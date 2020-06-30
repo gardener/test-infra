@@ -23,58 +23,39 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 )
 
 // Serve starts the webhook server for testrun validation
-func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) {
-	stopCh := make(chan struct{})
-	defer close(stopCh)
+func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration, stopCh <-chan struct{}) error {
+	o := NewOptions(log, restConfig, cfg)
+	log.Info("Start TM Bot")
 
-	opts := NewOptions(log, restConfig, cfg)
-
-	if err := opts.Run(stopCh); err != nil {
-		log.Error(err, "unable to setup components")
-		os.Exit(1)
-	}
-}
-
-func (o *options) Run(stopCh chan struct{}) error {
-	ctrl.SetLogger(o.log.WithName("watch"))
-
-	syncPeriod := 10 * time.Minute
-	mgr, err := manager.New(o.restConfig, manager.Options{
-		MetricsBindAddress: "0",
-		Scheme:             testmachinery.TestMachineryScheme,
-		SyncPeriod:         &syncPeriod,
+	var (
+		err        error
+		syncPeriod = 10 * time.Minute
+	)
+	o.w, err = watch.New(o.log, o.restConfig, &watch.Options{
+		SyncPeriod: &syncPeriod,
 	})
 	if err != nil {
-		return errors.Wrap(err, "unable to setup manager")
-	}
-	_, o.w, err = controller.NewWatchController(mgr, o.log)
-	if err != nil {
-		return errors.Wrap(err, "unable to setup controller")
-	}
-
-	if err := mgr.Add(o); err != nil {
 		return err
 	}
-	if err := mgr.Start(stopCh); err != nil {
-		return errors.Wrap(err, "error while running manager")
-	}
-	return nil
-}
 
-func (o *options) Start(stop <-chan struct{}) error {
-	o.log.Info("Start TM Bot")
+	go func() {
+		if err := o.w.Start(stopCh); err != nil {
+			o.log.Error(err, "error while starting watch")
+		}
+	}()
+
+	if err := watch.WaitForCacheSyncWithTimeout(o.w, 2*time.Minute); err != nil {
+		return err
+	}
+
 	runs := tests.NewRuns(o.w)
 
 	r := mux.NewRouter()
@@ -89,7 +70,7 @@ func (o *options) Start(stop <-chan struct{}) error {
 		return err
 	}
 
-	return o.startWebserver(r, stop)
+	return o.startWebserver(r, stopCh)
 }
 
 func (o *options) startWebserver(router *mux.Router, stop <-chan struct{}) error {

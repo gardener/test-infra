@@ -121,7 +121,7 @@ var _ = Describe("Testrun validation tests", func() {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
 			Expect(err).To(HaveOccurred())
-			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("No testdefinitions found"))
+			Expect(string(errors.ReasonForError(err))).To(ContainSubstring("no TestDefinitions found"))
 		})
 	})
 

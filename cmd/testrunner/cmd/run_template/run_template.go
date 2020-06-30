@@ -15,226 +15,125 @@
 package run_template
 
 import (
+	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/shootflavors"
 	"os"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 
 	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/gardener/test-infra/pkg/util"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
-	"github.com/spf13/cobra"
 )
 
-var testrunnerConfig = testrunner.Config{}
-var collectConfig = result.Config{}
-var shootParameters = testrunnerTemplate.Parameters{}
+// NewRunTemplateCommand creates a new run template command.
+func NewRunTemplateCommand() (*cobra.Command, error) {
+	opts := NewOptions()
 
-var (
-	testrunNamePrefix    string
-	shootPrefix          string
-	tmKubeconfigPath     string
-	filterPatchVersions  bool
-	failOnError          bool
-	testrunFlakeAttempts int
+	cmd := &cobra.Command{
+		Use:   "run-template",
+		Short: "Run the testrunner with a helm template containing testruns",
+		Aliases: []string{
+			"run", // for backward compatibility
+			"run-tmpl",
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate()
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := opts.Complete(); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 
-	timeout  int64
-	interval int64
-)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), opts.testrunnerConfig.Timeout)
+			defer cancelFunc()
 
-// AddCommand adds run-template to a command.
-func AddCommand(cmd *cobra.Command) {
-	cmd.AddCommand(runCmd)
+			if err := opts.run(ctx); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+
+	if err := opts.AddFlags(cmd.Flags()); err != nil {
+		return nil, err
+	}
+
+	return cmd, nil
 }
 
-var runCmd = &cobra.Command{
-	Use:   "run-template",
-	Short: "Run the testrunner with a helm template containing testruns",
-	Aliases: []string{
-		"run", // for backward compatibility
-		"run-tmpl",
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			err    error
-			stopCh = make(chan struct{})
+// run runs the workflow for the run template
+func (o *options) run(ctx context.Context) error {
+	logger.Log.Info("Start testmachinery testrunner")
 
-			shootFlavors []*shootflavors.ExtendedFlavorInstance
-		)
-		defer close(stopCh)
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		logger.Log.Info("Start testmachinery testrunner")
+	runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &o.shootParameters, o.shootFlavors)
+	if err != nil {
+		return errors.Wrap(err, "unable to render testrun")
+	}
 
-		testrunnerConfig.Watch, err = testrunner.StartWatchControllerFromFile(logger.Log, tmKubeconfigPath, stopCh)
-		if err != nil {
+	if o.dryRun {
+		fmt.Print(util.PrettyPrintStruct(runs))
+		return nil
+	}
+
+	logger.Log.V(3).Info("starting watcher")
+
+	watcher, err := watch.NewFromFile(logger.Log.WithName("watch"), o.tmKubeconfigPath, nil)
+	if err != nil {
+		return errors.Wrap(err, "unable to start testrun watch controller")
+	}
+
+	go func() {
+		if err := watcher.Start(ctx.Done()); err != nil {
 			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)
 		}
+	}()
 
-		gardenK8sClient, err := kubernetes.NewClientFromFile("", shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: kubernetes.GardenScheme,
-		}))
-		if err != nil {
-			logger.Log.Error(err, "unable to build garden kubernetes client", "file", tmKubeconfigPath)
-			os.Exit(1)
-		}
-
-		testrunnerConfig.Timeout = time.Duration(timeout) * time.Second
-		testrunnerConfig.FlakeAttempts = testrunFlakeAttempts
-		collectConfig.ComponentDescriptorPath = shootParameters.ComponentDescriptorPath
-
-		if shootParameters.FlavorConfigPath != "" {
-			flavors, err := GetShootFlavors(shootParameters.FlavorConfigPath, gardenK8sClient, shootPrefix, filterPatchVersions)
-			if err != nil {
-				logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
-				os.Exit(1)
-			}
-			shootFlavors = flavors.GetShoots()
-		}
-
-		runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &shootParameters, shootFlavors)
-		if err != nil {
-			logger.Log.Error(err, "unable to render testrun")
-			os.Exit(1)
-		}
-
-		if dryRun {
-			fmt.Print(util.PrettyPrintStruct(runs))
-			os.Exit(0)
-		}
-
-		collector, err := result.New(logger.Log.WithName("collector"), collectConfig, tmKubeconfigPath)
-		if err != nil {
-			logger.Log.Error(err, "unable to initialize collector")
-			os.Exit(1)
-		}
-		if err := collector.PreRunShoots(shootParameters.GardenKubeconfigPath, runs); err != nil {
-			logger.Log.Error(err, "unable to setup collector")
-			os.Exit(1)
-		}
-
-		if err := testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &testrunnerConfig, runs, testrunNamePrefix, collector.RunExecCh); err != nil {
-			logger.Log.Error(err, "unable to run testruns")
-			os.Exit(1)
-		}
-
-		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
-		if err != nil {
-			logger.Log.Error(err, "unable to collect test output")
-			os.Exit(1)
-		}
-
-		result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), collectConfig.ConcourseOnErrorDir)
-
-		logger.Log.Info("Testrunner finished")
-
-		// Fail when one testrun is failed and we should fail on failed testruns.
-		// Otherwise only fail when the testrun execution is erroneous.
-		if runs.HasErrors() {
-			os.Exit(1)
-		}
-		if failOnError && failed {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	// configuration flags
-	runCmd.Flags().StringVar(&tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
-	if err := runCmd.MarkFlagRequired("tm-kubeconfig-path"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "tm-kubeconfig-path")
+	if err := watch.WaitForCacheSyncWithTimeout(watcher, 2*time.Minute); err != nil {
+		return err
 	}
-	if err := runCmd.MarkFlagFilename("tm-kubeconfig-path"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "tm-kubeconfig-path")
-	}
-	runCmd.Flags().StringVar(&testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
-	if err := runCmd.MarkFlagRequired("testrun-prefix"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "testrun-prefix")
-	}
-	runCmd.Flags().StringVarP(&testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
-	runCmd.Flags().Int64Var(&timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
-	runCmd.Flags().Int64Var(&interval, "interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	runCmd.Flags().IntVar(&testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
-	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
-	runCmd.Flags().BoolVar(&collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
-	runCmd.Flags().BoolVar(&testrunnerConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
-	runCmd.Flags().IntVar(&testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
-	runCmd.Flags().DurationVar(&testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
+	o.testrunnerConfig.Watch = watcher
 
-	runCmd.Flags().StringVar(&collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
-
-	// status asset upload
-	runCmd.Flags().BoolVar(&collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
-	runCmd.Flags().StringVar(&collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "GitHUb username.")
-	runCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
-	runCmd.Flags().StringArrayVar(&collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
-	runCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
-
-	// slack notification
-	runCmd.Flags().StringVar(&collectConfig.SlackToken, "slack-token", "", "Client token to authenticate")
-	runCmd.Flags().StringVar(&collectConfig.SlackChannel, "slack-channel", "", "Client channel id to send the message to.")
-	runCmd.Flags().StringVar(&collectConfig.ConcourseURL, "concourse-url", "", "Concourse job URL.")
-	runCmd.Flags().BoolVar(&collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
-
-	// parameter flags
-	runCmd.Flags().StringVar(&shootParameters.DefaultTestrunChartPath, "testruns-chart-path", "", "Path to the default testruns chart.")
-	if err := runCmd.MarkFlagFilename("testruns-chart-path"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "testruns-chart-path")
+	collector, err := result.New(logger.Log.WithName("collector"), o.collectConfig, o.tmKubeconfigPath)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize collector")
 	}
-	runCmd.Flags().StringVar(&shootParameters.FlavoredTestrunChartPath, "flavored-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
-	if err := runCmd.MarkFlagFilename("flavored-testruns-chart-path"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "flavored-testruns-chart-path")
-	}
-	runCmd.Flags().StringVar(&shootParameters.GardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "gardener-kubeconfig-path")
-	}
-	if err := runCmd.MarkFlagFilename("gardener-kubeconfig-path"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "gardener-kubeconfig-path")
-	}
-	if err := runCmd.MarkFlagRequired("gardener-kubeconfig-path"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "gardener-kubeconfig-path")
+	if err := collector.PreRunShoots(o.shootParameters.GardenKubeconfigPath, runs); err != nil {
+		return errors.Wrap(err, "unable to setup collector")
 	}
 
-	runCmd.Flags().StringVar(&shootParameters.FlavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
-	if err := runCmd.MarkFlagFilename("flavor-config"); err != nil {
-		logger.Log.Error(err, "mark flag filename", "flag", "flavor-config")
+	if err := testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &o.testrunnerConfig, runs, o.testrunNamePrefix, collector.RunExecCh); err != nil {
+		return errors.Wrap(err, "unable to run testruns")
 	}
 
-	runCmd.Flags().StringVar(&shootPrefix, "shoot-name", "", "Shoot name which is used to run tests.")
-	if err := runCmd.MarkFlagRequired("shoot-name"); err != nil {
-		logger.Log.Error(err, "mark flag required", "flag", "shoot-name")
+	failed, err := collector.Collect(logger.Log.WithName("Collect"), o.testrunnerConfig.Watch.Client(), o.testrunnerConfig.Namespace, runs)
+	if err != nil {
+		return errors.Wrap(err, "unable to collect test output")
 	}
-	runCmd.Flags().BoolVar(&filterPatchVersions, "filter-patch-versions", false, "Filters patch versions so that only the latest patch versions per minor versions is used.")
 
-	runCmd.Flags().StringVar(&shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
-	runCmd.Flags().StringVar(&shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
+	result.GenerateNotificationConfigForAlerting(runs.GetTestruns(), o.collectConfig.ConcourseOnErrorDir)
 
-	runCmd.Flags().StringArrayVar(&shootParameters.SetValues, "set", make([]string, 0), "setValues additional helm values")
-	runCmd.Flags().StringArrayVarP(&shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
+	logger.Log.Info("Testrunner finished")
 
-	// DEPRECATED FLAGS
-	// is now handled by the testmachinery
-	runCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
-	runCmd.Flags().String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
-	runCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
-	runCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
-	runCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
-	runCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
-	runCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
-	runCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("es-username", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("es-password", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("s3-endpoint", "DEPRECATED: will not we used anymore")
-	runCmd.Flags().MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore")
+	// Fail when one testrun is failed and we should fail on failed testruns.
+	// Otherwise only fail when the testrun execution is erroneous.
+	if runs.HasErrors() {
+		return errors.New("At least one testrun failed. Stopping.")
+	}
+	if o.failOnError && failed {
+		return errors.New("Something went wrong during testrun execution")
+	}
+
+	return nil
 }

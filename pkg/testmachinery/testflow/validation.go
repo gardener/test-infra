@@ -83,7 +83,7 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 
 		// fail if there are no testdefinitions found
 		if len(testDefinitions) == 0 {
-			return fmt.Errorf("%s.Definition: no TestDefinition found", identifier)
+			return fmt.Errorf("%s.Definition: no TestDefinitions found", identifier)
 		}
 
 		for _, td := range testDefinitions {
