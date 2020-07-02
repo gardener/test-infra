@@ -68,13 +68,15 @@ spec:
             path: /healthz
             port: {{.Values.controller.healthEndpointPort}}
           initialDelaySeconds: 3
-          periodSeconds: 60
+          periodSeconds: 30
+          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /healthz
             port: {{.Values.controller.healthEndpointPort}}
           initialDelaySeconds: 3
-          periodSeconds: 60
+          periodSeconds: 30
+          failureThreshold: 5
         volumeMounts:
         - name: config
           mountPath: /etc/testmachinery/config
