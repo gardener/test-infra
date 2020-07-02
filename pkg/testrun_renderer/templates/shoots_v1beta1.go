@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
 	"strconv"
 )
 
@@ -97,6 +98,11 @@ func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigSeedName,
 			Value: ConfigSeedValue,
+		},
+		{
+			Type:  v1beta1.ConfigTypeEnv,
+			Name:  ConfigShootAnnotations,
+			Value: util.MarshalMap(cfg.ShootAnnotations),
 		},
 	}
 

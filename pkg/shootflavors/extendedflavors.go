@@ -92,6 +92,7 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 					shoot: &common.ExtendedShoot{
 						Shoot: common.Shoot{
 							Description:               rawFlavor.Description,
+							AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
 							Provider:                  rawFlavor.Provider,
 							KubernetesVersion:         k8sVersion,
 							AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,

@@ -82,6 +82,7 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 					}
 
 					shoots = append(shoots, &common.Shoot{
+						AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
 						Provider:                  rawFlavor.Provider,
 						KubernetesVersion:         k8sVersion,
 						AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,
@@ -91,6 +92,7 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 				continue
 			}
 			shoots = append(shoots, &common.Shoot{
+				AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
 				Provider:                  rawFlavor.Provider,
 				KubernetesVersion:         k8sVersion,
 				AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,

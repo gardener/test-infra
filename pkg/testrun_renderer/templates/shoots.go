@@ -30,6 +30,7 @@ const (
 	ConfigInfrastructureProviderPathName = "INFRASTRUCTURE_PROVIDER_CONFIG_FILEPATH"
 
 	ConfigShootName                 = "SHOOT_NAME"
+	ConfigShootAnnotations          = "SHOOT_ANNOTATIONS"
 	ConfigProjectNamespaceName      = "PROJECT_NAMESPACE"
 	ConfigK8sVersionName            = "K8S_VERSION"
 	ConfigCloudproviderName         = "CLOUDPROVIDER"
@@ -49,6 +50,7 @@ var (
 // CreateShootConfig describes the configuration for a create-shoot step
 type CreateShootConfig struct {
 	ShootName                 string
+	ShootAnnotations          map[string]string
 	Namespace                 string
 	K8sVersion                string
 	AllowPrivilegedContainers *bool

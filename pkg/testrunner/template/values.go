@@ -153,6 +153,9 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 	if shoot.AllowPrivilegedContainers != nil {
 		values["shoot"].(map[string]interface{})["allowPrivilegedContainers"] = shoot.AllowPrivilegedContainers
 	}
+	if shoot.AdditionalAnnotations != nil {
+		values["shoot"].(map[string]interface{})["shootAnnotations"] = util.MarshalMap(shoot.AdditionalAnnotations)
+	}
 	return utils.MergeMaps(defaultValues, values), nil
 }
 
@@ -172,5 +175,6 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 		AllowPrivilegedContainers: shoot.AllowPrivilegedContainers,
 		OperatingSystem:           shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
 		OperatingSystemVersion:    operatingsystemversion,
+		Annotations:               shoot.AdditionalAnnotations,
 	}, nil
 }

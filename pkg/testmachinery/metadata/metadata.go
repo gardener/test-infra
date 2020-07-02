@@ -18,6 +18,7 @@ import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
 	"strconv"
 )
 
@@ -34,6 +35,7 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 		common.AnnotationFlavorDescription:      m.FlavorDescription,
 		common.AnnotationDimension:              m.GetDimensionFromMetadata("/"),
 		common.AnnotationRetries:                strconv.Itoa(m.Retries),
+		common.AnnotationShootAnnotations:       util.MarshalMap(m.Annotations),
 	}
 	if m.AllowPrivilegedContainers != nil {
 		annotations[common.AnnotationAllowPrivilegedContainers] = strconv.FormatBool(*m.AllowPrivilegedContainers)
@@ -63,6 +65,11 @@ func (m *Metadata) DeepCopy() *Metadata {
 // FromTestrun reads metadata from a testrun
 func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 	retries, _ := strconv.Atoi(tr.Annotations[common.AnnotationRetries])
+	shootAnnotations, err := util.UnmarshalMap(tr.Annotations[common.AnnotationShootAnnotations])
+	if err != nil {
+		shootAnnotations = make(map[string]string)
+		shootAnnotations["error"] = err.Error()
+	}
 	metadata := &Metadata{
 		Landscape:              tr.Annotations[common.AnnotationLandscape],
 		KubernetesVersion:      tr.Annotations[common.AnnotationK8sVersion],
@@ -72,6 +79,7 @@ func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 		Region:                 tr.Annotations[common.AnnotationRegion],
 		Zone:                   tr.Annotations[common.AnnotationZone],
 		FlavorDescription:      tr.Annotations[common.AnnotationFlavorDescription],
+		ShootAnnotations:       shootAnnotations,
 		Retries:                retries,
 		Testrun: TestrunMetadata{
 			ID:             tr.Name,

@@ -15,6 +15,9 @@ metadata:
         {{- if  hasKey .Values.shoot "allowPrivilegedContainers" }}
         shoot.allowPrivilegedContainers: "{{ .Values.shoot.allowPrivilegedContainers }}"
         {{- end }}
+        {{- if  hasKey .Values.shoot "shootAnnotations" }}
+        shoot.shootAnnotations: "{{ .Values.shoot.shootAnnotations }}"
+        {{- end }}
         shoot.workers: {{ required "workers is required" .Values.shoot.workers }}
         shoot.k8sVersion: {{ required "k8sVersion is required" .Values.shoot.k8sVersion }}
         shoot.k8sPrevPrePatchVersion: {{ required "k8sPrevPrePatchVersion is required" .Values.shoot.k8sPrevPrePatchVersion }}

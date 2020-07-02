@@ -50,6 +50,9 @@ type Shoot struct {
 	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
 	AllowPrivilegedContainers *bool
 
+	// AdditionalAnnotations holds annotations to be added to created shoots
+	AdditionalAnnotations map[string]string
+
 	// Worker pools to test
 	Workers []gardencorev1beta1.Worker
 }
@@ -69,6 +72,10 @@ type ShootFlavor struct {
 	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
 	// +optional
 	AllowPrivilegedContainers *bool `json:"allowPrivilegedContainers"`
+
+	// AdditionalAnnotations allows to optionally define additional annotations for the created shoot resources
+	// +optional
+	AdditionalAnnotations map[string]string `json:"annotations"`
 
 	// Worker pools to test
 	Workers []ShootWorkerFlavor `json:"workers"`
