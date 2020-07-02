@@ -52,7 +52,7 @@ func New(log logr.Logger, cw *configwatcher.ConfigWatcher) (*DependencyEnsurer, 
 		renderer: chartrenderer.New(engine.New(), nil),
 	}
 
-	tmhealth.AddHealthCondition("bootsrap", b)
+	tmhealth.AddHealthCondition("bootstrap", b)
 
 	return b, nil
 }
@@ -122,11 +122,7 @@ func (e *DependencyEnsurer) CheckHealth(ctx context.Context) error {
 		}
 	}
 
-	mr := &v1alpha1.ManagedResource{}
-	if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.ArgoManagedResourceName, Namespace: namespace}, mr); err != nil {
-		return err
-	}
-	return health.CheckManagedResourceHealthy(mr)
+	return nil
 }
 
 // Reconcile ensures the correct state defined by the configuration.
