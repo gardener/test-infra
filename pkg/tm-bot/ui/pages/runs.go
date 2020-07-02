@@ -124,7 +124,6 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 		}
 
 		paginatedTestruns, pages := pagination.SliceFromValues(testrunsList, r.URL.Query())
-		sort.Sort(testrunsList)
 		sort.Sort(runsList)
 		params := map[string]interface{}{
 			"rungroup":   rgName,

@@ -142,6 +142,13 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 type testrunItemList []testrunItem
 
 func (l testrunItemList) GetPaginatedList(from, to int) pagination.Interface {
+	to++
+	if from > len(l) {
+		return make(testrunItemList, 0)
+	}
+	if to >= len(l) {
+		return l[from:]
+	}
 	return l[from:to]
 }
 
