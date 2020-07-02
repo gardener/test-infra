@@ -216,7 +216,6 @@
   { "testcase": "[sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : projected", "groups": ["fast"] },
   { "testcase": "[sig-storage] Ephemeralstorage When pod refers to non-existent ephemeral storage should allow deletion of pod with invalid volume : secret", "groups": ["fast"] },
   { "testcase": "[sig-storage] PV Protection Verify that PV bound to a PVC is not removed immediately", "groups": ["fast"] },
-  { "testcase": "[sig-storage] PersistentVolumes NFS when invoking the Recycle reclaim policy should test that a PV becomes Available and is clean after the PVC is deleted.", "groups": ["fast"] },
   { "testcase": "[sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PV and a pre-bound PVC: test write access", "groups": ["fast"] },
   { "testcase": "[sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PVC and a pre-bound PV: test write access", "groups": ["fast"] },
   { "testcase": "[sig-storage] PersistentVolumes NFS with Single PV - PVC pairs create a PVC and non-pre-bound PV: test write access", "groups": ["fast"] },

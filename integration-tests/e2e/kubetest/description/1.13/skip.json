@@ -496,5 +496,6 @@
   { "testcase": "[Driver: pd.csi.storage.gke.io]" },
   { "testcase": "[Driver: aws]" },
   { "testcase": "[Driver: azure]" },
-  { "testcase": "[k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 100 pods per node", "comment": "false positive: we already have some system pods running on some nodes, hence adding 100 pods exceeds the podlimit of 110 sometimes, hence this test cannot work" }
+  { "testcase": "[k8s.io] [sig-node] Kubelet [Serial] [Slow] [k8s.io] [sig-node] regular resource usage tracking resource tracking for 100 pods per node", "comment": "false positive: we already have some system pods running on some nodes, hence adding 100 pods exceeds the podlimit of 110 sometimes, hence this test cannot work" },
+  { "testcase": "[sig-storage] PersistentVolumes NFS when invoking the Recycle reclaim policy should test that a PV becomes Available and is clean after the PVC is deleted.", "description": "Fails on shoots with allowPrivilegedContainers=false because the recycling pod is not assigned any PSP and thus cannot mount nfs volumes. Recycling reclaim mode is anyway deprecated since K8s v1.10, see https://github.com/kubernetes/kubernetes/commit/24ab5e9ed0cd01e06fb2df2b3f704f45c780410d"}
 ]

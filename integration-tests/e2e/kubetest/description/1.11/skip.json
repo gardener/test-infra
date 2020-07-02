@@ -495,5 +495,6 @@
   { "testcase": "[Experimental]" },
   { "testcase": "[Driver: vSphere]" },
   { "testcase": "[Driver: cinder]" },
-  { "testcase": "[Driver: gluster]" }
+  { "testcase": "[Driver: gluster]" },
+  { "testcase": "[sig-storage] PersistentVolumes NFS when invoking the Recycle reclaim policy should test that a PV becomes Available and is clean after the PVC is deleted.", "description": "Fails on shoots with allowPrivilegedContainers=false because the recycling pod is not assigned any PSP and thus cannot mount nfs volumes. Recycling reclaim mode is anyway deprecated since K8s v1.10, see https://github.com/kubernetes/kubernetes/commit/24ab5e9ed0cd01e06fb2df2b3f704f45c780410d"}
 ]
