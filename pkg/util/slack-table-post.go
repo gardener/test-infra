@@ -45,11 +45,12 @@ type TableItem struct {
 }
 
 type ItemMeta struct {
-	CloudProvider     string
-	TestrunID         string
-	OperatingSystem   string
-	KubernetesVersion string
-	FlavorDescription string
+	CloudProvider           string
+	TestrunID               string
+	OperatingSystem         string
+	KubernetesVersion       string
+	FlavorDescription       string
+	AdditionalDimensionInfo string
 }
 
 type resultRow struct {
@@ -89,6 +90,9 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 		}
 
 		dimensionKey := fmt.Sprintf("%s %s", meta.KubernetesVersion, meta.OperatingSystem)
+		if meta.AdditionalDimensionInfo != "" {
+			dimensionKey = fmt.Sprintf("%s [%s]", dimensionKey, meta.AdditionalDimensionInfo)
+		}
 		if meta.FlavorDescription != "" {
 			dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
 		}
