@@ -46,18 +46,20 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 			reader, err := c.s3Client.GetObject(c.s3Config.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
 			if err != nil {
 				c.log.Info(fmt.Sprintf("cannot get exportet artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
+				if reader != nil {
+					if err := reader.Close(); err != nil {
+						c.log.Info(fmt.Sprintf("cannot close reader after artifact error: %v", err), "artifact", step.ExportArtifactKey)
+					}
+				}
 				continue
 			}
-			defer func() {
-				err := reader.Close()
-				if err != nil {
-					c.log.Info("cannot close reader", "artifact", step.ExportArtifactKey)
-				}
-			}()
 
 			info, err := reader.Stat()
 			if err != nil {
-				c.log.Info(fmt.Sprintf("cannot get exportet artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
+				c.log.Info(fmt.Sprintf("cannot get exported artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
+				if err := reader.Close(); err != nil {
+					c.log.Info(fmt.Sprintf("cannot close reader after exported artifact error: %v", err), "artifact", step.ExportArtifactKey)
+				}
 				continue
 			}
 
@@ -66,6 +68,9 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 				files, err := getFilesFromTar(reader)
 				if err != nil {
 					c.log.Info(fmt.Sprintf("cannot untar artifact: %s", err.Error()), "artifact", step.ExportArtifactKey)
+					if err := reader.Close(); err != nil {
+						c.log.Info(fmt.Sprintf("cannot close reader after untarring artifact error: %v", err), "artifact", step.ExportArtifactKey)
+					}
 					continue
 				}
 
@@ -73,7 +78,9 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 					bulks = append(bulks, bulk.ParseExportedFiles(c.log, strings.ToLower(step.TestDefinition.Name), stepMeta, doc)...)
 				}
 			}
-
+			if err := reader.Close(); err != nil {
+				c.log.Info(fmt.Sprintf("cannot close reader after artifact error: %v", err), "artifact", step.ExportArtifactKey)
+			}
 		}
 	}
 	return bulks
