@@ -47,7 +47,7 @@ func SliceFromValues(list Interface, values url.Values) (Interface, Pages) {
 	sort.Sort(list)
 
 	var (
-		pages = Pages{Pages: []Page{}, Current: 0, ItemCount: list.Len()}
+		pages        = Pages{Pages: []Page{}, Current: 0, ItemCount: list.Len()}
 		itemsPerPage = defaultItemsPerPage
 	)
 
@@ -61,8 +61,6 @@ func SliceFromValues(list Interface, values url.Values) (Interface, Pages) {
 	if to <= 0 {
 		to = from + itemsPerPage
 	}
-
-
 
 	if list.Len() < itemsPerPage {
 		return list, Pages{Pages: []Page{}, Current: 0, ItemCount: list.Len()}

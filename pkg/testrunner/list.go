@@ -20,6 +20,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
+	"strconv"
 	"strings"
 	"time"
 
@@ -115,8 +116,15 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 				log.Error(err, "unable to rerender testrun")
 				return
 			}
-			*rl[trI] = *newRun
+
 			attempt++
+
+			// update retry metadata and annotation
+			newRun.Metadata.Retries = attempt
+			newRun.Testrun.Annotations[common.AnnotationRetries] = strconv.Itoa(attempt)
+			newRun.Testrun.Annotations[common.AnnotationPreviousAttempt] = rl[trI].Testrun.Name
+
+			*rl[trI] = *newRun
 			executor.AddItem(f)
 		}
 		executor.AddItem(f)

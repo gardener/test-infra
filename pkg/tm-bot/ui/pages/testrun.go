@@ -91,7 +91,6 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				testrun:   tr,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
 				Phase:     PhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
@@ -100,6 +99,15 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			},
 			Steps:     make(testrunStepStatusItemList, len(tr.Status.Steps)),
 			RawStatus: statusTable.String(),
+		}
+		if retries, ok := tr.Annotations[common.AnnotationRetries]; ok {
+			item.Retries = retries
+		}
+		if prevAttempt, ok := tr.Annotations[common.AnnotationPreviousAttempt]; ok {
+			item.PreviousAttempt = prevAttempt
+		}
+		if runID, ok := tr.Labels[common.LabelTestrunExecutionGroup]; ok {
+			item.RunID = runID
 		}
 		if argoHostURL != "" {
 			item.ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, tr)

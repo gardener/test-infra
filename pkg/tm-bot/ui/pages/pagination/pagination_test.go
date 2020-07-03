@@ -24,6 +24,7 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages/pagination"
 )
+
 func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "UI Pagination Suite")
@@ -35,7 +36,7 @@ var _ = Describe("pagination", func() {
 		It("should return items 1-3", func() {
 			values := url.Values(map[string][]string{
 				common.DashboardPaginationFrom: []string{"1"},
-				common.DashboardPaginationTo: []string{"3"},
+				common.DashboardPaginationTo:   []string{"3"},
 			})
 
 			list := pagInterface([]string{"a", "b", "c", "d", "e"})
@@ -57,7 +58,7 @@ var _ = Describe("pagination", func() {
 		It("should return items 2-3", func() {
 			values := url.Values(map[string][]string{
 				common.DashboardPaginationFrom: []string{"2"},
-				common.DashboardPaginationTo: []string{"3"},
+				common.DashboardPaginationTo:   []string{"3"},
 			})
 			list := pagInterface([]string{"a", "b", "c", "d", "e"})
 
@@ -69,7 +70,7 @@ var _ = Describe("pagination", func() {
 		It("should return items 3-4", func() {
 			values := url.Values(map[string][]string{
 				common.DashboardPaginationFrom: []string{"3"},
-				common.DashboardPaginationTo: []string{"4"},
+				common.DashboardPaginationTo:   []string{"4"},
 			})
 			list := pagInterface([]string{"a", "b", "c", "d", "e"})
 
@@ -83,7 +84,7 @@ var _ = Describe("pagination", func() {
 		It("should return 5 pages with a items per page of 1", func() {
 			values := url.Values(map[string][]string{
 				common.DashboardPaginationFrom: []string{"1"},
-				common.DashboardPaginationTo: []string{"1"},
+				common.DashboardPaginationTo:   []string{"1"},
 			})
 			list := pagInterface([]string{"a", "b", "c", "d", "e"})
 
@@ -101,7 +102,7 @@ var _ = Describe("pagination", func() {
 		It("should return 2 pages with a items per page of 3", func() {
 			values := url.Values(map[string][]string{
 				common.DashboardPaginationFrom: []string{"1"},
-				common.DashboardPaginationTo: []string{"3"},
+				common.DashboardPaginationTo:   []string{"3"},
 			})
 			list := pagInterface([]string{"a", "b", "c", "d", "e"})
 
@@ -113,7 +114,6 @@ var _ = Describe("pagination", func() {
 			))
 		})
 	})
-
 
 })
 

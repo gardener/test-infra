@@ -41,7 +41,9 @@ type testrunItem struct {
 	Duration  string
 	Progress  string
 
-	Dimension string
+	Dimension       string
+	Retries         string
+	PreviousAttempt string
 
 	ArgoURL    string
 	GrafanaURL string
@@ -108,12 +110,20 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				testrun:   &testrun,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				RunID:     tr.GetLabels()[common.LabelTestrunExecutionGroup],
 				Phase:     PhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(&tr),
 				Dimension: metadata.GetDimensionFromMetadata("/"),
+			}
+			if retries, ok := tr.Annotations[common.AnnotationRetries]; ok {
+				testrunsList[i].Retries = retries
+			}
+			if prevAttempt, ok := tr.Annotations[common.AnnotationPreviousAttempt]; ok {
+				testrunsList[i].PreviousAttempt = prevAttempt
+			}
+			if runID, ok := tr.Labels[common.LabelTestrunExecutionGroup]; ok {
+				testrunsList[i].RunID = runID
 			}
 			if argoHostURL != "" {
 				testrunsList[i].ArgoURL = testrunner.GetArgoURLFromHost(argoHostURL, &tr)
