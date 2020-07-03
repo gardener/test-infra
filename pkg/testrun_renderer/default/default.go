@@ -108,6 +108,7 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 				Namespace:                 cfg.Shoots.Namespace,
 				K8sVersion:                flavor.KubernetesVersion.Version,
 				AllowPrivilegedContainers: flavor.AllowPrivilegedContainers,
+				ShootAnnotations:          flavor.AdditionalAnnotations,
 			},
 		})
 		for _, test := range cfg.Shoots.Tests {
@@ -120,6 +121,7 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 					Namespace:                 cfg.Shoots.Namespace,
 					K8sVersion:                flavor.KubernetesVersion.Version,
 					AllowPrivilegedContainers: flavor.AllowPrivilegedContainers,
+					ShootAnnotations:          flavor.AdditionalAnnotations,
 				},
 			})
 		}

@@ -40,6 +40,7 @@ var _ = Describe("shoot templates", func() {
 					KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
 					Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
 					AllowPrivilegedContainers: pointer.BoolPtr(false),
+					AdditionalAnnotations:     map[string]string{"a": "b"},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
@@ -77,6 +78,7 @@ var _ = Describe("shoot templates", func() {
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.allowPrivilegedContainers", "false"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.shootAnnotations", "a=b"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
@@ -101,6 +103,7 @@ var _ = Describe("shoot templates", func() {
 			Expect(meta.Region).To(Equal("region-1"))
 			Expect(meta.Zone).To(Equal("region-1-1"))
 			Expect(meta.AllowPrivilegedContainers).To(Equal(pointer.BoolPtr(false)))
+			Expect(meta.Annotations).To(Equal(map[string]string{"a": "b"}))
 			Expect(meta.OperatingSystem).To(Equal("core-os"))
 		})
 

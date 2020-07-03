@@ -72,6 +72,9 @@ const (
 	// AnnotationAllowPrivilegedContainers is the annotation describing whether and how created shoots will have allowPrivilegedContainers configured
 	AnnotationAllowPrivilegedContainers = "metadata.testmachinery.gardener.cloud/allow-privileged-containers"
 
+	// AnnotationShootAnnotations is the annotation describing which additional shoot annotations were set (as they could impact the shoot behaviour)
+	AnnotationShootAnnotations = "metadata.testmachinery.gardener.cloud/shoot-annotations"
+
 	// AnnotationFlavorDescription is the annotation to describe the test flavor of the current run testrun
 	AnnotationFlavorDescription = "metadata.testmachinery.gardener.cloud/flavor-description"
 

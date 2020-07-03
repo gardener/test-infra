@@ -45,6 +45,7 @@ import (
 	"time"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	testfwk "github.com/gardener/gardener/test/framework"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"sigs.k8s.io/yaml"
 )
@@ -485,4 +486,35 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
 	}
 	return matches[1], nil
+}
+
+// MarshalMap encodes the given map into a string similar to kubectl --selectors: map '{a:b,c:d}' becomes string 'a=b,c=d'
+func MarshalMap(annotations map[string]string) string {
+	var buf []string
+	for k, v := range annotations {
+		buf = append(buf, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(buf, ",")
+}
+
+// UnmarshalMap does the opposite of MarshalMap. It decodes the given string into a map, return an error if the string is not in the expected format 'key1=value1,key2=value2'
+func UnmarshalMap(cfg string) (map[string]string, error) {
+	if !testfwk.StringSet(cfg) {
+		return nil, nil
+	}
+	result := make(map[string]string)
+	annotations := strings.Split(cfg, ",")
+	for _, annotation := range annotations {
+		annotation = strings.TrimSpace(annotation)
+		if !testfwk.StringSet(annotation) {
+			continue
+		}
+		keyValue := strings.Split(annotation, "=")
+		if len(keyValue) != 2 {
+			return nil, fmt.Errorf("annotation %s could not be parsed into key and value", annotation)
+		}
+		result[keyValue[0]] = keyValue[1]
+	}
+
+	return result, nil
 }
