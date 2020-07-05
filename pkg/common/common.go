@@ -48,6 +48,9 @@ const (
 	// AnnotationRetries is the annotation to specify the retry count of the current testrun
 	AnnotationRetries = "testrunner.testmachinery.gardener.cloud/retries"
 
+	// AnnotationPreviousAttempt is the testrun id if the previous testrun
+	AnnotationPreviousAttempt = "testrunner.testmachinery.gardener.cloud/previous-attempt"
+
 	// AnnotationLandscape is the annotation to specify the landscape this testrun is testing
 	AnnotationLandscape = "metadata.testmachinery.gardener.cloud/landscape"
 

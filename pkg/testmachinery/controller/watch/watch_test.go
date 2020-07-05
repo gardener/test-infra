@@ -102,7 +102,6 @@ var _ = Describe("Watch", func() {
 		}
 		err := fakeClient.Create(context.TODO(), tr)
 		Expect(err).ToNot(HaveOccurred())
-		//fakeClient = fake.NewFakeClientWithScheme(tmScheme, tr)
 	})
 
 	AfterEach(func() {

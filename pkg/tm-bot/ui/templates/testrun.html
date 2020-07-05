@@ -24,6 +24,14 @@
                         <label class="mdl-textfield__label" for="dimension">Dimension</label>
                     </div>
                 </div>
+                {{ if .page.PreviousAttempt }}
+                <div class="mdl-cell  mdl-list__item-primary-content">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" id="attempt" value="{{ .page.PreviousAttempt }}" readonly>
+                        <label class="mdl-textfield__label" for="attempt">Attempt {{ .page.Retries }}</label>
+                    </div>
+                </div>
+                {{ end }}
             </div>
             <div class="mdl-grid">
                 <div class="mdl-cell mdl-list__item-primary-content">
@@ -77,6 +85,12 @@
 
         </div></div>
         <div class="mdl-card__menu">
+            {{ if .page.PreviousAttempt }}
+                <a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" href="/testrun/{{ .page.Namespace }}/{{ .page.PreviousAttempt }}">
+                    <i class="material-icons mdl-list__item-icon">replay</i>
+                    Previous Attempt
+                </a>
+            {{ end }}
             {{ if .page.ArgoURL }}
                 <a id="argo-url-{{.page.ID}}" href="{{ .page.ArgoURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><img alt="argo logo" src="/static/img/argo.svg" /></a>
                 <div class="mdl-tooltip" for="argo-url-{{.page.ID}}">Show Argo Workflow</div>

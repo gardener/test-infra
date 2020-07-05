@@ -50,6 +50,7 @@
                 <th class="mdl-data-table__cell--non-numeric">Progress</th>
                 <th class="mdl-data-table__cell--non-numeric">Start</th>
                 <th class="mdl-data-table__cell--non-numeric">Duration</th>
+                <th class="mdl-data-table__cell--non-numeric">Attempt</th>
                 <th class="mdl-data-table__cell--non-numeric">Details</th>
                 <th></th>
                 <th></th>
@@ -67,6 +68,7 @@
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Progress }}</td>
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.StartTime }}</td>
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Duration }}</td>
+                    <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Retries }}</td>
                     <td id="usage-col" class="mdl-data-table__cell--non-numeric">{{ $test.Dimension }}</td>
                     <td class="mdl-data-table__cell--numeric actions">
                         <a href="/testrun/{{ $test.Namespace }}/{{ $test.ID }}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Details</a>
