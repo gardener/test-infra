@@ -15,6 +15,11 @@
 # limitations under the License.
 set -e
 
+if ! which openssl 1>/dev/null; then
+  echo -n "Installing openssl... "
+  apk add openssl
+fi
+
 export DESIRED_VERSION=v3.2.1
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
