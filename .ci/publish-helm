@@ -25,5 +25,5 @@ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bas
 
 cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite --key password > /tmp/serviceaccount.yaml
 
-@helm registry login -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
+helm registry login -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
 make publish-tm-chart
