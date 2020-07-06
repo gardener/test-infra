@@ -180,3 +180,53 @@ func (l resultRows) Less(a, b int) bool {
 
 	return vA.GreaterThan(vB)
 }
+
+// SplitString splits a string into byte slices of the given length.
+// Tt will try to split only on newlines.
+func SplitString(text string, size int) []string {
+	if len(text) < size {
+		return []string{text}
+	}
+
+	textByNL := strings.SplitAfter(text, "\n")
+	if len(textByNL) == 1 {
+		return splitStringWithSize(text, size)
+	}
+	var (
+		chunk string
+	)
+	chunks := make([]string, 0)
+	for _, text := range textByNL {
+		if (len(chunk) + len(text)) >= size {
+			chunks = append(chunks, chunk)
+			chunk = ""
+		}
+		if len(text) > size {
+			chunks = append(chunks, splitStringWithSize(text, size)...)
+			continue
+		}
+		chunk = chunk + text
+	}
+	if len(chunk) > 0 {
+		chunks = append(chunks, chunk)
+	}
+
+	return chunks
+}
+
+func splitStringWithSize(data string, size int) []string {
+	if len(data) < size {
+		return []string{data}
+	}
+
+	var chunk string
+	chunks := make([]string, 0, len(data)/size+1)
+	for len(data) >= size {
+		chunk, data = data[:size], data[size:]
+		chunks = append(chunks, chunk)
+	}
+	if len(data) > 0 {
+		chunks = append(chunks, data)
+	}
+	return chunks
+}
