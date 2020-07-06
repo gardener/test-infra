@@ -24,10 +24,17 @@ import (
 	"net/http"
 )
 
+// MaxMessage is the maximium size of a slack message according to slacks docs
+// https://api.slack.com/changelog/2018-04-truncating-really-long-messages#:~:text=The%20text%20field%20of%20messages,but%20left%20the%20consequences%20ambiguous.
+const MaxMessageLimit = 4000
+
 // Client defines the interface to interact with the slack API
 type Client interface {
-	// PostMessage will send a message to as the token user to the specified channel
+	// PostMessage will sends a message as the token user to the specified channel
 	PostMessage(channel string, message string) error
+
+	// PostRawMessage will sends a raw message as the token user to the specified channel
+	PostRawMessage(message MessageRequest) error
 }
 
 type slack struct {
@@ -47,13 +54,18 @@ func New(log logr.Logger, token string) (Client, error) {
 }
 
 func (s *slack) PostMessage(channel string, message string) error {
-	slackReq, err := json.Marshal(MessageRequest{
+	rawMessage := MessageRequest{
 		Channel:     channel,
 		AsUser:      true,
 		Text:        message,
 		UnfurlLinks: false,
 		UnfurlMedia: false,
-	})
+	}
+	return s.PostRawMessage(rawMessage)
+}
+
+func (s *slack) PostRawMessage(message MessageRequest) error {
+	slackReq, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}

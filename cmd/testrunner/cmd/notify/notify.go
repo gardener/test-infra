@@ -17,14 +17,15 @@ package notifycmd
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/slack"
-	"github.com/spf13/cobra"
 )
 
 var SucessSymbols = map[bool]string{
@@ -97,7 +98,25 @@ var notifyCmd = &cobra.Command{
 			concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", concourseURL)
 		}
 
-		return slackClient.PostMessage(slackChannel, fmt.Sprintf("```%s\n%s\n%s```%s", header(), table, legend(), concourseURLFooter))
+		chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
+		if len(chunks) == 1 {
+			return slackClient.PostMessage(slackChannel, fmt.Sprintf("%s\n```%s\n%s```%s", header(), table, legend(), concourseURLFooter))
+		}
+
+		for i, chunk := range chunks {
+			message := fmt.Sprintf("```%s```", chunk)
+			if i == 0 {
+				message = fmt.Sprintf("%s\n%s", header(), message)
+			}
+			if i == len(chunks)-1 {
+				message = fmt.Sprintf("%s%s", message, concourseURLFooter)
+			}
+			if err := slackClient.PostMessage(slackChannel, message); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	},
 }
 
