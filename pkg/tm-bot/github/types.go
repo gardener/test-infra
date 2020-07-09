@@ -86,7 +86,7 @@ type manager struct {
 	configFile  string
 
 	apiURL      string
-	appId       int
+	appId       int64
 	keyFile     string
 	clients     map[int64]*internalClientItem
 	defaultTeam string

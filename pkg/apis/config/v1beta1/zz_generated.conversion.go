@@ -596,7 +596,7 @@ func autoConvert_v1beta1_GitHubBot_To_config_GitHubBot(in *GitHubBot, out *confi
 	out.ConfigurationFilePath = in.ConfigurationFilePath
 	out.DefaultTeam = in.DefaultTeam
 	out.ApiUrl = in.ApiUrl
-	out.AppID = in.AppID
+	out.AppID = int64(in.AppID)
 	out.AppPrivateKeyPath = in.AppPrivateKeyPath
 	out.WebhookSecret = in.WebhookSecret
 	if err := Convert_v1beta1_GitHubCache_To_config_GitHubCache(&in.GitHubCache, &out.GitHubCache, s); err != nil {
@@ -615,7 +615,7 @@ func autoConvert_config_GitHubBot_To_v1beta1_GitHubBot(in *config.GitHubBot, out
 	out.ConfigurationFilePath = in.ConfigurationFilePath
 	out.DefaultTeam = in.DefaultTeam
 	out.ApiUrl = in.ApiUrl
-	out.AppID = in.AppID
+	out.AppID = int(in.AppID)
 	out.AppPrivateKeyPath = in.AppPrivateKeyPath
 	out.WebhookSecret = in.WebhookSecret
 	if err := Convert_config_GitHubCache_To_v1beta1_GitHubCache(&in.GitHubCache, &out.GitHubCache, s); err != nil {

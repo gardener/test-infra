@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo v0.0.0-20200421005415-ede163e1af83 // argo v2.7.5
-	github.com/bradleyfalzon/ghinstallation v0.1.2
+	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gardener/gardener v1.4.1
