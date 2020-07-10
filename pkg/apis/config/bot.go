@@ -115,7 +115,7 @@ type GitHubBot struct {
 	ApiUrl string `json:"apiUrl"`
 
 	// AppID holds the ID of the GitHub App.
-	AppID int `json:"appId"`
+	AppID int64 `json:"appId"`
 
 	// AppPrivateKeyPath is the path to the private key for the GitHub app.
 	AppPrivateKeyPath string `json:"appPrivateKeyPath"`

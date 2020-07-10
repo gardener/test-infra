@@ -95,7 +95,7 @@ func (m *manager) getGitHubClient(installationID int64) (*internalClientItem, er
 	if err != nil {
 		return nil, err
 	}
-	itr, err := ghinstallation.NewKeyFromFile(trp, m.appId, int(installationID), m.keyFile)
+	itr, err := ghinstallation.NewKeyFromFile(trp, m.appId, installationID, m.keyFile)
 	if err != nil {
 		return nil, err
 	}
