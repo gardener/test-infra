@@ -84,7 +84,7 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			}
 
 			var additionalDimensionInfo string
-			if !*meta.AllowPrivilegedContainers {
+			if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
 				additionalDimensionInfo = "NoPrivCtrs"
 			}
 			item := &util.TableItem{
