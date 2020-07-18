@@ -40,7 +40,7 @@ mv ./kubectl /usr/local/bin/kubectl
 if ! which helm 1>/dev/null; then
   echo -n "Installing helm... "
   install_helm_path="./get_helm.sh"
-  curl https://raw.githubusercontent.com/helm/helm/v2.13.0/scripts/get > "${install_helm_path}"
+  curl https://raw.githubusercontent.com/helm/helm/v2.16.9/scripts/get > "${install_helm_path}"
   chmod 700 "${install_helm_path}"
   export DESIRED_VERSION=v2.13.0
   bash "${install_helm_path}"
