@@ -41,4 +41,25 @@ var _ = Describe("Slack Table Post", func() {
 		})
 	})
 
+	Context("Expected Information available", func() {
+		It("should contain flavorDescription and additionalDimensionInfo", func() {
+			ti := util.TableItem{
+				Meta:         util.ItemMeta{
+					CloudProvider:           "testprovider",
+					TestrunID:               "123",
+					OperatingSystem:         "BeOS",
+					KubernetesVersion:       "99.0",
+					FlavorDescription:       "orange",
+					AdditionalDimensionInfo: "para",
+				},
+				StatusSymbol: util.StatusSymbolSuccess,
+			}
+			tis := []*util.TableItem{&ti}
+			table, err := util.RenderTableForSlack(nil, tis)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(table).To(ContainSubstring("(orange)"))
+			Expect(table).To(ContainSubstring("[para]"))
+		})
+	})
+
 })

@@ -88,14 +88,6 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 			log.V(5).Info("skipped testrun", "id", meta.TestrunID)
 			continue
 		}
-
-		dimensionKey := fmt.Sprintf("%s %s", meta.KubernetesVersion, meta.OperatingSystem)
-		if meta.AdditionalDimensionInfo != "" {
-			dimensionKey = fmt.Sprintf("%s [%s]", dimensionKey, meta.AdditionalDimensionInfo)
-		}
-		if meta.FlavorDescription != "" {
-			dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
-		}
 		res.AddResult(meta, item.StatusSymbol)
 	}
 	if res.Len() == 0 {
@@ -133,6 +125,9 @@ func (r *results) AddResult(meta ItemMeta, symbol StatusSymbol) {
 
 func computeDimensionKey(meta ItemMeta) string {
 	dimensionKey := fmt.Sprintf("%s %s", meta.KubernetesVersion, meta.OperatingSystem)
+	if meta.AdditionalDimensionInfo != "" {
+		dimensionKey = fmt.Sprintf("%s [%s]", dimensionKey, meta.AdditionalDimensionInfo)
+	}
 	if meta.FlavorDescription != "" {
 		dimensionKey = fmt.Sprintf("%s (%s)", dimensionKey, meta.FlavorDescription)
 	}
