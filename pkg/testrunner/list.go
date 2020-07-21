@@ -140,6 +140,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 func (rl RunList) RenderTable() string {
 	writer := &strings.Builder{}
 	table := tablewriter.NewWriter(writer)
+	table.SetAutoWrapText(false)
 	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
 
 	dimensions := make(map[string][][]string, 0)
@@ -188,6 +189,9 @@ func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
 
 func getDimensionFromMetadata(meta *metadata.Metadata) string {
 	d := fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
+	if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
+		d = fmt.Sprintf("%s [%s]", d, "NoPrivCtrs")
+	}
 	if meta.FlavorDescription != "" {
 		d = fmt.Sprintf("%s\n(%s)", d, meta.FlavorDescription)
 	}
