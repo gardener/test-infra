@@ -94,6 +94,7 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 		return "", nil
 	}
 
+	table.SetAutoWrapText(false)
 	table.SetHeader(header)
 	table.AppendBulk(res.GetContent())
 	table.SetHeaderAlignment(tablewriter.ALIGN_CENTER)
