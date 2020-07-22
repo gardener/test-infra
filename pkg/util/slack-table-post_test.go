@@ -44,7 +44,7 @@ var _ = Describe("Slack Table Post", func() {
 	Context("Expected Information available", func() {
 		It("should contain flavorDescription and additionalDimensionInfo", func() {
 			ti := util.TableItem{
-				Meta:         util.ItemMeta{
+				Meta: util.ItemMeta{
 					CloudProvider:           "testprovider",
 					TestrunID:               "123",
 					OperatingSystem:         "BeOS",

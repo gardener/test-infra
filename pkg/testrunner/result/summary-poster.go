@@ -22,26 +22,27 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/slack"
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 )
 
-func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, runs testrunner.RunList) {
+func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, runs testrunner.RunList) error {
 	if !config.PostSummaryInSlack {
-		return
+		return nil
 	}
 
 	tableItems := parseTestrunsToTableItems(runs)
 	table, err := util.RenderTableForSlack(log, tableItems)
 	if err != nil {
-		log.Error(err, "failed creating a table to post")
+		return errors.Wrap(err, "failed creating a table to post")
 	}
 	if table == "" {
 		log.Info("no table to render")
-		return
+		return nil
 	}
 
 	slackClient, err := slack.New(log, config.SlackToken)
 	if err != nil {
-		log.Error(err, "was not able to create slack client")
+		return errors.Wrap(err, "was not able to create slack client")
 	}
 
 	concourseURLFooter := ""
@@ -49,9 +50,25 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 		concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", config.ConcourseURL)
 	}
 
-	if err := slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("```%s\n%s\n%s```%s", header(), table, legend(), concourseURLFooter)); err != nil {
-		log.Error(err, "failed to post the slack message of test summary")
+	chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
+	if len(chunks) == 1 {
+		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```%s", header(), table, legend(), concourseURLFooter))
 	}
+
+	for i, chunk := range chunks {
+		message := fmt.Sprintf("```%s```", chunk)
+		if i == 0 {
+			message = fmt.Sprintf("%s\n%s", header(), message)
+		}
+		if i == len(chunks)-1 {
+			message = fmt.Sprintf("%s%s", message, concourseURLFooter)
+		}
+		if err := slackClient.PostMessage(config.SlackChannel, message); err != nil {
+			return errors.Wrap(err, "failed to post the slack message of test summary")
+		}
+	}
+
+	return nil
 }
 
 func header() string {

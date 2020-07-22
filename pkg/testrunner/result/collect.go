@@ -67,7 +67,9 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 	}
 
 	c.uploadStatusAssets(c.config, log, runs, tmClient)
-	c.postTestrunsSummaryInSlack(c.config, log, runs)
+	if err := c.postTestrunsSummaryInSlack(c.config, log, runs); err != nil {
+		log.Error(err, "error while posting notification on slack")
+	}
 	fmt.Println(runs.RenderTable())
 
 	return testrunsFailed, util.ReturnMultiError(result)
