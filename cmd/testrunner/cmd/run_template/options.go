@@ -29,6 +29,7 @@ import (
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
@@ -36,6 +37,7 @@ import (
 
 type options struct {
 	testrunnerConfig testrunner.Config
+	watchOptions     watch.Options
 	collectConfig    result.Config
 	shootParameters  testrunnerTemplate.Parameters
 
@@ -135,6 +137,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.BoolVar(&o.testrunnerConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
 	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
+	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
 
 	fs.StringVar(&o.collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 

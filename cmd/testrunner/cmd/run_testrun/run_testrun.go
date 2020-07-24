@@ -64,7 +64,7 @@ func NewRunTestrunCommand() (*cobra.Command, error) {
 func (o *options) run(ctx context.Context) error {
 	logger.Log.Info("start testmachinery testrunner")
 
-	watcher, err := watch.NewFromFile(logger.Log, o.tmKubeconfigPath, nil)
+	watcher, err := watch.NewFromFile(logger.Log, o.tmKubeconfigPath, &o.watchOptions)
 	if err != nil {
 		logger.Log.Error(err, "unable to start testrun watch controller")
 		os.Exit(1)

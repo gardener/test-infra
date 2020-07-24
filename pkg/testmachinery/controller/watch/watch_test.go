@@ -16,6 +16,7 @@ package watch_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -23,7 +24,6 @@ import (
 	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,6 +49,17 @@ var _ = Describe("Watch", func() {
 		restConfig *rest.Config
 		tr         *tmv1beta1.Testrun
 		fakeClient client.Client
+
+		pollInterval = time.Second
+		options      = []*watch.Options{
+			{
+				InformerType: watch.CachedInformerType,
+			},
+			{
+				InformerType: watch.PollingInformerType,
+				PollInterval: &pollInterval,
+			},
+		}
 	)
 
 	BeforeSuite(func() {
@@ -109,117 +120,125 @@ var _ = Describe("Watch", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("watch should timeout after 2 seconds", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	for _, opts := range options {
 
-		w, err := watch.New(log.NullLogger{}, restConfig, nil)
-		Expect(err).ToNot(HaveOccurred())
-		go func() {
-			err := w.Start(ctx.Done())
-			Expect(err).ToNot(HaveOccurred())
-		}()
+		Context(string(opts.InformerType), func() {
+			It("watch should timeout after 2 seconds", func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
 
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		startTime := time.Now()
-		err = w.WatchUntil(2*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) { return false, nil })
-		Expect(err).To(HaveOccurred())
-		Expect(time.Now().Sub(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
-	})
-
-	It("watch should reconcile once", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, nil)
-		Expect(err).ToNot(HaveOccurred())
-		go func() {
-			err := w.Start(ctx.Done())
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
-			time.Sleep(1 * time.Second)
-			By("updating testrun annotation")
-			tr.Annotations["test"] = "false"
-			err := fakeClient.Update(ctx, tr)
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		count := 0
-		err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
-			Expect(tr.Annotations).To(HaveKeyWithValue("test", "false"))
-			count++
-			return true, nil
-		})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(count).To(Equal(1))
-	})
-
-	It("watch should reconcile 10 times", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, nil)
-		Expect(err).ToNot(HaveOccurred())
-		go func() {
-			err := w.Start(ctx.Done())
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
-			for i := 0; i < 10; i++ {
-				time.Sleep(10 * time.Millisecond)
-				tr.Annotations["rec"] = fmt.Sprintf("%d", i)
-				err := fakeClient.Update(ctx, tr)
+				w, err := watch.New(log.NullLogger{}, restConfig, opts)
 				Expect(err).ToNot(HaveOccurred())
-			}
-		}()
+				go func() {
+					err := w.Start(ctx.Done())
+					Expect(err).ToNot(HaveOccurred())
+				}()
 
-		count := 0
-		err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
-			Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
-			count++
+				err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+				Expect(err).ToNot(HaveOccurred())
 
-			if count == 10 {
-				return true, nil
-			}
-			return false, nil
+				startTime := time.Now()
+				err = w.WatchUntil(2*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) { return false, nil })
+				Expect(err).To(HaveOccurred())
+				Expect(time.Now().Sub(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
+			})
+
+			It("watch should reconcile once", func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				w, err := watch.New(log.NullLogger{}, restConfig, opts)
+				Expect(err).ToNot(HaveOccurred())
+
+				go func() {
+					err := w.Start(ctx.Done())
+					Expect(err).ToNot(HaveOccurred())
+				}()
+
+				err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+				Expect(err).ToNot(HaveOccurred())
+
+				go func() {
+					time.Sleep(1 * time.Second)
+					By("updating testrun annotation")
+					tr.Annotations["test"] = "false"
+					err := fakeClient.Update(ctx, tr)
+					Expect(err).ToNot(HaveOccurred())
+				}()
+
+				count := 0
+				err = w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+					if val, ok := tr.Annotations["test"]; ok && val == "false" {
+						count++
+						return true, nil
+					}
+					return false, nil
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(count).To(Equal(1))
+			})
+
+			It("watch should reconcile 10 times", func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				w, err := watch.New(log.NullLogger{}, restConfig, opts)
+				Expect(err).ToNot(HaveOccurred())
+				go func() {
+					err := w.Start(ctx.Done())
+					Expect(err).ToNot(HaveOccurred())
+				}()
+
+				err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+				Expect(err).ToNot(HaveOccurred())
+
+				go func() {
+					for i := 0; i < 10; i++ {
+						time.Sleep(10 * time.Millisecond)
+						tr.Annotations["rec"] = fmt.Sprintf("%d", i)
+						err := fakeClient.Update(ctx, tr)
+						Expect(err).ToNot(HaveOccurred())
+					}
+				}()
+
+				count := 0
+				err = w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+					Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
+					count++
+
+					if count == 10 {
+						return true, nil
+					}
+					return false, nil
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(count).To(Equal(10))
+			})
+
+			It("watch should return an error if the watch function returns an error", func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				w, err := watch.New(log.NullLogger{}, restConfig, opts)
+				Expect(err).ToNot(HaveOccurred())
+				go func() {
+					err := w.Start(ctx.Done())
+					Expect(err).ToNot(HaveOccurred())
+				}()
+
+				err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
+				Expect(err).ToNot(HaveOccurred())
+
+				go func() {
+					time.Sleep(10 * time.Millisecond)
+					tr.Annotations["rec"] = "true"
+					err := fakeClient.Update(ctx, tr)
+					Expect(err).ToNot(HaveOccurred())
+				}()
+
+				err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+					Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
+					return false, errors.New("error")
+				})
+				Expect(err).To(HaveOccurred())
+			})
 		})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(count).To(Equal(10))
-	})
-
-	It("watch should return an error if the watch function returns an error", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, nil)
-		Expect(err).ToNot(HaveOccurred())
-		go func() {
-			err := w.Start(ctx.Done())
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
-			time.Sleep(10 * time.Millisecond)
-			tr.Annotations["rec"] = "true"
-			err := fakeClient.Update(ctx, tr)
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
-			Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
-			return false, errors.New("error")
-		})
-		Expect(err).To(HaveOccurred())
-	})
+	}
 })

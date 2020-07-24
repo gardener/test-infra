@@ -25,6 +25,10 @@ func applyDefaultOptions(opts *Options) *Options {
 		opts = &Options{}
 	}
 
+	if len(opts.InformerType) == 0 {
+		opts.InformerType = CachedInformerType
+	}
+
 	if opts.Scheme == nil {
 		opts.Scheme = testmachinery.TestMachineryScheme
 	}
@@ -32,6 +36,10 @@ func applyDefaultOptions(opts *Options) *Options {
 	if opts.SyncPeriod == nil {
 		d := 10 * time.Minute
 		opts.SyncPeriod = &d
+	}
+	if opts.PollInterval == nil {
+		d := 1 * time.Minute
+		opts.PollInterval = &d
 	}
 	return opts
 }
