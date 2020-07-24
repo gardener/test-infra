@@ -16,28 +16,25 @@ package watch
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
-	toolscache "k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/workqueue"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 type WatchFunc func(*tmv1beta1.Testrun) (bool, error)
+
+// InformerType is the type of informer to be used.
+type InformerType string
 
 type Watch interface {
 	// Watch registers a watch for a testrun resource until the testrun is completed
@@ -47,19 +44,42 @@ type Watch interface {
 
 	Client() client.Client
 
-	// Start starts watcher adn its cache
+	// Start starts watcher and its informer
 	Start(<-chan struct{}) error
 
-	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a cache.
+	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a informer.
 	WaitForCacheSync(stop <-chan struct{}) bool
+}
+
+// Informer is the internal watch that interacts with the cluster and publishes events to the event bus.
+type Informer interface {
+	// Start starts watcher and its informer
+	Start(<-chan struct{}) error
+
+	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a informer.
+	WaitForCacheSync(stop <-chan struct{}) bool
+
+	// InjectEventBus injects the the event bus instance of the watch
+	InjectEventBus(eb EventBus)
+
+	// Client returns the used k8s client.
+	Client() client.Client
 }
 
 type Options struct {
 	// Scheme is the scheme
 	Scheme *runtime.Scheme
 
+	// InformerType is the type of the informer that should be used.
+	InformerType InformerType
+
 	// SyncPeriod is the minimum time where resources are reconciled
+	// Only relevant if the cached informer should be used
 	SyncPeriod *time.Duration
+
+	// PollInterval is the time where informer polls the apiserver for an update.
+	// Only relevant if the polling informer is used.
+	PollInterval *time.Duration
 
 	// Namespace restrict the namespace to watch.
 	// Leave this value empty to watch all namespaces.
@@ -67,21 +87,17 @@ type Options struct {
 }
 
 type watch struct {
-	log logr.Logger
-
-	cache  cache.Cache
-	queue  workqueue.RateLimitingInterface
-	client client.Client
-
+	log      logr.Logger
+	informer Informer
 	eventbus EventBus
 }
 
-// WaitForCacheSyncWithTimeout waits for all the caches to sync. Returns false if it could not sync a cache.
+// WaitForCacheSyncWithTimeout waits for all the caches to sync. Returns false if it could not sync a informer.
 func WaitForCacheSyncWithTimeout(w Watch, d time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), d)
 	defer cancel()
 	if ok := w.WaitForCacheSync(ctx.Done()); !ok {
-		return errors.New("error while waiting for cache")
+		return errors.New("error while waiting for informer")
 	}
 	return nil
 }
@@ -105,44 +121,33 @@ func New(log logr.Logger, config *rest.Config, options *Options) (Watch, error) 
 
 	options = applyDefaultOptions(options)
 
-	mapper, err := apiutil.NewDynamicRESTMapper(config)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create the cache for the cached read client and registering informers
-	cache, err := cache.New(config, cache.Options{Scheme: options.Scheme, Mapper: mapper, Resync: options.SyncPeriod, Namespace: options.Namespace})
-	if err != nil {
-		return nil, err
-	}
-
-	writer, err := client.New(config, client.Options{
-		Scheme: options.Scheme,
-		Mapper: mapper,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	c := &client.DelegatingClient{
-		Reader: &client.DelegatingReader{
-			CacheReader:  cache,
-			ClientReader: writer,
-		},
-		Writer:       writer,
-		StatusClient: writer,
+	var inf Informer
+	switch options.InformerType {
+	case CachedInformerType:
+		cInf, err := newCachedInformer(log, config, options)
+		if err != nil {
+			return nil, err
+		}
+		inf = cInf
+	case PollingInformerType:
+		pInf, err := newPollingInformer(log, config, options)
+		if err != nil {
+			return nil, err
+		}
+		inf = pInf
+	default:
+		return nil, errors.Errorf("unknown infromer type %s", options.InformerType)
 	}
 
 	return &watch{
 		log:      log,
-		cache:    cache,
-		client:   c,
-		eventbus: NewEventBus(),
+		informer: inf,
+		eventbus: NewEventBus(log),
 	}, nil
 }
 
 func (w *watch) Client() client.Client {
-	return w.client
+	return w.informer.Client()
 }
 
 func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f WatchFunc) error {
@@ -193,86 +198,24 @@ func (w *watch) Watch(namespace, name string, f WatchFunc) error {
 
 func (w *watch) Start(stop <-chan struct{}) error {
 
-	w.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "watch")
-	defer w.queue.ShutDown()
-
-	i, err := w.cache.GetInformer(&tmv1beta1.Testrun{})
-	if err != nil {
-		if kindMatchErr, ok := err.(*meta.NoKindMatchError); ok {
-			w.log.Error(err, "if kind is a CRD, it should be installed before calling Start",
-				"kind", kindMatchErr.GroupKind)
-		}
-		return err
-	}
-	i.AddEventHandler(toolscache.ResourceEventHandlerFuncs{
-		AddFunc:    w.addItemToQueue,
-		UpdateFunc: func(old, new interface{}) { w.addItemToQueue(new) },
-		DeleteFunc: w.addItemToQueue,
-	})
-
 	go func() {
-		if err := w.cache.Start(stop); err != nil {
-			w.log.Error(err, "unable to start client cache")
-			//return errors.Wrap(err, "unable to start client cache")
+		if err := w.eventbus.Start(stop); err != nil {
+			w.log.Error(err, "unable to start the event bus")
 		}
 	}()
 
-	if ok := w.cache.WaitForCacheSync(stop); !ok {
-		return errors.New("error while waiting for cache")
-	}
+	w.informer.InjectEventBus(w.eventbus)
 
-	const jitterPeriod = 1 * time.Second
-
-	// we only need one worker here
-	go wait.Until(w.worker, jitterPeriod, stop)
+	go func() {
+		if err := w.informer.Start(stop); err != nil {
+			w.log.Error(err, "unable to start informer")
+		}
+	}()
 
 	<-stop
 	return nil
 }
 
 func (w *watch) WaitForCacheSync(stop <-chan struct{}) bool {
-	return w.cache.WaitForCacheSync(stop)
-}
-
-// addItemToQueue adds the given object to the queue if it is applicable
-func (w *watch) addItemToQueue(obj interface{}) {
-	// try to cast to testrun ignore the event if this is not possible
-	tr, ok := obj.(*tmv1beta1.Testrun)
-	if !ok {
-		return
-	}
-
-	if !w.eventbus.Has(keyOfTestrun(tr)) {
-		return
-	}
-
-	w.queue.AddRateLimited(tr)
-}
-
-func (w *watch) worker() {
-	for w.processQueue() {
-	}
-}
-
-// processQueue takes the next item from the queue
-func (w *watch) processQueue() bool {
-	obj, shutdown := w.queue.Get()
-	if shutdown {
-		return false
-	}
-	defer w.queue.Done(obj)
-
-	tr, ok := obj.(*tmv1beta1.Testrun)
-	if !ok {
-		// As the item in the workqueue is actually invalid, so remove it directly form the queue
-		w.queue.Forget(obj)
-		w.log.V(5).Info("watch queue item was not a testrun", "type", fmt.Sprintf("%T", obj), "value", obj)
-		// Return true, don't take a break
-		return true
-	}
-
-	w.eventbus.Publish(keyOfTestrun(tr), tr)
-
-	w.queue.Forget(obj)
-	return true
+	return w.informer.WaitForCacheSync(stop)
 }

@@ -88,7 +88,7 @@ func (o *options) run(ctx context.Context) error {
 
 	logger.Log.V(3).Info("starting watcher")
 
-	watcher, err := watch.NewFromFile(logger.Log.WithName("watch"), o.tmKubeconfigPath, nil)
+	watcher, err := watch.NewFromFile(logger.Log.WithName("watch"), o.tmKubeconfigPath, &o.watchOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to start testrun watch controller")
 	}

@@ -21,11 +21,13 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testrunner"
 )
 
 type options struct {
 	testrunnerConfig testrunner.Config
+	watchOptions     watch.Options
 
 	fs                   *pflag.FlagSet
 	dryRun               bool
@@ -73,6 +75,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.BoolVar(&o.testrunnerConfig.ExecutorConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
 	fs.IntVar(&o.testrunnerConfig.ExecutorConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.ExecutorConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
+	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery
