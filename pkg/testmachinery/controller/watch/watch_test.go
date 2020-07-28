@@ -191,8 +191,9 @@ var _ = Describe("Watch", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				go func() {
+					defer GinkgoRecover()
 					for i := 0; i < 10; i++ {
-						time.Sleep(10 * time.Millisecond)
+						time.Sleep(2 * time.Second)
 						tr.Annotations["rec"] = fmt.Sprintf("%d", i)
 						err := fakeClient.Update(ctx, tr)
 						Expect(err).ToNot(HaveOccurred())
@@ -200,8 +201,11 @@ var _ = Describe("Watch", func() {
 				}()
 
 				count := 0
-				err = w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
-					Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
+				err = w.WatchUntil(50*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+					if _, ok := tr.Annotations["rec"]; !ok {
+						return false, nil
+					}
+					Expect(tr.Annotations["rec"]).To(Equal(fmt.Sprintf("%d", count)))
 					count++
 
 					if count == 10 {
