@@ -84,7 +84,7 @@ func (p *pollingInformer) process() (done bool, err error) {
 		if old, ok := p.old[key]; ok && reflect.DeepEqual(old, tr) {
 			continue
 		}
-
+		newOldCache[key] = tr
 		p.eventbus.Publish(key, tr)
 	}
 
