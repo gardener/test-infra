@@ -56,10 +56,14 @@ type options struct {
 
 // NewOptions creates a new options struct.
 func NewOptions() *options {
+	d := time.Minute
 	return &options{
 		testrunnerConfig: testrunner.Config{},
-		collectConfig:    result.Config{},
-		shootParameters:  testrunnerTemplate.Parameters{},
+		watchOptions: watch.Options{
+			PollInterval: &d,
+		},
+		collectConfig:   result.Config{},
+		shootParameters: testrunnerTemplate.Parameters{},
 	}
 }
 

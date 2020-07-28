@@ -41,8 +41,12 @@ type options struct {
 
 // NewOptions creates a new options struct.
 func NewOptions() *options {
+	d := time.Minute
 	return &options{
 		testrunnerConfig: testrunner.Config{},
+		watchOptions: watch.Options{
+			PollInterval: &d,
+		},
 	}
 }
 
