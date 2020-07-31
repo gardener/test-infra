@@ -97,8 +97,9 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 	}
 
 	shoots := make([]*shoot, 0)
-
+	additionalLocs := make([]common.AdditionalLocation, 0)
 	for _, flavor := range cfg.Shoots.Flavors.GetShoots() {
+		additionalLocs = append(additionalLocs, flavor.AdditionalLocations...)
 		shoots = append(shoots, &shoot{
 			Type:      flavor.Provider,
 			Suffix:    fmt.Sprintf("%s-%s", flavor.Provider, util.RandomString(3)),
@@ -132,7 +133,7 @@ func Render(cfg *Config) (*v1beta1.Testrun, error) {
 		return nil, err
 	}
 
-	if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", cfg.Components, true); err != nil {
+	if err := testrun_renderer.AddLocationsToTestrun(tr, "default", cfg.Components, true, additionalLocs); err != nil {
 		return nil, err
 	}
 	return tr, nil

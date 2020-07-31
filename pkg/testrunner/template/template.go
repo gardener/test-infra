@@ -98,6 +98,8 @@ func renderChartWithShoot(log logr.Logger, renderer *templateRenderer, parameter
 	}
 
 	for _, flavor := range shootFlavors {
+		parameters := parameters.DeepCopy()
+		parameters.AdditionalLocations = flavor.Get().AdditionalLocations
 		chartPath, err := determineAbsoluteShootChartPath(parameters, flavor.Get().ChartPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to determine chart to render")

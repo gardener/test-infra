@@ -53,6 +53,9 @@ type Shoot struct {
 	// AdditionalAnnotations holds annotations to be added to created shoots
 	AdditionalAnnotations map[string]string
 
+	// AdditionalLocations defines additional locations or overwrites locations from where to get tests from
+	AdditionalLocations []AdditionalLocation
+
 	// Worker pools to test
 	Workers []gardencorev1beta1.Worker
 }
@@ -77,8 +80,19 @@ type ShootFlavor struct {
 	// +optional
 	AdditionalAnnotations map[string]string `json:"annotations"`
 
+	// AdditionalLocations defines additional locations or overwrites locations from where to get tests from
+	// +optional
+	AdditionalLocations []AdditionalLocation `json:"additionalLocations"`
+
 	// Worker pools to test
 	Workers []ShootWorkerFlavor `json:"workers"`
+}
+
+// AdditionalLocation describes a location where to look for tests (beyond the ones added automatically from the component descriptor).
+type AdditionalLocation struct {
+	Type     string `json:"type"`
+	Repo     string `json:"repo"`
+	Revision string `json:"revision"`
 }
 
 type ShootKubernetesVersionFlavor struct {

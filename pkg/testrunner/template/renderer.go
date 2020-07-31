@@ -90,7 +90,7 @@ func (r *templateRenderer) Render(parameters *internalParameters, chartPath stri
 			meta := metadata.DeepCopy()
 			// Add all repositories defined in the component descriptor to the testrun locations.
 			// This gives us all dependent repositories as well as there deployed version.
-			if err := testrun_renderer.AddBOMLocationsToTestrun(tr, "default", parameters.ComponentDescriptor, true); err != nil {
+			if err := testrun_renderer.AddLocationsToTestrun(tr, "default", parameters.ComponentDescriptor, true, parameters.AdditionalLocations); err != nil {
 				r.log.Info(fmt.Sprintf("cannot add bom locations: %s", err.Error()))
 				continue
 			}

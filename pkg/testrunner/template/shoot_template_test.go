@@ -16,6 +16,7 @@ package template
 
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/shootflavors"
 	"k8s.io/utils/pointer"
 	"path/filepath"
@@ -41,6 +42,7 @@ var _ = Describe("shoot templates", func() {
 					Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
 					AllowPrivilegedContainers: pointer.BoolPtr(false),
 					AdditionalAnnotations:     map[string]string{"a": "b"},
+					AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https://github.com/gardener/gardener", Revision: "1.2.3"}},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
@@ -82,6 +84,12 @@ var _ = Describe("shoot templates", func() {
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
+
+			Expect(tr.Spec.LocationSets[0].Locations).To(ContainElement(v1beta1.TestLocation{
+				Type:     "git",
+				Repo:     "https://github.com/gardener/gardener",
+				Revision: "1.2.3",
+			}))
 		})
 
 		It("should render the basic shoot chart and write correct metadata", func() {
