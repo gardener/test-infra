@@ -17,30 +17,43 @@ package testrun_renderer
 import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/pkg/errors"
 	"strings"
 )
 
-// AddBOMLocationsToTestrun adds component descriptor repositories as location to location sets
-func AddBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, components []*componentdescriptor.Component, useAsDefault bool) error {
+// AddLocationsToTestrun adds component descriptor repositories and the given additionalLocations as locations to location sets for the given Testrun tr.
+func AddLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, components []*componentdescriptor.Component, useAsDefault bool, additionalLocations []common.AdditionalLocation) error {
 	if tr == nil || len(components) == 0 {
 		return nil
 	}
 
-	bomLocations := make([]tmv1beta1.TestLocation, 0)
+	locations := make([]tmv1beta1.TestLocation, 0)
 	for _, component := range components {
-		bomLocations = append(bomLocations, tmv1beta1.TestLocation{
+		locations = append(locations, tmv1beta1.TestLocation{
 			Type:     tmv1beta1.LocationTypeGit,
 			Repo:     fmt.Sprintf("https://%s", component.Name),
 			Revision: GetRevisionFromVersion(component.Version),
 		})
 	}
 
+	for _, location := range additionalLocations {
+		locationType, err := tmv1beta1.GetLocationType(location.Type)
+		if err != nil {
+			return err
+		}
+		locations = append(locations, tmv1beta1.TestLocation{
+			Type:     locationType,
+			Repo:     location.Repo,
+			Revision: location.Revision,
+		})
+	}
+
 	// check if the locationSet already exists
 	for i, set := range tr.Spec.LocationSets {
 		if set.Name == locationSetName {
-			set.Locations = append(bomLocations, set.Locations...)
+			set.Locations = append(locations, set.Locations...)
 			tr.Spec.LocationSets[i] = set
 			tr.Spec.TestLocations = nil
 			return nil
@@ -56,7 +69,7 @@ func AddBOMLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, com
 		tmv1beta1.LocationSet{
 			Name:      locationSetName,
 			Default:   useAsDefault,
-			Locations: append(bomLocations, existingLocations...),
+			Locations: append(locations, existingLocations...),
 		},
 	)
 	tr.Spec.TestLocations = nil

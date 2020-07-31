@@ -15,6 +15,7 @@
 package v1beta1
 
 import (
+	"fmt"
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	corev1 "k8s.io/api/core/v1"
@@ -30,9 +31,22 @@ type LocationType string
 
 // Testdefinition location types
 const (
-	LocationTypeGit   LocationType = "git"
-	LocationTypeLocal LocationType = "local"
+	LocationTypeGit     LocationType = "git"
+	LocationTypeLocal   LocationType = "local"
+	LocationTypeUnknown LocationType = "unknown"
 )
+
+// GetLocationType returns the LocationType constant for the given string. Returns LocationTypeUnknown and an error if the given string did not match any known location type.
+func GetLocationType(locationType string) (LocationType, error) {
+	switch locationType {
+	case "git":
+		return LocationTypeGit, nil
+	case "local":
+		return LocationTypeLocal, nil
+	default:
+		return LocationTypeUnknown, fmt.Errorf("unknown location type '%s'", locationType)
+	}
+}
 
 // ConditionType is the type of a testflow step indicating when it should be executed.
 type ConditionType string

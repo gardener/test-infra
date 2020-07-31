@@ -87,6 +87,7 @@ var _ = Describe("extended flavor test", func() {
 			ShootFlavor: common.ShootFlavor{
 				AllowPrivilegedContainers: pointer.BoolPtr(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
+				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
 					Versions: &[]gardencorev1beta1.ExpirableVersion{
@@ -113,6 +114,7 @@ var _ = Describe("extended flavor test", func() {
 			Provider:                  common.CloudProviderGCP,
 			AllowPrivilegedContainers: pointer.BoolPtr(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
+			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1"}},
 		}))
