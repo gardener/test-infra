@@ -2,15 +2,15 @@ images:
 - name: argo-ui
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/argocli
-  tag: "v2.7.5"
+  tag: "v2.9.5"
 - name: argo-workflow-controller
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/workflow-controller
-  tag: "v2.7.5"
+  tag: "v2.9.5"
 - name: argo-executor
   sourceRepository: github.com/argoproj/argo
   repository: argoproj/argoexec
-  tag: "v2.7.5"
+  tag: "v2.9.5"
 - name: reserve-excess-capacity
   sourceRepository: github.com/argoproj/argo
   repository: gcr.io/google_containers/pause-amd64
