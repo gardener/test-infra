@@ -20,6 +20,12 @@ if ! which openssl 1>/dev/null; then
   apk add openssl
 fi
 
+if [[ -z "${SOURCE_PATH}" ]]; then
+  export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
+else
+  export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
+fi
+
 export DESIRED_VERSION=v3.2.1
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
@@ -28,4 +34,5 @@ cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite -
 
 export HELM_EXPERIMENTAL_OCI=1
 helm registry login eu.gcr.io -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
+cd &{SOURCE_PATH}
 make publish-tm-chart
