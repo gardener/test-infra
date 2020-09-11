@@ -15,12 +15,14 @@
 package pages
 
 import (
+	"net/http"
+
+	"github.com/go-logr/logr"
+	"github.com/gorilla/mux"
+
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
-	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
-	"net/http"
 )
 
 var AuthorizationTooltip = map[github.AuthorizationType]string{
@@ -74,6 +76,7 @@ func NewCommandDetailedHelpPage(logger logr.Logger, auth auth.Provider, basePath
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
 			return
 		}
+
 		params := CommandHelpDetailedItem{
 			CommandHelpItem: CommandHelpItem{
 				Command:       plugin.Command(),

@@ -37,7 +37,7 @@ type ExtendedShootFlavor struct {
 
 // Shoot is the internal representation of one instance that is generated from a shoot flavor
 type Shoot struct {
-	// Short description of the flavor
+	// WithShort description of the flavor
 	// +optional
 	Description string
 
@@ -62,7 +62,7 @@ type Shoot struct {
 
 // ShootFlavor describes the shoot flavors that should be tested.
 type ShootFlavor struct {
-	// Short description of the flavor
+	// WithShort description of the flavor
 	// +optional
 	Description string `json:"description"`
 

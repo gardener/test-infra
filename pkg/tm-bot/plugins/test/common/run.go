@@ -12,12 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package single
+package common
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"strings"
+
+	"github.com/Masterminds/sprig"
+	"github.com/gardener/gardener/pkg/utils"
+	"github.com/ghodss/yaml"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/helm/pkg/strvals"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -27,36 +35,42 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/ghodss/yaml"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/spf13/pflag"
 )
 
 func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
-	logger := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
 	ctx := context.Background()
 	defer ctx.Done()
-
-	cfg, err := t.getConfig(client, flagset)
+	log := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
+	test, err := t.getConfig(client, flagset)
 	if err != nil {
 		return err
 	}
 
-	content, err := client.GetContent(ctx, event, cfg.FilePath)
+	content, err := client.GetContent(ctx, event, test.FilePath)
 	if err != nil {
-		logger.Error(err, "unable to get content of file", "path", cfg.FilePath)
+		log.Error(err, "unable to get content of file", "path", test.FilePath)
 		return pluginerr.Builder().
-			WithShortf("Sorry, but I was unable to render the Testrun from the file at %s.", cfg.FilePath).
+			WithShortf("Sorry, but I was unable to render the Testrun from the file at %s.", test.FilePath).
 			WithLong("Unable to get the content of the specified file.")
+	}
+
+	// template if applicable
+	if test.Template {
+		content, err = templateTest(test, content)
+		if err != nil {
+			return err
+		}
 	}
 
 	tr, err := testmachinery.ParseTestrun(content)
 	if err != nil {
-		logger.Error(err, "unable to parse testrun", "path", cfg.FilePath)
+		log.Error(err, "unable to parse testrun", "path", test.FilePath)
 		return pluginerr.Builder().
-			WithShortf("Sorry, but I was unable to render the Testrun from the file at %s.<br>", cfg.FilePath).
+			WithShortf("Sorry, but I was unable to render the Testrun from the file at %s.<br>", test.FilePath).
 			WithLongf("<pre>%s</pre>", string(content)).ShowLong()
 	}
 
@@ -64,8 +78,10 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	tr.Name = ""
 
 	if err := testutil.InjectRepositoryLocation(event, tr); err != nil {
-		logger.Error(err, "unable to inject current repository")
-		return pluginerr.New(fmt.Sprintf("Sorry, but I was unable to render the Testrun from the file at %s.", cfg.FilePath), "Current repository could not be injected.")
+		log.Error(err, "unable to inject current repository")
+		return pluginerr.Builder().
+			WithShortf("Sorry, but I was unable to render the Testrun from the file at %s.", test.FilePath).
+			WithLong("Current repository could not be injected.")
 	}
 
 	if t.dryRun {
@@ -77,7 +93,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		return err
 	}
 
-	tr, updater, err := t.runs.CreateTestrun(logger, ctx, client, event, tr)
+	tr, updater, err := t.runs.CreateTestrun(log, ctx, client, event, tr)
 	if err != nil {
 		return err
 	}
@@ -89,15 +105,40 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 	stateByte, err := yaml.Marshal(state)
 	if err := plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
-		logger.Error(err, "unable to persist state")
+		log.Error(err, "unable to persist state")
 	}
 
-	_, err = t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(log, ctx, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func templateTest(test *tests.TestConfig, testrunBytes []byte) ([]byte, error) {
+	values := map[string]interface{}{}
+	for _, val := range test.SetValues {
+		newSetValues, err := strvals.ParseString(val)
+		if err != nil {
+			return nil, pluginerr.Wrapf(err, "I was unable to parse the given templating values:<br> `%s`", val)
+		}
+		values = utils.MergeMaps(values, newSetValues)
+	}
+
+	tmpl, err := template.New("testrun").Funcs(sprig.FuncMap()).Parse(string(testrunBytes))
+	if err != nil {
+		return nil, pluginerr.Wrap(err, "An error occurred during parsing of the testrun as go template.")
+	}
+
+	var templatedTestrunBuf bytes.Buffer
+	err = tmpl.Execute(&templatedTestrunBuf, map[string]interface{}{
+		"Values": values,
+	})
+	if err != nil {
+		return nil, pluginerr.Wrap(err, "An error occurred during templating of the testrun.")
+	}
+	return templatedTestrunBuf.Bytes(), nil
 }
 
 func (t *test) ResumeFromState(client github.Client, event *github.GenericRequestEvent, stateString string) error {

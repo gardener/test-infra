@@ -25,7 +25,7 @@ The configuration file has the following format:
 echo:
   value: hello
 
-test:
+test-gardener:
   hostprovider: gardener
   baseClusterCloudprovider: gcp
 

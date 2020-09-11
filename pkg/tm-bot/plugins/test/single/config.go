@@ -17,7 +17,10 @@ package single
 import (
 	comerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
+
+	"strings"
+
 	"github.com/spf13/pflag"
 )
 
@@ -31,16 +34,18 @@ func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*Confi
 	if err := ghClient.GetConfig(t.Command(), &cfg); err != nil {
 		if !comerrors.IsNotFound(err) {
 			t.log.Error(err, "unable to get default config")
-			return nil, errors.New("Unable to read the default config", "The TM Bot was unable to get the default config from the repository")
+			return nil, pluginerr.New("Unable to read the default config", "The TM Bot was unable to get the default config from the repository")
 		}
 	}
 
 	if flagset.Arg(0) != "" {
-		cfg.FilePath = flagset.Arg(0)
+		cutset := " \r "
+		cfg.FilePath = strings.Trim(flagset.Arg(0), cutset)
 	}
 
 	if cfg.FilePath == "" && flagset.NArg() != 1 {
-		return nil, errors.New("No path to a testrun was specified", "")
+		return nil, pluginerr.New(`No path to a testrun was specified.
+Maybe check whether a bot configuration with a default test has been specified in <RepoRoot>/.ci/tm-config.yaml.`, "")
 	}
 
 	return &cfg, nil

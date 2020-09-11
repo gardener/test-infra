@@ -25,7 +25,9 @@ const AboutThisBotWithoutCommands = "Instructions for interacting with me using 
 func FormatSimpleResponse(to, message string) string {
 	format := `@%s: %s
 <details>
+
 %s
+
 </details>`
 
 	return fmt.Sprintf(format, to, message, AboutThisBotWithoutCommands)
@@ -37,6 +39,7 @@ func FormatResponseWithReason(to, message, reason string) string {
 	format := `
 @%s: %s
 <details>
+
 %s
 
 %s
@@ -62,6 +65,7 @@ func FormatErrorResponse(to, message, reason string) string {
 	format := `:fire: Oops, something went wrong @%s
 %s
 <details>
+
 %s
 
 </details>

@@ -16,12 +16,14 @@ package tests
 
 import (
 	"fmt"
+	"sync"
+
+	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/pkg/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sync"
 )
 
 var runs = &Runs{
@@ -106,4 +108,15 @@ func (r *Runs) Remove(event *github.GenericRequestEvent) {
 
 func uniqueEventString(event *github.GenericRequestEvent) string {
 	return fmt.Sprintf("%s/%s/%d", event.GetOwnerName(), event.GetRepositoryName(), event.Number)
+}
+
+// SubTestConfig configures a specific test when called with the test command and
+// the defined sub command
+type TestConfig struct {
+	// FilePath is the path to the testrun file that is executed.
+	FilePath string `json:"testrunPath"`
+	// Template configures the test to template the given file before execution.
+	Template bool `json:"template"`
+	// SetValues are the additional values that are used to template a testrun.
+	SetValues []string
 }

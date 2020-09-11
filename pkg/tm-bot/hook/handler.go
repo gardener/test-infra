@@ -21,6 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/resume"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/skip"
+	commontest "github.com/gardener/test-infra/pkg/tm-bot/plugins/test/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/gardener"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/single"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
@@ -54,6 +55,7 @@ func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, runs
 	}
 	plugins.Register(xkcdPlugin)
 
+	plugins.Register(commontest.New(log, runs))
 	plugins.Register(gardener.New(log, runs))
 	plugins.Register(single.New(log, runs))
 	plugins.Register(skip.New(log))

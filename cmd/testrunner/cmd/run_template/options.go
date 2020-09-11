@@ -171,7 +171,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&o.shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	fs.StringVar(&o.shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
 
-	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "setValues additional helm values")
+	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
 
 	// DEPRECATED FLAGS

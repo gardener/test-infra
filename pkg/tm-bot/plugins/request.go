@@ -100,15 +100,18 @@ func (p *Plugins) resumePlugin(ghMgr github.Manager, name, runID string, state *
 // Error responds to the client if an error occurs
 func (p *Plugins) Error(client github.Client, event *github.GenericRequestEvent, plugin Plugin, err error) error {
 	p.log.Error(err, err.Error())
-	switch err.(type) {
-	case *pluginerr.PluginError:
-		break
-	default:
+	pluginErr, ok := err.(*pluginerr.PluginError)
+	if !ok {
 		return nil
 	}
 
+	detailedMsg := FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())
+	if !pluginerr.OmitLongMessage(err) {
+		detailedMsg = pluginErr.LongMsg
+	}
+
 	if plugin != nil {
-		_, err := client.Comment(context.TODO(), event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), FormatUsageError(plugin.Command(), plugin.Description(), plugin.Example(), plugin.Flags().FlagUsages())))
+		_, err := client.Comment(context.TODO(), event, FormatErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err), detailedMsg))
 		return err
 	}
 	_, err = client.Comment(context.TODO(), event, FormatSimpleErrorResponse(event.GetAuthorName(), pluginerr.ShortForError(err)))
