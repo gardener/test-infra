@@ -30,11 +30,6 @@ func Validate(identifier string, config tmv1beta1.ConfigElement) error {
 		return fmt.Errorf("%s.name: Required value", identifier)
 	}
 
-	// configmaps should either have a value or a value from defined
-	if config.Value == "" && config.ValueFrom == nil {
-		return fmt.Errorf("%s.(value or valueFrom): Required value or valueFrom: A config must consist of a value or a reference to a value", identifier)
-	}
-
 	// if a valuefrom is defined then a configmap or a secret reference should be defined
 	if config.ValueFrom != nil {
 		if err := strconf.Validate(fmt.Sprintf("%s.valueFrom", identifier), config.ValueFrom); err != nil {
