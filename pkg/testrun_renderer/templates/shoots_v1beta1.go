@@ -99,11 +99,14 @@ func defaultShootConfig(cfg *CreateShootConfig) []v1beta1.ConfigElement {
 			Name:  ConfigSeedName,
 			Value: ConfigSeedValue,
 		},
-		{
+	}
+
+	if cfg.ShootAnnotations != nil {
+		defaultShootConfig = append(defaultShootConfig, v1beta1.ConfigElement{
 			Type:  v1beta1.ConfigTypeEnv,
 			Name:  ConfigShootAnnotations,
 			Value: util.MarshalMap(cfg.ShootAnnotations),
-		},
+		})
 	}
 
 	if cfg.AllowPrivilegedContainers != nil {
