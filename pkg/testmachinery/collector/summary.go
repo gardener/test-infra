@@ -16,7 +16,6 @@ package collector
 
 import (
 	"fmt"
-	"github.com/Masterminds/semver"
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -133,33 +132,11 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 
 // preComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)
 func (c *collector) preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, meta metadata.Metadata) *metadata.StepPreComputed {
-	var stepEnriched metadata.StepPreComputed
-
-	switch stepStatus.Phase {
-	case tmv1beta1.PhaseStatusFailed, tmv1beta1.PhaseStatusTimeout:
-		zero := 0
-		stepEnriched.PhaseNum = &zero
-	case tmv1beta1.PhaseStatusSuccess:
-		hundred := 100
-		stepEnriched.PhaseNum = &hundred
-	}
-
 	k8sVersion := meta.KubernetesVersion
-	if k8sVersion != "" {
-		semVer, err := semver.NewVersion(k8sVersion)
-		if err != nil {
-			c.log.Error(err, "cannot parse k8s Version, will not precompute derived data")
-		} else {
-			stepEnriched.K8SMajorMinorVersion = fmt.Sprintf("%d.%d", semVer.Major(), semVer.Minor())
-		}
-	}
-
 	clusterDomain, err := util.GetClusterDomainURL(c.client)
-	if err == nil {
-		stepEnriched.ArgoDisplayName = "argo"
-		stepEnriched.LogsDisplayName = "logs"
-		stepEnriched.ClusterDomain = clusterDomain
+	if err != nil {
+		c.log.Error(err, "Could not obtain cluster domain URL, will not pre compute dependent fields (argo-, grafana-url)")
 	}
 
-	return &stepEnriched
+	return PreComputeTeststepFields(stepStatus.Phase, k8sVersion, clusterDomain)
 }
