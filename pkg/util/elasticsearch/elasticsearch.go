@@ -20,6 +20,7 @@ import (
 	defaulterrors "errors"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/config"
+	"golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -33,6 +34,7 @@ import (
 // Client defines an interface to interact with an elastic search instance
 type Client interface {
 	Request(httpMethod, path string, payload io.Reader) ([]byte, error)
+	RequestWithCtx(ctx context.Context, httpMethod, path string, payload io.Reader) ([]byte, error)
 	Bulk([]byte) error
 	BulkFromFile(file string) error
 }
@@ -68,11 +70,15 @@ func NewClient(cfg config.ElasticSearch) (Client, error) {
 }
 
 func (c *client) Request(httpMethod, rawPath string, payload io.Reader) ([]byte, error) {
-	esURL, err := c.parseUrl(rawPath)
+	return c.RequestWithCtx(context.Background(), httpMethod, rawPath, payload)
+}
+
+func (c *client) RequestWithCtx(ctx context.Context, httpMethod, rawPath string, payload io.Reader) ([]byte, error) {
+	esURL, err := c.parseUrlNoEscape(rawPath)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(httpMethod, esURL, payload)
+	req, err := http.NewRequestWithContext(ctx, httpMethod, esURL, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +92,8 @@ func (c *client) Request(httpMethod, rawPath string, payload io.Reader) ([]byte,
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, errors.Errorf("request %s returned status code %d", esURL, res.StatusCode)
+		errorResponse, _ := ioutil.ReadAll(res.Body)
+		return nil, errors.Errorf("request %s returned status code %d with body %s", esURL, res.StatusCode, errorResponse)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -144,6 +151,27 @@ func (c *client) parseUrl(rawPath string) (string, error) {
 	}
 	u.Path = path.Join(u.Path, rawPath)
 	return u.String(), nil
+}
+
+func (c *client) parseUrlNoEscape(rawPath string) (string, error) {
+	u, err := url.Parse(c.endpoint)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, rawPath)
+	var result string
+	if u.Path == "" {
+		result = u.Scheme + "://" + u.Host
+	} else {
+		result = u.Scheme + "://" + path.Join(u.Host, u.Path)
+	}
+	if u.RawQuery != "" {
+		result += "?" + u.RawQuery
+	}
+	if u.Fragment != "" {
+		result += "#" + u.Fragment
+	}
+	return result, nil
 }
 
 // BulkResponse is the response that is returned by elastic search when doing a bulk request

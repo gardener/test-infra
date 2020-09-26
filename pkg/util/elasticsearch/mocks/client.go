@@ -5,6 +5,7 @@
 package mock_elasticsearch
 
 import (
+	context "context"
 	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
@@ -74,4 +75,19 @@ func (m *MockClient) Request(arg0, arg1 string, arg2 io.Reader) ([]byte, error) 
 func (mr *MockClientMockRecorder) Request(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockClient)(nil).Request), arg0, arg1, arg2)
+}
+
+// RequestWithCtx mocks base method
+func (m *MockClient) RequestWithCtx(arg0 context.Context, arg1, arg2 string, arg3 io.Reader) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestWithCtx", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestWithCtx indicates an expected call of RequestWithCtx
+func (mr *MockClientMockRecorder) RequestWithCtx(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestWithCtx", reflect.TypeOf((*MockClient)(nil).RequestWithCtx), arg0, arg1, arg2, arg3)
 }
