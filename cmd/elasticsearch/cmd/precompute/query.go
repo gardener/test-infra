@@ -22,6 +22,29 @@ import (
 	"strings"
 )
 
+
+type BulkResponse struct {
+	ErrorsOccurred bool `json:"errors"`
+	Items []BulkItem `json:"items,omitempty"`
+}
+
+type BulkItem struct {
+	Index BulkItemIndex `json:"index"`
+}
+
+type BulkItemIndex struct {
+	Index string `json:"_index"`
+	Type string `json:"_type"`
+	ID string `json:"_id"`
+	HTTPStatus int `json:"status"`
+	Error BulkItemIndexError `json:"error"`
+}
+
+type BulkItemIndexError struct {
+	Type string `json:"type"`
+	Reason string `json:"reason,omitempty"`
+}
+
 type QueryResponse struct {
 	ScrollID string `json:"_scroll_id,omitempty"`
 	Hits     Hits   `json:"hits,omitempty"`

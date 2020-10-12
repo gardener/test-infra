@@ -70,7 +70,9 @@ func NewClient(cfg config.ElasticSearch) (Client, error) {
 }
 
 func (c *client) Request(httpMethod, rawPath string, payload io.Reader) ([]byte, error) {
-	return c.RequestWithCtx(context.Background(), httpMethod, rawPath, payload)
+	ctx := context.Background()
+	defer ctx.Done()
+	return c.RequestWithCtx(ctx, httpMethod, rawPath, payload)
 }
 
 func (c *client) RequestWithCtx(ctx context.Context, httpMethod, rawPath string, payload io.Reader) ([]byte, error) {
