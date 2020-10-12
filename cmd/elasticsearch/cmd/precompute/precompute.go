@@ -17,6 +17,7 @@ package precompute
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/logger"
@@ -24,6 +25,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/spf13/cobra"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 )
@@ -75,11 +77,11 @@ func run(cmd *cobra.Command) error {
 		return err
 	}
 
-	pageSize := 10
+	pageSize := 5000
 	path, payload := BuildScrollQueryInitial("testmachinery-*", pageSize)
 
 	var processedItems int
-	for i := 0;; i++ {
+	for {
 		esResponse, err := queryAndRecomputeAndStore(esClient, path, payload)
 		if err != nil {
 			return err
@@ -118,26 +120,31 @@ func queryAndRecomputeAndStore(esClient elasticsearch.Client, path string, paylo
 
 	var modifiedItems []Result
 	for _, result := range esResponse.Hits.Results {
-		var k8sVersion, clusterDomain string
-		if result.StepSummary.Metadata != nil {
-			k8sVersion = result.StepSummary.Metadata.Metadata.KubernetesVersion
-			if k8sVersion == "" && result.StepSummary.Metadata.Annotations != nil {
-				k8sVersion = result.StepSummary.Metadata.Annotations["metadata.testmachinery.gardener.cloud/k8sVersion"]
-			}
-			if k8sVersion == "" && result.StepSummary.Metadata.Annotations != nil {
-				k8sVersion = result.StepSummary.Metadata.Annotations["testrunner.testmachinery.sapcloud.io/k8sVersion"]
-			}
+		meta := result.StepSummary.Metadata
+		if meta == nil {
+			logger.Log.V(5).Info("Skipping entry as no metadata present, probably too old", "index", result.Index, "docID", result.DocID)
+			continue
 		}
+
+		if meta.KubernetesVersion == "" && meta.Annotations != nil {
+			meta.KubernetesVersion = meta.Annotations["metadata.testmachinery.gardener.cloud/k8sVersion"]
+		}
+		if meta.KubernetesVersion == "" && meta.Annotations != nil {
+			meta.KubernetesVersion = meta.Annotations["testrunner.testmachinery.sapcloud.io/k8sVersion"]
+		}
+
+		var clusterDomain string
 		oldPreComputed := result.StepSummary.PreComputed
 		if oldPreComputed != nil {
 			clusterDomain = oldPreComputed.ClusterDomain
 		}
-		newPreComputed := collector.PreComputeTeststepFields(result.StepSummary.Phase, k8sVersion, clusterDomain)
+
+		newPreComputed := collector.PreComputeTeststepFields(result.StepSummary.Phase, meta.Metadata, clusterDomain)
 
 		if reflect.DeepEqual(oldPreComputed, newPreComputed) {
 			logger.Log.V(6).Info("old and new precomputed are equal -> nothing to do")
 		} else {
-			logger.Log.Info("preComputed field changed", "oldPreComputed", oldPreComputed, "newPreComputed", newPreComputed)
+			logger.Log.V(4).Info("preComputed field changed", "oldPreComputed", oldPreComputed, "newPreComputed", newPreComputed)
 			result.StepSummary.PreComputed = newPreComputed
 			modifiedItems = append(modifiedItems, result)
 		}
@@ -152,19 +159,34 @@ func queryAndRecomputeAndStore(esClient elasticsearch.Client, path string, paylo
 	if err != nil {
 		return QueryResponse{}, err
 	}
-	logger.Log.V(6).Info("going to bulk update", "path", path)
-
 
 	if !updateES {
-		logger.Log.Info("Not modifying elasticsearch data as update flag was not set")
+		payloadContent, err := ioutil.ReadAll(payload)
+		if err != nil {
+			logger.Log.Error(err, "could not parse bulk update payload into string")
+		}
+		logger.Log.Info("Not modifying elasticsearch data as update flag was not set.", "path", path, "payload", payloadContent)
 		return esResponse, nil
 	}
 
 	// do the real update
+	logger.Log.V(6).Info("going to bulk update", "path", path)
 	bytes, err = esClient.RequestWithCtx(ctx, http.MethodPost, path, payload)
 	if err != nil {
 		logger.Log.Error(err, "Error during bulk update", "response", string(bytes))
 		return QueryResponse{}, err
+	}
+	bulkResponse := BulkResponse{}
+	if err := json.Unmarshal(bytes, &bulkResponse); err != nil {
+		return QueryResponse{}, err
+	}
+	// check for errors in the bulk
+	if bulkResponse.ErrorsOccurred {
+		logger.Log.Error(errors.New("one or more errors occurred during bulk update"), "Errors occurred during bulk update")
+		for _, item := range bulkResponse.Items {
+			logger.Log.Info("bulk item error", "errorType", item.Index.Error.Type, "errorReason", item.Index.Error.Reason, "httpStatus", item.Index.HTTPStatus, "index", item.Index.Index, "id", item.Index.ID)
+		}
+		// in bulk updates a few items could go wrong, hence we'd better not stop the whole process here but continue, maybe next bulk updates will succeed ¯\_(ツ)_/¯
 	}
 
 	return esResponse, nil

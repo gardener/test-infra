@@ -132,11 +132,10 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 
 // preComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)
 func (c *collector) preComputeTeststepFields(stepStatus *tmv1beta1.StepStatus, meta metadata.Metadata) *metadata.StepPreComputed {
-	k8sVersion := meta.KubernetesVersion
 	clusterDomain, err := util.GetClusterDomainURL(c.client)
 	if err != nil {
 		c.log.Error(err, "Could not obtain cluster domain URL, will not pre compute dependent fields (argo-, grafana-url)")
 	}
 
-	return PreComputeTeststepFields(stepStatus.Phase, k8sVersion, clusterDomain)
+	return PreComputeTeststepFields(stepStatus.Phase, meta, clusterDomain)
 }

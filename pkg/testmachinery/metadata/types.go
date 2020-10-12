@@ -85,7 +85,7 @@ type TestrunSummary struct {
 	TelemetryData *TelemetryData     `json:"telemetry,omitempty"`
 }
 
-// StepSummaryMetadata is the metadta for a specific step result.
+// StepSummaryMetadata is the metadata for a specific step result.
 type StepSummaryMetadata struct {
 	Metadata
 	StepName    string `json:"stepName,omitempty"`
@@ -117,6 +117,8 @@ type StepPreComputed struct {
 	ArgoDisplayName string `json:"argoText,omitempty"`
 	// the cluster domain of the testmachinery (useful to build other URLs in dashboards)
 	ClusterDomain string `json:"clusterDomain,omitempty"`
+	// a provider field enriched with some dimension aspects (i.e. azure_multizone(NoPrivCtrs)
+	ProviderEnhanced string `json:"providerEnhanced,omitempty"`
 }
 
 // Dimension describes the basic dimension of a test

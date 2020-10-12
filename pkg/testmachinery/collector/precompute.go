@@ -34,10 +34,11 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
+	"strings"
 )
 
 // PreComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)
-func PreComputeTeststepFields(phase argov1.NodePhase, k8sVersion string, clusterDomain string) *metadata.StepPreComputed {
+func PreComputeTeststepFields(phase argov1.NodePhase, meta metadata.Metadata, clusterDomain string) *metadata.StepPreComputed {
 	var preComputed metadata.StepPreComputed
 
 	switch phase {
@@ -49,11 +50,16 @@ func PreComputeTeststepFields(phase argov1.NodePhase, k8sVersion string, cluster
 		preComputed.PhaseNum = &hundred
 	}
 
-	if k8sVersion != "" {
-		semVer, err := semver.NewVersion(k8sVersion)
+	if meta.KubernetesVersion != "" {
+		semVer, err := semver.NewVersion(meta.KubernetesVersion)
 		if err != nil {
-			fmt.Printf("cannot parse k8s Version, will not precompute derived data: %s", err)
-		} else {
+			fmt.Printf("cannot parse k8s Version '%s', will try to strip double quotes: %s", meta.KubernetesVersion, err)
+			semVer, err = semver.NewVersion(strings.Replace(meta.KubernetesVersion, "\"", "", -1))
+			if err != nil {
+				fmt.Printf("still cannot parse k8s Version, cannot precompute k8sMajMin Version: %s", err)
+			}
+		}
+		if err == nil {
 			preComputed.K8SMajorMinorVersion = fmt.Sprintf("%d.%d", semVer.Major(), semVer.Minor())
 		}
 	}
@@ -63,6 +69,18 @@ func PreComputeTeststepFields(phase argov1.NodePhase, k8sVersion string, cluster
 		preComputed.LogsDisplayName = "logs"
 		preComputed.ClusterDomain = clusterDomain
 	}
+
+	providerEnhanced := meta.CloudProvider
+	if meta.CloudProvider == "openstack" && meta.Region != "" {
+		providerEnhanced += "_" + meta.Region
+	}
+	if meta.FlavorDescription != "" {
+		providerEnhanced += "_" + meta.FlavorDescription
+	}
+	if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
+		providerEnhanced += "(NoPrivCtrs)"
+	}
+	preComputed.ProviderEnhanced = providerEnhanced
 
 	return &preComputed
 }

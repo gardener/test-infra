@@ -29,4 +29,14 @@ subcommand is requiredexit status 1
 # Commands
 ## `precompute`
 This command reads all existing teststep metadata from elasticsearch, then re-computes all the precomputed values like phaseNum and clusterDomain and if changes to the existing `.pre` field are detected, updates them in elasticsearch.
-This is useful if you want to modify or amend the precomputed values and fields in the testmachinery code and then want to update all existing data.  
+This is useful if you want to modify or amend the precomputed values and fields in the testmachinery code and then want to update all existing data.
+
+#### Note: read-only indexes
+If you use curator to roll-over indexes, they will be made read-only-allow-delete, hence before attempting to change data, make them read-write again:
+```shell
+# check which indexes are read-only-allow-delete
+curl -s 'localhost:9200/testmachinery-*' | jq '.[].settings.index | {index: .provided_name, readOnly: .blocks.read_only_allow_delete}' -c
+
+# remove read-only-allow-delete for one index
+curl -X PUT "localhost/testmachinery-000017/_settings" -H 'Content-Type: application/json' -d'{ "index.blocks.read_only_allow_delete" : null } }'
+```
