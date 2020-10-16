@@ -53,7 +53,7 @@ func PreComputeTeststepFields(phase argov1.NodePhase, meta metadata.Metadata, cl
 	if meta.KubernetesVersion != "" {
 		semVer, err := semver.NewVersion(meta.KubernetesVersion)
 		if err != nil {
-			fmt.Printf("cannot parse k8s Version '%s', will try to strip double quotes: %s", meta.KubernetesVersion, err)
+			fmt.Printf("cannot parse k8s Version '%s', will try to strip double quotes: %s\n", meta.KubernetesVersion, err)
 			semVer, err = semver.NewVersion(strings.Replace(meta.KubernetesVersion, "\"", "", -1))
 			if err != nil {
 				fmt.Printf("still cannot parse k8s Version, cannot precompute k8sMajMin Version: %s", err)

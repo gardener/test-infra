@@ -161,11 +161,12 @@ func queryAndRecomputeAndStore(esClient elasticsearch.Client, path string, paylo
 	}
 
 	if !updateES {
-		payloadContent, err := ioutil.ReadAll(payload)
+		payloadBytes, err := ioutil.ReadAll(payload)
 		if err != nil {
 			logger.Log.Error(err, "could not parse bulk update payload into string")
 		}
-		logger.Log.Info("Not modifying elasticsearch data as update flag was not set.", "path", path, "payload", payloadContent)
+		logger.Log.Info("Not modifying elasticsearch data as update flag was not set.")
+		logger.Log.V(10).Info("", "path", path, "payload", string(payloadBytes))
 		return esResponse, nil
 	}
 
