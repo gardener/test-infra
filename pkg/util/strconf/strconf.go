@@ -35,6 +35,18 @@ const (
 	Config             // The IntOrString holds a string.
 )
 
+// TypeToString returns the human readable type of a stringOrConfig type.
+func TypeToString(t Type) string {
+	switch t {
+	case String:
+		return "string"
+	case Config:
+		return "config"
+	default:
+		return ""
+	}
+}
+
 // FromString creates a StringOrConfig from a string.
 func FromString(s string) *StringOrConfig {
 	return &StringOrConfig{

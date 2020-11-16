@@ -92,5 +92,5 @@ func validateKubeconfig(identifier string, kubeconfig *strconf.StringOrConfig) e
 		return strconf.Validate(identifier, kubeconfig.Config())
 	}
 
-	return fmt.Errorf("%s: Undefined StringSecType %s", identifier, string(kubeconfig.Type))
+	return fmt.Errorf("%s: Undefined StringSecType %s", identifier, strconf.TypeToString(kubeconfig.Type))
 }

@@ -108,5 +108,5 @@ func addKubeconfig(configs *[]*config.Element, secrets *[]runtime.Object, tr *tm
 		}, config.LevelTestDefinition))
 		return nil
 	}
-	return fmt.Errorf("undefined StringSecType %s", string(kubeconfig.Type))
+	return fmt.Errorf("undefined StringSecType %s", strconf.TypeToString(kubeconfig.Type))
 }
