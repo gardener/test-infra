@@ -53,6 +53,14 @@ func NewLocalLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) 
 	}
 }
 
+// GitInfo implements the dummy func for the local git info.
+func (l *LocalLocation) GitInfo() testdefinition.GitInfo {
+	return testdefinition.GitInfo{
+		SHA: "local",
+		Ref: "local",
+	}
+}
+
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
 func (l *LocalLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDefinition) error {
 	testDefs, err := l.readTestDefs()

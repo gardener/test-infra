@@ -88,6 +88,8 @@ spec:
 | TM_KUBECONFIG_PATH      | points to a directory containing all kubeconfig files (defaults to `/tmp/env/kubeconfig`). </br> The files contained in this dir depend on the concrete TestRun and can contain up to 5 files: <ul><li>_testmachinery.config_: the kubeconfig pointing to the testmachinery cluster</li><li>_host.config_: the kubeconfig pointing to the cluster hosting the gardener (not available for untrusted steps)</li><li>_gardener.config_: the kubeconfig pointing to the gardener cluster created by TM (or predefined/given by a TestRun, not available for untrusted steps)</li><li>_seed.config_: the kubeconfig pointing to the seed cluster configured by TM (or predefined/given by a TestRun, not available for untrusted steps)</li><li>_shoot.config_: the kubeconfig pointing to the shoot cluster created by TM (or predefined/given by a TestRun)</li></ul>|
 | TM_EXPORT_PATH | points to a directory where the test can place arbitrary test-run data which will be archived at the end. Useful if some postprocessing needs to be done on that data. Further information can be found [here](#export-contract) |
 | TM_TESTRUN_ID | Name of the testrun |
+| TM_GIT_SHA | The commit SHA of the used git location |
+| TM_GIT_REF | The ref of the used git location (branch or tag name). Will be empty if only a commit sha is provided (e.g. when testing a Pull Request via the TM bot) |
 
 #### Shoot tests
 When your test is running as part of the gardener test suite to test a shoot, there are some more available context variables.

@@ -35,6 +35,14 @@ type Location interface {
 	Name() string
 	// GetLocation returns the original TestLocation object
 	GetLocation() *tmv1beta1.TestLocation
+	// GitInfo returns the current git information
+	GitInfo() GitInfo
+}
+
+// GitInfo describes additional information about the used sources.
+type GitInfo struct {
+	SHA string
+	Ref string
 }
 
 // GetStdInputArtifacts returns the default input artifacts of testdefionitions.
