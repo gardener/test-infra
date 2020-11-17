@@ -87,7 +87,7 @@ func run(cmd *cobra.Command) error {
 			return err
 		}
 		processedItems += len(esResponse.Hits.Results)
-		logger.Log.Info(fmt.Sprintf("%d%% processed (%d/%d)", processedItems * 100 / esResponse.Hits.Total.Value, processedItems, esResponse.Hits.Total.Value))
+		logger.Log.Info(fmt.Sprintf("%d%% processed (%d/%d)", processedItems*100/esResponse.Hits.Total.Value, processedItems, esResponse.Hits.Total.Value))
 
 		// once we hit the first page with less than pageSize results, there will be no further page -> done
 		if len(esResponse.Hits.Results) < pageSize {

@@ -58,7 +58,7 @@ generate:
 
 .PHONY: format
 format:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener-extensions/hack/format.sh ./cmd ./pkg
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg
 
 .PHONY: install
 install:

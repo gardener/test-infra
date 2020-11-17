@@ -46,8 +46,8 @@ testmachinery:
           host: minio.ingress.tm-it.core.shoot.canary.k8s-hana.ondemand.com
       ssl: false
     bucketName: testmachinery
-    accessKey: kjdpasnvpornv
-    secretKey: askldmackmdpacm
+    accessKey: foo
+    secretKey: bar
 
 #  esConfiguration:
 #    endpoint: https:...:9200

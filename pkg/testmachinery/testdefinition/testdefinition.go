@@ -89,6 +89,14 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 					Name:  testmachinery.TM_PHASE_NAME,
 					Value: "{{inputs.parameters.phase}}",
 				},
+				{
+					Name:  testmachinery.TM_GIT_SHA_NAME,
+					Value: loc.GitInfo().SHA,
+				},
+				{
+					Name:  testmachinery.TM_GIT_REF_NAME,
+					Value: loc.GitInfo().Ref,
+				},
 			},
 		},
 		Inputs: argov1.Inputs{

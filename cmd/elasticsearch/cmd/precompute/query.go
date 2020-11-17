@@ -22,10 +22,9 @@ import (
 	"strings"
 )
 
-
 type BulkResponse struct {
-	ErrorsOccurred bool `json:"errors"`
-	Items []BulkItem `json:"items,omitempty"`
+	ErrorsOccurred bool       `json:"errors"`
+	Items          []BulkItem `json:"items,omitempty"`
 }
 
 type BulkItem struct {
@@ -33,15 +32,15 @@ type BulkItem struct {
 }
 
 type BulkItemIndex struct {
-	Index string `json:"_index"`
-	Type string `json:"_type"`
-	ID string `json:"_id"`
-	HTTPStatus int `json:"status"`
-	Error BulkItemIndexError `json:"error"`
+	Index      string             `json:"_index"`
+	Type       string             `json:"_type"`
+	ID         string             `json:"_id"`
+	HTTPStatus int                `json:"status"`
+	Error      BulkItemIndexError `json:"error"`
 }
 
 type BulkItemIndexError struct {
-	Type string `json:"type"`
+	Type   string `json:"type"`
 	Reason string `json:"reason,omitempty"`
 }
 
@@ -51,7 +50,7 @@ type QueryResponse struct {
 }
 
 type Hits struct {
-	Total Total      `json:"total,omitempty"`
+	Total   Total    `json:"total,omitempty"`
 	Results []Result `json:"hits,omitempty"`
 }
 
@@ -60,8 +59,8 @@ type Total struct {
 }
 
 type Result struct {
-	Index string `json:"_index"`
-	DocID string `json:"_id"`
+	Index       string               `json:"_index"`
+	DocID       string               `json:"_id"`
 	StepSummary metadata.StepSummary `json:"_source,omitempty"`
 }
 

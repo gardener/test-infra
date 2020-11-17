@@ -71,6 +71,12 @@ const (
 	// TM_TESTRUN_ID_NAME is the name of the environment variable that holds the current testrun id
 	TM_TESTRUN_ID_NAME = "TM_TESTRUN_ID"
 
+	// TM_GIT_SHA_NAME is the name of the environment variable that holds the current git commit sha of the specified location.
+	TM_GIT_SHA_NAME = "TM_GIT_SHA"
+
+	// TM_GIT_REF_NAME is the name of the environment variable that holds the current git ref of the specified location.
+	TM_GIT_REF_NAME = "TM_GIT_REF"
+
 	// ConfigMapName is the name of the testmachinery configmap in the cluster
 	ConfigMapName = "tm-config"
 

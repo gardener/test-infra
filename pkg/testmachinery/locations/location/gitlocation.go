@@ -18,16 +18,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	"github.com/go-logr/logr"
 	"net/http"
 	"net/url"
 
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"github.com/go-logr/logr"
+	"github.com/google/go-github/v27/github"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/google/go-github/v27/github"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
 	"github.com/gardener/test-infra/pkg/util"
 )
@@ -43,6 +44,7 @@ type GitLocation struct {
 	repoOwner string
 	repoName  string
 	repoURL   *url.URL
+	gitInfo   testdefinition.GitInfo
 }
 
 // NewGitLocation creates a TestDefLocation of type git.
@@ -99,7 +101,14 @@ func (l *GitLocation) Type() tmv1beta1.LocationType {
 	return tmv1beta1.LocationTypeGit
 }
 
+// GitInfo returns the git info for the current test location.
+func (l *GitLocation) GitInfo() testdefinition.GitInfo {
+	return l.gitInfo
+}
+
 func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
+	ctx := context.Background()
+	defer ctx.Done()
 	var definitions []*testdefinition.TestDefinition
 
 	client, httpClient, err := l.getGitHubClient()
@@ -107,10 +116,15 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 		return nil, fmt.Errorf("unable to create github client for %s: %s", l.Info.Repo, err.Error())
 	}
 
-	_, directoryContent, _, err := client.Repositories.GetContents(context.Background(), l.repoOwner, l.repoName,
+	repoContent, directoryContent, _, err := client.Repositories.GetContents(ctx, l.repoOwner, l.repoName,
 		testmachinery.TestDefPath(), &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
 		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
+	}
+	l.gitInfo.SHA = repoContent.GetSHA()
+
+	if l.Info.Revision != l.gitInfo.SHA {
+		l.gitInfo.Ref = l.Info.Revision
 	}
 
 	for _, file := range directoryContent {

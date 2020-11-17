@@ -304,6 +304,10 @@ func (l *locationMock) Type() tmv1beta1.LocationType {
 	return "mock"
 }
 
+func (l *locationMock) GitInfo() testdefinition.GitInfo {
+	return testdefinition.GitInfo{}
+}
+
 func (l *locationMock) SetTestDefs(_ map[string]*testdefinition.TestDefinition) error {
 	return nil
 }
