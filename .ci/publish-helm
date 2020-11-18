@@ -34,5 +34,5 @@ cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite -
 
 export HELM_EXPERIMENTAL_OCI=1
 helm registry login eu.gcr.io -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
-cd &{SOURCE_PATH}
+cd ${SOURCE_PATH}
 make publish-tm-chart
