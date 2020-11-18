@@ -116,6 +116,15 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 		return nil, fmt.Errorf("unable to create github client for %s: %s", l.Info.Repo, err.Error())
 	}
 
+	tree, _, err := client.Git.GetTree(ctx, l.repoOwner, l.repoName, l.Info.Revision, false)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get git tree for revision %s: %w", l.Info.Revision, err)
+	}
+	l.gitInfo.SHA = tree.GetSHA()
+	if l.Info.Revision != l.gitInfo.SHA {
+		l.gitInfo.Ref = l.Info.Revision
+	}
+
 	_, directoryContent, _, err := client.Repositories.GetContents(ctx, l.repoOwner, l.repoName,
 		testmachinery.TestDefPath(), &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
@@ -123,10 +132,6 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 	}
 
 	for _, file := range directoryContent {
-		l.gitInfo.SHA = file.GetSHA()
-		if l.Info.Revision != l.gitInfo.SHA {
-			l.gitInfo.Ref = l.Info.Revision
-		}
 		if *file.Type == githubContentTypeFile {
 			l.log.V(5).Info("found file", "filename", *file.Name, "path", *file.Path)
 			data, err := util.DownloadFile(httpClient, file.GetDownloadURL())
