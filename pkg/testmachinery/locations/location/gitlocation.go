@@ -116,18 +116,17 @@ func (l *GitLocation) getTestDefs() ([]*testdefinition.TestDefinition, error) {
 		return nil, fmt.Errorf("unable to create github client for %s: %s", l.Info.Repo, err.Error())
 	}
 
-	repoContent, directoryContent, _, err := client.Repositories.GetContents(ctx, l.repoOwner, l.repoName,
+	_, directoryContent, _, err := client.Repositories.GetContents(ctx, l.repoOwner, l.repoName,
 		testmachinery.TestDefPath(), &github.RepositoryContentGetOptions{Ref: l.Info.Revision})
 	if err != nil {
 		return nil, fmt.Errorf("no testdefinitions can be found in %s: %s", l.Info.Repo, err.Error())
 	}
-	l.gitInfo.SHA = repoContent.GetSHA()
-
-	if l.Info.Revision != l.gitInfo.SHA {
-		l.gitInfo.Ref = l.Info.Revision
-	}
 
 	for _, file := range directoryContent {
+		l.gitInfo.SHA = file.GetSHA()
+		if l.Info.Revision != l.gitInfo.SHA {
+			l.gitInfo.Ref = l.Info.Revision
+		}
 		if *file.Type == githubContentTypeFile {
 			l.log.V(5).Info("found file", "filename", *file.Name, "path", *file.Path)
 			data, err := util.DownloadFile(httpClient, file.GetDownloadURL())
