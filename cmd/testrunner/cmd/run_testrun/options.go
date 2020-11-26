@@ -74,6 +74,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVarP(&o.testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
 	fs.DurationVar(&o.timeout, "timeout", 1*time.Hour, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	fs.IntVar(&o.testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
+	fs.BoolVar(&o.testrunnerConfig.NoExecutionGroup, "no-execution-group", false, "do not inject a execution group id into testruns")
 
 	fs.StringVarP(&o.testrunPath, "file", "f", "", "Path to the testrun yaml")
 	fs.BoolVar(&o.testrunnerConfig.ExecutorConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")

@@ -13,12 +13,12 @@
 # limitations under the License.
 
 #############      builder       #############
-FROM golang:1.14.1 AS builder
+FROM eu.gcr.io/gardener-project/3rd/golang:1.15.5 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 COPY . .
 
-RUN make install-requirements && make all
+RUN make install-requirements && make install
 
 ############# tm-controller #############
 FROM alpine:3.10 AS tm-controller

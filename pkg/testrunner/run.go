@@ -28,6 +28,9 @@ import (
 
 // SetRunID sets the provided run id as annotation and adds it to the metadata
 func (r *Run) SetRunID(id string) {
+	if len(id) == 0 {
+		return
+	}
 	if r.Testrun.Labels == nil {
 		r.Testrun.Labels = make(map[string]string, 1)
 	}
@@ -64,6 +67,9 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	r.Metadata.Testrun.ID = newTR.GetName()
 	log.Info(fmt.Sprintf("Testrun %s deployed", newTR.Name))
 
+	if TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client()); err == nil {
+		log.Info(fmt.Sprintf("TestMachinery Dashboard for Testrun %s: %s", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)))
+	}
 	if argoUrl, err := GetArgoURL(ctx, config.Watch.Client(), r.Testrun); err == nil {
 		log.WithValues("testrun", r.Testrun.GetName()).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
 	}

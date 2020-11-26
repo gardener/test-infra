@@ -71,18 +71,17 @@ func NewOptions() *options {
 func (o *options) Complete() error {
 	o.dryRun, _ = o.fs.GetBool("dry-run")
 
-	gardenK8sClient, err := kubernetes.NewClientFromFile("", o.shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.GardenScheme,
-	}))
-	if err != nil {
-		logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.tmKubeconfigPath)
-		os.Exit(1)
-	}
-
 	o.testrunnerConfig.Timeout = time.Duration(o.timeout) * time.Second
 	o.collectConfig.ComponentDescriptorPath = o.shootParameters.ComponentDescriptorPath
 
-	if o.shootParameters.FlavorConfigPath != "" {
+	if len(o.shootParameters.FlavorConfigPath) != 0 {
+		gardenK8sClient, err := kubernetes.NewClientFromFile("", o.shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
+			Scheme: kubernetes.GardenScheme,
+		}))
+		if err != nil {
+			logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.tmKubeconfigPath)
+			os.Exit(1)
+		}
 		flavors, err := GetShootFlavors(o.shootParameters.FlavorConfigPath, gardenK8sClient, o.shootPrefix, o.filterPatchVersions)
 		if err != nil {
 			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
@@ -117,11 +116,13 @@ func (o *options) Validate() error {
 	if len(o.testrunNamePrefix) == 0 {
 		return errors.New("testrun-prefix is required")
 	}
-	if len(o.shootParameters.GardenKubeconfigPath) == 0 {
-		return errors.New("gardener-kubeconfig-path is required")
-	}
-	if len(o.shootPrefix) == 0 {
-		return errors.New("shoot-name is required")
+	if len(o.shootParameters.FlavorConfigPath) != 0 {
+		if len(o.shootParameters.GardenKubeconfigPath) == 0 {
+			return errors.New("gardener-kubeconfig-path is required")
+		}
+		if len(o.shootPrefix) == 0 {
+			return errors.New("shoot-name is required")
+		}
 	}
 	return nil
 }
@@ -142,6 +143,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
+	fs.BoolVar(&o.testrunnerConfig.NoExecutionGroup, "no-execution-group", false, "do not inject a execution group id into testruns")
 
 	fs.StringVar(&o.collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 

@@ -36,6 +36,9 @@ type Config struct {
 	// Number of testrun retries after a failed run
 	FlakeAttempts int
 
+	// NoExecutionGroup configures if a execution group id should be injected into every testrun.
+	NoExecutionGroup bool
+
 	ExecutorConfig
 }
 
