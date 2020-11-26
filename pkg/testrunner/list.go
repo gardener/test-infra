@@ -16,18 +16,21 @@ package testrunner
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-multierror"
 	"strconv"
 	"strings"
 	"time"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
+	"github.com/gardener/test-infra/pkg/util"
+
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 // GetTestruns returns all testruns of a RunList as testrun array
@@ -64,15 +67,18 @@ func (rl RunList) Errors() error {
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
-	executiongroupID := uuid.New().String()
-	log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
 
-	// Print dashboard url if possible
-	TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
-	if err != nil {
-		log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
-	} else {
-		log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)))
+	var executiongroupID string
+	if !config.NoExecutionGroup {
+		executiongroupID = uuid.New().String()
+		// Print dashboard url if possible and if a execution group is defined
+		log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
+		TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
+		if err != nil {
+			log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
+		} else {
+			log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)))
+		}
 	}
 
 	executor, err := NewExecutor(log, config.ExecutorConfig)

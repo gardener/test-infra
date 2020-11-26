@@ -47,7 +47,7 @@ func New(log logr.Logger, config Config, kubeconfig string) (*Collector, error) 
 }
 
 func (c *Collector) PreRunShoots(kubeconfigPath string, runs testrunner.RunList) error {
-	if c.telemetry == nil {
+	if c.telemetry == nil || len(kubeconfigPath) == 0 {
 		return nil
 	}
 	if len(runs) == 0 {

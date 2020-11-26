@@ -16,15 +16,16 @@ package template
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/shootflavors"
 	"io/ioutil"
 
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 // RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
@@ -65,9 +66,12 @@ func getInternalParametersFunc(parameters *Parameters) (func(string) *internalPa
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode and parse the component descriptor: %s", err.Error())
 	}
-	gardenerKubeconfig, err := ioutil.ReadFile(parameters.GardenKubeconfigPath)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot read gardener kubeconfig %s", parameters.GardenKubeconfigPath)
+	var gardenerKubeconfig []byte
+	if len(parameters.GardenKubeconfigPath) != 0 {
+		gardenerKubeconfig, err = ioutil.ReadFile(parameters.GardenKubeconfigPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "cannot read gardener kubeconfig %s", parameters.GardenKubeconfigPath)
+		}
 	}
 	gardenerVersion := getGardenerVersionFromComponentDescriptor(componentDescriptor)
 
