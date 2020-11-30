@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-// SetRunID sets the provided run id as annotation and adds it to the metadata
+// SetRunID sets the provided run id as label and adds it to the metadata
 func (r *Run) SetRunID(id string) {
 	if len(id) == 0 {
 		return
@@ -38,6 +38,17 @@ func (r *Run) SetRunID(id string) {
 	if r.Metadata != nil {
 		r.Metadata.Testrun.ExecutionGroup = id
 	}
+}
+
+// SetTMDashboardURL sets the provided dashboard URL as annotation
+func (r *Run) SetTMDashboardURL(url string) {
+	if url == "" {
+		return
+	}
+	if r.Testrun.Annotations == nil {
+		r.Testrun.Annotations = make(map[string]string, 1)
+	}
+	r.Testrun.Annotations[common.AnnotationTMDashboardURL] = url
 }
 
 func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {

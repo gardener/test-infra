@@ -17,6 +17,7 @@ package result
 import (
 	"fmt"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
@@ -50,9 +51,17 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 		concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", config.ConcourseURL)
 	}
 
+	tmDashboardURLFooter := ""
+	if len(runs.GetTestruns()) > 0 {
+		tmDashboardURL := runs.GetTestruns()[0].Annotations[common.AnnotationTMDashboardURL]
+		if tmDashboardURL != "" {
+			tmDashboardURLFooter = fmt.Sprintf("\nTM Dashboard: %s", tmDashboardURL)
+		}
+	}
+
 	chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
 	if len(chunks) == 1 {
-		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```%s", header(), table, legend(), concourseURLFooter))
+		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```%s\n%s", header(), table, legend(), concourseURLFooter, tmDashboardURLFooter))
 	}
 
 	for i, chunk := range chunks {
