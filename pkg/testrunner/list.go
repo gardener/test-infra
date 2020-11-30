@@ -69,6 +69,7 @@ func (rl RunList) Errors() error {
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
 
 	var executiongroupID string
+	var tmDashboardURL string
 	if !config.NoExecutionGroup {
 		executiongroupID = uuid.New().String()
 		// Print dashboard url if possible and if a execution group is defined
@@ -77,7 +78,8 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		if err != nil {
 			log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
 		} else {
-			log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)))
+			tmDashboardURL = GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)
+			log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
 		}
 	}
 
@@ -98,6 +100,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		)
 		f = func() {
 			rl[trI].SetRunID(executiongroupID)
+			rl[trI].SetTMDashboardURL(tmDashboardURL)
 			triggerRunEvent(notify, rl[trI])
 			rl[trI].Exec(log, config, testrunNamePrefix)
 			if rl[trI].Metadata != nil {

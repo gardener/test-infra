@@ -87,6 +87,9 @@ const (
 	// AnnotationGroupPurpose is the annotation to describe a run group with an arbitrary string
 	AnnotationGroupPurpose = "metadata.testmachinery.gardener.cloud/group-purpose"
 
+	// AnnotationTMDashboardURL is the annotation to describe the URL of the TM Dashboard if present
+	AnnotationTMDashboardURL = "metadata.testmachinery.gardener.cloud/tm-dashboard-url"
+
 	// LabelTestrunExecutionGroup is the label to specify the unique name of the run (multiple testruns) this test belongs to.
 	// A run represents all tests that are running from one testrunner.
 	LabelTestrunExecutionGroup = "testrunner.testmachinery.gardener.cloud/execution-group"
