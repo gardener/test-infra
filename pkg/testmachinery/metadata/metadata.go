@@ -84,7 +84,7 @@ func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 		Testrun: TestrunMetadata{
 			ID:             tr.Name,
 			StartTime:      tr.Status.StartTime,
-			ExecutionGroup: tr.Annotations[common.LabelTestrunExecutionGroup],
+			ExecutionGroup: tr.Labels[common.LabelTestrunExecutionGroup],
 		},
 	}
 	if a, ok := tr.Annotations[common.AnnotationAllowPrivilegedContainers]; ok {
