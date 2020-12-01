@@ -19,6 +19,7 @@ import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch/bulk"
@@ -96,6 +97,9 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 			if elem.Type == tmv1beta1.ConfigTypeEnv && elem.Value != "" {
 				stepMetadata.Configuration[elem.Name] = elem.Value
 			}
+		}
+		if meta.Testrun.ExecutionGroup != "" {
+			stepMetadata.Annotations[common.LabelTestrunExecutionGroup] = meta.Testrun.ExecutionGroup
 		}
 		pre := c.preComputeTeststepFields(step, stepMetadata.Metadata)
 
