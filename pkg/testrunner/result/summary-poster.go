@@ -24,6 +24,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util/slack"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"strings"
+	"time"
 )
 
 func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, runs testrunner.RunList) error {
@@ -46,22 +48,21 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 		return errors.Wrap(err, "was not able to create slack client")
 	}
 
-	concourseURLFooter := ""
-	if config.ConcourseURL != "" {
-		concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", config.ConcourseURL)
-	}
 
-	tmDashboardURLFooter := ""
+	tmDashboardURL := ""
 	if len(runs.GetTestruns()) > 0 {
-		tmDashboardURL := runs.GetTestruns()[0].Annotations[common.AnnotationTMDashboardURL]
-		if tmDashboardURL != "" {
-			tmDashboardURLFooter = fmt.Sprintf("\nTM Dashboard: %s", tmDashboardURL)
-		}
+		tmDashboardURL = runs.GetTestruns()[0].Annotations[common.AnnotationTMDashboardURL]
 	}
 
-	chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
+	executionGroup := ""
+	if len(runs.GetTestruns()) > 0 {
+		executionGroup = runs.GetTestruns()[0].Labels[common.LabelTestrunExecutionGroup]
+	}
+	urlFooter := buildURLFooter(config.ConcourseURL, tmDashboardURL, config.GrafanaURL, executionGroup)
+
+		chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
 	if len(chunks) == 1 {
-		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```%s\n%s", header(), table, legend(), concourseURLFooter, tmDashboardURLFooter))
+		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```\n%s", header(), table, legend(), urlFooter))
 	}
 
 	for i, chunk := range chunks {
@@ -70,7 +71,7 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 			message = fmt.Sprintf("%s\n%s", header(), message)
 		}
 		if i == len(chunks)-1 {
-			message = fmt.Sprintf("%s%s", message, concourseURLFooter)
+			message = fmt.Sprintf("%s\n%s", message, urlFooter)
 		}
 		if err := slackClient.PostMessage(config.SlackChannel, message); err != nil {
 			return errors.Wrap(err, "failed to post the slack message of test summary")
@@ -88,6 +89,39 @@ func legend() string {
 	return fmt.Sprintf(`
 %s: Tests succeeded | %s: Tests failed | %s: Test execution error | %s: Tests not applicable
 `, util.StatusSymbolSuccess, util.StatusSymbolFailure, util.StatusSymbolError, util.StatusSymbolNA)
+}
+
+func buildURLFooter(ccURL, tmDashboardURL, grafanaURL, executionGroup string) string {
+	ccURLFooter := ""
+	if ccURL != "" {
+		ccURLFooter = fmt.Sprintf("<%s|Concourse Job>", ccURL)
+	}
+
+	tmDashboardURLFooter := ""
+	if tmDashboardURL != "" {
+		tmDashboardURLFooter = fmt.Sprintf("<%s|TM Native>", tmDashboardURL)
+	}
+
+	grafanaURLFooter := ""
+	if grafanaURL != "" && executionGroup != "" {
+		now := time.Now()
+		from := now.Add(-12 * time.Hour).Unix() * 1000
+		to := now.Add(2 * time.Hour).Unix() * 1000
+		grafanaURL := fmt.Sprintf("%s&from=%d&to=%d&var-Filters=tm.tr.executionGroup.keyword%%7C=%%7C%s", grafanaURL, from, to, executionGroup)
+		grafanaURLFooter = fmt.Sprintf("<%s|TM Grafana>", grafanaURL)
+	}
+
+	var parts []string
+	if ccURLFooter != "" {
+		parts = append(parts, ccURLFooter)
+	}
+	if tmDashboardURLFooter != "" {
+		parts = append(parts, tmDashboardURLFooter)
+	}
+	if grafanaURLFooter != "" {
+		parts = append(parts, grafanaURLFooter)
+	}
+	return strings.Join(parts, " - ")
 }
 
 func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableItems) {
