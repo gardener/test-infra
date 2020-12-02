@@ -158,6 +158,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&o.collectConfig.SlackToken, "slack-token", "", "Client token to authenticate")
 	fs.StringVar(&o.collectConfig.SlackChannel, "slack-channel", "", "Client channel id to send the message to.")
 	fs.StringVar(&o.collectConfig.ConcourseURL, "concourse-url", "", "Concourse job URL.")
+	fs.StringVar(&o.collectConfig.GrafanaURL, "grafana-url", "", "Grafana Dashboard URL.")
 	fs.BoolVar(&o.collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
 	// parameter flags

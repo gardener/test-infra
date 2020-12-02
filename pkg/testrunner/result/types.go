@@ -52,6 +52,9 @@ type Config struct {
 	// ConcourseURL provides the concourse URL as reference for testruns summary results
 	ConcourseURL string
 
+	// GrafanaURL provides the grafana dashboard URL for test results
+	GrafanaURL string
+
 	// SlackToken is the slack token for slack API operations
 	SlackToken string
 
