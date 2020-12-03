@@ -94,7 +94,7 @@ func AddFlags(flagset *flag.FlagSet) *config.GitHubCache {
 		"Path directory that should be used to cache github requests")
 	flagset.IntVar(&internalConfig.CacheDiskSizeGB, "github-cache-size", 1,
 		"Size of the github cache in GB")
-	flagset.IntVar(&internalConfig.MaxAgeSeconds, "github-cache-max-age", 600,
+	flagset.IntVar(&internalConfig.MaxAgeSeconds, "github-cache-max-age", 3600,
 		"Maximum age of a failed github response in seconds")
 	return internalConfig
 }
