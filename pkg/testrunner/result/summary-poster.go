@@ -121,7 +121,7 @@ func buildURLFooter(ccURL, tmDashboardURL, grafanaURL, executionGroup string) st
 	if grafanaURLFooter != "" {
 		parts = append(parts, grafanaURLFooter)
 	}
-	return strings.Join(parts, " - ")
+	return strings.Join(parts, " • ")
 }
 
 func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableItems) {
