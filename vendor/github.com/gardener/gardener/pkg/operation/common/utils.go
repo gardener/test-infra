@@ -22,7 +22,6 @@ import (
 	"net"
 	"reflect"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -36,28 +35,37 @@ import (
 	"github.com/gardener/gardener/pkg/version"
 
 	jsoniter "github.com/json-iterator/go"
+	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	schedulingv1beta1 "k8s.io/api/scheduling/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	autoscalingv1beta2 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1beta2"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var json = jsoniter.ConfigFastest
+var (
+	json = jsoniter.ConfigFastest
+
+	// TimeNow returns the current time. Exposed for testing.
+	TimeNow = time.Now
+)
 
 // GetSecretKeysWithPrefix returns a list of keys of the given map <m> which are prefixed with <kind>.
 func GetSecretKeysWithPrefix(kind string, m map[string]*corev1.Secret) []string {
-	result := []string{}
+	var result []string
 	for key := range m {
 		if strings.HasPrefix(key, kind) {
 			result = append(result, key)
@@ -143,17 +151,38 @@ func ReplaceCloudProviderConfigKey(cloudProviderConfig, separator, key, value st
 	return keyValueRegexp.ReplaceAllString(cloudProviderConfig, fmt.Sprintf(`${1}%q`, strings.Replace(value, `$`, `$$`, -1)))
 }
 
-// ProjectForNamespace returns the project object responsible for a given <namespace>. It tries to identify the project object by looking for the namespace
-// name in the project statuses.
+// ProjectForNamespace returns the project object responsible for a given <namespace>.
+// It tries to identify the project object by looking for the namespace name in the project spec.
 func ProjectForNamespace(projectLister gardencorelisters.ProjectLister, namespaceName string) (*gardencorev1beta1.Project, error) {
 	projectList, err := projectLister.List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
 
-	for _, project := range projectList {
+	var projects []gardencorev1beta1.Project
+	for _, p := range projectList {
+		projects = append(projects, *p)
+	}
+
+	return projectForNamespace(projects, namespaceName)
+}
+
+// ProjectForNamespaceWithClient returns the project object responsible for a given <namespace>.
+// It tries to identify the project object by looking for the namespace name in the project spec.
+func ProjectForNamespaceWithClient(ctx context.Context, c client.Client, namespaceName string) (*gardencorev1beta1.Project, error) {
+	projectList := &gardencorev1beta1.ProjectList{}
+	err := c.List(ctx, projectList)
+	if err != nil {
+		return nil, err
+	}
+
+	return projectForNamespace(projectList.Items, namespaceName)
+}
+
+func projectForNamespace(projects []gardencorev1beta1.Project, namespaceName string) (*gardencorev1beta1.Project, error) {
+	for _, project := range projects {
 		if project.Spec.Namespace != nil && *project.Spec.Namespace == namespaceName {
-			return project, nil
+			return &project, nil
 		}
 	}
 
@@ -199,7 +228,7 @@ func MergeOwnerReferences(references []metav1.OwnerReference, newReferences ...m
 }
 
 // ReadLeaderElectionRecord returns the leader election record for a given lock type and a namespace/name combination.
-func ReadLeaderElectionRecord(k8sClient kubernetes.Interface, lock, namespace, name string) (*resourcelock.LeaderElectionRecord, error) {
+func ReadLeaderElectionRecord(ctx context.Context, client client.Client, lock, namespace, name string) (*resourcelock.LeaderElectionRecord, error) {
 	var (
 		leaderElectionRecord resourcelock.LeaderElectionRecord
 		annotations          map[string]string
@@ -207,14 +236,14 @@ func ReadLeaderElectionRecord(k8sClient kubernetes.Interface, lock, namespace, n
 
 	switch lock {
 	case resourcelock.EndpointsResourceLock:
-		endpoint, err := k8sClient.Kubernetes().CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
+		endpoint := &corev1.Endpoints{}
+		if err := client.Get(ctx, kutil.Key(namespace, name), endpoint); err != nil {
 			return nil, err
 		}
 		annotations = endpoint.Annotations
 	case resourcelock.ConfigMapsResourceLock:
-		configmap, err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
+		configmap := &corev1.ConfigMap{}
+		if err := client.Get(ctx, kutil.Key(namespace, name), configmap); err != nil {
 			return nil, err
 		}
 		annotations = configmap.Annotations
@@ -251,27 +280,8 @@ func ShouldObjectBeRemoved(obj metav1.Object, gracePeriod time.Duration) bool {
 	return deletionTimestamp.Time.Before(time.Now().Add(-gracePeriod))
 }
 
-// ComputeSecretCheckSum computes the sha256 checksum of secret data.
-func ComputeSecretCheckSum(m map[string][]byte) string {
-	var (
-		hash string
-		keys []string
-	)
-
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		hash += utils.ComputeSHA256Hex(m[k])
-	}
-
-	return utils.ComputeSHA256Hex([]byte(hash))
-}
-
 // DeleteHvpa delete all resources required for the HVPA in the given namespace.
-func DeleteHvpa(k8sClient kubernetes.Interface, namespace string) error {
+func DeleteHvpa(ctx context.Context, k8sClient kubernetes.Interface, namespace string) error {
 	if k8sClient == nil {
 		return fmt.Errorf("require kubernetes client")
 	}
@@ -280,39 +290,89 @@ func DeleteHvpa(k8sClient kubernetes.Interface, namespace string) error {
 		LabelSelector: fmt.Sprintf("%s=%s", v1beta1constants.GardenRole, GardenRoleHvpa),
 	}
 
-	// Delete all Crds with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+	// Delete all CRDs with label "gardener.cloud/role=hvpa"
+	// Workaround: Due to https://github.com/gardener/gardener/issues/2257, we first list the HVPA CRDs and then remove
+	// them one by one.
+	crdList, err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().List(ctx, listOptions)
+	if err != nil {
 		return err
+	}
+	for _, crd := range crdList.Items {
+		if err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crd.Name, metav1.DeleteOptions{}); client.IgnoreNotFound(err) != nil {
+			return err
+		}
 	}
 
 	// Delete all Deployments with label "gardener.cloud/role=hvpa"
 	deletePropagation := metav1.DeletePropagationForeground
-	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(
-		&metav1.DeleteOptions{
-			PropagationPolicy: &deletePropagation,
-		}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(ctx, metav1.DeleteOptions{PropagationPolicy: &deletePropagation}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ClusterRoles with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoles().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().RbacV1().ClusterRoles().DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ClusterRoleBindings with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoleBindings().DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().RbacV1().ClusterRoleBindings().DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ServiceAccounts with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().CoreV1().ServiceAccounts(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().CoreV1().ServiceAccounts(namespace).DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
+	return nil
+}
+
+// DeleteVpa delete all resources required for the VPA in the given namespace.
+func DeleteVpa(ctx context.Context, c client.Client, namespace string, isShoot bool) error {
+	resources := []runtime.Object{
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAAdmissionController, Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPARecommender, Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAUpdater, Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "vpa-webhook", Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAAdmissionController, Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPARecommender, Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAUpdater, Namespace: namespace}},
+	}
+
+	if isShoot {
+		resources = append(resources,
+			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-admission-controller", Namespace: namespace}},
+			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-recommender", Namespace: namespace}},
+			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: VPASecretName, Namespace: namespace}},
+			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-updater", Namespace: namespace}},
+			&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: "allow-kube-apiserver-to-vpa-admission-controller", Namespace: namespace}},
+		)
+	} else {
+		resources = append(resources,
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:actor"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:admission-controller"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:checkpoint-actor"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:metrics-reader"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:target-reader"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:evictioner"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:actor"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:admission-controller"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:checkpoint-actor"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:metrics-reader"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:target-reader"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:evictioner"}},
+			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-admission-controller", Namespace: namespace}},
+			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-recommender", Namespace: namespace}},
+			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-updater", Namespace: namespace}},
+			&admissionregistrationv1beta1.MutatingWebhookConfiguration{ObjectMeta: metav1.ObjectMeta{Name: "vpa-webhook-config-seed"}},
+		)
+	}
+
+	for _, resource := range resources {
+		if err := c.Delete(ctx, resource); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -322,7 +382,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		return errors.New("must provide non-nil kubernetes client to common.DeleteLoggingStack")
 	}
 
-	// Delete the resources below that match "garden.sapcloud.io/role=logging"
+	// Delete the resources below that match "gardener.cloud/role=logging"
 	lists := []runtime.Object{
 		&corev1.ConfigMapList{},
 		&batchv1beta1.CronJobList{},
@@ -332,6 +392,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		&rbacv1.RoleBindingList{},
 		&appsv1.DaemonSetList{},
 		&appsv1.DeploymentList{},
+		// TODO: Use autoscaling/v2beta2 for Kubernetes 1.19+ shoots once kubernetes-v1.19 golang dependencies were vendored.
 		&autoscalingv2beta1.HorizontalPodAutoscalerList{},
 		&extensionsv1beta1.IngressList{},
 		&corev1.SecretList{},
@@ -343,7 +404,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 	for _, list := range lists {
 		if err := k8sClient.List(ctx, list,
 			client.InNamespace(namespace),
-			client.MatchingLabels(map[string]string{v1beta1constants.DeprecatedGardenRole: v1beta1constants.GardenRoleLogging})); err != nil {
+			client.MatchingLabels{v1beta1constants.GardenRole: v1beta1constants.GardenRoleLogging}); err != nil {
 			return err
 		}
 
@@ -356,7 +417,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "elasticsearch-logging-elasticsearch-logging-0",
+			Name:      "loki-loki-0",
 			Namespace: namespace,
 		},
 	}
@@ -365,6 +426,47 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 	}
 
 	return nil
+}
+
+// GetContainerResourcesInStatefulSet  returns the containers resources in StatefulSet
+func GetContainerResourcesInStatefulSet(ctx context.Context, k8sClient client.Client, key client.ObjectKey) ([]*corev1.ResourceRequirements, error) {
+	statefulSet := &appsv1.StatefulSet{}
+	resourcesPerContainer := make([]*corev1.ResourceRequirements, 0)
+	if err := k8sClient.Get(ctx, key, statefulSet); client.IgnoreNotFound(err) != nil {
+		return nil, err
+	} else if !apierrors.IsNotFound(err) {
+		for _, container := range statefulSet.Spec.Template.Spec.Containers {
+			resourcesPerContainer = append(resourcesPerContainer, container.Resources.DeepCopy())
+		}
+		return resourcesPerContainer, nil
+	}
+
+	// Use the default resources defined in values file
+	return nil, nil
+}
+
+// DeleteReserveExcessCapacity deletes the deployment and priority class for excess capacity
+func DeleteReserveExcessCapacity(ctx context.Context, k8sClient client.Client) error {
+	if k8sClient == nil {
+		return errors.New("must provide non-nil kubernetes client to common.DeleteReserveExcessCapacity")
+	}
+
+	deploy := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "reserve-excess-capacity",
+			Namespace: v1beta1constants.GardenNamespace,
+		},
+	}
+	if err := k8sClient.Delete(ctx, deploy); client.IgnoreNotFound(err) != nil {
+		return err
+	}
+
+	priorityClass := &schedulingv1beta1.PriorityClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "gardener-reserve-excess-capacity",
+		},
+	}
+	return client.IgnoreNotFound(k8sClient.Delete(ctx, priorityClass))
 }
 
 // DeleteAlertmanager deletes all resources of the Alertmanager in a given namespace.
@@ -420,17 +522,11 @@ func DeleteAlertmanager(ctx context.Context, k8sClient client.Client, namespace 
 		},
 	}
 
-	for _, obj := range objs {
-		if err := k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptions...); client.IgnoreNotFound(err) != nil {
-			return err
-		}
-	}
-
-	return nil
+	return kutil.DeleteObjects(ctx, k8sClient, objs...)
 }
 
 // DeleteGrafanaByRole deletes the monitoring stack for the shoot owner.
-func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string) error {
+func DeleteGrafanaByRole(ctx context.Context, k8sClient kubernetes.Interface, namespace, role string) error {
 	if k8sClient == nil {
 		return fmt.Errorf("require kubernetes client")
 	}
@@ -441,29 +537,30 @@ func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string)
 
 	deletePropagation := metav1.DeletePropagationForeground
 	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(
-		&metav1.DeleteOptions{
+		ctx,
+		metav1.DeleteOptions{
 			PropagationPolicy: &deletePropagation,
 		}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().ExtensionsV1beta1().Ingresses(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().CoreV1().Secrets(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
-	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete(fmt.Sprintf("grafana-%s", role),
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete(
+		ctx, fmt.Sprintf("grafana-%s", role), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -475,16 +572,10 @@ func GetDomainInfoFromAnnotations(annotations map[string]string) (provider strin
 		return "", "", nil, nil, fmt.Errorf("domain secret has no annotations")
 	}
 
-	if providerAnnotation, ok := annotations[DNSProviderDeprecated]; ok {
-		provider = providerAnnotation
-	}
 	if providerAnnotation, ok := annotations[DNSProvider]; ok {
 		provider = providerAnnotation
 	}
 
-	if domainAnnotation, ok := annotations[DNSDomainDeprecated]; ok {
-		domain = domainAnnotation
-	}
 	if domainAnnotation, ok := annotations[DNSDomain]; ok {
 		domain = domainAnnotation
 	}
@@ -507,9 +598,9 @@ func GetDomainInfoFromAnnotations(annotations map[string]string) (provider strin
 }
 
 // CurrentReplicaCount returns the current replicaCount for the given deployment.
-func CurrentReplicaCount(client client.Client, namespace, deploymentName string) (int32, error) {
+func CurrentReplicaCount(ctx context.Context, client client.Client, namespace, deploymentName string) (int32, error) {
 	deployment := &appsv1.Deployment{}
-	if err := client.Get(context.TODO(), kutil.Key(namespace, deploymentName), deployment); err != nil && !apierrors.IsNotFound(err) {
+	if err := client.Get(ctx, kutil.Key(namespace, deploymentName), deployment); err != nil && !apierrors.IsNotFound(err) {
 		return 0, err
 	}
 	if deployment.Spec.Replicas == nil {
@@ -529,7 +620,7 @@ func ShouldIgnoreShoot(respectSyncPeriodOverwrite bool, shoot *gardencorev1beta1
 		return false
 	}
 
-	value, ok := GetShootIgnoreAnnotation(shoot.Annotations)
+	value, ok := shoot.Annotations[ShootIgnore]
 	if !ok {
 		return false
 	}
@@ -553,6 +644,23 @@ func IsNowInEffectiveShootMaintenanceTimeWindow(shoot *gardencorev1beta1.Shoot) 
 	return EffectiveShootMaintenanceTimeWindow(shoot).Contains(time.Now())
 }
 
+// LastReconciliationDuringThisTimeWindow returns true if <now> is contained in the given effective maintenance time
+// window of the shoot and if the <lastReconciliation> did not happen longer than the longest possible duration of a
+// maintenance time window.
+func LastReconciliationDuringThisTimeWindow(shoot *gardencorev1beta1.Shoot) bool {
+	if shoot.Status.LastOperation == nil {
+		return false
+	}
+
+	var (
+		timeWindow         = EffectiveShootMaintenanceTimeWindow(shoot)
+		now                = time.Now()
+		lastReconciliation = shoot.Status.LastOperation.LastUpdateTime.Time
+	)
+
+	return timeWindow.Contains(lastReconciliation) && now.UTC().Sub(lastReconciliation.UTC()) <= gardencorev1beta1.MaintenanceTimeWindowDurationMaximum
+}
+
 // IsObservedAtLatestGenerationAndSucceeded checks whether the Shoot's generation has changed or if the LastOperation status
 // is Succeeded.
 func IsObservedAtLatestGenerationAndSucceeded(shoot *gardencorev1beta1.Shoot) bool {
@@ -571,7 +679,7 @@ func SyncPeriodOfShoot(respectSyncPeriodOverwrite bool, defaultMinSyncPeriod tim
 		return defaultMinSyncPeriod
 	}
 
-	syncPeriodOverwrite, ok := GetShootSyncPeriodAnnotation(shoot.Annotations)
+	syncPeriodOverwrite, ok := shoot.Annotations[ShootSyncPeriod]
 	if !ok {
 		return defaultMinSyncPeriod
 	}
@@ -657,34 +765,10 @@ func GetConfirmationDeletionAnnotation(annotations map[string]string) (string, b
 	return getDeprecatedAnnotation(annotations, ConfirmationDeletion, ConfirmationDeletionDeprecated)
 }
 
-// GetShootExpirationTimestampAnnotation fetches the value for ShootExpirationTimestamp annotation.
-// If not present, it fallbacks to ShootExpirationTimestampDeprecated.
-func GetShootExpirationTimestampAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootExpirationTimestamp, ShootExpirationTimestampDeprecated)
-}
-
 // GetShootOperationAnnotation fetches the value for v1beta1constants.GardenerOperation annotation.
 // If not present, it fallbacks to ShootOperationDeprecated.
 func GetShootOperationAnnotation(annotations map[string]string) (string, bool) {
 	return getDeprecatedAnnotation(annotations, v1beta1constants.GardenerOperation, ShootOperationDeprecated)
-}
-
-// GetShootSyncPeriodAnnotation fetches the value for ShootSyncPeriod annotation.
-// If not present, it fallbacks to ShootSyncPeriodDeprecated.
-func GetShootSyncPeriodAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootSyncPeriod, ShootSyncPeriodDeprecated)
-}
-
-// GetShootIgnoreAnnotation fetches the value for ShootIgnore annotation.
-// If not present, it fallbacks to ShootIgnoreDeprecated.
-func GetShootIgnoreAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootIgnore, ShootIgnoreDeprecated)
-}
-
-// GetTasksAnnotation fetches the value for ShootTasks annotation.
-// If not present, it falls back to ShootTasksDeprecated.
-func GetTasksAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootTasks, ShootTasksDeprecated)
 }
 
 func getDeprecatedAnnotation(annotations map[string]string, annotationKey, deprecatedAnnotationKey string) (string, bool) {
@@ -716,7 +800,7 @@ func annotationRequiredError() error {
 
 // ConfirmDeletion adds Gardener's deletion confirmation annotation to the given object and sends an UPDATE request.
 func ConfirmDeletion(ctx context.Context, c client.Client, obj runtime.Object) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		key, err := client.ObjectKeyFromObject(obj)
 		if err != nil {
 			return err
@@ -736,6 +820,7 @@ func ConfirmDeletion(ctx context.Context, c client.Client, obj runtime.Object) e
 			return err
 		}
 		kutil.SetMetaDataAnnotation(acc, ConfirmationDeletion, "true")
+		kutil.SetMetaDataAnnotation(acc, v1beta1constants.GardenerTimestamp, TimeNow().UTC().String())
 
 		if reflect.DeepEqual(existing, obj) {
 			return nil
@@ -743,4 +828,32 @@ func ConfirmDeletion(ctx context.Context, c client.Client, obj runtime.Object) e
 
 		return c.Update(ctx, obj)
 	})
+}
+
+// ExtensionID returns an identifier for the given extension kind/type.
+func ExtensionID(extensionKind, extensionType string) string {
+	return fmt.Sprintf("%s/%s", extensionKind, extensionType)
+}
+
+// DeleteDeploymentsHavingDeprecatedRoleLabelKey deletes the Deployments with the passed object keys if
+// the corresponding Deployment .spec.selector contains the deprecated "garden.sapcloud.io/role" label key.
+func DeleteDeploymentsHavingDeprecatedRoleLabelKey(ctx context.Context, c client.Client, keys []client.ObjectKey) error {
+	for _, key := range keys {
+		deployment := &appsv1.Deployment{}
+		if err := c.Get(ctx, key, deployment); err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+
+			return err
+		}
+
+		if _, ok := deployment.Spec.Selector.MatchLabels[v1beta1constants.DeprecatedGardenRole]; ok {
+			if err := c.Delete(ctx, deployment); client.IgnoreNotFound(err) != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

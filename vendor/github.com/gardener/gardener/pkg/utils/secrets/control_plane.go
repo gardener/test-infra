@@ -18,12 +18,21 @@ import (
 	"fmt"
 
 	"github.com/gardener/gardener/pkg/utils"
+	"github.com/gardener/gardener/pkg/utils/infodata"
 )
 
 const (
 	// DataKeyKubeconfig is the key in a secret data holding the kubeconfig.
 	DataKeyKubeconfig = "kubeconfig"
 )
+
+// ControlPlaneSecretDataKeyCertificatePEM returns the data key inside a Secret of type ControlPlane whose value
+// contains the certificate PEM.
+func ControlPlaneSecretDataKeyCertificatePEM(name string) string { return fmt.Sprintf("%s.crt", name) }
+
+// ControlPlaneSecretDataKeyPrivateKey returns the data key inside a Secret of type ControlPlane whose value
+// contains the private key PEM.
+func ControlPlaneSecretDataKeyPrivateKey(name string) string { return fmt.Sprintf("%s.key", name) }
 
 // ControlPlaneSecretConfig is a struct which inherits from CertificateSecretConfig and is extended with a couple of additional
 // properties. A control plane secret will always contain a server/client certificate and optionally a kubeconfig.
@@ -58,8 +67,68 @@ func (s *ControlPlaneSecretConfig) GetName() string {
 }
 
 // Generate implements ConfigInterface.
-func (s *ControlPlaneSecretConfig) Generate() (Interface, error) {
+func (s *ControlPlaneSecretConfig) Generate() (DataInterface, error) {
 	return s.GenerateControlPlane()
+}
+
+// GenerateInfoData implements ConfigInterface
+func (s *ControlPlaneSecretConfig) GenerateInfoData() (infodata.InfoData, error) {
+	cert, err := s.CertificateSecretConfig.GenerateCertificate()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cert.PrivateKeyPEM) == 0 && len(cert.CertificatePEM) == 0 {
+		return infodata.EmptyInfoData, nil
+	}
+
+	return NewCertificateInfoData(cert.PrivateKeyPEM, cert.CertificatePEM), nil
+}
+
+// GenerateFromInfoData implements ConfigInterface
+func (s *ControlPlaneSecretConfig) GenerateFromInfoData(infoData infodata.InfoData) (DataInterface, error) {
+	data, ok := infoData.(*CertificateInfoData)
+	if !ok {
+		return nil, fmt.Errorf("could not convert InfoData entry %s to CertificateInfoData", s.Name)
+	}
+
+	certificate := &Certificate{
+		Name: s.Name,
+		CA:   s.SigningCA,
+
+		PrivateKeyPEM:  data.PrivateKey,
+		CertificatePEM: data.Certificate,
+	}
+
+	controlPlane := &ControlPlane{
+		Name: s.Name,
+
+		Certificate: certificate,
+		BasicAuth:   s.BasicAuth,
+		Token:       s.Token,
+	}
+
+	if s.KubeConfigRequest != nil {
+		kubeconfig, err := generateKubeconfig(s, certificate)
+		if err != nil {
+			return nil, err
+		}
+		controlPlane.Kubeconfig = kubeconfig
+	}
+
+	return controlPlane, nil
+}
+
+// LoadFromSecretData implements infodata.Loader
+func (s *ControlPlaneSecretConfig) LoadFromSecretData(secretData map[string][]byte) (infodata.InfoData, error) {
+	privateKeyPEM := secretData[ControlPlaneSecretDataKeyPrivateKey(s.Name)]
+	certificatePEM := secretData[ControlPlaneSecretDataKeyCertificatePEM(s.Name)]
+
+	if len(privateKeyPEM) == 0 && len(certificatePEM) == 0 {
+		return infodata.EmptyInfoData, nil
+	}
+
+	return NewCertificateInfoData(privateKeyPEM, certificatePEM), nil
 }
 
 // GenerateControlPlane computes a secret for a control plane component of the clusters managed by Gardener.
@@ -96,8 +165,8 @@ func (c *ControlPlane) SecretData() map[string][]byte {
 	}
 
 	if c.Certificate.CertificatePEM != nil && c.Certificate.PrivateKeyPEM != nil {
-		data[fmt.Sprintf("%s.key", c.Name)] = c.Certificate.PrivateKeyPEM
-		data[fmt.Sprintf("%s.crt", c.Name)] = c.Certificate.CertificatePEM
+		data[ControlPlaneSecretDataKeyPrivateKey(c.Name)] = c.Certificate.PrivateKeyPEM
+		data[ControlPlaneSecretDataKeyCertificatePEM(c.Name)] = c.Certificate.CertificatePEM
 	}
 
 	if c.BasicAuth != nil {

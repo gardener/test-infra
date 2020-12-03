@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/gardener/pkg/client/kubernetes/utils"
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,50 +31,19 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	componentbaseconfig "k8s.io/component-base/config"
 	apiserviceclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	// UseCachedRuntimeClients is a flag for enabling cached controller-runtime clients (defaults to false).
+	// If enabled, the client returned by Interface.Client() will be backed by a cache, otherwise it will be the same
+	// client that will be returned by Interface.DirectClient().
+	UseCachedRuntimeClients = false
 )
 
 // KubeConfig is the key to the kubeconfig
 const KubeConfig = "kubeconfig"
-
-// NewRuntimeClientFromSecret creates a new controller runtime Client struct for a given secret.
-func NewRuntimeClientFromSecret(secret *corev1.Secret, fns ...ConfigFunc) (client.Client, error) {
-	if kubeconfig, ok := secret.Data[KubeConfig]; ok {
-		return NewRuntimeClientFromBytes(kubeconfig, fns...)
-	}
-	return nil, errors.New("no valid kubeconfig found")
-}
-
-// NewRuntimeClientFromBytes creates a new controller runtime Client struct for a given kubeconfig byte slice.
-func NewRuntimeClientFromBytes(kubeconfig []byte, fns ...ConfigFunc) (client.Client, error) {
-	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := validateClientConfig(clientConfig); err != nil {
-		return nil, err
-	}
-
-	config, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	opts := append([]ConfigFunc{WithRESTConfig(config)}, fns...)
-	return NewRuntimeClientForConfig(opts...)
-}
-
-// NewRuntimeClientForConfig returns a new controller runtime client from a config.
-func NewRuntimeClientForConfig(fns ...ConfigFunc) (client.Client, error) {
-	conf := &config{}
-	for _, f := range fns {
-		if err := f(conf); err != nil {
-			return nil, err
-		}
-	}
-	return client.New(conf.restConfig, conf.clientOptions)
-}
 
 // NewClientFromFile creates a new Client struct for a given kubeconfig. The kubeconfig will be
 // read from the filesystem at location <kubeconfigPath>. If given, <masterURL> overrides the
@@ -123,9 +92,9 @@ func NewClientFromBytes(kubeconfig []byte, fns ...ConfigFunc) (Interface, error)
 // Secret in an existing Kubernetes cluster. This cluster will be accessed by the <k8sClient>. It will
 // read the Secret <secretName> in <namespace>. The Secret must contain a field "kubeconfig" which will
 // be used.
-func NewClientFromSecret(k8sClient Interface, namespace, secretName string, fns ...ConfigFunc) (Interface, error) {
+func NewClientFromSecret(ctx context.Context, c client.Client, namespace, secretName string, fns ...ConfigFunc) (Interface, error) {
 	secret := &corev1.Secret{}
-	if err := k8sClient.Client().Get(context.TODO(), kutil.Key(namespace, secretName), secret); err != nil {
+	if err := c.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
 		return nil, err
 	}
 	return NewClientFromSecretObject(secret, fns...)
@@ -135,6 +104,10 @@ func NewClientFromSecret(k8sClient Interface, namespace, secretName string, fns 
 // contain a field "kubeconfig" which will be used.
 func NewClientFromSecretObject(secret *corev1.Secret, fns ...ConfigFunc) (Interface, error) {
 	if kubeconfig, ok := secret.Data[KubeConfig]; ok {
+		if len(kubeconfig) == 0 {
+			return nil, errors.New("the secret's field 'kubeconfig' is empty")
+		}
+
 		return NewClientFromBytes(kubeconfig, fns...)
 	}
 	return nil, errors.New("the secret does not contain a field with name 'kubeconfig'")
@@ -162,18 +135,9 @@ func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.Client
 			return nil, err
 		}
 	} else {
-		clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+		restConfig, err = RESTConfigFromKubeconfig(kubeconfig)
 		if err != nil {
-			return nil, err
-		}
-
-		if err := validateClientConfig(clientConfig); err != nil {
-			return nil, err
-		}
-
-		restConfig, err = clientConfig.ClientConfig()
-		if err != nil {
-			return nil, err
+			return restConfig, err
 		}
 	}
 
@@ -184,6 +148,24 @@ func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.Client
 		restConfig.ContentType = cfg.ContentType
 	}
 
+	return restConfig, nil
+}
+
+// RESTConfigFromKubeconfig returns a rest.Config from the bytes of a kubeconfig
+func RESTConfigFromKubeconfig(kubeconfig []byte) (*rest.Config, error) {
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateClientConfig(clientConfig); err != nil {
+		return nil, err
+	}
+
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
 	return restConfig, nil
 }
 
@@ -229,6 +211,7 @@ var supportedKubernetesVersions = []string{
 	"1.16",
 	"1.17",
 	"1.18",
+	"1.19",
 }
 
 func checkIfSupportedKubernetesVersion(gitVersion string) error {
@@ -247,7 +230,7 @@ func checkIfSupportedKubernetesVersion(gitVersion string) error {
 
 // NewWithConfig returns a new Kubernetes base client.
 func NewWithConfig(fns ...ConfigFunc) (Interface, error) {
-	conf := &config{}
+	conf := &Config{}
 
 	for _, f := range fns {
 		if err := f(conf); err != nil {
@@ -255,18 +238,43 @@ func NewWithConfig(fns ...ConfigFunc) (Interface, error) {
 		}
 	}
 
-	return new(conf)
+	return newClientSet(conf)
 }
 
-func new(conf *config) (Interface, error) {
-	c, err := client.New(conf.restConfig, conf.clientOptions)
+func newClientSet(conf *Config) (Interface, error) {
+	if err := setConfigDefaults(conf); err != nil {
+		return nil, err
+	}
+
+	runtimeCache, err := NewRuntimeCache(conf.restConfig, cache.Options{
+		Scheme: conf.clientOptions.Scheme,
+		Mapper: conf.clientOptions.Mapper,
+		Resync: conf.cacheResync,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	applier, err := NewApplierForConfig(conf.restConfig)
+	directClient, err := client.New(conf.restConfig, conf.clientOptions)
 	if err != nil {
 		return nil, err
+	}
+
+	var runtimeClient client.Client
+	if UseCachedRuntimeClients && !conf.disableCachedClient {
+		if cacheOpts := conf.cacheReaderOptions; cacheOpts != nil {
+			runtimeClient, err = utils.NewClientWithSpecificallyCachedReader(runtimeCache, conf.restConfig, conf.clientOptions, cacheOpts.readSpecifiedFromCache, cacheOpts.specificallyCachedObjects...)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			runtimeClient, err = newRuntimeClientWithCache(conf.restConfig, conf.clientOptions, runtimeCache)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		runtimeClient = directClient
 	}
 
 	kubernetes, err := kubernetesclientset.NewForConfig(conf.restConfig)
@@ -289,14 +297,16 @@ func new(conf *config) (Interface, error) {
 		return nil, err
 	}
 
-	clientSet := &Clientset{
+	cs := &clientSet{
 		config:     conf.restConfig,
 		restMapper: conf.clientOptions.Mapper,
 		restClient: kubernetes.Discovery().RESTClient(),
 
-		applier: applier,
+		applier: NewApplier(runtimeClient, conf.clientOptions.Mapper),
 
-		client: c,
+		client:       runtimeClient,
+		directClient: directClient,
+		cache:        runtimeCache,
 
 		kubernetes:      kubernetes,
 		gardenCore:      gardenCore,
@@ -304,15 +314,13 @@ func new(conf *config) (Interface, error) {
 		apiextension:    apiExtension,
 	}
 
-	serverVersion, err := clientSet.kubernetes.Discovery().ServerVersion()
-	if err != nil {
-		return nil, err
+	if _, err := cs.DiscoverVersion(); err != nil {
+		return nil, fmt.Errorf("error discovering kubernetes version: %w", err)
 	}
 
-	if err := checkIfSupportedKubernetesVersion(serverVersion.GitVersion); err != nil {
-		return nil, err
-	}
-	clientSet.version = serverVersion.GitVersion
+	return cs, nil
+}
 
-	return clientSet, nil
+func setConfigDefaults(conf *Config) error {
+	return setClientOptionsDefaults(conf.restConfig, &conf.clientOptions)
 }

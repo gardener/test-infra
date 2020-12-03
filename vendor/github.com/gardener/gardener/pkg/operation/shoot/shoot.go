@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,13 +28,17 @@ import (
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardencorelisters "github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1"
+	"github.com/gardener/gardener/pkg/features"
+	gardenletfeatures "github.com/gardener/gardener/pkg/gardenlet/features"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/operation/garden"
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	versionutils "github.com/gardener/gardener/pkg/utils/version"
 
 	"github.com/Masterminds/semver"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -156,6 +161,14 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 	shoot.ExternalClusterDomain = ConstructExternalClusterDomain(shootObject)
 	shoot.IgnoreAlerts = gardencorev1beta1helper.ShootIgnoresAlerts(shootObject)
 	shoot.WantsAlertmanager = !shoot.IgnoreAlerts && shootObject.Spec.Monitoring != nil && shootObject.Spec.Monitoring.Alerting != nil && len(shootObject.Spec.Monitoring.Alerting.EmailReceivers) > 0
+	shoot.WantsVerticalPodAutoscaler = gardencorev1beta1helper.ShootWantsVerticalPodAutoscaler(shootObject)
+	shoot.Components = &Components{
+		Extensions: &Extensions{
+			DNS: &DNS{},
+		},
+		ControlPlane:     &ControlPlane{},
+		SystemComponents: &SystemComponents{},
+	}
 
 	extensions, err := calculateExtensions(c, shootObject, shoot.SeedNamespace)
 	if err != nil {
@@ -171,11 +184,28 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 	shoot.ExternalDomain = externalDomain
 
 	// Store the Kubernetes version in the format <major>.<minor> on the Shoot object.
-	v, err := semver.NewVersion(shootObject.Spec.Kubernetes.Version)
+	kubernetesVersion, err := semver.NewVersion(shootObject.Spec.Kubernetes.Version)
 	if err != nil {
 		return nil, err
 	}
-	shoot.KubernetesMajorMinorVersion = fmt.Sprintf("%d.%d", v.Major(), v.Minor())
+	shoot.KubernetesMajorMinorVersion = fmt.Sprintf("%d.%d", kubernetesVersion.Major(), kubernetesVersion.Minor())
+	shoot.KubernetesVersion = kubernetesVersion
+
+	gardenerVersion, err := semver.NewVersion(shootObject.Status.Gardener.Version)
+	if err != nil {
+		return nil, err
+	}
+	shoot.GardenerVersion = gardenerVersion
+
+	kubernetesVersionGeq118, err := versionutils.CheckVersionMeetsConstraint(shoot.KubernetesMajorMinorVersion, ">= 1.18")
+	if err != nil {
+		return nil, err
+	}
+
+	shoot.KonnectivityTunnelEnabled = gardenletfeatures.FeatureGate.Enabled(features.KonnectivityTunnel) && kubernetesVersionGeq118
+	if konnectivityTunnelEnabled, err := strconv.ParseBool(shoot.Info.Annotations[v1beta1constants.AnnotationShootKonnectivityTunnel]); err == nil && kubernetesVersionGeq118 {
+		shoot.KonnectivityTunnelEnabled = konnectivityTunnelEnabled
+	}
 
 	needsClusterAutoscaler, err := gardencorev1beta1helper.ShootWantsClusterAutoscaler(shootObject)
 	if err != nil {
@@ -188,6 +218,9 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 		return nil, err
 	}
 	shoot.Networks = networks
+
+	shoot.ResourceRefs = getResourceRefs(shootObject)
+	shoot.NodeLocalDNSEnabled = gardenletfeatures.FeatureGate.Enabled(features.NodeLocalDNS)
 
 	return shoot, nil
 }
@@ -272,7 +305,7 @@ func (s *Shoot) ComputeCloudConfigSecretName(workerName string) string {
 }
 
 // GetReplicas returns the given <wokenUp> number if the shoot is not hibernated, or zero otherwise.
-func (s *Shoot) GetReplicas(wokenUp int) int {
+func (s *Shoot) GetReplicas(wokenUp int32) int32 {
 	if s.HibernationEnabled {
 		return 0
 	}
@@ -412,12 +445,15 @@ func ConstructExternalDomain(ctx context.Context, client client.Client, shoot *g
 // for a successful reconciliation of this extension resource.
 const ExtensionDefaultTimeout = 3 * time.Minute
 
-// MergeExtensions merges the given controller registrations with the given extensions, expecting that each type in extensions is also represented in the registration.
+// MergeExtensions merges the given controller registrations with the given extensions, expecting that each type in
+// extensions is also represented in the registration. It ignores all extensions that were explicitly disabled in the
+// shoot spec.
 func MergeExtensions(registrations []gardencorev1beta1.ControllerRegistration, extensions []gardencorev1beta1.Extension, namespace string) (map[string]Extension, error) {
 	var (
 		typeToExtension    = make(map[string]Extension)
 		requiredExtensions = make(map[string]Extension)
 	)
+
 	// Extensions enabled by default for all Shoot clusters.
 	for _, reg := range registrations {
 		for _, res := range reg.Spec.Resources {
@@ -453,12 +489,13 @@ func MergeExtensions(registrations []gardencorev1beta1.ControllerRegistration, e
 
 	// Extensions defined in Shoot resource.
 	for _, extension := range extensions {
-		obj, ok := typeToExtension[extension.Type]
-		if ok {
-			if extension.ProviderConfig != nil {
-				providerConfig := extension.ProviderConfig.RawExtension
-				obj.Spec.ProviderConfig = &providerConfig
+		if obj, ok := typeToExtension[extension.Type]; ok {
+			if utils.IsTrue(extension.Disabled) {
+				delete(requiredExtensions, extension.Type)
+				continue
 			}
+
+			obj.Spec.ProviderConfig = extension.ProviderConfig
 			requiredExtensions[extension.Type] = obj
 			continue
 		}
@@ -512,59 +549,76 @@ func ComputeRequiredExtensions(shoot *gardencorev1beta1.Shoot, seed *gardencorev
 	requiredExtensions := sets.NewString()
 
 	if seed.Spec.Backup != nil {
-		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.BackupBucketResource, seed.Spec.Backup.Provider))
-		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.BackupEntryResource, seed.Spec.Backup.Provider))
+		requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.BackupBucketResource, seed.Spec.Backup.Provider))
+		requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.BackupEntryResource, seed.Spec.Backup.Provider))
 	}
 	// Hint: This is actually a temporary work-around to request the control plane extension of the seed provider type as
 	// it might come with webhooks that are configuring the exposure of shoot control planes. The ControllerRegistration resource
 	// does not reflect this today.
-	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ControlPlaneResource, seed.Spec.Provider.Type))
+	requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.ControlPlaneResource, seed.Spec.Provider.Type))
 
-	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ControlPlaneResource, shoot.Spec.Provider.Type))
-	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.InfrastructureResource, shoot.Spec.Provider.Type))
-	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.NetworkResource, shoot.Spec.Networking.Type))
-	requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.WorkerResource, shoot.Spec.Provider.Type))
+	requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.ControlPlaneResource, shoot.Spec.Provider.Type))
+	requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.InfrastructureResource, shoot.Spec.Provider.Type))
+	requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.NetworkResource, shoot.Spec.Networking.Type))
+	requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.WorkerResource, shoot.Spec.Provider.Type))
 
+	var disabledExtensions = sets.NewString()
 	for _, extension := range shoot.Spec.Extensions {
-		requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ExtensionResource, extension.Type))
+		id := common.ExtensionID(extensionsv1alpha1.ExtensionResource, extension.Type)
+
+		if utils.IsTrue(extension.Disabled) {
+			disabledExtensions.Insert(id)
+		} else {
+			requiredExtensions.Insert(id)
+		}
 	}
 
 	for _, pool := range shoot.Spec.Provider.Workers {
 		if pool.Machine.Image != nil {
-			requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.OperatingSystemConfigResource, pool.Machine.Image.Name))
+			requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.OperatingSystemConfigResource, pool.Machine.Image.Name))
 		}
 		if pool.CRI != nil {
 			for _, cr := range pool.CRI.ContainerRuntimes {
-				requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ContainerRuntimeResource, cr.Type))
+				requiredExtensions.Insert(common.ExtensionID(extensionsv1alpha1.ContainerRuntimeResource, cr.Type))
 			}
 		}
 	}
 
-	if !gardencorev1beta1helper.TaintsHave(seed.Spec.Taints, gardencorev1beta1.SeedTaintDisableDNS) {
+	if seed.Spec.Settings.ShootDNS.Enabled {
 		if shoot.Spec.DNS != nil {
 			for _, provider := range shoot.Spec.DNS.Providers {
 				if provider.Type != nil && *provider.Type != core.DNSUnmanaged {
-					requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, *provider.Type))
+					requiredExtensions.Insert(common.ExtensionID(dnsv1alpha1.DNSProviderKind, *provider.Type))
 				}
 			}
 		}
 
 		if internalDomain != nil && internalDomain.Provider != core.DNSUnmanaged {
-			requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, internalDomain.Provider))
+			requiredExtensions.Insert(common.ExtensionID(dnsv1alpha1.DNSProviderKind, internalDomain.Provider))
 		}
 
 		if externalDomain != nil && externalDomain.Provider != core.DNSUnmanaged {
-			requiredExtensions.Insert(fmt.Sprintf("%s/%s", dnsv1alpha1.DNSProviderKind, externalDomain.Provider))
+			requiredExtensions.Insert(common.ExtensionID(dnsv1alpha1.DNSProviderKind, externalDomain.Provider))
 		}
 	}
 
 	for _, controllerRegistration := range controllerRegistrationList {
 		for _, resource := range controllerRegistration.Spec.Resources {
-			if resource.Kind == extensionsv1alpha1.ExtensionResource && resource.GloballyEnabled != nil && *resource.GloballyEnabled {
-				requiredExtensions.Insert(fmt.Sprintf("%s/%s", extensionsv1alpha1.ExtensionResource, resource.Type))
+			id := common.ExtensionID(extensionsv1alpha1.ExtensionResource, resource.Type)
+			if resource.Kind == extensionsv1alpha1.ExtensionResource && resource.GloballyEnabled != nil && *resource.GloballyEnabled && !disabledExtensions.Has(id) {
+				requiredExtensions.Insert(id)
 			}
 		}
 	}
 
 	return requiredExtensions
+}
+
+// getResourceRefs returns resource references from the Shoot spec as map[string]autoscalingv1.CrossVersionObjectReference.
+func getResourceRefs(shoot *gardencorev1beta1.Shoot) map[string]autoscalingv1.CrossVersionObjectReference {
+	resourceRefs := make(map[string]autoscalingv1.CrossVersionObjectReference)
+	for _, r := range shoot.Spec.Resources {
+		resourceRefs[r.Name] = r.ResourceRef
+	}
+	return resourceRefs
 }

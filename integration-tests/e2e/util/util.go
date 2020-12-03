@@ -7,7 +7,7 @@ import (
 	"fmt"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/gardener/test/integration/framework"
+	"github.com/gardener/gardener/test/framework"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

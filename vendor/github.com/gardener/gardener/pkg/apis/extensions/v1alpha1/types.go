@@ -16,8 +16,11 @@ package v1alpha1
 
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // Status is the status of an Object.
@@ -39,6 +42,13 @@ type Status interface {
 	GetLastError() *gardencorev1beta1.LastError
 	// GetState retrieves the State of the extension
 	GetState() *runtime.RawExtension
+	// SetState sets the State of the extension
+	SetState(state *runtime.RawExtension)
+	// GetResources retrieves the list of named resource references referred to in the State by their names.
+	GetResources() []gardencorev1beta1.NamedResourceReference
+	// SetResources sets a list of named resource references in the Status, that are referred by
+	// their names in the State.
+	SetResources(namedResourceReferences []gardencorev1beta1.NamedResourceReference)
 }
 
 // Spec is the spec section of an Object.
@@ -61,3 +71,17 @@ type Object interface {
 	// GetExtensionStatus retrieves the object's status.
 	GetExtensionStatus() Status
 }
+
+// ExtensionKinds contains all supported extension kinds.
+var ExtensionKinds = sets.NewString(
+	BackupBucketResource,
+	BackupEntryResource,
+	ContainerRuntimeResource,
+	ControlPlaneResource,
+	dnsv1alpha1.DNSProviderKind,
+	ExtensionResource,
+	InfrastructureResource,
+	NetworkResource,
+	OperatingSystemConfigResource,
+	WorkerResource,
+)

@@ -17,9 +17,11 @@ package botanist
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	v1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/utils/secrets"
@@ -39,7 +41,9 @@ const WorkerDefaultTimeout = 10 * time.Minute
 // cluster. Gardener waits until an external controller did reconcile the resource successfully.
 func (b *Botanist) DeployWorker(ctx context.Context) error {
 	var (
-		worker = &extensionsv1alpha1.Worker{
+		operation    = v1beta1constants.GardenerOperationReconcile
+		restorePhase = b.isRestorePhase()
+		worker       = &extensionsv1alpha1.Worker{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      b.Shoot.Info.Name,
 				Namespace: b.Shoot.SeedNamespace,
@@ -65,10 +69,10 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 			}
 		}
 
-		var dataVolumes []extensionsv1alpha1.Volume
+		var dataVolumes []extensionsv1alpha1.DataVolume
 		if len(workerPool.DataVolumes) > 0 {
 			for _, dataVolume := range workerPool.DataVolumes {
-				dataVolumes = append(dataVolumes, extensionsv1alpha1.Volume{
+				dataVolumes = append(dataVolumes, extensionsv1alpha1.DataVolume{
 					Name:      dataVolume.Name,
 					Type:      dataVolume.Type,
 					Size:      dataVolume.VolumeSize,
@@ -87,6 +91,10 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 			workerPool.Labels["node-role.kubernetes.io/node"] = ""
 		} else {
 			workerPool.Labels["node.kubernetes.io/role"] = "node"
+		}
+
+		if v1beta1helper.SystemComponentsAllowed(&workerPool) {
+			workerPool.Labels[v1beta1constants.LabelWorkerPoolSystemComponents] = strconv.FormatBool(workerPool.SystemComponents.Allow)
 		}
 
 		// worker pool name labels
@@ -125,18 +133,23 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 				Name:    workerPool.Machine.Image.Name,
 				Version: *workerPool.Machine.Image.Version,
 			},
-			ProviderConfig:        pConfig,
-			UserData:              []byte(b.Shoot.OperatingSystemConfigsMap[workerPool.Name].Downloader.Data.Content),
-			Volume:                volume,
-			DataVolumes:           dataVolumes,
-			KubeletDataVolumeName: workerPool.KubeletDataVolumeName,
-			Zones:                 workerPool.Zones,
+			ProviderConfig:                   pConfig,
+			UserData:                         []byte(b.Shoot.OperatingSystemConfigsMap[workerPool.Name].Downloader.Data.Content),
+			Volume:                           volume,
+			DataVolumes:                      dataVolumes,
+			KubeletDataVolumeName:            workerPool.KubeletDataVolumeName,
+			Zones:                            workerPool.Zones,
+			MachineControllerManagerSettings: workerPool.MachineControllerManagerSettings,
 		})
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), worker, func() error {
-		metav1.SetMetaDataAnnotation(&worker.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
+	if restorePhase {
+		operation = v1beta1constants.GardenerOperationWaitForState
+	}
 
+	_, err = controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), worker, func() error {
+		metav1.SetMetaDataAnnotation(&worker.ObjectMeta, v1beta1constants.GardenerOperation, operation)
+		metav1.SetMetaDataAnnotation(&worker.ObjectMeta, v1beta1constants.GardenerTimestamp, time.Now().UTC().String())
 		worker.Spec = extensionsv1alpha1.WorkerSpec{
 			DefaultSpec: extensionsv1alpha1.DefaultSpec{
 				Type: b.Shoot.Info.Spec.Provider.Type,
@@ -154,7 +167,15 @@ func (b *Botanist) DeployWorker(ctx context.Context) error {
 		}
 		return nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	if restorePhase {
+		return b.restoreExtensionObject(ctx, worker, extensionsv1alpha1.WorkerResource)
+	}
+
+	return nil
 }
 
 // DestroyWorker deletes the `Worker` extension resource in the shoot namespace in the seed cluster,
@@ -173,13 +194,14 @@ func (b *Botanist) DestroyWorker(ctx context.Context) error {
 func (b *Botanist) WaitUntilWorkerReady(ctx context.Context) error {
 	return common.WaitUntilExtensionCRReady(
 		ctx,
-		b.K8sSeedClient.Client(),
+		b.K8sSeedClient.DirectClient(),
 		b.Logger,
 		func() runtime.Object { return &extensionsv1alpha1.Worker{} },
 		"Worker",
 		b.Shoot.SeedNamespace,
 		b.Shoot.Info.Name,
 		DefaultInterval,
+		DefaultSevereThreshold,
 		WorkerDefaultTimeout,
 		func(obj runtime.Object) error {
 			worker, ok := obj.(*extensionsv1alpha1.Worker)
@@ -197,7 +219,7 @@ func (b *Botanist) WaitUntilWorkerReady(ctx context.Context) error {
 func (b *Botanist) WaitUntilWorkerDeleted(ctx context.Context) error {
 	return common.WaitUntilExtensionCRDeleted(
 		ctx,
-		b.K8sSeedClient.Client(),
+		b.K8sSeedClient.DirectClient(),
 		b.Logger,
 		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Worker{} },
 		"Worker",

@@ -16,21 +16,18 @@ package operation
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"net/http"
 
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/client/kubernetes/clientmap"
 	"github.com/gardener/gardener/pkg/gardenlet/apis/config"
 	"github.com/gardener/gardener/pkg/operation/garden"
 	"github.com/gardener/gardener/pkg/operation/seed"
 	"github.com/gardener/gardener/pkg/operation/shoot"
 	"github.com/gardener/gardener/pkg/utils/imagevector"
 
-	prometheusapi "github.com/prometheus/client_golang/api"
 	prometheusclient "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -39,14 +36,16 @@ import (
 
 // Builder is an object that builds Operation objects.
 type Builder struct {
-	configFunc       func() (*config.GardenletConfiguration, error)
-	gardenFunc       func(map[string]*corev1.Secret) (*garden.Garden, error)
-	gardenerInfoFunc func() (*gardencorev1beta1.Gardener, error)
-	imageVectorFunc  func() (imagevector.ImageVector, error)
-	loggerFunc       func() (*logrus.Entry, error)
-	secretsFunc      func() (map[string]*corev1.Secret, error)
-	seedFunc         func(context.Context, client.Client) (*seed.Seed, error)
-	shootFunc        func(context.Context, client.Client, *garden.Garden, *seed.Seed) (*shoot.Shoot, error)
+	configFunc                func() (*config.GardenletConfiguration, error)
+	gardenFunc                func(map[string]*corev1.Secret) (*garden.Garden, error)
+	gardenerInfoFunc          func() (*gardencorev1beta1.Gardener, error)
+	gardenClusterIdentityFunc func() (string, error)
+	imageVectorFunc           func() (imagevector.ImageVector, error)
+	loggerFunc                func() (*logrus.Entry, error)
+	secretsFunc               func() (map[string]*corev1.Secret, error)
+	seedFunc                  func(context.Context) (*seed.Seed, error)
+	shootFunc                 func(context.Context, client.Client, *garden.Garden, *seed.Seed) (*shoot.Shoot, error)
+	chartsRootPathFunc        func() string
 }
 
 // Operation contains all data required to perform an operation on a Shoot cluster.
@@ -54,6 +53,7 @@ type Operation struct {
 	Config                    *config.GardenletConfiguration
 	Logger                    *logrus.Entry
 	GardenerInfo              *gardencorev1beta1.Gardener
+	GardenClusterIdentity     string
 	Secrets                   map[string]*corev1.Secret
 	CheckSums                 map[string]string
 	ImageVector               imagevector.ImageVector
@@ -62,27 +62,17 @@ type Operation struct {
 	Shoot                     *shoot.Shoot
 	ShootState                *gardencorev1alpha1.ShootState
 	ShootedSeed               *gardencorev1beta1helper.ShootedSeed
+	ClientMap                 clientmap.ClientMap
 	K8sGardenClient           kubernetes.Interface
 	K8sSeedClient             kubernetes.Interface
 	K8sShootClient            kubernetes.Interface
-	ChartApplierSeed          kubernetes.ChartApplier
-	ChartApplierShoot         kubernetes.ChartApplier
+	ChartsRootPath            string
 	APIServerAddress          string
+	APIServerClusterIP        string
 	APIServerHealthCheckToken string
 	SeedNamespaceObject       *corev1.Namespace
 	MonitoringClient          prometheusclient.API
 
 	// ControlPlaneWildcardCert is a wildcard tls certificate which is issued for the seed's ingress domain.
 	ControlPlaneWildcardCert *corev1.Secret
-}
-
-type prometheusRoundTripper struct {
-	authHeader string
-	ca         *x509.CertPool
-}
-
-func (r prometheusRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", r.authHeader)
-	prometheusapi.DefaultRoundTripper.(*http.Transport).TLSClientConfig = &tls.Config{RootCAs: r.ca}
-	return prometheusapi.DefaultRoundTripper.RoundTrip(req)
 }

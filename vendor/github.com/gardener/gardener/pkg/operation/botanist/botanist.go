@@ -19,23 +19,39 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
+	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/operation"
+	"github.com/gardener/gardener/pkg/operation/botanist/clusteridentity"
+	"github.com/gardener/gardener/pkg/operation/botanist/controlplane/etcd"
 	"github.com/gardener/gardener/pkg/operation/common"
 	shootpkg "github.com/gardener/gardener/pkg/operation/shoot"
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	// DefaultInterval is the default interval for retry operations.
+	DefaultInterval = 5 * time.Second
+	// DefaultSevereThreshold  is the default threshold until an error reported by another component is treated as 'severe'.
+	DefaultSevereThreshold = 30 * time.Second
 )
 
 // New takes an operation object <o> and creates a new Botanist object. It checks whether the given Shoot DNS
 // domain is covered by a default domain, and if so, it sets the <DefaultDomainSecret> attribute on the Botanist
 // object.
 func New(o *operation.Operation) (*Botanist, error) {
-	b := &Botanist{
-		Operation: o,
-	}
+	var (
+		b   = &Botanist{Operation: o}
+		err error
+		ctx = context.TODO()
+	)
 
 	// Determine all default domain secrets and check whether the used Shoot domain matches a default domain.
 	if o.Shoot != nil && o.Shoot.Info.Spec.DNS != nil && o.Shoot.Info.Spec.DNS.Domain != nil {
@@ -53,9 +69,68 @@ func New(o *operation.Operation) (*Botanist, error) {
 		}
 	}
 
-	if err := b.InitializeSeedClients(); err != nil {
+	if err = b.InitializeSeedClients(); err != nil {
 		return nil, err
 	}
+
+	// extension components
+	o.Shoot.Components.Extensions.ControlPlane = b.DefaultControlPlane(b.K8sSeedClient.DirectClient(), extensionsv1alpha1.Normal)
+	o.Shoot.Components.Extensions.ControlPlaneExposure = b.DefaultControlPlane(b.K8sSeedClient.DirectClient(), extensionsv1alpha1.Exposure)
+	o.Shoot.Components.Extensions.DNS.ExternalProvider = b.DefaultExternalDNSProvider(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.ExternalOwner = b.DefaultExternalDNSOwner(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.ExternalEntry = b.DefaultExternalDNSEntry(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.InternalProvider = b.DefaultInternalDNSProvider(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.InternalOwner = b.DefaultInternalDNSOwner(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.InternalEntry = b.DefaultInternalDNSEntry(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.NginxOwner = b.DefaultNginxIngressDNSOwner(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.NginxEntry = b.DefaultNginxIngressDNSEntry(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.DNS.AdditionalProviders, err = b.AdditionalDNSProviders(ctx, b.K8sGardenClient.Client(), b.K8sSeedClient.DirectClient())
+	if err != nil {
+		return nil, err
+	}
+	o.Shoot.Components.Extensions.Infrastructure = b.DefaultInfrastructure(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.Network = b.DefaultNetwork(b.K8sSeedClient.DirectClient())
+	o.Shoot.Components.Extensions.ContainerRuntime = b.DefaultContainerRuntime(b.K8sSeedClient.DirectClient())
+
+	sniPhase, err := b.SNIPhase(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// control plane components
+	o.Shoot.Components.ControlPlane.EtcdMain, err = b.DefaultEtcd(v1beta1constants.ETCDRoleMain, etcd.ClassImportant)
+	if err != nil {
+		return nil, err
+	}
+	o.Shoot.Components.ControlPlane.EtcdEvents, err = b.DefaultEtcd(v1beta1constants.ETCDRoleEvents, etcd.ClassNormal)
+	if err != nil {
+		return nil, err
+	}
+	o.Shoot.Components.ControlPlane.KubeAPIServerService = b.DefaultKubeAPIServerService(sniPhase)
+	o.Shoot.Components.ControlPlane.KubeAPIServerSNI = b.DefaultKubeAPIServerSNI()
+	o.Shoot.Components.ControlPlane.KubeAPIServerSNIPhase = sniPhase
+	o.Shoot.Components.ControlPlane.KubeScheduler, err = b.DefaultKubeScheduler()
+	if err != nil {
+		return nil, err
+	}
+	o.Shoot.Components.ControlPlane.KubeControllerManager, err = b.DefaultKubeControllerManager()
+	if err != nil {
+		return nil, err
+	}
+	o.Shoot.Components.ControlPlane.ClusterAutoscaler, err = b.DefaultClusterAutoscaler()
+	if err != nil {
+		return nil, err
+	}
+
+	// system components
+	o.Shoot.Components.SystemComponents.Namespaces = b.DefaultShootNamespaces()
+	o.Shoot.Components.SystemComponents.MetricsServer, err = b.DefaultMetricsServer()
+	if err != nil {
+		return nil, err
+	}
+
+	// other components
+	o.Shoot.Components.ClusterIdentity = clusteridentity.New(o.Shoot.Info.Status.ClusterIdentity, o.GardenClusterIdentity, o.Shoot.Info.Name, o.Shoot.Info.Namespace, o.Shoot.SeedNamespace, string(o.Shoot.Info.Status.UID), b.K8sGardenClient.DirectClient(), b.K8sSeedClient.DirectClient(), b.Logger)
 
 	return b, nil
 }
@@ -106,5 +181,21 @@ func (b *Botanist) RequiredExtensionsReady(ctx context.Context) error {
 		return fmt.Errorf("extension controllers missing or unready: %+v", requiredExtensions)
 	}
 
+	return nil
+}
+
+// UpdateShootAndCluster updates the given `core.gardener.cloud/v1beta1.Shoot` resource in the garden cluster after
+// applying the given transform function to it. It will also update the `shoot` field in the
+// extensions.gardener.cloud/v1alpha1.Cluster` resource in the seed cluster with the updated shoot information.
+func (b *Botanist) UpdateShootAndCluster(ctx context.Context, shoot *gardencorev1beta1.Shoot, transform func() error) error {
+	if err := kutil.TryUpdate(ctx, retry.DefaultRetry, b.K8sGardenClient.DirectClient(), shoot, transform); err != nil {
+		return err
+	}
+
+	if err := common.SyncClusterResourceToSeed(ctx, b.K8sSeedClient.Client(), b.Shoot.SeedNamespace, shoot, nil, nil); err != nil {
+		return err
+	}
+
+	b.Shoot.Info = shoot
 	return nil
 }

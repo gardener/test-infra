@@ -174,17 +174,23 @@ func IsControllerInstallationSuccessful(controllerInstallation gardencorev1alpha
 	return installed && healthy
 }
 
-// ComputeOperationType checksthe <lastOperation> and determines whether is it is Create operation or reconcile operation
+// ComputeOperationType checks the <lastOperation> and determines whether it is Create, Delete, Reconcile, Migrate or Restore operation
 func ComputeOperationType(meta metav1.ObjectMeta, lastOperation *gardencorev1alpha1.LastOperation) gardencorev1alpha1.LastOperationType {
 	switch {
 	case meta.Annotations[v1alpha1constants.GardenerOperation] == v1alpha1constants.GardenerOperationMigrate:
 		return gardencorev1alpha1.LastOperationTypeMigrate
+	case meta.Annotations[v1alpha1constants.GardenerOperation] == v1alpha1constants.GardenerOperationRestore:
+		return gardencorev1alpha1.LastOperationTypeRestore
 	case meta.DeletionTimestamp != nil:
 		return gardencorev1alpha1.LastOperationTypeDelete
 	case lastOperation == nil:
 		return gardencorev1alpha1.LastOperationTypeCreate
 	case (lastOperation.Type == gardencorev1alpha1.LastOperationTypeCreate && lastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded):
 		return gardencorev1alpha1.LastOperationTypeCreate
+	case (lastOperation.Type == gardencorev1alpha1.LastOperationTypeMigrate && lastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded):
+		return gardencorev1alpha1.LastOperationTypeMigrate
+	case (lastOperation.Type == gardencorev1alpha1.LastOperationTypeRestore && lastOperation.State != gardencorev1alpha1.LastOperationStateSucceeded):
+		return gardencorev1alpha1.LastOperationTypeRestore
 	}
 	return gardencorev1alpha1.LastOperationTypeReconcile
 }
@@ -581,6 +587,11 @@ func ShootUsesUnmanagedDNS(shoot *gardencorev1alpha1.Shoot) bool {
 	return shoot.Spec.DNS != nil && len(shoot.Spec.DNS.Providers) > 0 && shoot.Spec.DNS.Providers[0].Type != nil && *shoot.Spec.DNS.Providers[0].Type == "unmanaged"
 }
 
+// SystemComponentsAllowed checks if the given worker allows system components to be scheduled onto it
+func SystemComponentsAllowed(worker *gardencorev1alpha1.Worker) bool {
+	return worker.SystemComponents == nil || worker.SystemComponents.Allow
+}
+
 // GetMachineImagesFor returns a list of all machine images for a given shoot.
 func GetMachineImagesFor(shoot *gardencorev1alpha1.Shoot) []*gardencorev1alpha1.ShootMachineImage {
 	var workerMachineImages []*gardencorev1alpha1.ShootMachineImage
@@ -620,16 +631,16 @@ func ShootMachineImageVersionExists(constraint gardencorev1alpha1.MachineImage, 
 }
 
 // DetermineLatestMachineImageVersion determines the latest MachineImageVersion from a MachineImage
-func DetermineLatestMachineImageVersion(image gardencorev1alpha1.MachineImage) (*semver.Version, gardencorev1alpha1.ExpirableVersion, error) {
+func DetermineLatestMachineImageVersion(image gardencorev1alpha1.MachineImage) (*semver.Version, gardencorev1alpha1.MachineImageVersion, error) {
 	var (
 		latestSemVerVersion       *semver.Version
-		latestMachineImageVersion gardencorev1alpha1.ExpirableVersion
+		latestMachineImageVersion gardencorev1alpha1.MachineImageVersion
 	)
 
 	for _, imageVersion := range image.Versions {
 		v, err := semver.NewVersion(imageVersion.Version)
 		if err != nil {
-			return nil, gardencorev1alpha1.ExpirableVersion{}, fmt.Errorf("error while parsing machine image version '%s' of machine image '%s': version not valid: %s", imageVersion.Version, image.Name, err.Error())
+			return nil, gardencorev1alpha1.MachineImageVersion{}, fmt.Errorf("error while parsing machine image version '%s' of machine image '%s': version not valid: %s", imageVersion.Version, image.Name, err.Error())
 		}
 		if latestSemVerVersion == nil || v.GreaterThan(latestSemVerVersion) {
 			latestSemVerVersion = v
@@ -727,7 +738,7 @@ func determineNextKubernetesVersions(cloudProfile *gardencorev1alpha1.CloudProfi
 }
 
 // SetMachineImageVersionsToMachineImage sets imageVersions to the matching imageName in the machineImages.
-func SetMachineImageVersionsToMachineImage(machineImages []gardencorev1alpha1.MachineImage, imageName string, imageVersions []gardencorev1alpha1.ExpirableVersion) ([]gardencorev1alpha1.MachineImage, error) {
+func SetMachineImageVersionsToMachineImage(machineImages []gardencorev1alpha1.MachineImage, imageName string, imageVersions []gardencorev1alpha1.MachineImageVersion) ([]gardencorev1alpha1.MachineImage, error) {
 	for index, image := range machineImages {
 		if strings.EqualFold(image.Name, imageName) {
 			machineImages[index].Versions = imageVersions

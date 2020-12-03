@@ -16,89 +16,38 @@ package botanist
 
 import (
 	"context"
-	"time"
 
-	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
-	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gardener/gardener/pkg/operation/common"
+	"github.com/gardener/gardener/pkg/operation/botanist/component"
+	"github.com/gardener/gardener/pkg/operation/botanist/extensions/network"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NetworkDefaultTimeout is the default timeout and defines how long Gardener should wait
-// for a successful reconciliation of a network resource.
-const NetworkDefaultTimeout = 3 * time.Minute
-
-// DeployNetwork creates the `Network` extension resource in the shoot namespace in the seed
-// cluster. Gardener waits until an external controller did reconcile the cluster successfully.
-func (b *Botanist) DeployNetwork(ctx context.Context) error {
-	network := &extensionsv1alpha1.Network{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.Shoot.Info.Name,
-			Namespace: b.Shoot.SeedNamespace,
+// DefaultNetwork creates the default deployer for the Network custom resource.
+func (b *Botanist) DefaultNetwork(seedClient client.Client) component.DeployMigrateWaiter {
+	return network.New(
+		b.Logger,
+		seedClient,
+		&network.Values{
+			Namespace:      b.Shoot.SeedNamespace,
+			Name:           b.Shoot.Info.Name,
+			Type:           b.Shoot.Info.Spec.Networking.Type,
+			ProviderConfig: b.Shoot.Info.Spec.Networking.ProviderConfig,
+			PodCIDR:        b.Shoot.Networks.Pods,
+			ServiceCIDR:    b.Shoot.Networks.Services,
 		},
+		network.DefaultInterval,
+		network.DefaultSevereThreshold,
+		network.DefaultTimeout,
+	)
+}
+
+// DeployNetwork deploys the Network custom resource and triggers the restore operation in case
+// the Shoot is in the restore phase of the control plane migration
+func (b *Botanist) DeployNetwork(ctx context.Context) error {
+	if b.isRestorePhase() {
+		return b.Shoot.Components.Extensions.Network.Restore(ctx, b.ShootState)
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), network, func() error {
-		metav1.SetMetaDataAnnotation(&network.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
-		network.Spec = extensionsv1alpha1.NetworkSpec{
-			DefaultSpec: extensionsv1alpha1.DefaultSpec{
-				Type: string(b.Shoot.Info.Spec.Networking.Type),
-			},
-			PodCIDR:     b.Shoot.Networks.Pods.String(),
-			ServiceCIDR: b.Shoot.Networks.Services.String(),
-		}
-
-		if b.Shoot.Info.Spec.Networking.ProviderConfig != nil {
-			network.Spec.ProviderConfig = &b.Shoot.Info.Spec.Networking.ProviderConfig.RawExtension
-		}
-
-		return nil
-	})
-	return err
-}
-
-// DestroyNetwork deletes the `Network` extension resource in the shoot namespace in the seed cluster,
-// and it waits for a maximum of 10m until it is deleted.
-func (b *Botanist) DestroyNetwork(ctx context.Context) error {
-	return common.DeleteExtensionCR(
-		ctx,
-		b.K8sSeedClient.Client(),
-		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Network{} },
-		b.Shoot.SeedNamespace,
-		b.Shoot.Info.Name,
-	)
-}
-
-// WaitUntilNetworkIsReady waits until the network resource has been reconciled successfully.
-func (b *Botanist) WaitUntilNetworkIsReady(ctx context.Context) error {
-	return common.WaitUntilExtensionCRReady(
-		ctx,
-		b.K8sSeedClient.Client(),
-		b.Logger,
-		func() runtime.Object { return &extensionsv1alpha1.Network{} },
-		"Network",
-		b.Shoot.SeedNamespace,
-		b.Shoot.Info.Name,
-		DefaultInterval,
-		NetworkDefaultTimeout,
-		nil,
-	)
-}
-
-// WaitUntilNetworkIsDeleted waits until the Network resource has been deleted.
-func (b *Botanist) WaitUntilNetworkIsDeleted(ctx context.Context) error {
-	return common.WaitUntilExtensionCRDeleted(
-		ctx,
-		b.K8sSeedClient.Client(),
-		b.Logger,
-		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Network{} },
-		"Network",
-		b.Shoot.SeedNamespace,
-		b.Shoot.Info.Name,
-		DefaultInterval,
-		NetworkDefaultTimeout,
-	)
+	return b.Shoot.Components.Extensions.Network.Deploy(ctx)
 }

@@ -180,6 +180,18 @@ func (u unstructuredStatusAccessor) GetState() *runtime.RawExtension {
 	return raw
 }
 
+// SetState implements Status.
+func (u unstructuredStatusAccessor) SetState(state *runtime.RawExtension) {
+	unstrc, err := runtime.DefaultUnstructuredConverter.ToUnstructured(state)
+	if err != nil {
+		return
+	}
+
+	if err := unstructured.SetNestedField(u.UnstructuredContent(), unstrc, "status", "state"); err != nil {
+		return
+	}
+}
+
 // GetConditions implements Status.
 func (u unstructuredStatusAccessor) GetConditions() []gardencorev1beta1.Condition {
 	val, ok, err := unstructured.NestedFieldNoCopy(u.UnstructuredContent(), "status", "conditions")
@@ -210,6 +222,41 @@ func (u unstructuredStatusAccessor) SetConditions(conditions []gardencorev1beta1
 		interfaceSlice[i] = unstrc
 	}
 	err := unstructured.SetNestedSlice(u.UnstructuredContent(), interfaceSlice, "status", "conditions")
+	if err != nil {
+		return
+	}
+}
+
+// GetResources implements Status.
+func (u unstructuredStatusAccessor) GetResources() []gardencorev1beta1.NamedResourceReference {
+	val, ok, err := unstructured.NestedFieldNoCopy(u.UnstructuredContent(), "status", "resources")
+	if err != nil || !ok {
+		return nil
+	}
+	var resources []gardencorev1beta1.NamedResourceReference
+	interfaceResourceSlice := val.([]interface{})
+	for _, interfaceResource := range interfaceResourceSlice {
+		new := interfaceResource.(map[string]interface{})
+		resource := &gardencorev1beta1.NamedResourceReference{}
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(new, resource); err != nil {
+			return nil
+		}
+		resources = append(resources, *resource)
+	}
+	return resources
+}
+
+// SetResources implements Status.
+func (u unstructuredStatusAccessor) SetResources(namedResourceReference []gardencorev1beta1.NamedResourceReference) {
+	var interfaceSlice = make([]interface{}, len(namedResourceReference))
+	for i, d := range namedResourceReference {
+		unstrc, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&d)
+		if err != nil {
+			return
+		}
+		interfaceSlice[i] = unstrc
+	}
+	err := unstructured.SetNestedSlice(u.UnstructuredContent(), interfaceSlice, "status", "resources")
 	if err != nil {
 		return
 	}

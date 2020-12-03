@@ -32,7 +32,6 @@ import (
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/secrets"
 
-	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,23 +118,35 @@ func (b *Botanist) ComputeShootOperatingSystemConfig(ctx context.Context) error 
 
 func (b *Botanist) generateDownloaderConfig(machineImageName string) map[string]interface{} {
 	return map[string]interface{}{
-		"type":    machineImageName,
-		"purpose": extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
-		"server":  fmt.Sprintf("https://%s", b.Shoot.ComputeOutOfClusterAPIServerAddress(b.APIServerAddress, true)),
+		"type":                       machineImageName,
+		"purpose":                    extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
+		"annotationCurrentTimestamp": time.Now().UTC().String(),
+		"server":                     fmt.Sprintf("https://%s", b.Shoot.ComputeOutOfClusterAPIServerAddress(b.APIServerAddress, true)),
 	}
 }
 
 func (b *Botanist) generateOriginalConfig() (map[string]interface{}, error) {
 	var (
-		originalConfig = map[string]interface{}{
-			"kubernetes": map[string]interface{}{
-				"clusterDNS": b.Shoot.Networks.CoreDNS.String(),
-				"domain":     gardencorev1beta1.DefaultDomain,
-				"version":    b.Shoot.Info.Spec.Kubernetes.Version,
-			},
+		kubernetesConfig = map[string]interface{}{
+			"clusterDNS": b.Shoot.Networks.CoreDNS.String(),
+			"domain":     gardencorev1beta1.DefaultDomain,
+			"version":    b.Shoot.Info.Spec.Kubernetes.Version,
 		}
 	)
-	caBundle := ""
+
+	// if IPVS is enabled, instruct the kubelet to create pods resolving DNS to the `nodelocaldns` network interface link-local ip address
+	// for more information checkout the [usage documentation](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)
+	if b.Shoot.NodeLocalDNSEnabled && b.Shoot.IPVSEnabled() {
+		kubernetesConfig["clusterDNS"] = NodeLocalIPVSAddress
+	}
+
+	var (
+		originalConfig = map[string]interface{}{
+			"kubernetes": kubernetesConfig,
+		}
+		caBundle = ""
+	)
+
 	if cloudProfileCaBundle := b.Shoot.CloudProfile.Spec.CABundle; cloudProfileCaBundle != nil {
 		caBundle = *cloudProfileCaBundle
 	}
@@ -150,36 +161,32 @@ func (b *Botanist) generateOriginalConfig() (map[string]interface{}, error) {
 func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, machineTypes []gardencorev1beta1.MachineType, machineImage *gardencorev1beta1.ShootMachineImage, downloaderConfig, originalConfig map[string]interface{}, worker gardencorev1beta1.Worker) (*shoot.OperatingSystemConfigs, error) {
 	secretName := b.Shoot.ComputeCloudConfigSecretName(worker.Name)
 
-	downloaderConfig["secretName"] = secretName
-
-	var customization = map[string]interface{}{}
-	if machineImage.ProviderConfig != nil {
-		err := yaml.Unmarshal(machineImage.ProviderConfig.Raw, &customization)
-		if err != nil {
-			return nil, err
+	var (
+		criNamesConfig = map[string]interface{}{
+			"containerd": extensionsv1alpha1.CRINameContainerD,
 		}
+		criConfig = map[string]interface{}{
+			"containerRuntimesBinaryPath": extensionsv1alpha1.ContainerDRuntimeContainersBinFolder,
+			"names":                       criNamesConfig,
+		}
+		osc = map[string]interface{}{
+			"type":                       machineImage.Name,
+			"purpose":                    extensionsv1alpha1.OperatingSystemConfigPurposeReconcile,
+			"reloadConfigFilePath":       common.CloudConfigFilePath,
+			"secretName":                 secretName,
+			"sshKey":                     string(b.Secrets[v1beta1constants.SecretNameSSHKeyPair].Data[secrets.DataKeySSHAuthorizedKeys]),
+			"cri":                        criConfig,
+			"annotationCurrentTimestamp": time.Now().UTC().String(),
+		}
+	)
+
+	if machineImage.ProviderConfig != nil && machineImage.ProviderConfig.Raw != nil {
+		downloaderConfig["providerConfig"] = string(machineImage.ProviderConfig.Raw)
+		osc["providerConfig"] = string(machineImage.ProviderConfig.Raw)
 	}
 
-	sshKey := b.Secrets[v1beta1constants.SecretNameSSHKeyPair].Data[secrets.DataKeySSHAuthorizedKeys]
-
-	criNamesConfig := map[string]interface{}{
-		"containerd": extensionsv1alpha1.CRINameContainerD,
-	}
-
-	criConfig := map[string]interface{}{
-		"containerRuntimesBinaryPath": extensionsv1alpha1.ContainerDRuntimeContainersBinFolder,
-		"names":                       criNamesConfig,
-	}
-
-	originalConfig["osc"] = map[string]interface{}{
-		"type":                 machineImage.Name,
-		"purpose":              extensionsv1alpha1.OperatingSystemConfigPurposeReconcile,
-		"reloadConfigFilePath": common.CloudConfigFilePath,
-		"secretName":           secretName,
-		"customization":        customization,
-		"sshKey":               string(sshKey),
-		"cri":                  criConfig,
-	}
+	downloaderConfig["secretName"] = secretName
+	originalConfig["osc"] = osc
 
 	if data := worker.CABundle; data != nil {
 		if existingCABundle, ok := originalConfig["caBundle"]; ok {
@@ -194,6 +201,8 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 		evictionSoft            = map[string]string{}
 		evictionSoftGracePeriod = map[string]string{}
 		evictionMinimumReclaim  = map[string]string{}
+		kubeReserved            = map[string]string{}
+		systemReserved          = map[string]string{}
 	)
 
 	// use the spec.Kubernetes.Kubelet as default for worker
@@ -281,6 +290,38 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 				evictionMinimumReclaim["nodeFSInodesFree"] = nodeFSInodesFree.String()
 			}
 		}
+
+		if kubeletConfig.KubeReserved != nil {
+			reserved := kubeletConfig.KubeReserved
+			if cpu := reserved.CPU; cpu != nil {
+				kubeReserved["cpu"] = cpu.String()
+			}
+			if memory := reserved.Memory; memory != nil {
+				kubeReserved["memory"] = memory.String()
+			}
+			if ephemeralStorage := reserved.EphemeralStorage; ephemeralStorage != nil {
+				kubeReserved["ephemeral-storage"] = ephemeralStorage.String()
+			}
+			if pid := reserved.PID; pid != nil {
+				kubeReserved["pid"] = pid.String()
+			}
+		}
+
+		if kubeletConfig.SystemReserved != nil {
+			reserved := kubeletConfig.SystemReserved
+			if cpu := reserved.CPU; cpu != nil {
+				systemReserved["cpu"] = cpu.String()
+			}
+			if memory := reserved.Memory; memory != nil {
+				systemReserved["memory"] = memory.String()
+			}
+			if ephemeralStorage := reserved.EphemeralStorage; ephemeralStorage != nil {
+				systemReserved["ephemeral-storage"] = ephemeralStorage.String()
+			}
+			if pid := reserved.PID; pid != nil {
+				systemReserved["pid"] = pid.String()
+			}
+		}
 	}
 
 	var kubelet = map[string]interface{}{
@@ -289,6 +330,8 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 		"evictionSoft":            evictionSoft,
 		"evictionSoftGracePeriod": evictionSoftGracePeriod,
 		"evictionMinimumReclaim":  evictionMinimumReclaim,
+		"kubeReserved":            kubeReserved,
+		"systemReserved":          systemReserved,
 	}
 
 	if kubeletConfig := kubeletConfig; kubeletConfig != nil {
@@ -316,6 +359,9 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 		if evictionMaxPodGracePeriod := kubeletConfig.EvictionMaxPodGracePeriod; evictionMaxPodGracePeriod != nil {
 			kubelet["evictionMaxPodGracePeriod"] = *evictionMaxPodGracePeriod
 		}
+		if failSwapOn := kubeletConfig.FailSwapOn; failSwapOn != nil {
+			kubelet["failSwapOn"] = *failSwapOn
+		}
 	}
 
 	workerConfig := map[string]interface{}{
@@ -328,6 +374,7 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 		workerConfig["cri"] = map[string]interface{}{
 			"name": worker.CRI.Name,
 		}
+		downloaderConfig["cri"] = workerConfig["cri"]
 	}
 
 	originalConfig["worker"] = workerConfig
@@ -358,7 +405,7 @@ func (b *Botanist) deployOperatingSystemConfigsForWorker(ctx context.Context, ma
 }
 
 func (b *Botanist) applyAndWaitForShootOperatingSystemConfig(ctx context.Context, chartPath, name string, values map[string]interface{}) (*shoot.OperatingSystemConfigData, error) {
-	if err := b.ChartApplierSeed.Apply(ctx, chartPath, b.Shoot.SeedNamespace, name, kubernetes.Values(values)); err != nil {
+	if err := b.K8sSeedClient.ChartApplier().Apply(ctx, chartPath, b.Shoot.SeedNamespace, name, kubernetes.Values(values)); err != nil {
 		return nil, err
 	}
 
@@ -366,13 +413,14 @@ func (b *Botanist) applyAndWaitForShootOperatingSystemConfig(ctx context.Context
 
 	if err := common.WaitUntilExtensionCRReady(
 		ctx,
-		b.K8sSeedClient.Client(),
+		b.K8sSeedClient.DirectClient(),
 		b.Logger,
 		func() runtime.Object { return &extensionsv1alpha1.OperatingSystemConfig{} },
 		"OperatingSystemConfig",
 		b.Shoot.SeedNamespace,
 		name,
 		DefaultInterval,
+		15*time.Second,
 		30*time.Second,
 		func(obj runtime.Object) error {
 			o, ok := obj.(*extensionsv1alpha1.OperatingSystemConfig)
@@ -416,8 +464,7 @@ func (b *Botanist) getGenerateCloudConfigExecutionChartFunc(releaseName string, 
 		if worker.KubeletDataVolumeName != nil && worker.DataVolumes != nil {
 			kubeletDataVolName := worker.KubeletDataVolumeName
 			for _, dataVolume := range worker.DataVolumes {
-				volName := dataVolume.Name
-				if *volName == *kubeletDataVolName {
+				if dataVolume.Name == *kubeletDataVolName {
 					size, err := resource.ParseQuantity(dataVolume.VolumeSize)
 					if err != nil {
 						return nil, err
@@ -430,7 +477,7 @@ func (b *Botanist) getGenerateCloudConfigExecutionChartFunc(releaseName string, 
 						}
 					}
 					w["kubeletDataVolume"] = map[string]interface{}{
-						"name": volName,
+						"name": dataVolume.Name,
 						"type": dataVolume.Type,
 						"size": fmt.Sprintf("%d", sizeInBytes),
 					}
@@ -448,7 +495,7 @@ func (b *Botanist) getGenerateCloudConfigExecutionChartFunc(releaseName string, 
 		if err != nil {
 			return nil, err
 		}
-		return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-cloud-config"), releaseName, metav1.NamespaceSystem, config)
+		return b.K8sShootClient.ChartRenderer().Render(filepath.Join(common.ChartPath, "shoot-cloud-config"), releaseName, metav1.NamespaceSystem, config)
 	}
 }
 
@@ -461,7 +508,7 @@ func (b *Botanist) generateCloudConfigRBACChart() (*chartrenderer.RenderedChart,
 	config := map[string]interface{}{
 		"secretNames": secretNames,
 	}
-	return b.ChartApplierShoot.Render(filepath.Join(common.ChartPath, "shoot-cloud-config-rbac"), "shoot-cloud-config-rbac", metav1.NamespaceSystem, config)
+	return b.K8sShootClient.ChartRenderer().Render(filepath.Join(common.ChartPath, "shoot-cloud-config-rbac"), "shoot-cloud-config-rbac", metav1.NamespaceSystem, config)
 }
 
 // DeleteStaleOperatingSystemConfigs deletes all unused operating system configs in the shoot seed namespace

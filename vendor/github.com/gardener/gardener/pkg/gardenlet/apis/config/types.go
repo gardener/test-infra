@@ -15,8 +15,6 @@
 package config
 
 import (
-	"time"
-
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -41,26 +39,34 @@ type GardenletConfiguration struct {
 	ShootClientConnection *ShootClientConnection
 	// Controllers defines the configuration of the controllers.
 	Controllers *GardenletControllerConfiguration
+	// Resources defines the total capacity for seed resources and the amount reserved for use by Gardener.
+	Resources *ResourcesConfiguration
 	// LeaderElection defines the configuration of leader election client.
 	LeaderElection *LeaderElectionConfiguration
-	// Discovery defines the configuration of the discovery client.
-	Discovery *DiscoveryConfiguration
 	// LogLevel is the level/severity for the logs. Must be one of [info,debug,error].
 	LogLevel *string
 	// KubernetesLogLevel is the log level used for Kubernetes' k8s.io/klog functions.
 	KubernetesLogLevel *klog.Level
+	// Server defines the configuration of the HTTP server.
+	Server *ServerConfiguration
 	// FeatureGates is a map of feature names to bools that enable or disable alpha/experimental
 	// features. This field modifies piecemeal the built-in default values from
-	// "github.com/gardener/gardener/pkg/features/gardener_features.go".
+	// "github.com/gardener/gardener/pkg/gardenlet/features/features.go".
 	// Default: nil
 	FeatureGates map[string]bool
-	// SeedConfig contains configuration for the seed cluster. May not be set if seed selector is set.
+	// SeedConfig contains configuration for the seed cluster. Must not be set if seed selector is set.
 	// In this case the gardenlet creates the `Seed` object itself based on the provided config.
 	SeedConfig *SeedConfig
 	// SeedSelector contains an optional list of labels on `Seed` resources that shall be managed by
 	// this gardenlet instance. In this case the `Seed` object is not managed by the Gardenlet and must
 	// be created by an operator/administrator.
 	SeedSelector *metav1.LabelSelector
+	// Logging contains an optional configurations for the logging stack deployed
+	// by the Gardenlet in the seed clusters.
+	Logging *Logging
+	// SNI contains an optional configuration for the APIServerSNI feature used
+	// by the Gardenlet in the seed clusters.
+	SNI *SNI
 }
 
 // GardenClientConnection specifies the kubeconfig file and the client connection settings
@@ -105,14 +111,20 @@ type GardenletControllerConfiguration struct {
 	ControllerInstallation *ControllerInstallationControllerConfiguration
 	// ControllerInstallationCare defines the configuration of the ControllerInstallationCare controller.
 	ControllerInstallationCare *ControllerInstallationCareControllerConfiguration
+	// ControllerInstallationRequired defines the configuration of the ControllerInstallationRequired controller.
+	ControllerInstallationRequired *ControllerInstallationRequiredControllerConfiguration
 	// Seed defines the configuration of the Seed controller.
 	Seed *SeedControllerConfiguration
 	// Shoot defines the configuration of the Shoot controller.
 	Shoot *ShootControllerConfiguration
 	// ShootCare defines the configuration of the ShootCare controller.
 	ShootCare *ShootCareControllerConfiguration
-	// ShootStateSync defines the configuration of the ShootState controller
+	// ShootStateSync defines the configuration of the ShootState controller.
 	ShootStateSync *ShootStateSyncControllerConfiguration
+	// ShootedSeedRegistration the configuration of the shooted seed registration controller.
+	ShootedSeedRegistration *ShootedSeedRegistrationControllerConfiguration
+	// SeedAPIServerNetworkPolicy defines the configuration of the SeedAPIServerNetworkPolicy controller.
+	SeedAPIServerNetworkPolicy *SeedAPIServerNetworkPolicyControllerConfiguration
 }
 
 // BackupBucketControllerConfiguration defines the configuration of the BackupBucket
@@ -151,17 +163,19 @@ type ControllerInstallationCareControllerConfiguration struct {
 	SyncPeriod *metav1.Duration
 }
 
+// ControllerInstallationRequiredControllerConfiguration defines the configuration of the ControllerInstallationRequired
+// controller.
+type ControllerInstallationRequiredControllerConfiguration struct {
+	// ConcurrentSyncs is the number of workers used for the controller to work on
+	// events.
+	ConcurrentSyncs *int
+}
+
 // SeedControllerConfiguration defines the configuration of the Seed controller.
 type SeedControllerConfiguration struct {
 	// ConcurrentSyncs is the number of workers used for the controller to work on
 	// events.
 	ConcurrentSyncs *int
-	// ReserveExcessCapacity indicates whether the Seed controller should reserve
-	// excess capacity for Shoot control planes in the Seeds. This is done via
-	// PodPriority and requires the Seed cluster to have Kubernetes version 1.11 or
-	// the PodPriority feature gate as well as the scheduling.k8s.io/v1alpha1 API
-	// group enabled. It defaults to true.
-	ReserveExcessCapacity *bool
 	// SyncPeriod is the duration how often the existing resources are reconciled.
 	SyncPeriod *metav1.Duration
 }
@@ -172,6 +186,11 @@ type ShootControllerConfiguration struct {
 	// ConcurrentSyncs is the number of workers used for the controller to work on
 	// events.
 	ConcurrentSyncs *int
+	// ProgressReportPeriod is the period how often the progress of a shoot operation will be reported in the
+	// Shoot's `.status.lastOperation` field. By default, the progress will be reported immediately after a task of the
+	// respective flow has been completed. If you set this to a value > 0 (e.g., 5s) then it will be only reported every
+	// 5 seconds. Any tasks that were completed in the meantime will not be reported.
+	ProgressReportPeriod *metav1.Duration
 	// ReconcileInMaintenanceOnly determines whether Shoot reconciliations happen only
 	// during its maintenance time window.
 	ReconcileInMaintenanceOnly *bool
@@ -183,6 +202,9 @@ type ShootControllerConfiguration struct {
 	RetryDuration *metav1.Duration
 	// SyncPeriod is the duration how often the existing resources are reconciled.
 	SyncPeriod *metav1.Duration
+	// DNSEntryTTLSeconds is the TTL in seconds that is being used for DNS entries when reconciling shoots.
+	// Default: 120s
+	DNSEntryTTLSeconds *int64
 }
 
 // ShootCareControllerConfiguration defines the configuration of the ShootCare
@@ -205,6 +227,14 @@ type ShootCareControllerConfiguration struct {
 	ConditionThresholds []ConditionThreshold
 }
 
+// ShootedSeedRegistrationControllerConfiguration defines the configuration of the shooted seed registration controller.
+type ShootedSeedRegistrationControllerConfiguration struct {
+	// SyncJitterPeriod is a jitter duration for the reconciler sync that can be used to distribute the syncs randomly.
+	// If its value is greater than 0 then the shooted seeds will not be enqueued immediately but only after a random
+	// duration between 0 and the configured value. It is defaulted to 5m.
+	SyncJitterPeriod *metav1.Duration
+}
+
 // ConditionThreshold defines the duration how long a flappy condition stays in progressing state.
 type ConditionThreshold struct {
 	// Type is the type of the condition to define the threshold for.
@@ -224,17 +254,20 @@ type ShootStateSyncControllerConfiguration struct {
 	SyncPeriod *metav1.Duration
 }
 
-// DiscoveryConfiguration defines the configuration of how to discover API groups.
-// It allows to set where to store caching data and to specify the TTL of that data.
-type DiscoveryConfiguration struct {
-	// DiscoveryCacheDir is the directory to store discovery cache information.
-	// If unset, the discovery client will use the current working directory.
-	DiscoveryCacheDir *string
-	// HTTPCacheDir is the directory to store discovery HTTP cache information.
-	// If unset, no HTTP caching will be done.
-	HTTPCacheDir *string
-	// TTL is the ttl how long discovery cache information shall be valid.
-	TTL *metav1.Duration
+// SeedAPIServerNetworkPolicyControllerConfiguration defines the configuration of the SeedAPIServerNetworkPolicy
+// controller.
+type SeedAPIServerNetworkPolicyControllerConfiguration struct {
+	// ConcurrentSyncs is the number of workers used for the controller to work on events.
+	ConcurrentSyncs *int
+}
+
+// ResourcesConfiguration defines the total capacity for seed resources and the amount reserved for use by Gardener.
+type ResourcesConfiguration struct {
+	// Capacity defines the total resources of a seed.
+	Capacity corev1.ResourceList
+	// Reserved defines the resources of a seed that are reserved for use by Gardener.
+	// Defaults to 0.
+	Reserved corev1.ResourceList
 }
 
 // LeaderElectionConfiguration defines the configuration of leader election
@@ -252,17 +285,72 @@ type SeedConfig struct {
 	gardencorev1beta1.Seed
 }
 
-const (
-	// GardenletDefaultLockObjectNamespace is the default lock namespace for leader election.
-	GardenletDefaultLockObjectNamespace = "garden"
+// FluentBit contains configuration for Fluent Bit.
+type FluentBit struct {
+	// ServiceSection defines [SERVICE] configuration for the fluent-bit.
+	// If it is nil, fluent-bit uses default service configuration.
+	ServiceSection *string
+	// InputSection defines [INPUT] configuration for the fluent-bit.
+	// If it is nil, fluent-bit uses default input configuration.
+	InputSection *string
+	// OutputSection defines [OUTPUT] configuration for the fluent-bit.
+	// If it is nil, fluent-bit uses default output configuration.
+	OutputSection *string
+}
 
-	// GardenletDefaultLockObjectName is the default lock name for leader election.
-	GardenletDefaultLockObjectName = "gardenlet-leader-election"
+// Logging contains configuration for the logging stack.
+type Logging struct {
+	// FluentBit contains configurations for the fluent-bit
+	FluentBit *FluentBit
+}
 
-	// DefaultBackupEntryDeletionGracePeriodHours is a constant for the default number of hours the Backup Entry should be kept after shoot is deleted.
-	// By default we set this to 0 so that then BackupEntryController will trigger deletion immediately.
-	DefaultBackupEntryDeletionGracePeriodHours = 0
+// ServerConfiguration contains details for the HTTP(S) servers.
+type ServerConfiguration struct {
+	// HTTPS is the configuration for the HTTPS server.
+	HTTPS HTTPSServer
+}
 
-	// DefaultDiscoveryTTL is the default ttl for the cached discovery client.
-	DefaultDiscoveryTTL = 10 * time.Second
-)
+// Server contains information for HTTP(S) server configuration.
+type Server struct {
+	// BindAddress is the IP address on which to listen for the specified port.
+	BindAddress string
+	// Port is the port on which to serve unsecured, unauthenticated access.
+	Port int
+}
+
+// HTTPSServer is the configuration for the HTTPSServer server.
+type HTTPSServer struct {
+	// Server is the configuration for the bind address and the port.
+	Server
+	// TLSServer contains information about the TLS configuration for a HTTPS server. If empty then a proper server
+	// certificate will be self-generated during startup.
+	TLS *TLSServer
+}
+
+// TLSServer contains information about the TLS configuration for a HTTPS server.
+type TLSServer struct {
+	// ServerCertPath is the path to the server certificate file.
+	ServerCertPath string
+	// ServerKeyPath is the path to the private key file.
+	ServerKeyPath string
+}
+
+// SNI contains an optional configuration for the APIServerSNI feature used
+// by the Gardenlet in the seed clusters.
+type SNI struct {
+	// Ingress is the ingressgateway configuration.
+	Ingress *SNIIngress
+}
+
+// SNIIngress contains configuration of the ingressgateway.
+type SNIIngress struct {
+	// ServiceName is the name of the ingressgateway Service.
+	// Defaults to "istio-ingressgateway".
+	ServiceName *string
+	// Namespace is the namespace in which the ingressgateway is deployed in.
+	// Defaults to "istio-ingress".
+	Namespace *string
+	// Labels of the ingressgateway
+	// Defaults to "istio: ingressgateway".
+	Labels map[string]string
+}

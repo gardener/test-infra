@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/retry"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -37,7 +37,7 @@ import (
 
 // ShootSeedNamespace gets the shoot namespace in the seed
 func (f *ShootFramework) ShootSeedNamespace() string {
-	return computeTechnicalID(f.Project.Name, f.Shoot)
+	return ComputeTechnicalID(f.Project.Name, f.Shoot)
 }
 
 // ShootKubeconfigSecretName gets the name of the secret with the kubeconfig of the shoot
@@ -45,31 +45,28 @@ func (f *ShootFramework) ShootKubeconfigSecretName() string {
 	return fmt.Sprintf("%s.kubeconfig", f.Shoot.GetName())
 }
 
-// GetLoggingPassword returns the passwort to access the elasticseerach logging instance
-func (f *ShootFramework) GetLoggingPassword(ctx context.Context) (string, error) {
-	return GetObjectFromSecret(ctx, f.SeedClient, f.ShootSeedNamespace(), loggingIngressCredentials, "password")
-}
-
-// GetElasticsearchLogs gets logs for <podName> from the elasticsearch instance in <elasticsearchNamespace>
-func (f *ShootFramework) GetElasticsearchLogs(ctx context.Context, elasticsearchNamespace, podName string, client kubernetes.Interface) (*SearchResponse, error) {
-	elasticsearchLabels := labels.SelectorFromSet(labels.Set(map[string]string{
-		"app":  elasticsearchLogging,
+// GetLokiLogs gets logs from the last 1 hour for <key>, <value> from the loki instance in <lokiNamespace>
+func (f *ShootFramework) GetLokiLogs(ctx context.Context, tenant, lokiNamespace, key, value string, client kubernetes.Interface) (*SearchResponse, error) {
+	lokiLabels := labels.SelectorFromSet(labels.Set(map[string]string{
+		"app":  lokiLogging,
 		"role": "logging",
 	}))
 
-	now := time.Now()
-	index := fmt.Sprintf("logstash-admin-%d.%02d.%02d", now.Year(), now.Month(), now.Day())
-	loggingPassword, err := f.GetLoggingPassword(ctx)
-
-	if err != nil {
-		return nil, err
+	if tenant == "" {
+		tenant = "fake"
 	}
 
-	command := fmt.Sprintf("curl http://localhost:%d/%s/_search?q=kubernetes.pod_name:%s --user %s:%s", elasticsearchPort, index, podName, LoggingUserName, loggingPassword)
+	query := fmt.Sprintf("query=count_over_time({%s=~\"%s\"}[1h])", key, value)
+
+	command := fmt.Sprintf("wget 'http://localhost:%d/loki/api/v1/query' -O- '--header=X-Scope-OrgID: %s' --post-data='%s'", lokiPort, tenant, query)
+
 	var reader io.Reader
-	err = retry.Until(ctx, defaultPollInterval, func(ctx context.Context) (bool, error) {
-		reader, err = PodExecByLabel(ctx, elasticsearchLabels, elasticsearchLogging, command, elasticsearchNamespace, client)
+	err := retry.Until(ctx, defaultPollInterval, func(ctx context.Context) (bool, error) {
+		var err error
+		reader, err = PodExecByLabel(ctx, lokiLabels, lokiLogging, command, lokiNamespace, client)
+
 		if err != nil {
+			f.Logger.Warn(err)
 			return retry.MinorError(err)
 		}
 		return retry.Ok()
@@ -79,6 +76,7 @@ func (f *ShootFramework) GetElasticsearchLogs(ctx context.Context, elasticsearch
 	}
 
 	search := &SearchResponse{}
+
 	if err = json.NewDecoder(reader).Decode(search); err != nil {
 		return nil, err
 	}
@@ -98,7 +96,8 @@ func (f *ShootFramework) DumpState(ctx context.Context) {
 			f.Logger.Fatalf("Cannot decode shoot %s: %s", f.Shoot.GetName(), err)
 		}
 
-		if f.ShootClient != nil {
+		isRunning, err := f.IsAPIServerRunning(ctx)
+		if f.ShootClient != nil && isRunning && err == nil {
 			ctxIdentifier := fmt.Sprintf("[SHOOT %s]", f.Shoot.Name)
 			f.Logger.Info(ctxIdentifier)
 			if err := f.DumpDefaultResourcesInAllNamespaces(ctx, ctxIdentifier, f.ShootClient); err != nil {
@@ -107,10 +106,16 @@ func (f *ShootFramework) DumpState(ctx context.Context) {
 			if err := f.dumpNodes(ctx, ctxIdentifier, f.ShootClient); err != nil {
 				f.Logger.Errorf("unable to dump information of nodes from shoot %s: %s", f.Shoot.Name, err.Error())
 			}
+		} else {
+			errMsg := ""
+			if err != nil {
+				errMsg = ": " + err.Error()
+			}
+			f.Logger.Errorf("unable to dump resources from shoot %s: API server is currently not running%s", f.Shoot.Name, errMsg)
 		}
 	}
 
-	//dump controlplane in the shoot namespace
+	// dump controlplane in the shoot namespace
 	if f.Seed != nil && f.SeedClient != nil {
 		if err := f.dumpControlplaneInSeed(ctx, f.Seed, f.ShootSeedNamespace()); err != nil {
 			f.Logger.Errorf("unable to dump controlplane of %s in seed %s: %v", f.Shoot.Name, f.Seed.Name, err)
@@ -129,7 +134,7 @@ func (f *ShootFramework) DumpState(ctx context.Context) {
 		// dump seed status if seed is available
 		if f.Shoot.Spec.SeedName != nil {
 			seed := &gardencorev1beta1.Seed{}
-			if err := f.GardenClient.Client().Get(ctx, client.ObjectKey{Name: *f.Shoot.Spec.SeedName}, seed); err != nil {
+			if err := f.GardenClient.DirectClient().Get(ctx, client.ObjectKey{Name: *f.Shoot.Spec.SeedName}, seed); err != nil {
 				f.Logger.Errorf("unable to get seed %s: %s", *f.Shoot.Spec.SeedName, err.Error())
 				return
 			}
@@ -166,6 +171,27 @@ func CreateShootTestArtifacts(cfg *ShootCreationConfig, projectNamespace string,
 	return shoot.Name, shoot, nil
 }
 
+func parseAnnotationCfg(cfg string) (map[string]string, error) {
+	if !StringSet(cfg) {
+		return nil, nil
+	}
+	result := make(map[string]string)
+	annotations := strings.Split(cfg, ",")
+	for _, annotation := range annotations {
+		annotation = strings.TrimSpace(annotation)
+		if !StringSet(annotation) {
+			continue
+		}
+		keyValue := strings.Split(annotation, "=")
+		if len(keyValue) != 2 {
+			return nil, fmt.Errorf("annotation %s could not be parsed into key and value", annotation)
+		}
+		result[keyValue[0]] = keyValue[1]
+	}
+
+	return result, nil
+}
+
 // setShootMetadata sets the Shoot's metadata from the given config and project namespace
 func setShootMetadata(shoot *gardencorev1beta1.Shoot, cfg *ShootCreationConfig, projectNamespace string) error {
 	if StringSet(cfg.testShootName) {
@@ -182,8 +208,24 @@ func setShootMetadata(shoot *gardencorev1beta1.Shoot, cfg *ShootCreationConfig, 
 		shoot.Namespace = projectNamespace
 	}
 
+	if err := setConfiguredShootAnnotations(shoot, cfg); err != nil {
+		return err
+	}
+
 	metav1.SetMetaDataAnnotation(&shoot.ObjectMeta, v1beta1constants.AnnotationShootIgnoreAlerts, "true")
 
+	return nil
+}
+
+// setConfiguredShootAnnotations sets annotations from the given config on the given shoot
+func setConfiguredShootAnnotations(shoot *gardencorev1beta1.Shoot, cfg *ShootCreationConfig) error {
+	annotations, err := parseAnnotationCfg(cfg.shootAnnotations)
+	if err != nil {
+		return err
+	}
+	for k, v := range annotations {
+		metav1.SetMetaDataAnnotation(&shoot.ObjectMeta, k, v)
+	}
 	return nil
 }
 
@@ -218,6 +260,11 @@ func setShootGeneralSettings(shoot *gardencorev1beta1.Shoot, cfg *ShootCreationC
 			shoot.Spec.Hibernation = &gardencorev1beta1.Hibernation{}
 		}
 		shoot.Spec.Hibernation.Enabled = &cfg.startHibernated
+	}
+
+	// allow privileged containers defaults to true
+	if cfg.allowPrivilegedContainers != nil {
+		shoot.Spec.Kubernetes.AllowPrivilegedContainers = cfg.allowPrivilegedContainers
 	}
 
 	if clearExtensions {

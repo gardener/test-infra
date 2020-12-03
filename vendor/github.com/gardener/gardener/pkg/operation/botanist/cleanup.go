@@ -16,12 +16,12 @@ package botanist
 
 import (
 	"context"
-	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/operation/common"
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/flow"
 	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
 	"github.com/gardener/gardener/pkg/utils/retry"
@@ -39,16 +39,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	// DefaultInterval is the default interval for retry operations.
-	DefaultInterval = 5 * time.Second
-
 	// Provider is the kubernetes provider label.
 	Provider = "provider"
 	// KubernetesProvider is the 'kubernetes' value of the Provider label.
@@ -60,13 +56,6 @@ const (
 	// MetadataNameField ist the `metadata.name` field for a field selector.
 	MetadataNameField = "metadata.name"
 )
-
-// MustNewRequirement creates a labels.Requirement with the given values and panics if there is an error.
-func MustNewRequirement(key string, op selection.Operator, vals ...string) labels.Requirement {
-	req, err := labels.NewRequirement(key, op, vals)
-	utilruntime.Must(err)
-	return *req
-}
 
 var (
 	// FinalizeAfterFiveMinutes is an option to finalize resources after five minutes.
@@ -81,13 +70,13 @@ var (
 	GracePeriodFiveMinutes = utilclient.DeleteWith{client.GracePeriodSeconds(5 * 60)}
 
 	// NotSystemComponent is a requirement that something doesn't have the GardenRole GardenRoleSystemComponent.
-	NotSystemComponent = MustNewRequirement(v1beta1constants.DeprecatedGardenRole, selection.NotEquals, v1beta1constants.GardenRoleSystemComponent)
+	NotSystemComponent = utils.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleSystemComponent)
 	// NoCleanupPrevention is a requirement that the ShootNoCleanup label of something is not true.
-	NoCleanupPrevention = MustNewRequirement(common.ShootNoCleanup, selection.NotEquals, "true")
+	NoCleanupPrevention = utils.MustNewRequirement(common.ShootNoCleanup, selection.NotEquals, "true")
 	// NotKubernetesProvider is a requirement that the Provider label of something is not KubernetesProvider.
-	NotKubernetesProvider = MustNewRequirement(Provider, selection.NotEquals, KubernetesProvider)
+	NotKubernetesProvider = utils.MustNewRequirement(Provider, selection.NotEquals, KubernetesProvider)
 	// NotKubeAggregatorAutoManaged is a requirement that something is not auto-managed by Kube-Aggregator.
-	NotKubeAggregatorAutoManaged = MustNewRequirement(KubeAggregatorAutoManaged, selection.DoesNotExist)
+	NotKubeAggregatorAutoManaged = utils.MustNewRequirement(KubeAggregatorAutoManaged, selection.DoesNotExist)
 
 	// CleanupSelector is a selector that excludes system components and all resources not considered for auto cleanup.
 	CleanupSelector = labels.NewSelector().Add(NotSystemComponent).Add(NoCleanupPrevention)
@@ -206,7 +195,7 @@ func (b *Botanist) CleanExtendedAPIs(ctx context.Context) error {
 	)
 
 	return flow.Parallel(
-		cleanResourceFn(defaultOps, c, &apiregistrationv1beta1.APIServiceList{}, APIServiceCleanOption, GracePeriodFiveMinutes, FinalizeAfterOneHour),
+		cleanResourceFn(defaultOps, c, &apiregistrationv1.APIServiceList{}, APIServiceCleanOption, GracePeriodFiveMinutes, FinalizeAfterOneHour),
 		cleanResourceFn(crdCleanOps, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, CustomResourceDefinitionCleanOption, GracePeriodFiveMinutes, FinalizeAfterOneHour),
 	)(ctx)
 }
@@ -217,7 +206,7 @@ func (b *Botanist) CleanExtendedAPIs(ctx context.Context) error {
 // It will return an error in case it has not finished yet, and nil if all resources are gone.
 func (b *Botanist) CleanKubernetesResources(ctx context.Context) error {
 	var (
-		c       = b.K8sShootClient.Client()
+		c       = b.K8sShootClient.DirectClient()
 		ensurer = utilclient.GoneBeforeEnsurer(b.Shoot.Info.GetDeletionTimestamp().Time)
 		ops     = utilclient.NewCleanOps(utilclient.DefaultCleaner(), ensurer)
 	)
@@ -248,7 +237,9 @@ func (b *Botanist) CleanKubernetesResources(ctx context.Context) error {
 // It assumes that all workload resources are cleaned up in previous step(s).
 func (b *Botanist) CleanShootNamespaces(ctx context.Context) error {
 	var (
-		c                 = b.K8sShootClient.Client()
+		// use direct client here, as cached client does not support field selector with multiple requirements
+		// see https://github.com/kubernetes-sigs/controller-runtime/blob/ca25c1f1014d6db6eba745e04f180d272a854e9a/pkg/cache/internal/cache_reader.go#L98-L103
+		c                 = b.K8sShootClient.DirectClient()
 		namespaceCleaner  = utilclient.NewNamespaceCleaner(b.K8sShootClient.Kubernetes().CoreV1().Namespaces())
 		namespaceCleanOps = utilclient.NewCleanOps(namespaceCleaner, utilclient.DefaultGoneEnsurer())
 	)

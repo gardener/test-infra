@@ -33,31 +33,34 @@ var shootCreationCfg *ShootCreationConfig
 type ShootCreationConfig struct {
 	GardenerConfig *GardenerConfig
 
-	shootKubeconfigPath          string
-	seedKubeconfigPath           string
-	testShootName                string
-	testShootPrefix              string
-	shootMachineImageName        string
-	shootMachineType             string
-	shootMachineImageVersion     string
-	cloudProfile                 string
-	seedName                     string
-	shootRegion                  string
-	secretBinding                string
-	shootProviderType            string
-	shootK8sVersion              string
-	externalDomain               string
-	workerZone                   string
-	networkingPods               string
-	networkingServices           string
-	networkingNodes              string
-	startHibernatedFlag          string
-	startHibernated              bool
-	infrastructureProviderConfig string
-	controlPlaneProviderConfig   string
-	networkingProviderConfig     string
-	workersConfig                string
-	shootYamlPath                string
+	shootKubeconfigPath           string
+	seedKubeconfigPath            string
+	testShootName                 string
+	testShootPrefix               string
+	shootMachineImageName         string
+	shootMachineType              string
+	shootMachineImageVersion      string
+	cloudProfile                  string
+	seedName                      string
+	shootRegion                   string
+	secretBinding                 string
+	shootProviderType             string
+	shootK8sVersion               string
+	externalDomain                string
+	workerZone                    string
+	networkingPods                string
+	networkingServices            string
+	networkingNodes               string
+	startHibernatedFlag           string
+	startHibernated               bool
+	allowPrivilegedContainersFlag string
+	allowPrivilegedContainers     *bool
+	infrastructureProviderConfig  string
+	controlPlaneProviderConfig    string
+	networkingProviderConfig      string
+	workersConfig                 string
+	shootYamlPath                 string
+	shootAnnotations              string
 }
 
 // ShootCreationFramework represents the shoot test framework that includes
@@ -74,8 +77,13 @@ type ShootCreationFramework struct {
 
 // NewShootCreationFramework creates a new simple Shoot creation framework
 func NewShootCreationFramework(cfg *ShootCreationConfig) *ShootCreationFramework {
+	var gardenerConfig *GardenerConfig
+	if cfg != nil {
+		gardenerConfig = cfg.GardenerConfig
+	}
+
 	f := &ShootCreationFramework{
-		GardenerFramework: NewGardenerFrameworkFromConfig(nil),
+		GardenerFramework: NewGardenerFramework(gardenerConfig),
 		TestDescription:   NewTestDescription("SHOOTCREATION"),
 		Config:            cfg,
 	}
@@ -86,21 +94,6 @@ func NewShootCreationFramework(cfg *ShootCreationConfig) *ShootCreationFramework
 	})
 	CAfterEach(f.AfterEach, 10*time.Minute)
 	return f
-}
-
-// NewShootCreationFrameworkFromConfig creates a new Shoot creation framework from a shoot creation configuration
-// without registering ginkgo specific functions
-func NewShootCreationFrameworkFromConfig(cfg *ShootCreationConfig) (*ShootCreationFramework, error) {
-	var gardenerConfig *GardenerConfig
-	if cfg != nil {
-		gardenerConfig = cfg.GardenerConfig
-	}
-	f := &ShootCreationFramework{
-		GardenerFramework: NewGardenerFramework(gardenerConfig),
-		TestDescription:   NewTestDescription("SHOOTCREATION"),
-		Config:            cfg,
-	}
-	return f, nil
 }
 
 // BeforeEach should be called in ginkgo's BeforeEach.
@@ -123,6 +116,13 @@ func validateShootCreationConfig(cfg *ShootCreationConfig) {
 		ginkgo.Fail("no shoot creation framework configuration provided")
 	}
 
+	if StringSet(cfg.shootAnnotations) {
+		_, err := parseAnnotationCfg(cfg.shootAnnotations)
+		if err != nil {
+			ginkgo.Fail(fmt.Sprintf("annotations could not be parsed: %+v", err))
+		}
+	}
+
 	if !StringSet(cfg.shootProviderType) {
 		ginkgo.Fail("you need to specify provider type of the shoot")
 	}
@@ -141,6 +141,14 @@ func validateShootCreationConfig(cfg *ShootCreationConfig) {
 			ginkgo.Fail("startHibernated is not a boolean value")
 		}
 		cfg.startHibernated = parsedBool
+	}
+
+	if StringSet(cfg.allowPrivilegedContainersFlag) {
+		parsedBool, err := strconv.ParseBool(cfg.allowPrivilegedContainersFlag)
+		if err != nil {
+			ginkgo.Fail("allowPrivilegedContainers is not a boolean value")
+		}
+		cfg.allowPrivilegedContainers = &parsedBool
 	}
 
 	if !StringSet(cfg.infrastructureProviderConfig) {
@@ -196,6 +204,10 @@ func mergeShootCreationConfig(base, overwrite *ShootCreationConfig) *ShootCreati
 
 	if StringSet(overwrite.testShootPrefix) {
 		base.testShootPrefix = overwrite.testShootPrefix
+	}
+
+	if StringSet(overwrite.shootAnnotations) {
+		base.shootAnnotations = overwrite.shootAnnotations
 	}
 
 	if StringSet(overwrite.shootMachineImageName) {
@@ -262,6 +274,14 @@ func mergeShootCreationConfig(base, overwrite *ShootCreationConfig) *ShootCreati
 		base.startHibernated = overwrite.startHibernated
 	}
 
+	if StringSet(overwrite.allowPrivilegedContainersFlag) {
+		base.allowPrivilegedContainersFlag = overwrite.allowPrivilegedContainersFlag
+	}
+
+	if overwrite.allowPrivilegedContainers != nil {
+		base.allowPrivilegedContainers = overwrite.allowPrivilegedContainers
+	}
+
 	if StringSet(overwrite.infrastructureProviderConfig) {
 		base.infrastructureProviderConfig = overwrite.infrastructureProviderConfig
 	}
@@ -295,6 +315,7 @@ func RegisterShootCreationFrameworkFlags() *ShootCreationConfig {
 	flag.StringVar(&newCfg.seedKubeconfigPath, "seed-kubecfg-path", "", "the path to where the Kubeconfig of the Seed cluster will be downloaded to.")
 	flag.StringVar(&newCfg.testShootName, "shoot-name", "", "unique name to use for test shoots. Used by test-machinery.")
 	flag.StringVar(&newCfg.testShootPrefix, "prefix", "", "prefix for generated shoot name. Usually used locally to auto generate a unique name.")
+	flag.StringVar(&newCfg.shootAnnotations, "annotations", "", "annotations to be added to the test shoot. Expected format is key1=val1,key2=val2 (similar to kubectl --selector).")
 	flag.StringVar(&newCfg.shootMachineImageName, "machine-image-name", "", "the Machine Image Name of the test shoot. Defaults to first machine image in the CloudProfile.")
 	flag.StringVar(&newCfg.shootMachineType, "machine-type", "", "the Machine type of the first worker of the test shoot. Needs to match the machine types for that Provider available in the CloudProfile.")
 	flag.StringVar(&newCfg.shootMachineImageVersion, "machine-image-version", "", "the Machine Image version of the first worker of the test shoot. Needs to be set when the MachineImageName is set.")
@@ -310,6 +331,8 @@ func RegisterShootCreationFrameworkFlags() *ShootCreationConfig {
 	flag.StringVar(&newCfg.networkingServices, "networking-services", "", "the spec.networking.services to use for this shoot. Optional.")
 	flag.StringVar(&newCfg.networkingNodes, "networking-nodes", "", "the spec.networking.nodes to use for this shoot. Optional.")
 	flag.StringVar(&newCfg.startHibernatedFlag, "start-hibernated", "", "the spec.hibernation.enabled to use for this shoot. Optional.")
+	flag.StringVar(&newCfg.allowPrivilegedContainersFlag, "allow-privileged-containers", "", "the spec.kubernetes.allowPrivilegedContainers to use for this shoot. Optional, defaults to true.")
+
 	newCfg.startHibernated = false
 
 	// ProviderConfigs flags
@@ -325,15 +348,21 @@ func RegisterShootCreationFrameworkFlags() *ShootCreationConfig {
 	return shootCreationCfg
 }
 
-func (f *ShootCreationFramework) CreateShoot(ctx context.Context) (*gardencorev1beta1.Shoot, error) {
-	if err := f.prepareShoot(ctx); err != nil {
-		return nil, err
+func (f *ShootCreationFramework) CreateShoot(ctx context.Context, initializeShootWithFlags, waitUntilShootIsReconciled bool) (*gardencorev1beta1.Shoot, error) {
+	if initializeShootWithFlags {
+		if err := f.InitializeShootWithFlags(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	f.Logger.Infof("Creating shoot %s in namespace %s", f.Shoot.GetName(), f.ProjectNamespace)
 	if err := PrettyPrintObject(f.Shoot); err != nil {
 		f.Logger.Fatalf("Cannot decode shoot %s: %s", f.Shoot.GetName(), err)
 		return nil, err
+	}
+
+	if !waitUntilShootIsReconciled {
+		return f.GardenerFramework.createShootResource(ctx, f.Shoot)
 	}
 
 	if err := f.GardenerFramework.CreateShoot(ctx, f.Shoot); err != nil {
@@ -369,7 +398,7 @@ func (f *ShootCreationFramework) CreateShoot(ctx context.Context) (*gardencorev1
 	return f.Shoot, nil
 }
 
-func (f *ShootCreationFramework) prepareShoot(ctx context.Context) error {
+func (f *ShootCreationFramework) InitializeShootWithFlags(ctx context.Context) error {
 	// if running in test machinery, test will be executed from root of the project
 	if !FileExists(fmt.Sprintf(".%s", f.Config.shootYamlPath)) {
 		// locally, we need find the example shoot

@@ -15,11 +15,14 @@
 package controllerutils
 
 import (
+	"context"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	gardencorelisters "github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // LabelsMatchFor checks whether the given label selector matches for the given set of labels.
@@ -56,9 +59,15 @@ func ShootFilterFunc(seedName string, seedLister gardencorelisters.SeedLister, l
 			return false
 		}
 		if len(seedName) > 0 {
-			return *shoot.Spec.SeedName == seedName
+			if shoot.Status.SeedName == nil || *shoot.Spec.SeedName == *shoot.Status.SeedName {
+				return *shoot.Spec.SeedName == seedName
+			}
+			return *shoot.Status.SeedName == seedName
 		}
-		return SeedLabelsMatch(seedLister, *shoot.Spec.SeedName, labelSelector)
+		if shoot.Status.SeedName == nil || *shoot.Spec.SeedName == *shoot.Status.SeedName {
+			return SeedLabelsMatch(seedLister, *shoot.Spec.SeedName, labelSelector)
+		}
+		return SeedLabelsMatch(seedLister, *shoot.Status.SeedName, labelSelector)
 	}
 }
 
@@ -67,6 +76,17 @@ func ShootFilterFunc(seedName string, seedLister gardencorelisters.SeedLister, l
 func SeedLabelsMatch(seedLister gardencorelisters.SeedLister, seedName string, labelSelector *metav1.LabelSelector) bool {
 	seed, err := seedLister.Get(seedName)
 	if err != nil {
+		return false
+	}
+
+	return LabelsMatchFor(seed.Labels, labelSelector)
+}
+
+// seedLabelsMatchWithClient fetches the given seed by its name from the client and then checks whether the given
+// label selector matches the seed labels.
+func seedLabelsMatchWithClient(ctx context.Context, c client.Client, seedName string, labelSelector *metav1.LabelSelector) bool {
+	seed := &gardencorev1beta1.Seed{}
+	if err := c.Get(ctx, client.ObjectKey{Name: seedName}, seed); err != nil {
 		return false
 	}
 
@@ -88,7 +108,7 @@ func ControllerInstallationFilterFunc(seedName string, seedLister gardencorelist
 }
 
 // BackupBucketFilterFunc returns a filtering func for the seeds and the given label selector.
-func BackupBucketFilterFunc(seedName string, seedLister gardencorelisters.SeedLister, labelSelector *metav1.LabelSelector) func(obj interface{}) bool {
+func BackupBucketFilterFunc(ctx context.Context, c client.Client, seedName string, labelSelector *metav1.LabelSelector) func(obj interface{}) bool {
 	return func(obj interface{}) bool {
 		backupBucket, ok := obj.(*gardencorev1beta1.BackupBucket)
 		if !ok {
@@ -100,12 +120,12 @@ func BackupBucketFilterFunc(seedName string, seedLister gardencorelisters.SeedLi
 		if len(seedName) > 0 {
 			return *backupBucket.Spec.SeedName == seedName
 		}
-		return SeedLabelsMatch(seedLister, *backupBucket.Spec.SeedName, labelSelector)
+		return seedLabelsMatchWithClient(ctx, c, *backupBucket.Spec.SeedName, labelSelector)
 	}
 }
 
 // BackupEntryFilterFunc returns a filtering func for the seeds and the given label selector.
-func BackupEntryFilterFunc(seedName string, seedLister gardencorelisters.SeedLister, labelSelector *metav1.LabelSelector) func(obj interface{}) bool {
+func BackupEntryFilterFunc(ctx context.Context, c client.Client, seedName string, labelSelector *metav1.LabelSelector) func(obj interface{}) bool {
 	return func(obj interface{}) bool {
 		backupEntry, ok := obj.(*gardencorev1beta1.BackupEntry)
 		if !ok {
@@ -117,6 +137,6 @@ func BackupEntryFilterFunc(seedName string, seedLister gardencorelisters.SeedLis
 		if len(seedName) > 0 {
 			return *backupEntry.Spec.SeedName == seedName
 		}
-		return SeedLabelsMatch(seedLister, *backupEntry.Spec.SeedName, labelSelector)
+		return seedLabelsMatchWithClient(ctx, c, *backupEntry.Spec.SeedName, labelSelector)
 	}
 }

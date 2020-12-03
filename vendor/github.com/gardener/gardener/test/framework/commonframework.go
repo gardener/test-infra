@@ -16,12 +16,13 @@ package framework
 
 import (
 	"flag"
+	"os"
+	"path/filepath"
+
 	"github.com/gardener/gardener/pkg/logger"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
-	"os"
-	"path/filepath"
 )
 
 var commonCfg *CommonConfig
@@ -53,10 +54,16 @@ type CommonFramework struct {
 
 // NewCommonFramework creates a new common framework and registers its ginkgo BeforeEach setup
 func NewCommonFramework(cfg *CommonConfig) *CommonFramework {
+	f := NewCommonFrameworkFromConfig(cfg)
+	ginkgo.BeforeEach(f.BeforeEach)
+	return f
+}
+
+// NewCommonFrameworkFromConfig creates a new common framework and registers its ginkgo BeforeEach setup
+func NewCommonFrameworkFromConfig(cfg *CommonConfig) *CommonFramework {
 	f := &CommonFramework{
 		Config: cfg,
 	}
-	ginkgo.BeforeEach(f.BeforeEach)
 	return f
 }
 
@@ -92,6 +99,10 @@ func (f *CommonFramework) BeforeEach() {
 
 // CommonAfterSuite performs necessary common steps after all tests of a suite a run
 func CommonAfterSuite() {
+
+	// run all registered cleanup functions
+	RunCleanupActions()
+
 	resourcesDir, err := filepath.Abs(filepath.Join("..", "..", "framework", "resources"))
 	ExpectNoError(err)
 	err = os.RemoveAll(filepath.Join(resourcesDir, "charts"))

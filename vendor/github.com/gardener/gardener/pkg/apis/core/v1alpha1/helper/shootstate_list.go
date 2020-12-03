@@ -16,6 +16,7 @@ package helper
 
 import (
 	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 )
 
@@ -35,8 +36,8 @@ func (e *ExtensionResourceStateList) Get(kind string, name, purpose *string) *ga
 
 // Delete removes an ExtensionResourceState from the list by kind, name and purpose
 func (e *ExtensionResourceStateList) Delete(kind string, name, purpose *string) {
-	for i, obj := range *e {
-		if matchesExtensionResourceState(&obj, kind, name, purpose) {
+	for i := len(*e) - 1; i >= 0; i-- {
+		if matchesExtensionResourceState(&(*e)[i], kind, name, purpose) {
 			*e = append((*e)[:i], (*e)[i+1:]...)
 			return
 		}
@@ -48,6 +49,7 @@ func (e *ExtensionResourceStateList) Upsert(extensionResourceState *gardencorev1
 	for i, obj := range *e {
 		if matchesExtensionResourceState(&obj, extensionResourceState.Kind, extensionResourceState.Name, extensionResourceState.Purpose) {
 			(*e)[i].State = extensionResourceState.State
+			(*e)[i].Resources = extensionResourceState.Resources
 			return
 		}
 	}
@@ -61,14 +63,15 @@ func matchesExtensionResourceState(extensionResourceState *gardencorev1alpha1.Ex
 	return false
 }
 
-// GardenerResourceDataList defines function
+// GardenerResourceDataList is a list of GardenerResourceData
 type GardenerResourceDataList []gardencorev1alpha1.GardenerResourceData
 
 // Delete deletes an item from the list
 func (g *GardenerResourceDataList) Delete(name string) {
-	for i, e := range *g {
-		if e.Name == name {
+	for i := len(*g) - 1; i >= 0; i-- {
+		if (*g)[i].Name == name {
 			*g = append((*g)[:i], (*g)[i+1:]...)
+			return
 		}
 	}
 }
@@ -93,4 +96,47 @@ func (g *GardenerResourceDataList) Upsert(data *gardencorev1alpha1.GardenerResou
 		}
 	}
 	*g = append(*g, *data)
+}
+
+// DeepCopy makes a deep copy of a GardenerResourceDataList
+func (g GardenerResourceDataList) DeepCopy() GardenerResourceDataList {
+	res := GardenerResourceDataList{}
+	for _, obj := range g {
+		res = append(res, *obj.DeepCopy())
+	}
+	return res
+}
+
+// ResourceDataList is a list of ResourceData
+type ResourceDataList []gardencorev1alpha1.ResourceData
+
+// Delete deletes an item from the list
+func (r *ResourceDataList) Delete(ref *autoscalingv1.CrossVersionObjectReference) {
+	for i := len(*r) - 1; i >= 0; i-- {
+		if apiequality.Semantic.DeepEqual((*r)[i].CrossVersionObjectReference, *ref) {
+			*r = append((*r)[:i], (*r)[i+1:]...)
+			return
+		}
+	}
+}
+
+// Get returns the item from the list
+func (r *ResourceDataList) Get(ref *autoscalingv1.CrossVersionObjectReference) *gardencorev1alpha1.ResourceData {
+	for _, obj := range *r {
+		if apiequality.Semantic.DeepEqual(obj.CrossVersionObjectReference, *ref) {
+			return &obj
+		}
+	}
+	return nil
+}
+
+// Upsert inserts a new element or updates an existing one
+func (r *ResourceDataList) Upsert(data *gardencorev1alpha1.ResourceData) {
+	for i, obj := range *r {
+		if apiequality.Semantic.DeepEqual(obj.CrossVersionObjectReference, data.CrossVersionObjectReference) {
+			(*r)[i].Data = data.Data
+			return
+		}
+	}
+	*r = append(*r, *data)
 }

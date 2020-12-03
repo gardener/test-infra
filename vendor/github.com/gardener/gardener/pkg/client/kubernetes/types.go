@@ -17,12 +17,13 @@ package kubernetes
 import (
 	"context"
 
+	"github.com/gardener/gardener/pkg/chartrenderer"
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
 	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
 
 	druidv1alpha1 "github.com/gardener/etcd-druid/api/v1alpha1"
-	dnsscheme "github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	resourcesscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	hvpav1alpha1 "github.com/gardener/hvpa-controller/api/v1alpha1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -31,13 +32,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/version"
+	autoscalingscheme "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1beta2"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationscheme "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -61,7 +66,26 @@ var (
 		client.PropagationPolicy(metav1.DeletePropagationBackground),
 		client.GracePeriodSeconds(0),
 	}
+
+	// SeedSerializer is a YAML serializer using the Seed scheme.
+	SeedSerializer = json.NewSerializerWithOptions(json.DefaultMetaFactory, SeedScheme, SeedScheme, json.SerializerOptions{Yaml: true, Pretty: false, Strict: false})
+	// SeedCodec is a codec factory using the Seed scheme.
+	SeedCodec = serializer.NewCodecFactory(SeedScheme)
+
+	// ShootSerializer is a YAML serializer using the Shoot scheme.
+	ShootSerializer = json.NewSerializerWithOptions(json.DefaultMetaFactory, ShootScheme, ShootScheme, json.SerializerOptions{Yaml: true, Pretty: false, Strict: false})
+	// ShootCodec is a codec factory using the Shoot scheme.
+	ShootCodec = serializer.NewCodecFactory(ShootScheme)
 )
+
+// DefaultGetOptions are the default options for GET requests.
+func DefaultGetOptions() metav1.GetOptions { return metav1.GetOptions{} }
+
+// DefaultCreateOptions are the default options for CREATE requests.
+func DefaultCreateOptions() metav1.CreateOptions { return metav1.CreateOptions{} }
+
+// DefaultUpdateOptions are the default options for UPDATE requests.
+func DefaultUpdateOptions() metav1.UpdateOptions { return metav1.UpdateOptions{} }
 
 func init() {
 	gardenSchemeBuilder := runtime.NewSchemeBuilder(
@@ -72,11 +96,13 @@ func init() {
 
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
-		dnsscheme.AddToScheme,
+		dnsv1alpha1.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
 		resourcesscheme.AddToScheme,
+		autoscalingscheme.AddToScheme,
 		hvpav1alpha1.AddToScheme,
 		druidv1alpha1.AddToScheme,
+		apiextensionsscheme.AddToScheme,
 	)
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 
@@ -84,6 +110,7 @@ func init() {
 		corescheme.AddToScheme,
 		apiextensionsscheme.AddToScheme,
 		apiregistrationscheme.AddToScheme,
+		autoscalingscheme.AddToScheme,
 	)
 	utilruntime.Must(shootSchemeBuilder.AddToScheme(ShootScheme))
 
@@ -92,49 +119,16 @@ func init() {
 		gardencorescheme.AddToScheme,
 	)
 	utilruntime.Must(plantSchemeBuilder.AddToScheme(PlantScheme))
-
-}
-
-// Clientset is a struct containing the configuration for the respective Kubernetes
-// cluster, the collection of Kubernetes clients <Clientset> containing all REST clients
-// for the built-in Kubernetes API groups, and the Garden which is a REST clientset
-// for the Garden API group.
-// The RESTClient itself is a normal HTTP client for the respective Kubernetes cluster,
-// allowing requests to arbitrary URLs.
-// The version string contains only the major/minor part in the form <major>.<minor>.
-type Clientset struct {
-	config     *rest.Config
-	restMapper meta.RESTMapper
-	restClient rest.Interface
-
-	applier ApplierInterface
-
-	client client.Client
-
-	kubernetes      kubernetesclientset.Interface
-	gardenCore      gardencoreclientset.Interface
-	apiextension    apiextensionsclientset.Interface
-	apiregistration apiregistrationclientset.Interface
-
-	version string
-}
-
-// Applier is a default implementation of the ApplyInterface. It applies objects with
-// by first checking whether they exist and then either creating / updating them (update happens
-// with a predefined merge logic).
-type Applier struct {
-	client     client.Client
-	restMapper *restmapper.DeferredDiscoveryRESTMapper
 }
 
 // MergeFunc determines how oldOj is merged into new oldObj.
 type MergeFunc func(newObj, oldObj *unstructured.Unstructured)
 
-// ApplierInterface is an interface which describes declarative operations to apply multiple
+// Applier is an interface which describes declarative operations to apply multiple
 // Kubernetes objects.
-type ApplierInterface interface {
+type Applier interface {
 	ApplyManifest(ctx context.Context, unstructured UnstructuredReader, options MergeFuncs) error
-	DeleteManifest(ctx context.Context, unstructured UnstructuredReader) error
+	DeleteManifest(ctx context.Context, unstructured UnstructuredReader, opts ...DeleteManifestOption) error
 }
 
 // Interface is used to wrap the interactions with a Kubernetes cluster
@@ -145,8 +139,21 @@ type Interface interface {
 	RESTMapper() meta.RESTMapper
 	RESTClient() rest.Interface
 
+	// Client returns the ClientSet's controller-runtime client. This client should be used by default, as it carries
+	// a cache, which uses SharedIndexInformers to keep up-to-date.
 	Client() client.Client
-	Applier() ApplierInterface
+	// DirectClient returns a controller-runtime client, which can be used to talk to the API server directly
+	// (without using a cache).
+	DirectClient() client.Client
+	// Cache returns the ClientSet's controller-runtime cache. It can be used to get Informers for arbitrary objects.
+	Cache() cache.Cache
+
+	// Applier returns an Applier which uses the ClientSet's client.
+	Applier() Applier
+	// ChartRenderer returns a ChartRenderer populated with the cluster's Capabilities.
+	ChartRenderer() chartrenderer.Interface
+	// ChartApplier returns a ChartApplier using the ClientSet's ChartRenderer and Applier.
+	ChartApplier() ChartApplier
 
 	Kubernetes() kubernetesclientset.Interface
 	GardenCore() gardencoreclientset.Interface
@@ -157,5 +164,16 @@ type Interface interface {
 	ForwardPodPort(string, string, int, int) (chan struct{}, error)
 	CheckForwardPodPort(string, string, int, int) error
 
+	// Version returns the server version of the targeted Kubernetes cluster.
 	Version() string
+	// DiscoverVersion tries to retrieve the server version of the targeted Kubernetes cluster and updates the
+	// ClientSet's saved version accordingly. Use Version if you only want to retrieve the kubernetes version instead
+	// of refreshing the ClientSet's saved version.
+	DiscoverVersion() (*version.Info, error)
+
+	// Start starts the cache of the ClientSet's controller-runtime client and returns immediately.
+	// It must be called first before using the client to retrieve objects from the API server.
+	Start(stopCh <-chan struct{})
+	// WaitForCacheSync waits for the cache of the ClientSet's controller-runtime client to be synced.
+	WaitForCacheSync(stopCh <-chan struct{}) bool
 }

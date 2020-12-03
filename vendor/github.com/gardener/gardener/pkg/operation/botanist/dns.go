@@ -17,284 +17,31 @@ package botanist
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gardener/gardener/pkg/apis/core"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
-	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/gardener/pkg/operation/common"
-	"github.com/gardener/gardener/pkg/utils/flow"
+	"github.com/gardener/gardener/pkg/features"
+	gardenletfeatures "github.com/gardener/gardener/pkg/gardenlet/features"
+	"github.com/gardener/gardener/pkg/operation/botanist/component"
+	"github.com/gardener/gardener/pkg/operation/botanist/extensions/dns"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	"github.com/gardener/gardener/pkg/utils/retry"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-var dnsChartPath = filepath.Join(common.ChartPath, "seed-dns")
 
 const (
 	// DNSInternalName is a constant for a DNS resources used for the internal domain name.
 	DNSInternalName = "internal"
 	// DNSExternalName is a constant for a DNS resources used for the external domain name.
 	DNSExternalName = "external"
-	// DNSProviderRolePrimary is a constant for a DNS providers used to manage shoot domains.
-	DNSProviderRolePrimary = "primary-dns-provider"
 	// DNSProviderRoleAdditional is a constant for additionally managed DNS providers.
 	DNSProviderRoleAdditional = "managed-dns-provider"
 )
-
-// DeployInternalDomainDNSRecord deploys the DNS record for the internal cluster domain.
-func (b *Botanist) DeployInternalDomainDNSRecord(ctx context.Context) error {
-	if err := b.deployDNSProvider(ctx, DNSInternalName, DNSProviderRolePrimary, b.Garden.InternalDomain.Provider, b.Garden.InternalDomain.SecretData, []string{b.Shoot.InternalClusterDomain}, nil, b.Garden.InternalDomain.IncludeZones, b.Garden.InternalDomain.ExcludeZones); err != nil {
-		return err
-	}
-	return b.deployDNSEntry(ctx, DNSInternalName, common.GetAPIServerDomain(b.Shoot.InternalClusterDomain), b.APIServerAddress)
-}
-
-// DestroyInternalDomainDNSRecord destroys the DNS record for the internal cluster domain.
-func (b *Botanist) DestroyInternalDomainDNSRecord(ctx context.Context) error {
-	return b.deleteDNSEntry(ctx, DNSInternalName)
-}
-
-// DeployExternalDomainDNSRecord deploys the DNS record for the external cluster domain.
-func (b *Botanist) DeployExternalDomainDNSRecord(ctx context.Context) error {
-	if b.Shoot.Info.Spec.DNS == nil || b.Shoot.Info.Spec.DNS.Domain == nil || b.Shoot.ExternalClusterDomain == nil || strings.HasSuffix(*b.Shoot.ExternalClusterDomain, ".nip.io") {
-		return nil
-	}
-
-	if err := b.deployDNSProvider(ctx, DNSExternalName, DNSProviderRolePrimary, b.Shoot.ExternalDomain.Provider, b.Shoot.ExternalDomain.SecretData, sets.NewString(append(b.Shoot.ExternalDomain.IncludeDomains, *b.Shoot.ExternalClusterDomain)...).List(), b.Shoot.ExternalDomain.ExcludeDomains, b.Shoot.ExternalDomain.IncludeZones, b.Shoot.ExternalDomain.ExcludeZones); err != nil {
-		return err
-	}
-	return b.deployDNSEntry(ctx, DNSExternalName, common.GetAPIServerDomain(*b.Shoot.ExternalClusterDomain), b.APIServerAddress)
-}
-
-// DestroyExternalDomainDNSRecord destroys the DNS record for the external cluster domain.
-func (b *Botanist) DestroyExternalDomainDNSRecord(ctx context.Context) error {
-	return b.deleteDNSEntry(ctx, DNSExternalName)
-}
-
-// DeployAdditionalDNSProviders deploys the additional DNS providers configured in the shoot resource.
-func (b *Botanist) DeployAdditionalDNSProviders(ctx context.Context) error {
-	if b.Shoot.Info.Spec.DNS == nil {
-		return nil
-	}
-
-	var (
-		fns               []flow.TaskFn
-		deployedProviders = sets.NewString()
-	)
-	for i, provider := range b.Shoot.Info.Spec.DNS.Providers {
-		p := provider
-		if p.Primary != nil && *p.Primary {
-			continue
-		}
-		fns = append(fns, func(ctx context.Context) error {
-			var includeDomains, excludeDomains, includeZones, excludeZones []string
-			if domains := p.Domains; domains != nil {
-				includeDomains = domains.Include
-				excludeDomains = domains.Exclude
-			}
-			if zones := p.Zones; zones != nil {
-				includeZones = zones.Include
-				excludeZones = zones.Exclude
-			}
-			providerType := p.Type
-			if providerType == nil {
-				return fmt.Errorf("dns provider[%d] doesn't speify a type", i)
-			}
-			if *providerType == core.DNSUnmanaged {
-				b.Logger.Infof("Skipping deployment of DNS provider[%d] since it specifies type %q", i, core.DNSUnmanaged)
-				return nil
-			}
-			secretName := p.SecretName
-			if secretName == nil {
-				return fmt.Errorf("dns provider[%d] doesn't specify a secretName", i)
-			}
-			secret := &corev1.Secret{}
-			if err := b.K8sGardenClient.Client().Get(ctx, kutil.Key(b.Shoot.Info.Namespace, *secretName), secret); err != nil {
-				return fmt.Errorf("could not get dns provider secret %q: %+v", *secretName, err)
-			}
-			providerName := GenerateDNSProviderName(*secretName, *providerType)
-			if err := b.deployDNSProvider(ctx, providerName, DNSProviderRoleAdditional, *p.Type, secret.Data, includeDomains, excludeDomains, includeZones, excludeZones); err != nil {
-				return err
-			}
-			deployedProviders.Insert(providerName)
-			return nil
-		})
-	}
-
-	if err := flow.Parallel(fns...)(ctx); err != nil {
-		return err
-	}
-
-	// Clean-up old providers
-	providerList := &dnsv1alpha1.DNSProviderList{}
-	if err := b.K8sSeedClient.Client().List(ctx, providerList, client.InNamespace(b.Shoot.SeedNamespace), client.MatchingLabels{v1beta1constants.GardenRole: DNSProviderRoleAdditional}); err != nil {
-		return err
-	}
-	fns = nil
-
-	for _, provider := range providerList.Items {
-		p := provider
-		if !deployedProviders.Has(p.Name) {
-			fns = append(fns, func(ctx context.Context) error {
-				return b.deleteDNSProvider(ctx, p.Name)
-			})
-		}
-	}
-	if err := flow.Parallel(fns...)(ctx); err != nil {
-		return err
-	}
-
-	fns = nil
-	for _, provider := range deployedProviders.UnsortedList() {
-		providerName := provider
-		fns = append(fns, func(ctx context.Context) error {
-			return b.waitUntilDNSProviderReady(ctx, providerName)
-		})
-	}
-
-	return flow.Parallel(fns...)(ctx)
-}
-
-// DeleteDNSProviders deletes all DNS providers in the shoot namespace of the seed.
-func (b *Botanist) DeleteDNSProviders(ctx context.Context) error {
-	if err := b.K8sSeedClient.Client().DeleteAllOf(ctx, &dnsv1alpha1.DNSProvider{}, client.InNamespace(b.Shoot.SeedNamespace)); err != nil {
-		return err
-	}
-
-	providers := &dnsv1alpha1.DNSProviderList{}
-	return kutil.WaitUntilResourcesDeleted(ctx, b.K8sSeedClient.Client(), providers, 5*time.Second, client.InNamespace(b.Shoot.SeedNamespace))
-}
-
-func (b *Botanist) deployDNSProvider(ctx context.Context, name, role, provider string, secretData map[string][]byte, includeDomains, excludeDomains, includeZones, excludeZones []string) error {
-	values := map[string]interface{}{
-		"name":     name,
-		"purpose":  name,
-		"provider": provider,
-		"providerLabels": map[string]interface{}{
-			v1beta1constants.GardenRole: role,
-		},
-		"secretData": secretData,
-		"domains": map[string]interface{}{
-			"include": includeDomains,
-			"exclude": excludeDomains,
-		},
-		"zones": map[string]interface{}{
-			"include": includeZones,
-			"exclude": excludeZones,
-		},
-	}
-
-	if err := b.ChartApplierSeed.Apply(ctx, filepath.Join(dnsChartPath, "provider"), b.Shoot.SeedNamespace, name, kubernetes.Values(values)); err != nil {
-		return err
-	}
-
-	return b.waitUntilDNSProviderReady(ctx, name)
-}
-
-func (b *Botanist) waitUntilDNSProviderReady(ctx context.Context, name string) error {
-	var (
-		status  string
-		message string
-	)
-
-	if err := retry.UntilTimeout(ctx, 5*time.Second, 2*time.Minute, func(ctx context.Context) (done bool, err error) {
-		provider := &dnsv1alpha1.DNSProvider{}
-		if err := b.K8sSeedClient.Client().Get(ctx, client.ObjectKey{Name: name, Namespace: b.Shoot.SeedNamespace}, provider); err != nil {
-			return retry.SevereError(err)
-		}
-
-		if provider.Status.State == dnsv1alpha1.STATE_READY {
-			return retry.Ok()
-		}
-
-		status = provider.Status.State
-		if msg := provider.Status.Message; msg != nil {
-			message = *msg
-		}
-
-		b.Logger.Infof("Waiting for %q DNS provider to be ready... (status=%s, message=%s)", name, status, message)
-		return retry.MinorError(fmt.Errorf("DNS provider %q is not ready (status=%s, message=%s)", name, status, message))
-	}); err != nil {
-		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("Failed to create DNS provider for %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
-	}
-
-	return nil
-}
-
-func (b *Botanist) deleteDNSProvider(ctx context.Context, name string) error {
-	if err := b.K8sSeedClient.Client().Delete(ctx, &dnsv1alpha1.DNSProvider{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: name}}); client.IgnoreNotFound(err) != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-
-	return kutil.WaitUntilResourceDeleted(ctx, b.K8sSeedClient.Client(), &dnsv1alpha1.DNSProvider{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: name}}, 5*time.Second)
-}
-
-func (b *Botanist) deployDNSEntry(ctx context.Context, name, dnsName, target string) error {
-	values := map[string]interface{}{
-		"name":    name,
-		"dnsName": dnsName,
-		"targets": []string{target},
-	}
-
-	if err := b.ChartApplierSeed.Apply(ctx, filepath.Join(dnsChartPath, "entry"), b.Shoot.SeedNamespace, name, kubernetes.Values(values)); err != nil {
-		return err
-	}
-
-	return b.waitUntilDNSEntryReady(ctx, name)
-}
-
-func (b *Botanist) waitUntilDNSEntryReady(ctx context.Context, name string) error {
-	var (
-		status  string
-		message string
-	)
-
-	if err := retry.UntilTimeout(ctx, 5*time.Second, 2*time.Minute, func(ctx context.Context) (done bool, err error) {
-		entry := &dnsv1alpha1.DNSEntry{}
-		if err := b.K8sSeedClient.Client().Get(ctx, client.ObjectKey{Name: name, Namespace: b.Shoot.SeedNamespace}, entry); err != nil {
-			return retry.SevereError(err)
-		}
-
-		if entry.Status.ObservedGeneration == entry.Generation && entry.Status.State == dnsv1alpha1.STATE_READY {
-			return retry.Ok()
-		}
-
-		status = entry.Status.State
-		if msg := entry.Status.Message; msg != nil {
-			message = *msg
-		}
-
-		b.Logger.Infof("Waiting for %q DNS record to be ready... (status=%s, message=%s)", name, status, message)
-		return retry.MinorError(fmt.Errorf("DNS record %q is not ready (status=%s, message=%s)", name, status, message))
-	}); err != nil {
-		return gardencorev1beta1helper.DetermineError(err, fmt.Sprintf("Failed to create %q DNS record: %q (status=%s, message=%s)", name, err.Error(), status, message))
-	}
-
-	return nil
-}
-
-func (b *Botanist) deleteDNSEntry(ctx context.Context, name string) error {
-	if err := b.K8sSeedClient.Client().Delete(ctx, &dnsv1alpha1.DNSEntry{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: name}}); client.IgnoreNotFound(err) != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-
-	return kutil.WaitUntilResourceDeleted(ctx, b.K8sSeedClient.Client(), &dnsv1alpha1.DNSEntry{ObjectMeta: metav1.ObjectMeta{Namespace: b.Shoot.SeedNamespace, Name: name}}, 5*time.Second)
-}
 
 // GenerateDNSProviderName creates a name for the dns provider out of the passed `secretName` and `providerType`.
 func GenerateDNSProviderName(secretName, providerType string) string {
@@ -308,4 +55,456 @@ func GenerateDNSProviderName(secretName, providerType string) string {
 	default:
 		return ""
 	}
+}
+
+// DeployExternalDNS deploys the external DNSOwner, DNSProvider, and DNSEntry resources.
+func (b *Botanist) DeployExternalDNS(ctx context.Context) error {
+	if b.NeedsExternalDNS() {
+		if b.isRestorePhase() {
+			return dnsRestoreDeployer{
+				provider: b.Shoot.Components.Extensions.DNS.ExternalProvider,
+				entry:    b.Shoot.Components.Extensions.DNS.ExternalEntry,
+				owner:    b.Shoot.Components.Extensions.DNS.ExternalOwner,
+			}.Deploy(ctx)
+		}
+
+		return component.OpWaiter(
+			b.Shoot.Components.Extensions.DNS.ExternalOwner,
+			b.Shoot.Components.Extensions.DNS.ExternalProvider,
+			b.Shoot.Components.Extensions.DNS.ExternalEntry,
+		).Deploy(ctx)
+	}
+
+	return component.OpWaiter(
+		b.Shoot.Components.Extensions.DNS.ExternalEntry,
+		b.Shoot.Components.Extensions.DNS.ExternalProvider,
+		b.Shoot.Components.Extensions.DNS.ExternalOwner,
+	).Deploy(ctx)
+}
+
+// DeployInternalDNS deploys the internal DNSOwner, DNSProvider, and DNSEntry resources.
+func (b *Botanist) DeployInternalDNS(ctx context.Context) error {
+	if b.NeedsInternalDNS() {
+		if b.isRestorePhase() {
+			return dnsRestoreDeployer{
+				provider: b.Shoot.Components.Extensions.DNS.InternalProvider,
+				entry:    b.Shoot.Components.Extensions.DNS.InternalEntry,
+				owner:    b.Shoot.Components.Extensions.DNS.InternalOwner,
+			}.Deploy(ctx)
+		}
+
+		return component.OpWaiter(
+			b.Shoot.Components.Extensions.DNS.InternalOwner,
+			b.Shoot.Components.Extensions.DNS.InternalProvider,
+			b.Shoot.Components.Extensions.DNS.InternalEntry,
+		).Deploy(ctx)
+	}
+
+	return component.OpWaiter(
+		b.Shoot.Components.Extensions.DNS.InternalEntry,
+		b.Shoot.Components.Extensions.DNS.InternalProvider,
+		b.Shoot.Components.Extensions.DNS.InternalOwner,
+	).Deploy(ctx)
+}
+
+// DefaultExternalDNSProvider returns the external DNSProvider if external DNS is
+// enabled and if not DeployWaiter which removes the external DNSProvider.
+func (b *Botanist) DefaultExternalDNSProvider(seedClient client.Client) component.DeployWaiter {
+	if b.NeedsExternalDNS() {
+		return dns.NewDNSProvider(
+			&dns.ProviderValues{
+				Name:       DNSExternalName,
+				Purpose:    DNSExternalName,
+				Provider:   b.Shoot.ExternalDomain.Provider,
+				SecretData: b.Shoot.ExternalDomain.SecretData,
+				Domains: &dns.IncludeExclude{
+					Include: sets.NewString(append(b.Shoot.ExternalDomain.IncludeDomains, *b.Shoot.ExternalClusterDomain)...).List(),
+					Exclude: b.Shoot.ExternalDomain.ExcludeDomains,
+				},
+				Zones: &dns.IncludeExclude{
+					Include: b.Shoot.ExternalDomain.IncludeZones,
+					Exclude: b.Shoot.ExternalDomain.ExcludeZones,
+				},
+			},
+			b.Shoot.SeedNamespace,
+			b.K8sSeedClient.ChartApplier(),
+			b.ChartsRootPath,
+			b.Logger,
+			seedClient,
+			nil,
+		)
+	}
+
+	return component.OpDestroy(dns.NewDNSProvider(
+		&dns.ProviderValues{
+			Name:    DNSExternalName,
+			Purpose: DNSExternalName,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		b.Logger,
+		seedClient,
+		nil,
+	))
+}
+
+// DefaultExternalDNSEntry returns DeployWaiter which removes the external DNSEntry.
+func (b *Botanist) DefaultExternalDNSEntry(seedClient client.Client) component.DeployWaiter {
+	return component.OpDestroy(dns.NewDNSEntry(
+		&dns.EntryValues{
+			Name: DNSExternalName,
+			TTL:  *b.Config.Controllers.Shoot.DNSEntryTTLSeconds,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		b.Logger,
+		seedClient,
+		nil,
+	))
+}
+
+// DefaultExternalDNSOwner returns DeployWaiter which removes the external DNSOwner.
+func (b *Botanist) DefaultExternalDNSOwner(seedClient client.Client) component.DeployWaiter {
+	return component.OpDestroy(dns.NewDNSOwner(
+		&dns.OwnerValues{
+			Name: DNSExternalName,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		seedClient,
+	))
+}
+
+// DefaultInternalDNSProvider returns the internal DNSProvider if internal DNS is
+// enabled and if not, DeployWaiter which removes the internal DNSProvider.
+func (b *Botanist) DefaultInternalDNSProvider(seedClient client.Client) component.DeployWaiter {
+	if b.NeedsInternalDNS() {
+		return dns.NewDNSProvider(
+			&dns.ProviderValues{
+				Name:       DNSInternalName,
+				Purpose:    DNSInternalName,
+				Provider:   b.Garden.InternalDomain.Provider,
+				SecretData: b.Garden.InternalDomain.SecretData,
+				Domains: &dns.IncludeExclude{
+					Include: []string{b.Shoot.InternalClusterDomain},
+				},
+				Zones: &dns.IncludeExclude{
+					Include: b.Garden.InternalDomain.IncludeZones,
+					Exclude: b.Garden.InternalDomain.ExcludeZones,
+				},
+			},
+			b.Shoot.SeedNamespace,
+			b.K8sSeedClient.ChartApplier(),
+			b.ChartsRootPath,
+			b.Logger,
+			seedClient,
+			nil,
+		)
+	}
+
+	return component.OpDestroy(dns.NewDNSProvider(
+		&dns.ProviderValues{
+			Name:    DNSInternalName,
+			Purpose: DNSInternalName,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		b.Logger,
+		seedClient,
+		nil,
+	))
+}
+
+// DefaultInternalDNSEntry returns DeployWaiter which removes the internal DNSEntry.
+func (b *Botanist) DefaultInternalDNSEntry(seedClient client.Client) component.DeployWaiter {
+	return component.OpDestroy(dns.NewDNSEntry(
+		&dns.EntryValues{
+			Name: DNSInternalName,
+			TTL:  *b.Config.Controllers.Shoot.DNSEntryTTLSeconds,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		b.Logger,
+		seedClient,
+		nil,
+	))
+}
+
+// DefaultInternalDNSOwner returns a DeployWaiter which removes the internal DNSOwner.
+func (b *Botanist) DefaultInternalDNSOwner(seedClient client.Client) component.DeployWaiter {
+	return component.OpDestroy(dns.NewDNSOwner(
+		&dns.OwnerValues{
+			Name: DNSInternalName,
+		},
+		b.Shoot.SeedNamespace,
+		b.K8sSeedClient.ChartApplier(),
+		b.ChartsRootPath,
+		seedClient,
+	))
+}
+
+// AdditionalDNSProviders returns a map containing DNSProviders where the key is the provider name.
+// Providers and DNSEntries which are no longer needed / or in use, contain a DeployWaiter which removes
+// said DNSEntry / DNSProvider.
+func (b *Botanist) AdditionalDNSProviders(ctx context.Context, gardenClient, seedClient client.Client) (map[string]component.DeployWaiter, error) {
+	additionalProviders := map[string]component.DeployWaiter{}
+
+	if b.NeedsAdditionalDNSProviders() {
+		for i, provider := range b.Shoot.Info.Spec.DNS.Providers {
+			p := provider
+			if p.Primary != nil && *p.Primary {
+				continue
+			}
+
+			var includeDomains, excludeDomains, includeZones, excludeZones []string
+			if domains := p.Domains; domains != nil {
+				includeDomains = domains.Include
+				excludeDomains = domains.Exclude
+			}
+
+			if zones := p.Zones; zones != nil {
+				includeZones = zones.Include
+				excludeZones = zones.Exclude
+			}
+
+			providerType := p.Type
+			if providerType == nil {
+				return nil, fmt.Errorf("dns provider[%d] doesn't specify a type", i)
+			}
+
+			if *providerType == core.DNSUnmanaged {
+				b.Logger.Infof("Skipping deployment of DNS provider[%d] since it specifies type %q", i, core.DNSUnmanaged)
+				continue
+			}
+
+			secretName := p.SecretName
+			if secretName == nil {
+				return nil, fmt.Errorf("dns provider[%d] doesn't specify a secretName", i)
+			}
+
+			secret := &corev1.Secret{}
+			if err := gardenClient.Get(
+				ctx,
+				kutil.Key(b.Shoot.Info.Namespace, *secretName),
+				secret,
+			); err != nil {
+				return nil, fmt.Errorf("could not get dns provider secret %q: %+v", *secretName, err)
+			}
+			providerName := GenerateDNSProviderName(*secretName, *providerType)
+
+			additionalProviders[providerName] = dns.NewDNSProvider(
+				&dns.ProviderValues{
+					Name:       providerName,
+					Purpose:    providerName,
+					Labels:     map[string]string{v1beta1constants.GardenRole: DNSProviderRoleAdditional},
+					SecretData: secret.Data,
+					Provider:   *p.Type,
+					Domains: &dns.IncludeExclude{
+						Include: includeDomains,
+						Exclude: excludeDomains,
+					},
+					Zones: &dns.IncludeExclude{
+						Include: includeZones,
+						Exclude: excludeZones,
+					},
+				},
+				b.Shoot.SeedNamespace,
+				b.K8sSeedClient.ChartApplier(),
+				b.ChartsRootPath,
+				b.Logger,
+				seedClient,
+				nil,
+			)
+		}
+	}
+
+	// Clean-up old providers
+	providerList := &dnsv1alpha1.DNSProviderList{}
+	if err := seedClient.List(
+		ctx,
+		providerList,
+		client.InNamespace(b.Shoot.SeedNamespace),
+		client.MatchingLabels{v1beta1constants.GardenRole: DNSProviderRoleAdditional},
+	); err != nil {
+		return nil, err
+	}
+
+	for _, p := range providerList.Items {
+		if _, ok := additionalProviders[p.Name]; !ok {
+			additionalProviders[p.Name] = component.OpDestroy(dns.NewDNSProvider(
+				&dns.ProviderValues{
+					Name:    p.Name,
+					Purpose: p.Name,
+					Labels:  map[string]string{v1beta1constants.GardenRole: DNSProviderRoleAdditional},
+				},
+				b.Shoot.SeedNamespace,
+				b.K8sSeedClient.ChartApplier(),
+				b.ChartsRootPath,
+				b.Logger,
+				seedClient,
+				nil,
+			))
+		}
+	}
+
+	return additionalProviders, nil
+}
+
+// NeedsExternalDNS returns true if the Shoot cluster needs external DNS.
+func (b *Botanist) NeedsExternalDNS() bool {
+	return !b.Shoot.DisableDNS &&
+		b.Shoot.Info.Spec.DNS != nil &&
+		b.Shoot.Info.Spec.DNS.Domain != nil &&
+		b.Shoot.ExternalClusterDomain != nil &&
+		!strings.HasSuffix(*b.Shoot.ExternalClusterDomain, ".nip.io") &&
+		b.Shoot.ExternalDomain != nil &&
+		b.Shoot.ExternalDomain.Provider != "unmanaged"
+}
+
+// NeedsInternalDNS returns true if the Shoot cluster needs internal DNS.
+func (b *Botanist) NeedsInternalDNS() bool {
+	return !b.Shoot.DisableDNS &&
+		b.Garden.InternalDomain != nil &&
+		b.Garden.InternalDomain.Provider != "unmanaged"
+}
+
+// NeedsAdditionalDNSProviders returns true if additional DNS providers
+// are needed.
+func (b *Botanist) NeedsAdditionalDNSProviders() bool {
+	return !b.Shoot.DisableDNS &&
+		b.Shoot.Info.Spec.DNS != nil &&
+		len(b.Shoot.Info.Spec.DNS.Providers) > 0
+}
+
+// APIServerSNIEnabled returns true if APIServerSNI feature gate is enabled and
+// the shoot uses internal and external DNS.
+func (b *Botanist) APIServerSNIEnabled() bool {
+	return gardenletfeatures.FeatureGate.Enabled(features.APIServerSNI) && b.NeedsInternalDNS() && b.NeedsExternalDNS()
+}
+
+// APIServerSNIPodMutatorEnabled returns false if the value of the Shoot annotation
+// 'alpha.featuregates.shoot.gardener.cloud/apiserver-sni-pod-injector' is 'disable' or
+// APIServereSNI feature is disabled.
+func (b *Botanist) APIServerSNIPodMutatorEnabled() bool {
+	sniEnabled := b.APIServerSNIEnabled()
+	if !sniEnabled {
+		return false
+	}
+
+	vs, ok := b.Shoot.Info.GetAnnotations()[v1beta1constants.AnnotationShootAPIServerSNIPodInjector]
+	if !ok {
+		return true
+	}
+
+	return vs != v1beta1constants.AnnotationShootAPIServerSNIPodInjectorDisableValue
+}
+
+// DeleteDNSProviders deletes all DNS providers in the shoot namespace of the seed.
+func (b *Botanist) DeleteDNSProviders(ctx context.Context) error {
+	if err := b.K8sSeedClient.Client().DeleteAllOf(
+		ctx,
+		&dnsv1alpha1.DNSProvider{},
+		client.InNamespace(b.Shoot.SeedNamespace),
+	); err != nil {
+		return err
+	}
+
+	return kutil.WaitUntilResourcesDeleted(
+		ctx,
+		b.K8sSeedClient.Client(),
+		&dnsv1alpha1.DNSProviderList{},
+		5*time.Second,
+		client.InNamespace(b.Shoot.SeedNamespace),
+	)
+}
+
+// DestroyInternalDNS destroys the internal DNSEntry, DNSOwner, and DNSProvider resources.
+func (b *Botanist) DestroyInternalDNS(ctx context.Context) error {
+	return component.OpDestroyAndWait(
+		b.Shoot.Components.Extensions.DNS.InternalEntry,
+		b.Shoot.Components.Extensions.DNS.InternalProvider,
+		b.Shoot.Components.Extensions.DNS.InternalOwner,
+	).Destroy(ctx)
+}
+
+// DestroyExternalDNS destroys the external DNSEntry, DNSOwner, and DNSProvider resources.
+func (b *Botanist) DestroyExternalDNS(ctx context.Context) error {
+	return component.OpDestroyAndWait(
+		b.Shoot.Components.Extensions.DNS.ExternalEntry,
+		b.Shoot.Components.Extensions.DNS.ExternalProvider,
+		b.Shoot.Components.Extensions.DNS.ExternalOwner,
+	).Destroy(ctx)
+}
+
+// MigrateInternalDNS destroys the internal DNSEntry, DNSOwner, and DNSProvider resources,
+// without removing the entry from the DNS provider.
+func (b *Botanist) MigrateInternalDNS(ctx context.Context) error {
+	return component.OpDestroy(
+		b.Shoot.Components.Extensions.DNS.InternalOwner,
+		b.Shoot.Components.Extensions.DNS.InternalProvider,
+		b.Shoot.Components.Extensions.DNS.InternalEntry,
+	).Destroy(ctx)
+}
+
+// MigrateExternalDNS destroys the external DNSEntry, DNSOwner, and DNSProvider resources,
+// without removing the entry from the DNS provider.
+func (b *Botanist) MigrateExternalDNS(ctx context.Context) error {
+	return component.OpDestroy(
+		b.Shoot.Components.Extensions.DNS.ExternalOwner,
+		b.Shoot.Components.Extensions.DNS.ExternalProvider,
+		b.Shoot.Components.Extensions.DNS.ExternalEntry,
+	).Destroy(ctx)
+}
+
+// dnsRestoreDeployer implements special deploy logic for DNS providers, entries, and owners to be executed only
+// during the restore phase.
+type dnsRestoreDeployer struct {
+	provider component.DeployWaiter
+	entry    component.DeployWaiter
+	owner    component.DeployWaiter
+}
+
+func (d dnsRestoreDeployer) Deploy(ctx context.Context) error {
+	// Deploy the provider and wait for it to become ready
+	if d.provider != nil {
+		if err := d.provider.Deploy(ctx); err != nil {
+			return err
+		}
+		if err := d.provider.Wait(ctx); err != nil {
+			return err
+		}
+	}
+
+	// Deploy the entry and wait for it to be reconciled, but ignore any errors due to Invalid or Error status
+	// This is done in order to ensure that the entry exists and has been reconciled before the owner is reconciled
+	if err := d.entry.Deploy(ctx); err != nil {
+		return err
+	}
+	if err := d.entry.Wait(ctx); err != nil && !strings.Contains(err.Error(), "status=") {
+		return err
+	}
+
+	// Deploy the owner and wait for it to become ready
+	if err := d.owner.Deploy(ctx); err != nil {
+		return err
+	}
+	if err := d.owner.Wait(ctx); err != nil {
+		return err
+	}
+
+	// Wait for the entry to become ready
+	if err := d.entry.Wait(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d dnsRestoreDeployer) Destroy(ctx context.Context) error {
+	return nil
 }

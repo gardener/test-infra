@@ -16,6 +16,7 @@ package botanist
 
 import (
 	"context"
+	"time"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
@@ -32,6 +33,15 @@ import (
 // DeployExtensionResources creates the `Extension` extension resource in the shoot namespace in the seed
 // cluster. Gardener waits until an external controller did reconcile the cluster successfully.
 func (b *Botanist) DeployExtensionResources(ctx context.Context) error {
+	var (
+		restorePhase      = b.isRestorePhase()
+		gardenerOperation = v1beta1constants.GardenerOperationReconcile
+	)
+
+	if restorePhase {
+		gardenerOperation = v1beta1constants.GardenerOperationWaitForState
+	}
+
 	fns := make([]flow.TaskFn, 0, len(b.Shoot.Extensions))
 	for _, extension := range b.Shoot.Extensions {
 		var (
@@ -47,12 +57,17 @@ func (b *Botanist) DeployExtensionResources(ctx context.Context) error {
 
 		fns = append(fns, func(ctx context.Context) error {
 			_, err := controllerutil.CreateOrUpdate(ctx, b.K8sSeedClient.Client(), &toApply, func() error {
-				metav1.SetMetaDataAnnotation(&toApply.ObjectMeta, v1beta1constants.GardenerOperation, v1beta1constants.GardenerOperationReconcile)
-
+				metav1.SetMetaDataAnnotation(&toApply.ObjectMeta, v1beta1constants.GardenerOperation, gardenerOperation)
+				metav1.SetMetaDataAnnotation(&toApply.ObjectMeta, v1beta1constants.GardenerTimestamp, time.Now().UTC().String())
 				toApply.Spec.Type = extensionType
 				toApply.Spec.ProviderConfig = providerConfig
 				return nil
 			})
+
+			if restorePhase {
+				return b.restoreExtensionObject(ctx, &toApply, extensionsv1alpha1.ExtensionResource)
+			}
+
 			return err
 		})
 	}
@@ -69,14 +84,15 @@ func (b *Botanist) WaitUntilExtensionResourcesReady(ctx context.Context) error {
 		fns = append(fns, func(ctx context.Context) error {
 			return common.WaitUntilExtensionCRReady(
 				ctx,
-				b.K8sSeedClient.Client(),
+				b.K8sSeedClient.DirectClient(),
 				b.Logger,
 				func() runtime.Object { return &extensionsv1alpha1.Extension{} },
 				"Extension",
 				extension.Namespace,
 				extension.Name,
 				DefaultInterval,
-				shoot.ExtensionDefaultTimeout,
+				DefaultSevereThreshold,
+				extension.Timeout,
 				nil,
 			)
 		})
@@ -116,7 +132,7 @@ func (b *Botanist) deleteExtensionResources(ctx context.Context, wantedExtension
 func (b *Botanist) WaitUntilExtensionResourcesDeleted(ctx context.Context) error {
 	return common.WaitUntilExtensionCRsDeleted(
 		ctx,
-		b.K8sSeedClient.Client(),
+		b.K8sSeedClient.DirectClient(),
 		b.Logger,
 		&extensionsv1alpha1.ExtensionList{},
 		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Extension{} },

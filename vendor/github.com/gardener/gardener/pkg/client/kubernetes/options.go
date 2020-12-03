@@ -16,25 +16,43 @@ package kubernetes
 
 import (
 	"errors"
+	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	baseconfig "k8s.io/component-base/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type config struct {
-	clientOptions client.Options
-	restConfig    *rest.Config
+// Config carries options for new ClientSets.
+type Config struct {
+	clientOptions       client.Options
+	restConfig          *rest.Config
+	cacheResync         *time.Duration
+	disableCachedClient bool
+	cacheReaderOptions  *cacheReaderOptions
+}
+
+// cacheReaderOptions configures the specificallyCachedReader
+type cacheReaderOptions struct {
+	readSpecifiedFromCache    bool
+	specificallyCachedObjects []runtime.Object
+}
+
+// NewConfig returns a new Config with an empty REST config to allow testing ConfigFuncs without exporting
+// the fields of the Config type.
+func NewConfig() *Config {
+	return &Config{restConfig: &rest.Config{}}
 }
 
 // ConfigFunc is a function that mutates a Config struct.
 // It implements the functional options pattern. See
 // https://github.com/tmrts/go-patterns/blob/master/idiom/functional-options.md.
-type ConfigFunc func(config *config) error
+type ConfigFunc func(config *Config) error
 
-// WithRESTConfig returns a ConfigFunc that sets the passed rest.Config on the config object.
+// WithRESTConfig returns a ConfigFunc that sets the passed rest.Config on the Config object.
 func WithRESTConfig(restConfig *rest.Config) ConfigFunc {
-	return func(config *config) error {
+	return func(config *Config) error {
 		config.restConfig = restConfig
 		return nil
 	}
@@ -44,7 +62,7 @@ func WithRESTConfig(restConfig *rest.Config) ConfigFunc {
 // the passed ClientConnectionConfiguration.
 // The kubeconfig location in ClientConnectionConfiguration is disregarded, though!
 func WithClientConnectionOptions(cfg baseconfig.ClientConnectionConfiguration) ConfigFunc {
-	return func(config *config) error {
+	return func(config *Config) error {
 		if config.restConfig == nil {
 			return errors.New("REST config must be set before setting connection options")
 		}
@@ -56,10 +74,49 @@ func WithClientConnectionOptions(cfg baseconfig.ClientConnectionConfiguration) C
 	}
 }
 
-// WithClientOptions returns a ConfigFunc that sets the passed Options on the config object.
+// WithClientOptions returns a ConfigFunc that sets the passed Options on the Config object.
 func WithClientOptions(opt client.Options) ConfigFunc {
-	return func(config *config) error {
+	return func(config *Config) error {
 		config.clientOptions = opt
+		return nil
+	}
+}
+
+// WithCacheResyncPeriod returns a ConfigFunc that set the client's cache's resync period to the given duration.
+func WithCacheResyncPeriod(resync time.Duration) ConfigFunc {
+	return func(config *Config) error {
+		config.cacheResync = &resync
+		return nil
+	}
+}
+
+// WithDisabledCachedClient disables the cache in the controller-runtime client, so Client() will be equivalent to
+// DirectClient().
+func WithDisabledCachedClient() ConfigFunc {
+	return func(config *Config) error {
+		config.disableCachedClient = true
+		return nil
+	}
+}
+
+// WithDisabledCacheFor disables the cached client for the specified objects' GroupKinds.
+func WithDisabledCacheFor(objects ...runtime.Object) ConfigFunc {
+	return func(config *Config) error {
+		config.cacheReaderOptions = &cacheReaderOptions{
+			readSpecifiedFromCache:    false,
+			specificallyCachedObjects: objects,
+		}
+		return nil
+	}
+}
+
+// WithEnabledCacheFor enables the cached client only for the specified objects' GroupKinds.
+func WithEnabledCacheFor(objects ...runtime.Object) ConfigFunc {
+	return func(config *Config) error {
+		config.cacheReaderOptions = &cacheReaderOptions{
+			readSpecifiedFromCache:    true,
+			specificallyCachedObjects: objects,
+		}
 		return nil
 	}
 }

@@ -30,9 +30,9 @@ const (
 	ErrorInfraDependencies ErrorCode = "ERR_INFRA_DEPENDENCIES"
 	// ErrorInfraResourcesDepleted indicates that the last error occurred due to depleted resource in the infrastructure.
 	ErrorInfraResourcesDepleted ErrorCode = "ERR_INFRA_RESOURCES_DEPLETED"
-	// ErrorCleanupClusterResources indicates that the last error occurred due to resources in the cluster are stuck in deletion.
+	// ErrorCleanupClusterResources indicates that the last error occurred due to resources in the cluster that are stuck in deletion.
 	ErrorCleanupClusterResources ErrorCode = "ERR_CLEANUP_CLUSTER_RESOURCES"
-	// ErrorConfigurationProblem indicates that the last error occurred due a configuration problem.
+	// ErrorConfigurationProblem indicates that the last error occurred due to a configuration problem.
 	ErrorConfigurationProblem ErrorCode = "ERR_CONFIGURATION_PROBLEM"
 )
 
@@ -63,6 +63,8 @@ const (
 	LastOperationTypeDelete LastOperationType = "Delete"
 	// LastOperationTypeMigrate indicates a 'migrate' operation.
 	LastOperationTypeMigrate LastOperationType = "Migrate"
+	// LastOperationTypeRestore indicates a 'restore' operation.
+	LastOperationTypeRestore LastOperationType = "Restore"
 )
 
 // LastOperationState is a string alias.
@@ -115,11 +117,6 @@ const (
 	// ExternalGardenerName is the value in a Kubernetes core resources `.metadata.finalizers[]` array on which the
 	// Gardener will react when performing a delete request on a resource.
 	ExternalGardenerName = "gardener.cloud/gardener"
-	// ExternalGardenerNameDeprecated is the value in a Kubernetes core resources `.metadata.finalizers[]` array on which the
-	// Gardener will react when performing a delete request on a resource.
-	//
-	// Deprecated: Use `ExternalGardenerName` instead.
-	ExternalGardenerNameDeprecated = "garden.sapcloud.io/gardener"
 )
 
 const (
@@ -135,6 +132,10 @@ const (
 	EventDeleted = "Deleted"
 	// EventDeleteError indicates that the a Delete operation failed.
 	EventDeleteError = "DeleteError"
-	// EventOperationPending
-	EventOperationPending = "OperationPending"
+	// EventPrepareMigration indicates that a Prepare Migration operation started.
+	EventPrepareMigration = "PrepareMigration"
+	// EventMigrationPrepared indicates that Migration preparation was successful.
+	EventMigrationPrepared = "MigrationPrepared"
+	// EventMigrationPreparationFailed indicates that Migration preparation failed.
+	EventMigrationPreparationFailed = "MigrationPreparationFailed"
 )

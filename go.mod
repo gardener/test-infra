@@ -11,14 +11,14 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/gardener v1.4.1
-	github.com/gardener/gardener-resource-manager v0.10.0
+	github.com/gardener/gardener v1.14.0
+	github.com/gardener/gardener-resource-manager v0.18.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/spec v0.19.7
 	github.com/gobuffalo/packr/v2 v2.8.0
-	github.com/golang/mock v1.4.3
+	github.com/golang/mock v1.4.4-0.20200731163441-8734ec565a4d
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.6.2
@@ -30,32 +30,33 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.5.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
 	google.golang.org/api v0.20.0
 	google.golang.org/genproto v0.0.0-20200317114155-1f3552e48f24
-	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.7
-	k8s.io/apiextensions-apiserver v0.17.7
-	k8s.io/apimachinery v0.17.7
+	gopkg.in/yaml.v2 v2.3.0
+	k8s.io/api v0.18.10
+	k8s.io/apiextensions-apiserver v0.18.10
+	k8s.io/apimachinery v0.18.10
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
-	k8s.io/code-generator v0.16.8
+	k8s.io/code-generator v0.18.10
 	k8s.io/helm v2.16.1+incompatible
-	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/utils v0.0.0-20200603063816-c1c6865ac451
-	sigs.k8s.io/controller-runtime v0.5.7
-	sigs.k8s.io/yaml v1.1.0
+	k8s.io/kube-openapi v0.0.0-20200410145947-bcb3869e6f29
+	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19
+	sigs.k8s.io/controller-runtime v0.6.3
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Interface represents a set of secrets that can be deployed and deleted.
+type Interface interface {
+	// Deploy generates and deploys the secrets into the given namespace, taking into account existing secrets.
+	Deploy(context.Context, kubernetes.Interface, gardenerkubernetes.Interface, string) (map[string]*corev1.Secret, error)
+	// Delete deletes the secrets from the given namespace.
+	Delete(context.Context, kubernetes.Interface, string) error
+}
+
 // Secrets represents a set of secrets that can be deployed and deleted.
 type Secrets struct {
 	CertificateSecretConfigs map[string]*CertificateSecretConfig
@@ -38,9 +46,8 @@ func (s *Secrets) Deploy(
 	gcs gardenerkubernetes.Interface,
 	namespace string,
 ) (map[string]*corev1.Secret, error) {
-
 	// Get existing secrets in the namespace
-	existingSecrets, err := getSecrets(cs, namespace)
+	existingSecrets, err := getSecrets(ctx, cs, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -62,17 +69,17 @@ func (s *Secrets) Deploy(
 }
 
 // Delete deletes the secrets from the given namespace.
-func (s *Secrets) Delete(cs kubernetes.Interface, namespace string) error {
+func (s *Secrets) Delete(ctx context.Context, cs kubernetes.Interface, namespace string) error {
 	for _, sc := range s.SecretConfigsFunc(nil, namespace) {
-		if err := deleteSecret(cs, namespace, sc.GetName()); err != nil {
+		if err := deleteSecret(ctx, cs, namespace, sc.GetName()); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func getSecrets(cs kubernetes.Interface, namespace string) (map[string]*corev1.Secret, error) {
-	secretList, err := cs.CoreV1().Secrets(namespace).List(metav1.ListOptions{})
+func getSecrets(ctx context.Context, cs kubernetes.Interface, namespace string) (map[string]*corev1.Secret, error) {
+	secretList, err := cs.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list secrets in namespace '%s'", namespace)
 	}
@@ -85,6 +92,6 @@ func getSecrets(cs kubernetes.Interface, namespace string) (map[string]*corev1.S
 	return result, nil
 }
 
-func deleteSecret(cs kubernetes.Interface, namespace, name string) error {
-	return cs.CoreV1().Secrets(namespace).Delete(name, &metav1.DeleteOptions{})
+func deleteSecret(ctx context.Context, cs kubernetes.Interface, namespace, name string) error {
+	return cs.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 }

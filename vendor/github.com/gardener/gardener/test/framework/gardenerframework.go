@@ -17,12 +17,13 @@ package framework
 import (
 	"context"
 	"flag"
+	"time"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 var gardenerCfg *GardenerConfig
@@ -73,7 +74,7 @@ func NewGardenerFrameworkFromConfig(cfg *GardenerConfig) *GardenerFramework {
 		commonConfig = cfg.CommonConfig
 	}
 	f := &GardenerFramework{
-		CommonFramework:         NewCommonFramework(commonConfig),
+		CommonFramework:         NewCommonFrameworkFromConfig(commonConfig),
 		TestDescription:         NewTestDescription("GARDENER"),
 		GardenerFrameworkConfig: cfg,
 	}
@@ -136,7 +137,7 @@ func RegisterGardenerFrameworkFlags() *GardenerConfig {
 
 	newCfg := &GardenerConfig{}
 
-	flag.StringVar(&newCfg.GardenerKubeconfig, "kubecfg", "", "the path to the KubeconfigSecretKeyName  of the garden cluster that will be used for integration tests")
+	flag.StringVar(&newCfg.GardenerKubeconfig, "kubecfg", "", "the path to the kubeconfig  of the garden cluster that will be used for integration tests")
 	flag.StringVar(&newCfg.ProjectNamespace, "project-namespace", "", "specify the gardener project namespace to run tests")
 
 	gardenerCfg = newCfg
@@ -156,4 +157,16 @@ func (f *GardenerFramework) NewShootFramework(shoot *gardencorev1beta1.Shoot) (*
 		return nil, err
 	}
 	return shootFramework, nil
+}
+
+// NewSeedRegistrationFramework creates a new SeedRegistrationFramework with the current gardener framework
+func (f *GardenerFramework) NewSeedRegistrationFramework(seed *gardencorev1beta1.Seed) (*SeedRegistrationFramework, error) {
+	seedFramework := &SeedRegistrationFramework{
+		GardenerFramework: f,
+		Config: &SeedRegistrationConfig{
+			GardenerConfig: f.GardenerFrameworkConfig,
+		},
+	}
+
+	return seedFramework, seedFramework.AddSeed(context.TODO(), seed)
 }
