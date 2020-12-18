@@ -142,6 +142,7 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 	if err = cmd.Wait(); err != nil {
 		log.Error(err)
 	}
+	file.Close()
 
 	// kubetest run fails if one of the testcases failes, therefore the execution is still successful and no err needs to be returned
 	if err != nil {
@@ -157,29 +158,31 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 		stat, err := os.Stat(e2eLogFilePath)
 		if err != nil {
 			log.Error("unable to get stat of path %s: %s", e2eLogFilePath, err.Error())
+			return
 		}
 		var start int64
 		if stat.Size() < bufferSize {
-			start = stat.Size()
+			start = 0
 		} else {
 			start = stat.Size() - bufferSize
 		}
 		_, err = file.ReadAt(buf, start)
-		if err == nil {
-			log.Infof("BEGIN: dump kubetest stdout last %d bytes", bufferSize)
+		if err == nil || errors.Is(err, io.EOF){
+			log.Infof("BEGIN: dump kubetest stdout last %d bytes (size %d)", bufferSize, stat.Size())
 			scanner := bufio.NewScanner(strings.NewReader(string(buf)))
 			for scanner.Scan() {
 				log.Info("    " + scanner.Text())
 			}
 			log.Infof("END: dump kubetest stdout last %d bytes", bufferSize)
+		} else {
+			log.Error(errors.Wrapf(err, "kubetest run failed"))
 		}
-		log.Error(errors.Wrapf(err, "kubetest run failed"))
 
 		if err = util.DumpShootLogs(config.GardenKubeconfigPath, config.ProjectNamespace, config.ShootName); err != nil {
 			log.Error(errors.Wrap(err, "could not execute shoot dump"))
 		}
 	} else {
-		log.Info("kubtest test run successful")
+		log.Info("kubetest test run successful")
 	}
 }
 
