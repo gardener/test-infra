@@ -132,9 +132,7 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 		outWriter := io.MultiWriter(os.Stdout, file)
 		cmd.Stdout = outWriter
 	}
-	if log.GetLevel() == log.DebugLevel {
-		cmd.Stderr = os.Stderr
-	}
+	cmd.Stderr = os.Stderr
 
 	if err = cmd.Start(); err != nil {
 		log.Error(err)
