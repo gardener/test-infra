@@ -167,11 +167,15 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 			start = stat.Size() - bufferSize
 		}
 		_, err = file.ReadAt(buf, start)
-		if err == nil || errors.Is(err, io.EOF){
+		if err == nil || errors.Is(err, io.EOF) {
 			log.Infof("BEGIN: dump kubetest stdout last %d bytes (size %d)", bufferSize, stat.Size())
-			scanner := bufio.NewScanner(strings.NewReader(string(buf)))
-			for scanner.Scan() {
-				log.Info("    " + scanner.Text())
+			if stat.Size() > 0 {
+				scanner := bufio.NewScanner(strings.NewReader(string(buf)))
+				for scanner.Scan() {
+					log.Info("    " + scanner.Text())
+				}
+			} else {
+				log.Info("empty kubetest stdout")
 			}
 			log.Infof("END: dump kubetest stdout last %d bytes", bufferSize)
 		} else {
