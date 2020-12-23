@@ -1,13 +1,15 @@
 loki:
   image:
     repository: grafana/loki
-    tag: v1.3.0
+    tag: 2.0.0
   podAnnotations:
       cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   persistence:
     enabled: true
     storageClassName: default
   config:
+    limits_config:
+      max_entries_limit_per_query: 10000
     table_manager:
       retention_deletes_enabled: true
       retention_period: 336h # two weeks (but probably when table gets deleted we have max 7 days of history, see https://github.com/grafana/loki/issues/916)
@@ -23,7 +25,7 @@ loki:
 promtail:
   image:
     repository: grafana/promtail
-    tag: v1.3.0
+    tag: 2.0.0
   resources:
     limits:
       cpu: 500m
@@ -37,8 +39,9 @@ promtail:
     value: testload
     effect: NoSchedule
   scrapeConfigs:
-  - entry_parser: docker
-    job_name: pods
+  - job_name: pods
+    pipeline_stages:
+    - docker: {}
     kubernetes_sd_configs:
     - role: pod
     relabel_configs:
