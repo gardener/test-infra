@@ -114,14 +114,6 @@ config:
     # Maximum time to wait for server to respond to a request
     timeout: 10s
 
-    backoff_config:
-      # Initial backoff time between retries
-      minbackoff: 100ms
-      # Maximum backoff time between retries
-      maxbackoff: 5s
-      # Maximum number of retries when sending batches, 0 means infinite retries
-      maxretries: 20
-
     # The labels to add to any time series or alerts when communicating with loki
     external_labels: {}
 
