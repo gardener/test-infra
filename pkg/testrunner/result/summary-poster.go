@@ -48,7 +48,6 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 		return errors.Wrap(err, "was not able to create slack client")
 	}
 
-
 	tmDashboardURL := ""
 	if len(runs.GetTestruns()) > 0 {
 		tmDashboardURL = runs.GetTestruns()[0].Annotations[common.AnnotationTMDashboardURL]
@@ -60,7 +59,7 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 	}
 	urlFooter := buildURLFooter(config.ConcourseURL, tmDashboardURL, config.GrafanaURL, executionGroup)
 
-		chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
+	chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
 	if len(chunks) == 1 {
 		return slackClient.PostMessage(config.SlackChannel, fmt.Sprintf("%s\n```%s\n%s```\n%s", header(), table, legend(), urlFooter))
 	}
@@ -105,8 +104,8 @@ func buildURLFooter(ccURL, tmDashboardURL, grafanaURL, executionGroup string) st
 	grafanaURLFooter := ""
 	if grafanaURL != "" && executionGroup != "" {
 		now := time.Now()
-		from := now.Add(-12 * time.Hour).Unix() * 1000
-		to := now.Add(2 * time.Hour).Unix() * 1000
+		from := now.Add(-12*time.Hour).Unix() * 1000
+		to := now.Add(2*time.Hour).Unix() * 1000
 		grafanaURL := fmt.Sprintf("%s&from=%d&to=%d&var-Filters=tm.tr.executionGroup.keyword%%7C=%%7C%s", grafanaURL, from, to, executionGroup)
 		grafanaURLFooter = fmt.Sprintf("<%s|TM Grafana>", grafanaURL)
 	}
