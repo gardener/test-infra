@@ -17,6 +17,8 @@ package testflow_test
 import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	testutils "github.com/gardener/test-infra/test/utils"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -28,7 +30,7 @@ var _ = Describe("Testflow", func() {
 	Context("validatation", func() {
 		It("should fail when no testdefs are found", func() {
 			tf := tmv1beta1.TestFlow{}
-			locations := &testDefinitionsMock{}
+			locations := &testutils.LocationsMock{}
 			Expect(testflow.Validate("identifier", tf, locations, false)).To(HaveOccurred())
 		})
 
@@ -65,7 +67,7 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			Expect(testflow.Validate("identifier", tf, emptyMockLocation, true)).To(HaveOccurred())
+			Expect(testflow.Validate("identifier", tf, testutils.EmptyMockLocation, true)).To(HaveOccurred())
 		})
 
 		It("should fail when dependent steps do not exist", func() {
@@ -265,11 +267,11 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			locations := &testDefinitionsMock{
-				getTestDefinitions: func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
+			locations := &testutils.LocationsMock{
+				GetTestDefinitionsFunc: func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
 					testdefs := []*testdefinition.TestDefinition{
 						{
-							Location: &locationMock{},
+							Location: &testutils.TDLocationMock{},
 							FileName: "file.name",
 							Info: &tmv1beta1.TestDefinition{
 								ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
@@ -285,55 +287,15 @@ var _ = Describe("Testflow", func() {
 	})
 })
 
-type testDefinitionsMock struct {
-	getTestDefinitions func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error)
-}
-
-func (t *testDefinitionsMock) GetTestDefinitions(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
-	return t.getTestDefinitions(step)
-}
-
-type locationMock struct {
-}
-
-func (l *locationMock) Name() string {
-	return "locationmock"
-}
-
-func (l *locationMock) Type() tmv1beta1.LocationType {
-	return "mock"
-}
-
-func (l *locationMock) GitInfo() testdefinition.GitInfo {
-	return testdefinition.GitInfo{}
-}
-
-func (l *locationMock) SetTestDefs(_ map[string]*testdefinition.TestDefinition) error {
-	return nil
-}
-
-func (l *locationMock) GetLocation() *tmv1beta1.TestLocation {
-	return nil
-}
-
-var emptyMockLocation = &testDefinitionsMock{
-	getTestDefinitions: func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
-		return []*testdefinition.TestDefinition{}, nil
-	},
-}
-
-var defaultMockLocation = &testDefinitionsMock{
-	getTestDefinitions: func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error) {
-		testdefs := []*testdefinition.TestDefinition{
-			{
-				Location: &locationMock{},
-				FileName: "file.name",
-				Info: &tmv1beta1.TestDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
-					Spec:       tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
-				},
+var defaultMockLocation = &testutils.LocationsMock{
+	TestDefinitions: []*testdefinition.TestDefinition{
+		{
+			Location: &testutils.TDLocationMock{},
+			FileName: "file.name",
+			Info: &tmv1beta1.TestDefinition{
+				ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
+				Spec:       tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
 			},
-		}
-		return testdefs, nil
+		},
 	},
 }

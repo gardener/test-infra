@@ -41,8 +41,9 @@ spec:
 
   # optional, specify specific behavior of a test.
   # By default steps are executed in parallel.
-  # By specifying "serial behavior", tests can be forced to be executed in serial.
-  behavior: ["serial"]
+  # By specifying "serial" behavior, tests can be forced to be executed in serial.
+  # By specifying "disruptive" behavior, tests are executed in serial and are forced to run with continueOnError=false
+  behavior: ["serial", "disruptive"]
 
   # required; Entrypoint array. Not executed within a shell.
   # The docker image's ENTRYPOINT is used if this is not provided.

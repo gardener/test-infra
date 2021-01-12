@@ -52,10 +52,14 @@ func NewNode(td *testdefinition.TestDefinition, step *tmv1beta1.DAGStep, flow st
 	node := &Node{
 		name:           name,
 		TestDefinition: td,
-		step:           step,
+		step:           step.DeepCopy(),
 		flow:           flow,
 		Parents:        NewSet(),
 		Children:       NewSet(),
+	}
+
+	if td.HasBehavior(tmv1beta1.DisruptiveBehavior) {
+		node.step.Definition.ContinueOnError = false
 	}
 
 	return node
