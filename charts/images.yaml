@@ -22,8 +22,8 @@ images:
 - name: loki
   sourceRepository: https://github.com/grafana/loki
   repository: grafana/loki
-  tag: "v1.3.0"
+  tag: "2.0.0"
 - name: promtail
   sourceRepository: https://github.com/grafana/loki/tree/master/docs/clients/promtail
   repository: grafana/promtail
-  tag: "v1.3.0"
+  tag: "2.0.0"
