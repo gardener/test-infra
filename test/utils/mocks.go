@@ -21,7 +21,7 @@ import (
 )
 
 type LocationsMock struct {
-	TestDefinitions []*testdefinition.TestDefinition
+	TestDefinitions        []*testdefinition.TestDefinition
 	GetTestDefinitionsFunc func(step tmv1beta1.StepDefinition) ([]*testdefinition.TestDefinition, error)
 }
 
@@ -43,7 +43,7 @@ var EmptyMockLocation = &LocationsMock{
 	},
 }
 
-type TDLocationMock struct {}
+type TDLocationMock struct{}
 
 var _ testdefinition.Location = &TDLocationMock{}
 
