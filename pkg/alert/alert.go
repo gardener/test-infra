@@ -15,27 +15,27 @@
 package alert
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
-	"github.com/gardener/test-infra/pkg/util/slack"
-	"github.com/go-logr/logr"
-	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
+	"github.com/gardener/test-infra/pkg/util/slack"
 )
 
 type Alert struct {
 	log logr.Logger
 	cfg Config
-	ctx context.Context
 }
 
 //ElasticsearchConfig represents the elasticsearch configuration
@@ -146,7 +146,7 @@ func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 	testsSizeBefore := len(*tests)
 	for _, patternStr := range alerter.cfg.TestsSkip {
 		alerter.log.V(3).Info(fmt.Sprintf("filtering out tests with expression %s", patternStr))
-		for testContext, _ := range *tests {
+		for testContext := range *tests {
 			matched, err := regexp.MatchString(patternStr, testContext)
 			if err != nil {
 				return errors.Wrapf(err, "failed to apply regexep %s", patternStr)
@@ -157,7 +157,7 @@ func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 		}
 	}
 
-	for testContext, _ := range *tests {
+	for testContext := range *tests {
 		if len(alerter.cfg.TestsFocus) == 0 {
 			break
 		}

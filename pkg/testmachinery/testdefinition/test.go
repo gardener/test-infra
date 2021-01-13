@@ -24,9 +24,9 @@ func NewEmpty() *TestDefinition {
 	td := TestDefinition{
 		Info:            &v1beta1.TestDefinition{},
 		Template:        &argov1.Template{},
-		inputArtifacts:  make(ArtifactSet, 0),
-		outputArtifacts: make(ArtifactSet, 0),
-		config:          make(config.Set, 0),
+		inputArtifacts:  make(ArtifactSet),
+		outputArtifacts: make(ArtifactSet),
+		config:          make(config.Set),
 	}
 
 	return &td

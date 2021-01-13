@@ -70,7 +70,7 @@ func ResumeTestrun(ctx context.Context, k8sClient client.Client, tr *tmv1beta1.T
 		return err
 	}
 	if tr.Annotations == nil {
-		tr.Annotations = make(map[string]string, 0)
+		tr.Annotations = make(map[string]string)
 	}
 	tr.Annotations[common.AnnotationResumeTestrun] = "true"
 	if err := k8sClient.Update(ctx, tr); err != nil {

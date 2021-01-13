@@ -66,10 +66,7 @@ func ValidateName(identifier, name string) error {
 
 	// IsDNS1123Subdomain: lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
 	// used for e.g. statefulset names
-	errMsgs := []string{}
-	for _, msg := range apimachineryvalidation.IsDNS1123Subdomain(name) {
-		errMsgs = append(errMsgs, msg)
-	}
+	errMsgs := append([]string{}, apimachineryvalidation.IsDNS1123Subdomain(name)...)
 
 	if len(errMsgs) != 0 {
 		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: %s", identifier, strings.Join(errMsgs, ";"))

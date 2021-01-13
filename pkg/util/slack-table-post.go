@@ -67,7 +67,7 @@ type results struct {
 func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 	writer := &strings.Builder{}
 	table := tablewriter.NewWriter(writer)
-	headerKeys := make(map[string]int, 0) // maps the header values to their index
+	headerKeys := make(map[string]int) // maps the header values to their index
 	header := []string{""}
 
 	for _, item := range items {

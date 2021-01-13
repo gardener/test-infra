@@ -152,7 +152,7 @@ func (rl RunList) RenderTable() string {
 	table.SetAutoWrapText(false)
 	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
 
-	dimensions := make(map[string][][]string, 0)
+	dimensions := make(map[string][][]string)
 	for _, run := range rl {
 		// dimension header
 		dimension := getDimensionFromMetadata(run.Metadata)

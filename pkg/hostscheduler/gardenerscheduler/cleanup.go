@@ -42,7 +42,7 @@ var (
 func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 	clean := flagset.Bool("clean", false, "Cleanup the specified cluster")
 	return func(ctx context.Context) error {
-		if clean != nil || *clean == false {
+		if clean != nil || !*clean {
 			return nil
 		}
 

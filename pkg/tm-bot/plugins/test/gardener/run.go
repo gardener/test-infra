@@ -84,6 +84,9 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		CommentID: updater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
+	if err != nil {
+		return err
+	}
 	if err := plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
 		logger.Error(err, "unable to persist state")
 	}

@@ -3,7 +3,7 @@ package node
 // NewSet creates a new set of nodes
 func NewSet(nodes ...*Node) *Set {
 	set := Set{
-		set:  make(map[*Node]int, 0),
+		set:  make(map[*Node]int),
 		list: make([]*Node, 0),
 	}
 	set.Add(nodes...)

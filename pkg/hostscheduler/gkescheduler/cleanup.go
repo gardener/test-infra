@@ -37,7 +37,7 @@ func (s *gkescheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFu
 	clean := flagset.Bool("clean", false, "Cleanup the specified cluster")
 
 	return func(ctx context.Context) error {
-		if clean != nil && *clean == false {
+		if clean != nil && !*clean {
 			s.log.V(3).Info("clean is not defined. Therefore the cluster is not cleaned up.")
 			return nil
 		}

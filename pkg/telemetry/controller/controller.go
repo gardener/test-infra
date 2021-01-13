@@ -64,10 +64,7 @@ func NewTelemetryController(mgr manager.Manager, log logr.Logger, cacheDir strin
 func RegisterShootTelemetryWatch(c controller.Controller) error {
 	return c.Watch(&source.Kind{Type: &telv1beta1.ShootsMeasurement{}}, &handler.EnqueueRequestForObject{}, &predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if !reflect.DeepEqual(e.ObjectOld, e.ObjectNew) {
-				return true
-			}
-			return false
+			return !reflect.DeepEqual(e.ObjectOld, e.ObjectNew)
 		},
 	})
 }

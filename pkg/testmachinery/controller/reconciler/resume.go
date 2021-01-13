@@ -97,7 +97,7 @@ func resumeTimerKey(testrun *v1beta1.Testrun) string {
 // calculateTimer calculates the remaining time for a step
 // if the time is elapsed a duration of zero is returned
 func calculateTimer(pauseTimeout time.Duration, startTime metav1.Time) time.Duration {
-	elapsedTime := time.Now().Sub(startTime.Time)
+	elapsedTime := time.Since(startTime.Time)
 	remainingDuration := pauseTimeout - elapsedTime
 	if remainingDuration <= 0 {
 		return time.Duration(0)

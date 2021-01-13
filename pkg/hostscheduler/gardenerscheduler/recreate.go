@@ -40,7 +40,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 			return errors.Wrapf(err, "cannot get shoot %s", *name)
 		}
 
-		if *force == false {
+		if !*force {
 			if isLocked(shoot) {
 				return fmt.Errorf("shoot %s is still in use", *name)
 			}
@@ -88,5 +88,5 @@ func patchAnnotation(ctx context.Context, k8sClient client.Client, oldShoot *gar
 	if err != nil {
 		return fmt.Errorf("failed to patch bytes")
 	}
-	return k8sClient.Patch(ctx, oldShoot, client.ConstantPatch(types.MergePatchType, patchBytes))
+	return k8sClient.Patch(ctx, oldShoot, client.RawPatch(types.MergePatchType, patchBytes))
 }

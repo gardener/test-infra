@@ -214,13 +214,13 @@ type TestLocation struct {
 // LocationSet defines a set of locations with a specific name and a flag marking the set as the default set.
 type LocationSet struct {
 	// Unique name of the set.
-	Name string `json:"name,omitemtpy"`
+	Name string `json:"name,omitempty"`
 	// default defines this location set as the default location set to search for TestDefinitions.
 	// Only one default location per Testrun is possible.
 	// +optional
-	Default bool `json:"default,omitemtpy"`
+	Default bool `json:"default,omitempty"`
 	// Locations defines all Locations corresponding to the set.
-	Locations []TestLocation `json:"locations,omitemtpy"`
+	Locations []TestLocation `json:"locations,omitempty"`
 }
 
 // TestrunKubeconfigs are parameters where Shoot, Seed or a Gardener strconf for the Testrun can be specified.

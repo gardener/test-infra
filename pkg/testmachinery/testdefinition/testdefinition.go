@@ -123,8 +123,8 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		Location:        loc,
 		FileName:        fileName,
 		Template:        template,
-		inputArtifacts:  make(ArtifactSet, 0),
-		outputArtifacts: make(ArtifactSet, 0),
+		inputArtifacts:  make(ArtifactSet),
+		outputArtifacts: make(ArtifactSet),
 		config:          config.NewSet(config.New(def.Spec.Config, config.LevelTestDefinition)...),
 	}
 	td.AddOutputArtifacts(outputArtifacts...)
@@ -214,7 +214,7 @@ func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
 // AddInputArtifacts adds argo artifacts to the input of the TestDefinitions's template.
 func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 	if td.inputArtifacts == nil {
-		td.inputArtifacts = make(ArtifactSet, 0)
+		td.inputArtifacts = make(ArtifactSet)
 	}
 	for _, a := range artifacts {
 		if !td.inputArtifacts.Has(a.Name) {
@@ -227,7 +227,7 @@ func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 // AddOutputArtifacts adds argo artifacts to the output of the TestDefinitions's template.
 func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
 	if td.outputArtifacts == nil {
-		td.outputArtifacts = make(ArtifactSet, 0)
+		td.outputArtifacts = make(ArtifactSet)
 	}
 	for _, a := range artifacts {
 		if !td.outputArtifacts.Has(a.Name) {
@@ -333,7 +333,7 @@ func (td *TestDefinition) AddVolumeFromConfig(cfg *config.Element) error {
 // GetAnnotations returns Template annotations for a testdefinition
 func (td *TestDefinition) AddAnnotation(key, value string) {
 	if td.Template.Metadata.Annotations == nil {
-		td.Template.Metadata.Annotations = make(map[string]string, 0)
+		td.Template.Metadata.Annotations = make(map[string]string)
 	}
 	td.Template.Metadata.Annotations[key] = value
 }

@@ -91,7 +91,7 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 			StepName:    step.Name,
 			TestDefName: step.TestDefinition.Name,
 		}
-		stepMetadata.Configuration = make(map[string]string, 0)
+		stepMetadata.Configuration = make(map[string]string)
 		stepMetadata.Annotations = utils.MergeStringMaps(stepMetadata.Annotations, step.Annotations)
 		for _, elem := range step.TestDefinition.Config {
 			if elem.Type == tmv1beta1.ConfigTypeEnv && elem.Value != "" {

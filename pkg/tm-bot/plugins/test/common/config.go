@@ -41,7 +41,7 @@ type SubCommand struct {
 	tests.TestConfig `json:",inline"`
 }
 
-const trimset = " \r "
+const trimset = " \r"
 
 // getConfig returns the test config given by the arguments and config file.
 func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*tests.TestConfig, error) {

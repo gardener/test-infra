@@ -58,7 +58,7 @@ func New(log logr.Logger, k8sClient client.Client, dataDir string) Manager {
 		log:         log,
 		client:      k8sClient,
 		dataDir:     dataDir,
-		controllers: make(map[string]*telemetry.Telemetry, 0),
+		controllers: make(map[string]*telemetry.Telemetry),
 	}
 	m.startCleanupInterval()
 	return m
@@ -231,7 +231,9 @@ func ControllerKey(config clientcmd.ClientConfig) (string, error) {
 	}
 
 	h := sha256.New()
-	h.Write([]byte(restConfig.Host))
+	if _, err := h.Write([]byte(restConfig.Host)); err != nil {
+		return "", err
+	}
 	key := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	return key, nil
 }

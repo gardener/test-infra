@@ -67,6 +67,10 @@ var gardenerTelemtryCmd = &cobra.Command{
 		k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
 			Scheme: kubernetes.GardenScheme,
 		}))
+		if err != nil {
+			logger.Log.Error(err, "unable to create kubernetes client")
+			os.Exit(1)
+		}
 
 		unhealthyShoots, err := GetUnhealthyShoots(logger.Log, ctx, k8sClient)
 		if err != nil {

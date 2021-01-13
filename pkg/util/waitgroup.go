@@ -22,7 +22,7 @@ import (
 // AdvancedWaitGroup implements the same interface as sync.WaitGroup.
 // In addition a wait can be canceled during runtime when using the WaitWithCancel function
 type AdvancedWaitGroup struct {
-	noCopy noCopy
+	noCopy
 
 	mut   sync.Mutex
 	count int

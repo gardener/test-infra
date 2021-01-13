@@ -115,7 +115,6 @@ func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrun
 	if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
 		log.Error(err, "unable to mark testrun status as uploaded to github")
 	}
-	return
 }
 
 func (c *Collector) fetchTelemetryResults() {

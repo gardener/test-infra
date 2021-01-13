@@ -705,12 +705,6 @@ var serialTestDef = func() testdefinition.TestDefinition {
 }()
 var defaultTestDef = testdefinition.NewEmpty()
 
-func testDefWithConfig(cfgs []v1beta1.ConfigElement) *testdefinition.TestDefinition {
-	td := testdefinition.NewEmpty()
-	td.AddConfig(config.New(cfgs, config.LevelTestDefinition))
-	return td
-}
-
 func createStepsFromNodes(nodes ...*node.Node) map[string]*testflow.Step {
 	steps := make(map[string]*testflow.Step)
 	for _, n := range nodes {

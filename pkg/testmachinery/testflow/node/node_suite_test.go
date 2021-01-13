@@ -47,15 +47,6 @@ var _ = Describe("node operations", func() {
 	})
 })
 
-func testDAGStep(dependencies []string) *tmv1beta1.DAGStep {
-	return &tmv1beta1.DAGStep{
-		DependsOn: dependencies,
-		Definition: tmv1beta1.StepDefinition{
-			Config: make([]tmv1beta1.ConfigElement, 0),
-		},
-	}
-}
-
 func serialTestDef() *testdefinition.TestDefinition {
 	return &testdefinition.TestDefinition{
 		Info: &tmv1beta1.TestDefinition{

@@ -42,7 +42,7 @@ func NewManager(log logr.Logger, cfg config.GitHubBot) (Manager, error) {
 		appId:       cfg.AppID,
 		keyFile:     cfg.AppPrivateKeyPath,
 		defaultTeam: cfg.DefaultTeam,
-		clients:     make(map[int64]*internalClientItem, 0),
+		clients:     make(map[int64]*internalClientItem),
 	}, nil
 }
 

@@ -91,7 +91,9 @@ func (a *report) writeText(dest string) error {
 
 	data := a.getText()
 	w := io.Writer(outputFile)
-	w.Write([]byte(data))
+	if _, err := w.Write([]byte(data)); err != nil {
+		return err
+	}
 	return nil
 }
 

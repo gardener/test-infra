@@ -21,7 +21,7 @@ import (
 )
 
 func GetLocationsFromExtensions(extensions common.GSExtensions) []v1beta1.TestLocation {
-	extSet := make(map[string]interface{}, 0)
+	extSet := make(map[string]interface{})
 	ext := make([]v1beta1.TestLocation, 0)
 	for _, e := range extensions {
 		var revision string
