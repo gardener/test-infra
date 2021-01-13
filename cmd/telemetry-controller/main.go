@@ -26,7 +26,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/telemetry/controller"
 	"github.com/joho/godotenv"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 )

@@ -90,7 +90,6 @@ func (e *executor) AddItem(f func()) {
 	e.mut.Lock()
 	defer e.mut.Unlock()
 	e.items.PushBack(f)
-	return
 }
 
 // Run executes all added items in the configured order

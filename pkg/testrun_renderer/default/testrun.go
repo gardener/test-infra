@@ -108,6 +108,9 @@ func GetShootTest(gardenerConfig templates.GardenerConfig, shootConfig *shoot, d
 	}
 	//defaultTestStep := templates.GetTestStepWithLabels(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStep.Name}, shootConfig.TestLabel, string(testmachinery.TestLabelShoot))
 	tests, testDep, err := shootConfig.TestsFunc(fmt.Sprintf("tests-%s", shootConfig.Suffix), []string{createShootStepName})
+	if err != nil {
+		return nil, nil, err
+	}
 	deleteShootStep := templates.GetStepDeleteShoot(fmt.Sprintf("delete-%s", shootConfig.Suffix), createShootStepName, shootConfig.Config.ShootName, testDep)
 
 	return append(append(createShootStep, &deleteShootStep), tests...), &deleteShootStep, nil

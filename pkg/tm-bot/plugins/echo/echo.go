@@ -77,8 +77,9 @@ func (e *echo) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		if err != nil {
 			return err
 		}
+	} else {
+		val = flagset.Arg(0)
 	}
-	val = flagset.Arg(0)
 
 	_, err = client.Comment(context.TODO(), event, fmt.Sprintf("@%s: %s\n%s", event.GetAuthorName(), val, e.runID))
 	return err

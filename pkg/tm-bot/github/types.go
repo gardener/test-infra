@@ -110,6 +110,7 @@ const (
 	AuthorizationOrg        AuthorizationType = "org"
 	AuthorizationTeam       AuthorizationType = "team"
 	AuthorizationCodeOwners AuthorizationType = "codeowners"
+	AuthorizationOrgAdmin   AuthorizationType = "org-admin"
 )
 
 // EventActionType represents the action type of a github event

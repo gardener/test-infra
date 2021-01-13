@@ -10,9 +10,9 @@ import (
 
 // preprocessTestflow takes a Tesflow and creates a map which maps the unique step name to the step pointer.
 func preprocessTestflow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc locations.Locations, globalConfig []*config.Element) (map[string]*Step, map[*testdefinition.TestDefinition]interface{}, map[testdefinition.Location]interface{}, error) {
-	stepMap := make(map[string]*Step, 0)
-	testdefinitions := make(map[*testdefinition.TestDefinition]interface{}, 0)
-	usedLocations := make(map[testdefinition.Location]interface{}, 0)
+	stepMap := make(map[string]*Step)
+	testdefinitions := make(map[*testdefinition.TestDefinition]interface{})
+	usedLocations := make(map[testdefinition.Location]interface{})
 	for _, step := range tf {
 		// todo(schrodit): add validation
 
@@ -173,7 +173,7 @@ func ApplyConfigScope(steps map[string]*Step) {
 				if nextNode != nil && nextNode.Step() != nil {
 					cfgs := config.New(nextNode.Step().Definition.Config, config.LevelShared)
 					for _, element := range cfgs {
-						if element.Info.Private == nil || *element.Info.Private == false {
+						if element.Info.Private == nil || !*element.Info.Private {
 							configs.Add(element)
 						}
 					}
@@ -211,9 +211,11 @@ func getNextSerialParent(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 		}
 	}
 
-	parent := &node.Node{}
-	lastParents := n.Parents.List()
-	branches := make([]*node.Set, len(lastParents))
+	var (
+		parent      *node.Node
+		lastParents = n.Parents.List()
+		branches    = make([]*node.Set, len(lastParents))
+	)
 	for i := range branches {
 		branches[i] = node.NewSet()
 	}
@@ -239,9 +241,11 @@ func getNextSerialChild(n *node.Node, filters ...nodeFilterFunc) *node.Node {
 		}
 	}
 
-	child := &node.Node{}
-	lastChildren := n.Children.List()
-	branches := make([]*node.Set, len(lastChildren))
+	var (
+		child        *node.Node
+		lastChildren = n.Children.List()
+		branches     = make([]*node.Set, len(lastChildren))
+	)
 	for i := range branches {
 		branches[i] = node.NewSet()
 	}

@@ -142,9 +142,9 @@ func (n *Node) Task(phase testmachinery.Phase) []argov1.DAGTask {
 
 	switch n.step.Definition.Condition {
 	case tmv1beta1.ConditionTypeSuccess:
-		task.When = fmt.Sprintf("{{workflow.status}} == Succeeded")
+		task.When = "{{workflow.status}} == Succeeded"
 	case tmv1beta1.ConditionTypeError:
-		task.When = fmt.Sprintf("{{workflow.status}} != Succeeded")
+		task.When = "{{workflow.status}} != Succeeded"
 	}
 
 	return append(tasks, task)

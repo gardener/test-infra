@@ -60,12 +60,16 @@ generate:
 format:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg
 
+.PHONY: check
+check:
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh ./cmd/... ./pkg/...
+
 .PHONY: install
 install:
 	@./hack/install
 
 .PHONY: all
-all: generate install
+all: generate check install
 
 .PHONY: install-requirements
 install-requirements:

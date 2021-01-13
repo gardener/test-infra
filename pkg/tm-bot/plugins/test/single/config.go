@@ -39,7 +39,7 @@ func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*Confi
 	}
 
 	if flagset.Arg(0) != "" {
-		cutset := " \r "
+		cutset := " \r"
 		cfg.FilePath = strings.Trim(flagset.Arg(0), cutset)
 	}
 

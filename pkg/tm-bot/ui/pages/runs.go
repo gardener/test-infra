@@ -102,7 +102,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 
 			d := time.Duration(tr.Status.Duration) * time.Second
 			if tr.Status.Duration == 0 && !tr.Status.StartTime.IsZero() {
-				d = time.Now().Sub(tr.Status.StartTime.Time)
+				d = time.Since(tr.Status.StartTime.Time)
 				d = d / time.Second * time.Second // remove unnecessary milliseconds
 			}
 

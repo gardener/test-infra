@@ -17,7 +17,7 @@ package config
 import "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
 func NewSet(elements ...*Element) Set {
-	s := make(Set, 0)
+	s := make(Set)
 	for _, e := range elements {
 		s[e.Info.Name] = e
 	}
@@ -45,7 +45,7 @@ func (s Set) RawList() []*v1beta1.ConfigElement {
 }
 
 func (s Set) Copy() Set {
-	newSet := make(Set, 0)
+	newSet := make(Set)
 	for key, value := range s {
 		newSet[key] = value
 	}

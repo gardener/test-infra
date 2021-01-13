@@ -74,7 +74,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		startTime := time.Now()
 		err = w.WatchUntil(2*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) { return false, nil })
 		Expect(err).To(HaveOccurred())
-		Expect(time.Now().Sub(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
+		Expect(time.Since(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
 	})
 
 	It("watch should reconcile once", func() {

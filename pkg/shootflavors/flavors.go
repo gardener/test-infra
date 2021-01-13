@@ -57,8 +57,8 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 // New creates an internal representation of raw shoot flavors.
 // It also parses the flavors and creates the resulting shoots.
 func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
-	versions := make(map[common.CloudProvider]gardencorev1beta1.KubernetesSettings, 0)
-	machineImages := make(map[common.CloudProvider][]gardencorev1beta1.MachineImage, 0)
+	versions := make(map[common.CloudProvider]gardencorev1beta1.KubernetesSettings)
+	machineImages := make(map[common.CloudProvider][]gardencorev1beta1.MachineImage)
 	addVersion := addKubernetesVersionFunc(versions)
 	addMachineImage := addMachineImagesFunc(machineImages)
 
@@ -128,14 +128,14 @@ func (f *Flavors) GetUsedKubernetesVersions() map[common.CloudProvider]gardencor
 
 func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardencorev1beta1.MachineImage {
 	if f.usedMachineImages == nil {
-		return make(map[common.CloudProvider][]gardencorev1beta1.MachineImage, 0)
+		return make(map[common.CloudProvider][]gardencorev1beta1.MachineImage)
 	}
 	return f.usedMachineImages
 }
 
 // addKubernetesVersionFunc adds a new kubernetes version to a list of unique versions per cloudprovider.
 func addKubernetesVersionFunc(versions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings) func(common.CloudProvider, gardencorev1beta1.ExpirableVersion) {
-	used := make(map[common.CloudProvider]map[string]interface{}, 0)
+	used := make(map[common.CloudProvider]map[string]interface{})
 	return func(provider common.CloudProvider, version gardencorev1beta1.ExpirableVersion) {
 
 		if _, ok := used[provider]; !ok {
@@ -155,8 +155,8 @@ func addKubernetesVersionFunc(versions map[common.CloudProvider]gardencorev1beta
 
 // addMachineImagesFunc adds a new machine image version to a list of unique versions per cloudprovider.
 func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.MachineImage) func(common.CloudProvider, string, string) {
-	used := make(map[common.CloudProvider]map[string]map[string]interface{}, 0)
-	indexMapping := make(map[common.CloudProvider]map[string]int, 0)
+	used := make(map[common.CloudProvider]map[string]map[string]interface{})
+	indexMapping := make(map[common.CloudProvider]map[string]int)
 	return func(provider common.CloudProvider, name, version string) {
 		if _, ok := used[provider]; !ok {
 			used[provider] = map[string]map[string]interface{}{

@@ -118,10 +118,7 @@ func RegisterArgoWorkflowWatch(c controller.Controller) error {
 func RegisterTestrunWatch(c controller.Controller) error {
 	return c.Watch(&source.Kind{Type: &tmv1beta1.Testrun{}}, &handler.EnqueueRequestForObject{}, &predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if !reflect.DeepEqual(e.ObjectOld, e.ObjectNew) {
-				return true
-			}
-			return false
+			return !reflect.DeepEqual(e.ObjectOld, e.ObjectNew)
 		},
 	})
 }

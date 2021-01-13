@@ -77,7 +77,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 		}
 		d := time.Duration(tr.Status.Duration) * time.Second
 		if tr.Status.Duration == 0 && !tr.Status.StartTime.IsZero() {
-			d = time.Now().Sub(tr.Status.StartTime.Time)
+			d = time.Since(tr.Status.StartTime.Time)
 			d = d / time.Second * time.Second // remove unnecessary milliseconds
 		}
 
@@ -123,7 +123,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			}
 			d := time.Duration(step.Duration) * time.Second
 			if step.Duration == 0 && !step.StartTime.IsZero() {
-				d = time.Now().Sub(step.StartTime.Time)
+				d = time.Since(step.StartTime.Time)
 				d = d / time.Second * time.Second // remove unnecessary milliseconds
 			}
 			item.Steps[i] = testrunStepStatusItem{

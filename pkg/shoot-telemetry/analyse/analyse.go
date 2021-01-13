@@ -36,6 +36,9 @@ func AnalyseDir(outputDir, outputPath, outputFormat string) (map[string]*Figures
 
 	figuresStore := make(map[string]*Figures)
 	err := filepath.Walk(inputMeasurementsDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if filepath.Ext(path) != ".csv" {
 			return nil
 		}

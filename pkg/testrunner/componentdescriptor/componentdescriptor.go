@@ -25,7 +25,7 @@ import (
 func GetComponents(content []byte) (ComponentList, error) {
 
 	components := components{
-		components:   make([]*Component, 0, 0),
+		components:   make([]*Component, 0),
 		componentSet: make(map[Component]bool),
 	}
 
@@ -56,7 +56,7 @@ func GetComponentsFromFile(file string) (ComponentList, error) {
 // GetComponentsFromLocations parses a list of components from a testruns's locations
 func GetComponentsFromLocations(tr *tmv1beta1.Testrun) (ComponentList, error) {
 	components := components{
-		components:   make([]*Component, 0, 0),
+		components:   make([]*Component, 0),
 		componentSet: make(map[Component]bool),
 	}
 	for _, locSet := range tr.Spec.LocationSets {

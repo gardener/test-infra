@@ -99,7 +99,6 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 				Author:         event.GetComment().GetUser(),
 			})
 		}
-		break
 	default:
 		http.Error(w, "event not handled", http.StatusNoContent)
 		return

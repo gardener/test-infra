@@ -46,7 +46,7 @@ func New(log logr.Logger, interval time.Duration) (*Telemetry, error) {
 		log:          log,
 		mut:          sync.Mutex{},
 		interval:     interval,
-		shootsFilter: make(map[string]bool, 0),
+		shootsFilter: make(map[string]bool),
 	}, nil
 }
 

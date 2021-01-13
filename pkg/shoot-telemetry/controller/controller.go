@@ -92,11 +92,6 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 		}
 
 		config.KubeConfig = clientcmd.NewDefaultClientConfig(*configObj, &clientcmd.ConfigOverrides{})
-
-		k8sClient, err = kubernetes.NewClientFromFile("", config.KubeConfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: kubernetes.GardenScheme,
-		}))
-	} else {
 	}
 
 	restConfig, err := config.KubeConfig.ClientConfig()
@@ -108,6 +103,9 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	k8sClient, err = kubernetes.NewWithConfig(kubernetes.WithRESTConfig(restConfig), kubernetes.WithClientOptions(client.Options{
 		Scheme: kubernetes.GardenScheme,
 	}))
+	if err != nil {
+		return err
+	}
 
 	k8sinformersFactory, gardenInformerFactory, err := common.SetupInformerFactory(restConfig)
 	if err != nil {

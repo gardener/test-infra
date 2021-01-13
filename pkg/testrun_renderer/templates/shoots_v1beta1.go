@@ -31,19 +31,16 @@ func stepCreateShootV1beta1(cloudprovider common.CloudProvider, name string, dep
 			name = "create-shoot-aws"
 		}
 		generatorStep, stepConfig = v1beta1AWSShootConfig(name, dependencies, stepConfig)
-		break
 	case common.CloudProviderGCP:
 		if name == "" {
 			name = "create-shoot-gcp"
 		}
 		generatorStep, stepConfig = v1beta1GCPShootConfig(name, dependencies, stepConfig)
-		break
 	case common.CloudProviderAzure:
 		if name == "" {
 			name = "create-shoot-azure"
 		}
 		generatorStep, stepConfig = v1beta1AzureShootConfig(name, dependencies, stepConfig)
-		break
 	default:
 		return []*v1beta1.DAGStep{}, "", fmt.Errorf("unsupported cloudprovider %s", cloudprovider)
 	}

@@ -13,7 +13,7 @@ type Sample struct {
 func NewSample(statusCode int, timestamp time.Time) *Sample {
 	// TODO Should we directly convert the timestamp into a string with the proper format?
 	return &Sample{
-		ResponseDuration: time.Now().Sub(timestamp),
+		ResponseDuration: time.Since(timestamp),
 		Status:           statusCode,
 		Timestamp:        timestamp,
 	}

@@ -143,7 +143,6 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 
 		bulks = append(bulks, bulk)
 		meta = nil
-		doc = make([]byte, 0)
 	}
 
 	return bulks

@@ -34,13 +34,15 @@ func (c *client) IsAuthorized(authorizationType AuthorizationType, event *Generi
 	case AuthorizationCodeOwners:
 		// todo: update to really parse the codeowners file with fallback to default team or org
 		return c.isInRequestedTeam(ctx, event)
+	case AuthorizationOrgAdmin:
+		return c.isOrgAdmin(ctx, event)
 	}
 	return false
 }
 
 // isOrgAdmin checks if the author is organization admin
-func (c *client) isOrgAdmin(event *GenericRequestEvent) bool {
-	membership, _, err := c.client.Organizations.GetOrgMembership(context.TODO(), event.GetAuthorName(), event.GetOwnerName())
+func (c *client) isOrgAdmin(ctx context.Context, event *GenericRequestEvent) bool {
+	membership, _, err := c.client.Organizations.GetOrgMembership(ctx, event.GetAuthorName(), event.GetOwnerName())
 	if err != nil {
 		c.log.V(3).Info(err.Error())
 		return false

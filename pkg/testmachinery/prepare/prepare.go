@@ -78,7 +78,7 @@ func New(name string, addGlobalInput, addGlobalOutput bool) (*Definition, error)
 	}
 	prepare := &Definition{td, addGlobalInput, Config{
 		Directories:  []string{testmachinery.TM_KUBECONFIG_PATH, testmachinery.TM_SHARED_PATH},
-		Repositories: make(map[string]*Repository, 0),
+		Repositories: make(map[string]*Repository),
 	}}
 
 	if err := prepare.addNetrcFile(); err != nil {

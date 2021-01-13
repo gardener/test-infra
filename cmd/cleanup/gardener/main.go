@@ -56,7 +56,7 @@ func main() {
 
 	log, err := logger.NewCliLogger()
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 	logger.SetLogger(log)
@@ -82,7 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	shootQueue := make(map[*gardencorev1beta1.Shoot]bool, 0)
+	shootQueue := make(map[*gardencorev1beta1.Shoot]bool)
 	for _, s := range shoots.Items {
 		shoot := s
 		shootQueue[&shoot] = false
@@ -144,7 +144,7 @@ func deleteShoot(ctx context.Context, k8sClient kubernetes.Interface, shoot *gar
 	if err != nil {
 		return fmt.Errorf("failed to patch bytes")
 	}
-	if err := k8sClient.Client().Patch(ctx, oldShoot, client.ConstantPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err := k8sClient.Client().Patch(ctx, oldShoot, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		return err
 	}
 

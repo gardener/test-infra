@@ -17,15 +17,16 @@ package elasticsearch
 import (
 	"bytes"
 	"encoding/json"
-	defaulterrors "errors"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
+
+	"golang.org/x/net/context"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -128,7 +129,7 @@ func (c *client) Bulk(data []byte) error {
 		for _, action := range items {
 			for _, item := range action {
 				if item.Status < 200 || item.Status > 299 {
-					allErrors = multierror.Append(allErrors, defaulterrors.New(fmt.Sprintf("%#v", item.Error)))
+					allErrors = multierror.Append(allErrors, fmt.Errorf("%#v", item.Error))
 				}
 			}
 		}
@@ -144,15 +145,6 @@ func (c *client) BulkFromFile(file string) error {
 		return err
 	}
 	return c.Bulk(data)
-}
-
-func (c *client) parseUrl(rawPath string) (string, error) {
-	u, err := url.Parse(c.endpoint)
-	if err != nil {
-		return "", err
-	}
-	u.Path = path.Join(u.Path, rawPath)
-	return u.String(), nil
 }
 
 func (c *client) parseUrlNoEscape(rawPath string) (string, error) {

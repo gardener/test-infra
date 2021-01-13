@@ -110,10 +110,12 @@ func (u *StatusUpdater) UpdateComment(comment string) error {
 		return nil
 	}
 	h := sha1.New()
-	h.Write([]byte(comment))
+	if _, err := h.Write([]byte(comment)); err != nil {
+		return err
+	}
 	commentHash := h.Sum([]byte{})
 
-	if bytes.Compare(commentHash, u.lastCommentHash) != 0 {
+	if !bytes.Equal(commentHash, u.lastCommentHash) {
 		if err := u.client.UpdateComment(u.event, u.commentID, comment); err != nil {
 			return err
 		}

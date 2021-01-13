@@ -30,7 +30,6 @@ type options struct {
 	watchOptions     watch.Options
 
 	fs                   *pflag.FlagSet
-	dryRun               bool
 	testrunNamePrefix    string
 	tmKubeconfigPath     string
 	testrunPath          string

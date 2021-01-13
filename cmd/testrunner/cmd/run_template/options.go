@@ -43,15 +43,14 @@ type options struct {
 
 	shootFlavors []*shootflavors.ExtendedFlavorInstance
 
-	fs                   *pflag.FlagSet
-	dryRun               bool
-	testrunNamePrefix    string
-	shootPrefix          string
-	tmKubeconfigPath     string
-	filterPatchVersions  bool
-	failOnError          bool
-	testrunFlakeAttempts int
-	timeout              int64
+	fs                  *pflag.FlagSet
+	dryRun              bool
+	testrunNamePrefix   string
+	shootPrefix         string
+	tmKubeconfigPath    string
+	filterPatchVersions bool
+	failOnError         bool
+	timeout             int64
 }
 
 // NewOptions creates a new options struct.

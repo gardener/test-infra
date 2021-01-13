@@ -322,7 +322,9 @@ func Unzip(archive, target string) error {
 	for _, file := range reader.File {
 		path := filepath.Join(target, file.Name)
 		if file.FileInfo().IsDir() {
-			os.MkdirAll(path, file.Mode())
+			if err := os.MkdirAll(path, file.Mode()); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -480,7 +482,7 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 		return "", fmt.Errorf("cannot get ingress rule from ingress %v", ingress)
 	}
 	host := ingress.Spec.Rules[0].Host
-	r, _ := regexp.Compile("[a-z]+\\.ingress\\.(.+)$")
+	r, _ := regexp.Compile(`[a-z]+\\.ingress\\.(.+)$`)
 	matches := r.FindStringSubmatch(host)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)

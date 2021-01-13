@@ -55,7 +55,7 @@ func Validate(identifier string, tf tmv1beta1.TestFlow, locs locations.Locations
 
 	usedTestdefinitions := 0
 
-	usedStepNames := make(map[string]*tmv1beta1.DAGStep, 0)
+	usedStepNames := make(map[string]*tmv1beta1.DAGStep)
 
 	for i, step := range tf {
 		identifier := fmt.Sprintf("%s.[%d]", identifier, i)

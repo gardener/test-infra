@@ -54,6 +54,9 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 			return err
 		}
 		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview, prefix)
+		if err != nil {
+			return err
+		}
 		if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
 			log.Info("no testrun updates, therefore not assets to upload")
 			continue
@@ -359,6 +362,9 @@ func getGithubArtifacts(componentName, githubUser, githubPassword string) (githu
 // deletes remote github asset if the asset exists
 func deleteAssetIfExists(c ComponentExtended, filename string) error {
 	remoteAssetID, err := getAssetIDByName(c, filename)
+	if err != nil {
+		return err
+	}
 	if remoteAssetID == 0 {
 		// no remote asset exists, nothing to do
 		return nil

@@ -131,7 +131,7 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			continue
 		} else {
 
-			status := util.StatusSymbolUnknown
+			var status util.StatusSymbol
 			if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 				status = util.StatusSymbolError
 			} else {

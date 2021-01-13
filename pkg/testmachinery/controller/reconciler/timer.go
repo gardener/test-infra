@@ -33,12 +33,3 @@ func (r *TestmachineryReconciler) addTimer(key string, t time.Duration, f func()
 	r.timers[key] = timer
 	return nil
 }
-
-func (r *TestmachineryReconciler) stopTimer(key string) error {
-	if t := r.timers[key]; t == nil {
-		return nil
-	}
-	r.timers[key].Stop()
-	delete(r.timers, key)
-	return nil
-}

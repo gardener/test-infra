@@ -65,7 +65,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 		if err != nil {
 			return fmt.Errorf("failed to patch bytes")
 		}
-		if err := s.client.Client().Patch(ctx, shoot, client.ConstantPatch(types.MergePatchType, patchBytes)); err != nil {
+		if err := s.client.Client().Patch(ctx, shoot, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 

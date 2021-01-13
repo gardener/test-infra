@@ -65,7 +65,7 @@ type Result struct {
 }
 
 func BuildBulkUpdateQuery(items []Result) (path string, payload io.Reader, err error) {
-	path = fmt.Sprintf("/_bulk")
+	path = "/_bulk"
 	var buffer strings.Builder
 	for _, item := range items {
 		buffer.WriteString(fmt.Sprintf("{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n", item.Index, item.DocID))

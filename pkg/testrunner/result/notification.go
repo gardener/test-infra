@@ -57,9 +57,7 @@ func createNotificationString(testruns []*tmv1beta1.Testrun) []byte {
 		for _, step := range tr.Status.Steps {
 			if step.Phase == argov1.NodeFailed {
 				cfg.Email.MailBody = fmt.Sprintf("%s  - %s\n", cfg.Email.MailBody, step.TestDefinition.Name)
-				for _, email := range step.TestDefinition.RecipientsOnFailure {
-					cfg.Email.Recipients = append(cfg.Email.Recipients, email)
-				}
+				cfg.Email.Recipients = append(cfg.Email.Recipients, step.TestDefinition.RecipientsOnFailure...)
 			}
 		}
 	}
