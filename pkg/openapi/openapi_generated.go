@@ -1450,7 +1450,6 @@ func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"name", "locations"},
 			},
 		},
 		Dependencies: []string{

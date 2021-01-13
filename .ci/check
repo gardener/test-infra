@@ -23,6 +23,27 @@ else
   export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
+function arraydiff() {
+  awk 'BEGIN{RS=ORS=" "}
+       {NR==FNR?a[$0]++:a[$0]--}
+       END{for(k in a)if(a[k])print k}' <(echo -n "${!1}") <(echo -n "${!2}")
+}
+
 cd "${SOURCE_PATH}"
 
-/vendor/github.com/gardener/gardener/hack/check.sh ./cmd/... ./pkg/...
+make install-requirements
+
+make check
+
+echo > Validate generated files
+
+state=($(git status --porcelain | awk '{ print $2 }' | sort -u))
+make generate
+changed_state=($(git status --porcelain | awk '{ print $2 }' | sort -u))
+state_diff=($(arraydiff $state[@] $changed_state[@]))
+diff_total=${#state_diff[*]}
+if [[ "$diff_total" -gt 0 ]]; then
+  echo "Updated files:"
+  echo "$(arraydiff $state[@] $changed_state[@])"
+  exit 1;
+fi

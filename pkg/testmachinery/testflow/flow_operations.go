@@ -278,28 +278,38 @@ func getJointNodes(nodes []*node.Node, branches []*node.Set, getNext func(*node.
 	return nil, lastNodes
 }
 
+// findJointNode returns the first node that exists in all given node sets.
+// Note the order of the node sets are essential.
 func findJointNode(nodeSets []*node.Set) *node.Node {
 	if len(nodeSets) == 1 {
 		nodeList := nodeSets[0].List()
 		return nodeList[len(nodeList)-1]
 	}
 
+	// contains nodes that are already validated that they are not the joint node.
 	alreadyCheckedNodes := node.NewSet()
-	for i, set := range nodeSets {
+	for _, set := range nodeSets {
 		for n := range set.IterateInverse() {
 			if alreadyCheckedNodes.Has(n) {
 				continue
 			}
-			for j := i + 1; j < len(nodeSets); j++ {
-				if !nodeSets[j].Has(n) {
-					alreadyCheckedNodes.Add(n)
-					break
-				}
+			if nodeSetsHave(nodeSets, n) {
 				return n
+			} else {
+				alreadyCheckedNodes.Add(n)
 			}
 		}
 	}
 	return nil
+}
+
+func nodeSetsHave(nodeSets []*node.Set, n *node.Node) bool {
+	for _, set := range nodeSets {
+		if !set.Has(n) {
+			return false
+		}
+	}
+	return true
 }
 
 // emptyNodeList checks if all nodes of a node list are nil
