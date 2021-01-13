@@ -85,7 +85,8 @@ func reorderChildrenOfNode(root *node.Node) *node.Set {
 	serialNodes := node.NewSet()
 	parallelNodes := node.NewSet()
 	for item := range root.Children.Iterate() {
-		if item.TestDefinition.HasBehavior("serial") {
+		if item.TestDefinition.HasBehavior(tmv1beta1.SerialBehavior) ||
+			item.TestDefinition.HasBehavior(tmv1beta1.DisruptiveBehavior) {
 			serialNodes.Add(item)
 		} else {
 			parallelNodes.Add(item)

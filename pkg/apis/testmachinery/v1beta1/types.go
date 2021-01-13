@@ -310,6 +310,16 @@ type Pause struct {
 // TestDefinitionName is the kind identifier of a testdefinition.
 const TestDefinitionName = "TestDefinition"
 
+const (
+	// SerialBehavior defines a serial behavior for the step which
+	// means that the testdefinition should run in serial.
+	SerialBehavior = "serial"
+	// DisruptiveBehavior defines the testdefinition as disruptive
+	// which means that the same properties as for serial testdefinitions apply
+	// and these steps are always have the continueOnError set to false.
+	DisruptiveBehavior = "disruptive"
+)
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TestDefinition describes the execution of a test.
