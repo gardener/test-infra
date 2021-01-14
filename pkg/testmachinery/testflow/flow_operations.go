@@ -74,10 +74,9 @@ func ReorderChildrenOfNodes(list *node.Set) *node.Set {
 // reorderSerialNodes reorders all children of a node so that serial steps run in serial after parallel nodes.
 // The functions returns the new Children
 func reorderChildrenOfNode(root *node.Node) *node.Set {
-	grandChildren := root.Children.GetChildren()
 
-	// directly return if there is only one node in the pool
-	if root.Children.Len() == 1 {
+	// directly return if there are no nodes or only one node in the pool
+	if root.Children.Len() <= 1 {
 		// todo: write test for special case
 		return root.Children
 	}
@@ -98,36 +97,43 @@ func reorderChildrenOfNode(root *node.Node) *node.Set {
 		return root.Children
 	}
 
-	root.ClearChildren()
-	root.AddChildren(parallelNodes.List()...)
-
+	previousChildren := parallelNodes.GetChildren()
+	// remove children from parallel node
+	parallelNodes.Remove(previousChildren.List()...)
+	// set the root as parent for the parallel nodes
+	root.ClearChildren().AddChildren(parallelNodes.List()...)
+	parallelNodes.ClearParents().AddParents(root)
 	for i, serialNode := range serialNodes.List() {
+		// remove the current node from the list of previous children
+		// and add all children of the current node
+		previousChildren.Remove(serialNode).Add(serialNode.Children.List()...)
+		// remove the serial as possible parent from all previous children
+		previousChildren.RemoveParents(serialNode)
+		serialNode.ClearChildren()
 		if i == 0 {
-			parallelNodes.ClearChildren()
-			parallelNodes.AddChildren(serialNode)
+			parallelNodes.ClearChildren().AddChildren(serialNode)
 
-			serialNode.ClearParents()
-			serialNode.AddParents(parallelNodes.List()...)
+			// only remove the root parent as otherwise other parent information will get lost
+			serialNode.RemoveParent(root).AddParents(parallelNodes.List()...)
 		} else {
 			prevNode := serialNodes.List()[i-1]
-
-			prevNode.ClearChildren()
+			//prevNode.ClearChildren()
 			prevNode.AddChildren(serialNode)
 
-			serialNode.ClearParents()
-			serialNode.AddParents(prevNode)
+			// only remove the root parent as otherwise other parent information will get lost
+			serialNode.RemoveParent(root).AddParents(prevNode)
 		}
 
+		// last node
 		if i == serialNodes.Len()-1 {
-			serialNode.ClearChildren()
-			serialNode.AddChildren(grandChildren.List()...)
-
-			grandChildren.ClearParents()
-			grandChildren.AddParents(serialNode)
+			serialNode.ClearChildren().AddChildren(previousChildren.List()...)
+			previousChildren.AddParents(serialNode)
 		}
 	}
 
-	return grandChildren
+	// return last node
+	// the list cannot be empty as this case is already checked above.
+	return node.NewSet(serialNodes.Last())
 }
 
 // ApplyOutputScope defines the artifact scopes for outputs.
@@ -282,6 +288,9 @@ func getJointNodes(nodes []*node.Node, branches []*node.Set, getNext func(*node.
 // Note the order of the node sets are essential.
 func findJointNode(nodeSets []*node.Set) *node.Node {
 	if len(nodeSets) == 1 {
+		if nodeSets[0].Len() == 0 {
+			return nil
+		}
 		nodeList := nodeSets[0].List()
 		return nodeList[len(nodeList)-1]
 	}

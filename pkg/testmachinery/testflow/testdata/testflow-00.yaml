@@ -1,0 +1,20 @@
+- name: create
+  definition:
+    name: create
+
+- name: tests-beta
+  dependsOn: [ create ]
+  definition:
+    name: tests-beta
+    continueOnError: true
+
+- name: tests-release
+  dependsOn: [ tests-beta ]
+  definition:
+    name: tests-release
+    continueOnError: true
+
+- name: delete
+  dependsOn: [ tests-release, tests-beta ]
+  definition:
+    name: delete

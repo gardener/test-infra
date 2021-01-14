@@ -13,7 +13,6 @@ import (
 // TestDefinition represents a TestDefinition which was fetched from locations.
 type TestDefinition struct {
 	Info     *tmv1beta1.TestDefinition
-	TaskName string
 	Location Location
 	FileName string
 	Template *argov1.Template

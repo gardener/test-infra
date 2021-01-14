@@ -3,8 +3,6 @@ package node
 import (
 	"testing"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	testutils "github.com/gardener/test-infra/test/utils"
@@ -25,9 +23,9 @@ var _ = Describe("node operations", func() {
 			step.Definition.ContinueOnError = true
 			locs := &testutils.LocationsMock{
 				TestDefinitions: []*testdefinition.TestDefinition{
-					defaultTestDef,
-					serialTestDef(),
-					disruptiveTestDef(),
+					testutils.TestDef("default"),
+					testutils.SerialTestDef("serial"),
+					testutils.DisruptiveTestDef("disruptive"),
 				},
 			}
 			nodes, err := CreateNodesFromStep(step, locs, nil, "")
@@ -46,27 +44,3 @@ var _ = Describe("node operations", func() {
 
 	})
 })
-
-func serialTestDef() *testdefinition.TestDefinition {
-	return &testdefinition.TestDefinition{
-		Info: &tmv1beta1.TestDefinition{
-			Spec: tmv1beta1.TestDefSpec{
-				Behavior: []string{tmv1beta1.SerialBehavior},
-			},
-		},
-		Template: &argov1.Template{},
-	}
-}
-
-func disruptiveTestDef() *testdefinition.TestDefinition {
-	return &testdefinition.TestDefinition{
-		Info: &tmv1beta1.TestDefinition{
-			Spec: tmv1beta1.TestDefSpec{
-				Behavior: []string{tmv1beta1.DisruptiveBehavior},
-			},
-		},
-		Template: &argov1.Template{},
-	}
-}
-
-var defaultTestDef = testdefinition.NewEmpty()

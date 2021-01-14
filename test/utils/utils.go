@@ -16,6 +16,7 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	mrhealth "github.com/gardener/gardener-resource-manager/pkg/health"
@@ -25,6 +26,9 @@ import (
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/yaml"
+
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
@@ -261,4 +265,22 @@ func HTTPGet(url string) (*http.Response, error) {
 	}
 
 	return response, nil
+}
+
+// ReadJSONFile reads a file and deserializes the json into the given object
+func ReadJSONFile(path string, obj interface{}) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, obj)
+}
+
+// ReadYAMLFile reads a file and deserializes the yaml into the given object
+func ReadYAMLFile(path string, obj interface{}) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(data, obj)
 }

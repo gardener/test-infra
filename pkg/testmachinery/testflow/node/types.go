@@ -2,13 +2,25 @@ package node
 
 import (
 	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
 
 type Set struct {
-	list []*Node
-	set  map[*Node]int
+	set map[*Node]sets.Empty
+	// first item of the linked list
+	listStart *listItem
+	// last item of the linked list
+	listEnd *listItem
+}
+
+// listItem is a internal structure for a linked list of nodes
+type listItem struct {
+	node     *Node
+	previous *listItem
+	next     *listItem
 }
 
 // Node is an object that represents a node of the internal DAG representation

@@ -703,6 +703,7 @@ var serialTestDef = func() testdefinition.TestDefinition {
 		Template: &argov1.Template{},
 	}
 }()
+
 var defaultTestDef = testdefinition.NewEmpty()
 
 func createStepsFromNodes(nodes ...*node.Node) map[string]*testflow.Step {
