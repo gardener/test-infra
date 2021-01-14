@@ -89,7 +89,7 @@ func BuildScrollQueryInitial(index string, pageSize int) (path string, payload i
 		pageSize = 100
 	}
 
-	// add a filter if you want to restrict the dataset for experimenting/debugging
+	// add a filter (or add as json object to the must array) if you want to restrict the dataset for experimenting/debugging
 	// "range": {
 	//    "tm.tr.startTime": {
 	//        "gte": "2020-09-30T16:45:24.249Z",
