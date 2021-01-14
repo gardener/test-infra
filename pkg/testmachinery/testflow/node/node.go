@@ -75,18 +75,33 @@ func NewEmpty(name string) *Node {
 }
 
 // AddChildren adds Nodes as children
-func (n *Node) AddChildren(children ...*Node) {
+func (n *Node) AddChildren(children ...*Node) *Node {
 	n.Children.Add(children...)
+	return n
 }
 
-// ClearParent removes a node from the current node's children
-func (n *Node) RemoveChild(child *Node) {
+// RemoveChild removes a node from the current node's children
+func (n *Node) RemoveChild(child *Node) *Node {
+	child.RemoveParent(n)
 	n.Children.Remove(child)
+	return n
+}
+
+// RemoveChildren removes all nodes from the current node's children
+func (n *Node) RemoveChildren(children ...*Node) *Node {
+	for _, child := range children {
+		n.RemoveChild(child)
+	}
+	return n
 }
 
 // ClearChildren removes all children from the current node
-func (n *Node) ClearChildren() {
+func (n *Node) ClearChildren() *Node {
+	for child := range n.Children.Iterate() {
+		child.RemoveParent(n)
+	}
 	n.Children = NewSet()
+	return n
 }
 
 // AddParents adds nodes as parents.
@@ -95,13 +110,15 @@ func (n *Node) AddParents(parents ...*Node) {
 }
 
 // ClearParent removes a node from the current node's parents
-func (n *Node) RemoveParent(parent *Node) {
+func (n *Node) RemoveParent(parent *Node) *Node {
 	n.Parents.Remove(parent)
+	return n
 }
 
 // ClearParents removes all parents from the current node
-func (n *Node) ClearParents() {
+func (n *Node) ClearParents() *Node {
 	n.Parents = NewSet()
+	return n
 }
 
 // ParentNames returns the names of all parent nodes

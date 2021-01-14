@@ -64,6 +64,10 @@ format:
 check:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh ./cmd/... ./pkg/...
 
+.PHONY: test
+test:
+	@go test -mod=vendor $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
+
 .PHONY: install
 install:
 	@./hack/install
