@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util_test
+package util
 
 import (
-	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -23,20 +22,26 @@ import (
 
 var _ = Describe("util test", func() {
 
-	Context("github url parsing", func() {
-		It("should return the repo and owner of a repository", func() {
+	Context("url parsing", func() {
+		It("github url should return the repo and owner of a repository", func() {
 			ghUrl := "https://github.com/gardener/gardener-extensions.git"
 
-			owner, repo, err := util.ParseRepoURLFromString(ghUrl)
+			owner, repo, err := ParseRepoURLFromString(ghUrl)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(repo).To(Equal("gardener-extensions"))
 			Expect(owner).To(Equal("gardener"))
+		})
+		It("domain should parse from grafana url", func() {
+			hostname := "grafana.ingress.tm.core.shoot.live.k8s-hana.ondemand.com"
+			domain, err := parseDomain(hostname)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(domain).To(Equal("tm.core.shoot.live.k8s-hana.ondemand.com"))
 		})
 	})
 
 	DescribeTable("IsLastElementOfBucket",
 		func(value int, expected bool) {
-			Expect(util.IsLastElementOfBucket(value, 3)).To(Equal(expected))
+			Expect(IsLastElementOfBucket(value, 3)).To(Equal(expected))
 		},
 		Entry("0", 0, false),
 		Entry("0", 1, false),

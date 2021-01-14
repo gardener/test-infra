@@ -482,10 +482,14 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 		return "", fmt.Errorf("cannot get ingress rule from ingress %v", ingress)
 	}
 	host := ingress.Spec.Rules[0].Host
-	r, _ := regexp.Compile(`[a-z]+\\.ingress\\.(.+)$`)
-	matches := r.FindStringSubmatch(host)
+	return parseDomain(host)
+}
+
+func parseDomain(hostname string) (string, error) {
+	r, _ := regexp.Compile(`[a-z]+\.ingress\.(.+)$`)
+	matches := r.FindStringSubmatch(hostname)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("cannot regex cluster domain from ingress %v", ingress)
+		return "", fmt.Errorf("cannot regex cluster domain from hostname %v", hostname)
 	}
 	return matches[1], nil
 }
