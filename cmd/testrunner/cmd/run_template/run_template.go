@@ -76,7 +76,7 @@ func NewRunTemplateCommand() (*cobra.Command, error) {
 func (o *options) run(ctx context.Context) error {
 	logger.Log.Info("Start testmachinery testrunner")
 
-	runs, err := testrunnerTemplate.RenderTestruns(logger.Log.WithName("Render"), &o.shootParameters, o.shootFlavors)
+	runs, err := testrunnerTemplate.RenderTestruns(ctx, logger.Log.WithName("Render"), &o.shootParameters, o.shootFlavors)
 	if err != nil {
 		return errors.Wrap(err, "unable to render testrun")
 	}
@@ -117,7 +117,7 @@ func (o *options) run(ctx context.Context) error {
 		return errors.Wrap(err, "unable to run testruns")
 	}
 
-	failed, err := collector.Collect(logger.Log.WithName("Collect"), o.testrunnerConfig.Watch.Client(), o.testrunnerConfig.Namespace, runs)
+	failed, err := collector.Collect(ctx, logger.Log.WithName("Collect"), o.testrunnerConfig.Watch.Client(), o.testrunnerConfig.Namespace, runs)
 	if err != nil {
 		return errors.Wrap(err, "unable to collect test output")
 	}

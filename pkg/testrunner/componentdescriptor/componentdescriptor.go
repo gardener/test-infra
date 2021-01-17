@@ -14,35 +14,57 @@
 package componentdescriptor
 
 import (
+	"context"
 	"fmt"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"io/ioutil"
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"github.com/gardener/component-cli/ociclient"
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+	comphelper "github.com/gardener/component-cli/pkg/components"
+	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
+	"github.com/gardener/component-spec/bindings-go/codec"
+	"github.com/go-logr/logr"
+	"github.com/mandelsoft/vfs/pkg/osfs"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 // GetComponents returns a list of all git/component dependencies.
-func GetComponents(content []byte) (ComponentList, error) {
-
+// todo: re-enable component validation
+func GetComponents(ctx context.Context, log logr.Logger, ociClient ociclient.Client, content []byte) (ComponentList, error) {
 	components := components{
 		components:   make([]*Component, 0),
 		componentSet: make(map[Component]bool),
 	}
 
-	componentDescriptor, err := parse(content)
+	compDesc := &cdv2.ComponentDescriptor{}
+	if err := codec.Decode(content, compDesc, codec.DisableValidation(true)); err != nil {
+		return nil, err
+	}
+	resolver := comphelper.New(log, osfs.New(), ociClient, codec.DisableValidation(true))
+	compList, err := comphelper.ResolveTransitiveComponentDescriptors(ctx, resolver, compDesc)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, component := range componentDescriptor.Components {
-		components.add(component.Component)
+	// add current component to list
+	components.add(Component{
+		Name:    compDesc.GetName(),
+		Version: compDesc.GetVersion(),
+	})
+	for _, comp := range compList.Components {
+		// todo: use the source to fetch the git repository and the real version/commit
+		components.add(Component{
+			Name:    comp.Name,
+			Version: comp.Version,
+		})
 	}
 
 	return components.components, nil
 }
 
 // GetComponentsFromFile read a component descriptor and returns a ComponentList
-func GetComponentsFromFile(file string) (ComponentList, error) {
+func GetComponentsFromFile(ctx context.Context, log logr.Logger, ociClient ociclient.Client, file string) (ComponentList, error) {
 	if file == "" {
 		return make(ComponentList, 0), nil
 	}
@@ -50,7 +72,16 @@ func GetComponentsFromFile(file string) (ComponentList, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
 	}
-	return GetComponents(data)
+	return GetComponents(ctx, log, ociClient, data)
+}
+
+// GetComponentsFromFileWithOCIOptions read a component descriptor and returns a ComponentList
+func GetComponentsFromFileWithOCIOptions(ctx context.Context, log logr.Logger, ociOpts *ociopts.Options, file string) (ComponentList, error) {
+	ociClient, _, err := ociOpts.Build(log, osfs.New())
+	if err != nil {
+		return nil, err
+	}
+	return GetComponentsFromFile(ctx, log, ociClient, file)
 }
 
 // GetComponentsFromLocations parses a list of components from a testruns's locations
@@ -110,13 +141,4 @@ func (c *components) add(newComponents ...Component) {
 func (c *components) has(newComponent Component) bool {
 	_, ok := c.componentSet[newComponent]
 	return ok
-}
-
-func parse(content []byte) (*descriptor, error) {
-	var d = &descriptor{}
-	err := yaml.Unmarshal(content, d)
-	if err != nil {
-		return nil, err
-	}
-	return d, nil
 }

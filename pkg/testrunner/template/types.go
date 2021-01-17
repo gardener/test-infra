@@ -15,6 +15,8 @@
 package template
 
 import (
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
@@ -32,6 +34,7 @@ type Parameters struct {
 	// metadata
 	Landscape               string
 	ComponentDescriptorPath string
+	OCIOpts                 *ociopts.Options
 
 	SetValues  []string
 	FileValues []string

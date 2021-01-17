@@ -16,12 +16,15 @@ package gardener_telemetry_cmd
 
 import (
 	"context"
+	"os"
+	"time"
+
+	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
@@ -33,6 +36,7 @@ import (
 var (
 	kubeconfigPath          string
 	componentDescriptorPath string
+	ociOpts                 = &ociopts.Options{}
 
 	initialTimeoutString   string
 	reconcileTimeoutString string
@@ -93,7 +97,7 @@ var gardenerTelemtryCmd = &cobra.Command{
 		time.Sleep(initialTimeout)
 
 		// parse component descriptor and get latest gardener version
-		cd, err := componentdescriptor.GetComponentsFromFile(componentDescriptorPath)
+		cd, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, logger.Log, ociOpts, componentDescriptorPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to read component descriptor")
 			os.Exit(1)
@@ -139,5 +143,7 @@ func init() {
 
 	gardenerTelemtryCmd.Flags().StringVar(&initialTimeoutString, "initial-timeout", "1m", "Initial timeout to wait for the update to start. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
 	gardenerTelemtryCmd.Flags().StringVar(&reconcileTimeoutString, "reconcile-timeout", "10m", "Timeout to wait for all shoots to tbe reconciled. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
+
+	ociOpts.AddFlags(gardenerTelemtryCmd.Flags())
 
 }

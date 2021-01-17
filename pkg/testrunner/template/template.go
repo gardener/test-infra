@@ -15,6 +15,7 @@
 package template
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -30,10 +31,10 @@ import (
 
 // RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
-func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
+func RenderTestruns(ctx context.Context, log logr.Logger, parameters *Parameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
 	log.V(3).Info(fmt.Sprintf("Parameters: %+v", util.PrettyPrintStruct(parameters)))
 
-	getInternalParameters, err := getInternalParametersFunc(parameters)
+	getInternalParameters, err := getInternalParametersFunc(ctx, log, parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +62,9 @@ func RenderTestruns(log logr.Logger, parameters *Parameters, shootFlavors []*sho
 	return runs, nil
 }
 
-func getInternalParametersFunc(parameters *Parameters) (func(string) *internalParameters, error) {
-	componentDescriptor, err := componentdescriptor.GetComponentsFromFile(parameters.ComponentDescriptorPath)
+func getInternalParametersFunc(ctx context.Context, log logr.Logger, parameters *Parameters) (func(string) *internalParameters, error) {
+	componentDescriptor, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(
+		ctx, log, parameters.OCIOpts, parameters.ComponentDescriptorPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode and parse the component descriptor: %s", err.Error())
 	}

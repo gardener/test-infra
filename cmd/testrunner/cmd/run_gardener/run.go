@@ -20,6 +20,8 @@ import (
 	"os"
 	"time"
 
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -51,6 +53,7 @@ var (
 	collectConfig    = result.Config{}
 	defaultConfig    = _default.Config{}
 	metadata         = metadata2.Metadata{}
+	ociOpts          = &ociopts.Options{}
 
 	testrunNamePrefix  string
 	kubernetesVersions []string
@@ -80,7 +83,9 @@ var runCmd = &cobra.Command{
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		logger.Log.Info("Start testmachinery testrunner")
 
-		components, err := componentdescriptor.GetComponentsFromFile(collectConfig.ComponentDescriptorPath)
+		collectConfig.OCIOpts = ociOpts
+
+		components, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, logger.Log, ociOpts, collectConfig.ComponentDescriptorPath)
 		if err != nil {
 			logger.Log.Error(err, "unable to render default testrun")
 			os.Exit(1)
@@ -168,7 +173,7 @@ var runCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to run testruns")
 			os.Exit(1)
 		}
-		failed, err := collector.Collect(logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
+		failed, err := collector.Collect(ctx, logger.Log.WithName("Collect"), testrunnerConfig.Watch.Client(), testrunnerConfig.Namespace, runs)
 		if err != nil {
 			logger.Log.Error(err, "unable to collect results")
 			os.Exit(1)
@@ -228,6 +233,8 @@ func init() {
 
 	// metadata
 	runCmd.Flags().StringVar(&metadata.Landscape, "landscape", "", "gardener landscape name")
+
+	ociOpts.AddFlags(runCmd.Flags())
 
 	// DEPRECATED FLAGS
 

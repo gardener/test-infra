@@ -1,0 +1,17 @@
+meta:
+  schemaVersion: 'v2'
+
+component:
+  name: 'example.com/repo2'
+  version: '1.27.0'
+
+  repositoryContexts:
+  - type: 'ociRegistry'
+    baseUrl: 'registry.example'
+  provider: 'internal'
+  sources: []
+  resources: []
+  componentReferences:
+  - name: 'repo3'
+    componentName: 'example.com/repo3'
+    version: '1.30.0'
