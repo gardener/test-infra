@@ -30,17 +30,3 @@ type components struct {
 	components   []*Component
 	componentSet map[Component]bool
 }
-
-type descriptor struct {
-	Components []dependencies `json:"components"`
-}
-
-type dependencies struct {
-	Component
-	Dependencies dependency `json:"dependencies"`
-}
-
-type dependency struct {
-	Name       string      `json:"name"`
-	Components []Component `json:"components"`
-}

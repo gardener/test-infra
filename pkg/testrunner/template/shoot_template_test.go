@@ -15,6 +15,8 @@
 package template
 
 import (
+	"context"
+	ociopts "github.com/gardener/component-cli/ociclient/options"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -30,10 +32,12 @@ import (
 var _ = Describe("shoot templates", func() {
 
 	var (
+		ctx    context.Context
 		shoots []*shootflavors.ExtendedFlavorInstance
 	)
 
 	BeforeEach(func() {
+		ctx = context.Background()
 		shoots = []*shootflavors.ExtendedFlavorInstance{
 			shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -60,15 +64,20 @@ var _ = Describe("shoot templates", func() {
 		}
 	})
 
+	AfterEach(func() {
+		ctx.Done()
+	})
+
 	Context("shoot", func() {
 		It("should render the basic shoot chart with all its necessary parameters", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun
@@ -97,10 +106,11 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 				Landscape:                "test",
 			}
 
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			meta := runs[0].Metadata
@@ -120,6 +130,7 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 			shoots = []*shootflavors.ExtendedFlavorInstance{
 				shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
@@ -150,7 +161,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				}),
 			}
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun
@@ -167,6 +178,7 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -187,7 +199,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				},
 			}))
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(2))
 		})
@@ -200,9 +212,10 @@ var _ = Describe("shoot templates", func() {
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(2))
 		})
@@ -213,6 +226,7 @@ var _ = Describe("shoot templates", func() {
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -233,7 +247,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				},
 			}))
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(3))
 		})
@@ -245,9 +259,10 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				ComponentDescriptorPath:  componentDescriptorPath,
+				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun

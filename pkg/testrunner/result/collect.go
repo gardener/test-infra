@@ -15,7 +15,17 @@
 package result
 
 import (
+	"context"
 	"fmt"
+	"math"
+	"os"
+
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
@@ -25,17 +35,11 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
-	"math"
-	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Collect collects results of all testruns and writes them to a file.
 // It returns whether there are failed testruns or not.
-func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) (bool, error) {
+func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) (bool, error) {
 	var (
 		testrunsFailed = false
 		result         *multierror.Error
@@ -66,7 +70,7 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 		fmt.Println(":---------------------------------------------------------------------------------------------:")
 	}
 
-	c.uploadStatusAssets(c.config, log, runs, tmClient)
+	c.uploadStatusAssets(ctx, c.config, log, runs, tmClient)
 	if err := c.postTestrunsSummaryInSlack(c.config, log, runs); err != nil {
 		log.Error(err, "error while posting notification on slack")
 	}
@@ -75,8 +79,13 @@ func (c *Collector) Collect(log logr.Logger, tmClient client.Client, namespace s
 	return testrunsFailed, util.ReturnMultiError(result)
 }
 
-func getComponentsForUpload(runLogger logr.Logger, componentdescriptorPath string, assetComponents []string) ([]*componentdescriptor.Component, error) {
-	componentsFromFile, err := componentdescriptor.GetComponentsFromFile(componentdescriptorPath)
+func getComponentsForUpload(
+	ctx context.Context,
+	runLogger logr.Logger,
+	componentdescriptorPath string,
+	assetComponents []string,
+	ociOpts *ociopts.Options) ([]*componentdescriptor.Component, error) {
+	componentsFromFile, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, runLogger, ociOpts, componentdescriptorPath)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Unable to get component '%s'", componentdescriptorPath))
 	}
@@ -91,7 +100,7 @@ func getComponentsForUpload(runLogger logr.Logger, componentdescriptorPath strin
 	return componentsForUpload, nil
 }
 
-func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrunner.RunList, tmClient client.Client) {
+func (c *Collector) uploadStatusAssets(ctx context.Context, cfg Config, log logr.Logger, runs testrunner.RunList, tmClient client.Client) {
 	if !cfg.UploadStatusAsset {
 		return
 	}
@@ -102,7 +111,7 @@ func (c *Collector) uploadStatusAssets(cfg Config, log logr.Logger, runs testrun
 		return
 	}
 
-	componentsForUpload, err := getComponentsForUpload(log, cfg.ComponentDescriptorPath, cfg.AssetComponents)
+	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.OCIOpts)
 	if err != nil {
 		log.Error(err, "unable to get component for upload")
 		return

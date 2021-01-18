@@ -20,6 +20,7 @@ import (
 	"os"
 	"time"
 
+	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -40,6 +41,7 @@ type options struct {
 	watchOptions     watch.Options
 	collectConfig    result.Config
 	shootParameters  testrunnerTemplate.Parameters
+	ociOpts          *ociopts.Options
 
 	shootFlavors []*shootflavors.ExtendedFlavorInstance
 
@@ -63,6 +65,7 @@ func NewOptions() *options {
 		},
 		collectConfig:   result.Config{},
 		shootParameters: testrunnerTemplate.Parameters{},
+		ociOpts:         &ociopts.Options{},
 	}
 }
 
@@ -72,6 +75,9 @@ func (o *options) Complete() error {
 
 	o.testrunnerConfig.Timeout = time.Duration(o.timeout) * time.Second
 	o.collectConfig.ComponentDescriptorPath = o.shootParameters.ComponentDescriptorPath
+
+	o.shootParameters.OCIOpts = o.ociOpts
+	o.collectConfig.OCIOpts = o.ociOpts
 
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
 		gardenK8sClient, err := kubernetes.NewClientFromFile("", o.shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
@@ -170,8 +176,9 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&o.shootPrefix, "shoot-name", "", "Shoot name which is used to run tests.")
 	fs.BoolVar(&o.filterPatchVersions, "filter-patch-versions", false, "Filters patch versions so that only the latest patch versions per minor versions is used.")
 
-	fs.StringVar(&o.shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	fs.StringVar(&o.shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
+	fs.StringVar(&o.shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
+	o.ociOpts.AddFlags(fs)
 
 	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")

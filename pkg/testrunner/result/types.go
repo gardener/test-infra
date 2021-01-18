@@ -15,10 +15,12 @@
 package result
 
 import (
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+	"github.com/go-logr/logr"
+
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
-	"github.com/go-logr/logr"
 )
 
 // Config represents the configuration for collecting and storing results from a testrun.
@@ -34,6 +36,9 @@ type Config struct {
 
 	// ComponentDescriptorPath path to the component descriptor file
 	ComponentDescriptorPath string
+
+	// OCIOpts describe options to build a oci client
+	OCIOpts *ociopts.Options
 
 	// AssetComponents indicates to upload the testrun status to the github component as an asset
 	AssetComponents []string

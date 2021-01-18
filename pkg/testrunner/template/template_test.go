@@ -15,22 +15,39 @@
 package template
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	"context"
+	"path/filepath"
+
+	ociopts "github.com/gardener/component-cli/ociclient/options"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
 var _ = Describe("default templates", func() {
+
+	var (
+		ctx context.Context
+	)
+
+	BeforeEach(func() {
+		ctx = context.Background()
+	})
+
+	AfterEach(func() {
+		ctx.Done()
+	})
 
 	It("should render the basic chart with all its necessary parameters", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
 			ComponentDescriptorPath: componentDescriptorPath,
+			OCIOpts:                 &ociopts.Options{},
 		}
-		runs, err := RenderTestruns(log.NullLogger{}, params, nil)
+		runs, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runs.GetTestruns()).To(HaveLen(1))
 	})
@@ -40,9 +57,10 @@ var _ = Describe("default templates", func() {
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
 			ComponentDescriptorPath: componentDescriptorPath,
+			OCIOpts:                 &ociopts.Options{},
 			SetValues:               []string{"addValue1=test,addValue2=test2"},
 		}
-		_, err := RenderTestruns(log.NullLogger{}, params, nil)
+		_, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -51,9 +69,10 @@ var _ = Describe("default templates", func() {
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
 			ComponentDescriptorPath: componentDescriptorPath,
+			OCIOpts:                 &ociopts.Options{},
 			SetValues:               []string{"addValue1=test", "addValue2=test2"},
 		}
-		_, err := RenderTestruns(log.NullLogger{}, params, nil)
+		_, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -63,8 +82,9 @@ var _ = Describe("default templates", func() {
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
 			Landscape:               "test-landscape",
 			ComponentDescriptorPath: componentDescriptorPath,
+			OCIOpts:                 &ociopts.Options{},
 		}
-		runs, err := RenderTestruns(log.NullLogger{}, params, nil)
+		runs, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runs.GetTestruns()).To(HaveLen(1))
 
