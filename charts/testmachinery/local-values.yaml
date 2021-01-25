@@ -85,3 +85,15 @@ controller:
       3YK8iGe6ae5dor/u/N6wDEZeSNA3FqAwDvRDLkP3FLsZVgD1HjaJYGq2ics/J6TC
       mEvYQw+mgvGxixCjwInQiQ6/FkEiEdWEYA/X0w==
       -----END CERTIFICATE-----
+
+testmachinery:
+  s3Configuration:
+    server:
+      minio:
+        distributed: false
+        ingress:
+          enabled: false
+      ssl: false
+    bucketName: testmachinery
+    accessKey: IbnGHa4V6ypsm
+    secretKey: l9rJ0XR65Rkvc9g9fyOf
