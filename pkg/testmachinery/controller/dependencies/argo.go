@@ -84,7 +84,7 @@ func (e *DependencyEnsurer) getExternalLoggingLinks(ctx context.Context) []argov
 
 	grafanaHost, err := testrunner.GetGrafanaHost(ctx, e.client)
 	if err != nil {
-		e.log.Error(err, "unable to get grafana host")
+		e.log.Info(fmt.Sprintf("unable to get grafana host: %s", err.Error()))
 		return nil
 	}
 

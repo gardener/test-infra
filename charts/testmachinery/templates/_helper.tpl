@@ -48,7 +48,9 @@ github:
     cacheDir: {{ .Values.testmachinery.github.cache.cacheDir }}
     cacheDiskSizeGB: {{ .Values.testmachinery.github.cache.cacheDiskSizeGB }}
     maxAgeSeconds: {{ .Values.testmachinery.github.cache.maxAgeSeconds }}
+  {{- if .Values.testmachinery.github.credentials }}
   secretsPath: /etc/testmachinery-controller/secrets/git/github-secrets.yaml # mount secrets and specify the path
+  {{- end }}
 
 s3Configuration:
   server:
