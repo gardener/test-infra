@@ -87,6 +87,9 @@ controller:
       -----END CERTIFICATE-----
 
 testmachinery:
+
+  disableCollector: true
+
   s3Configuration:
     server:
       minio:
