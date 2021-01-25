@@ -83,7 +83,7 @@ Furthermore, generated artifacts that are stored in the s3 storage are deleted a
 ### TestMachinery Deployment
 
 1. Setup a k8s cluster (min. Version 1.10.x, preferred Version: 1.12.x, minikube is also suitable)
-3. Install the TestMachinery with `make install-controller`. Then the controller alongside to a service, validation webhooks and needed rbac permissions is installed.
+3. Install the latest TestMachinery with `make deploy-controller VERSION=latest`. Then the controller alongside to a service, validation webhooks and needed rbac permissions is installed.
     * Needed prerequisites like [argo](https://github.com/argoproj/argo) and optional [minio](https://www.minio.io/) blob store will then be automatically deployed and reconciled by the testmachinery.
     * For proper deployment the testmachinery has to be configured accordingly. For more information have a look at the configuration section below.
 4. `TestRun`s can be executed by creating them with `kubectl create -f path/to/testrun.yaml` (examples can be found in the [examples folder](examples))

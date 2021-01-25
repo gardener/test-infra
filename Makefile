@@ -23,7 +23,7 @@ HELM_REGISTRY       := eu.gcr.io/gardener-project/charts/gardener/testmachinery
 
 TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
 TM_CONTROLLER_CHART := $(HELM_REGISTRY)/testmachinery-controller
-VERSION             := $(shell cat ${REPO_ROOT}/VERSION)
+VERSION             ?= $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
 TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
@@ -32,7 +32,6 @@ TM_BOT_IMAGE               := $(REGISTRY)/bot
 PREPARESTEP_IMAGE          := $(REGISTRY)/testmachinery-prepare
 
 NS ?= default
-KUBECONFIG ?= "~/.kube/config"
 TESTRUN ?= "examples/int-testrun.yaml"
 
 #####################
@@ -132,7 +131,7 @@ install-controller-local:
 .PHONY: run-it-tests
 run-it-tests:
 	GIT_COMMIT_SHA=${current_sha} ginkgo ./test/... -v -progress -- \
-		--kubecfg=${KUBECONFIG} --tm-namespace=${NS} --namespace="" --git-commit-sha=master --s3-endpoint=""
+		--tm-namespace=${NS} --namespace="" --git-commit-sha=master --s3-endpoint=""
 
 .PHONY: validate
 validate:
