@@ -28,23 +28,21 @@ import (
 	"github.com/go-logr/logr"
 )
 
-func (r *Runs) CreateTestrun(log logr.Logger, ctx context.Context, ghClient github.Client, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) (*tmv1beta1.Testrun, *StatusUpdater, error) {
+func (r *Runs) CreateTestrun(ctx context.Context, log logr.Logger, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) error {
 	if runs.IsRunning(event) {
-		return nil, nil, errors.New("A test is already running for this PR.")
+		return errors.New("A test is already running for this PR.")
 	}
 
 	if err := r.watch.Client().Create(ctx, tr); err != nil {
-		return nil, nil, pluginerr.New("unable to create Testrun", err.Error())
+		return pluginerr.New("unable to create Testrun", err.Error())
 	}
 	log.Info(fmt.Sprintf("Testrun %s deployed", tr.Name))
-
-	statusUpdater := NewStatusUpdater(log, ghClient, event)
 
 	if err := statusUpdater.Init(ctx, tr); err != nil {
 		log.Error(err, "unable to create comment", "Testrun", tr.Name)
 	}
 
-	return tr, statusUpdater, nil
+	return nil
 }
 
 func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {

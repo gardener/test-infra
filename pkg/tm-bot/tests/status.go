@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	githubContext = "Test Machinery"
+	githubContext   = "Test Machinery"
+	GitHubCtxPrefix = "TM/"
 )
 
 var GitHubState = map[argov1.NodePhase]github.State{
@@ -52,13 +53,17 @@ type StatusUpdater struct {
 	commentID       int64
 	lastState       github.State
 	lastCommentHash []byte
+	// githubContext is the context that s displayed in the github state to distinguish different status.
+	// defaults to "Test Machinery"
+	githubContext string
 }
 
 func NewStatusUpdater(log logr.Logger, ghClient github.Client, event *github.GenericRequestEvent) *StatusUpdater {
 	return &StatusUpdater{
-		log:    log,
-		client: ghClient,
-		event:  event,
+		log:           log,
+		client:        ghClient,
+		event:         event,
+		githubContext: githubContext,
 	}
 }
 
@@ -71,6 +76,11 @@ func NewStatusUpdaterFromCommentID(log logr.Logger, ghClient github.Client, even
 	}
 }
 
+// SetGitHubContext overwrites the default github context that is used as identifier in the github's status.
+func (u *StatusUpdater) SetGitHubContext(ctx string) {
+	u.githubContext = GitHubCtxPrefix + ctx
+}
+
 func (u *StatusUpdater) Init(ctx context.Context, tr *tmv1beta1.Testrun) error {
 	commentID, err := u.client.Comment(ctx, u.event, FormatInitStatus(tr))
 	if err != nil {
@@ -78,7 +88,7 @@ func (u *StatusUpdater) Init(ctx context.Context, tr *tmv1beta1.Testrun) error {
 	}
 	u.commentID = commentID
 
-	if err := u.client.UpdateStatus(ctx, u.event, github.StatePending, githubContext, tr.Name); err != nil {
+	if err := u.client.UpdateStatus(ctx, u.event, github.StatePending, u.githubContext, tr.Name); err != nil {
 		return err
 	}
 
@@ -128,7 +138,7 @@ func (u *StatusUpdater) UpdateComment(comment string) error {
 // UpdateStatus updates the GitHub status of the current PR
 func (u *StatusUpdater) UpdateStatus(ctx context.Context, state github.State, description string) error {
 	if state != u.lastState {
-		if err := u.client.UpdateStatus(ctx, u.event, state, githubContext, description); err != nil {
+		if err := u.client.UpdateStatus(ctx, u.event, state, u.githubContext, description); err != nil {
 			return err
 		}
 		u.log.V(3).Info("updated commit status")

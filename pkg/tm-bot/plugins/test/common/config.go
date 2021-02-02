@@ -43,13 +43,13 @@ type SubCommand struct {
 
 const trimset = " \r"
 
-// getConfig returns the test config given by the arguments and config file.
-func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*tests.TestConfig, error) {
+// getConfig returns the subcommand name, test config given by the arguments and config file.
+func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (string, *tests.TestConfig, error) {
 	var repoConfig Config
 	if err := ghClient.GetConfig(t.Command(), &repoConfig); err != nil {
 		if !comerrors.IsNotFound(err) {
 			t.log.Error(err, "unable to get repository config")
-			return nil, pluginerr.New("Unable to read the config from the repository", "The TM Bot was unable to get the default config from the repository")
+			return "", nil, pluginerr.New("Unable to read the config from the repository", "The TM Bot was unable to get the default config from the repository")
 		}
 	}
 
@@ -58,31 +58,31 @@ func (t *test) getConfig(ghClient github.Client, flagset *pflag.FlagSet) (*tests
 		defaultConfig := mergeTestConfig(&t.testConfig, repoConfig.Default)
 		if err := validateTestConfig(defaultConfig); err != nil {
 			if repoConfig.Default == nil {
-				return nil, pluginerr.Builder().
+				return "", nil, pluginerr.Builder().
 					WithShortf("%s.<br> Tip: Check whether the test is correctly defined by flags or by the default test config in the repository.", err.Error()).
 					WithLong("")
 			}
-			return nil, err
+			return "", nil, err
 		}
-		return defaultConfig, nil
+		return "default", defaultConfig, nil
 	}
 
 	subCommandName := flagset.Arg(0)
 	subCommandName = strings.Trim(subCommandName, trimset)
 
 	if len(subCommandName) == 0 {
-		return nil, pluginerr.New("The defined subcommand is emtpy", "")
+		return "", nil, pluginerr.New("The defined subcommand is emtpy", "")
 	}
 
 	test := getConfigForSubCommand(repoConfig.Tests, subCommandName)
 	if test == nil {
-		return nil, pluginerr.New(fmt.Sprintf(`No test configuration found for subcommand %s.
+		return "", nil, pluginerr.New(fmt.Sprintf(`No test configuration found for subcommand %s.
 Check check the test configuration in the main branch of your repository under "RepoRoot/.ci/tm-config.yaml".`, subCommandName), "")
 	}
 	if err := validateTestConfig(test); err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return mergeTestConfig(&t.testConfig, test), nil
+	return subCommandName, mergeTestConfig(&t.testConfig, test), nil
 }
 
 func getConfigForSubCommand(tests []SubCommand, name string) *tests.TestConfig {

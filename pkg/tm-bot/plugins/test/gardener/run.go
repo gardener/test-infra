@@ -37,7 +37,7 @@ import (
 )
 
 func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
-	logger := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
+	log := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -59,7 +59,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 
 	tr, err := _default.Render(&t.config)
 	if err != nil {
-		logger.Error(err, "unable to render default testrun")
+		log.Error(err, "unable to render default testrun")
 		os.Exit(1)
 	}
 
@@ -73,25 +73,27 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	}
 
 	tr.GenerateName = fmt.Sprintf("bot-%s-", t.Command())
-	tr, updater, err := t.runs.CreateTestrun(logger, ctx, client, event, tr)
-	if err != nil {
+
+	statusUpdater := tests.NewStatusUpdater(log, client, event)
+	statusUpdater.SetGitHubContext("gardener")
+	if err := t.runs.CreateTestrun(ctx, log, statusUpdater, event, tr); err != nil {
 		return err
 	}
 
 	var state interface{} = testutil.State{
 		TestrunID: tr.Name,
 		Namespace: tr.Namespace,
-		CommentID: updater.GetCommentID(),
+		CommentID: statusUpdater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
 	if err != nil {
 		return err
 	}
 	if err := plugins.UpdateState(t, t.runID, string(stateByte)); err != nil {
-		logger.Error(err, "unable to persist state")
+		log.Error(err, "unable to persist state")
 	}
 
-	_, err = t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(log, ctx, statusUpdater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}

@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ghodss/yaml"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
@@ -27,11 +30,10 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/ghodss/yaml"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/spf13/pflag"
 )
 
 func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
@@ -77,15 +79,16 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		return err
 	}
 
-	tr, updater, err := t.runs.CreateTestrun(logger, ctx, client, event, tr)
-	if err != nil {
+	statusUpdater := tests.NewStatusUpdater(logger, client, event)
+	statusUpdater.SetGitHubContext("single")
+	if err := t.runs.CreateTestrun(ctx, logger, statusUpdater, event, tr); err != nil {
 		return err
 	}
 
 	var state interface{} = testutil.State{
 		TestrunID: tr.Name,
 		Namespace: tr.Namespace,
-		CommentID: updater.GetCommentID(),
+		CommentID: statusUpdater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
 	if err != nil {
@@ -95,7 +98,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		logger.Error(err, "unable to persist state")
 	}
 
-	_, err = t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(logger, ctx, statusUpdater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}

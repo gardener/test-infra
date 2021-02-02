@@ -45,7 +45,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 	ctx := context.Background()
 	defer ctx.Done()
 	log := t.log.WithValues("owner", event.GetOwnerName(), "repo", event.GetRepositoryName(), "runID", t.runID)
-	test, err := t.getConfig(client, flagset)
+	subCommand, test, err := t.getConfig(client, flagset)
 	if err != nil {
 		return err
 	}
@@ -93,15 +93,16 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		return err
 	}
 
-	tr, updater, err := t.runs.CreateTestrun(log, ctx, client, event, tr)
-	if err != nil {
+	statusUpdater := tests.NewStatusUpdater(log, client, event)
+	statusUpdater.SetGitHubContext(subCommand)
+	if err := t.runs.CreateTestrun(ctx, log, statusUpdater, event, tr); err != nil {
 		return err
 	}
 
 	var state interface{} = testutil.State{
 		TestrunID: tr.Name,
 		Namespace: tr.Namespace,
-		CommentID: updater.GetCommentID(),
+		CommentID: statusUpdater.GetCommentID(),
 	}
 	stateByte, err := yaml.Marshal(state)
 	if err != nil {
@@ -111,7 +112,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		log.Error(err, "unable to persist state")
 	}
 
-	_, err = t.runs.Watch(log, ctx, updater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(log, ctx, statusUpdater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
