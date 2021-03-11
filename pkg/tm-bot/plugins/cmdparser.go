@@ -23,6 +23,10 @@ import (
 
 // ParseCommands parses a message and returns a string of commands and arguments
 func ParseCommands(message string) ([][]string, error) {
+	// first replace possible line breaks with \n
+	message = strings.ReplaceAll(message, "\r\n", "\n")
+	message = strings.ReplaceAll(message, "<br>", "\n")
+	message = strings.ReplaceAll(message, "</br>", "\n")
 	r := bufio.NewReader(strings.NewReader(message))
 	var (
 		commands = make([][]string, 0)

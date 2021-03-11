@@ -44,12 +44,11 @@ var _ = Describe("Commands", func() {
 	})
 
 	It("should parse multiple commands", func() {
-		input := `/test --arg1=asdf 
-/cmd2 --test		
-`
+		input := "/test --arg1=asdf\n/cmd2 --test\r\n/cmd3 --test"
 		expect := [][]string{
 			{"test", "--arg1=asdf"},
 			{"cmd2", "--test"},
+			{"cmd3", "--test"},
 		}
 
 		actual, err := plugins.ParseCommands(input)
