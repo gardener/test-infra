@@ -192,7 +192,7 @@ docker-image-prepare:
 
 .PHONY: docker-image-base
 docker-image-base:
-	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/base/Dockerfile ./hack/images/base
+	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target base-step .
 
 .PHONY: docker-image-golang
 docker-image-golang:

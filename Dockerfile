@@ -13,15 +13,15 @@
 # limitations under the License.
 
 #############      builder       #############
-FROM eu.gcr.io/gardener-project/3rd/golang:1.15.5 AS builder
+FROM golang:1.15.8 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 COPY . .
 
-RUN make install-requirements && make install
+RUN make install
 
 ############# tm-controller #############
-FROM alpine:3.10 AS tm-controller
+FROM alpine:3.13 AS tm-controller
 
 COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
@@ -31,7 +31,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# telemetry-controller #############
-FROM alpine:3.10 AS telemetry-controller
+FROM alpine:3.13 AS telemetry-controller
 
 RUN apk add --update bash curl
 
@@ -42,8 +42,82 @@ WORKDIR /
 
 ENTRYPOINT ["/telemetry-controller"]
 
+############# tm-base-step #############
+FROM golang:1.15-alpine3.13 AS base-step
+
+ENV HELM_TILLER_VERSION=v2.13.0
+ENV KUBECTL_VERSION=v1.19.7
+ENV HELM_V3_VERSION=v3.1.1
+
+RUN  \
+  apk update \
+  && apk add \
+    apache2-utils \
+    coreutils \
+    cargo \
+    bash \
+    binutils \
+    bind-tools \
+    build-base \
+    curl \
+    file \
+    gcc \
+    git \
+    jq \
+    libc-dev \
+    libev-dev \
+    libffi-dev \
+    openssh \
+    openssl \
+    openssl-dev \
+    python3 \
+    python3-dev \
+    py3-pip \
+    wget \
+    grep \
+    findutils \
+    rsync \
+    bc \
+    linux-headers \
+  && pip install --upgrade pip \
+    gardener-cicd-cli \
+    gardener-cicd-libs \
+  && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
+  && curl -Lo /bin/kubectl \
+    https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+  && chmod +x /bin/kubectl \
+  && curl -L \
+    https://kubernetes-helm.storage.googleapis.com/helm-${HELM_TILLER_VERSION}-linux-amd64.tar.gz \
+    | tar xz -C /bin --strip=1 \
+  && chmod +x /bin/helm \
+  && curl -L \
+    https://get.helm.sh/helm-${HELM_V3_VERSION}-linux-amd64.tar.gz | tar xz -C /tmp --strip=1 \
+  && mv /tmp/helm /bin/helm3 \
+  && curl -Lo /bin/yaml2json \
+    https://github.com/bronze1man/yaml2json/releases/download/v1.2/yaml2json_linux_amd64 \
+  && chmod +x /bin/yaml2json \
+  && curl -Lo /bin/cfssl \
+    https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 \
+  && chmod +x /bin/cfssl \
+  && curl -Lo /bin/cfssljson \
+    https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 \
+  && chmod +x /bin/cfssljson \
+  &&  curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt -o \
+    /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
+  && curl http://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt -o \
+      /usr/local/share/ca-certificates/SAPNetCA_G2.crt \
+  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2002.crt -o \
+      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_02.crt \
+  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2004.crt -o \
+      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_04.crt \
+  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2005.crt -o \
+      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
+  && update-ca-certificates
+
+ENV PATH /cc/utils/bin:$PATH
+
 ############# tm-run #############
-FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-run
+FROM base-step AS tm-run
 
 COPY --from=builder /go/bin/testrunner /testrunner
 
@@ -52,7 +126,7 @@ WORKDIR /
 ENTRYPOINT ["/testrunner"]
 
 ############# tm-bot #############
-FROM alpine:3.10 AS tm-bot
+FROM alpine:3.13 AS tm-bot
 
 RUN apk add --update bash curl
 
@@ -65,7 +139,7 @@ WORKDIR /
 ENTRYPOINT ["/tm-bot"]
 
 ############# tm-prepare #############
-FROM eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest AS tm-prepare
+FROM base-step AS tm-prepare
 
 COPY --from=builder /go/bin/prepare /tm/prepare
 
