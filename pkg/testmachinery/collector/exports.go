@@ -18,14 +18,16 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch/bulk"
-	"github.com/minio/minio-go"
 	"io"
 	"io/ioutil"
 	"strings"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"github.com/minio/minio-go"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch/bulk"
 )
 
 func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *metadata.Metadata) bulk.BulkList {

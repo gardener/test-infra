@@ -17,16 +17,19 @@ package main
 import (
 	goflag "flag"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
-	flag "github.com/spf13/pflag"
 	"net/http"
 	"os"
 
+	flag "github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/logger"
+
 	"github.com/gardener/test-infra/pkg/version"
 
-	"github.com/gardener/test-infra/pkg/telemetry/controller"
 	"github.com/joho/godotenv"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+
+	"github.com/gardener/test-infra/pkg/telemetry/controller"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 )

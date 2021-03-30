@@ -15,10 +15,12 @@
 package s3
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/config"
+	"io"
+
 	"github.com/minio/minio-go"
 	"github.com/pkg/errors"
-	"io"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 )
 
 // Client is a interface to interact with a S3 object store

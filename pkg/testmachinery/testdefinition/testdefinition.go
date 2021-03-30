@@ -18,23 +18,27 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
 	"path"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/gardener/test-infra/pkg/common"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/util"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	apiv1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 var (
-	DefaultActiveDeadlineSeconds int64 = 600
-	archiveLogs                        = true
+	DefaultActiveDeadlineSeconds = intstr.FromInt(600)
+	archiveLogs                  = true
 )
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
@@ -51,14 +55,14 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 		def.Spec.ActiveDeadlineSeconds = &DefaultActiveDeadlineSeconds
 	}
 
-	template := &argov1.Template{
+	template := &argov1alpha1.Template{
 		Name: "",
-		Metadata: argov1.Metadata{
+		Metadata: argov1alpha1.Metadata{
 			Annotations: map[string]string{
 				common.AnnotationTestDefName: def.Name,
 			},
 		},
-		ArchiveLocation: &argov1.ArtifactLocation{
+		ArchiveLocation: &argov1alpha1.ArtifactLocation{
 			ArchiveLogs: &archiveLogs,
 		},
 		ActiveDeadlineSeconds: def.Spec.ActiveDeadlineSeconds,
@@ -99,18 +103,18 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 				},
 			},
 		},
-		Inputs: argov1.Inputs{
-			Parameters: []argov1.Parameter{
+		Inputs: argov1alpha1.Inputs{
+			Parameters: []argov1alpha1.Parameter{
 				{Name: "phase"},
 			},
-			Artifacts: make([]argov1.Artifact, 0),
+			Artifacts: make([]argov1alpha1.Artifact, 0),
 		},
-		Outputs: argov1.Outputs{
-			Artifacts: make([]argov1.Artifact, 0),
+		Outputs: argov1alpha1.Outputs{
+			Artifacts: make([]argov1alpha1.Artifact, 0),
 		},
 	}
 
-	outputArtifacts := []argov1.Artifact{
+	outputArtifacts := []argov1alpha1.Artifact{
 		{
 			Name:     testmachinery.ExportArtifact,
 			Path:     testmachinery.TM_EXPORT_PATH,
@@ -157,10 +161,10 @@ func (td *TestDefinition) GetName() string {
 }
 
 func (td *TestDefinition) SetSuspend() {
-	td.Template.Suspend = &argov1.SuspendTemplate{}
+	td.Template.Suspend = &argov1alpha1.SuspendTemplate{}
 }
 
-func (td *TestDefinition) GetTemplate() (*argov1.Template, error) {
+func (td *TestDefinition) GetTemplate() (*argov1alpha1.Template, error) {
 	for _, cfg := range td.config {
 		switch cfg.Info.Type {
 		case tmv1beta1.ConfigTypeEnv:
@@ -212,7 +216,7 @@ func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
 }
 
 // AddInputArtifacts adds argo artifacts to the input of the TestDefinitions's template.
-func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
+func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1alpha1.Artifact) {
 	if td.inputArtifacts == nil {
 		td.inputArtifacts = make(ArtifactSet)
 	}
@@ -225,7 +229,7 @@ func (td *TestDefinition) AddInputArtifacts(artifacts ...argov1.Artifact) {
 }
 
 // AddOutputArtifacts adds argo artifacts to the output of the TestDefinitions's template.
-func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
+func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1alpha1.Artifact) {
 	if td.outputArtifacts == nil {
 		td.outputArtifacts = make(ArtifactSet)
 	}
@@ -239,7 +243,10 @@ func (td *TestDefinition) AddOutputArtifacts(artifacts ...argov1.Artifact) {
 
 // AddInputParameter adds a parameter to the input of the TestDefinitions's template.
 func (td *TestDefinition) AddInputParameter(name, value string) {
-	td.Template.Inputs.Parameters = append(td.Template.Inputs.Parameters, argov1.Parameter{Name: name, Value: &value})
+	td.Template.Inputs.Parameters = append(td.Template.Inputs.Parameters, argov1alpha1.Parameter{
+		Name:  name,
+		Value: argov1alpha1.AnyStringPtr(value)},
+	)
 }
 
 // AddVolumeMount adds a mount to the container of the TestDefinitions's template.
@@ -297,11 +304,11 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
 		// Add the file path as env var with the config name to the pod
 		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
-		td.AddInputArtifacts(argov1.Artifact{
+		td.AddInputArtifacts(argov1alpha1.Artifact{
 			Name: element.Name(),
 			Path: element.Info.Path,
-			ArtifactLocation: argov1.ArtifactLocation{
-				Raw: &argov1.RawArtifact{
+			ArtifactLocation: argov1alpha1.ArtifactLocation{
+				Raw: &argov1alpha1.RawArtifact{
 					Data: string(data),
 				},
 			},

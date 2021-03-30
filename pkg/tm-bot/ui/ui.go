@@ -15,13 +15,15 @@
 package ui
 
 import (
+	"net/http"
+	"path/filepath"
+
+	"github.com/go-logr/logr"
+	"github.com/gorilla/mux"
+
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages"
-	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
-	"net/http"
-	"path/filepath"
 )
 
 func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Provider, r *mux.Router) {

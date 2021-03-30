@@ -15,10 +15,10 @@
 package framework
 
 import (
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 )
 
 const (
@@ -47,12 +47,12 @@ type Config struct {
 type Operation struct {
 	testConfig *Config
 	log        logr.Logger
-	tmClient   kubernetes.Interface
+	tmClient   client.Client
 
 	tmConfig *intconfig.Configuration
 	State    OperationState
 }
 
 type OperationState struct {
-	Objects []runtime.Object
+	Objects []client.Object
 }

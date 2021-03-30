@@ -15,6 +15,9 @@
 package watch
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/rest"
@@ -22,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/cluster"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -48,31 +52,23 @@ func newCachedInformer(log logr.Logger, config *rest.Config, options *Options) (
 		return nil, err
 	}
 
-	writer, err := client.New(config, client.Options{
-		Scheme: options.Scheme,
-		Mapper: mapper,
-	})
+	cachedClient, err := cluster.NewClientBuilder().
+		Build(cache, config, client.Options{
+			Scheme: options.Scheme,
+			Mapper: mapper,
+		})
 	if err != nil {
-		return nil, err
-	}
-
-	c := &client.DelegatingClient{
-		Reader: &client.DelegatingReader{
-			CacheReader:  cache,
-			ClientReader: writer,
-		},
-		Writer:       writer,
-		StatusClient: writer,
+		return nil, fmt.Errorf("unable to create chached client: %w", err)
 	}
 	return &cachedInformer{
 		log:    log,
-		client: c,
+		client: cachedClient,
 		cache:  cache,
 	}, nil
 }
 
-func (c *cachedInformer) Start(stop <-chan struct{}) error {
-	i, err := c.cache.GetInformer(&tmv1beta1.Testrun{})
+func (c *cachedInformer) Start(ctx context.Context) error {
+	i, err := c.cache.GetInformer(ctx, &tmv1beta1.Testrun{})
 	if err != nil {
 		if kindMatchErr, ok := err.(*meta.NoKindMatchError); ok {
 			c.log.Error(err, "if kind is a CRD, it should be installed before calling Start",
@@ -86,11 +82,11 @@ func (c *cachedInformer) Start(stop <-chan struct{}) error {
 		DeleteFunc: c.addItemToQueue,
 	})
 
-	return c.cache.Start(stop)
+	return c.cache.Start(ctx)
 }
 
-func (c *cachedInformer) WaitForCacheSync(stop <-chan struct{}) bool {
-	return c.cache.WaitForCacheSync(stop)
+func (c *cachedInformer) WaitForCacheSync(ctx context.Context) bool {
+	return c.cache.WaitForCacheSync(ctx)
 }
 
 func (c *cachedInformer) InjectEventBus(eb EventBus) {

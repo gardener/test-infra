@@ -17,17 +17,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/cmdutil"
+
 	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 func (s *gkescheduler) List(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {

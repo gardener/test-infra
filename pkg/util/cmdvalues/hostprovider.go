@@ -14,8 +14,9 @@
 package cmdvalues
 
 import (
-	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 type HostProviderValue struct {

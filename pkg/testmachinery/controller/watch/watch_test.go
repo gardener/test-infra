@@ -15,19 +15,21 @@
 package watch_test
 
 import (
+	"context"
 	"testing"
 
-	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	testmachineryapi "github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 func TestConfig(t *testing.T) {
@@ -43,6 +45,8 @@ var (
 )
 
 var _ = BeforeSuite(func() {
+	ctx := context.Background()
+	defer ctx.Done()
 	var err error
 	crd := &v1beta1.CustomResourceDefinition{}
 	crd.Name = "testruns.testmachinery.sapcloud.io"
@@ -62,19 +66,22 @@ var _ = BeforeSuite(func() {
 		Status: &v1beta1.CustomResourceSubresourceStatus{},
 	}
 	testenv = &envtest.Environment{
-		CRDs: []runtime.Object{crd},
+		CRDs: []client.Object{crd},
 	}
 
 	restConfig, err = testenv.Start()
 	Expect(err).ToNot(HaveOccurred())
 
-	tmScheme := runtime.NewScheme()
-	err = tmv1beta1.AddToScheme(tmScheme)
+	fakeClient, err = client.New(restConfig, client.Options{Scheme: testmachineryapi.TestMachineryScheme})
 	Expect(err).ToNot(HaveOccurred())
-	err = argov1alpha1.AddToScheme(tmScheme)
-	Expect(err).ToNot(HaveOccurred())
-	fakeClient, err = client.New(restConfig, client.Options{Scheme: tmScheme})
-	Expect(err).ToNot(HaveOccurred())
+
+	ns := &corev1.Namespace{}
+	ns.Name = "test"
+	if err := fakeClient.Create(ctx, ns); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			Expect(err).ToNot(HaveOccurred())
+		}
+	}
 })
 
 var _ = AfterSuite(func() {

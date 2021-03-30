@@ -16,6 +16,10 @@ package _default
 
 import (
 	"fmt"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
@@ -25,8 +29,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 // Config is used to render a default gardener test

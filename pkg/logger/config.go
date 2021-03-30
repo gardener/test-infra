@@ -15,10 +15,11 @@
 package logger
 
 import (
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	flag "github.com/spf13/pflag"
 	"go.uber.org/zap"
+
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 )
 
 type Config struct {

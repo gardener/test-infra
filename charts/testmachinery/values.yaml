@@ -29,7 +29,7 @@ controller:
   enableLeaderElection: false
   maxConcurrentSyncs: 1
   webhook:
-    port: 443
+    port: 9443
 
   tls:
     caBundle: |
@@ -101,8 +101,8 @@ testmachinery:
 #      chartValues: {}
 
 gardener-resource-manager:
-  images:
-    gardener-resource-manager: eu.gcr.io/gardener-project/gardener/gardener-resource-manager:v0.12.0
+  image:
+    tag: v0.22.0
 
 # imageVectorOverwrite: |
 #  - name: argo-ui

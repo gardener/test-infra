@@ -5,23 +5,25 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/gardener/test/integration/framework"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/util/dump"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 // use max log line length, because kubetest commands can be very long
@@ -49,7 +51,7 @@ func RunCmd(command, execPath string) (output CmdOutput, err error) {
 	parts := strings.Split(command, separator)
 
 	head := parts[0]
-	args := parts[1:len(parts)]
+	args := parts[1:]
 	cmd := exec.Command(head, args...)
 	if execPath != "" {
 		cmd.Dir = execPath
@@ -127,34 +129,6 @@ type CmdOutput struct {
 }
 
 /*
-   GoLang: os.Rename() give error "invalid cross-device link" for Docker container with Volumes.
-   MoveFile(source, destination) will work moving file between folders
-*/
-func MoveFile(sourcePath, destPath string) error {
-	inputFile, err := os.Open(sourcePath)
-	if err != nil {
-		return fmt.Errorf("couldn't open source file: %s", err)
-	}
-	outputFile, err := os.Create(destPath)
-	if err != nil {
-		_ = inputFile.Close()
-		return fmt.Errorf("couldn't open dest file: %s", err)
-	}
-	defer outputFile.Close()
-	_, err = io.Copy(outputFile, inputFile)
-	_ = inputFile.Close()
-	if err != nil {
-		return fmt.Errorf("writing to output file failed: %s", err)
-	}
-	// The copy was successful, so now delete the original file
-	err = os.Remove(sourcePath)
-	if err != nil {
-		return fmt.Errorf("failed removing original file: %s", err)
-	}
-	return nil
-}
-
-/*
 	CommandExists checks whether the given command executable exists and returns a boolean result value
 */
 func CommandExists(cmd string) bool {
@@ -213,31 +187,38 @@ func Copy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
-func DumpShootLogs(gardenKubeconfigPath, projectNamespace, shootName string) error {
+func DumpShootLogs(gardenKubeconfigPath, shootKubeconfigPath, projectNamespace, shootName string) error {
+	ctx := context.Background()
+	defer ctx.Done()
 	logger := log.New()
 	if gardenKubeconfigPath == "" || projectNamespace == "" || shootName == "" {
 		logger.Warn("cannot dump shoot cluster events because of missing parameters gardener kubconfig / project namespace / shoot name")
 		return nil
 	}
-	gardenerClient, err := kubernetes.NewClientFromFile("", gardenKubeconfigPath, kubernetes.WithClientOptions(
-		client.Options{
-			Scheme: kubernetes.GardenScheme,
-		}))
-	if err != nil {
-		return err
-	}
-	gardenerTestOperations, err := framework.NewGardenTestOperation(gardenerClient, logger)
+	gardenerClient, err := kutil.NewClientFromFile(gardenKubeconfigPath, client.Options{
+		Scheme: gardener.GardenScheme,
+	})
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
-	defer ctx.Done()
-	shoot := &gardencorev1beta1.Shoot{ObjectMeta: metav1.ObjectMeta{Namespace: projectNamespace, Name: shootName}}
-	if err := gardenerTestOperations.AddShoot(ctx, shoot); err != nil {
-		logger.Error(err.Error())
-		gardenerTestOperations.Shoot = shoot
+	// dump shoot resource
+	shoot := &gardencorev1beta1.Shoot{}
+	if err := gardenerClient.Get(ctx, client.ObjectKey{Namespace: projectNamespace, Name: shootName}, shoot); err != nil {
+		return fmt.Errorf("unable to get shoot from gardener: %w", err)
 	}
-	gardenerTestOperations.DumpState(ctx)
+	util.PrettyPrintStruct(shoot)
+
+	shootClient, err := kutil.NewClientFromFile(shootKubeconfigPath, client.Options{})
+	if err != nil {
+		return err
+	}
+	ctxIdentifier := fmt.Sprintf("[SHOOT %s]", shootName)
+	logFunc := dump.LoggerFunc(func(msg string) {
+		logger.Info(msg)
+	})
+	if err := dump.NewKubernetesDumper(logFunc, shootClient).DumpDefaultResourcesInAllNamespaces(ctx, ctxIdentifier); err != nil {
+		return err
+	}
 	return nil
 }

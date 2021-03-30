@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gardener/gardener/pkg/operation/common"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/logger"
 	telcommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/util/gardener"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/gardener/test/framework"
 	"github.com/go-logr/logr"
 )
 
-func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface) (map[string]bool, error) {
+func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient client.Client) (map[string]bool, error) {
 	shoots := &gardencorev1beta1.ShootList{}
-	err := k8sClient.Client().List(ctx, shoots)
+	err := k8sClient.List(ctx, shoots)
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +50,10 @@ func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient kubernet
 	return unhealthyShoots, nil
 }
 
-func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kubernetes.Interface, newGardenerVersion string, unhealthyShoots map[string]bool, timeout time.Duration) error {
+func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient client.Client, newGardenerVersion string, unhealthyShoots map[string]bool, timeout time.Duration) error {
 	return retry.UntilTimeout(ctx, 1*time.Minute, timeout, func(ctx context.Context) (bool, error) {
 		shoots := &gardencorev1beta1.ShootList{}
-		err := k8sClient.Client().List(ctx, shoots)
+		err := k8sClient.List(ctx, shoots)
 		if err != nil {
 			log.V(3).Info(err.Error())
 			return retry.MinorError(err)
@@ -63,7 +63,7 @@ func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kuber
 		for _, shoot := range shoots.Items {
 
 			// ignore shoots that have a do not reconcile label
-			if shoot.Annotations[common.ShootIgnore] == "true" {
+			if shoot.Annotations[gardener.ShootIgnore] == "true" {
 				reconciledShoots++
 				continue
 			}
@@ -91,17 +91,18 @@ func WaitForGardenerUpdate(log logr.Logger, ctx context.Context, k8sClient kuber
 			}
 
 			// check if shoot is not in its maintenance window
-			if common.IsNowInEffectiveShootMaintenanceTimeWindow(&shoot) {
-				log.V(3).Info("shoot is not in reconcile window", "shoot", shoot.Name, "namespace", shoot.Namespace)
-				// check if the last acted gardener version is the current version,
-				// to determine if the updated gardener version reconciled the shoot.
-				if shoot.Status.Gardener.Version != newGardenerVersion {
-					logger.Logf(log.V(3).Info, "last acted gardener version %s does not match current gardener version %s", shoot.Status.Gardener.Version, newGardenerVersion)
-					continue
-				}
-			}
+			// todo: refactor to use own module
+			//if common.IsNowInEffectiveShootMaintenanceTimeWindow(&shoot) {
+			//	log.V(3).Info("shoot is not in reconcile window", "shoot", shoot.Name, "namespace", shoot.Namespace)
+			//	// check if the last acted gardener version is the current version,
+			//	// to determine if the updated gardener version reconciled the shoot.
+			//	if shoot.Status.Gardener.Version != newGardenerVersion {
+			//		logger.Logf(log.V(3).Info, "last acted gardener version %s does not match current gardener version %s", shoot.Status.Gardener.Version, newGardenerVersion)
+			//		continue
+			//	}
+			//}
 
-			if framework.ShootCreationCompleted(&shoot) {
+			if ok, _ := gardener.ShootCreationCompleted(&shoot); ok {
 				reconciledShoots++
 				continue
 			}

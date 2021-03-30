@@ -17,13 +17,14 @@ package garbagecollection_test
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/utils/retry"
 	"net/http"
 	"time"
 
+	"github.com/gardener/gardener/pkg/utils/retry"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -45,7 +46,7 @@ var _ = Describe("Garbage collection tests", func() {
 		utils.DeleteTestrun(operation.Client(), tr)
 
 		err = retry.UntilTimeout(ctx, 5*time.Second, InitializationTimeout, func(ctx context.Context) (bool, error) {
-			if err := operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr); err != nil {
+			if err := operation.Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr); err != nil {
 				if errors.IsNotFound(err) {
 					return retry.Ok()
 				}

@@ -17,6 +17,8 @@ apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: testmachinery-controller
+  labels:
+    {{- include "defaultLabels" . | nindent 4 }}
 webhooks:
 - name: validate-testrun.tm.garden.cloud
   rules:

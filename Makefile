@@ -29,7 +29,9 @@ IMAGE_TAG           := ${VERSION}
 TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
 TM_RUN_IMAGE               := $(REGISTRY)/testmachinery-run
 TM_BOT_IMAGE               := $(REGISTRY)/bot
-PREPARESTEP_IMAGE          := $(REGISTRY)/testmachinery-prepare
+PREPARESTEP_IMAGE          := $(REGISTRY)/prepare-step
+TM_BASE_IMAGE              := $(REGISTRY)/base
+TM_GOLANG_BASE_IMAGE       := $(REGISTRY)/golang
 
 NS ?= default
 TESTRUN ?= "examples/int-testrun.yaml"
@@ -42,9 +44,6 @@ TESTRUN ?= "examples/int-testrun.yaml"
 revendor:
 	@GO111MODULE=on go mod vendor
 	@GO111MODULE=on go mod tidy
-	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
-	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/.ci/*
-	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/extensions/hack/*
 	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
 
 .PHONY: code-gen
@@ -53,15 +52,15 @@ code-gen:
 
 .PHONY: generate
 generate:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/generate.sh ./cmd/... ./pkg/... ./test/...
+	@$(REPO_ROOT)/hack/generate.sh ./cmd/... ./pkg/... ./test/...
 
 .PHONY: format
 format:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg
+	@$(REPO_ROOT)/hack/format.sh ./cmd ./pkg ./test ./integration-tests
 
 .PHONY: check
 check:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh ./cmd/... ./pkg/...
+	@$(REPO_ROOT)/hack/check.sh --golangci-lint-config=./.golangci.yaml $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/... $(REPO_ROOT)/test/...
 
 .PHONY: test
 test:
@@ -71,12 +70,16 @@ test:
 install:
 	@./hack/install
 
+.PHONY: verify
+verify: check
+
 .PHONY: all
-all: generate check install
+all: generate format verify install
 
 .PHONY: install-requirements
 install-requirements:
 	@curl -sfL "https://install.goreleaser.com/github.com/golangci/golangci-lint.sh" | sh -s -- -b $(go env GOPATH)/bin v1.32.2
+	@GO111MODULE=off go get golang.org/x/tools/cmd/goimports
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/gobuffalo/packr/v2/packr2
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
 
@@ -152,7 +155,7 @@ testrunner:
 docker-images: docker-image-prepare docker-image-base docker-image-golang docker-image-run docker-image-controller
 
 .PHONY: docker-push
-docker-push: docker-push-prepare docker-push-controller
+docker-push: docker-push-prepare docker-push-controller docker-push-run
 
 
 .PHONY: docker-push-controller
@@ -192,11 +195,11 @@ docker-image-prepare:
 
 .PHONY: docker-image-base
 docker-image-base:
-	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target base-step .
+	@docker build -t $(TM_BASE_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target base-step .
 
 .PHONY: docker-image-golang
 docker-image-golang:
-	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/golang/Dockerfile ./hack/images/golang
+	@docker build -t $(TM_GOLANG_BASE_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/golang/Dockerfile ./hack/images/golang
 
 ##################################
 # Helm charts                    #

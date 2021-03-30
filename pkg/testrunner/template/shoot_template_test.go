@@ -16,17 +16,20 @@ package template
 
 import (
 	"context"
-	ociopts "github.com/gardener/component-cli/ociclient/options"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/shootflavors"
-	"k8s.io/utils/pointer"
 	"path/filepath"
 
-	"github.com/gardener/test-infra/pkg/common"
+	ociopts "github.com/gardener/component-cli/ociclient/options"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/utils/pointer"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/shootflavors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 var _ = Describe("shoot templates", func() {

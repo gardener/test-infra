@@ -22,9 +22,10 @@ limitations under the License.
 package openapi
 
 import (
-	strconf "github.com/gardener/test-infra/pkg/util/strconf"
 	spec "github.com/go-openapi/spec"
 	common "k8s.io/kube-openapi/pkg/common"
+
+	strconf "github.com/gardener/test-infra/pkg/util/strconf"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -92,6 +93,7 @@ func schema_pkg_apis_config_v1beta1_Argo(ref common.ReferenceCallback) common.Op
 					"argoUI": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress holds the argo ui ingress configuration",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.ArgoUI"),
 						},
 					},
@@ -121,6 +123,7 @@ func schema_pkg_apis_config_v1beta1_ArgoUI(ref common.ReferenceCallback) common.
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress holds the argo ui ingress configuration",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"),
 						},
 					},
@@ -156,17 +159,20 @@ func schema_pkg_apis_config_v1beta1_BotConfiguration(ref common.ReferenceCallbac
 					},
 					"webserver": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver"),
 						},
 					},
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Dashboard"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Dashboard"),
 						},
 					},
 					"githubBot": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot"),
 						},
 					},
 				},
@@ -188,6 +194,7 @@ func schema_pkg_apis_config_v1beta1_Certificate(ref common.ReferenceCallback) co
 					"cert": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Cert specifies the path to the certificate file",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -195,6 +202,7 @@ func schema_pkg_apis_config_v1beta1_Certificate(ref common.ReferenceCallback) co
 					"privateKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PrivateKey specifies the path to the private key file",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -229,22 +237,26 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 					},
 					"controller": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Controller"),
 						},
 					},
 					"testmachinery": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery"),
 						},
 					},
 					"argo": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Argo"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHub"),
 						},
 					},
 					"s3Configuration": {
@@ -264,7 +276,8 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 					},
 					"observability": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability"),
 						},
 					},
 				},
@@ -314,6 +327,7 @@ func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) com
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
 							Description: "WebhookConfig holds the validating webhook configuration",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"),
 						},
 					},
@@ -335,6 +349,7 @@ func schema_pkg_apis_config_v1beta1_Dashboard(ref common.ReferenceCallback) comm
 					"UIBasePath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "UIBasePath specifies the base path for static files and templates",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -342,6 +357,7 @@ func schema_pkg_apis_config_v1beta1_Dashboard(ref common.ReferenceCallback) comm
 					"authentication": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Authentication to restrict access to specific parts in the dashboard",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication"),
 						},
 					},
@@ -364,6 +380,7 @@ func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.Reference
 					"provider": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Provider defines the authentication provider that should be used to authenticate and authorize users to view testruns.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -371,6 +388,7 @@ func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.Reference
 					"cookieSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "CookieSecret is the secret for the cookie store",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -463,6 +481,7 @@ func schema_pkg_apis_config_v1beta1_GitHubAuthentication(ref common.ReferenceCal
 					"organization": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Organization is the GitHub organization to restrict access to the bot",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -485,6 +504,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"enabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Enabled defines if the GitHub Bot integration should be enabled",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -492,6 +512,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"configurationFilePath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ConfigurationFilePath specifies the path to the configuration inside a repository that is watched by the bot",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -499,6 +520,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"defaultTeam": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DefaultTeam is the slug name of the default team to grant permissions to perform bot commands",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -506,6 +528,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"apiUrl": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ApiUrl specifies the github api endpoint",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -513,6 +536,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"appId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AppID holds the ID of the GitHub App.",
+							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -520,6 +544,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"appPrivateKeyPath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AppPrivateKeyPath is the path to the private key for the GitHub app.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -527,6 +552,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"webhookSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub webhook secret to verify payload",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -534,6 +560,7 @@ func schema_pkg_apis_config_v1beta1_GitHubBot(ref common.ReferenceCallback) comm
 					"cache": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHubCache configures the cache for the github api",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache"),
 						},
 					},
@@ -586,14 +613,16 @@ func schema_pkg_apis_config_v1beta1_Ingress(ref common.ReferenceCallback) common
 				Properties: map[string]spec.Schema{
 					"enabled": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
 						},
 					},
 					"host": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 				},
@@ -613,6 +642,7 @@ func schema_pkg_apis_config_v1beta1_Logging(ref common.ReferenceCallback) common
 					"namespace": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Namespace configures the namespace the logging stack is deployed to.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -620,6 +650,7 @@ func schema_pkg_apis_config_v1beta1_Logging(ref common.ReferenceCallback) common
 					"storageClass": {
 						SchemaProps: spec.SchemaProps{
 							Description: "StorageClass configures the storage class for the loki deployment",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -648,6 +679,7 @@ func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallb
 					"distributed": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Distributed specified that minio should be deployed in cluster mode",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -655,6 +687,7 @@ func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallb
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Ingress is the ingress configuration to expose minio",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"),
 						},
 					},
@@ -682,20 +715,23 @@ func schema_pkg_apis_config_v1beta1_OAuth(ref common.ReferenceCallback) common.O
 				Properties: map[string]spec.Schema{
 					"clientId": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"clientSecret": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"redirectUrl": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 				},
@@ -736,6 +772,7 @@ func schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref common.ReferenceC
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas is the amount of reserve excess capacity pods.",
+							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -764,7 +801,8 @@ func schema_pkg_apis_config_v1beta1_S3(ref common.ReferenceCallback) common.Open
 				Properties: map[string]spec.Schema{
 					"server": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server"),
 						},
 					},
 					"bucketName": {
@@ -843,6 +881,7 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 					"testdefPath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "TestDefPath is the repository path where the Test Machinery should search for testdefinitions.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -850,6 +889,7 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 					"prepareImage": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PrepareImage is the prepare image that is used in the prepare and postprepare step.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -857,6 +897,7 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 					"baseImage": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PrepareImage is the base image that is used as the default image if a TestDefinition does not define an image.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -878,6 +919,7 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 					"disableCollector": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableCollector disables the collection of test results and their ingestion into elasticsearch.",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -933,6 +975,7 @@ func schema_pkg_apis_config_v1beta1_Webserver(ref common.ReferenceCallback) comm
 					"httpPort": {
 						SchemaProps: spec.SchemaProps{
 							Description: "HTTPPort specifies the port to listen for http traffic",
+							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -940,6 +983,7 @@ func schema_pkg_apis_config_v1beta1_Webserver(ref common.ReferenceCallback) comm
 					"httpsPort": {
 						SchemaProps: spec.SchemaProps{
 							Description: "HTTPSPort specifies the port to listen for https traffic",
+							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -947,6 +991,7 @@ func schema_pkg_apis_config_v1beta1_Webserver(ref common.ReferenceCallback) comm
 					"certificate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Certificate holds the certificate the should be used to server the https traffic",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Certificate"),
 						},
 					},
@@ -967,32 +1012,37 @@ func schema_pkg_apis_telemetry_v1beta1_DowntimePeriods(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"min": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"max": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"avg": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"median": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"std": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 				},
@@ -1010,32 +1060,37 @@ func schema_pkg_apis_telemetry_v1beta1_ResponseTimeDuration(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"min": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"max": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"avg": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"median": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 					"std": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
 						},
 					},
 				},
@@ -1054,37 +1109,43 @@ func schema_pkg_apis_telemetry_v1beta1_ShootMeasurementData(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"shoot": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/types.NamespacedName"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/types.NamespacedName"),
 						},
 					},
 					"provider": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"seed": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"countUnhealthyPeriods": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"countRequest": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"countRequestTimeouts": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
 						},
 					},
 					"downTimesSec": {
@@ -1129,17 +1190,20 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurement(ref common.ReferenceCal
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurementSpec"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurementSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurementStatus"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurementStatus"),
 						},
 					},
 				},
@@ -1174,7 +1238,8 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurementList(ref common.Referenc
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1183,7 +1248,8 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurementList(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurement"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootsMeasurement"),
 									},
 								},
 							},
@@ -1219,7 +1285,8 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurementSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("k8s.io/apimachinery/pkg/types.NamespacedName"),
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/types.NamespacedName"),
 									},
 								},
 							},
@@ -1268,7 +1335,8 @@ func schema_pkg_apis_telemetry_v1beta1_ShootsMeasurementStatus(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootMeasurementData"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1.ShootMeasurementData"),
 									},
 								},
 							},
@@ -1299,6 +1367,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Type of the config value. For now only environment variables are supported.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1306,6 +1375,7 @@ func schema_pkg_apis_testmachinery_v1beta1_ConfigElement(ref common.ReferenceCal
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name of the environment variable. Must be a C_IDENTIFIER.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1360,7 +1430,8 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 					},
 					"definition": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepDefinition"),
 						},
 					},
 					"useGlobalArtifacts": {
@@ -1375,8 +1446,9 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1400,8 +1472,9 @@ func schema_pkg_apis_testmachinery_v1beta1_DAGStep(ref common.ReferenceCallback)
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1443,7 +1516,8 @@ func schema_pkg_apis_testmachinery_v1beta1_LocationSet(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
 									},
 								},
 							},
@@ -1523,7 +1597,8 @@ func schema_pkg_apis_testmachinery_v1beta1_StepDefinition(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
 									},
 								},
 							},
@@ -1560,18 +1635,21 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"position": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusPosition"),
 						},
 					},
 					"testdefinition": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.StepStatusTestDefinition"),
 						},
 					},
 					"annotations": {
@@ -1581,8 +1659,9 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1612,14 +1691,16 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatus(ref common.ReferenceCallba
 					},
 					"exportArtifactKey": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"podName": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 				},
@@ -1643,8 +1724,9 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusPosition(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1683,7 +1765,8 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 					},
 					"location": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
 						},
 					},
 					"config": {
@@ -1704,8 +1787,9 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1723,8 +1807,9 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1732,8 +1817,7 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 					},
 					"activeDeadlineSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
+							Ref: ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
 				},
@@ -1741,7 +1825,7 @@ func schema_pkg_apis_testmachinery_v1beta1_StepStatusTestDefinition(ref common.R
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation", "k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
 	}
 }
 
@@ -1766,8 +1850,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1787,8 +1872,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1801,8 +1887,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1811,8 +1898,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					"activeDeadlineSeconds": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Optional duration in seconds the test may be active on the node relative to StartTime before the system will actively try to mark it failed and kill associated containers. Value must be a positive integer.",
-							Type:        []string{"integer"},
-							Format:      "int64",
+							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
 					"command": {
@@ -1822,8 +1908,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1836,8 +1923,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -1857,7 +1945,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
 									},
 								},
 							},
@@ -1866,6 +1955,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Compute Resources required by this container.",
+							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
 						},
 					},
@@ -1873,7 +1963,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
 	}
 }
 
@@ -1900,12 +1990,14 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefinition(ref common.ReferenceCa
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefSpec"),
 						},
 					},
 				},
@@ -1940,7 +2032,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefinitionList(ref common.Referen
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1949,7 +2042,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestDefinitionList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestDefinition"),
 									},
 								},
 							},
@@ -1973,8 +2067,9 @@ func schema_pkg_apis_testmachinery_v1beta1_TestLocation(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"repo": {
@@ -2027,17 +2122,20 @@ func schema_pkg_apis_testmachinery_v1beta1_Testrun(ref common.ReferenceCallback)
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunSpec"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunStatus"),
 						},
 					},
 				},
@@ -2107,7 +2205,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunList(ref common.ReferenceCallb
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2116,7 +2215,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunList(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Testrun"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.Testrun"),
 									},
 								},
 							},
@@ -2157,7 +2257,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestLocation"),
 									},
 								},
 							},
@@ -2170,7 +2271,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.LocationSet"),
 									},
 								},
 							},
@@ -2179,6 +2281,7 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 					"kubeconfigs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Base64 encoded kubeconfigs that are mounted to every testflow step. They are available at $TM_KUBECONFIG_PATH/xxx.config, where xxx is either (gardener, seed or shoot).",
+							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.TestrunKubeconfigs"),
 						},
 					},
@@ -2189,7 +2292,8 @@ func schema_pkg_apis_testmachinery_v1beta1_TestrunSpec(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1.ConfigElement"),
 									},
 								},
 							},

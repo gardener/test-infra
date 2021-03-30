@@ -15,10 +15,12 @@
 package mock_s3
 
 import (
-	"github.com/gardener/test-infra/pkg/util/s3"
-	"github.com/minio/minio-go"
 	"io"
 	"os"
+
+	"github.com/minio/minio-go"
+
+	"github.com/gardener/test-infra/pkg/util/s3"
 )
 
 type mockObject struct {

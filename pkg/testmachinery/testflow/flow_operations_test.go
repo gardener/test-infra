@@ -3,7 +3,8 @@ package testflow_test
 import (
 	"testing"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"

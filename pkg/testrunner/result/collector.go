@@ -15,16 +15,18 @@
 package result
 
 import (
+	"os"
+	"path"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/logger"
 	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	telemetryctrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	"os"
-	"path"
-	"time"
 )
 
 func New(log logr.Logger, config Config, kubeconfig string) (*Collector, error) {

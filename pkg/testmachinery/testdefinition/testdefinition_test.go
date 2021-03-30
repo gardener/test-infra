@@ -17,9 +17,10 @@ package testdefinition_test
 import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 var _ = Describe("TestDefinition", func() {

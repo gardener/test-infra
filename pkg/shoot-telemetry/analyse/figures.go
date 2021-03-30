@@ -15,9 +15,10 @@
 package analyse
 
 import (
-	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
 	"math"
 	"sort"
+
+	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
 )
 
 type Figures struct {

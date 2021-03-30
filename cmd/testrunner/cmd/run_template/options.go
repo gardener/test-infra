@@ -21,7 +21,6 @@ import (
 	"time"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +33,8 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 type options struct {
@@ -80,9 +81,9 @@ func (o *options) Complete() error {
 	o.collectConfig.OCIOpts = o.ociOpts
 
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
-		gardenK8sClient, err := kubernetes.NewClientFromFile("", o.shootParameters.GardenKubeconfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: kubernetes.GardenScheme,
-		}))
+		gardenK8sClient, err := kutil.NewClientFromFile(o.shootParameters.GardenKubeconfigPath, client.Options{
+			Scheme: gardener.GardenScheme,
+		})
 		if err != nil {
 			logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.tmKubeconfigPath)
 			os.Exit(1)
@@ -98,7 +99,7 @@ func (o *options) Complete() error {
 	return nil
 }
 
-func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
+func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
 	// read and parse test shoot configuration
 	dat, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
@@ -110,7 +111,7 @@ func GetShootFlavors(cfgPath string, k8sClient kubernetes.Interface, shootPrefix
 		return nil, err
 	}
 
-	return shootflavors.NewExtended(k8sClient.Client(), flavors.Flavors, shootPrefix, filterPatchVersions)
+	return shootflavors.NewExtended(k8sClient, flavors.Flavors, shootPrefix, filterPatchVersions)
 }
 
 // Validate validates the options

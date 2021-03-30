@@ -17,8 +17,6 @@ package controller
 import (
 	"reflect"
 
-	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
-	telmgr "github.com/gardener/test-infra/pkg/telemetry/manager"
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -26,6 +24,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
+	telmgr "github.com/gardener/test-infra/pkg/telemetry/manager"
 )
 
 // NewTelemetryController creates new controller with the telemetry reconciler that watches Telemetry resources.

@@ -16,14 +16,16 @@ package gardensetup
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/Masterminds/semver"
+	"k8s.io/helm/pkg/strvals"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
-	"k8s.io/helm/pkg/strvals"
-	"reflect"
-	"strings"
 )
 
 func ParseFlag(value string) (common.GSExtensions, error) {

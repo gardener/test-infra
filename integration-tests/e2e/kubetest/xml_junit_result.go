@@ -3,9 +3,10 @@ package kubetest
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"regexp"
 	"strings"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
 )
 
 func (result *JunitXMLResult) CalculateAdditionalFields() {

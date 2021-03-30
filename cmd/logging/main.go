@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 
 	flag "github.com/spf13/pflag"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -33,8 +33,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 var (
@@ -60,37 +62,56 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 	defer ctx.Done()
+	if err := run(ctx); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+}
 
+func run(ctx context.Context) error {
 	if kubeconfigPath == "" {
 		if os.Getenv("KUBECONFIG") == "" {
-			fmt.Println("Kubeconfig is neither defined by commandline --kubeconfig neither by environment variable 'KUBECONFIG'")
-			os.Exit(1)
+			return errors.New("Kubeconfig is neither defined by commandline --kubeconfig neither by environment variable 'KUBECONFIG'")
 		}
 		kubeconfigPath = os.Getenv("KUBECONFIG")
 	}
 
 	// if file does not exist we exit with 0 as this means that gardener wasn't deployed
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-		fmt.Printf("host kubeconfig at %s does not exists\n", kubeconfigPath)
-		os.Exit(1)
+		return fmt.Errorf("host kubeconfig at %s does not exists", kubeconfigPath)
 	}
 
-	k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.ShootScheme,
-	}))
+	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
-		log.Fatalf("cannot build config from path %s: %s", kubeconfigPath, err.Error())
+		return fmt.Errorf("unable to read host kubeconfig: %w", err)
+	}
+	config, err := clientcmd.NewClientConfigFromBytes(kubeconfigBytes)
+	if err != nil {
+		return fmt.Errorf("unable to read k8s config: %w", err)
+	}
+	restClient, err := config.ClientConfig()
+	if err != nil {
+		return fmt.Errorf("unable to build rest config: %w", err)
+	}
+	k8sClient, err := kutil.NewClientFromBytes(kubeconfigBytes, client.Options{
+		Scheme: gardener.ShootScheme,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot build config from path %s: %s", kubeconfigPath, err.Error())
+	}
+	k8sClientset, err := kubernetesclientset.NewForConfig(restClient)
+	if err != nil {
+		return fmt.Errorf("cannot build kubernetes clientset from path %s: %s", kubeconfigPath, err.Error())
 	}
 
 	pods := &corev1.PodList{}
-	if err := k8sClient.Client().List(ctx, pods, client.InNamespace(namespace), client.MatchingLabels(GardenerComponentLabels)); err != nil {
-		fmt.Printf("unable to list pods in %s: %s\n", namespace, err.Error())
-		os.Exit(1)
+	if err := k8sClient.List(ctx, pods, client.InNamespace(namespace), client.MatchingLabels(GardenerComponentLabels)); err != nil {
+		return fmt.Errorf("unable to list pods in %s: %s", namespace, err.Error())
 	}
 
 	var result *multierror.Error
 	for _, pod := range pods.Items {
-		logs, err := getPodLogs(k8sClient.Kubernetes(), pod)
+		logs, err := getPodLogs(ctx, k8sClientset, pod)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
@@ -110,11 +131,12 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("Successfully fetched all logs")
+	return nil
 }
 
-func getPodLogs(client kubernetesclientset.Interface, pod corev1.Pod) ([]byte, error) {
+func getPodLogs(ctx context.Context, client kubernetesclientset.Interface, pod corev1.Pod) ([]byte, error) {
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
-	logs, err := req.Stream()
+	logs, err := req.Stream(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to get logs from pod %s in namespace %s", pod.Name, pod.Namespace)
 	}

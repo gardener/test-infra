@@ -16,12 +16,14 @@ package shootflavors
 
 import (
 	"fmt"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/hashicorp/go-multierror"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/hashicorp/go-multierror"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ValidateExtendedFlavor validates extended a shoot flavors.

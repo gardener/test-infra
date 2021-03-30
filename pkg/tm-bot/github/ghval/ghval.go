@@ -17,6 +17,7 @@ package ghval
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/pkg/errors"
 )
 

@@ -5,11 +5,13 @@
 package mock_plugins
 
 import (
-	github "github.com/gardener/test-infra/pkg/tm-bot/github"
-	plugins "github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	pflag "github.com/spf13/pflag"
-	reflect "reflect"
+
+	github "github.com/gardener/test-infra/pkg/tm-bot/github"
+	plugins "github.com/gardener/test-infra/pkg/tm-bot/plugins"
 )
 
 // MockPlugin is a mock of Plugin interface

@@ -16,16 +16,18 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/gardener/test-infra/pkg/logger"
+
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	cfg "github.com/gardener/test-infra/pkg/shoot-telemetry/config"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/controller"
-	"github.com/spf13/cobra"
 )
 
 // GetRootCommand return the root command.

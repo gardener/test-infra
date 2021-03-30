@@ -2,13 +2,15 @@ package main
 
 import (
 	"bufio"
+	"os"
+	"path/filepath"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest/setup"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"os"
-	"path/filepath"
 )
 
 func main() {

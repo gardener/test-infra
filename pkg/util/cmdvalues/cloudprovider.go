@@ -15,8 +15,10 @@ package cmdvalues
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/common"
+
 	"github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 type CloudProviderValue struct {

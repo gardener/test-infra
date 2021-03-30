@@ -16,14 +16,17 @@ package validationwebhook_test
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/util/strconf"
-	"github.com/gardener/test-infra/test/utils"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util/strconf"
+	"github.com/gardener/test-infra/test/utils"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
 	"github.com/gardener/test-infra/test/resources"
 )
@@ -44,7 +47,7 @@ var _ = Describe("Testrun validation tests", func() {
 				},
 			}
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -61,7 +64,7 @@ var _ = Describe("Testrun validation tests", func() {
 			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
 			tr.Spec.LocationSets = nil
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -79,7 +82,7 @@ var _ = Describe("Testrun validation tests", func() {
 				Type: tmv1beta1.LocationTypeLocal,
 			})
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -95,7 +98,7 @@ var _ = Describe("Testrun validation tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{}
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -116,7 +119,7 @@ var _ = Describe("Testrun validation tests", func() {
 				},
 			}
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -132,7 +135,7 @@ var _ = Describe("Testrun validation tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.Kubeconfigs.Gardener = strconf.FromString("dGVzdGluZwo=")
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			if err == nil {
 				defer utils.DeleteTestrun(operation.Client(), tr)
 			}
@@ -147,12 +150,12 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 
 			Expect(err).ToNot(HaveOccurred())
 
-			err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr)
+			err = operation.Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

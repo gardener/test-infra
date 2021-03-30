@@ -16,20 +16,22 @@ package dependencies
 
 import (
 	"context"
-	"github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
-	"github.com/gardener/gardener-resource-manager/pkg/health"
+	"fmt"
+
+	mrv1alpha1 "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
+
 	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/apis/config/validation"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
 	tmhealth "github.com/gardener/test-infra/pkg/testmachinery/controller/health"
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/helm/pkg/engine"
-	client "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"github.com/gardener/test-infra/pkg/util/gardener"
 )
 
 // DependencyEnsurer reconciles all dependencies that are needed by the testmachinery
@@ -45,11 +47,29 @@ type DependencyEnsurer struct {
 var _ tmhealth.Condition = &DependencyEnsurer{}
 
 // New returns a new dependency ensurer
-func New(log logr.Logger, cw *configwatcher.ConfigWatcher) (*DependencyEnsurer, error) {
+func New(log logr.Logger, restConfig *rest.Config, cw *configwatcher.ConfigWatcher) (*DependencyEnsurer, error) {
+	s := runtime.NewScheme()
+	if err := scheme.AddToScheme(s); err != nil {
+		return nil, fmt.Errorf("uable to add kubernetes scheme: %w", err)
+	}
+	if err := mrv1alpha1.AddToScheme(s); err != nil {
+		return nil, fmt.Errorf("unable to add managed resources scheme: %w", err)
+	}
+	kubeClient, err := client.New(restConfig, client.Options{Scheme: s})
+	if err != nil {
+		return nil, err
+	}
+
+	renderer, err := chartrenderer.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	b := &DependencyEnsurer{
 		log:      log,
+		client:   kubeClient,
 		cw:       cw,
-		renderer: chartrenderer.New(engine.New(), nil),
+		renderer: renderer,
 	}
 
 	tmhealth.AddHealthCondition("bootstrap", b)
@@ -58,21 +78,7 @@ func New(log logr.Logger, cw *configwatcher.ConfigWatcher) (*DependencyEnsurer, 
 }
 
 // Start is only needed during startup to ensure all needed deployments are healthy
-func (e *DependencyEnsurer) Start(ctx context.Context, mgr manager.Manager) error {
-	var err error
-	s := runtime.NewScheme()
-	if err := scheme.AddToScheme(s); err != nil {
-		return err
-	}
-	if err := v1alpha1.AddToScheme(s); err != nil {
-		return err
-	}
-
-	e.client, err = client.New(mgr.GetConfig(), client.Options{Scheme: s})
-	if err != nil {
-		return err
-	}
-
+func (e *DependencyEnsurer) Start(ctx context.Context) error {
 	if err := e.Reconcile(ctx, e.cw.GetConfiguration()); err != nil {
 		return err
 	}
@@ -103,21 +109,21 @@ func (e *DependencyEnsurer) CheckHealth(ctx context.Context) error {
 	}
 
 	if config.S3.Server.Minio != nil {
-		mr := &v1alpha1.ManagedResource{}
+		mr := &mrv1alpha1.ManagedResource{}
 		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.ArgoManagedResourceName, Namespace: namespace}, mr); err != nil {
 			return err
 		}
-		if err := health.CheckManagedResourceHealthy(mr); err != nil {
+		if err := gardener.CheckManagedResourceHealthy(mr); err != nil {
 			return err
 		}
 	}
 
 	if config.Observability.Logging != nil {
-		mr := &v1alpha1.ManagedResource{}
+		mr := &mrv1alpha1.ManagedResource{}
 		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.LoggingManagedResourceName, Namespace: config.Observability.Logging.Namespace}, mr); err != nil {
 			return err
 		}
-		if err := health.CheckManagedResourceHealthy(mr); err != nil {
+		if err := gardener.CheckManagedResourceHealthy(mr); err != nil {
 			return err
 		}
 	}

@@ -41,7 +41,6 @@ done
 import (
 	"encoding/json"
 	"fmt"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"io/ioutil"
 	"net"
 	"os"
@@ -50,10 +49,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+
+	"github.com/go-logr/logr"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	prepare "github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
 )
 
 func runPrepare(log logr.Logger, cfg *prepare.Config, repoBasePath string) error {

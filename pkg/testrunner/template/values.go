@@ -16,13 +16,15 @@ package template
 
 import (
 	"fmt"
+
 	"github.com/gardener/gardener/pkg/utils"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 func NewDefaultValueRenderer(parameters *internalParameters) ValueRenderer {

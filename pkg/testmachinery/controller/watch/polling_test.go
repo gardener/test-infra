@@ -50,13 +50,13 @@ var _ = Describe("Watch Polling Informer", func() {
 				},
 			},
 		}
-		err := fakeClient.Create(context.TODO(), tr)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(fakeClient.Create(context.TODO(), tr)).To(Succeed())
 	})
 
 	AfterEach(func() {
-		err := fakeClient.Delete(context.TODO(), tr)
-		Expect(err).ToNot(HaveOccurred())
+		ctx := context.Background()
+		defer ctx.Done()
+		Expect(fakeClient.Delete(ctx, tr)).To(Succeed())
 	})
 
 	It("watch should timeout after 2 seconds", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Watch Polling Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -86,7 +86,7 @@ var _ = Describe("Watch Polling Informer", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -119,7 +119,7 @@ var _ = Describe("Watch Polling Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -156,7 +156,7 @@ var _ = Describe("Watch Polling Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 

@@ -16,10 +16,11 @@ package controller
 
 import (
 	"encoding/csv"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gardener/test-infra/pkg/logger"
 

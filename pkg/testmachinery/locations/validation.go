@@ -3,10 +3,11 @@ package locations
 import (
 	"fmt"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 func ValidateLocations(identifier string, spec tmv1beta1.TestrunSpec) error {

@@ -17,30 +17,33 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/util/s3"
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 )
 
 // New returns a new testmachinery reconciler
-func New(mgr manager.Manager, log logr.Logger, s3Client s3.Client, c collector.Interface) reconcile.Reconciler {
+func New(log logr.Logger, kubeClient client.Client, scheme *runtime.Scheme, s3Client s3.Client, c collector.Interface) reconcile.Reconciler {
 	return &TestmachineryReconciler{
-		Client:    mgr.GetClient(),
-		scheme:    mgr.GetScheme(),
+		Client:    kubeClient,
+		scheme:    scheme,
 		Logger:    log,
 		s3Client:  s3Client,
 		collector: c,
@@ -49,12 +52,10 @@ func New(mgr manager.Manager, log logr.Logger, s3Client s3.Client, c collector.I
 }
 
 // Reconcile handles various testrun events like crete, update and delete.
-func (r *TestmachineryReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := context.Background()
+func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	rCtx := &reconcileContext{
 		tr: &tmv1beta1.Testrun{},
 	}
-	defer ctx.Done()
 	log := r.Logger.WithValues("testrun", request.NamespacedName)
 
 	log.V(3).Info("start reconcile")
@@ -113,7 +114,7 @@ func (r *TestmachineryReconciler) Reconcile(request reconcile.Request) (reconcil
 func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
 	log.V(5).Info("generate workflow")
 	var (
-		k8sHelperResources []runtime.Object
+		k8sHelperResources []client.Object
 		err                error
 	)
 	rCtx.wf, k8sHelperResources, err = r.generateWorkflow(ctx, rCtx.tr)
@@ -160,7 +161,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	return reconcile.Result{}, nil
 }
 
-func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, []runtime.Object, error) {
+func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, []client.Object, error) {
 	tr, err := testrun.New(r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing testrun: %s", err.Error())

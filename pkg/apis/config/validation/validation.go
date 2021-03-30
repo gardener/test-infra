@@ -15,8 +15,9 @@
 package validation
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/config"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 )
 
 // ValidateConfiguration validates the passed configuration instance

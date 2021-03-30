@@ -17,11 +17,13 @@ package testrunner
 import (
 	"container/list"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"sync"
 	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // ExecutorConfig configures the execution order of a execution

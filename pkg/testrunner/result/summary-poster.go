@@ -16,16 +16,18 @@ package result
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/slack"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	"strings"
-	"time"
 )
 
 func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, runs testrunner.RunList) error {

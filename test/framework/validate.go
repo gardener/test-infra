@@ -16,10 +16,12 @@ package framework
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util"
+	"os"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"os"
+
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // ValidateConfig validates a framework configuration

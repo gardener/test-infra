@@ -17,18 +17,20 @@ package pages
 import (
 	"context"
 	"fmt"
-	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"net/http"
+	"sort"
+	"time"
+
+	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	tmetadata "github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages/pagination"
 	"github.com/gardener/test-infra/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"time"
 )
 
 type testrunItem struct {

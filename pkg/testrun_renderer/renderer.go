@@ -16,11 +16,13 @@ package testrun_renderer
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/pkg/errors"
-	"strings"
 )
 
 // AddLocationsToTestrun adds component descriptor repositories and the given additionalLocations as locations to location sets for the given Testrun tr.

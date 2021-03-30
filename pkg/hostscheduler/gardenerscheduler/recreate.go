@@ -16,16 +16,15 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/gardener/gardener/pkg/operation/common"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/util/gardener"
 )
 
 func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -36,7 +35,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 			return errors.New("no shoot cluster is defined. Use --name or create a config file")
 		}
 		shoot := &gardencorev1beta1.Shoot{}
-		if err := s.client.Client().Get(ctx, client.ObjectKey{Name: *name, Namespace: s.namespace}, shoot); err != nil {
+		if err := s.client.Get(ctx, client.ObjectKey{Name: *name, Namespace: s.namespace}, shoot); err != nil {
 			return errors.Wrapf(err, "cannot get shoot %s", *name)
 		}
 
@@ -55,11 +54,11 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 		}
 		newShoot.Status = gardencorev1beta1.ShootStatus{}
 
-		if err := patchAnnotation(ctx, s.client.Client(), shoot, common.ConfirmationDeletion, "true"); err != nil {
+		if err := patchAnnotation(ctx, s.client, shoot, gardener.ConfirmationDeletion, "true"); err != nil {
 			return errors.Wrap(err, "unable to patch deletion confirmation")
 		}
 		s.log.Info("delete shoot")
-		if err := s.client.Client().Delete(ctx, shoot); err != nil {
+		if err := s.client.Delete(ctx, shoot); err != nil {
 			return errors.Wrap(err, "unable to delete shoot")
 		}
 		if err := WaitUntilShootIsDeleted(ctx, s.log, s.client, shoot); err != nil {
@@ -69,7 +68,7 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 
 		// recreate the shoot
 		s.log.Info("recreate shoot")
-		if err := s.client.Client().Create(ctx, newShoot); err != nil {
+		if err := s.client.Create(ctx, newShoot); err != nil {
 			return errors.Wrap(err, "unable to create shoot")
 		}
 		if _, err := WaitUntilShootIsReconciled(ctx, s.log, s.client, shoot); err != nil {
@@ -84,9 +83,5 @@ func (s *gardenerscheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.Sched
 func patchAnnotation(ctx context.Context, k8sClient client.Client, oldShoot *gardencorev1beta1.Shoot, key, value string) error {
 	newShoot := oldShoot.DeepCopy()
 	metav1.SetMetaDataAnnotation(&newShoot.ObjectMeta, key, value)
-	patchBytes, err := kutil.CreateTwoWayMergePatch(oldShoot, newShoot)
-	if err != nil {
-		return fmt.Errorf("failed to patch bytes")
-	}
-	return k8sClient.Patch(ctx, oldShoot, client.RawPatch(types.MergePatchType, patchBytes))
+	return k8sClient.Patch(ctx, newShoot, client.MergeFrom(oldShoot))
 }

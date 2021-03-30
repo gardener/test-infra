@@ -17,7 +17,16 @@ package pages
 import (
 	"context"
 	"fmt"
-	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"github.com/go-logr/logr"
+	github2 "github.com/google/go-github/v27/github"
+	"github.com/gorilla/mux"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
@@ -25,13 +34,6 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/go-logr/logr"
-	github2 "github.com/google/go-github/v27/github"
-	"github.com/gorilla/mux"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type IconWithTooltip struct {

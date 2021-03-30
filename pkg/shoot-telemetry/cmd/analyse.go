@@ -16,13 +16,15 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/logger"
+
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	cfg "github.com/gardener/test-infra/pkg/shoot-telemetry/config"
-	"github.com/spf13/cobra"
 )
 
 // GetAnalyseCommand return the analyse command.

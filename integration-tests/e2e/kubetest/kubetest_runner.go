@@ -4,9 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
-	"github.com/gardener/test-infra/integration-tests/e2e/util"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,6 +13,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -180,7 +182,7 @@ func runKubetest(args KubetestArgs, logToStd bool) {
 			log.Error(errors.Wrapf(err, "kubetest run failed"))
 		}
 
-		if err = util.DumpShootLogs(config.GardenKubeconfigPath, config.ProjectNamespace, config.ShootName); err != nil {
+		if err = util.DumpShootLogs(config.GardenKubeconfigPath, config.ShootKubeconfigPath, config.ProjectNamespace, config.ShootName); err != nil {
 			log.Error(errors.Wrap(err, "could not execute shoot dump"))
 		}
 	} else {

@@ -6,9 +6,10 @@ package mock_elasticsearch
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockClient is a mock of Client interface

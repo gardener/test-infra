@@ -18,15 +18,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"net/http"
 	"time"
 
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"
-	log "github.com/sirupsen/logrus"
 )
 
 type target struct {
@@ -126,9 +128,9 @@ func (c *controller) observeTarget(t *target, stopCh <-chan struct{}) {
 }
 
 // initTargets initializes the targets with all available shoots
-func (c *controller) initTargets(k8sClient kubernetes.Interface) error {
+func (c *controller) initTargets(k8sClient client.Client) error {
 	shoots := &gardenv1beta1.ShootList{}
-	if err := k8sClient.Client().List(context.TODO(), shoots); err != nil {
+	if err := k8sClient.List(context.TODO(), shoots); err != nil {
 		return err
 	}
 

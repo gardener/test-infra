@@ -2,10 +2,12 @@ package util
 
 import (
 	"fmt"
+
 	"github.com/Masterminds/semver"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 // GetK8sVersions returns all K8s version that should be rendered by the chart

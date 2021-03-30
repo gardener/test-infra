@@ -16,15 +16,17 @@ package configwatcher
 
 import (
 	"context"
+	"io/ioutil"
+	"sync"
+
 	"github.com/fsnotify/fsnotify"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sync"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 type NotifyFunc = func(ctx context.Context, configuration *config.Configuration) error

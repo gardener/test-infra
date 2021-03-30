@@ -18,15 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
-	mrhealth "github.com/gardener/gardener-resource-manager/pkg/health"
+
+	mrv1alpha1 "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/yaml"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
 	"io/ioutil"
 	"net/http"
@@ -36,15 +39,12 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
-
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-
 	"github.com/gardener/test-infra/pkg/util"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
 	. "github.com/onsi/gomega"
 )
@@ -52,14 +52,14 @@ import (
 // RunTestrunUntilCompleted executes a testrun on a cluster until it is finished and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
 // DEPRECATED: this is just a wrapper function to keep functionality across tests. In the future the RunTestrun function should be directly used.
-func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return RunTestrun(ctx, log, tmClient, tr, phase, timeout, WatchUntilCompletedFunc)
 }
 
 // RunTestrunUntilCompleted executes a testrun on a cluster until a specific state has been reached and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, f WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
-	err := tmClient.Client().Create(ctx, tr)
+func RunTestrun(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, f WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+	err := tmClient.Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,9 +104,9 @@ func RunTestrun(ctx context.Context, log logr.Logger, tmClient kubernetes.Interf
 }
 
 // GetWorkflow returns the argo workflow of a testrun.
-func GetWorkflow(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) (*argov1.Workflow, error) {
+func GetWorkflow(ctx context.Context, tmClient client.Client, tr *tmv1beta1.Testrun) (*argov1.Workflow, error) {
 	wf := &argov1.Workflow{}
-	err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Status.Workflow}, wf)
+	err := tmClient.Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Status.Workflow}, wf)
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +118,10 @@ type WatchFunc = func(*tmv1beta1.Testrun) (bool, error)
 
 // WatchTestrun watches a testrun until the maxwait is reached.
 // Every time a testrun can be found without a problem the function f is called.
-func WatchTestrun(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, timeout time.Duration, f WatchFunc) error {
+func WatchTestrun(ctx context.Context, tmClient client.Client, tr *tmv1beta1.Testrun, timeout time.Duration, f WatchFunc) error {
 	return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
 		updatedTestrun := &tmv1beta1.Testrun{}
-		if err := tmClient.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, updatedTestrun); err != nil {
+		if err := tmClient.Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, updatedTestrun); err != nil {
 			return retry.MinorError(err)
 		}
 		*tr = *updatedTestrun
@@ -155,26 +155,26 @@ func WatchUntil(timeout time.Duration) WatchFunc {
 }
 
 // WatchTestrunUntilCompleted watches a testrun to finish and returns the newest testrun object.
-func WatchTestrunUntilCompleted(ctx context.Context, tmClient kubernetes.Interface, tr *tmv1beta1.Testrun, timeout time.Duration) (*tmv1beta1.Testrun, error) {
+func WatchTestrunUntilCompleted(ctx context.Context, tmClient client.Client, tr *tmv1beta1.Testrun, timeout time.Duration) (*tmv1beta1.Testrun, error) {
 	foundTestrun := tr.DeepCopy()
 	err := WatchTestrun(ctx, tmClient, tr, timeout, WatchUntilCompletedFunc)
 	return foundTestrun, err
 }
 
 // DeleteTestrun deletes a testrun and expects to be successful.
-func DeleteTestrun(tmClient kubernetes.Interface, tr *tmv1beta1.Testrun) {
+func DeleteTestrun(tmClient client.Client, tr *tmv1beta1.Testrun) {
 	// wf is not deleted if testrun is triggered but deleted before wf can be deployed.
 	// Strange timing in validation test with kubeconfig.
 	// needs further investigation
 	time.Sleep(3 * time.Second)
-	err := tmClient.Client().Delete(context.TODO(), tr)
+	err := tmClient.Delete(context.TODO(), tr)
 	if !apierrors.IsNotFound(err) {
 		Expect(err).To(BeNil(), "Error deleting Testrun: %s", tr.Name)
 	}
 }
 
 // DumpState dumps the current testrun und workflow state
-func DumpState(ctx context.Context, log logr.Logger, client kubernetes.Interface, tr, foundTestrun *tmv1beta1.Testrun) {
+func DumpState(ctx context.Context, log logr.Logger, client client.Client, tr, foundTestrun *tmv1beta1.Testrun) {
 	fmt.Println("Testrun:")
 	fmt.Println(util.PrettyPrintStruct(tr))
 	fmt.Println("FoundTestrun:")
@@ -190,7 +190,7 @@ func DumpState(ctx context.Context, log logr.Logger, client kubernetes.Interface
 }
 
 // WaitForClusterReadiness waits for all testmachinery components to be ready.
-func WaitForClusterReadiness(log logr.Logger, clusterClient kubernetes.Interface, namespace string, maxWaitTime time.Duration) error {
+func WaitForClusterReadiness(log logr.Logger, clusterClient client.Client, namespace string, maxWaitTime time.Duration) error {
 	ctx := context.Background()
 	defer ctx.Done()
 	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
@@ -220,32 +220,26 @@ func WaitForMinioService(minioEndpoint string, maxWaitTime time.Duration) error 
 	})
 }
 
-func deploymentIsReady(ctx context.Context, log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
+func deploymentIsReady(ctx context.Context, log logr.Logger, clusterClient client.Client, namespace, name string) bool {
 	deployment := &appsv1.Deployment{}
-	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment)
+	err := clusterClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	if err != nil {
 		log.V(3).Info(err.Error())
 		return false
 	}
-	err = health.CheckDeployment(deployment)
-	if err == nil {
-		return true
-	}
-	return false
+	err = kutil.CheckDeployment(deployment)
+	return err == nil
 }
 
-func managedresourceIsReady(ctx context.Context, log logr.Logger, clusterClient kubernetes.Interface, namespace, name string) bool {
-	mr := &v1alpha1.ManagedResource{}
-	err := clusterClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, mr)
+func managedresourceIsReady(ctx context.Context, log logr.Logger, clusterClient client.Client, namespace, name string) bool {
+	mr := &mrv1alpha1.ManagedResource{}
+	err := clusterClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, mr)
 	if err != nil {
 		log.V(3).Info(err.Error())
 		return false
 	}
-	err = mrhealth.CheckManagedResource(mr)
-	if err == nil {
-		return true
-	}
-	return false
+	err = gardener.CheckManagedResource(mr)
+	return err == nil
 }
 
 // HTTPGet performs an HTTP get with a default timeout of 60 seconds

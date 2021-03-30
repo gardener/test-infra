@@ -1,11 +1,13 @@
 package testmachinery
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/pkg/errors"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/runtime"
 	"os"
+
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 var decoder runtime.Decoder

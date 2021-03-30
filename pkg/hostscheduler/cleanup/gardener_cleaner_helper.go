@@ -16,17 +16,22 @@ package cleanup
 import (
 	"context"
 	"fmt"
+	"time"
+
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
 	"k8s.io/apimachinery/pkg/fields"
 
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/gardener/gardener/pkg/operation/botanist"
 	"github.com/gardener/gardener/pkg/utils/flow"
-	utilclient "github.com/gardener/gardener/pkg/utils/kubernetes/client"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -41,57 +46,157 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	// Provider is the kubernetes provider label.
+	Provider = "provider"
+	// KubernetesProvider is the 'kubernetes' value of the Provider label.
+	KubernetesProvider = "kubernetes"
+	// MetadataNameField ist the `metadata.name` field for a field selector.
+	MetadataNameField = "metadata.name"
+)
+
+const (
+	// ShootNoCleanup is a constant for a label on a resource indicating that the Gardener cleaner should not delete this
+	// resource when cleaning a shoot during the deletion flow.
+	ShootNoCleanup = "shoot.gardener.cloud/no-cleanup"
+)
+
 var (
+
+	// NotSystemComponent is a requirement that something doesn't have the GardenRole GardenRoleSystemComponent.
+	NotSystemComponent = utils.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleSystemComponent)
+
+	// NoCleanupPrevention is a requirement that the ShootNoCleanup label of something is not true.
+	NoCleanupPrevention = utils.MustNewRequirement(ShootNoCleanup, selection.NotEquals, "true")
+
+	// NoCleanupPreventionListOption are CollectionMatching that exclude system components or non-auto cleaned up resource.
+	NoCleanupPreventionListOption = client.MatchingLabelsSelector{Selector: CleanupSelector}
+
 	// NotAddonManagerReconcile is a requirement that something doesnt have the label addonmanager.kubernetes.io/mode = Reconcile
-	NotAddonManagerReconcile = botanist.MustNewRequirement("addonmanager.kubernetes.io/mode", selection.NotEquals, "Reconcile")
+	NotAddonManagerReconcile = MustNewRequirement("addonmanager.kubernetes.io/mode", selection.NotEquals, "Reconcile")
 
 	// NotKubernetesClusterService is a requirement that something doesnt have the label kubernetes.io/cluster-service = true
-	NotKubernetesClusterService = botanist.MustNewRequirement("kubernetes.io/cluster-service", selection.NotEquals, "true")
+	NotKubernetesClusterService = MustNewRequirement("kubernetes.io/cluster-service", selection.NotEquals, "true")
+
+	// NotKubernetesProvider is a requirement that the Provider label of something is not KubernetesProvider.
+	NotKubernetesProvider = utils.MustNewRequirement(Provider, selection.NotEquals, KubernetesProvider)
+
+	// CleanupSelector is a selector that excludes system components and all resources not considered for auto cleanup.
+	CleanupSelector = labels.NewSelector().Add(NotSystemComponent).Add(NoCleanupPrevention)
 
 	// NamespaceCleanOption is the delete selector for Namespaces that excludes system namespaces.
-	NamespaceCleanOption = utilclient.ListWith{
-		client.MatchingLabelsSelector{Selector: botanist.CleanupSelector},
+	NamespaceCleanOption = []client.ListOption{
+		client.MatchingLabelsSelector{Selector: CleanupSelector},
 		client.MatchingFieldsSelector{
 			Selector: fields.AndSelectors(
-				fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespacePublic),
-				fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespaceSystem),
-				fields.OneTermNotEqualSelector(botanist.MetadataNameField, metav1.NamespaceDefault),
-				fields.OneTermNotEqualSelector(botanist.MetadataNameField, corev1.NamespaceNodeLease),
+				fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespacePublic),
+				fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespaceSystem),
+				fields.OneTermNotEqualSelector(MetadataNameField, metav1.NamespaceDefault),
+				fields.OneTermNotEqualSelector(MetadataNameField, corev1.NamespaceNodeLease),
 			),
 		},
 	}
+
+	// DaemonSetCleanOption is the delete selector for DaemonSets.
+	DaemonSetCleanOption = &NoCleanupPreventionListOption
+
+	// DeploymentCleanOption is the delete selector for Deployments.
+	DeploymentCleanOption = &NoCleanupPreventionListOption
+
+	// StatefulSetCleanOption is the delete selector for StatefulSets.
+	StatefulSetCleanOption = &NoCleanupPreventionListOption
+
+	// ServiceCleanOption is the delete selector for Services.
+	ServiceCleanOption = client.MatchingLabelsSelector{
+		Selector: labels.NewSelector().Add(NotKubernetesProvider, NotSystemComponent, NoCleanupPrevention),
+	}
+
+	// MutatingWebhookConfigurationCleanOption is the delete selector for MutatingWebhookConfigurations.
+	MutatingWebhookConfigurationCleanOption = &NoCleanupPreventionListOption
+
+	// ValidatingWebhookConfigurationCleanOption is the delete selector for ValidatingWebhookConfigurations.
+	ValidatingWebhookConfigurationCleanOption = &NoCleanupPreventionListOption
+
+	// CustomResourceDefinitionCleanOption is the delete selector for CustomResources.
+	CustomResourceDefinitionCleanOption = &NoCleanupPreventionListOption
+
+	// CronJobCleanOption is the delete selector for CronJobs.
+	CronJobCleanOption = &NoCleanupPreventionListOption
+
+	// IngressCleanOption is the delete selector for Ingresses.
+	IngressCleanOption = &NoCleanupPreventionListOption
+
+	// JobCleanOption is the delete selector for Jobs.
+	JobCleanOption = &NoCleanupPreventionListOption
+
+	// PodCleanOption is the delete selector for Pods.
+	PodCleanOption = &NoCleanupPreventionListOption
+
+	// ReplicaSetCleanOption is the delete selector for ReplicaSets.
+	ReplicaSetCleanOption = &NoCleanupPreventionListOption
+
+	// ReplicationControllerCleanOption is the delete selector for ReplicationControllers.
+	ReplicationControllerCleanOption = &NoCleanupPreventionListOption
+
+	// PersistentVolumeClaimCleanOption is the delete selector for PersistentVolumeClaims.
+	PersistentVolumeClaimCleanOption = &NoCleanupPreventionListOption
 )
 
-func cleanResourceFn(logger logr.Logger, cleanOps utilclient.CleanOps, c client.Client, list runtime.Object, t string, finalize bool, opts ...utilclient.CleanOption) flow.TaskFn {
-	logCleaner(logger, c, list, t, opts...)
+func cleanResourceFn(ctx context.Context, logger logr.Logger, c client.Client, list client.ObjectList, t string, finalize bool, opts ...client.ListOption) flow.TaskFn {
+	logCleaner(ctx, logger, c, list, t, opts...)
 
 	return func(ctx context.Context) error {
-		return retry.Until(ctx, botanist.DefaultInterval, func(ctx context.Context) (done bool, err error) {
-			if err := cleanOps.CleanAndEnsureGone(ctx, c, list, opts...); err != nil {
-				if utilclient.AreObjectsRemaining(err) {
-					return retry.MinorError(err)
-				}
+		return retry.Until(ctx, 5*time.Second, func(ctx context.Context) (done bool, err error) {
+
+			if err := c.List(ctx, list, opts...); err != nil {
+				return retry.MinorError(err)
+			}
+
+			foundObjects := make([]client.Object, 0)
+			err = meta.EachListItem(list, func(obj runtime.Object) error {
+				foundObjects = append(foundObjects, obj.(client.Object))
+				return nil
+			})
+			if err != nil {
 				return retry.SevereError(err)
 			}
-			return retry.Ok()
+
+			if len(foundObjects) == 0 {
+				return retry.Ok()
+			}
+
+			for _, obj := range foundObjects {
+				if err := c.Delete(ctx, obj.(client.Object)); err != nil {
+					if apierrors.IsNotFound(err) {
+						continue
+					}
+					return retry.MinorError(err)
+				}
+			}
+
+			return retry.MinorError(errors.New("still objects left"))
 		})
 	}
 }
 
 // CleanWebhooks deletes all Webhooks in the Shoot cluster that are not being managed by the addon manager.
 func CleanWebhooks(ctx context.Context, l logr.Logger, c client.Client, requirements labels.Requirements) error {
-	ops := utilclient.DefaultCleanOps()
+	sel := labels.NewSelector()
+	sel.Add(requirements...)
+
 	return flow.Parallel(
-		cleanResourceFn(l, ops, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, "MutationsWebhook", true, addAdditionalListOptions(botanist.MutatingWebhookConfigurationCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, "ValidationWebhook", true, addAdditionalListOptions(botanist.ValidatingWebhookConfigurationCleanOption, requirements)),
+		cleanResourceFn(ctx, l, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, "MutationsWebhook", true, MutatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
+		cleanResourceFn(ctx, l, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, "ValidationWebhook", true, ValidatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
 	)(ctx)
 }
 
 // CleanExtendedAPIs removes API extensions like CRDs and API services from the Shoot cluster.
 func CleanExtendedAPIs(ctx context.Context, l logr.Logger, c client.Client, requirements labels.Requirements) error {
-	ops := utilclient.DefaultCleanOps()
+	sel := labels.NewSelector()
+	sel.Add(requirements...)
+
 	return flow.Parallel(
-		cleanResourceFn(l, ops, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, "CRD", true, addAdditionalListOptions(botanist.CustomResourceDefinitionCleanOption, requirements)),
+		cleanResourceFn(ctx, l, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, "CRD", true, CustomResourceDefinitionCleanOption, client.MatchingLabelsSelector{Selector: sel}),
 	)(ctx)
 }
 
@@ -100,41 +205,27 @@ func CleanExtendedAPIs(ctx context.Context, l logr.Logger, c client.Client, requ
 // in the Shoot cluster other than those stored in the exceptions map have been deleted.
 // It will return an error in case it has not finished yet, and nil if all resources are gone.
 func CleanKubernetesResources(ctx context.Context, l logr.Logger, c client.Client, requirements labels.Requirements) error {
-	ops := utilclient.DefaultCleanOps()
+	sel := labels.NewSelector()
+	sel.Add(requirements...)
+	labelOption := client.MatchingLabelsSelector{Selector: sel}
 	return flow.Parallel(
-		cleanResourceFn(l, ops, c, &batchv1beta1.CronJobList{}, "CronJob", false, addAdditionalListOptions(botanist.CronJobCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &appsv1.DaemonSetList{}, "DaemonSet", false, addAdditionalListOptions(botanist.DaemonSetCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &appsv1.DeploymentList{}, "Deployment", false, addAdditionalListOptions(botanist.DeploymentCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &batchv1.JobList{}, "Job", false, addAdditionalListOptions(botanist.JobCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &corev1.PodList{}, "Pod", false, addAdditionalListOptions(botanist.PodCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &appsv1.ReplicaSetList{}, "ReplicaSet", false, addAdditionalListOptions(botanist.ReplicaSetCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &corev1.ReplicationControllerList{}, "ReplicationController", false, addAdditionalListOptions(botanist.ReplicationControllerCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &appsv1.StatefulSetList{}, "StatefulSet", false, addAdditionalListOptions(botanist.StatefulSetCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &corev1.PersistentVolumeClaimList{}, "PVC", false, addAdditionalListOptions(botanist.PersistentVolumeClaimCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &extensionsv1beta1.IngressList{}, "Ingress", false, addAdditionalListOptions(botanist.IngressCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &corev1.ServiceList{}, "Service", false, addAdditionalListOptions(botanist.ServiceCleanOption, requirements)),
-		cleanResourceFn(l, ops, c, &corev1.NamespaceList{}, "Namespace", false, NamespaceCleanOption),
+		cleanResourceFn(ctx, l, c, &batchv1beta1.CronJobList{}, "CronJob", false, CronJobCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &appsv1.DaemonSetList{}, "DaemonSet", false, DaemonSetCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &appsv1.DeploymentList{}, "Deployment", false, DeploymentCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &batchv1.JobList{}, "Job", false, JobCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &corev1.PodList{}, "Pod", false, PodCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &appsv1.ReplicaSetList{}, "ReplicaSet", false, ReplicaSetCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &corev1.ReplicationControllerList{}, "ReplicationController", false, ReplicationControllerCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &appsv1.StatefulSetList{}, "StatefulSet", false, StatefulSetCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &corev1.PersistentVolumeClaimList{}, "PVC", false, PersistentVolumeClaimCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &extensionsv1beta1.IngressList{}, "Ingress", false, IngressCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &corev1.ServiceList{}, "Service", false, ServiceCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &corev1.NamespaceList{}, "Namespace", false, NamespaceCleanOption...),
 	)(ctx)
 }
 
-func addAdditionalListOptions(f utilclient.CleanOption, requirements labels.Requirements) utilclient.CleanOption {
-	cleanOptions := &utilclient.CleanOptions{}
-	f.ApplyToClean(cleanOptions)
-	if len(cleanOptions.ListOptions) == 0 {
-		return f
-	}
-	cleanOptions.ListOptions = append(cleanOptions.ListOptions, client.MatchingLabelsSelector{
-		Selector: labels.NewSelector().Add(NotAddonManagerReconcile, NotKubernetesClusterService),
-	}, client.MatchingLabelsSelector{
-		Selector: labels.NewSelector().Add(requirements...),
-	})
-	return utilclient.ListWith(cleanOptions.ListOptions)
-}
-
-func logCleaner(logger logr.Logger, c client.Client, list runtime.Object, t string, opts ...utilclient.CleanOption) {
-	cleanOptions := &utilclient.CleanOptions{}
-	cleanOptions.ApplyOptions(opts)
-	err := c.List(context.TODO(), list, cleanOptions.ListOptions...)
+func logCleaner(ctx context.Context, logger logr.Logger, c client.Client, list client.ObjectList, t string, opts ...client.ListOption) {
+	err := c.List(ctx, list, opts...)
 	if err != nil {
 		logger.Error(err, "unable to list objects: %s")
 		return
@@ -155,4 +246,10 @@ func logCleaner(logger logr.Logger, c client.Client, list runtime.Object, t stri
 		logger.Error(err, "unable to list objects")
 		return
 	}
+}
+
+func MustNewRequirement(key string, op selection.Operator, val string) labels.Requirement {
+	req, err := labels.NewRequirement(key, op, []string{val})
+	utilruntime.Must(err)
+	return *req
 }

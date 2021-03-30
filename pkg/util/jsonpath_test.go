@@ -15,9 +15,10 @@
 package util_test
 
 import (
-	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 var _ = Describe("jsonpath util", func() {

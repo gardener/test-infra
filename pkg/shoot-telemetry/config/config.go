@@ -16,9 +16,10 @@ package config
 
 import (
 	"fmt"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"time"
+
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 )

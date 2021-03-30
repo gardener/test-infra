@@ -17,6 +17,14 @@ package pages
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/gorilla/mux"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	metadata2 "github.com/gardener/test-infra/pkg/testmachinery/metadata"
@@ -24,12 +32,6 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages/pagination"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/gorilla/mux"
-	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"strings"
-	"time"
 )
 
 type detailedTestrunItem struct {

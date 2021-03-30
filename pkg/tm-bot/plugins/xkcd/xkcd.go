@@ -18,16 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
-	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
-	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 )
 
 type xkcdInfo struct {

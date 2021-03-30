@@ -15,11 +15,12 @@ package gardenerscheduler
 
 import (
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/go-logr/logr"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 const (
@@ -49,7 +50,7 @@ type registration struct {
 }
 
 type gardenerscheduler struct {
-	client kubernetes.Interface
+	client client.Client
 	log    logr.Logger
 
 	shootName     string

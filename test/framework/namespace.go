@@ -17,18 +17,20 @@ package framework
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // EnsureTestNamespace creates the namespace specified in the config it does not exist.
@@ -67,7 +69,7 @@ func (o *Operation) createNewTestNamespace(ctx context.Context) error {
 		}
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, o.Client().Client(), ns, func() error { return nil }); err != nil {
+	if _, err := controllerutil.CreateOrUpdate(ctx, o.Client(), ns, func() error { return nil }); err != nil {
 		return errors.Wrapf(err, "unable to create new test namespace")
 	}
 	o.State.AppendObject(ns)
@@ -94,7 +96,7 @@ func (o *Operation) setupNamespace(ctx context.Context, namespace string) error 
 			},
 		},
 	}
-	if _, err := controllerutil.CreateOrUpdate(ctx, o.Client().Client(), rb, func() error { return nil }); err != nil {
+	if _, err := controllerutil.CreateOrUpdate(ctx, o.Client(), rb, func() error { return nil }); err != nil {
 		return errors.Wrapf(err, "unable to create cluster rolebinding %s", namespace)
 	}
 	o.State.AppendObject(rb)
@@ -104,7 +106,7 @@ func (o *Operation) setupNamespace(ctx context.Context, namespace string) error 
 func (o *Operation) copyDefaultSecretsToNamespace(ctx context.Context, namespace string) error {
 	for _, secretName := range CoreSecrets {
 		secret := &corev1.Secret{}
-		if err := o.Client().Client().Get(ctx, client.ObjectKey{Name: secretName, Namespace: o.testConfig.TmNamespace}, secret); err != nil {
+		if err := o.Client().Get(ctx, client.ObjectKey{Name: secretName, Namespace: o.testConfig.TmNamespace}, secret); err != nil {
 			return errors.Wrapf(err, "unable to fetch secret %s from namespace %s", secretName, o.testConfig.TmNamespace)
 		}
 
@@ -115,7 +117,7 @@ func (o *Operation) copyDefaultSecretsToNamespace(ctx context.Context, namespace
 			},
 			Data: secret.Data,
 		}
-		if _, err := controllerutil.CreateOrUpdate(ctx, o.Client().Client(), newSecret, func() error { return nil }); err != nil {
+		if _, err := controllerutil.CreateOrUpdate(ctx, o.Client(), newSecret, func() error { return nil }); err != nil {
 			return errors.Wrapf(err, "unable to create new secret %s in namespace %s", secretName, namespace)
 		}
 		o.State.AppendObject(newSecret)
@@ -127,6 +129,8 @@ func (o *Operation) copyDefaultSecretsToNamespace(ctx context.Context, namespace
 // AfterSuite should be registered as ginkgo's after suite.
 // It cleans up all previously created resources that are in the operation state.
 func (o *Operation) AfterSuite() {
+	ctx := context.Background()
+	defer ctx.Done()
 	o.log.Info("deleting namespace", "namespace", o.TestNamespace())
 	if !strings.HasPrefix(o.TestNamespace(), TestNamespacePrefix) {
 		return
@@ -134,7 +138,7 @@ func (o *Operation) AfterSuite() {
 
 	var res *multierror.Error
 	for _, obj := range o.State.Objects {
-		if err := o.Client().Client().Delete(context.TODO(), obj); err != nil {
+		if err := o.Client().Delete(ctx, obj); err != nil {
 			res = multierror.Append(res, err)
 		}
 	}

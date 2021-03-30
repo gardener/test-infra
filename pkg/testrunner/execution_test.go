@@ -15,11 +15,14 @@
 package testrunner_test
 
 import (
-	"github.com/gardener/test-infra/pkg/testrunner"
+	"math"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
+
+	"github.com/gardener/test-infra/pkg/testrunner"
 )
 
 var _ = Describe("Executor tests", func() {
@@ -37,7 +40,7 @@ var _ = Describe("Executor tests", func() {
 				executions[i] = e
 				f := func() {
 					e.start = time.Now()
-					time.Sleep(5 * time.Second)
+					time.Sleep(1 * time.Second)
 				}
 				executor.AddItem(f)
 			}
@@ -50,7 +53,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+				Expect(b.Seconds()).To(BeNumerically(">=", 1))
 			}
 		}, 10)
 
@@ -85,7 +88,7 @@ var _ = Describe("Executor tests", func() {
 			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
 				Serial:        true,
 				BackoffBucket: 1,
-				BackoffPeriod: 5 * time.Second,
+				BackoffPeriod: 2 * time.Second,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -105,7 +108,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+				Expect(b.Seconds()).To(BeNumerically(">=", 2))
 			}
 		}, 10)
 
@@ -115,17 +118,15 @@ var _ = Describe("Executor tests", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			e := newExecution(1)
+			var called int
 			f := func() {
-				e.start = time.Now()
-				time.Sleep(5 * time.Second)
+				called++
+				time.Sleep(1 * time.Second)
 			}
 			executor.AddItem(f)
 
 			executor.Run()
-			endtime := time.Now()
-			b := endtime.Sub(e.start)
-			Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+			Expect(called).To(Equal(1))
 		}, 10)
 
 		It("should run 3 functions in serial", func() {
@@ -140,7 +141,7 @@ var _ = Describe("Executor tests", func() {
 				executions[i] = e
 				f := func() {
 					e.start = time.Now()
-					time.Sleep(5 * time.Second)
+					time.Sleep(1 * time.Second)
 				}
 				executor.AddItem(f)
 			}
@@ -152,7 +153,7 @@ var _ = Describe("Executor tests", func() {
 				Expect(e.start.After(before.start)).To(BeTrue())
 
 				b := e.start.Sub(before.start)
-				Expect(b.Seconds()).To(BeNumerically("~", 5, 1))
+				Expect(b.Seconds()).To(BeNumerically(">=", 1))
 			}
 		}, 10)
 
@@ -177,12 +178,12 @@ var _ = Describe("Executor tests", func() {
 
 			executor.Run()
 
-			expectExecutionsToBe(executions[0], executions[1], 0)
-			expectExecutionsToBe(executions[2], executions[3], 0)
-			expectExecutionsToBe(executions[4], executions[5], 0)
+			expectExecutionsToHaveStartedInParallel(executions[0], executions[1])
+			expectExecutionsToHaveStartedInParallel(executions[2], executions[3])
+			expectExecutionsToHaveStartedInParallel(executions[4], executions[5])
 
-			expectExecutionsToBe(executions[2], executions[0], 2)
-			expectExecutionsToBe(executions[4], executions[2], 2)
+			expectExecutionsToHaveBeenStartedAfter(executions[2], executions[0], 2)
+			expectExecutionsToHaveBeenStartedAfter(executions[4], executions[2], 2)
 		}, 10)
 
 		It("should run 6 functions in serial with a backoff in a bucket of 2", func() {
@@ -206,12 +207,12 @@ var _ = Describe("Executor tests", func() {
 
 			executor.Run()
 
-			expectExecutionsToBe(executions[0], executions[1], 0)
-			expectExecutionsToBe(executions[2], executions[3], 0)
-			expectExecutionsToBe(executions[4], executions[5], 0)
+			expectExecutionsToHaveStartedInParallel(executions[0], executions[1])
+			expectExecutionsToHaveStartedInParallel(executions[2], executions[3])
+			expectExecutionsToHaveStartedInParallel(executions[4], executions[5])
 
-			expectExecutionsToBe(executions[2], executions[0], 3)
-			expectExecutionsToBe(executions[4], executions[2], 3)
+			expectExecutionsToHaveBeenStartedAfter(executions[2], executions[0], 3)
+			expectExecutionsToHaveBeenStartedAfter(executions[4], executions[2], 3)
 		}, 10)
 	})
 
@@ -242,7 +243,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[2], 5)
+		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[2], 5)
 
 	}, 10)
 
@@ -271,7 +272,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[2], 5)
+		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[2], 5)
 	}, 10)
 
 	It("should add another test during execution in parallel steps that start immediately", func() {
@@ -302,7 +303,7 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
-		expectExecutionsToBe(addExecution, executions[0], 5)
+		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[0], 5)
 	}, 10)
 
 	It("should add same test during execution in parallel steps", func() {
@@ -328,14 +329,20 @@ var _ = Describe("Executor tests", func() {
 		executor.Run()
 
 		Expect(executions[1].value).To(Equal(3))
-		expectExecutionsToBe(executions[1], executions[2], 5)
+		expectExecutionsToHaveBeenStartedAfter(executions[1], executions[2], 5)
 	}, 10)
 
 })
 
-func expectExecutionsToBe(e1, e2 *execution, expDurationSeconds int) {
-	d := e1.start.Sub(e2.start)
-	ExpectWithOffset(1, d.Seconds()).To(BeNumerically("~", expDurationSeconds, 1.1), "duration is %fs but expected %ds", d.Seconds(), expDurationSeconds)
+func expectExecutionsToHaveBeenStartedAfter(e1, e2 *execution, expDurationSeconds int) {
+	d := e1.start.Sub(e2.start).Seconds()
+	d = math.Round(d*100) / 100
+	ExpectWithOffset(1, d).To(BeNumerically(">=", expDurationSeconds), "duration is %fs but expected %ds", d, expDurationSeconds)
+}
+
+func expectExecutionsToHaveStartedInParallel(e1, e2 *execution) {
+	d := math.Abs(e1.start.Sub(e2.start).Seconds())
+	ExpectWithOffset(1, d).To(BeNumerically("~", 0, 1), "duration is %fs but expected have been started in parallel", d)
 }
 
 func newExecution(i int) *execution {

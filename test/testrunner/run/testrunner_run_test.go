@@ -15,6 +15,7 @@
 package testrunner_run_test
 
 import (
+	"context"
 	"time"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -43,13 +44,13 @@ var _ = Describe("Testrunner execution tests", func() {
 
 	Context("testrun", func() {
 		It("should run a single testrun", func() {
-			stopCh := make(chan struct{})
-			defer close(stopCh)
+			ctx := context.Background()
+			defer ctx.Done()
 
 			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
 			go func() {
-				Expect(w.Start(stopCh)).ToNot(HaveOccurred())
+				Expect(w.Start(ctx)).ToNot(HaveOccurred())
 			}()
 
 			err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
@@ -74,13 +75,13 @@ var _ = Describe("Testrunner execution tests", func() {
 		})
 
 		It("should run 2 testruns", func() {
-			stopCh := make(chan struct{})
-			defer close(stopCh)
+			ctx := context.Background()
+			defer ctx.Done()
 
 			w, err := watch.NewFromFile(operation.Log(), operation.GetKubeconfigPath(), nil)
 			Expect(err).ToNot(HaveOccurred())
 			go func() {
-				Expect(w.Start(stopCh)).ToNot(HaveOccurred())
+				Expect(w.Start(ctx)).ToNot(HaveOccurred())
 			}()
 
 			err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)

@@ -16,11 +16,12 @@ package collector
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 func writeBulks(path string, bufs [][]byte) error {

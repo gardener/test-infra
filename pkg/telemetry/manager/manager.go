@@ -18,20 +18,23 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
-	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"os"
 	"path"
 	"sync"
 	"time"
 
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	"github.com/gardener/test-infra/pkg/testrunner/telemetry"
+	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/testrunner/telemetry"
 )
 
 type Manager interface {

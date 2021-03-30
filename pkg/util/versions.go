@@ -2,8 +2,9 @@ package util
 
 import (
 	"github.com/Masterminds/semver"
-	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 // GetLatestVersionFromConstraint returns the latest version that matches a constraint

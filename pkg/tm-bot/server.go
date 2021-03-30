@@ -31,7 +31,7 @@ import (
 )
 
 // Serve starts the webhook server for testrun validation
-func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration, stopCh <-chan struct{}) error {
+func Serve(ctx context.Context, log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguration) error {
 	o := NewOptions(log, restConfig, cfg)
 	log.Info("Start TM Bot")
 
@@ -47,7 +47,7 @@ func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguratio
 	}
 
 	go func() {
-		if err := o.w.Start(stopCh); err != nil {
+		if err := o.w.Start(ctx); err != nil {
 			o.log.Error(err, "error while starting watch")
 		}
 	}()
@@ -70,7 +70,7 @@ func Serve(log logr.Logger, restConfig *rest.Config, cfg *config.BotConfiguratio
 		return err
 	}
 
-	return o.startWebserver(r, stopCh)
+	return o.startWebserver(r, ctx.Done())
 }
 
 func (o *options) startWebserver(router *mux.Router, stop <-chan struct{}) error {

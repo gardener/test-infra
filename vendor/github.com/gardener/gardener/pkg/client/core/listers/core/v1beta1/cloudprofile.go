@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import (
 )
 
 // CloudProfileLister helps list CloudProfiles.
+// All objects returned here must be treated as read-only.
 type CloudProfileLister interface {
 	// List lists all CloudProfiles in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.CloudProfile, err error)
 	// Get retrieves the CloudProfile from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.CloudProfile, error)
 	CloudProfileListerExpansion
 }

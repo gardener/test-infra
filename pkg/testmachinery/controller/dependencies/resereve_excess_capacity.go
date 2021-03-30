@@ -17,7 +17,8 @@ package dependencies
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/utils/chart"
+	"path/filepath"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 
 	intconfig "github.com/gardener/test-infra/pkg/apis/config"
@@ -31,20 +32,35 @@ func (e *DependencyEnsurer) ensureReserveExcessCapacityPods(ctx context.Context,
 		return nil
 	}
 
-	values := map[string]interface{}{
-		"replicas":  config.Replicas,
-		"resources": config.Resources,
+	values := map[string]interface{}{}
+	var err error
+	if config.Resources != nil {
+		values["resources"], err = EncodeValues(config.Resources)
+		if err != nil {
+			return fmt.Errorf("unable to encode resources: %w", err)
+		}
+	}
+	if config.Replicas != 0 {
+		values["replicas"], err = EncodeValues(config.Replicas)
+		if err != nil {
+			return fmt.Errorf("unable to encode replicas: %w", err)
+		}
 	}
 
-	values, err := chart.InjectImages(values, imagevector.ImageVector(), []string{
-		intconfig.ReserveExcessCapacityImageName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to find image version %v", err)
+	minioChart := &helmChart{
+		Name: intconfig.ReserveExcessCapacityChartName,
+		Path: filepath.Join(intconfig.ChartsPath, intconfig.ReserveExcessCapacityChartName),
+		Images: []string{
+			intconfig.ReserveExcessCapacityImageName,
+		},
+		Values: values,
 	}
-
-	err = e.createManagedResource(ctx, namespace, intconfig.ReserveExcessCapacityManagedResourceName, e.renderer,
-		intconfig.ReserveExcessCapacityChartName, values, nil)
+	err = e.createManagedResource(ctx,
+		namespace,
+		intconfig.ReserveExcessCapacityManagedResourceName,
+		minioChart,
+		imagevector.ImageVector(),
+	)
 	if err != nil {
 		e.log.Error(err, "unable to create managed resource")
 		return err

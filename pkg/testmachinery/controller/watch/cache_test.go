@@ -64,7 +64,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, opts)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -84,7 +84,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -117,7 +117,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, opts)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
@@ -159,7 +159,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		w, err := watch.New(log.NullLogger{}, restConfig, opts)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := w.Start(ctx.Done())
+			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 

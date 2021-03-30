@@ -15,16 +15,17 @@
 package testmachinery
 
 import (
-	argoscheme "github.com/argoproj/argo/pkg/client/clientset/versioned/scheme"
-	mrscheme "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	configinstall "github.com/gardener/test-infra/pkg/apis/config/install"
-	tminstall "github.com/gardener/test-infra/pkg/apis/testmachinery/install"
-	"github.com/gardener/test-infra/pkg/util"
+	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	mrscheme "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	configinstall "github.com/gardener/test-infra/pkg/apis/config/install"
+	tminstall "github.com/gardener/test-infra/pkg/apis/testmachinery/install"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 type Phase string
@@ -141,7 +142,7 @@ func init() {
 	testmachinerySchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
 		tminstall.AddToScheme,
-		argoscheme.AddToScheme,
+		argov1alpha1.AddToScheme,
 		mrscheme.AddToScheme,
 	)
 

@@ -17,9 +17,10 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 func RawJSONPath(content []byte, path string, dest interface{}) ([]byte, error) {

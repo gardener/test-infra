@@ -49,7 +49,7 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	var err error
-	operation, err = framework.New(zap.LoggerTo(GinkgoWriter, true), cfg)
+	operation, err = framework.New(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)), cfg)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(operation.WaitForClusterReadiness(InitializationTimeout)).ToNot(HaveOccurred())
 })

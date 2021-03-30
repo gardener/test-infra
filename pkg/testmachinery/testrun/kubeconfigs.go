@@ -17,20 +17,22 @@ package testrun
 import (
 	"encoding/base64"
 	"fmt"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/util/strconf"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
 )
 
 // ParseKubeconfigs parses the kubeconfigs defined in the testrun and returns respective configs and k8s secrets.
-func ParseKubeconfigs(tr *tmv1beta1.Testrun) ([]*config.Element, []runtime.Object, error) {
+func ParseKubeconfigs(tr *tmv1beta1.Testrun) ([]*config.Element, []client.Object, error) {
 	configs := make([]*config.Element, 0)
-	secrets := make([]runtime.Object, 0)
+	secrets := make([]client.Object, 0)
 	if tr.Spec.Kubeconfigs.Host != nil {
 		if err := addKubeconfig(&configs, &secrets, tr, "host", tr.Spec.Kubeconfigs.Host); err != nil {
 			return nil, nil, err
@@ -55,7 +57,7 @@ func ParseKubeconfigs(tr *tmv1beta1.Testrun) ([]*config.Element, []runtime.Objec
 	return configs, secrets, nil
 }
 
-func addKubeconfig(configs *[]*config.Element, secrets *[]runtime.Object, tr *tmv1beta1.Testrun, name string, kubeconfig *strconf.StringOrConfig) error {
+func addKubeconfig(configs *[]*config.Element, secrets *[]client.Object, tr *tmv1beta1.Testrun, name string, kubeconfig *strconf.StringOrConfig) error {
 	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
 	if kubeconfig.Type == strconf.String {
 

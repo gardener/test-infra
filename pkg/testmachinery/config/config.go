@@ -18,9 +18,10 @@ import (
 	"fmt"
 	"path"
 
+	corev1 "k8s.io/api/core/v1"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // NewElement creates a new config element object.

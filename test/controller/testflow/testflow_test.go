@@ -17,16 +17,18 @@ package testflow_test
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/pkg/util/strconf"
 	"strings"
 	"time"
+
+	"github.com/gardener/gardener/pkg/utils/retry"
+
+	"github.com/gardener/test-infra/pkg/util/strconf"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -222,19 +224,19 @@ var _ = Describe("Testflow execution tests", func() {
 				Pause: &tmv1beta1.Pause{Enabled: true},
 			})
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			err = utils.WatchTestrun(ctx, operation.Client(), tr, 2*time.Minute, func(tr *tmv1beta1.Testrun) (bool, error) {
 				testrun := &tmv1beta1.Testrun{}
-				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.GetName(), Namespace: tr.GetNamespace()}, testrun); err != nil {
+				if err := operation.Client().Get(ctx, client.ObjectKey{Name: tr.GetName(), Namespace: tr.GetNamespace()}, testrun); err != nil {
 					operation.Log().Error(err, "unable to get testrun")
 					return false, nil
 				}
 				tr = testrun
 				wf := &argov1.Workflow{}
-				if err := operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf); err != nil {
+				if err := operation.Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf); err != nil {
 					operation.Log().Error(err, "unable to get workflow")
 					return false, nil
 				}
@@ -249,14 +251,14 @@ var _ = Describe("Testflow execution tests", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			err = util.ResumeTestrun(ctx, operation.Client().Client(), tr)
+			err = util.ResumeTestrun(ctx, operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			tr, err = utils.WatchTestrunUntilCompleted(ctx, operation.Client(), tr, 2*time.Minute)
 			Expect(err).ToNot(HaveOccurred())
 
 			wf := &argov1.Workflow{}
-			err = operation.Client().Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf)
+			err = operation.Client().Get(ctx, client.ObjectKey{Name: tr.Status.Workflow, Namespace: tr.GetNamespace()}, wf)
 			Expect(err).ToNot(HaveOccurred())
 
 			numExecutedTestDefs := 0
@@ -476,10 +478,10 @@ var _ = Describe("Testflow execution tests", func() {
 						"test": []byte("test"),
 					},
 				}
-				err := operation.Client().Client().Create(ctx, secret)
+				err := operation.Client().Create(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := operation.Client().Client().Delete(ctx, secret)
+					err := operation.Client().Delete(ctx, secret)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 
@@ -531,10 +533,10 @@ var _ = Describe("Testflow execution tests", func() {
 						"test": "test",
 					},
 				}
-				err := operation.Client().Client().Create(ctx, configmap)
+				err := operation.Client().Create(ctx, configmap)
 				Expect(err).ToNot(HaveOccurred())
 				defer func() {
-					err := operation.Client().Client().Delete(ctx, configmap)
+					err := operation.Client().Delete(ctx, configmap)
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete configmap %s", configmap.Name)
 				}()
 
@@ -587,20 +589,20 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, InitializationTimeout) {
-				err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
+				err = operation.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 				if errors.IsNotFound(err) {
 					return
 				}
 				time.Sleep(5 * time.Second)
 			}
 
-			err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
+			err = operation.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 			Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun %s was not deleted in %d seconds", tr.Name, InitializationTimeout)
 		})
 
@@ -613,19 +615,19 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TTLSecondsAfterFinished = &ttl
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			startTime := time.Now()
 			for !util.MaxTimeExceeded(startTime, InitializationTimeout) {
-				err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
+				err = operation.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 				if errors.IsNotFound(err) {
 					return
 				}
 				time.Sleep(5 * time.Second)
 			}
-			err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
+			err = operation.Client().Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, tr)
 			Expect(errors.IsNotFound(err)).To(BeTrue(), "Testrun %s was not deleted in %d seconds", tr.Name, InitializationTimeout)
 		})
 	})

@@ -15,9 +15,11 @@
 package pages
 
 import (
-	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
-	"github.com/go-logr/logr"
 	"net/http"
+
+	"github.com/go-logr/logr"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
 )
 
 func NewHomePage(logger logr.Logger, auth auth.Provider, basePath string) http.HandlerFunc {

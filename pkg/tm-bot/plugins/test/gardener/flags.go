@@ -17,6 +17,10 @@ package gardener
 import (
 	"context"
 	"fmt"
+
+	"github.com/ghodss/yaml"
+	"github.com/spf13/pflag"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/shootflavors"
@@ -26,8 +30,6 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"github.com/gardener/test-infra/pkg/util/gardensetup"
-	"github.com/ghodss/yaml"
-	"github.com/spf13/pflag"
 )
 
 const (

@@ -17,15 +17,15 @@ package main
 import (
 	"fmt"
 	"os"
-)
 
-import (
-	"github.com/gardener/gardener/extensions/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+
 	"github.com/gardener/test-infra/cmd/tm-bot/app"
 )
 
 func main() {
-	cmd := app.NewTestMachineryBotCommand(controller.SetupSignalHandlerContext())
+	ctx := signals.SetupSignalHandler()
+	cmd := app.NewTestMachineryBotCommand(ctx)
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Print(err)

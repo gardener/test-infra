@@ -16,12 +16,14 @@ package shootflavors
 
 import (
 	"fmt"
+
 	"github.com/Masterminds/semver"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // Validate validates a shoot flavor and checks if all necessary attributes are set
@@ -167,7 +169,7 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.Ma
 			images[provider] = []gardencorev1beta1.MachineImage{
 				{
 					Name:     name,
-					Versions: []gardencorev1beta1.ExpirableVersion{{Version: version}},
+					Versions: MachineImageVersions(version),
 				},
 			}
 			return
@@ -179,7 +181,7 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.Ma
 
 			images[provider] = append(images[provider], gardencorev1beta1.MachineImage{
 				Name:     name,
-				Versions: []gardencorev1beta1.ExpirableVersion{{Version: version}},
+				Versions: MachineImageVersions(version),
 			})
 			return
 		}
@@ -187,7 +189,7 @@ func addMachineImagesFunc(images map[common.CloudProvider][]gardencorev1beta1.Ma
 		if _, ok := used[provider][name][version]; !ok {
 			used[provider][name][version] = new(interface{})
 			index := indexMapping[provider][name]
-			images[provider][index].Versions = append(images[provider][index].Versions, gardencorev1beta1.ExpirableVersion{Version: version})
+			images[provider][index].Versions = append(images[provider][index].Versions, MachineImageVersion(version))
 		}
 	}
 }
@@ -209,4 +211,22 @@ func ParseKubernetesVersions(versions common.ShootKubernetesVersionFlavor) ([]ga
 		return nil, errors.New("unable to read versions from cloudprofile. Only concrete kubernetes versions are allowed")
 	}
 	return nil, errors.New("no kubernetes versions or patterns are defined")
+}
+
+// MachineImageVersion creates a new machine image version
+func MachineImageVersion(version string) gardencorev1beta1.MachineImageVersion {
+	return gardencorev1beta1.MachineImageVersion{
+		ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+			Version: version,
+		},
+	}
+}
+
+// MachineImageVersions creates a new list of machine image versions
+func MachineImageVersions(versions ...string) []gardencorev1beta1.MachineImageVersion {
+	images := make([]gardencorev1beta1.MachineImageVersion, len(versions))
+	for i, version := range versions {
+		images[i] = MachineImageVersion(version)
+	}
+	return images
 }

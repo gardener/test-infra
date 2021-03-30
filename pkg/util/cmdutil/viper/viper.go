@@ -16,10 +16,11 @@ package viper
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"os"
 )
 
 const (

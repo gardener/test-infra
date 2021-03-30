@@ -16,12 +16,14 @@ package testmachinery
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 var tmConfig = TmConfiguration{

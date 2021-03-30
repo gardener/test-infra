@@ -18,10 +18,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 // GenerateNotificationConfigForAlerting creates a notification config file with email recipients if any test step has failed

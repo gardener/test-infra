@@ -17,11 +17,12 @@ package locations
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 // NewTestLocations takes the parsed CRD Locations and fetches all TestDefintions from all locations.

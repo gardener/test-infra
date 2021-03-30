@@ -16,20 +16,22 @@ package framework
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"k8s.io/apimachinery/pkg/runtime"
 	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/test/utils"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/test/utils"
 )
 
 // Client returns the kubernetes client of the current test cluster
-func (o *Operation) Client() kubernetes.Interface {
+func (o *Operation) Client() client.Client {
 	return o.tmClient
 }
 
@@ -117,9 +119,9 @@ func (o *Operation) RunTestrun(ctx context.Context, tr *tmv1beta1.Testrun, phase
 
 // AppendObject adds a kubernetes objects to the start of the state's objects.
 // These objects are meant to be cleaned up after the test has run.
-func (s *OperationState) AppendObject(obj runtime.Object) {
+func (s *OperationState) AppendObject(obj client.Object) {
 	if s.Objects == nil {
-		s.Objects = make([]runtime.Object, 0)
+		s.Objects = make([]client.Object, 0)
 	}
-	s.Objects = append([]runtime.Object{obj}, s.Objects...)
+	s.Objects = append([]client.Object{obj}, s.Objects...)
 }

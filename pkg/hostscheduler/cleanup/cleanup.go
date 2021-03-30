@@ -16,21 +16,22 @@ package cleanup
 
 import (
 	"context"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CleanResources(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, requirements labels.Requirements) error {
-	if err := CleanWebhooks(ctx, logger, k8sClient.Client(), requirements); err != nil {
+func CleanResources(ctx context.Context, logger logr.Logger, k8sClient client.Client, requirements labels.Requirements) error {
+	if err := CleanWebhooks(ctx, logger, k8sClient, requirements); err != nil {
 		return err
 	}
 	logger.Info("Cleaned Webhooks...")
-	if err := CleanExtendedAPIs(ctx, logger, k8sClient.Client(), requirements); err != nil {
+	if err := CleanExtendedAPIs(ctx, logger, k8sClient, requirements); err != nil {
 		return err
 	}
 	logger.Info("Cleaned Extended API...")
-	if err := CleanKubernetesResources(ctx, logger, k8sClient.Client(), requirements); err != nil {
+	if err := CleanKubernetesResources(ctx, logger, k8sClient, requirements); err != nil {
 		return err
 	}
 	logger.Info("Cleaned Kubernetes resources...")

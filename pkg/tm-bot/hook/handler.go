@@ -16,6 +16,12 @@ package hook
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/go-logr/logr"
+	"github.com/google/go-github/v27/github"
+	"github.com/pkg/errors"
+
 	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/echo"
@@ -26,10 +32,6 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/test/single"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/xkcd"
 	testsmanager "github.com/gardener/test-infra/pkg/tm-bot/tests"
-	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
-	"github.com/pkg/errors"
-	"net/http"
 )
 
 type Handler struct {

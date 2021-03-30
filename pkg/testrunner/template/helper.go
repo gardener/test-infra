@@ -17,14 +17,16 @@ package template
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/gardener/gardener/pkg/utils"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+
+	"github.com/gardener/gardener/pkg/utils"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
 func addAnnotationsToTestrun(tr *tmv1beta1.Testrun, annotations map[string]string) {

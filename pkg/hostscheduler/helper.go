@@ -16,16 +16,18 @@ package hostscheduler
 
 import (
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/util/secrets"
-	"github.com/go-logr/logr"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/go-logr/logr"
+	"k8s.io/client-go/rest"
+
+	"github.com/gardener/test-infra/pkg/util/secrets"
 )
 
 // WriteHostKubeconfig writes a kubeconfig from a restclient to the kubeconfig host path
-func WriteHostKubeconfig(log logr.Logger, k8sClient kubernetes.Interface) error {
+func WriteHostKubeconfig(log logr.Logger, restConfig *rest.Config) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
 	kubeconfigPath, err := HostKubeconfigPath()
 	if err != nil {
@@ -34,7 +36,7 @@ func WriteHostKubeconfig(log logr.Logger, k8sClient kubernetes.Interface) error 
 	log.Info(fmt.Sprintf("Writing host kubeconfig to %s", kubeconfigPath))
 
 	// Generate kubeconfig from restclient
-	kubeconfig, err := secrets.GenerateKubeconfigFromRestConfig(k8sClient.RESTConfig(), "gke-host")
+	kubeconfig, err := secrets.GenerateKubeconfigFromRestConfig(restConfig, "gke-host")
 	if err != nil {
 		return err
 	}

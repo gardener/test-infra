@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import (
 )
 
 // ControllerInstallationLister helps list ControllerInstallations.
+// All objects returned here must be treated as read-only.
 type ControllerInstallationLister interface {
 	// List lists all ControllerInstallations in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.ControllerInstallation, err error)
 	// Get retrieves the ControllerInstallation from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.ControllerInstallation, error)
 	ControllerInstallationListerExpansion
 }

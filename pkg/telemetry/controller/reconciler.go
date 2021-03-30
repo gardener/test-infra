@@ -17,14 +17,16 @@ package controller
 import (
 	"context"
 	"fmt"
-	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
-	telmgr "github.com/gardener/test-infra/pkg/telemetry/manager"
+
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	telv1beta1 "github.com/gardener/test-infra/pkg/apis/telemetry/v1beta1"
+	telmgr "github.com/gardener/test-infra/pkg/telemetry/manager"
 )
 
 type telemetryReconciler struct {
@@ -35,10 +37,7 @@ type telemetryReconciler struct {
 	controllerManager telmgr.Manager
 }
 
-func (r *telemetryReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := context.Background()
-	defer ctx.Done()
-
+func (r *telemetryReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := r.logger.WithValues("name", request.Name, "namespace", request.Namespace)
 
 	st := &telv1beta1.ShootsMeasurement{}

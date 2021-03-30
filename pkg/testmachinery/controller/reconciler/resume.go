@@ -17,15 +17,17 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"time"
+
+	"github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/retry"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 // Resume a workflow if a specific annotation is set

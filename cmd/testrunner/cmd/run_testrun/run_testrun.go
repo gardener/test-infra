@@ -17,16 +17,18 @@ package run_testrun
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"os"
-	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/spf13/cobra"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -71,7 +73,7 @@ func (o *options) run(ctx context.Context) error {
 	}
 
 	go func() {
-		if err := watcher.Start(ctx.Done()); err != nil {
+		if err := watcher.Start(ctx); err != nil {
 			logger.Log.Error(err, "unable to start testrun watch controller")
 			os.Exit(1)
 		}

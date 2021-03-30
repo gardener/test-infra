@@ -3,13 +3,9 @@ package template
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testrun_renderer"
-	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +14,13 @@ import (
 	chartapi "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/strvals"
 	"k8s.io/helm/pkg/timeconv"
-	"path/filepath"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // templateRenderer is the internal template templateRenderer

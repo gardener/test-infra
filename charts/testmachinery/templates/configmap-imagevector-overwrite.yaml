@@ -19,6 +19,8 @@ kind: ConfigMap
 metadata:
   name: testmachinery-controller-imagevector-overwrite
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "defaultLabels" . | nindent 4 }}
 data:
   images_overwrite.yaml: |
 {{ .Values.imageVectorOverwrite | indent 4 }}

@@ -51,6 +51,10 @@ func NewOCIRegistryAccess(ref string) TypedObjectAccessor {
 	}
 }
 
+func (_ *OCIRegistryAccess) GetType() string {
+	return OCIRegistryType
+}
+
 func (O OCIRegistryAccess) GetData() ([]byte, error) {
 	return json.Marshal(O)
 }
@@ -98,6 +102,10 @@ func NewOCIBlobAccess(ref, mediaType, digest string, size int64) TypedObjectAcce
 	}
 }
 
+func (_ *OCIBlobAccess) GetType() string {
+	return OCIBlobType
+}
+
 func (a OCIBlobAccess) GetData() ([]byte, error) {
 	return json.Marshal(a)
 }
@@ -135,6 +143,10 @@ type LocalOCIBlobAccess struct {
 	Digest string `json:"digest"`
 }
 
+func (_ *LocalOCIBlobAccess) GetType() string {
+	return LocalOCIBlobType
+}
+
 func (a LocalOCIBlobAccess) GetData() ([]byte, error) {
 	return json.Marshal(a)
 }
@@ -152,12 +164,13 @@ func (a *LocalOCIBlobAccess) SetData(bytes []byte) error {
 const LocalFilesystemBlobType = "localFilesystemBlob"
 
 // NewLocalFilesystemBlobAccess creates a new localFilesystemBlob accessor.
-func NewLocalFilesystemBlobAccess(path string) TypedObjectAccessor {
+func NewLocalFilesystemBlobAccess(path string, mediaType string) TypedObjectAccessor {
 	return &LocalFilesystemBlobAccess{
 		ObjectType: ObjectType{
 			Type: LocalFilesystemBlobType,
 		},
-		Filename: path,
+		Filename:  path,
+		MediaType: mediaType,
 	}
 }
 
@@ -167,6 +180,12 @@ type LocalFilesystemBlobAccess struct {
 	// Filename is the name of the blob in the local filesystem.
 	// The blob is expected to be at <fs-root>/blobs/<name>
 	Filename string `json:"filename"`
+	// MediaType is the media type of the object this filename refers to.
+	MediaType string `json:"mediaType,omitempty"`
+}
+
+func (_ *LocalFilesystemBlobAccess) GetType() string {
+	return LocalFilesystemBlobType
 }
 
 func (a LocalFilesystemBlobAccess) GetData() ([]byte, error) {
@@ -201,6 +220,10 @@ func NewWebAccess(url string) TypedObjectAccessor {
 		},
 		URL: url,
 	}
+}
+
+func (_ *Web) GetType() string {
+	return WebType
 }
 
 func (w Web) GetData() ([]byte, error) {
@@ -245,17 +268,21 @@ func NewGitHubAccess(url, ref, commit string) TypedObjectAccessor {
 	}
 }
 
-func (w GitHubAccess) GetData() ([]byte, error) {
-	return yaml.Marshal(w)
+func (a GitHubAccess) GetType() string {
+	return GitHubAccessType
 }
 
-func (w *GitHubAccess) SetData(bytes []byte) error {
+func (a GitHubAccess) GetData() ([]byte, error) {
+	return yaml.Marshal(a)
+}
+
+func (a *GitHubAccess) SetData(bytes []byte) error {
 	var newGitHubAccess GitHubAccess
 	if err := json.Unmarshal(bytes, &newGitHubAccess); err != nil {
 		return err
 	}
 
-	w.RepoURL = newGitHubAccess.RepoURL
-	w.Ref = newGitHubAccess.Ref
+	a.RepoURL = newGitHubAccess.RepoURL
+	a.Ref = newGitHubAccess.Ref
 	return nil
 }

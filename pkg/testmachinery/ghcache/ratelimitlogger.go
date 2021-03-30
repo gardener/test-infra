@@ -15,9 +15,10 @@
 package ghcache
 
 import (
+	"net/http"
+
 	"github.com/go-logr/logr"
 	"github.com/gregjones/httpcache"
-	"net/http"
 )
 
 var _ http.RoundTripper = &rateLimitLogger{}

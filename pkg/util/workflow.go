@@ -15,14 +15,15 @@
 package util
 
 import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 // WorkflowPhase calculates the phase for a completed workflow.
 // In contrast to the argo status, we need to also consider continueOn steps as failures.
 func WorkflowPhase(wf *argov1.Workflow) argov1.NodePhase {
-	if !wf.Status.Completed() {
+	if !wf.Status.Phase.Completed() {
 		return wf.Status.Phase
 	}
 

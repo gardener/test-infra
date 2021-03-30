@@ -16,9 +16,10 @@ package plugins
 
 import (
 	"bufio"
-	"github.com/kballard/go-shellquote"
 	"io"
 	"strings"
+
+	"github.com/kballard/go-shellquote"
 )
 
 // ParseCommands parses a message and returns a string of commands and arguments

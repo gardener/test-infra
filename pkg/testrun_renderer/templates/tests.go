@@ -16,10 +16,11 @@ package templates
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	"github.com/gardener/test-infra/pkg/util"
-	"strings"
 )
 
 // TestWithLabels creates tests functions that render test steps executed in serial.

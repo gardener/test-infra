@@ -16,14 +16,16 @@ package collector
 
 import (
 	"fmt"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"path/filepath"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch/bulk"
-	"path/filepath"
 )
 
 // collectSummaryAndExports takes a completed testrun status and writes the results to elastic search bulk json files.

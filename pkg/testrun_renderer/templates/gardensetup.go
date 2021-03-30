@@ -17,12 +17,14 @@ package templates
 import (
 	"encoding/base64"
 	"encoding/json"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/strconf"
-	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 )
 
 const (

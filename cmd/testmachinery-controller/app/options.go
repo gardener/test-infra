@@ -16,14 +16,16 @@ package app
 
 import (
 	goflag "flag"
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
+
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
 )
 
 type options struct {
@@ -82,6 +84,10 @@ func (o *options) GetManagerOptions() manager.Options {
 	}
 	if len(c.Controller.MetricsAddr) != 0 {
 		opts.MetricsBindAddress = c.Controller.MetricsAddr
+	}
+
+	if !c.TestMachinery.Local {
+		opts.Port = c.Controller.WebhookConfig.Port
 	}
 
 	return opts

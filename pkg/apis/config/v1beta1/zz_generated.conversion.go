@@ -23,10 +23,11 @@ import (
 	json "encoding/json"
 	unsafe "unsafe"
 
-	config "github.com/gardener/test-infra/pkg/apis/config"
 	v1 "k8s.io/api/core/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+
+	config "github.com/gardener/test-infra/pkg/apis/config"
 )
 
 func init() {
