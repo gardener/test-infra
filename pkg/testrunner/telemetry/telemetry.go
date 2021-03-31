@@ -15,18 +15,20 @@
 package telemetry
 
 import (
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/config"
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/controller"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/config"
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/controller"
 )
 
 type Telemetry struct {

@@ -17,9 +17,10 @@ package precompute
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"io"
 	"strings"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 )
 
 type BulkResponse struct {

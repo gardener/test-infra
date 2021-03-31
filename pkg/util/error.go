@@ -16,8 +16,9 @@ package util
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"reflect"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // ReturnMultiError takes an err object and returns a multierror with a custom format.

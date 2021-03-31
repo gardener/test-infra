@@ -17,12 +17,14 @@ package webhooks
 import (
 	"context"
 	"fmt"
+	"net/http"
+
+	"github.com/go-logr/logr"
+	admissionv1 "k8s.io/api/admission/v1"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
-	"github.com/go-logr/logr"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 type testrunValidator struct {
@@ -52,7 +54,7 @@ func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	switch req.Operation {
-	case admissionv1beta1.Create:
+	case admissionv1.Create:
 		if err := testrun.Validate(v.log.WithValues("testrun", tr.Name), tr); err != nil {
 			v.log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
 			return admission.Denied(err.Error())

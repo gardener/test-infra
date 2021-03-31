@@ -16,10 +16,11 @@ package metadata
 
 import (
 	"fmt"
+	"strconv"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util"
-	"strconv"
 )
 
 // CreateAnnotations creates annotations of the metadata to be set on the respective workflow

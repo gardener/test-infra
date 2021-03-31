@@ -19,7 +19,7 @@ metadata:
   name: testmachinery-controller
   namespace: {{ .Release.Namespace }}
   labels:
-    app: tm-controller
+    {{- include "defaultLabels" . | nindent 4 }}
 spec:
   selector:
     app: tm-controller

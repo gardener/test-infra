@@ -16,27 +16,29 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
-	"github.com/gardener/gardener/pkg/operation/botanist"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
 	flag "github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 var (
 	// NotMonitoringComponent is a requirement that something doesn't have the GardenRole GardenRoleMonitoring.
-	NotMonitoringComponent = botanist.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleMonitoring)
+	NotMonitoringComponent = cleanup.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleMonitoring)
 
 	// NotKubernetesClusterService is a requirement that something doesnt have the GardenRole GardenRoleOptionalAddon
-	NotGardenerAddon = botanist.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleOptionalAddon)
+	NotGardenerAddon = cleanup.MustNewRequirement(v1beta1constants.GardenRole, selection.NotEquals, v1beta1constants.GardenRoleOptionalAddon)
 )
 
 func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -59,14 +61,14 @@ func (s *gardenerscheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.Schedu
 		}
 
 		shoot := &gardencorev1beta1.Shoot{}
-		err = s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot)
+		err = s.client.Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot)
 		if err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 		}
 
-		hostClient, err := kubernetes.NewClientFromSecret(s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), kubernetes.WithClientOptions(client.Options{
-			Scheme: kubernetes.ShootScheme,
-		}))
+		hostClient, err := kutil.NewClientFromSecret(ctx, s.client, hostConfig.Namespace, ShootKubeconfigSecretName(shoot.Name), client.Options{
+			Scheme: gardener.ShootScheme,
+		})
 		if err != nil {
 			return fmt.Errorf("cannot build shoot client: %s", err.Error())
 		}

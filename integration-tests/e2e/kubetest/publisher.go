@@ -1,17 +1,19 @@
 package kubetest
 
 import (
-	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"cloud.google.com/go/storage"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
 )
 
 const (

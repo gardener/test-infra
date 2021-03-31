@@ -17,9 +17,10 @@ package health
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"net/http"
 	"sync"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 var (

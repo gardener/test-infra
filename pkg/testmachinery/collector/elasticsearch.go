@@ -16,10 +16,11 @@ package collector
 
 import (
 	"fmt"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/util"
 	"io/ioutil"
 	"path/filepath"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 func (c *collector) ingestIntoElasticsearch(path string, tr *tmv1beta1.Testrun) error {

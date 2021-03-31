@@ -15,19 +15,13 @@
 package controller
 
 import (
-	"reflect"
+	"fmt"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -37,88 +31,44 @@ import (
 	"github.com/gardener/test-infra/pkg/util/s3"
 )
 
-// NewTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
-func NewTestMachineryController(mgr manager.Manager, log logr.Logger, config *config.Configuration) (controller.Controller, error) {
+// RegisterTestMachineryController creates new controller with the testmachinery reconciler that watches testruns and workflows
+func RegisterTestMachineryController(mgr manager.Manager, log logr.Logger, config *config.Configuration) error {
 	var (
 		err      error
 		collect  collector.Interface
 		s3Client s3.Client
 	)
+
+	if err := tmv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+	if err := argov1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
 	if !config.TestMachinery.DisableCollector {
 		collect, err = collector.New(ctrl.Log, mgr.GetClient(), testmachinery.GetElasticsearchConfiguration(), testmachinery.GetS3Configuration())
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to setup collector")
+			return fmt.Errorf("unable to setup collector: %w", err)
 		}
 	}
 
 	if !config.TestMachinery.Local {
 		s3Client, err = s3.New(s3.FromConfig(testmachinery.GetS3Configuration()))
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to setup s3 client")
+			return fmt.Errorf("unable to setup s3 client: %w", err)
 		}
 	}
 
-	tmReconciler := reconciler.New(mgr, log.WithName("controller"), s3Client, collect)
-	c, err := New(mgr, tmReconciler, &config.Controller.MaxConcurrentSyncs)
-	if err != nil {
-		return nil, err
-	}
-	if err := RegisterDefaultWatches(c); err != nil {
-		return nil, err
-	}
-	return c, nil
-}
+	tmReconciler := reconciler.New(log.WithName("controller"), mgr.GetClient(), mgr.GetScheme(), s3Client, collect)
+	bldr := ctrl.NewControllerManagedBy(mgr).
+		For(&tmv1beta1.Testrun{}).
+		Owns(&argov1.Workflow{})
 
-// New creates a new Testmachinery controller for handling testruns and argo workflows.
-func New(mgr manager.Manager, r reconcile.Reconciler, maxConcurrentReconciles *int) (controller.Controller, error) {
-	if err := tmv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
-		return nil, err
-	}
-	if err := argov1.AddToScheme(mgr.GetScheme()); err != nil {
-		return nil, err
-	}
-
-	opts := controller.Options{
-		Reconciler: r,
-	}
-	if maxConcurrentReconciles != nil {
-		opts.MaxConcurrentReconciles = *maxConcurrentReconciles
-	}
-
-	c, err := controller.New("testmachinery-controller", mgr, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-// RegisterDefaultWatches registers event watches for testruns and testrun argo workflows.
-func RegisterDefaultWatches(c controller.Controller) error {
-	if err := RegisterTestrunWatch(c); err != nil {
-		return err
-	}
-	return RegisterArgoWorkflowWatch(c)
-}
-
-// RegisterArgoWorkflowWatch registers event watches for argo workflows.
-func RegisterArgoWorkflowWatch(c controller.Controller) error {
-	return c.Watch(&source.Kind{Type: &argov1.Workflow{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &tmv1beta1.Testrun{},
-	},
-		&predicate.Funcs{
-			DeleteFunc: func(_ event.DeleteEvent) bool {
-				return false
-			},
+	if config.Controller.MaxConcurrentSyncs != 0 {
+		bldr.WithOptions(controller.Options{
+			MaxConcurrentReconciles: config.Controller.MaxConcurrentSyncs,
 		})
-}
-
-// RegisterTestrunWatch registers event watches for testruns.
-func RegisterTestrunWatch(c controller.Controller) error {
-	return c.Watch(&source.Kind{Type: &tmv1beta1.Testrun{}}, &handler.EnqueueRequestForObject{}, &predicate.Funcs{
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return !reflect.DeepEqual(e.ObjectOld, e.ObjectNew)
-		},
-	})
+	}
+	return bldr.Complete(tmReconciler)
 }

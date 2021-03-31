@@ -18,16 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/Masterminds/semver"
+	"github.com/go-logr/logr"
+	"github.com/google/go-github/v27/github"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
+
 	comerrors "github.com/gardener/test-infra/pkg/common/error"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
-	"github.com/pkg/errors"
-	"net/http"
-	"sigs.k8s.io/yaml"
 )
 
 func NewClient(log logr.Logger, ghClient *github.Client, httpClient *http.Client, owner, defaultTeamName string, config map[string]json.RawMessage) (Client, error) {

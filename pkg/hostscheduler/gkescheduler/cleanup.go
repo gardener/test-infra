@@ -15,22 +15,23 @@ package gkescheduler
 
 import (
 	"context"
-	"github.com/gardener/gardener/pkg/operation/botanist"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
+
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/hostscheduler/cleanup"
 )
 
 var (
-	NotHeapster          = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "heapster")
-	NotKubeDNS           = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns")
-	NotKubeDNSAutoscaler = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns-autoscaler")
-	NotMetricsServer     = botanist.MustNewRequirement("k8s-app", selection.NotEquals, "metrics-server")
-	NotKubeProxy         = botanist.MustNewRequirement("component", selection.NotEquals, "kube-proxy")
+	NotHeapster          = cleanup.MustNewRequirement("k8s-app", selection.NotEquals, "heapster")
+	NotKubeDNS           = cleanup.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns")
+	NotKubeDNSAutoscaler = cleanup.MustNewRequirement("k8s-app", selection.NotEquals, "kube-dns-autoscaler")
+	NotMetricsServer     = cleanup.MustNewRequirement("k8s-app", selection.NotEquals, "metrics-server")
+	NotKubeProxy         = cleanup.MustNewRequirement("component", selection.NotEquals, "kube-proxy")
 )
 
 func (s *gkescheduler) Cleanup(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {

@@ -15,10 +15,11 @@
 package testrunner
 
 import (
+	"time"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"time"
 )
 
 // Config are configuration of the environment like the testmachinery cluster or S3 store

@@ -16,19 +16,23 @@ package gardenerscheduler
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
-	"os"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
-	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/pkg/errors"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/logger"
+
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 const (
@@ -70,9 +74,9 @@ func (r *registration) PreRun(cmd *cobra.Command, args []string) error {
 	if _, err := os.Stat(r.kubeconfigPath); err != nil {
 		return fmt.Errorf("kubeconfig at %s cannot be found", r.kubeconfigPath)
 	}
-	k8sClient, err := kubernetes.NewClientFromFile("", r.kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.GardenScheme,
-	}))
+	k8sClient, err := kutil.NewClientFromFile(r.kubeconfigPath, client.Options{
+		Scheme: gardener.GardenScheme,
+	})
 	if err != nil {
 		return err
 	}

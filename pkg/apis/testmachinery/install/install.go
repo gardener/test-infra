@@ -15,9 +15,10 @@
 package install
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 var (

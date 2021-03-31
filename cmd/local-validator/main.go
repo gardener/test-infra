@@ -16,14 +16,17 @@ package main
 
 import (
 	"fmt"
-	intconfig "github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"os"
 
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+
+	intconfig "github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+
 	flag "github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
 	"github.com/gardener/test-infra/pkg/logger"
 

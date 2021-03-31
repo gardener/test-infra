@@ -16,10 +16,11 @@ package testflow_test
 
 import (
 	"context"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"time"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/test/resources"

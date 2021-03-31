@@ -48,7 +48,7 @@ func NewTestMachineryBotCommand(ctx context.Context) *cobra.Command {
 
 func (o *options) run(ctx context.Context) {
 	o.log.Info(fmt.Sprintf("start Test Machinery Bot with version %s", version.Get().String()))
-	if err := tm_bot.Serve(o.log, o.restConfig, o.config, ctx.Done()); err != nil {
+	if err := tm_bot.Serve(ctx, o.log, o.restConfig, o.config); err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}

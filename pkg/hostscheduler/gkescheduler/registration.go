@@ -15,17 +15,19 @@
 package gkescheduler
 
 import (
-	"cloud.google.com/go/container/apiv1"
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
+	"os"
+
+	container "cloud.google.com/go/container/apiv1"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 	"google.golang.org/api/option"
-	"os"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
 )
 
 const (

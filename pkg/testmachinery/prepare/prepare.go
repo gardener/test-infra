@@ -17,17 +17,19 @@ package prepare
 import (
 	"encoding/json"
 	"fmt"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"net/url"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/url"
 )
 
 // New creates the TM prepare step

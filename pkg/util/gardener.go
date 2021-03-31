@@ -17,12 +17,14 @@ package util
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/Masterminds/semver"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 // ConvertStringToVersion converts a string to gardener experable versions

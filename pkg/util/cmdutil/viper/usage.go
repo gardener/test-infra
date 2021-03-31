@@ -15,10 +15,11 @@
 package viper
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 // Usage returns the help output for whole config

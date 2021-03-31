@@ -16,15 +16,18 @@ package gardener_telemetry_cmd
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"time"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
@@ -56,74 +59,70 @@ var gardenerTelemtryCmd = &cobra.Command{
 		ctx := context.Background()
 		defer ctx.Done()
 		logger.Log.Info("Start collecting metrics")
-
-		initialTimeout, err := time.ParseDuration(initialTimeoutString)
-		if err != nil {
-			logger.Log.Error(err, "unable to parse initial timeout duration")
-			os.Exit(1)
+		if err := run(ctx); err != nil {
+			panic(err)
 		}
-		reconcileTimeout, err := time.ParseDuration(reconcileTimeoutString)
-		if err != nil {
-			logger.Log.Error(err, "unable to parse reconcile timeout duration")
-			os.Exit(1)
-		}
-
-		k8sClient, err := kubernetes.NewClientFromFile("", kubeconfigPath, kubernetes.WithClientOptions(client.Options{
-			Scheme: kubernetes.GardenScheme,
-		}))
-		if err != nil {
-			logger.Log.Error(err, "unable to create kubernetes client")
-			os.Exit(1)
-		}
-
-		unhealthyShoots, err := GetUnhealthyShoots(logger.Log, ctx, k8sClient)
-		if err != nil {
-			logger.Log.Error(err, "unable to fetch unhealthy shoots")
-			os.Exit(1)
-		}
-
-		telemetry, err := telemetryctrl.New(logger.Log.WithName("telemetry-controller"), 1*time.Second)
-		if err != nil {
-			logger.Log.Error(err, "unable to initialize telemetry controller")
-			os.Exit(1)
-		}
-		if err := telemetry.Start(kubeconfigPath, resultDir); err != nil {
-			logger.Log.Error(err, "unable to start telemetry controller")
-			os.Exit(1)
-		}
-
-		// wait for update to finish
-		logger.Log.Info("Wait for initial timeout..")
-		time.Sleep(initialTimeout)
-
-		// parse component descriptor and get latest gardener version
-		cd, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, logger.Log, ociOpts, componentDescriptorPath)
-		if err != nil {
-			logger.Log.Error(err, "unable to read component descriptor")
-			os.Exit(1)
-		}
-		gardenerComponent := cd.Get("github.com/gardener/gardener")
-		if gardenerComponent == nil {
-			logger.Log.Error(nil, "gardener component not defined")
-			os.Exit(1)
-		}
-
-		if err := WaitForGardenerUpdate(logger.Log.WithName("reconcile"), ctx, k8sClient, gardenerComponent.Version, unhealthyShoots, reconcileTimeout); err != nil {
-			logger.Log.Error(err, "error waiting for all shoots to reconcile")
-		}
-
-		if err := telemetry.Stop(); err != nil {
-			logger.Log.Error(err, "unable to stop telemetry controller and analyze metrics")
-			os.Exit(1)
-		}
-
-		if _, err := analyse.AnalyseDir(resultDir, "", common.ReportOutputFormatText); err != nil {
-			logger.Log.Error(err, "unable to analyze measurement")
-			os.Exit(1)
-		}
-
-		logger.Log.Info("finished collecting metrics")
 	},
+}
+
+func run(ctx context.Context) error {
+	initialTimeout, err := time.ParseDuration(initialTimeoutString)
+	if err != nil {
+		return fmt.Errorf("unable to parse initial timeout duration: %w", err)
+	}
+	reconcileTimeout, err := time.ParseDuration(reconcileTimeoutString)
+	if err != nil {
+		return fmt.Errorf("unable to parse reconcile timeout duration: %w", err)
+	}
+
+	k8sClient, err := kutil.NewClientFromFile(kubeconfigPath, client.Options{
+		Scheme: gardener.GardenScheme,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to create kubernetes client: %w", err)
+	}
+
+	unhealthyShoots, err := GetUnhealthyShoots(logger.Log, ctx, k8sClient)
+	if err != nil {
+		return fmt.Errorf("unable to fetch unhealthy shoots: %w", err)
+	}
+
+	telemetry, err := telemetryctrl.New(logger.Log.WithName("telemetry-controller"), 1*time.Second)
+	if err != nil {
+		return fmt.Errorf("unable to initialize telemetry controller: %w", err)
+	}
+	if err := telemetry.Start(kubeconfigPath, resultDir); err != nil {
+		return fmt.Errorf("unable to start telemetry controller: %w", err)
+	}
+
+	// wait for update to finish
+	logger.Log.Info("Wait for initial timeout..")
+	time.Sleep(initialTimeout)
+
+	// parse component descriptor and get latest gardener version
+	cd, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, logger.Log, ociOpts, componentDescriptorPath)
+	if err != nil {
+		return fmt.Errorf("unable to read component descriptor: %w", err)
+	}
+	gardenerComponent := cd.Get("github.com/gardener/gardener")
+	if gardenerComponent == nil {
+		return errors.New("gardener component not defined")
+	}
+
+	if err := WaitForGardenerUpdate(logger.Log.WithName("reconcile"), ctx, k8sClient, gardenerComponent.Version, unhealthyShoots, reconcileTimeout); err != nil {
+		logger.Log.Error(err, "error waiting for all shoots to reconcile")
+	}
+
+	if err := telemetry.Stop(); err != nil {
+		return fmt.Errorf("unable to stop telemetry controller and analyze metrics: %w", err)
+	}
+
+	if _, err := analyse.AnalyseDir(resultDir, "", common.ReportOutputFormatText); err != nil {
+		return fmt.Errorf("unable to analyze measurement: %w", err)
+	}
+
+	logger.Log.Info("finished collecting metrics")
+	return nil
 }
 
 func init() {
@@ -145,5 +144,4 @@ func init() {
 	gardenerTelemtryCmd.Flags().StringVar(&reconcileTimeoutString, "reconcile-timeout", "10m", "Timeout to wait for all shoots to tbe reconciled. Valid time units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'.")
 
 	ociOpts.AddFlags(gardenerTelemtryCmd.Flags())
-
 }

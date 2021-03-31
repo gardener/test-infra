@@ -15,14 +15,16 @@
 package pages
 
 import (
-	"github.com/Masterminds/sprig"
-	"github.com/gardener/test-infra/pkg/tm-bot/tests"
-	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
-	"github.com/gardener/test-infra/pkg/version"
-	"github.com/go-logr/logr"
 	"html/template"
 	"net/http"
 	"path/filepath"
+
+	"github.com/Masterminds/sprig"
+	"github.com/go-logr/logr"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
+	"github.com/gardener/test-infra/pkg/tm-bot/ui/auth"
+	"github.com/gardener/test-infra/pkg/version"
 )
 
 type Page struct {

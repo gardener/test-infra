@@ -16,10 +16,11 @@ package shootflavors
 
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 var _ = Describe("flavor test", func() {
@@ -437,7 +438,10 @@ var _ = Describe("flavor test", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			images := flavors.GetUsedMachineImages()
-			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}}}))
+			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{{
+				Name:     "coreos",
+				Versions: MachineImageVersions("0.0.1"),
+			}}))
 		})
 
 		It("should add 2 image from different pools to gcp's used images", func() {
@@ -464,8 +468,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}},
-				{Name: "jeos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.2"}}},
+				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
+				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
 			}))
 		})
 
@@ -499,8 +503,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.1"}}},
-				{Name: "jeos", Versions: []gardencorev1beta1.ExpirableVersion{{Version: "0.0.2"}}},
+				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
+				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
 			}))
 		})
 	})

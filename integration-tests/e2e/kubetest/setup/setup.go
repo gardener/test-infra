@@ -2,19 +2,21 @@ package setup
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
-	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
-	"github.com/gardener/test-infra/integration-tests/e2e/util"
-	tmutil "github.com/gardener/test-infra/pkg/util"
-	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
+	tmutil "github.com/gardener/test-infra/pkg/util"
 )
 
 func Setup() error {

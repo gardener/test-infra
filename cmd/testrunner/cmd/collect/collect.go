@@ -17,17 +17,20 @@ package collectcmd
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"os"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
-	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
+
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/spf13/cobra"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -56,16 +59,16 @@ var collectCmd = &cobra.Command{
 
 		logger.Log.V(3).Info(util.PrettyPrintStruct(collectConfig))
 
-		tmClient, err := kubernetes.NewClientFromFile("", tmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
+		tmClient, err := kutil.NewClientFromFile(tmKubeconfigPath, client.Options{
 			Scheme: testmachinery.TestMachineryScheme,
-		}))
+		})
 		if err != nil {
 			logger.Log.Error(err, fmt.Sprintf("Cannot build kubernetes client from %s", tmKubeconfigPath))
 			os.Exit(1)
 		}
 
 		tr := &tmv1beta1.Testrun{}
-		err = tmClient.Client().Get(ctx, client.ObjectKey{Namespace: namespace, Name: testrunName}, tr)
+		err = tmClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: testrunName}, tr)
 		if err != nil {
 			logger.Log.Error(err, "unable to fetch testrun %s from cluster", "testrun", testrunName)
 			os.Exit(1)
@@ -81,7 +84,7 @@ var collectCmd = &cobra.Command{
 			logger.Log.Error(err, "unable to initialize collector")
 			os.Exit(1)
 		}
-		_, err = collector.Collect(ctx, logger.Log.WithName("Collect"), tmClient.Client(), namespace, []*testrunner.Run{run})
+		_, err = collector.Collect(ctx, logger.Log.WithName("Collect"), tmClient, namespace, []*testrunner.Run{run})
 		if err != nil {
 			logger.Log.Error(err, "unable to collect result", "testrun", testrunName)
 			os.Exit(1)

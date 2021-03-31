@@ -17,9 +17,11 @@ package echo
 import (
 	"context"
 	"fmt"
+
+	"github.com/spf13/pflag"
+
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
-	"github.com/spf13/pflag"
 )
 
 type echo struct {

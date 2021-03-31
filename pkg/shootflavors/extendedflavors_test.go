@@ -16,14 +16,16 @@ package shootflavors
 
 import (
 	"context"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	mockclient "github.com/gardener/gardener/pkg/mock/controller-runtime/client"
-	"github.com/gardener/test-infra/pkg/common"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 var _ = Describe("extended flavor test", func() {
@@ -59,11 +61,8 @@ var _ = Describe("extended flavor test", func() {
 				},
 				MachineImages: []gardencorev1beta1.MachineImage{
 					{
-						Name: "test-os",
-						Versions: []gardencorev1beta1.ExpirableVersion{
-							{Version: "0.0.2"},
-							{Version: "0.0.1"},
-						},
+						Name:     "test-os",
+						Versions: MachineImageVersions("0.0.2", "0.0.1"),
 					},
 				},
 			},

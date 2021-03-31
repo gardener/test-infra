@@ -17,18 +17,22 @@ package framework
 import (
 	"context"
 	"flag"
+
 	"github.com/gardener/test-infra/pkg/apis/config"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
+
 	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"os"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/util"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // New creates a new test operation with a logger and a framework configuration.
@@ -41,9 +45,9 @@ func New(log logr.Logger, config *Config) (*Operation, error) {
 		return nil, err
 	}
 
-	tmClient, err := kubernetes.NewClientFromFile("", config.TmKubeconfigPath, kubernetes.WithClientOptions(client.Options{
+	tmClient, err := kutil.NewClientFromFile(config.TmKubeconfigPath, client.Options{
 		Scheme: testmachinery.TestMachineryScheme,
-	}))
+	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create client from %s", config.TmKubeconfigPath)
 	}
@@ -79,7 +83,7 @@ func (o *Operation) setTestMachineryConfig(ctx context.Context) error {
 		}
 	} else {
 		secret := &corev1.Secret{}
-		if err := o.Client().Client().Get(ctx, client.ObjectKey{Name: "tm-configuration", Namespace: o.TestMachineryNamespace()}, secret); err != nil {
+		if err := o.Client().Get(ctx, client.ObjectKey{Name: "tm-configuration", Namespace: o.TestMachineryNamespace()}, secret); err != nil {
 			return err
 		}
 		data = secret.Data["config.yaml"]

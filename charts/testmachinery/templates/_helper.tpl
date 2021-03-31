@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{{- define "defaultLabels" -}}
+app.kubernetes.io/name: testmachinery
+helm.sh/chart: testmachinery
+app.kubernetes.io/instance: {{ .Release.Name }}
+app: testmachinery-controller
+{{- end -}}
+
 {{- define "config" -}}
 ---
 apiVersion: config.testmachinery.gardener.cloud/v1beta1

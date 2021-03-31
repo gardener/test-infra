@@ -15,14 +15,15 @@
 package testflow
 
 import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // NewFlow takes a testflow and the global config, and generates the DAG.

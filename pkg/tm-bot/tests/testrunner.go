@@ -17,15 +17,18 @@ package tests
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/pkg/errors"
+
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
-	"github.com/pkg/errors"
-	"time"
+
+	"github.com/go-logr/logr"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
 )
 
 func (r *Runs) CreateTestrun(ctx context.Context, log logr.Logger, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun) error {

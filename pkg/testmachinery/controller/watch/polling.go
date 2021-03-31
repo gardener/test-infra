@@ -57,8 +57,8 @@ func newPollingInformer(log logr.Logger, config *rest.Config, options *Options) 
 }
 
 // Start starts the polling
-func (p *pollingInformer) Start(stop <-chan struct{}) error {
-	return wait.PollImmediateUntil(p.pollInterval, p.process, stop)
+func (p *pollingInformer) Start(ctx context.Context) error {
+	return wait.PollImmediateUntil(p.pollInterval, p.process, ctx.Done())
 }
 
 func (p *pollingInformer) process() (done bool, err error) {
@@ -93,7 +93,7 @@ func (p *pollingInformer) process() (done bool, err error) {
 }
 
 // WaitForCacheSync implements a noop operation for th polling informer as there are no caches to start
-func (p *pollingInformer) WaitForCacheSync(stop <-chan struct{}) bool {
+func (p *pollingInformer) WaitForCacheSync(_ context.Context) bool {
 	return true
 }
 

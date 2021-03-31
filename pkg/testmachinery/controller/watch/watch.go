@@ -45,19 +45,19 @@ type Watch interface {
 	Client() client.Client
 
 	// Start starts watcher and its informer
-	Start(<-chan struct{}) error
+	Start(ctx context.Context) error
 
 	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a informer.
-	WaitForCacheSync(stop <-chan struct{}) bool
+	WaitForCacheSync(ctx context.Context) bool
 }
 
 // Informer is the internal watch that interacts with the cluster and publishes events to the event bus.
 type Informer interface {
 	// Start starts watcher and its informer
-	Start(<-chan struct{}) error
+	Start(ctx context.Context) error
 
 	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a informer.
-	WaitForCacheSync(stop <-chan struct{}) bool
+	WaitForCacheSync(ctx context.Context) bool
 
 	// InjectEventBus injects the the event bus instance of the watch
 	InjectEventBus(eb EventBus)
@@ -96,7 +96,7 @@ type watch struct {
 func WaitForCacheSyncWithTimeout(w Watch, d time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), d)
 	defer cancel()
-	if ok := w.WaitForCacheSync(ctx.Done()); !ok {
+	if ok := w.WaitForCacheSync(ctx); !ok {
 		return errors.New("error while waiting for informer")
 	}
 	return nil
@@ -196,10 +196,10 @@ func (w *watch) Watch(namespace, name string, f WatchFunc) error {
 	return w.WatchUntil(0, namespace, name, f)
 }
 
-func (w *watch) Start(stop <-chan struct{}) error {
+func (w *watch) Start(ctx context.Context) error {
 
 	go func() {
-		if err := w.eventbus.Start(stop); err != nil {
+		if err := w.eventbus.Start(ctx.Done()); err != nil {
 			w.log.Error(err, "unable to start the event bus")
 		}
 	}()
@@ -207,15 +207,15 @@ func (w *watch) Start(stop <-chan struct{}) error {
 	w.informer.InjectEventBus(w.eventbus)
 
 	go func() {
-		if err := w.informer.Start(stop); err != nil {
+		if err := w.informer.Start(ctx); err != nil {
 			w.log.Error(err, "unable to start informer")
 		}
 	}()
 
-	<-stop
+	<-ctx.Done()
 	return nil
 }
 
-func (w *watch) WaitForCacheSync(stop <-chan struct{}) bool {
-	return w.informer.WaitForCacheSync(stop)
+func (w *watch) WaitForCacheSync(ctx context.Context) bool {
+	return w.informer.WaitForCacheSync(ctx)
 }

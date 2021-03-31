@@ -15,9 +15,10 @@
 package testrunner_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestTestrunnerTemplate(t *testing.T) {

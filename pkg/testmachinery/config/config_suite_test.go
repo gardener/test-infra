@@ -15,15 +15,17 @@
 package config_test
 
 import (
-	"github.com/gardener/test-infra/pkg/util/strconf"
 	"testing"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/util/strconf"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
 )
 
 func TestConfig(t *testing.T) {

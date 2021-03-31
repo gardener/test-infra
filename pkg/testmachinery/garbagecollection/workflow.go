@@ -3,17 +3,20 @@ package garbagecollection
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util/s3"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/util/s3"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 // GCWorkflowArtifacts collects all outputs of a workflow by traversing through nodes and collect outputs artifacts from the s3 storage.

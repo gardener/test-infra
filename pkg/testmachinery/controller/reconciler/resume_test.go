@@ -15,14 +15,16 @@
 package reconciler
 
 import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"time"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 var _ = Describe("Testmachinery controller resume", func() {

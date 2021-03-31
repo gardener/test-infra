@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ import (
 )
 
 // BackupEntryLister helps list BackupEntries.
+// All objects returned here must be treated as read-only.
 type BackupEntryLister interface {
 	// List lists all BackupEntries in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.BackupEntry, err error)
 	// BackupEntries returns an object that can list and get BackupEntries.
 	BackupEntries(namespace string) BackupEntryNamespaceLister
@@ -58,10 +60,13 @@ func (s *backupEntryLister) BackupEntries(namespace string) BackupEntryNamespace
 }
 
 // BackupEntryNamespaceLister helps list and get BackupEntries.
+// All objects returned here must be treated as read-only.
 type BackupEntryNamespaceLister interface {
 	// List lists all BackupEntries in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.BackupEntry, err error)
 	// Get retrieves the BackupEntry from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.BackupEntry, error)
 	BackupEntryNamespaceListerExpansion
 }

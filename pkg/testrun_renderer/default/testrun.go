@@ -16,12 +16,14 @@ package _default
 
 import (
 	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type shoot struct {

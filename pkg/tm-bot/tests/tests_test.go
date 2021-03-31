@@ -15,12 +15,13 @@
 package tests_test
 
 import (
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	ghutil "github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/google/go-github/v27/github"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	ghutil "github.com/gardener/test-infra/pkg/tm-bot/github"
+	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 )
 
 var _ = Describe("Runs", func() {

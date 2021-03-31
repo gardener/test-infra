@@ -14,7 +14,7 @@
 package gkescheduler
 
 import (
-	"cloud.google.com/go/container/apiv1"
+	container "cloud.google.com/go/container/apiv1"
 	"github.com/go-logr/logr"
 )
 

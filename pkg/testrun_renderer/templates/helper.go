@@ -16,6 +16,7 @@ package templates
 
 import (
 	"fmt"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 )

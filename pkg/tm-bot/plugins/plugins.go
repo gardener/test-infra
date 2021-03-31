@@ -16,13 +16,15 @@ package plugins
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/go-logr/logr"
+	"github.com/spf13/pflag"
 
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
-	"github.com/go-logr/logr"
-	"github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 )

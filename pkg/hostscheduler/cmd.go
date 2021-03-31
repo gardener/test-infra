@@ -17,9 +17,10 @@ package hostscheduler
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var lockCmd = cobra.Command{

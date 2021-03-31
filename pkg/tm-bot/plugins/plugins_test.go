@@ -15,15 +15,16 @@
 package plugins_test
 
 import (
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	mock_github "github.com/gardener/test-infra/pkg/tm-bot/github/mocks"
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
-	mock_plugins "github.com/gardener/test-infra/pkg/tm-bot/plugins/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	mock_github "github.com/gardener/test-infra/pkg/tm-bot/github/mocks"
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
+	mock_plugins "github.com/gardener/test-infra/pkg/tm-bot/plugins/mocks"
 )
 
 var _ = Describe("plugins", func() {

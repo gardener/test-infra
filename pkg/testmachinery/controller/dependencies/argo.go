@@ -18,9 +18,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"path/filepath"
+
+	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/gardener/gardener/pkg/utils/chart"
+
 	intconfig "github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -28,11 +30,17 @@ import (
 
 func (e *DependencyEnsurer) ensureArgo(ctx context.Context, namespace string, config *intconfig.Configuration) error {
 	e.log.Info("Ensuring argo deployment")
+
+	loggingLinks, err := e.getExternalLoggingLinks(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get external logging links: %w", err)
+	}
+
 	values := map[string]interface{}{
 		"argo": map[string]interface{}{
 			"name": intconfig.ArgoWorkflowControllerDeploymentName,
 			"logging": map[string]interface{}{
-				"links": e.getExternalLoggingLinks(ctx),
+				"links": loggingLinks,
 			},
 		},
 		"argoui": map[string]interface{}{
@@ -60,17 +68,23 @@ func (e *DependencyEnsurer) ensureArgo(ctx context.Context, namespace string, co
 		values = utils.MergeMaps(additionalValues, values)
 	}
 
-	values, err := chart.InjectImages(values, imagevector.ImageVector(), []string{
-		intconfig.ArgoUIImageName,
-		intconfig.ArgoWorkflowControllerImageName,
-		intconfig.ArgoExecutorImageName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to find image version %v", err)
+	argoChart := &helmChart{
+		Name: intconfig.ArgoChartName,
+		Path: filepath.Join(intconfig.ChartsPath, intconfig.ArgoChartName),
+		Images: []string{
+			intconfig.ArgoUIImageName,
+			intconfig.ArgoWorkflowControllerImageName,
+			intconfig.ArgoExecutorImageName,
+		},
+		Values: values,
 	}
 
-	err = e.createManagedResource(ctx, namespace, intconfig.ArgoManagedResourceName, e.renderer,
-		intconfig.ArgoChartName, values, nil)
+	err = e.createManagedResource(ctx,
+		namespace,
+		intconfig.ArgoManagedResourceName,
+		argoChart,
+		imagevector.ImageVector(),
+	)
 	if err != nil {
 		e.log.Error(err, "unable to create managed resource")
 		return err
@@ -79,13 +93,13 @@ func (e *DependencyEnsurer) ensureArgo(ctx context.Context, namespace string, co
 }
 
 // getExternalLoggingLinks returns argo links for the grafana logging if it is deployed
-func (e *DependencyEnsurer) getExternalLoggingLinks(ctx context.Context) []argov1alpha1.Link {
+func (e *DependencyEnsurer) getExternalLoggingLinks(ctx context.Context) (interface{}, error) {
 	links := make([]argov1alpha1.Link, 0)
 
 	grafanaHost, err := testrunner.GetGrafanaHost(ctx, e.client)
 	if err != nil {
 		e.log.Info(fmt.Sprintf("unable to get grafana host: %s", err.Error()))
-		return nil
+		return nil, nil
 	}
 
 	links = append(links, argov1alpha1.Link{
@@ -98,6 +112,5 @@ func (e *DependencyEnsurer) getExternalLoggingLinks(ctx context.Context) []argov
 			Scope: "pod",
 			URL:   testrunner.GetGrafanaURLFromHostForPod(grafanaHost, "${metadata.name}"),
 		})
-
-	return links
+	return EncodeValues(links)
 }

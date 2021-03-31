@@ -17,16 +17,18 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/health"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/version"
-	"github.com/spf13/cobra"
-	"os"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func NewTestMachineryControllerCommand(ctx context.Context) *cobra.Command {
@@ -52,7 +54,7 @@ func NewTestMachineryControllerCommand(ctx context.Context) *cobra.Command {
 
 func (o *options) run(ctx context.Context) {
 	o.log.Info(fmt.Sprintf("start Test Machinery with version %s", version.Get().String()))
-
+	fmt.Println(testmachinery.GetConfig().String())
 	if testmachinery.IsRunInsecure() {
 		o.log.Info("testmachinery is running in insecure mode")
 	}
@@ -63,16 +65,14 @@ func (o *options) run(ctx context.Context) {
 		o.log.Error(err, "unable to setup manager")
 		os.Exit(1)
 	}
+	mgr.GetClient()
 
 	if err := o.ensureDependencies(ctx, mgr); err != nil {
 		o.log.Error(err, "error during ensureDependencies")
 		os.Exit(1)
 	}
 
-	fmt.Println(testmachinery.GetConfig().String())
-
-	_, err = controller.NewTestMachineryController(mgr, ctrl.Log, o.configwatcher.GetConfiguration())
-	if err != nil {
+	if err := controller.RegisterTestMachineryController(mgr, ctrl.Log, o.configwatcher.GetConfiguration()); err != nil {
 		o.log.Error(err, "unable to create controller", "controllers", "Testrun")
 		os.Exit(1)
 	}
@@ -87,19 +87,19 @@ func (o *options) run(ctx context.Context) {
 	o.ApplyWebhooks(mgr)
 
 	o.log.Info("starting the controller", "controllers", "Testrun")
-	if err := mgr.Start(ctx.Done()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		o.log.Error(err, "error while running manager")
 		os.Exit(1)
 	}
 }
 
 func (o *options) ensureDependencies(ctx context.Context, mgr manager.Manager) error {
-	be, err := dependencies.New(o.log.WithName("ensureDependencies"), o.configwatcher)
+	be, err := dependencies.New(o.log.WithName("ensureDependencies"), mgr.GetConfig(), o.configwatcher)
 	if err != nil {
 		return errors.Wrap(err, "unable to create ensureDependencies ensurer")
 	}
 
-	if err := be.Start(ctx, mgr); err != nil {
+	if err := be.Start(ctx); err != nil {
 		return err
 	}
 	return nil

@@ -15,12 +15,14 @@
 package util_test
 
 import (
+	"time"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
+
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 var _ = Describe("gardener util", func() {

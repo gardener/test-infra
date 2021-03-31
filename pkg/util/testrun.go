@@ -17,11 +17,13 @@ package util
 import (
 	"context"
 	"fmt"
-	argov1alpha1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	"sort"
+
+	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
 )
 
 // TestrunStatusPhase determines the real testrun phase of a testrun by ignoring exit handler failures and system component failures if all other tests passed.
@@ -62,11 +64,8 @@ func IsSystemStep(step *tmv1beta1.StepStatus) bool {
 
 // Resume testruns resumes a testrun by adding the appropriate annotation to it
 func ResumeTestrun(ctx context.Context, k8sClient client.Client, tr *tmv1beta1.Testrun) error {
-	obj, err := client.ObjectKeyFromObject(tr)
-	if err != nil {
-		return err
-	}
-	if err := k8sClient.Get(ctx, obj, tr); err != nil {
+	key := client.ObjectKeyFromObject(tr)
+	if err := k8sClient.Get(ctx, key, tr); err != nil {
 		return err
 	}
 	if tr.Annotations == nil {

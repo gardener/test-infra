@@ -18,8 +18,10 @@
 package ini
 
 import (
+	"os"
 	"regexp"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -55,8 +57,10 @@ var (
 	DefaultFormatRight = ""
 )
 
+var inTest = len(os.Args) > 0 && strings.HasSuffix(strings.TrimSuffix(os.Args[0], ".exe"), ".test")
+
 func init() {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" && !inTest {
 		LineBreak = "\r\n"
 	}
 }
@@ -111,6 +115,8 @@ type LoadOptions struct {
 	DebugFunc DebugFunc
 	// ReaderBufferSize is the buffer size of the reader in bytes.
 	ReaderBufferSize int
+	// AllowNonUniqueSections indicates whether to allow sections with the same name multiple times.
+	AllowNonUniqueSections bool
 }
 
 // DebugFunc is the type of function called to log parse events.

@@ -5,10 +5,12 @@
 package mock_s3
 
 import (
-	s3 "github.com/gardener/test-infra/pkg/util/s3"
-	gomock "github.com/golang/mock/gomock"
-	minio_go "github.com/minio/minio-go"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	minio "github.com/minio/minio-go"
+
+	s3 "github.com/gardener/test-infra/pkg/util/s3"
 )
 
 // MockClient is a mock of Client interface
@@ -35,7 +37,7 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetObject mocks base method
-func (m *MockClient) GetObject(arg0, arg1 string, arg2 minio_go.GetObjectOptions) (s3.Object, error) {
+func (m *MockClient) GetObject(arg0, arg1 string, arg2 minio.GetObjectOptions) (s3.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetObject", arg0, arg1, arg2)
 	ret0, _ := ret[0].(s3.Object)
@@ -116,10 +118,10 @@ func (mr *MockObjectMockRecorder) Read(arg0 interface{}) *gomock.Call {
 }
 
 // Stat mocks base method
-func (m *MockObject) Stat() (minio_go.ObjectInfo, error) {
+func (m *MockObject) Stat() (minio.ObjectInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Stat")
-	ret0, _ := ret[0].(minio_go.ObjectInfo)
+	ret0, _ := ret[0].(minio.ObjectInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

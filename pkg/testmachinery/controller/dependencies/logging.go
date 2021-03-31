@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -79,16 +78,21 @@ func (e *DependencyEnsurer) ensureLoggingStack(ctx context.Context, config *intc
 		values = utils.MergeMaps(additionalValues, values)
 	}
 
-	chart, err := e.renderer.Render(filepath.Join(intconfig.ChartsPath, intconfig.LoggingChartName), "tm", config.Namespace, values)
-	if err != nil {
-		return err
+	loggingChart := &helmChart{
+		Name:   intconfig.LoggingChartName,
+		Path:   filepath.Join(intconfig.ChartsPath, intconfig.LoggingChartName),
+		Images: []string{},
+		Values: values,
 	}
 
-	err = controller.CreateManagedResource(ctx, e.client, config.Namespace, intconfig.LoggingManagedResourceName,
-		"", "tm", chart.Manifest(), false, nil, false)
-
+	err = e.createManagedResource(ctx,
+		config.Namespace,
+		intconfig.LoggingManagedResourceName,
+		loggingChart,
+		imagevector.ImageVector(),
+	)
 	if err != nil {
-		e.log.Error(err, "unable to create managed resource")
+		e.log.Error(err, "unable to create logging managed resource")
 		return err
 	}
 	return nil

@@ -15,10 +15,12 @@
 package locations_test
 
 import (
-	"github.com/gardener/test-infra/test/framework"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"testing"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/gardener/test-infra/test/framework"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -47,7 +49,7 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	var err error
-	operation, err = framework.New(zap.LoggerTo(GinkgoWriter, true), cfg)
+	operation, err = framework.New(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)), cfg)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(operation.WaitForClusterReadiness(InitializationTimeout)).ToNot(HaveOccurred())
 })

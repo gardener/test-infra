@@ -14,8 +14,9 @@
 package cmdvalues
 
 import (
-	"github.com/spf13/pflag"
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 type DurationValue struct {

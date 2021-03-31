@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,13 +37,13 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			err := operation.Client().Client().Create(ctx, tr)
+			err := operation.Client().Create(ctx, tr)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			// todo: add polling instead of timeouts
 			time.Sleep(10 * time.Second)
-			err = operation.Client().Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr)
+			err = operation.Client().Get(ctx, client.ObjectKey{Namespace: operation.TestNamespace(), Name: tr.Name}, tr)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")

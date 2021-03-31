@@ -16,8 +16,10 @@ package gkescheduler
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
+
 	flag "github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 func (s *gkescheduler) Recreate(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {

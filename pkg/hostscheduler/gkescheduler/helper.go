@@ -18,22 +18,23 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"k8s.io/client-go/rest"
+	container "cloud.google.com/go/container/apiv1"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"k8s.io/client-go/rest"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"cloud.google.com/go/container/apiv1"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
@@ -65,7 +66,15 @@ func waitUntilOperationFinished(log logr.Logger, ctx context.Context, client *co
 	return newOperation, nil
 }
 
-func clientFromCluster(cluster *containerpb.Cluster) (kubernetes.Interface, error) {
+func clientFromCluster(cluster *containerpb.Cluster) (client.Client, error) {
+	restConfig, err := restConfigFromCluster(cluster)
+	if err != nil {
+		return nil, err
+	}
+	return client.New(restConfig, client.Options{})
+}
+
+func restConfigFromCluster(cluster *containerpb.Cluster) (*rest.Config, error) {
 	auth := cluster.GetMasterAuth()
 
 	ca, err := base64.StdEncoding.DecodeString(auth.GetClusterCaCertificate())
@@ -92,9 +101,7 @@ func clientFromCluster(cluster *containerpb.Cluster) (kubernetes.Interface, erro
 		Username: auth.GetUsername(),
 		Password: auth.GetPassword(),
 	}
-	return kubernetes.NewWithConfig(kubernetes.WithRESTConfig(cfg), kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.ShootScheme,
-	}))
+	return cfg, nil
 }
 
 func (s *gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Context, operation *containerpb.Operation) error {

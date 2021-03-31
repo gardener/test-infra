@@ -16,16 +16,18 @@ package app
 
 import (
 	goflag "flag"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/apis/config/install"
-	"github.com/gardener/test-infra/pkg/logger"
+	"io/ioutil"
+
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
-	"io/ioutil"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/apis/config/install"
+	"github.com/gardener/test-infra/pkg/logger"
 )
 
 type options struct {

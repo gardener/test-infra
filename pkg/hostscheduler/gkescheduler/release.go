@@ -17,10 +17,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 func (s *gkescheduler) Release(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {

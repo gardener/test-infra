@@ -17,15 +17,17 @@ package testrunner
 import (
 	"context"
 	"fmt"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"net/url"
+	"path"
+
 	"github.com/pkg/errors"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
-	"net/url"
-	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 func GetArgoURL(ctx context.Context, k8sClient client.Client, tr *tmv1beta1.Testrun) (string, error) {

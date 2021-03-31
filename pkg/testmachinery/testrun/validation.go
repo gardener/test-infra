@@ -17,12 +17,14 @@ package testrun
 import (
 	"encoding/base64"
 	"fmt"
+	"reflect"
+
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/strconf"
-	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
-	"reflect"
 
 	"k8s.io/client-go/tools/clientcmd"
 

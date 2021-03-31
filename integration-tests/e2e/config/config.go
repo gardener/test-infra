@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	flag "github.com/spf13/pflag"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,9 +11,12 @@ import (
 	"strconv"
 	"strings"
 
-	tiutil "github.com/gardener/test-infra/pkg/util"
+	flag "github.com/spf13/pflag"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	tiutil "github.com/gardener/test-infra/pkg/util"
 )
 
 type arrayTestcase []string

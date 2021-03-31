@@ -16,6 +16,7 @@ package shootflavors
 
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
 	"github.com/gardener/test-infra/pkg/common"
 )
 

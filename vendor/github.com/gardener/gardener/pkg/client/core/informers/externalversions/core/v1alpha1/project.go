@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	corev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
@@ -60,13 +61,13 @@ func NewFilteredProjectInformer(client versioned.Interface, resyncPeriod time.Du
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoreV1alpha1().Projects().List(options)
+				return client.CoreV1alpha1().Projects().List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoreV1alpha1().Projects().Watch(options)
+				return client.CoreV1alpha1().Projects().Watch(context.TODO(), options)
 			},
 		},
 		&corev1alpha1.Project{},

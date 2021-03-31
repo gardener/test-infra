@@ -99,6 +99,7 @@ var _ TypedObjectEncoder = DefaultJSONTypedObjectEncoder{}
 
 // Encode is the Encode implementation of the TypedObjectEncoder interface.
 func (e DefaultJSONTypedObjectEncoder) Encode(obj TypedObjectAccessor) ([]byte, error) {
+	obj.SetType(obj.GetType()) // hardcord the correct type if the type was not correctly constructed.
 	return json.Marshal(obj)
 }
 
@@ -121,6 +122,15 @@ type codec struct {
 	validationFunc KnownTypeValidationFunc
 }
 
+// NewDefaultCodec creates a new default typed object codec.
+func NewDefaultCodec() TypedObjectCodec {
+	return &codec{
+		defaultCodec: DefaultJSONTypedObjectCodec,
+		knownTypes:   KnownAccessTypes,
+	}
+}
+
+// NewCodec creates a new typed object codec.
 func NewCodec(knownTypes KnownTypes, defaultCodec TypedObjectCodec, validationFunc KnownTypeValidationFunc) TypedObjectCodec {
 	if knownTypes == nil {
 		knownTypes = KnownAccessTypes

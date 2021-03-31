@@ -17,10 +17,12 @@ package auth
 import (
 	"context"
 	"encoding/gob"
-	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/google/go-github/v27/github"
 	"net/http"
 	"time"
+
+	"github.com/google/go-github/v27/github"
+
+	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
 
 	"github.com/go-logr/logr"
 	"github.com/gorilla/sessions"

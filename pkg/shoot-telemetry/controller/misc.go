@@ -17,8 +17,9 @@ package controller
 import (
 	"errors"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"strings"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"k8s.io/apimachinery/pkg/labels"
 )

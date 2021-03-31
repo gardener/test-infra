@@ -17,17 +17,19 @@ package collector
 import (
 	"bufio"
 	"context"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"github.com/golang/mock/gomock"
+	"k8s.io/apimachinery/pkg/util/json"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	mock_elasticsearch "github.com/gardener/test-infra/pkg/util/elasticsearch/mocks"
 	mock_collector "github.com/gardener/test-infra/pkg/util/s3/mocks"
-	"github.com/golang/mock/gomock"
-	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/json"
-	"os"
-	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

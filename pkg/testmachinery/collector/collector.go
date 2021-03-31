@@ -15,6 +15,14 @@
 package collector
 
 import (
+	"io/ioutil"
+	"os"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
@@ -22,12 +30,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/s3"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Interface is the testmachinery interface to collects testrun results, store them in a persistent store

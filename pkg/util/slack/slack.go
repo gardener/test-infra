@@ -18,10 +18,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 )
 
 // MaxMessage is the maximium size of a slack message according to slacks docs

@@ -14,8 +14,9 @@
 package cmdutil
 
 import (
-	"github.com/olekukonko/tablewriter"
 	"io"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 func PrintTable(output io.Writer, headers []string, content [][]string) {

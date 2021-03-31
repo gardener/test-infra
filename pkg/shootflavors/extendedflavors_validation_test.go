@@ -16,10 +16,11 @@ package shootflavors
 
 import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/common"
 )
 
 var _ = Describe("extended flavor validation test", func() {

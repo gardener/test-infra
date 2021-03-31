@@ -16,13 +16,13 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -40,7 +40,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 		}
 
 		shoot := &gardencorev1beta1.Shoot{}
-		if err := s.client.Client().Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot); err != nil {
+		if err := s.client.Get(ctx, client.ObjectKey{Namespace: hostConfig.Namespace, Name: hostConfig.Name}, shoot); err != nil {
 			return fmt.Errorf("cannot get shoot %s: %s", hostConfig.Name, err.Error())
 		}
 
@@ -61,11 +61,7 @@ func (s *gardenerscheduler) Release(flagset *flag.FlagSet) (hostscheduler.Schedu
 		newShoot.Labels[ShootLabelStatus] = ShootStatusFree
 		delete(newShoot.Annotations, ShootAnnotationLockedAt)
 		delete(newShoot.Annotations, ShootAnnotationID)
-		patchBytes, err := kutil.CreateTwoWayMergePatch(shoot, newShoot)
-		if err != nil {
-			return fmt.Errorf("failed to patch bytes")
-		}
-		if err := s.client.Client().Patch(ctx, shoot, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		if err := s.client.Patch(ctx, newShoot, client.MergeFrom(shoot)); err != nil {
 			return fmt.Errorf("cannot hibernate shoot %s: %s", shoot.Name, err.Error())
 		}
 

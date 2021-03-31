@@ -16,6 +16,7 @@ package testflow
 
 import (
 	"fmt"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"

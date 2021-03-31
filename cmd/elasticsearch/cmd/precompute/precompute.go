@@ -19,15 +19,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/testmachinery/collector"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
-	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
+
+	"github.com/spf13/cobra"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 )
 
 var (

@@ -27,7 +27,7 @@ rm -f ${GOPATH}/bin/*-gen
 
 echo "> Generating internal groups for TestMachinery"
 "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
-  all \
+  deep-copy,defaulter,conversion \
   $PROJECT_MOD_ROOT/pkg/client/testmachinery \
   $PROJECT_MOD_ROOT/pkg/apis \
   $PROJECT_MOD_ROOT/pkg/apis \

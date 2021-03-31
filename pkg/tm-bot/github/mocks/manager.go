@@ -5,9 +5,11 @@
 package mock_github
 
 import (
-	github "github.com/gardener/test-infra/pkg/tm-bot/github"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+
+	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 )
 
 // MockManager is a mock of Manager interface

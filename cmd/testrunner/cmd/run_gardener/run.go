@@ -149,7 +149,7 @@ var runCmd = &cobra.Command{
 		}
 
 		go func() {
-			if err := watcher.Start(ctx.Done()); err != nil {
+			if err := watcher.Start(ctx); err != nil {
 				logger.Log.Error(err, "unable to start testrun watch controller")
 				os.Exit(1)
 			}

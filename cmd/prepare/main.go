@@ -16,10 +16,12 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	flag "github.com/spf13/pflag"
+
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	flag "github.com/spf13/pflag"
-	"os"
 )
 
 func init() {

@@ -15,10 +15,11 @@
 package gardensetup_test
 
 import (
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/util/gardensetup"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util/gardensetup"
 )
 
 var _ = Describe("gardensetup extensions util", func() {

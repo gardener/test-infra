@@ -17,11 +17,13 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util/strconf"
 	"strings"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util/strconf"
+
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 // Validate validates a testrun config element.

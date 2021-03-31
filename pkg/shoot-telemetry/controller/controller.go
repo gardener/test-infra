@@ -16,18 +16,20 @@ package controller
 
 import (
 	"errors"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"io/ioutil"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"os/signal"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
 	"syscall"
 	"time"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+	"github.com/gardener/test-infra/pkg/util/gardener"
 
 	v1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -58,7 +60,7 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 			config:  config,
 			targets: map[string]*target{},
 		}
-		k8sClient kubernetes.Interface
+		k8sClient client.Client
 		err       error
 	)
 
@@ -100,9 +102,9 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	} else if restConfig == nil {
 		return errors.New("clientConfig is nil")
 	}
-	k8sClient, err = kubernetes.NewWithConfig(kubernetes.WithRESTConfig(restConfig), kubernetes.WithClientOptions(client.Options{
-		Scheme: kubernetes.GardenScheme,
-	}))
+	k8sClient, err = client.New(restConfig, client.Options{
+		Scheme: gardener.GardenScheme,
+	})
 	if err != nil {
 		return err
 	}

@@ -16,10 +16,11 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type dockerImages struct {

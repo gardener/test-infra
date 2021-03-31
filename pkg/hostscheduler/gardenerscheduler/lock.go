@@ -17,11 +17,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,12 +31,12 @@ import (
 
 	flag "github.com/spf13/pflag"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
@@ -57,7 +58,7 @@ func (s *gardenerscheduler) Lock(flagset *flag.FlagSet) (hostscheduler.Scheduler
 					return retry.MinorError(err)
 				}
 			} else {
-				err := s.client.Client().Get(ctx, client.ObjectKey{Name: s.shootName, Namespace: s.namespace}, shoot)
+				err := s.client.Get(ctx, client.ObjectKey{Name: s.shootName, Namespace: s.namespace}, shoot)
 				if err != nil {
 					s.log.V(3).Info(err.Error())
 					if apierrors.IsNotFound(err) {
@@ -106,7 +107,7 @@ func (s *gardenerscheduler) getAvailableHost(ctx context.Context) (*gardencorev1
 		ShootLabel:       "true",
 		ShootLabelStatus: ShootStatusFree,
 	}))
-	err := s.client.Client().List(ctx, shoots, &client.ListOptions{
+	err := s.client.List(ctx, shoots, &client.ListOptions{
 		LabelSelector: selector,
 		Namespace:     s.namespace,
 	})
@@ -151,14 +152,14 @@ func (s *gardenerscheduler) lockShoot(ctx context.Context, shoot *gardencorev1be
 		shoot.Annotations[ShootAnnotationID] = id
 	}
 
-	err := s.client.Client().Update(ctx, shoot)
+	err := s.client.Update(ctx, shoot)
 	if err != nil {
 		return errors.Wrapf(err, "shoot cannot be updated")
 	}
 	return nil
 }
 
-func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
+func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient client.Client, shoot *gardencorev1beta1.Shoot) error {
 	// Write kubeconfigPath to kubeconfigPath folder: $TM_KUBECONFIG_PATH/host.config
 	kubeconfigPath, err := hostscheduler.HostKubeconfigPath()
 	if err != nil {
@@ -169,7 +170,7 @@ func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient k
 
 	// Download kubeconfigPath secret from gardener
 	secret := &corev1.Secret{}
-	err = k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: ShootKubeconfigSecretName(shoot.Name)}, secret)
+	err = k8sClient.Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: ShootKubeconfigSecretName(shoot.Name)}, secret)
 	if err != nil {
 		return fmt.Errorf("cannot download kubeconfig for shoot %s: %s", shoot.Name, err.Error())
 	}

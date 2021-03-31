@@ -14,18 +14,20 @@
 package gkescheduler
 
 import (
-	container "cloud.google.com/go/container/apiv1"
 	"context"
 	"fmt"
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"strconv"
+	"time"
+
+	container "cloud.google.com/go/container/apiv1"
 	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
-	"strconv"
-	"time"
+	"k8s.io/client-go/rest"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 
 const (
@@ -37,12 +39,12 @@ func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc,
 
 	return func(ctx context.Context) error {
 		var (
-			cluster   *containerpb.Cluster
-			k8sClient kubernetes.Interface
-			err       error
+			cluster    *containerpb.Cluster
+			restConfig *rest.Config
+			err        error
 		)
 		if s.hostname == "" {
-			cluster, k8sClient, err = s.selectAvailableHost(ctx)
+			cluster, restConfig, err = s.selectAvailableHost(ctx)
 			if err != nil {
 				return errors.Wrap(err, "unable to select host cluster")
 			}
@@ -54,7 +56,7 @@ func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc,
 			if err != nil {
 				return errors.Wrap(err, "unable to get gke clusters")
 			}
-			k8sClient, err = clientFromCluster(cluster)
+			restConfig, err = restConfigFromCluster(cluster)
 			if err != nil {
 				return errors.Wrap(err, "unable to build k8s client from cluster")
 			}
@@ -84,7 +86,7 @@ func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc,
 			return errors.Wrap(err, "labels cannot be set")
 		}
 
-		if err := hostscheduler.WriteHostKubeconfig(s.log, k8sClient); err != nil {
+		if err := hostscheduler.WriteHostKubeconfig(s.log, restConfig); err != nil {
 			return errors.Wrap(err, "unable to write host kubeconfig")
 		}
 
@@ -92,14 +94,14 @@ func (s *gkescheduler) Lock(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc,
 	}, nil
 }
 
-func (s *gkescheduler) selectAvailableHost(ctx context.Context) (*containerpb.Cluster, kubernetes.Interface, error) {
+func (s *gkescheduler) selectAvailableHost(ctx context.Context) (*containerpb.Cluster, *rest.Config, error) {
 	var (
-		cluster   *containerpb.Cluster
-		k8sClient kubernetes.Interface
-		err       error
+		cluster    *containerpb.Cluster
+		restConfig *rest.Config
+		err        error
 	)
 	err = retry.UntilTimeout(ctx, 1*time.Minute, SelectHostTimeout, func(ctx context.Context) (bool, error) {
-		cluster, k8sClient, err = tryAvailableHost(ctx, s.log, s.client, s.getParentName())
+		cluster, restConfig, err = tryAvailableHost(ctx, s.log, s.client, s.getParentName())
 		if err != nil {
 			s.log.Info("Unable to select host cluster. Trying again..")
 			s.log.V(3).Info(err.Error())
@@ -107,10 +109,10 @@ func (s *gkescheduler) selectAvailableHost(ctx context.Context) (*containerpb.Cl
 		}
 		return retry.Ok()
 	})
-	return cluster, k8sClient, err
+	return cluster, restConfig, err
 }
 
-func tryAvailableHost(ctx context.Context, logger logr.Logger, client *container.ClusterManagerClient, parent string) (*containerpb.Cluster, kubernetes.Interface, error) {
+func tryAvailableHost(ctx context.Context, logger logr.Logger, client *container.ClusterManagerClient, parent string) (*containerpb.Cluster, *rest.Config, error) {
 	req := &containerpb.ListClustersRequest{
 		Parent: parent,
 	}
@@ -135,13 +137,13 @@ func tryAvailableHost(ctx context.Context, logger logr.Logger, client *container
 		}
 
 		logger.Info(fmt.Sprintf("use gke cluster %s", cluster.GetName()))
-		k8sClient, err := clientFromCluster(cluster)
+		restConfig, err := restConfigFromCluster(cluster)
 		if err != nil {
 			logger.V(3).Info(err.Error())
 			continue
 		}
 
-		return cluster, k8sClient, nil
+		return cluster, restConfig, nil
 
 	}
 	return nil, nil, errors.New("no clusters found")

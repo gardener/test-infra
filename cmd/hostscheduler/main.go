@@ -16,15 +16,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/gardener/test-infra/cmd/hostscheduler/completion"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gkescheduler"
 	"github.com/gardener/test-infra/pkg/logger"
 	vh "github.com/gardener/test-infra/pkg/util/cmdutil/viper"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"os"
 )
 
 var (

@@ -16,24 +16,26 @@ package gardenerscheduler
 import (
 	"context"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"os"
 
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
 	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/util/cmdutil"
 )
 
-func (s *gardenerscheduler) List(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
+func (s *gardenerscheduler) List(_ *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {
 	return func(ctx context.Context) error {
 
 		shoots := &gardencorev1beta1.ShootList{}
-		selector := labels.SelectorFromSet(labels.Set(map[string]string{
+		selector := labels.SelectorFromSet(map[string]string{
 			ShootLabel: "true",
-		}))
-		err := s.client.Client().List(ctx, shoots, &client.ListOptions{
+		})
+		err := s.client.List(ctx, shoots, &client.ListOptions{
 			LabelSelector: selector,
 			Namespace:     s.namespace,
 		})

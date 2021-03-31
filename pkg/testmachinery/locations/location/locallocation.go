@@ -17,16 +17,18 @@ package location
 import (
 	"encoding/base32"
 	"fmt"
-	"github.com/go-logr/logr"
 	"hash/fnv"
 	"io/ioutil"
 	"strings"
 
+	"github.com/go-logr/logr"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+
+	apiv1 "k8s.io/api/core/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	apiv1 "k8s.io/api/core/v1"
 
 	"github.com/gardener/test-infra/pkg/util"
 )

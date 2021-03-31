@@ -14,10 +14,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gardener/test-infra/integration-tests/e2e/config"
-	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gardener/test-infra/integration-tests/e2e/config"
+	"github.com/gardener/test-infra/integration-tests/e2e/util"
 )
 
 const (

@@ -31,6 +31,7 @@ import (
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
+	"github.com/gardener/component-spec/bindings-go/apis/v2/cdutils"
 	"github.com/gardener/component-spec/bindings-go/codec"
 	"github.com/gardener/component-spec/bindings-go/ctf"
 )
@@ -43,14 +44,19 @@ type Client interface {
 	Fetch(ctx context.Context, ref string, desc ocispecv1.Descriptor, writer io.Writer) error
 }
 
-// OCIRef generates the oci reference url from the repository context and a component name and version.
+// OCIRef generates the oci reference from the repository context and a component name and version.
 func OCIRef(repoCtx v2.RepositoryContext, name, version string) (string, error) {
-	u, err := url.Parse(repoCtx.BaseURL)
+	baseUrl := repoCtx.BaseURL
+	if !strings.Contains(baseUrl, "://") {
+		// add dummy protocol to correctly parse the the url
+		baseUrl = "http://" + baseUrl
+	}
+	u, err := url.Parse(baseUrl)
 	if err != nil {
 		return "", err
 	}
-	u.Path = path.Join(u.Path, ComponentDescriptorNamespace, name)
-	return fmt.Sprintf("%s:%s", u.String(), version), nil
+	ref := path.Join(u.Host, u.Path, ComponentDescriptorNamespace, name)
+	return fmt.Sprintf("%s:%s", ref, version), nil
 }
 
 // Resolver is a generic resolve to resolve a component descriptor from a oci registry
@@ -125,7 +131,7 @@ func (r *Resolver) Resolve(ctx context.Context, name, version string) (*v2.Compo
 	if err := codec.Decode(componentDescriptorBytes, cd, r.decodeOpts...); err != nil {
 		return nil, nil, fmt.Errorf("unable to decode component descriptor: %w", err)
 	}
-	return cd, newBlobResolver(r.client, ref, manifest, cd), nil
+	return cd, NewBlobResolver(r.client, ref, manifest, cd), nil
 }
 
 // ToComponentArchive creates a tar archive in the CTF (Cnudie Transport Format) from the given component descriptor.
@@ -173,7 +179,8 @@ type blobResolver struct {
 	cd       *v2.ComponentDescriptor
 }
 
-func newBlobResolver(client Client, ref string, manifest *ocispecv1.Manifest, cd *v2.ComponentDescriptor) ctf.BlobResolver {
+// NewBlobResolver creates a new resolver for oci and local oci blobs.
+func NewBlobResolver(client Client, ref string, manifest *ocispecv1.Manifest, cd *v2.ComponentDescriptor) ctf.BlobResolver {
 	return &blobResolver{
 		client:   client,
 		ref:      ref,
@@ -198,8 +205,8 @@ func (b *blobResolver) resolve(ctx context.Context, res v2.Resource, writer io.W
 	switch res.Access.GetType() {
 	case v2.LocalOCIBlobType:
 		localOCIAccess := &v2.LocalOCIBlobAccess{}
-		if err := v2.NewCodec(nil, nil, nil).Decode(res.Access.Raw, localOCIAccess); err != nil {
-			return nil, fmt.Errorf("unable to decode access to type '%s': %w", res.Access.GetType(), err)
+		if err := cdutils.FromUnstructuredObject(v2.NewDefaultCodec(), res.Access, localOCIAccess); err != nil {
+			return nil, err
 		}
 
 		blobLayer := GetLayerWithDigest(b.manifest.Layers, localOCIAccess.Digest)
@@ -207,7 +214,7 @@ func (b *blobResolver) resolve(ctx context.Context, res v2.Resource, writer io.W
 			return nil, fmt.Errorf("oci blob layer with digest %s not found in component descriptor manifest", localOCIAccess.Digest)
 		}
 
-		if writer == nil {
+		if writer != nil {
 			if err := b.client.Fetch(ctx, b.ref, *blobLayer, writer); err != nil {
 				return nil, err
 			}
@@ -220,11 +227,11 @@ func (b *blobResolver) resolve(ctx context.Context, res v2.Resource, writer io.W
 		}, nil
 	case v2.OCIBlobType:
 		ociBlobAccess := &v2.OCIBlobAccess{}
-		if err := v2.NewCodec(nil, nil, nil).Decode(res.Access.Raw, ociBlobAccess); err != nil {
-			return nil, fmt.Errorf("unable to decode access to type '%s': %w", res.Access.GetType(), err)
+		if err := cdutils.FromUnstructuredObject(v2.NewDefaultCodec(), res.Access, ociBlobAccess); err != nil {
+			return nil, err
 		}
 
-		if writer == nil {
+		if writer != nil {
 			if err := b.client.Fetch(ctx, b.ref, ocispecv1.Descriptor{
 				MediaType: ociBlobAccess.MediaType,
 				Digest:    digest.Digest(ociBlobAccess.Digest),

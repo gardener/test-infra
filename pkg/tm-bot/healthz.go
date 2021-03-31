@@ -15,10 +15,12 @@
 package tm_bot
 
 import (
-	"github.com/gardener/test-infra/pkg/version"
-	"github.com/go-logr/logr"
 	"net/http"
 	"sync"
+
+	"github.com/go-logr/logr"
+
+	"github.com/gardener/test-infra/pkg/version"
 )
 
 var (

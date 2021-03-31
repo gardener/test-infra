@@ -17,10 +17,12 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"strings"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 func (r *TestmachineryReconciler) getImagePullSecrets(ctx context.Context) []string {

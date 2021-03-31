@@ -17,6 +17,12 @@ package gardener
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/ghodss/yaml"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
@@ -24,16 +30,13 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-	"github.com/ghodss/yaml"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"strings"
+
+	"github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	"github.com/spf13/pflag"
 )
 
 func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {

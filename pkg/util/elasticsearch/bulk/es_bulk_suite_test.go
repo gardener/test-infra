@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"testing"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -17,10 +17,12 @@ package versioncmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/version"
-	"github.com/spf13/cobra"
-	"os"
 )
 
 // AddCommand adds version to a command.

@@ -18,10 +18,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"k8s.io/client-go/rest"
 	"path"
 	"time"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/client-go/rest"
 
 	clientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"

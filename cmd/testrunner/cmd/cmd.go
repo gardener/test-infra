@@ -16,17 +16,18 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
-	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
 	"os"
 
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
+	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
+	collectcmd "github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
+	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
+	versioncmd "github.com/gardener/test-infra/cmd/testrunner/cmd/version"
+
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
 	gardener_telemetry "github.com/gardener/test-infra/cmd/testrunner/cmd/gardener_telemetry"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_gardener"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_template"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_testrun"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/version"
 	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/spf13/cobra"

@@ -16,13 +16,15 @@ package alert
 
 import (
 	"errors"
+	"os"
+
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/pkg/alert"
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 	"github.com/gardener/test-infra/pkg/util/slack"
-	"github.com/spf13/cobra"
-	"os"
 )
 
 var (

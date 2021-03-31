@@ -16,10 +16,13 @@ package v1beta1
 
 import (
 	"fmt"
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/gardener/test-infra/pkg/util/strconf"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/gardener/test-infra/pkg/util/strconf"
 )
 
 ////////////////////////////////////////////////////
@@ -182,13 +185,13 @@ type StepStatus struct {
 
 // StepStatusTestDefinition holds information about the used testdefinition and its location.
 type StepStatusTestDefinition struct {
-	Name                  string           `json:"name,omitempty"`
-	Location              TestLocation     `json:"location,omitempty"`
-	Config                []*ConfigElement `json:"config,omitempty"`
-	Labels                []string         `json:"labels,omitempty"`
-	Owner                 string           `json:"owner,omitempty"`
-	RecipientsOnFailure   []string         `json:"recipientsOnFailure"`
-	ActiveDeadlineSeconds *int64           `json:"activeDeadlineSeconds"`
+	Name                  string              `json:"name,omitempty"`
+	Location              TestLocation        `json:"location,omitempty"`
+	Config                []*ConfigElement    `json:"config,omitempty"`
+	Labels                []string            `json:"labels,omitempty"`
+	Owner                 string              `json:"owner,omitempty"`
+	RecipientsOnFailure   []string            `json:"recipientsOnFailure"`
+	ActiveDeadlineSeconds *intstr.IntOrString `json:"activeDeadlineSeconds"`
 }
 
 type StepStatusPosition struct {
@@ -362,7 +365,7 @@ type TestDefSpec struct {
 	// StartTime before the system will actively try to mark it failed and kill associated containers.
 	// Value must be a positive integer.
 	// +optional
-	ActiveDeadlineSeconds *int64 `json:"activeDeadlineSeconds,omitempty"`
+	ActiveDeadlineSeconds *intstr.IntOrString `json:"activeDeadlineSeconds,omitempty"`
 	// Entrypoint array. Not executed within a shell.
 	// The docker image's ENTRYPOINT is used if this is not provided.
 	// +optional

@@ -59,10 +59,10 @@ type LeaderElectionConfiguration struct {
 // DebuggingConfiguration holds configuration for Debugging related features.
 type DebuggingConfiguration struct {
 	// enableProfiling enables profiling via web interface host:port/debug/pprof/
-	EnableProfiling bool `json:"enableProfiling"`
+	EnableProfiling *bool `json:"enableProfiling,omitempty"`
 	// enableContentionProfiling enables lock contention profiling, if
 	// enableProfiling is true.
-	EnableContentionProfiling bool `json:"enableContentionProfiling"`
+	EnableContentionProfiling *bool `json:"enableContentionProfiling,omitempty"`
 }
 
 // ClientConnectionConfiguration contains details for constructing a client.
@@ -79,4 +79,15 @@ type ClientConnectionConfiguration struct {
 	QPS float32 `json:"qps"`
 	// burst allows extra queries to accumulate when a client is exceeding its rate.
 	Burst int32 `json:"burst"`
+}
+
+// LoggingConfiguration contains logging options
+// Refer [Logs Options](https://github.com/kubernetes/component-base/blob/master/logs/options.go) for more information.
+type LoggingConfiguration struct {
+	// Format Flag specifies the structure of log messages.
+	// default value of format is `text`
+	Format string `json:"format,omitempty"`
+	// [Experimental] When enabled prevents logging of fields tagged as sensitive (passwords, keys, tokens).
+	// Runtime log sanitization may introduce significant computation overhead and therefore should not be enabled in production.`)
+	Sanitization bool `json:"sanitization,omitempty"`
 }

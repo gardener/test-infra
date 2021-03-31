@@ -21,16 +21,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
-	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	restclient "k8s.io/client-go/rest"
-	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"math"
 	"math/rand"
 	"net/http"
@@ -39,15 +31,25 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"strings"
 	"time"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	testfwk "github.com/gardener/gardener/test/framework"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/go-logr/logr"
+	"github.com/google/go-github/v27/github"
+	"github.com/pkg/errors"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	restclient "k8s.io/client-go/rest"
+	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"sigs.k8s.io/yaml"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 func init() {
@@ -505,14 +507,14 @@ func MarshalMap(annotations map[string]string) string {
 
 // UnmarshalMap does the opposite of MarshalMap. It decodes the given string into a map, return an error if the string is not in the expected format 'key1=value1,key2=value2'
 func UnmarshalMap(cfg string) (map[string]string, error) {
-	if !testfwk.StringSet(cfg) {
+	if len(cfg) == 0 {
 		return nil, nil
 	}
 	result := make(map[string]string)
 	annotations := strings.Split(cfg, ",")
 	for _, annotation := range annotations {
 		annotation = strings.TrimSpace(annotation)
-		if !testfwk.StringSet(annotation) {
+		if len(annotation) == 0 {
 			continue
 		}
 		keyValue := strings.Split(annotation, "=")

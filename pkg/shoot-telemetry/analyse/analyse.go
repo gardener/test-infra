@@ -17,12 +17,13 @@ package analyse
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 )

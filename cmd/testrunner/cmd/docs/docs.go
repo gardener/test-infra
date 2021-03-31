@@ -17,8 +17,9 @@ package docs
 import (
 	"bytes"
 	"fmt"
-	"github.com/gardener/test-infra/pkg/logger"
 	"os"
+
+	"github.com/gardener/test-infra/pkg/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"

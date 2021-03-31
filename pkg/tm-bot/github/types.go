@@ -17,12 +17,14 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/Masterminds/semver"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
-	"net/http"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
 )
 
 type Manager interface {

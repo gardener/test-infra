@@ -17,15 +17,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/gardener/test-infra/pkg/hostscheduler"
-	"github.com/go-logr/logr"
 	"io/ioutil"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
-	"github.com/gardener/gardener/pkg/client/kubernetes"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/gardener/gardener/pkg/utils/retry"
+	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/gardener/test-infra/pkg/hostscheduler"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
@@ -57,12 +58,12 @@ func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
 }
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use
-func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) (*gardencorev1beta1.Shoot, error) {
+func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClient client.Client, shoot *gardencorev1beta1.Shoot) (*gardencorev1beta1.Shoot, error) {
 	interval := 1 * time.Minute
 	timeout := 2 * time.Hour
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &gardencorev1beta1.Shoot{}
-		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
+		err := k8sClient.Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
 		if err != nil {
 			logger.Info("Wait for shoot to be reconciled...")
 			logger.V(3).Info(err.Error())
@@ -82,12 +83,12 @@ func WaitUntilShootIsReconciled(ctx context.Context, logger logr.Logger, k8sClie
 }
 
 // WaitUntilShootIsDeleted waits until a cluster is deleted
-func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient kubernetes.Interface, shoot *gardencorev1beta1.Shoot) error {
+func WaitUntilShootIsDeleted(ctx context.Context, logger logr.Logger, k8sClient client.Client, shoot *gardencorev1beta1.Shoot) error {
 	interval := 1 * time.Minute
 	timeout := 3 * time.Hour
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		shootObject := &gardencorev1beta1.Shoot{}
-		err := k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
+		err := k8sClient.Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: shoot.Name}, shootObject)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return retry.Ok()

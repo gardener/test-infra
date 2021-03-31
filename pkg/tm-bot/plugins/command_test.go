@@ -15,9 +15,10 @@
 package plugins_test
 
 import (
-	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 )
 
 var _ = Describe("Commands", func() {

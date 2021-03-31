@@ -38,14 +38,6 @@ type RecoverFn func(ctx context.Context, err error) error
 // EmptyTaskFn is a TaskFn that does nothing (returns nil).
 var EmptyTaskFn TaskFn = func(ctx context.Context) error { return nil }
 
-// SimpleTaskFn converts the given function to a TaskFn, disrespecting any context.Context it is being given.
-// deprecated: Only used during transition period. Do not use for new functions.
-func SimpleTaskFn(f func() error) TaskFn {
-	return func(ctx context.Context) error {
-		return f()
-	}
-}
-
 // SkipIf returns a TaskFn that does nothing if the condition is true, otherwise the function
 // will be executed once called.
 func (t TaskFn) SkipIf(condition bool) TaskFn {
@@ -59,19 +51,6 @@ func (t TaskFn) SkipIf(condition bool) TaskFn {
 // Otherwise, it will do nothing when called.
 func (t TaskFn) DoIf(condition bool) TaskFn {
 	return t.SkipIf(!condition)
-}
-
-// Retry returns a TaskFn that is retried until the timeout is reached.
-// Deprecated: Retry handling should be done in the function itself, if necessary.
-func (t TaskFn) Retry(interval time.Duration) TaskFn {
-	return func(ctx context.Context) error {
-		return retry.Until(ctx, interval, func(ctx context.Context) (done bool, err error) {
-			if err := t(ctx); err != nil {
-				return retry.MinorError(err)
-			}
-			return retry.Ok()
-		})
-	}
 }
 
 // Timeout returns a TaskFn that is bound to a context which times out.

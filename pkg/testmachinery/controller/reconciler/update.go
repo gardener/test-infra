@@ -17,19 +17,22 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/types"
+
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
 	"github.com/gardener/test-infra/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
 
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 // ErrDeadlineExceeded indicates the operation exceeded its deadline for execution
@@ -53,7 +56,7 @@ func (r *TestmachineryReconciler) updateStatus(ctx context.Context, rCtx *reconc
 		rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusPending
 		rCtx.updated = true
 	}
-	if !rCtx.wf.Status.Completed() {
+	if !rCtx.wf.Status.Phase.Completed() {
 		r.updateStepsStatus(rCtx)
 		rCtx.updated = true
 	} else {
@@ -141,11 +144,11 @@ func (r *TestmachineryReconciler) updateStepsStatus(rCtx *reconcileContext) {
 				step.StartTime = &argoNodeStatus.StartedAt
 			}
 
-			testDuration := time.Duration(*step.TestDefinition.ActiveDeadlineSeconds) * time.Second
+			testDuration := time.Duration(step.TestDefinition.ActiveDeadlineSeconds.IntValue()) * time.Second
 			completionTime := metav1.NewTime(step.StartTime.Add(testDuration))
 
 			step.Phase = tmv1beta1.PhaseStatusTimeout
-			step.Duration = *step.TestDefinition.ActiveDeadlineSeconds
+			step.Duration = int64(step.TestDefinition.ActiveDeadlineSeconds.IntValue())
 			step.CompletionTime = &completionTime
 			step.PodName = argoNodeStatus.ID
 

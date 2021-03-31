@@ -16,13 +16,15 @@ package gardener
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/go-logr/logr"
+
 	"github.com/gardener/test-infra/pkg/common"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
-	"github.com/go-logr/logr"
-	"time"
 )
 
 type test struct {

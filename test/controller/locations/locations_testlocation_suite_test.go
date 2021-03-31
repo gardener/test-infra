@@ -16,11 +16,13 @@ package locations_test
 
 import (
 	"context"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Locations TestLocations tests", func() {

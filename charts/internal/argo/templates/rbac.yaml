@@ -54,6 +54,15 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - get
+  - watch
+  - list
+  - create
+- apiGroups:
+  - ""
+  resources:
   - persistentvolumeclaims
   verbs:
   - create

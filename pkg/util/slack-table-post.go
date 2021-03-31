@@ -16,11 +16,12 @@ package util
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/Masterminds/semver"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
-	"sort"
-	"strings"
 )
 
 // SymbolOffset is the offset that the symbol is prefixed for better readability

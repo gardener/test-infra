@@ -18,16 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/gardener/gardener/pkg/utils/chart"
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 )
 
 // checkResourceManager checks if a resource manager ist deployed
@@ -103,17 +105,22 @@ func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s
 		values = utils.MergeMaps(additionalValues, values)
 	}
 
-	values, err := chart.InjectImages(values, imagevector.ImageVector(), []string{
-		config.MinioImageName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to find image version %v", err)
+	minioChart := &helmChart{
+		Name: config.MinioChartName,
+		Path: filepath.Join(config.ChartsPath, config.MinioChartName),
+		Images: []string{
+			config.MinioImageName,
+		},
+		Values: values,
 	}
-
-	err = e.createManagedResource(ctx, namespace, config.MinioManagedResourceName, e.renderer,
-		config.MinioChartName, values, nil)
+	err := e.createManagedResource(ctx,
+		namespace,
+		config.MinioManagedResourceName,
+		minioChart,
+		imagevector.ImageVector(),
+	)
 	if err != nil {
-		return errors.Wrap(err, "unable to create managed resource")
+		return fmt.Errorf("unable to create managed resource: %w", err)
 	}
 
 	// set the endpoint to use the internal minio service

@@ -16,12 +16,14 @@ package single
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/spf13/pflag"
+
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
-	"github.com/go-logr/logr"
-	"github.com/spf13/pflag"
-	"time"
 )
 
 type test struct {

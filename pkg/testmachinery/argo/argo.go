@@ -15,12 +15,25 @@
 package argo
 
 import (
-	argov1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	argoclientset "github.com/argoproj/argo/pkg/client/clientset/versioned"
-	"github.com/gardener/test-infra/pkg/testmachinery"
+	"context"
+	"fmt"
+
+	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
+
+// Scheme defines the kubernetes scheme that contains the argo resources.
+var Scheme = runtime.NewScheme()
+
+func init() {
+	utilruntime.Must(argov1.AddToScheme(Scheme))
+}
 
 // CreateWorkflow takes a name, templates and volumes to generate an argo workflow object.
 func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []argov1.Template, volumes []corev1.Volume, ttl *int32, pullImageSecretNames []string) (*argov1.Workflow, error) {
@@ -48,18 +61,19 @@ func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []
 }
 
 // DeployWorkflow creates the given argo workflow object in the given k8s cluster.
-func DeployWorkflow(wf *argov1.Workflow, masterURL, kubeconfig string) (*argov1.Workflow, error) {
+func DeployWorkflow(ctx context.Context, wf *argov1.Workflow, masterURL, kubeconfig string) (*argov1.Workflow, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
 		return nil, err
 	}
-	argoclient, err := argoclientset.NewForConfig(cfg)
+	kubeClient, err := client.New(cfg, client.Options{
+		Scheme: Scheme,
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create kubernetes client: %w", err)
 	}
 
-	wf, err = argoclient.ArgoprojV1alpha1().Workflows("default").Create(wf)
-	if err != nil {
+	if err := kubeClient.Create(ctx, wf); err != nil {
 		return nil, err
 	}
 	return wf, nil
@@ -81,7 +95,7 @@ func CreateTask(taskName, templateName, phase string, continueOnError bool, depe
 			Parameters: []argov1.Parameter{
 				{
 					Name:  "phase",
-					Value: &phase,
+					Value: argov1.AnyStringPtr(phase),
 				},
 			},
 		},
