@@ -19,8 +19,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
 	"github.com/gardener/test-infra/pkg/testmachinery/locations/location"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 )
@@ -37,8 +39,8 @@ func NewTestLocations(log logr.Logger, testLocations []tmv1beta1.TestLocation) (
 		t := testLocation
 		locationLog := log.WithValues("testlocation", i)
 
-		if err := ValidateTestLocation(fmt.Sprintf("spec.testDefLocations.[%d]", i), t); err != nil {
-			return nil, err
+		if err := validation.ValidateTestLocation(field.NewPath("spec", "testDefLocations").Index(i), t); len(err) != 0 {
+			return nil, err.ToAggregate()
 		}
 
 		if testLocation.Type == tmv1beta1.LocationTypeGit {

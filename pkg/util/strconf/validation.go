@@ -1,27 +1,33 @@
 package strconf
 
-import "fmt"
+import (
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
 
 // Validate validates a testrun config element.
-func Validate(identifier string, source *ConfigSource) error {
+func Validate(fldPath *field.Path, source *ConfigSource) field.ErrorList {
+	var allErrs field.ErrorList
 	if source.ConfigMapKeyRef == nil && source.SecretKeyRef == nil {
-		return fmt.Errorf("%s.(configMapKeyRef or secretMapKeyRef): Required configMapKeyRef or secretMapKeyRef: Either a configmap ref or a secretmap ref have to be defined", identifier)
+		allErrs = append(allErrs, field.Required(fldPath.Child("configMapKeyRef/secretMapKeyRef"), "Either a configmap ref or a secretmap ref have to be defined"))
+		return allErrs
 	}
 	if source.ConfigMapKeyRef != nil {
+		cmPath := fldPath.Child("configMapKeyRef")
 		if source.ConfigMapKeyRef.Key == "" {
-			return fmt.Errorf("%s.configMapKeyRef.key: Required value", identifier)
+			allErrs = append(allErrs, field.Required(cmPath.Child("key"), "has to be defined"))
 		}
 		if source.ConfigMapKeyRef.Name == "" {
-			return fmt.Errorf("%s.configMapKeyRef.name: Required value", identifier)
+			allErrs = append(allErrs, field.Required(cmPath.Child("name"), "has to be defined"))
 		}
 	}
 	if source.SecretKeyRef != nil {
+		skPath := fldPath.Child("secretKeyRef")
 		if source.SecretKeyRef.Key == "" {
-			return fmt.Errorf("%s.secretKeyRef.key: Required value", identifier)
+			allErrs = append(allErrs, field.Required(skPath.Child("key"), "has to be defined"))
 		}
 		if source.SecretKeyRef.Name == "" {
-			return fmt.Errorf("%s.secretKeyRef.name: Required value", identifier)
+			allErrs = append(allErrs, field.Required(skPath.Child("name"), "has to be defined"))
 		}
 	}
-	return nil
+	return allErrs
 }

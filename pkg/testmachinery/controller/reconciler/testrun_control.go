@@ -78,6 +78,19 @@ func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconci
 	// RECONCILE //
 	///////////////
 
+	if rCtx.tr.Status.Phase.Completed() {
+		return reconcile.Result{}, nil
+	}
+	if err := testrun.Validate(log, rCtx.tr); err != nil {
+		rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusError
+		rCtx.tr.Status.State = fmt.Sprintf("validation failed: %s", err.Error())
+		if err := r.Status().Update(ctx, rCtx.tr); err != nil {
+			log.Error(err, "unable to update testrun status")
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, nil
+	}
+
 	rCtx.wf = &argov1.Workflow{}
 	err = r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(rCtx.tr), Namespace: rCtx.tr.Namespace}, rCtx.wf)
 	if err != nil {

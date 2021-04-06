@@ -12,26 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package locations_test
+package validation_test
 
 import (
-	"testing"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/locations"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
-func TestConfig(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Testdefinition Suite")
-}
+var stdPath = field.NewPath("identifier")
 
-var _ = Describe("TestDefinition Validation", func() {
+var _ = Describe("Locations Validation", func() {
 
 	Context("validating testdefinition locations", func() {
 		var location tmv1beta1.TestLocation
@@ -47,16 +42,19 @@ var _ = Describe("TestDefinition Validation", func() {
 
 		It("should fail when no type is defined", func() {
 			location.Type = ""
-			Expect(locations.ValidateTestLocation("identifier", location)).To(HaveOccurred())
+			errList := validation.ValidateTestLocation(stdPath, location)
+			Expect(errList).To(HaveLen(1))
 		})
 		It("should fail when an unknown type is defined", func() {
 			location.Type = "unknownType"
-			Expect(locations.ValidateTestLocation("identifier", location)).To(HaveOccurred())
+			errList := validation.ValidateTestLocation(stdPath, location)
+			Expect(errList).To(HaveLen(1))
 		})
 
 		Context("when location type is git", func() {
 			It("should succeed when repo and revision are defined", func() {
-				Expect(locations.ValidateTestLocation("identifier", location)).ToNot(HaveOccurred())
+				errList := validation.ValidateTestLocation(stdPath, location)
+				Expect(errList).To(HaveLen(0))
 			})
 		})
 
@@ -64,18 +62,21 @@ var _ = Describe("TestDefinition Validation", func() {
 			It("should succeed when hostPath is defined and the application running in insecure mode", func() {
 				location.Type = "local"
 				testmachinery.GetConfig().TestMachinery.Insecure = true
-				Expect(locations.ValidateTestLocation("identifier", location)).ToNot(HaveOccurred())
+				errList := validation.ValidateTestLocation(stdPath, location)
+				Expect(errList).To(HaveLen(0))
 			})
 
 			It("should fail when hostPath is not specified", func() {
 				location.Type = "local"
 				location.HostPath = ""
-				Expect(locations.ValidateTestLocation("identifier", location)).To(HaveOccurred())
+				errList := validation.ValidateTestLocation(stdPath, location)
+				Expect(errList).To(HaveLen(1))
 			})
 
 			It("should fail when the testmachinery is running in secure mode", func() {
 				location.Type = "local"
-				Expect(locations.ValidateTestLocation("identifier", location)).To(HaveOccurred())
+				errList := validation.ValidateTestLocation(stdPath, location)
+				Expect(errList).To(HaveLen(1))
 			})
 		})
 	})

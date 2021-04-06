@@ -15,6 +15,8 @@
 package testflow_test
 
 import (
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	testutils "github.com/gardener/test-infra/test/utils"
@@ -23,34 +25,22 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
+
+var stdPath = field.NewPath("identifier")
 
 var _ = Describe("Testflow", func() {
 	Context("validatation", func() {
 		It("should fail when no testdefs are found", func() {
 			tf := tmv1beta1.TestFlow{}
-			locations := &testutils.LocationsMock{}
-			Expect(testflow.Validate("identifier", tf, locations, false)).To(HaveOccurred())
-		})
-
-		It("should fail when step names are not unique", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
+			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("identifier"),
+			}))))
 		})
 
 		It("should fail when a test step specifies a label with non existent testdefinitions", func() {
@@ -68,171 +58,11 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			Expect(testflow.Validate("identifier", tf, testutils.EmptyMockLocation, true)).To(HaveOccurred())
-		})
-
-		It("should fail when dependent steps do not exist", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"bla"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
-		})
-
-		It("should fail when dependencies have a cycle", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test1",
-					DependsOn: []string{"int-test3", "int-test"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"int-test1"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test3",
-					DependsOn: []string{"int-test1"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
-		})
-
-		It("should fail when artifactsFrom and useGlobalArtifacts are used at the same time", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"int-test"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom:      "int-test",
-					UseGlobalArtifacts: true,
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
-		})
-
-		It("should fail when step with artifactsFrom name does not exist", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"int-test"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "notExistingStepName",
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
-		})
-
-		It("should fail when step with artifactsFrom name does not exist", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"int-test"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "int-test",
-				},
-				{
-					Name:      "int-test3",
-					DependsOn: []string{"int-test2"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "int-test2",
-				},
-				{
-					Name:      "int-test4",
-					DependsOn: []string{"int-test2"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "int-test",
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(Succeed())
-		})
-
-		It("should fail artifactsFrom step name represents a succeeding step", func() {
-			tf := tmv1beta1.TestFlow{
-				{
-					Name: "int-test",
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-				{
-					Name:      "int-test2",
-					DependsOn: []string{"int-test"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "int-test",
-				},
-				{
-					Name:      "int-test3",
-					DependsOn: []string{"int-test2"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-					ArtifactsFrom: "int-test4",
-				},
-				{
-					Name:      "int-test4",
-					DependsOn: []string{"int-test2"},
-					Definition: tmv1beta1.StepDefinition{
-						Name: "testdefname",
-					},
-				},
-			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).To(HaveOccurred())
+			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeRequired),
+				"Field": Equal("identifier[0].definition"),
+			}))))
 		})
 
 		It("should fail when labels without matching testdefs are found", func() {
@@ -244,7 +74,11 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, false)).To(HaveOccurred())
+			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeRequired),
+				"Field": Equal("identifier[0].definition"),
+			}))))
 		})
 
 		It("should succeed when an empty flow is ignored", func() {
@@ -256,7 +90,7 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			Expect(testflow.Validate("identifier", tf, defaultMockLocation, true)).ToNot(HaveOccurred())
+			Expect(testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, true)).To(HaveLen(0))
 		})
 
 		It("should succeed when a testdef can be found", func() {
@@ -283,20 +117,7 @@ var _ = Describe("Testflow", func() {
 					return testdefs, nil
 				},
 			}
-			Expect(testflow.Validate("identifier", tf, locations, true)).ToNot(HaveOccurred())
+			Expect(testflow.Validate(stdPath, tf, locations, true)).To(HaveLen(0))
 		})
 	})
 })
-
-var defaultMockLocation = &testutils.LocationsMock{
-	TestDefinitions: []*testdefinition.TestDefinition{
-		{
-			Location: &testutils.TDLocationMock{},
-			FileName: "file.name",
-			Info: &tmv1beta1.TestDefinition{
-				ObjectMeta: metav1.ObjectMeta{Name: "testdefname"},
-				Spec:       tmv1beta1.TestDefSpec{Command: []string{"bash"}, Owner: "user@company.com"},
-			},
-		},
-	},
-}
