@@ -136,8 +136,10 @@ func (v *testflowValidationHelper) checkPreviousStepHasDependentStep(path *field
 		pPath := path.Child(parent)
 		parentStep, ok := v.stepNameToStep[parent]
 		if !ok {
-			// continue here as the check if a parent exists is validated by another func.
-			continue
+			return false, pPath.String()
+		}
+		if parent == v.dependentStepName {
+			return true, pPath.String()
 		}
 
 		if len(parentStep.DependsOn) == 0 {

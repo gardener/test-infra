@@ -57,6 +57,7 @@ func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) ad
 	case admissionv1.Create:
 		if err := validation.ValidateTestrun(tr); err != nil {
 			v.log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
+			v.log.V(7).Info(string(req.Object.Raw))
 			return admission.Denied(err.Error())
 		}
 	case admissionv1.Update:
@@ -66,6 +67,8 @@ func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) ad
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 		if !reflect.DeepEqual(oldObj.Spec, tr.Spec) {
+			v.log.V(5).Info(fmt.Sprintf("updated testrun spec %s", tr.Name))
+			v.log.V(7).Info(string(req.Object.Raw))
 			return admission.Denied("testrun spec is not allowed to be updated")
 		}
 	default:

@@ -71,6 +71,26 @@ var _ = Describe("testflow", func() {
 		}))))
 	})
 
+	It("should not fail when direct dependent steps does exist", func() {
+		tf := tmv1beta1.TestFlow{
+			{
+				Name: "int-test",
+				Definition: tmv1beta1.StepDefinition{
+					Name: "testdefname",
+				},
+			},
+			{
+				Name:      "int-test2",
+				DependsOn: []string{"int-test"},
+				Definition: tmv1beta1.StepDefinition{
+					Name: "int-test",
+				},
+			},
+		}
+		errList := validation.ValidateTestFlow(stdPath, tf)
+		Expect(errList).To(HaveLen(0))
+	})
+
 	It("should fail when dependencies have a cycle", func() {
 		tf := tmv1beta1.TestFlow{
 			{
