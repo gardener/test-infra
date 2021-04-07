@@ -59,7 +59,7 @@ func GetRootCommand() *cobra.Command {
 					config.ShootsFilter[shoot] = true
 				}
 
-				// Validate the passed flag inputs.
+				// validates the passed flag inputs.
 				if err := config.Validate(); err != nil {
 					log.Error(err, "invalid flag input")
 					os.Exit(1)

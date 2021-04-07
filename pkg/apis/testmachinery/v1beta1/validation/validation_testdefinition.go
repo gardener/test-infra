@@ -12,45 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdefinition
+package validation
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
-// Validate validates a testdefinition.
-func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
+// ValidateTestDefinition validates a testdefinition.
+func ValidateTestDefinition(fldPath *field.Path, td *tmv1beta1.TestDefinition) field.ErrorList {
+	var allErrs field.ErrorList
 	if td.GetName() == "" {
-		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Required value: name has to be defined", identifier)
+		allErrs = append(allErrs, field.Required(fldPath.Child("name"), "must be defined"))
+	} else {
+		allErrs = append(allErrs, ValidateName(fldPath.Child("name"), td.GetName())...)
 	}
 
-	if err := ValidateName(identifier, td.GetName()); err != nil {
-		return err
-	}
-
+	specPath := fldPath.Child("spec")
 	if len(td.Spec.Command) == 0 {
-		return fmt.Errorf("Invalid TestDefinition (%s) Name: \"%s\": spec.command : Required value: command has to be defined", identifier, td.GetName())
+		allErrs = append(allErrs, field.Required(specPath.Child("command"), "must be defined"))
 	}
-	if td.Spec.Owner == "" || !isEmailValid(td.Spec.Owner) {
-		return fmt.Errorf("Invalid TestDefinition (%s) Owner: \"%s\": spec.owner : Required value: valid email has to be defined", identifier, td.Spec.Owner)
+	if td.Spec.Owner == "" {
+		allErrs = append(allErrs, field.Required(specPath.Child("owner"), "must be defined"))
+	} else if !isEmailValid(td.Spec.Owner) {
+		allErrs = append(allErrs, field.Invalid(specPath.Child("owner"), td.Spec.Owner, "must be a valid email address"))
 	}
 	if len(td.Spec.RecipientsOnFailure) != 0 && !isEmailListValid(td.Spec.RecipientsOnFailure) {
-		return fmt.Errorf("Invalid TestDefinition (%s) ReceipientsOnFailure: \"%s\": spec.notifyOnFailure : Required value: valid email has to be defined", identifier, td.Spec.RecipientsOnFailure)
+		allErrs = append(allErrs, field.Invalid(specPath.Child("recipientsOnFailure"), td.Spec.RecipientsOnFailure, "must be a list of valid email addresses"))
 	}
 
 	for i, label := range td.Spec.Labels {
-		identifier := fmt.Sprintf("Invalid TestDefinition (%s): spec.labels[%d]", identifier, i)
-		if err := ValidateLabelName(identifier, label); err != nil {
-			return err
-		}
+		labelPath := specPath.Child("labels").Index(i)
+		allErrs = append(allErrs, ValidateLabelName(labelPath, label)...)
 	}
-	return nil
+	return allErrs
 }
 
 // ValidateName validates the TestDefinition name. Therefore Kubernetes naming conventions and elasticsearch naming is considered.
@@ -59,9 +60,10 @@ func Validate(identifier string, td *tmv1beta1.TestDefinition) error {
 // must not start with _, - or +
 // must no be . or ..
 // must be lowercase
-func ValidateName(identifier, name string) error {
+func ValidateName(fldPath *field.Path, name string) field.ErrorList {
+	var allErrs field.ErrorList
 	if strings.Contains(name, ".") {
-		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: name must not contain '.'", identifier)
+		allErrs = append(allErrs, field.Invalid(fldPath, name, "name must not contain '.'"))
 	}
 
 	// IsDNS1123Subdomain: lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
@@ -69,19 +71,20 @@ func ValidateName(identifier, name string) error {
 	errMsgs := append([]string{}, apimachineryvalidation.IsDNS1123Subdomain(name)...)
 
 	if len(errMsgs) != 0 {
-		return fmt.Errorf("Invalid TestDefinition (%s): metadata.name : Invalid value: %s", identifier, strings.Join(errMsgs, ";"))
+		allErrs = append(allErrs, field.Invalid(fldPath, name, strings.Join(errMsgs, ";")))
 	}
 
-	return nil
+	return allErrs
 }
 
 // ValidateLabelName validates the TestDefinition label string.
 // label starting with "!" are not valid as this is considered to mean exclude label
-func ValidateLabelName(identifier, label string) error {
+func ValidateLabelName(fldPath *field.Path, label string) field.ErrorList {
+	var allErrs field.ErrorList
 	if strings.HasPrefix(label, "!") {
-		return fmt.Errorf("%s : Invalid label: name must not contain '!'", identifier)
+		allErrs = append(allErrs, field.Invalid(fldPath, label, "name must not contain '!'"))
 	}
-	return nil
+	return allErrs
 }
 
 func isEmailListValid(emailList []string) bool {

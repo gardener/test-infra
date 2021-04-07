@@ -22,7 +22,9 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
 	"github.com/gardener/test-infra/pkg/common"
 
 	"github.com/gardener/test-infra/pkg/testmachinery/config"
@@ -44,8 +46,8 @@ var (
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
 func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDefinition, error) {
 
-	if err := Validate(fmt.Sprintf("Location: \"%s\"; File: \"%s\"", loc.Name(), fileName), def); err != nil {
-		return nil, err
+	if err := validation.ValidateTestDefinition(field.NewPath(fmt.Sprintf("Location: \"%s\"; File: \"%s\"", loc.Name(), fileName)), def); len(err) != 0 {
+		return nil, err.ToAggregate()
 	}
 
 	if def.Spec.Image == "" {

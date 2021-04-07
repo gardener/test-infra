@@ -18,13 +18,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	admissionv1 "k8s.io/api/admission/v1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
 )
 
 type testrunValidator struct {
@@ -48,16 +49,24 @@ func (v *testrunValidator) InjectDecoder(d *admission.Decoder) error {
 // Handle validates a testrun
 func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	tr := &tmv1beta1.Testrun{}
-
 	if err := v.decoder.Decode(req, tr); err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
 	switch req.Operation {
 	case admissionv1.Create:
-		if err := testrun.Validate(v.log.WithValues("testrun", tr.Name), tr); err != nil {
+		if err := validation.ValidateTestrun(tr); err != nil {
 			v.log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
 			return admission.Denied(err.Error())
+		}
+	case admissionv1.Update:
+		// forbid any update to the spec after the testrun was created
+		oldObj := &tmv1beta1.Testrun{}
+		if err := v.decoder.DecodeRaw(req.OldObject, oldObj); err != nil {
+			return admission.Errored(http.StatusBadRequest, err)
+		}
+		if !reflect.DeepEqual(oldObj.Spec, tr.Spec) {
+			return admission.Denied("testrun spec is not allowed to be updated")
 		}
 	default:
 		v.log.V(5).Info("Webhook not responsible")
