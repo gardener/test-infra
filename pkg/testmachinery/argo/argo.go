@@ -40,14 +40,19 @@ func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []
 
 	wf := &argov1.Workflow{
 		Spec: argov1.WorkflowSpec{
-			Affinity:                getWorkflowAffinity(),
-			Tolerations:             getWorkflowTolerations(),
-			Entrypoint:              entrypoint,
-			ImagePullSecrets:        getImagePullSecrets(pullImageSecretNames),
-			Volumes:                 volumes,
-			Templates:               append(templates, SuspendTemplate()),
-			TTLSecondsAfterFinished: ttl,
+			Affinity:         getWorkflowAffinity(),
+			Tolerations:      getWorkflowTolerations(),
+			Entrypoint:       entrypoint,
+			ImagePullSecrets: getImagePullSecrets(pullImageSecretNames),
+			Volumes:          volumes,
+			Templates:        append(templates, SuspendTemplate()),
 		},
+	}
+
+	if ttl != nil {
+		wf.Spec.TTLStrategy = &argov1.TTLStrategy{
+			SecondsAfterCompletion: ttl,
+		}
 	}
 
 	if onExitName != "" {
