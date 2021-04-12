@@ -40,6 +40,11 @@ testmachinery:
   disableCollector: {{ .Values.testmachinery.disableCollector }}
   cleanWorkflowPods: {{ .Values.testmachinery.cleanWorkflowPods }}
 
+  {{- if .Values.testmachinery.locations }}
+  locations:
+{{ toYaml .Values.testmachinery.locations | indent 4 }}
+  {{- end }}
+
 argo:
   argoUI:
     ingress:

@@ -26,11 +26,14 @@ import (
 
 // Validate validates a testrun and all its subcomponenets.
 // This function validate in addition to the default validation function also the testlocations.
-func Validate(fldPath *field.Path, tf tmv1beta1.TestFlow, locs locations.Locations, ignoreEmptyFlow bool) field.ErrorList {
+// Returns true if the operation cvan be retried.
+// todo: refactor this to use better errors
+func Validate(fldPath *field.Path, tf tmv1beta1.TestFlow, locs locations.Locations, ignoreEmptyFlow bool) (field.ErrorList, bool) {
 	var (
 		usedTestdefinitions = 0
 		usedStepNames       = make(map[string]*tmv1beta1.DAGStep)
 		allErrs             field.ErrorList
+		retry               bool
 	)
 
 	for i, step := range tf {
@@ -39,12 +42,14 @@ func Validate(fldPath *field.Path, tf tmv1beta1.TestFlow, locs locations.Locatio
 		testDefinitions, err := locs.GetTestDefinitions(step.Definition)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(stepPath.Child("definition"), err))
+			retry = true
 			continue
 		}
 
 		// fail if there are no testdefinitions found
 		if len(testDefinitions) == 0 && !ignoreEmptyFlow {
-			allErrs = append(allErrs, field.Required(stepPath.Child("definition"), "no TestDefinitions found"))
+			allErrs = append(allErrs, field.Required(stepPath.Child("definition"), "no TestDefinitions found for step"))
+			retry = true
 			continue
 		}
 
@@ -60,7 +65,8 @@ func Validate(fldPath *field.Path, tf tmv1beta1.TestFlow, locs locations.Locatio
 	// check if there are any testruns to execute. Fail if there are none.
 	if !ignoreEmptyFlow && usedTestdefinitions == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath, nil, "no testdefinitions found"))
+		retry = true
 	}
 
-	return allErrs
+	return allErrs, retry
 }

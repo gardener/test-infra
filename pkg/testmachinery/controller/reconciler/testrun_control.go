@@ -81,15 +81,6 @@ func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconci
 	if rCtx.tr.Status.Phase.Completed() {
 		return reconcile.Result{}, nil
 	}
-	if err := testrun.Validate(log, rCtx.tr); err != nil {
-		rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusError
-		rCtx.tr.Status.State = fmt.Sprintf("validation failed: %s", err.Error())
-		if err := r.Status().Update(ctx, rCtx.tr); err != nil {
-			log.Error(err, "unable to update testrun status")
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
-	}
 
 	rCtx.wf = &argov1.Workflow{}
 	err = r.Get(ctx, types.NamespacedName{Name: testmachinery.GetWorkflowName(rCtx.tr), Namespace: rCtx.tr.Namespace}, rCtx.wf)
@@ -100,6 +91,20 @@ func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconci
 		}
 		if rCtx.tr.Status.CompletionTime != nil {
 			log.Error(err, "unable to get workflow but testrun is already finished", "workflow", testmachinery.GetWorkflowName(rCtx.tr), "namespace", rCtx.tr.Namespace)
+			return reconcile.Result{}, err
+		}
+
+		if err, retry := testrun.Validate(log, rCtx.tr); err != nil {
+			if !retry || RetryTimeoutExceeded(rCtx.tr) {
+				rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusError
+				t := metav1.Now()
+				rCtx.tr.Status.CompletionTime = &t
+			}
+			rCtx.tr.Status.State = fmt.Sprintf("validation failed: %s", err.Error())
+			if err := r.Status().Update(ctx, rCtx.tr); err != nil {
+				log.Error(err, "unable to update testrun status")
+				return reconcile.Result{}, err
+			}
 			return reconcile.Result{}, err
 		}
 

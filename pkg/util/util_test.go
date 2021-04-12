@@ -48,5 +48,19 @@ var _ = Describe("util test", func() {
 		Entry("2", 2, true),
 		Entry("3", 3, false),
 		Entry("4", 4, false),
-		Entry("5", 5, true))
+		Entry("5", 5, true),
+	)
+
+	DescribeTable("DomainMatches",
+		func(expected bool, value string, domains ...string) {
+			Expect(DomainMatches(value, domains...)).To(Equal(expected))
+		},
+		Entry("match exactly", true, "example.com", "example.com"),
+		Entry("not match", false, "example.com", "not.com"),
+		Entry("match subdomain", true, "sub.example.com", "example.com"),
+		Entry("match sub subdomain", true, "sub.sub.example.com", "example.com"),
+		Entry("match if one matches", true, "sub.sub.example.com", "not.com", "example.com"),
+		Entry("not match if none matches", false, "sub.sub.example.com", "not.com", "not2.com"),
+		Entry("not match if none domains provided", false, "sub.sub.example.com"),
+	)
 })

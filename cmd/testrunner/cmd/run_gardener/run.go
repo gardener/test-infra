@@ -136,7 +136,7 @@ var runCmd = &cobra.Command{
 
 		if dryRun {
 			fmt.Print(util.PrettyPrintStruct(tr))
-			if err := testrun.Validate(logger.Log.WithName("validation"), tr); err != nil {
+			if err, _ := testrun.Validate(logger.Log.WithName("validation"), tr); err != nil {
 				fmt.Println(err.Error())
 			}
 			os.Exit(0)

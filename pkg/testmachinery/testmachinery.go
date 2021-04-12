@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -52,6 +53,19 @@ func Setup(config *config.Configuration) error {
 		tmConfig.ElasticSearch = nil
 	}
 
+	if len(config.TestMachinery.RetryTimeout) != 0 {
+		d, err := time.ParseDuration(config.TestMachinery.RetryTimeout)
+		if err != nil {
+			return fmt.Errorf("unable to parse retry timeout: %w", err)
+		}
+		config.TestMachinery.RetryTimeoutDuration = &d
+	}
+	if config.TestMachinery.RetryTimeoutDuration == nil {
+		// default timeout location
+		d := 15 * time.Minute
+		config.TestMachinery.RetryTimeoutDuration = &d
+	}
+
 	return nil
 }
 
@@ -73,6 +87,11 @@ func CleanWorkflowPods() bool {
 // TestDefPath returns the path to TestDefinition inside repositories (scripts/integration-tests/argo/tm).
 func TestDefPath() string {
 	return tmConfig.TestMachinery.TestDefPath
+}
+
+// Locations returns the locations configuration
+func Locations() *config.Locations {
+	return tmConfig.TestMachinery.Locations
 }
 
 // Prepare Image returns the image of the prepare step.
@@ -108,6 +127,11 @@ func IsRunLocal() bool {
 // IsRunInsecure returns if the testmachinery is run locally
 func IsRunInsecure() bool {
 	return tmConfig.TestMachinery.Insecure
+}
+
+// GetRetryTimeout returns the retry
+func GetRetryTimeout() *time.Duration {
+	return tmConfig.TestMachinery.RetryTimeoutDuration
 }
 
 // GetWorkflowName returns the workflow name of a testruns

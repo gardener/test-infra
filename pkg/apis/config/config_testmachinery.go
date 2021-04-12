@@ -14,6 +14,8 @@
 
 package config
 
+import "time"
+
 // TestMachinery holds information about the testmachinery
 type TestMachinery struct {
 	// Namespace is the namespace the testmachinery is deployed to.
@@ -21,6 +23,9 @@ type TestMachinery struct {
 
 	// TestDefPath is the repository path where the Test Machinery should search for testdefinitions.
 	TestDefPath string `json:"testdefPath"`
+
+	// Locations contains all testlocation configurations
+	Locations *Locations `json:"locations,omitempty"`
 
 	// PrepareImage is the prepare image that is used in the prepare and postprepare step.
 	PrepareImage string `json:"prepareImage"`
@@ -34,11 +39,25 @@ type TestMachinery struct {
 	// Insecure indicates that the testmachinery runs insecure.
 	Insecure bool `json:"insecure,omitempty"`
 
+	// RetryTimeout defines the timeout when a testrun is not retried anymore and goes into failed state.
+	// The string is expected to be passed as golang duration parsable format.
+	RetryTimeout string `json:"retryTimeout,omitempty"`
+
+	// RetryTimeoutDuration is the parsed value of the RetryTimeout.
+	RetryTimeoutDuration *time.Duration `json:"-"`
+
 	// DisableCollector disables the collection of test results and their ingestion into elasticsearch.
 	DisableCollector bool `json:"disableCollector"`
 
 	// CleanWorkflowPods indicates if workflow pods should be directly cleaned up by the testmachinery.
 	CleanWorkflowPods bool `json:"cleanWorkflowPods,omitempty"`
+}
+
+// Locations defines test location configurations.
+type Locations struct {
+	// ExcludeDomains is a list of domains that should be excluded and no test definition fetched from.
+	// Note that the domain and all its subdomains are ignored.
+	ExcludeDomains []string `json:"excludeDomains,omitempty"`
 }
 
 // GitHub holds all github related information needed in the testmachinery.

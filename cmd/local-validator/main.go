@@ -74,7 +74,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := testrun.Validate(log.WithValues("testrun", internalName(tr)), tr); err != nil {
+	if err, _ := testrun.Validate(log.WithValues("testrun", internalName(tr)), tr); err != nil {
 		log.Error(err, "invalid Testrun", "testrun", internalName(tr))
 		os.Exit(1)
 	}

@@ -36,7 +36,7 @@ var _ = Describe("Testflow", func() {
 	Context("validatation", func() {
 		It("should fail when no testdefs are found", func() {
 			tf := tmv1beta1.TestFlow{}
-			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			errList, _ := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
 			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeInvalid),
 				"Field": Equal("identifier"),
@@ -58,7 +58,7 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			errList, _ := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
 			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeRequired),
 				"Field": Equal("identifier[0].definition"),
@@ -74,7 +74,7 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			errList := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
+			errList, _ := testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, false)
 			Expect(errList).To(ContainElement(PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeRequired),
 				"Field": Equal("identifier[0].definition"),

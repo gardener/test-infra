@@ -68,6 +68,10 @@ func NewGitLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) (t
 
 // SetTestDefs adds its TestDefinitions to the TestDefinition Map.
 func (l *GitLocation) SetTestDefs(testDefMap map[string]*testdefinition.TestDefinition) error {
+	// ignore the location if the domain is excluded
+	if util.DomainMatches(l.repoURL.Hostname(), testmachinery.Locations().ExcludeDomains...) {
+		return nil
+	}
 	testDefs, err := l.getTestDefs()
 	if err != nil {
 		return err

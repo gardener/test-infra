@@ -18,10 +18,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
@@ -39,4 +41,11 @@ func (r *TestmachineryReconciler) getImagePullSecrets(ctx context.Context) []str
 	}
 
 	return strings.Split(pullSecretNames, ",")
+}
+
+// RetryTimeoutExceeded returns whether the retry timeout is exceeded or not.
+func RetryTimeoutExceeded(tr *tmv1beta1.Testrun) bool {
+	timeout := testmachinery.GetRetryTimeout()
+	passedTime := time.Since(tr.CreationTimestamp.Time)
+	return passedTime.Milliseconds() >= timeout.Milliseconds()
 }

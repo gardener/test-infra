@@ -52,6 +52,9 @@ testmachinery:
   disableCollector: false
   cleanWorkflowPods: false
 
+  locations:
+    excludeDomains: []
+
   github:
     cache:
       cacheDir: /tmp/tm/cache

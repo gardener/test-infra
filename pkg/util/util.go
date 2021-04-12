@@ -198,6 +198,17 @@ func StringDefault(value, def string) string {
 	return value
 }
 
+// DomainMatches returns true if one of the given domains or subdomains match.
+func DomainMatches(s string, domains ...string) bool {
+	normalizedDomain := strings.ToUpper(s)
+	for _, d := range domains {
+		if strings.HasSuffix(normalizedDomain, strings.ToUpper(d)) {
+			return true
+		}
+	}
+	return false
+}
+
 // HasLabel returns a bool if passed in label exists
 func HasLabel(obj metav1.ObjectMeta, label string) bool {
 	_, found := obj.Labels[label]
