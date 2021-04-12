@@ -90,7 +90,7 @@ func TestDefPath() string {
 }
 
 // Locations returns the locations configuration
-func Locations() *config.Locations {
+func Locations() config.Locations {
 	return tmConfig.TestMachinery.Locations
 }
 

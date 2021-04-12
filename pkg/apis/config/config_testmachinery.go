@@ -25,7 +25,7 @@ type TestMachinery struct {
 	TestDefPath string `json:"testdefPath"`
 
 	// Locations contains all testlocation configurations
-	Locations *Locations `json:"locations,omitempty"`
+	Locations Locations `json:"locations,omitempty"`
 
 	// PrepareImage is the prepare image that is used in the prepare and postprepare step.
 	PrepareImage string `json:"prepareImage"`

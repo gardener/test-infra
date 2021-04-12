@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
 )
@@ -59,7 +60,7 @@ func (o *options) Complete() error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return testmachinery.Setup(o.configwatcher.GetConfiguration())
 }
 
 func (o *options) ApplyWebhooks(mgr manager.Manager) {
