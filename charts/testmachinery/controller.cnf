@@ -12,16 +12,21 @@ string_mask         = utf8only
 default_md          = sha256
 
 # Extension to add when the -x509 option is used.
-#x509_extensions     = v3_ca
+prompt = no
+req_extensions     = v3_req
 
-[ req_distinguished_name ]
-# See <https://en.wikipedia.org/wiki/Certificate_signing_request>.
-countryName                     = Country Name (2 letter code)
-0.organizationName              = Organization Name
-organizationalUnitName          = Organizational Unit Name
-commonName                      = Common Name
+[req_distinguished_name]
+C = DE
+O = SAP SE
+OU = testmachinery
+CN = testmachinery-controller.default.svc
 
-countryName_default             = DE
-0.organizationName_default      = SAP SE
-organizationalUnitName_default  = testmachinery
-commonName_default              = testmachinery-controller.default.svc
+[v3_req]
+keyUsage = keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = testmachinery-controller.default.svc
+DNS.2 = testmachinery-controller.default
+DNS.3 = testmachinery-controller
