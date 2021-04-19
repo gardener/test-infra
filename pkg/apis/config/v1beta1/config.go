@@ -37,20 +37,31 @@ type Configuration struct {
 
 // Controller holds information about the testmachinery controller
 type Controller struct {
-	// HealthAddr is the address of the healtcheck endpoint
+	// HealthAddr is the address of the healtcheck endpoint.
 	HealthAddr string `json:"healthAddr,omitempty"`
 
-	// MetricsAddr is the address of the metrics endpoint
+	// MetricsAddr is the address of the metrics endpoint.
 	MetricsAddr string `json:"metricsAddr,omitempty"`
 
-	// EnableLeaderElection enables leader election for the controller
+	// EnableLeaderElection enables leader election for the controller.
 	EnableLeaderElection bool `json:"enableLeaderElection,omitempty"`
 
 	// MaxConcurrentSyncs is the max concurrent reconciles the controller does.
 	MaxConcurrentSyncs int `json:"maxConcurrentSyncs,omitempty"`
 
-	// WebhookConfig holds the validating webhook configuration
+	// TTLController contains the ttl controller configuration.
+	TTLController TTLController `json:"ttlController,omitempty"`
+
+	// WebhookConfig holds the validating webhook configuration.
 	WebhookConfig WebhookConfig `json:"webhook,omitempty"`
+}
+
+// TTLController contains the ttl controller configuration.
+type TTLController struct {
+	// Disable disables the ttl controller.
+	Disable bool `json:"disable,omitempty"`
+	// MaxConcurrentSyncs is the max concurrent reconciles the controller does.
+	MaxConcurrentSyncs int `json:"maxConcurrentSyncs,omitempty"`
 }
 
 // WebhookConfig holds the validating webhook configuration

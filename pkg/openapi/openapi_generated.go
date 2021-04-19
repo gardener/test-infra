@@ -44,6 +44,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot":                       schema_pkg_apis_config_v1beta1_GitHubBot(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache":                     schema_pkg_apis_config_v1beta1_GitHubCache(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress":                         schema_pkg_apis_config_v1beta1_Ingress(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations":                       schema_pkg_apis_config_v1beta1_Locations(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging":                         schema_pkg_apis_config_v1beta1_Logging(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth":                           schema_pkg_apis_config_v1beta1_OAuth(ref),
@@ -51,6 +52,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity":          schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3":                              schema_pkg_apis_config_v1beta1_S3(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3Server":                        schema_pkg_apis_config_v1beta1_S3Server(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TTLController":                   schema_pkg_apis_config_v1beta1_TTLController(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TestMachinery":                   schema_pkg_apis_config_v1beta1_TestMachinery(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig":                   schema_pkg_apis_config_v1beta1_WebhookConfig(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Webserver":                       schema_pkg_apis_config_v1beta1_Webserver(ref),
@@ -298,21 +300,21 @@ func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) com
 				Properties: map[string]spec.Schema{
 					"healthAddr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "HealthAddr is the address of the healtcheck endpoint",
+							Description: "HealthAddr is the address of the healtcheck endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"metricsAddr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "MetricsAddr is the address of the metrics endpoint",
+							Description: "MetricsAddr is the address of the metrics endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"enableLeaderElection": {
 						SchemaProps: spec.SchemaProps{
-							Description: "EnableLeaderElection enables leader election for the controller",
+							Description: "EnableLeaderElection enables leader election for the controller.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -324,9 +326,16 @@ func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) com
 							Format:      "int32",
 						},
 					},
+					"ttlController": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TTLController contains the ttl controller configuration.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.TTLController"),
+						},
+					},
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
-							Description: "WebhookConfig holds the validating webhook configuration",
+							Description: "WebhookConfig holds the validating webhook configuration.",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"),
 						},
@@ -335,7 +344,7 @@ func schema_pkg_apis_config_v1beta1_Controller(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.TTLController", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.WebhookConfig"},
 	}
 }
 
@@ -632,6 +641,34 @@ func schema_pkg_apis_config_v1beta1_Ingress(ref common.ReferenceCallback) common
 	}
 }
 
+func schema_pkg_apis_config_v1beta1_Locations(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Locations defines test location configurations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"excludeDomains": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExcludeDomains is a list of domains that should be excluded and no test definition fetched from. Note that the domain and all its subdomains are ignored.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_config_v1beta1_Logging(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -864,6 +901,33 @@ func schema_pkg_apis_config_v1beta1_S3Server(ref common.ReferenceCallback) commo
 	}
 }
 
+func schema_pkg_apis_config_v1beta1_TTLController(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TTLController contains the ttl controller configuration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disable disables the ttl controller.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"maxConcurrentSyncs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxConcurrentSyncs is the max concurrent reconciles the controller does.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -884,6 +948,13 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"locations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Locations contains all testlocation configurations",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations"),
 						},
 					},
 					"prepareImage": {
@@ -916,6 +987,13 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"retryTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryTimeout defines the timeout when a testrun is not retried anymore and goes into failed state. The string is expected to be passed as golang duration parsable format.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disableCollector": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableCollector disables the collection of test results and their ingestion into elasticsearch.",
@@ -935,6 +1013,8 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 				Required: []string{"testdefPath", "prepareImage", "baseImage", "disableCollector"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations"},
 	}
 }
 
