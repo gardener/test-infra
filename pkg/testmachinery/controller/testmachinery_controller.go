@@ -23,6 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/ttl"
+
 	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -70,5 +72,12 @@ func RegisterTestMachineryController(mgr manager.Manager, log logr.Logger, confi
 			MaxConcurrentReconciles: config.Controller.MaxConcurrentSyncs,
 		})
 	}
-	return bldr.Complete(tmReconciler)
+	if err := bldr.Complete(tmReconciler); err != nil {
+		return err
+	}
+
+	if !config.Controller.TTLController.Disable {
+		return ttl.AddControllerToManager(log, mgr, config.Controller.TTLController)
+	}
+	return nil
 }
