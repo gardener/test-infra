@@ -67,6 +67,7 @@ var (
 	DownloadsDir             string
 	RunCleanUpAfterTest      bool
 	RetryFailedTestcases     bool
+	DryRun                   bool
 )
 
 const (
@@ -93,6 +94,7 @@ func init() {
 	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
 	flag.Var(&ExplicitTestcases, "testcase", "List of testcases. If used description file and execution group are ingored.")
 	flag.BoolVar(&RetryFailedTestcases, "retryFailedTestcases", false, "runs an additional kubetest run for failed tests only")
+	flag.BoolVar(&DryRun, "dryRun", false, "specify dryRun = true to only display all testcases")
 	flag.Parse()
 	if Debug {
 		log.SetLevel(log.DebugLevel)

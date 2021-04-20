@@ -175,6 +175,12 @@ func getAllE2eTestCases() sets.StringSet {
 	if log.GetLevel() == log.DebugLevel {
 		allTestcases.WriteToFile(AllTestcasesFilePath)
 	}
+	if config.DryRun {
+		fmt.Println("In Dry Run mode, only print file containing all test cases for specified k8s version")
+		allTestcases.WriteToFile(AllTestcasesFilePath)
+		fmt.Printf("All test cases have been saved in %s \n", AllTestcasesFilePath)
+		os.Exit(0)
+	}
 	return allTestcases
 }
 
