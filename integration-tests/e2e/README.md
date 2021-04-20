@@ -48,7 +48,7 @@ go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.16.2 --cloudprovider=a
 | - | debug | false | Runs application in debug mode |
 | - | testcase |  | List of explicit testcases to test. If used, `TESTCASE_GROUPS` and `TESTCASE_GROUPS` are ignored.  |
 | - | cleanUpAfterwards | false | Removes downloaded or existings kubernetes files to reduce memory footprint. |
-
+| - | dryRun | false | Dry Run mode, get all test cases and save them to a file, then print the filename path. |
 ### Description Files
 Example:
 ```json
