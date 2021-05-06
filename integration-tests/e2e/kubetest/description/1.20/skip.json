@@ -101,7 +101,6 @@
   { "testcase": "[sig-network] Loadbalancing: L7 [Slow] Nginx should conform to Ingress spec"},
   { "testcase": "[sig-network] Networking should check kube-proxy urls"},
   { "testcase": "[sig-network] Services should be able to change the type and ports of a service [Slow] [DisabledForLargeClusters]"},
-  { "testcase": "[sig-network] Services should be able to up and down services"},
   { "testcase": "[sig-network] Services should only allow access from service loadbalancer source ranges [Slow]"},
   { "testcase": "[sig-network] Services should reconcile LB health check interval [Slow][Serial]"},
   { "testcase": "[sig-scheduling] Multi-AZ Cluster Volumes [sig-storage] should only be allowed to provision PDs in zones where nodes exist"},

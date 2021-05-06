@@ -4,6 +4,7 @@
   { "testcase": "[k8s.io] [sig-node] kubelet [k8s.io] [sig-node] Clean up pods on node kubelet should be able to delete 10 pods per node in 1m0s.", "groups": ["fast"]},
   { "testcase": "[sig-api-machinery] ResourceQuota should create a ResourceQuota and capture the life of a persistent volume claim with a storage class. [sig-storage]", "groups": ["fast"]},
   { "testcase": "[sig-api-machinery] ResourceQuota should create a ResourceQuota and capture the life of a persistent volume claim. [sig-storage]", "groups": ["fast"]},
+  { "testcase": "[sig-network] Services should be able to up and down services", "groups": ["fast"]},
   { "testcase": "[sig-storage] ConfigMap should be consumable from pods in volume as non-root with FSGroup [LinuxOnly] [NodeFeature:FSGroup]", "groups": ["fast"]},
   { "testcase": "[sig-storage] HostPath should support r/w [NodeConformance]", "groups": ["fast"]},
   { "testcase": "[sig-storage] HostPath should support subPath [NodeConformance]", "groups": ["fast"]},
