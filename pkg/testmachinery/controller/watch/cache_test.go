@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -36,9 +37,14 @@ var _ = Describe("Watch Cache Informer", func() {
 		opts = &watch.Options{
 			InformerType: watch.CachedInformerType,
 		}
+		ctx    context.Context
+		cancel context.CancelFunc
+		wg     sync.WaitGroup
+		w      watch.Watch
 	)
 
 	BeforeEach(func() {
+		ctx, cancel = context.WithCancel(context.Background())
 		tr = &tmv1beta1.Testrun{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",
@@ -48,50 +54,43 @@ var _ = Describe("Watch Cache Informer", func() {
 				},
 			},
 		}
-		err := fakeClient.Create(context.TODO(), tr)
+		err := fakeClient.Create(ctx, tr)
 		Expect(err).ToNot(HaveOccurred())
-	})
 
-	AfterEach(func() {
-		err := fakeClient.Delete(context.TODO(), tr)
+		wg = sync.WaitGroup{}
+		w, err = watch.New(log.NullLogger{}, restConfig, opts)
 		Expect(err).ToNot(HaveOccurred())
-	})
-
-	It("watch should timeout after 2 seconds", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		w, err := watch.New(log.NullLogger{}, restConfig, opts)
-		Expect(err).ToNot(HaveOccurred())
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			err := w.Start(ctx)
 			Expect(err).ToNot(HaveOccurred())
 		}()
-
 		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
 		Expect(err).ToNot(HaveOccurred())
+	}, 5)
 
+	AfterEach(func() {
+		defer cancel()
+		err := fakeClient.Delete(context.TODO(), tr)
+		Expect(err).ToNot(HaveOccurred())
+
+		cancel()
+		wg.Wait()
+	}, 3)
+
+	It("watch should timeout after 2 seconds", func() {
 		startTime := time.Now()
-		err = w.WatchUntil(2*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) { return false, nil })
+		err := w.WatchUntil(2*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) { return false, nil })
 		Expect(err).To(HaveOccurred())
 		Expect(time.Since(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
 	})
 
 	It("watch should reconcile once", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, opts)
-		Expect(err).ToNot(HaveOccurred())
-
+		sendWG := sync.WaitGroup{}
+		sendWG.Add(1)
 		go func() {
-			err := w.Start(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
+			defer sendWG.Done()
 			time.Sleep(1 * time.Second)
 			By("updating testrun annotation")
 			tr.Annotations["test"] = "false"
@@ -100,7 +99,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		}()
 
 		count := 0
-		err = w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+		err := w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
 			if val, ok := tr.Annotations["test"]; ok && val == "false" {
 				count++
 				return true, nil
@@ -109,22 +108,14 @@ var _ = Describe("Watch Cache Informer", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(count).To(Equal(1))
-	})
+		sendWG.Wait()
+	}, 12)
 
 	It("watch should get triggered for 10 changes", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, opts)
-		Expect(err).ToNot(HaveOccurred())
+		sendWG := sync.WaitGroup{}
+		sendWG.Add(1)
 		go func() {
-			err := w.Start(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
+			defer sendWG.Done()
 			defer GinkgoRecover()
 			for i := 0; i < 10; i++ {
 				time.Sleep(500 * time.Millisecond)
@@ -135,7 +126,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		}()
 
 		count := 0
-		err = w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+		err := w.WatchUntil(10*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
 			num, ok := tr.Annotations["rec"]
 			if !ok {
 				return false, nil
@@ -151,32 +142,25 @@ var _ = Describe("Watch Cache Informer", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(count).To(Equal(10))
-	})
+		sendWG.Wait()
+	}, 12)
 
 	It("watch should return an error if the watch function returns an error", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, opts)
-		Expect(err).ToNot(HaveOccurred())
+		sendWG := sync.WaitGroup{}
+		sendWG.Add(1)
 		go func() {
-			err := w.Start(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		}()
-
-		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
+			defer sendWG.Done()
 			time.Sleep(10 * time.Millisecond)
 			tr.Annotations["rec"] = "true"
 			err := fakeClient.Update(ctx, tr)
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
-		err = w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
+		err := w.WatchUntil(5*time.Second, "test", "test", func(tr *tmv1beta1.Testrun) (bool, error) {
 			Expect(tr.Annotations).To(HaveKeyWithValue("test", "true"))
 			return false, errors.New("error")
 		})
 		Expect(err).To(HaveOccurred())
+		sendWG.Wait()
 	})
 })
