@@ -5,9 +5,15 @@
 package secretserver
 
 import (
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,11 +29,17 @@ import (
 // ContainerRegistryConfigType is the cc secret server container registry config type
 const ContainerRegistryConfigType = "container_registry"
 
-// SecretServerEndpointEnvVarName is the name of the envvar that contains the endpoint of the secret server.
-const SecretServerEndpointEnvVarName = "SECRETS_SERVER_ENDPOINT"
+// EndpointEnvVarName is the name of the envvar that contains the endpoint of the secret server.
+const EndpointEnvVarName = "SECRETS_SERVER_ENDPOINT"
 
-// SecretServerConcourseConfigEnvVarName is the name of the envvar that contains the name of concourse config.
-const SecretServerConcourseConfigEnvVarName = "SECRETS_SERVER_CONCOURSE_CFG_NAME"
+// ConcourseConfigEnvVarName is the name of the envvar that contains the name of concourse config.
+const ConcourseConfigEnvVarName = "SECRETS_SERVER_CONCOURSE_CFG_NAME"
+
+// SecretKeyEnvVarName is the name of the envar that contains the decryption key.
+const SecretKeyEnvVarName = "SECRET_KEY"
+
+// CipherEnvVarName is the name of the envvar that contains the decryption cipher algorithm.
+const CipherEnvVarName = "SECRET_CIPHER_ALGORITHM"
 
 type Privilege string
 
@@ -117,20 +129,107 @@ func (kb *KeyringBuilder) Apply(keyring *credentials.GeneralOciKeyring) error {
 			return fmt.Errorf("unable to load config from %q: %w", kb.path, err)
 		}
 		defer file.Close()
-		return newKeyring(keyring, file, kb.minPrivileges, kb.forRef)
-	}
-
-	secSrvEndpoint, ccConfig := os.Getenv(SecretServerEndpointEnvVarName), os.Getenv(SecretServerConcourseConfigEnvVarName)
-	if len(secSrvEndpoint) != 0 && len(ccConfig) != 0 {
-		body, err := getConfigFromSecretServer(secSrvEndpoint, ccConfig)
-		if err != nil {
-			return err
+		config := &SecretServerConfig{}
+		if err := json.NewDecoder(file).Decode(config); err != nil {
+			return fmt.Errorf("unable to decode config")
 		}
-		defer body.Close()
-		return newKeyring(keyring, body, kb.minPrivileges, kb.forRef)
+		return newKeyring(keyring, config, kb.minPrivileges, kb.forRef)
 	}
 
-	return nil
+	srv, err := NewSecretServer()
+	if err != nil {
+		return nil
+	}
+	config, err := srv.Get()
+	if err != nil {
+		return err
+	}
+	return newKeyring(keyring, config, kb.minPrivileges, kb.forRef)
+}
+
+type SecretServer struct {
+	endpoint   string
+	configName string
+
+	cipherAlgorithm string
+	key             []byte
+}
+
+var NoSecretFoundError = errors.New("no secret server configuration found")
+
+const unencyptedEndpoint = "concourse-secrets/concourse_cfg"
+
+// NewSecretServer creates a new secret server instance using given env vars.
+func NewSecretServer() (*SecretServer, error) {
+	keyBase64, cipher := os.Getenv(SecretKeyEnvVarName), os.Getenv(CipherEnvVarName)
+	secSrvEndpoint, ccConfig := os.Getenv(EndpointEnvVarName), os.Getenv(ConcourseConfigEnvVarName)
+
+	key, err := base64.StdEncoding.DecodeString(keyBase64)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode base64 encoded key %q: %w", keyBase64, err)
+	}
+
+	if len(keyBase64) == 0 {
+		ccConfig = unencyptedEndpoint
+	}
+
+	if len(secSrvEndpoint) == 0 {
+		return nil, NoSecretFoundError
+	}
+
+	return &SecretServer{
+		endpoint:        secSrvEndpoint,
+		configName:      ccConfig,
+		cipherAlgorithm: cipher,
+		key:             key,
+	}, nil
+}
+
+// Get returns the secret configuration from the server.
+func (ss *SecretServer) Get() (*SecretServerConfig, error) {
+	reader, err := ss.read()
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	config := &SecretServerConfig{}
+	if err := json.NewDecoder(reader).Decode(config); err != nil {
+		return nil, fmt.Errorf("unable to decode config")
+	}
+	return config, err
+}
+
+func (ss *SecretServer) read() (io.ReadCloser, error) {
+	reader, err := getConfigFromSecretServer(ss.endpoint, ss.configName)
+	if err != nil {
+		return nil, err
+	}
+
+	if ss.configName == unencyptedEndpoint {
+		return reader, err
+	}
+
+	switch ss.cipherAlgorithm {
+	case "AES.ECB":
+		var srcBuf bytes.Buffer
+		if _, err := io.Copy(&srcBuf, reader); err != nil {
+			return nil, fmt.Errorf("unable to read body from secret server: %w", err)
+		}
+		if err := reader.Close(); err != nil {
+			return nil, err
+		}
+		block, err := aes.NewCipher(ss.key)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create ciphr for %q; %w", ss.cipherAlgorithm, err)
+		}
+		dst := make([]byte, srcBuf.Len())
+		if err := ECBDecrypt(block, dst, srcBuf.Bytes()); err != nil {
+			return nil, err
+		}
+		return ioutil.NopCloser(bytes.NewBuffer(dst)), nil
+	default:
+		return nil, fmt.Errorf("unknown block %q", ss.cipherAlgorithm)
+	}
 }
 
 func getConfigFromSecretServer(endpoint, configName string) (io.ReadCloser, error) {
@@ -149,12 +248,7 @@ func getConfigFromSecretServer(endpoint, configName string) (io.ReadCloser, erro
 
 // newKeyring creates a new oci keyring from a config given by the reader
 // if ref is defined only the credentials that match the ref are put into the keyring.
-func newKeyring(keyring *credentials.GeneralOciKeyring, reader io.Reader, minPriv Privilege, ref string) error {
-	config := &SecretServerConfig{}
-	if err := json.NewDecoder(reader).Decode(config); err != nil {
-		return fmt.Errorf("unable to decode config")
-	}
-
+func newKeyring(keyring *credentials.GeneralOciKeyring, config *SecretServerConfig, minPriv Privilege, ref string) error {
 	for key, cred := range config.ContainerRegistry {
 		if minPriv == ReadWrite && cred.Privileges == ReadOnly {
 			continue
@@ -184,5 +278,22 @@ func newKeyring(keyring *credentials.GeneralOciKeyring, reader io.Reader, minPri
 		}
 	}
 
+	return nil
+}
+
+// ECBDecrypt decrypts ecb data.
+func ECBDecrypt(block cipher.Block, dst, src []byte) error {
+	blockSize := block.BlockSize()
+	if len(src)%blockSize != 0 {
+		return errors.New("crypto/cipher: input not full blocks")
+	}
+	if len(dst) < len(src) {
+		return errors.New("crypto/cipher: output smaller than input")
+	}
+	for len(src) > 0 {
+		block.Decrypt(dst, src[:blockSize])
+		src = src[blockSize:]
+		dst = dst[blockSize:]
+	}
 	return nil
 }
