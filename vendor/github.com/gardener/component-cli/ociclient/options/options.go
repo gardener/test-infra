@@ -18,7 +18,7 @@ import (
 	"github.com/gardener/component-cli/ociclient/credentials/secretserver"
 )
 
-// OCIOptions defines a set of options to create a oci client
+// Options defines a set of options to create a oci client
 type Options struct {
 	// AllowPlainHttp allows the fallback to http if the oci registry does not support https
 	AllowPlainHttp bool
@@ -40,37 +40,38 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.ConcourseConfigPath, "cc-config", "", "path to the local concourse config file")
 }
 
-// Builds a new oci client based on the given options
-func (o *Options) Build(log logr.Logger, fs vfs.FileSystem) (ociclient.Client, cache.Cache, error) {
+// Build builds a new oci client based on the given options
+func (o *Options) Build(log logr.Logger, fs vfs.FileSystem) (ociclient.ExtendedClient, cache.Cache, error) {
 	cache, err := cache.NewCache(log, cache.WithBasePath(o.CacheDir))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	ociOpts := []ociclient.Option{
-		ociclient.WithCache{Cache: cache},
+		ociclient.WithCache(cache),
 		ociclient.WithKnownMediaType(cdoci.ComponentDescriptorConfigMimeType),
 		ociclient.WithKnownMediaType(cdoci.ComponentDescriptorTarMimeType),
 		ociclient.WithKnownMediaType(cdoci.ComponentDescriptorJSONMimeType),
 		ociclient.AllowPlainHttp(o.AllowPlainHttp),
 	}
-	if len(o.RegistryConfigPath) != 0 {
-		keyring, err := credentials.CreateOCIRegistryKeyring(nil, []string{o.RegistryConfigPath})
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to create keyring for registry at %q: %w", o.RegistryConfigPath, err)
-		}
-		ociOpts = append(ociOpts, ociclient.WithKeyring(keyring))
-	} else {
-		keyring, err := secretserver.New().
-			WithFS(fs).
-			FromPath(o.ConcourseConfigPath).
-			WithMinPrivileges(secretserver.ReadWrite).
-			Build()
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to get credentils from secret server: %s", err.Error())
-		}
-		if keyring != nil {
-			ociOpts = append(ociOpts, ociclient.WithKeyring(keyring))
+
+	keyring, err := credentials.NewBuilder(log).WithFS(fs).FromConfigFiles(o.RegistryConfigPath).Build()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to create keyring for registry at %q: %w", o.RegistryConfigPath, err)
+	}
+	ociOpts = append(ociOpts, ociclient.WithKeyring(keyring))
+
+	secretServerKeyring, err := secretserver.New().
+		WithFS(fs).
+		FromPath(o.ConcourseConfigPath).
+		WithMinPrivileges(secretserver.ReadWrite).
+		Build()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to get credentils from secret server: %s", err.Error())
+	}
+	if secretServerKeyring != nil {
+		if err := credentials.Merge(keyring, secretServerKeyring); err != nil {
+			return nil, nil, err
 		}
 	}
 
