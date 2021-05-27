@@ -3,7 +3,7 @@ module github.com/gardener/test-infra
 go 1.14
 
 require (
-	cloud.google.com/go v0.55.0
+	cloud.google.com/go v0.57.0
 	cloud.google.com/go/storage v1.6.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
@@ -11,7 +11,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/component-cli v0.4.1-0.20210118092759-03e0dd9bcc4b
+	github.com/gardener/component-cli v0.19.0
 	github.com/gardener/component-spec/bindings-go v0.0.36
 	github.com/gardener/gardener v1.19.1
 	github.com/gardener/gardener-resource-manager v0.22.0
@@ -47,7 +47,7 @@ require (
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/api v0.20.0
+	google.golang.org/api v0.22.0
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.5.3

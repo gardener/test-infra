@@ -336,7 +336,7 @@ var _ = Describe("Executor tests", func() {
 
 func expectExecutionsToHaveBeenStartedAfter(e1, e2 *execution, expDurationSeconds int) {
 	d := e1.start.Sub(e2.start).Seconds()
-	d = math.Round(d*100) / 100
+	d = math.Round(d*10) / 10
 	ExpectWithOffset(1, d).To(BeNumerically(">=", expDurationSeconds), "duration is %fs but expected %ds", d, expDurationSeconds)
 }
 
