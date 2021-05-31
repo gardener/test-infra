@@ -459,7 +459,7 @@
   { "testcase": "[sig-storage] Pod Disks schedule a pod w/ RW PD(s) mounted to 1 or more containers, write to PD, verify content, delete pod, and repeat in rapid succession [Slow] using 1 containers and 2 PDs", "groups": ["fast"]},
   { "testcase": "[sig-storage] PersistentVolumes-local  [Volume type: block] Set fsGroup for local volume should set different fsGroup for second pod if first pod is deleted", "groups": ["fast"]},
   { "testcase": "[sig-storage] PersistentVolumes-local  StatefulSet with pod affinity [Slow] should use volumes spread across nodes when pod management is parallel and pod has anti-affinity", "groups": ["fast"]},
-  { "testcase": "[sig-storage] PersistentVolumes-local  StatefulSet with pod affinity [Slow] should use volumes spread across nodes when pod has anti-affinity", "groups": ["fast"]}
+  { "testcase": "[sig-storage] PersistentVolumes-local  StatefulSet with pod affinity [Slow] should use volumes spread across nodes when pod has anti-affinity", "groups": ["fast"]},
   { "testcase": "[sig-storage] In-tree Volumes [Driver: hostPathSymlink] [Testpattern: Pre-provisioned PV (default fs)] subPath should support restarting containers using directory as subpath [Slow]", "groups": ["fast"]},
   { "testcase": "[sig-storage] In-tree Volumes [Driver: hostPathSymlink] [Testpattern: Pre-provisioned PV (default fs)] volumes should allow exec of files on the volume", "groups": ["fast"]},
   { "testcase": "[sig-storage] In-tree Volumes [Driver: hostPathSymlink] [Testpattern: Pre-provisioned PV (ext3)] volumes should allow exec of files on the volume", "groups": ["fast"]},
