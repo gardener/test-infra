@@ -117,17 +117,6 @@ func (e *DependencyEnsurer) CheckHealth(ctx context.Context) error {
 			return err
 		}
 	}
-
-	if config.Observability.Logging != nil {
-		mr := &mrv1alpha1.ManagedResource{}
-		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.LoggingManagedResourceName, Namespace: config.Observability.Logging.Namespace}, mr); err != nil {
-			return err
-		}
-		if err := gardener.CheckManagedResourceHealthy(mr); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
