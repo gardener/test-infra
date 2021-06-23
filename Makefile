@@ -45,6 +45,7 @@ revendor:
 	@GO111MODULE=on go mod vendor
 	@GO111MODULE=on go mod tidy
 	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
+	@$(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: code-gen
 code-gen:
