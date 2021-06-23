@@ -57,8 +57,3 @@ objectStorage:
 
   secret:
     name: "s3-secret"
-
-secrets:
-  pullSecrets: []
-  # - name: myDockerPullSecretName
-  #   dockerconfigjson: base64 encoded dockerconfigjson

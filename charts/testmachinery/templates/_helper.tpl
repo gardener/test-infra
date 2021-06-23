@@ -91,4 +91,11 @@ observability:
 {{ toYaml .Values.testmachinery.observability | indent 2 }}
 {{- end }}
 
+{{- if .Values.testmachinery.imagePullSecrets }}
+imagePullSecretNames:
+  {{- range .Values.testmachinery.imagePullSecrets }}
+  - {{.name}}
+  {{- end }}
+{{- end }}
+
 {{- end }}

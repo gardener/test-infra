@@ -428,6 +428,7 @@ func autoConvert_v1beta1_Configuration_To_config_Configuration(in *Configuration
 	if err := Convert_v1beta1_Observability_To_config_Observability(&in.Observability, &out.Observability, s); err != nil {
 		return err
 	}
+	out.ImagePullSecretNames = *(*[]string)(unsafe.Pointer(&in.ImagePullSecretNames))
 	return nil
 }
 
@@ -455,6 +456,7 @@ func autoConvert_config_Configuration_To_v1beta1_Configuration(in *config.Config
 	if err := Convert_config_Observability_To_v1beta1_Observability(&in.Observability, &out.Observability, s); err != nil {
 		return err
 	}
+	out.ImagePullSecretNames = *(*[]string)(unsafe.Pointer(&in.ImagePullSecretNames))
 	return nil
 }
 

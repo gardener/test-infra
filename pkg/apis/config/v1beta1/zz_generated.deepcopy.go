@@ -134,6 +134,11 @@ func (in *Configuration) DeepCopyInto(out *Configuration) {
 		(*in).DeepCopyInto(*out)
 	}
 	in.Observability.DeepCopyInto(&out.Observability)
+	if in.ImagePullSecretNames != nil {
+		in, out := &in.ImagePullSecretNames, &out.ImagePullSecretNames
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

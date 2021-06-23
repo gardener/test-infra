@@ -13,30 +13,30 @@ import (
 	s3 "github.com/gardener/test-infra/pkg/util/s3"
 )
 
-// MockClient is a mock of Client interface
+// MockClient is a mock of Client interface.
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
 }
 
-// MockClientMockRecorder is the mock recorder for MockClient
+// MockClientMockRecorder is the mock recorder for MockClient.
 type MockClientMockRecorder struct {
 	mock *MockClient
 }
 
-// NewMockClient creates a new mock instance
+// NewMockClient creates a new mock instance.
 func NewMockClient(ctrl *gomock.Controller) *MockClient {
 	mock := &MockClient{ctrl: ctrl}
 	mock.recorder = &MockClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// GetObject mocks base method
+// GetObject mocks base method.
 func (m *MockClient) GetObject(arg0, arg1 string, arg2 minio.GetObjectOptions) (s3.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetObject", arg0, arg1, arg2)
@@ -45,13 +45,13 @@ func (m *MockClient) GetObject(arg0, arg1 string, arg2 minio.GetObjectOptions) (
 	return ret0, ret1
 }
 
-// GetObject indicates an expected call of GetObject
+// GetObject indicates an expected call of GetObject.
 func (mr *MockClientMockRecorder) GetObject(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockClient)(nil).GetObject), arg0, arg1, arg2)
 }
 
-// RemoveObject mocks base method
+// RemoveObject mocks base method.
 func (m *MockClient) RemoveObject(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveObject", arg0, arg1)
@@ -59,36 +59,36 @@ func (m *MockClient) RemoveObject(arg0, arg1 string) error {
 	return ret0
 }
 
-// RemoveObject indicates an expected call of RemoveObject
+// RemoveObject indicates an expected call of RemoveObject.
 func (mr *MockClientMockRecorder) RemoveObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveObject", reflect.TypeOf((*MockClient)(nil).RemoveObject), arg0, arg1)
 }
 
-// MockObject is a mock of Object interface
+// MockObject is a mock of Object interface.
 type MockObject struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectMockRecorder
 }
 
-// MockObjectMockRecorder is the mock recorder for MockObject
+// MockObjectMockRecorder is the mock recorder for MockObject.
 type MockObjectMockRecorder struct {
 	mock *MockObject
 }
 
-// NewMockObject creates a new mock instance
+// NewMockObject creates a new mock instance.
 func NewMockObject(ctrl *gomock.Controller) *MockObject {
 	mock := &MockObject{ctrl: ctrl}
 	mock.recorder = &MockObjectMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockObject) EXPECT() *MockObjectMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method
+// Close mocks base method.
 func (m *MockObject) Close() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Close")
@@ -96,13 +96,13 @@ func (m *MockObject) Close() error {
 	return ret0
 }
 
-// Close indicates an expected call of Close
+// Close indicates an expected call of Close.
 func (mr *MockObjectMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockObject)(nil).Close))
 }
 
-// Read mocks base method
+// Read mocks base method.
 func (m *MockObject) Read(arg0 []byte) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", arg0)
@@ -111,13 +111,13 @@ func (m *MockObject) Read(arg0 []byte) (int, error) {
 	return ret0, ret1
 }
 
-// Read indicates an expected call of Read
+// Read indicates an expected call of Read.
 func (mr *MockObjectMockRecorder) Read(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockObject)(nil).Read), arg0)
 }
 
-// Stat mocks base method
+// Stat mocks base method.
 func (m *MockObject) Stat() (minio.ObjectInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Stat")
@@ -126,7 +126,7 @@ func (m *MockObject) Stat() (minio.ObjectInfo, error) {
 	return ret0, ret1
 }
 
-// Stat indicates an expected call of Stat
+// Stat indicates an expected call of Stat.
 func (mr *MockObjectMockRecorder) Stat() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stat", reflect.TypeOf((*MockObject)(nil).Stat))

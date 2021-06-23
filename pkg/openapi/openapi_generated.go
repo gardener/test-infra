@@ -282,6 +282,20 @@ func schema_pkg_apis_config_v1beta1_Configuration(ref common.ReferenceCallback) 
 							Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability"),
 						},
 					},
+					"imagePullSecretNames": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"controller", "testmachinery", "argo"},
 			},
