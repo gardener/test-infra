@@ -33,6 +33,7 @@ type Configuration struct {
 	ElasticSearch          *ElasticSearch          `json:"esConfiguration,omitempty"`
 	ReservedExcessCapacity *ReservedExcessCapacity `json:"reservedExcessCapacity,omitempty"`
 	Observability          Observability           `json:"observability,omitempty"`
+	ImagePullSecretNames   []string                `json:"imagePullSecretNames,omitempty"`
 }
 
 // Controller holds information about the testmachinery controller

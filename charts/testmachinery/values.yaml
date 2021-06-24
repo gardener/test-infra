@@ -82,6 +82,10 @@ testmachinery:
     accessKey: IbnGHa4V6ypsm
     secretKey: l9rJ0XR65Rkvc9g9fyOf
 
+  imagePullSecrets: [ ]
+  # - name: myDockerPullSecretName
+  #   dockerconfigjson: base64 encoded dockerconfigjson
+
 #  esConfiguration:
 #    endpoint: https:...:9200
 #    username: user
