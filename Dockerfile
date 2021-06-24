@@ -43,7 +43,7 @@ WORKDIR /
 ENTRYPOINT ["/telemetry-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.16-alpine3.14 AS base-step
+FROM golang:1.16-alpine3.13 AS base-step
 
 ENV HELM_TILLER_VERSION=v2.13.0
 ENV KUBECTL_VERSION=v1.19.7
