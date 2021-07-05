@@ -68,6 +68,21 @@ var _ = Describe("kubernetes version util", func() {
 			))
 		})
 
+		It("should return latest patch of old minor version", func() {
+			pattern := "1.14.*"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
 		It("should return all versions", func() {
 			pattern := "*"
 			versionFlavor := common.ShootKubernetesVersionFlavor{
