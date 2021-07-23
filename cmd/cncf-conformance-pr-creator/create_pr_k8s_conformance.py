@@ -134,7 +134,7 @@ def inplace_change(filename, old_string, new_string):
         f.write(s)
 
 
-def modifyFiles():
+def modifyFiles(product_name):
     gardener_version = get_gardener_version()
     subprocess.run(["git", "clean", "-f", "-d"])
 
@@ -145,15 +145,9 @@ def modifyFiles():
         provider = provider_version_tuple[0]
         k8s_version = provider_version_tuple[1]
         modify_files_for_product(gardener_version=gardener_version,
-                                 product_name='gardener',
+                                 product_name=product_name,
                                  provider=provider,
                                  k8s_version=k8s_version)
-        modify_files_for_product(
-            gardener_version=gardener_version,
-            product_name='sap-cp',
-            provider=provider,
-            k8s_version=k8s_version)
-
 
 def activate_google_application_credentials():
     cfg_factory = ccc.cfg.cfg_factory()
@@ -308,5 +302,10 @@ except subprocess.CalledProcessError as e:
 gitHelper = cloneForkedRepo()
 syncForkAndUpstream(gitHelper)
 branch_name = createNewBranch()
-modifyFiles()
+modifyFiles('sap-cp')
+commitAndPushChanges(gitHelper, branch_name)
+
+subprocess.run(["git", "checkout", "master"])
+branch_name = createNewBranch()
+modifyFiles('gardener')
 commitAndPushChanges(gitHelper, branch_name)
