@@ -28,6 +28,7 @@ type Metadata struct {
 	// todo: schrodit - add support to better persist multiple worker pools with multiple oss, versions and zones
 	OperatingSystem           string            `json:"operating_system,omitempty"`
 	OperatingSystemVersion    string            `json:"operating_system_version,omitempty"`
+	ContainerRuntime          string            `json:"container_runtime,omitempty"`
 	Zone                      string            `json:"zone,omitempty"`
 	AllowPrivilegedContainers *bool             `json:"allow_privileged_containers,omitempty"`
 	ShootAnnotations          map[string]string `json:"shoot_annotations,omitempty"`
