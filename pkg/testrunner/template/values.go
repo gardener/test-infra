@@ -166,6 +166,10 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 	if shoot.Workers[0].Machine.Image.Version != nil {
 		operatingsystemversion = *shoot.Workers[0].Machine.Image.Version
 	}
+	containerRuntime := "default"
+	if shoot.Workers[0].CRI != nil {
+		containerRuntime = string(shoot.Workers[0].CRI.Name)
+	}
 	return &metadata.Metadata{
 		FlavorDescription:         shoot.Description,
 		Landscape:                 r.parameters.Landscape,
@@ -177,7 +181,7 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 		AllowPrivilegedContainers: shoot.AllowPrivilegedContainers,
 		OperatingSystem:           shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
 		OperatingSystemVersion:    operatingsystemversion,
-		ContainerRuntime:          string(shoot.Workers[0].CRI.Name),
+		ContainerRuntime:          containerRuntime,
 		Annotations:               shoot.AdditionalAnnotations,
 	}, nil
 }
