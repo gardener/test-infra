@@ -60,6 +60,9 @@ const (
 	// AnnotationCloudProvider is the annotation to specify the cloudprovider the testrun is testing
 	AnnotationCloudProvider = "metadata.testmachinery.gardener.cloud/cloudprovider"
 
+	// AnnotationContainerRuntime is the annotation to specify the container runtime of the shoot nodes the testrun is testing
+	AnnotationContainerRuntime = "metadata.testmachinery.gardener.cloud/container-runtime"
+
 	// AnnotationOperatingSystem is the annotation to specify the operating system of the shoot nodes the testrun is testing
 	AnnotationOperatingSystem = "metadata.testmachinery.gardener.cloud/operating-system"
 
