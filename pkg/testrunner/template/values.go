@@ -166,7 +166,7 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 	if shoot.Workers[0].Machine.Image.Version != nil {
 		operatingsystemversion = *shoot.Workers[0].Machine.Image.Version
 	}
-	containerRuntime := "default"
+	containerRuntime := ""
 	if shoot.Workers[0].CRI != nil {
 		containerRuntime = string(shoot.Workers[0].CRI.Name)
 	}
