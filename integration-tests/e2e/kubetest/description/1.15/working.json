@@ -433,7 +433,6 @@
   { "testcase": "[k8s.io] Security Context When creating a container with runAsNonRoot should run with an explicit non-root user ID", "groups": ["fast"]},
   { "testcase": "[k8s.io] [sig-node] Security Context should support pod.Spec.SecurityContext.RunAsUser [LinuxOnly]", "groups": ["fast"]},
   { "testcase": "[k8s.io] Security Context When creating a pod with readOnlyRootFilesystem should run the container with readonly rootfs when readOnlyRootFilesystem=true [LinuxOnly] [NodeConformance]", "groups": ["fast"]},
-  { "testcase": "[sig-node] RuntimeClass should run a Pod requesting a RuntimeClass with a configured handler [NodeFeature:RuntimeHandler]", "groups": ["fast"]},
   { "testcase": "[k8s.io] Security Context When creating a container with runAsUser should run the container with uid 0 [LinuxOnly] [NodeConformance]", "groups": ["fast"]},
   { "testcase": "[k8s.io] [sig-node] Security Context should support pod.Spec.SecurityContext.SupplementalGroups [LinuxOnly]", "groups": ["fast"]},
   { "testcase": "[k8s.io] [sig-node] Security Context should support pod.Spec.SecurityContext.RunAsUser And pod.Spec.SecurityContext.RunAsGroup [LinuxOnly]", "groups": ["fast"]},
