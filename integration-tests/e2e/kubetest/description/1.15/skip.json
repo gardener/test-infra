@@ -5,6 +5,7 @@
   { "testcase": "[Driver: vSphere]"},
   { "testcase": "[Driver: cinder]"},
   { "testcase": "[Driver: gluster]"},
+  { "testcase": "[sig-node] RuntimeClass should run a Pod requesting a RuntimeClass with a configured handler [NodeFeature:RuntimeHandler]"},
   { "testcase": "[k8s.io] Cluster size autoscaler scalability [Slow] CA ignores unschedulable pods while scheduling schedulable pods [Feature:ClusterAutoscalerScalability6]"},
   { "testcase": "[k8s.io] Cluster size autoscaler scalability [Slow] should scale down empty nodes [Feature:ClusterAutoscalerScalability3]"},
   { "testcase": "[k8s.io] Cluster size autoscaler scalability [Slow] should scale down underutilized nodes [Feature:ClusterAutoscalerScalability4]"},
