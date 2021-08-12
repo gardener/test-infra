@@ -88,7 +88,7 @@ RUN  \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
   && curl -L \
-    https://kubernetes-helm.storage.googleapis.com/helm-${HELM_TILLER_VERSION}-linux-amd64.tar.gz \
+    https://get.helm.sh/helm-${HELM_TILLER_VERSION}-linux-amd64.tar.gz \
     | tar xz -C /bin --strip=1 \
   && chmod +x /bin/helm \
   && curl -L \
