@@ -55,6 +55,8 @@ var _ = Describe("componentdescriptor test", func() {
 	It("Should parse a component descriptor and return 2 dependencies", func() {
 		input, err := ioutil.ReadFile("./testdata/component_descriptor_1")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_1")
+		Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, "./testdata")).To(Succeed())
+		defer os.Unsetenv(constants.ComponentRepositoryCacheDirEnvVar)
 
 		dependencies, err := GetComponents(ctx, log.NullLogger{}, mockOCIClient, input)
 		Expect(err).ToNot(HaveOccurred())

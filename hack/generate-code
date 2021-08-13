@@ -25,6 +25,8 @@ PROJECT_ROOT="${CURRENT_DIR}"/..
 
 rm -f ${GOPATH}/bin/*-gen
 
+chmod +x "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/*.sh
+
 echo "> Generating internal groups for TestMachinery"
 "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
   deep-copy,defaulter,conversion \
