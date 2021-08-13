@@ -1,0 +1,14 @@
+meta:
+  schemaVersion: 'v2'
+
+component:
+  name: 'github.com/gardener/gardener'
+  version: '0.30.0'
+
+  repositoryContexts:
+  - type: 'ociRegistry'
+    baseUrl: 'registry.example'
+  provider: 'internal'
+  sources: []
+  resources: []
+  componentReferences: []

@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 
 	dockerconfigtypes "github.com/docker/cli/cli/config/types"
+	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 
@@ -53,7 +54,7 @@ type SecretServerConfig struct {
 	ContainerRegistry map[string]*ContainerRegistryCredentials `json:"container_registry"`
 }
 
-// ContainerRegistryCredentials describes the container registry credentials struct as igven by the cc secrets server.
+// ContainerRegistryCredentials describes the container registry credentials struct as given by the cc secrets server.
 type ContainerRegistryCredentials struct {
 	Username               string    `json:"username"`
 	Password               string    `json:"password"`
@@ -64,6 +65,7 @@ type ContainerRegistryCredentials struct {
 
 // KeyringBuilder is a builder that creates a keyring from a concourse config file.
 type KeyringBuilder struct {
+	log           logr.Logger
 	fs            vfs.FileSystem
 	path          string
 	minPrivileges Privilege
@@ -72,7 +74,15 @@ type KeyringBuilder struct {
 
 // New creates a new keyring builder.
 func New() *KeyringBuilder {
-	return &KeyringBuilder{}
+	return &KeyringBuilder{
+		log: logr.Discard(),
+	}
+}
+
+// WithLog configures a optional logger
+func (kb *KeyringBuilder) WithLog(log logr.Logger) *KeyringBuilder {
+	kb.log = log
+	return kb
 }
 
 // WithFS configures the builder to use a different filesystem
@@ -138,6 +148,11 @@ func (kb *KeyringBuilder) Apply(keyring *credentials.GeneralOciKeyring) error {
 
 	srv, err := NewSecretServer()
 	if err != nil {
+		if errors.Is(err, NoSecretFoundError) {
+			kb.log.V(3).Info(err.Error())
+			return nil
+		}
+		kb.log.Error(err, "unable to init secret server")
 		return nil
 	}
 	config, err := srv.Get()
@@ -194,7 +209,7 @@ func (ss *SecretServer) Get() (*SecretServerConfig, error) {
 	defer reader.Close()
 	config := &SecretServerConfig{}
 	if err := json.NewDecoder(reader).Decode(config); err != nil {
-		return nil, fmt.Errorf("unable to decode config")
+		return nil, fmt.Errorf("unable to decode config: %w", err)
 	}
 	return config, err
 }
@@ -220,12 +235,20 @@ func (ss *SecretServer) read() (io.ReadCloser, error) {
 		}
 		block, err := aes.NewCipher(ss.key)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create ciphr for %q; %w", ss.cipherAlgorithm, err)
+			return nil, fmt.Errorf("unable to create cipher for %q; %w", ss.cipherAlgorithm, err)
 		}
 		dst := make([]byte, srcBuf.Len())
 		if err := ECBDecrypt(block, dst, srcBuf.Bytes()); err != nil {
 			return nil, err
 		}
+		//_ = os.WriteFile("/tmp/cc.json", dst, os.ModePerm)
+		//fmt.Println(string(dst))
+		//var d map[string]json.RawMessage
+		//if err := json.Unmarshal(dst, &d); err != nil {
+		//	panic(err)
+		//}
+		//fmt.Println(string(d["container_registry"]))
+
 		return ioutil.NopCloser(bytes.NewBuffer(dst)), nil
 	default:
 		return nil, fmt.Errorf("unknown block %q", ss.cipherAlgorithm)
@@ -250,8 +273,11 @@ func getConfigFromSecretServer(endpoint, configName string) (io.ReadCloser, erro
 // if ref is defined only the credentials that match the ref are put into the keyring.
 func newKeyring(keyring *credentials.GeneralOciKeyring, config *SecretServerConfig, minPriv Privilege, ref string) error {
 	for key, cred := range config.ContainerRegistry {
-		if minPriv == ReadWrite && cred.Privileges == ReadOnly {
-			continue
+		if minPriv == ReadWrite {
+			// if no privileges are set we assume that they default to readonly.
+			if cred.Privileges == ReadOnly || len(cred.Privileges) == 0 {
+				continue
+			}
 		}
 
 		if len(cred.Host) != 0 {
@@ -259,19 +285,19 @@ func newKeyring(keyring *credentials.GeneralOciKeyring, config *SecretServerConf
 			if err != nil {
 				return fmt.Errorf("unable to parse url %q in config %q: %w", cred.Host, key, err)
 			}
-			err = keyring.AddAuthConfig(host.Host, dockerconfigtypes.AuthConfig{
+			err = keyring.AddAuthConfig(host.Host, credentials.FromAuthConfig(dockerconfigtypes.AuthConfig{
 				Username: cred.Username,
 				Password: cred.Password,
-			})
+			}, "cc-config-name", key))
 			if err != nil {
 				return fmt.Errorf("unable to add auth config: %w", err)
 			}
 		}
 		for _, prefix := range cred.ImageReferencePrefixes {
-			err := keyring.AddAuthConfig(prefix, dockerconfigtypes.AuthConfig{
+			err := keyring.AddAuthConfig(prefix, credentials.FromAuthConfig(dockerconfigtypes.AuthConfig{
 				Username: cred.Username,
 				Password: cred.Password,
-			})
+			}, "cc-config-name", key))
 			if err != nil {
 				return fmt.Errorf("unable to add auth config: %w", err)
 			}
@@ -285,7 +311,7 @@ func newKeyring(keyring *credentials.GeneralOciKeyring, config *SecretServerConf
 func ECBDecrypt(block cipher.Block, dst, src []byte) error {
 	blockSize := block.BlockSize()
 	if len(src)%blockSize != 0 {
-		return errors.New("crypto/cipher: input not full blocks")
+		return fmt.Errorf("crypto/cipher: input not full blocks (blocksize: %d; src: %d)", blockSize, len(src))
 	}
 	if len(dst) < len(src) {
 		return errors.New("crypto/cipher: output smaller than input")

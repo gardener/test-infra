@@ -17,13 +17,17 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/gardener/component-cli/ociclient"
 	ociopts "github.com/gardener/component-cli/ociclient/options"
-	comphelper "github.com/gardener/component-cli/pkg/components"
+	"github.com/gardener/component-cli/pkg/commands/constants"
+	cdcomponents "github.com/gardener/component-cli/pkg/components"
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/codec"
+	"github.com/gardener/component-spec/bindings-go/ctf/ctfutils"
+	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 
@@ -42,8 +46,11 @@ func GetComponents(ctx context.Context, log logr.Logger, ociClient ociclient.Cli
 	if err := codec.Decode(content, compDesc, codec.DisableValidation(true)); err != nil {
 		return nil, err
 	}
-	resolver := comphelper.New(log, osfs.New(), ociClient, codec.DisableValidation(true))
-	compList, err := comphelper.ResolveTransitiveComponentDescriptors(ctx, resolver, compDesc)
+	resolver := cdoci.NewResolver(ociClient, codec.DisableValidation(true)).WithLog(log)
+	if len(os.Getenv(constants.ComponentRepositoryCacheDirEnvVar)) != 0 {
+		resolver.WithCache(cdcomponents.NewLocalComponentCache(osfs.New()))
+	}
+	compList, err := ctfutils.ResolveList(ctx, resolver, compDesc.GetEffectiveRepositoryContext(), compDesc.GetName(), compDesc.GetVersion())
 	if err != nil {
 		return nil, err
 	}

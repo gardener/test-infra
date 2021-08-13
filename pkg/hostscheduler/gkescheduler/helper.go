@@ -98,8 +98,8 @@ func restConfigFromCluster(cluster *containerpb.Cluster) (*rest.Config, error) {
 			CertData: cert,
 			KeyData:  key,
 		},
-		Username: auth.GetUsername(),
-		Password: auth.GetPassword(),
+		Username: auth.GetUsername(), //nolint
+		Password: auth.GetPassword(), //nolint
 	}
 	return cfg, nil
 }

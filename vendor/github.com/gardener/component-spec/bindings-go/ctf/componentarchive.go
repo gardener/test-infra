@@ -33,7 +33,6 @@ import (
 	"github.com/opencontainers/go-digest"
 
 	"github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/apis/v2/cdutils"
 	"github.com/gardener/component-spec/bindings-go/codec"
 )
 
@@ -163,11 +162,11 @@ func (ca *ComponentArchive) AddResource(res *v2.Resource, info BlobInfo, reader 
 	}
 
 	localFsAccess := v2.NewLocalFilesystemBlobAccess(info.Digest, info.MediaType)
-	unstructuredType, err := cdutils.ToUnstructuredTypedObject(v2.NewCodec(nil, nil, nil), localFsAccess)
+	unstructuredType, err := v2.NewUnstructured(localFsAccess)
 	if err != nil {
 		return fmt.Errorf("unable to convert local filesystem type to untructured type: %w", err)
 	}
-	res.Access = unstructuredType
+	res.Access = &unstructuredType
 
 	if id == -1 {
 		ca.ComponentDescriptor.Resources = append(ca.ComponentDescriptor.Resources, *res)
@@ -206,11 +205,11 @@ func (ca *ComponentArchive) AddSource(src *v2.Source, info BlobInfo, reader io.R
 	}
 
 	localFsAccess := v2.NewLocalFilesystemBlobAccess(info.Digest, info.MediaType)
-	unstructuredType, err := cdutils.ToUnstructuredTypedObject(v2.NewCodec(nil, nil, nil), localFsAccess)
+	unstructuredType, err := v2.NewUnstructured(localFsAccess)
 	if err != nil {
 		return fmt.Errorf("unable to convert local filesystem type to untructured type: %w", err)
 	}
-	src.Access = unstructuredType
+	src.Access = &unstructuredType
 
 	if id == -1 {
 		ca.ComponentDescriptor.Sources = append(ca.ComponentDescriptor.Sources, *src)
@@ -220,7 +219,7 @@ func (ca *ComponentArchive) AddSource(src *v2.Source, info BlobInfo, reader io.R
 	return nil
 }
 
-// AddResource adds a blob resource to the current archive.
+// AddResourceFromResolver adds a blob resource to the current archive.
 // If the specified resource already exists it will be overwritten.
 func (ca *ComponentArchive) AddResourceFromResolver(ctx context.Context, res *v2.Resource, resolver BlobResolver) error {
 	if res == nil {
@@ -254,11 +253,11 @@ func (ca *ComponentArchive) AddResourceFromResolver(ctx context.Context, res *v2
 	}
 
 	localFsAccess := v2.NewLocalFilesystemBlobAccess(info.Digest, info.MediaType)
-	unstructuredType, err := cdutils.ToUnstructuredTypedObject(v2.NewCodec(nil, nil, nil), localFsAccess)
+	unstructuredType, err := v2.NewUnstructured(localFsAccess)
 	if err != nil {
 		return fmt.Errorf("unable to convert local filesystem type to untructured type: %w", err)
 	}
-	res.Access = unstructuredType
+	res.Access = &unstructuredType
 
 	if id == -1 {
 		ca.ComponentDescriptor.Resources = append(ca.ComponentDescriptor.Resources, *res)
@@ -279,7 +278,7 @@ func (ca *ComponentArchive) ensureBlobsPath() error {
 	return nil
 }
 
-// WriteTar tars the current components descriptor and its artifacts.
+// WriteTarGzip tars the current components descriptor and its artifacts.
 func (ca *ComponentArchive) WriteTarGzip(writer io.Writer) error {
 	gw := gzip.NewWriter(writer)
 	if err := ca.WriteTar(gw); err != nil {
@@ -459,7 +458,7 @@ func (ca *ComponentArchiveBlobResolver) resolve(_ context.Context, res v2.Resour
 		return nil, nil, UnsupportedResolveType
 	}
 	localFSAccess := &v2.LocalFilesystemBlobAccess{}
-	if err := v2.NewCodec(nil, nil, nil).Decode(res.Access.Raw, localFSAccess); err != nil {
+	if err := res.Access.DecodeInto(localFSAccess); err != nil {
 		return nil, nil, fmt.Errorf("unable to decode access to type '%s': %w", res.Access.GetType(), err)
 	}
 	blobpath := BlobPath(localFSAccess.Filename)

@@ -5,7 +5,9 @@
 package options
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/go-logr/logr"
@@ -22,6 +24,8 @@ import (
 type Options struct {
 	// AllowPlainHttp allows the fallback to http if the oci registry does not support https
 	AllowPlainHttp bool
+	// SkipTLSVerify specifies if the server's certificate should be checked for validity.
+	SkipTLSVerify bool
 	// CacheDir defines the oci cache directory
 	CacheDir string
 	// RegistryConfigPath defines a path to the dockerconfig.json with the oci registry authentication.
@@ -36,6 +40,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	}
 
 	fs.BoolVar(&o.AllowPlainHttp, "allow-plain-http", false, "allows the fallback to http if the oci registry does not support https")
+	fs.BoolVar(&o.SkipTLSVerify, "insecure-skip-tls-verify", false, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
 	fs.StringVar(&o.RegistryConfigPath, "registry-config", "", "path to the dockerconfig.json with the oci registry authentication information")
 	fs.StringVar(&o.ConcourseConfigPath, "cc-config", "", "path to the local concourse config file")
 }
@@ -55,6 +60,16 @@ func (o *Options) Build(log logr.Logger, fs vfs.FileSystem) (ociclient.ExtendedC
 		ociclient.AllowPlainHttp(o.AllowPlainHttp),
 	}
 
+	if o.SkipTLSVerify {
+		httpClient := http.Client{
+			Transport: http.DefaultTransport,
+		}
+		httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		ociOpts = append(ociOpts, ociclient.WithHTTPClient(httpClient))
+	}
+
 	keyring, err := credentials.NewBuilder(log).WithFS(fs).FromConfigFiles(o.RegistryConfigPath).Build()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create keyring for registry at %q: %w", o.RegistryConfigPath, err)
@@ -62,12 +77,13 @@ func (o *Options) Build(log logr.Logger, fs vfs.FileSystem) (ociclient.ExtendedC
 	ociOpts = append(ociOpts, ociclient.WithKeyring(keyring))
 
 	secretServerKeyring, err := secretserver.New().
+		WithLog(log.WithName("secretserver")).
 		WithFS(fs).
 		FromPath(o.ConcourseConfigPath).
 		WithMinPrivileges(secretserver.ReadWrite).
 		Build()
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get credentils from secret server: %s", err.Error())
+		return nil, nil, fmt.Errorf("unable to get credentials from secret server: %s", err.Error())
 	}
 	if secretServerKeyring != nil {
 		if err := credentials.Merge(keyring, secretServerKeyring); err != nil {
