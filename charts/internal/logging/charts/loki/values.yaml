@@ -120,7 +120,7 @@ persistence:
   enabled: false
   accessModes:
   - ReadWriteOnce
-  size: 10Gi
+  size: 50Gi
   annotations: {}
   # subPath: ""
   # existingClaim:
