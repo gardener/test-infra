@@ -3,22 +3,22 @@ module github.com/gardener/test-infra
 go 1.14
 
 require (
-	cloud.google.com/go v0.57.0
-	cloud.google.com/go/storage v1.6.0
+	cloud.google.com/go v0.81.0
+	cloud.google.com/go/storage v1.10.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo/v2 v2.12.10
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/component-cli v0.19.0
-	github.com/gardener/component-spec/bindings-go v0.0.36
+	github.com/gardener/component-cli v0.28.0
+	github.com/gardener/component-spec/bindings-go v0.0.52
 	github.com/gardener/gardener v1.19.1
 	github.com/gardener/gardener-resource-manager v0.22.0
 	github.com/gardener/gardener-resource-manager/api v0.22.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.51.1 // indirect
-	github.com/go-logr/logr v0.3.0
+	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.3.0
 	github.com/go-openapi/spec v0.19.8
 	github.com/gobuffalo/packr/v2 v2.8.0
@@ -32,24 +32,24 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/karrick/godirwalk v1.15.5 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/mandelsoft/vfs v0.0.0-20201002134249-3c471f64a4d1
+	github.com/mandelsoft/vfs v0.0.0-20210530103237-5249dc39ce91
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/onsi/ginkgo v1.14.1
-	github.com/onsi/gomega v1.10.5
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.13.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.2.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.0
-	go.uber.org/zap v1.16.0
-	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/api v0.22.0
-	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
-	gopkg.in/yaml.v2 v2.3.0
+	github.com/spf13/viper v1.8.1
+	go.uber.org/zap v1.17.0
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
+	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
+	google.golang.org/api v0.44.0
+	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
+	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.3
 	k8s.io/api v0.20.2
 	k8s.io/apiextensions-apiserver v0.20.2
