@@ -43,42 +43,29 @@ WORKDIR /
 ENTRYPOINT ["/telemetry-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.16-alpine3.13 AS base-step
+FROM golang:1.16-bullseye AS base-step
 
 ENV HELM_TILLER_VERSION=v2.13.0
 ENV KUBECTL_VERSION=v1.19.7
 ENV HELM_V3_VERSION=v3.1.1
 
-RUN  \
-  apk update \
-  && apk add \
+RUN \
+  apt-get update \
+  && apt-get --assume-yes install \
     apache2-utils \
-    coreutils \
+    build-essential \
+    bc \
     cargo \
-    bash \
-    binutils \
-    bind-tools \
-    build-base \
-    curl \
+    dnsutils \
     file \
-    gcc \
-    git \
     jq \
-    libc-dev \
     libev-dev \
     libffi-dev \
-    openssh \
-    openssl \
-    openssl-dev \
-    python3 \
+    libssl-dev \
+    linux-headers-amd64 \
     python3-dev \
-    py3-pip \
-    wget \
-    grep \
-    findutils \
+    python3-pip \
     rsync \
-    bc \
-    linux-headers \
   && pip install --upgrade pip \
     gardener-cicd-cli \
     gardener-cicd-libs \
