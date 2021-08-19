@@ -16,8 +16,6 @@ package ttl_test
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -45,7 +43,7 @@ var _ = Describe("Reconcile", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		ns := &corev1.Namespace{}
-		ns.Name = fmt.Sprintf("test-%d", rand.Intn(1000))
+		ns.GenerateName = "test-"
 		if err := fakeClient.Create(ctx, ns); err != nil {
 			if !apierrors.IsAlreadyExists(err) {
 				Expect(err).ToNot(HaveOccurred())
@@ -61,15 +59,6 @@ var _ = Describe("Reconcile", func() {
 		ns := &corev1.Namespace{}
 		ns.Name = namespace
 		Expect(fakeClient.Delete(ctx, ns)).To(Succeed())
-		Eventually(func() error {
-			if err := fakeClient.Get(ctx, client.ObjectKeyFromObject(ns), &corev1.Namespace{}); err != nil {
-				if apierrors.IsNotFound(err) {
-					return nil
-				}
-				return err
-			}
-			return nil
-		}, 1*time.Minute, 10*time.Second).Should(Succeed())
 	})
 
 	It("should not delete a testrun when no ttl is set", func() {
@@ -99,7 +88,7 @@ var _ = Describe("Reconcile", func() {
 
 		res, err := controller.Reconcile(ctx, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(tr)})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(res.RequeueAfter.Seconds()).To(BeNumerically("~", 10.0, 1))
+		Expect(res.RequeueAfter.Seconds()).To(BeNumerically("~", 10.0, 1.2))
 
 		Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(tr), tr)).To(Succeed())
 		Expect(tr.DeletionTimestamp.IsZero()).To(BeTrue())
