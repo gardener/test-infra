@@ -38,7 +38,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"

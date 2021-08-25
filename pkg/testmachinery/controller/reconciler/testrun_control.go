@@ -27,7 +27,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/util/s3"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"

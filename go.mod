@@ -7,19 +7,19 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/argoproj/argo/v2 v2.12.10
+	github.com/argoproj/argo-workflows/v3 v3.1.8
+	github.com/argoproj/argo/v2 v2.12.13
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/docker/cli v20.10.3+incompatible // indirect
-	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gardener/component-cli v0.32.0
 	github.com/gardener/component-spec/bindings-go v0.0.53
 	github.com/gardener/gardener v1.38.2
-	github.com/ghodss/yaml v1.0.0
+	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-ini/ini v1.51.1 // indirect
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/go-openapi/spec v0.19.8
+	github.com/go-openapi/spec v0.20.2
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v39 v39.2.0
@@ -68,6 +68,7 @@ replace (
 	github.com/docker/docker => github.com/moby/moby v20.10.11+incompatible
 	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 	k8s.io/api => k8s.io/api v0.19.9
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.9
 	k8s.io/apimachinery => k8s.io/apimachinery v0.19.9
@@ -77,5 +78,4 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
 	// needed because of https://github.com/kubernetes-sigs/controller-runtime/issues/1538
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.8.3
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 )

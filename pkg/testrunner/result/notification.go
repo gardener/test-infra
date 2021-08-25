@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 

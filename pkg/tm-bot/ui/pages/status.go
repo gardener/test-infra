@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	github2 "github.com/google/go-github/v39/github"
 	"github.com/gorilla/mux"

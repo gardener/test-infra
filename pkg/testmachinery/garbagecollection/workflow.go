@@ -11,7 +11,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util/s3"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

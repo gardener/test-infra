@@ -21,7 +21,7 @@ import (
 	"sort"
 	"time"
 
-	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

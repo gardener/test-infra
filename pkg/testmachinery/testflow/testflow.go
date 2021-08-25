@@ -21,7 +21,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	apiv1 "k8s.io/api/core/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"

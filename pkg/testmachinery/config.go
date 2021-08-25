@@ -15,7 +15,7 @@
 package testmachinery
 
 import (
-	argov1alpha1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
