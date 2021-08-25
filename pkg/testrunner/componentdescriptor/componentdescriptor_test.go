@@ -64,6 +64,21 @@ var _ = Describe("componentdescriptor test", func() {
 		Expect(len(dependencies)).To(Equal(2))
 	})
 
+	It("Should parse a component descriptor that was not already in the local cache", func() {
+		input, err := ioutil.ReadFile("./testdata/component_descriptor_2")
+		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_2")
+		Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, "./testdata")).To(Succeed())
+		defer os.Unsetenv(constants.ComponentRepositoryCacheDirEnvVar)
+		defer func() {
+			Expect(os.Remove("./testdata/registry.example/github.com/gardener/gardener-0.18.0")).To(Succeed())
+		}()
+
+		dependencies, err := GetComponents(ctx, log.NullLogger{}, mockOCIClient, input)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(len(dependencies)).To(Equal(2))
+	})
+
 	It("Should parse a component descriptor and ignore duplicates", func() {
 		input, err := ioutil.ReadFile("./testdata/registry.example/example.com/repo1-0.17.0")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_2")

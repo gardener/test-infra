@@ -29,7 +29,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 )
 
-// RenderShootTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
+// RenderTestruns renders a helm chart with containing testruns, adds the provided parameters and values, and returns the parsed and modified testruns.
 // Adds the component descriptor to metadata.
 func RenderTestruns(ctx context.Context, log logr.Logger, parameters *Parameters, shootFlavors []*shootflavors.ExtendedFlavorInstance) (testrunner.RunList, error) {
 	log.V(3).Info(fmt.Sprintf("Parameters: %+v", util.PrettyPrintStruct(parameters)))

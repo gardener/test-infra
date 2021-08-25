@@ -30,6 +30,7 @@ import (
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/osfs"
+	"github.com/mandelsoft/vfs/pkg/vfs"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -42,14 +43,30 @@ func GetComponents(ctx context.Context, log logr.Logger, ociClient ociclient.Cli
 		componentSet: make(map[Component]bool),
 	}
 
+	fs := osfs.New()
+	if len(os.Getenv(constants.ComponentRepositoryCacheDirEnvVar)) == 0 {
+		// always use a local cache
+		log.Info(fmt.Sprintf("no cache set (%s) using temporary dir", constants.ComponentRepositoryCacheDirEnvVar))
+		tmpCacheDir, err := vfs.TempDir(fs, fs.FSTempDir(), "cache-")
+		if err != nil {
+			return nil, fmt.Errorf("unable to create temporary cache: %w", err)
+		}
+		if err := os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, tmpCacheDir); err != nil {
+			return nil, fmt.Errorf("unable to set cache dir environment variable: %w", err)
+		}
+	}
+
+	localCache := cdcomponents.NewLocalComponentCache(osfs.New())
+	resolver := cdoci.NewResolver(ociClient, codec.DisableValidation(true)).WithLog(log).WithCache(localCache)
+
 	compDesc := &cdv2.ComponentDescriptor{}
 	if err := codec.Decode(content, compDesc, codec.DisableValidation(true)); err != nil {
 		return nil, err
 	}
-	resolver := cdoci.NewResolver(ociClient, codec.DisableValidation(true)).WithLog(log)
-	if len(os.Getenv(constants.ComponentRepositoryCacheDirEnvVar)) != 0 {
-		resolver.WithCache(cdcomponents.NewLocalComponentCache(osfs.New()))
+	if err := localCache.Store(ctx, compDesc); err != nil {
+		return nil, err
 	}
+
 	compList, err := ctfutils.ResolveList(ctx, resolver, compDesc.GetEffectiveRepositoryContext(), compDesc.GetName(), compDesc.GetVersion())
 	if err != nil {
 		return nil, err
