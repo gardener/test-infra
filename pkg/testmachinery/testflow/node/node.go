@@ -179,7 +179,7 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 			Flow:      n.flow,
 		},
 		Annotations: n.step.Annotations,
-		Phase:       tmv1beta1.PhaseStatusInit,
+		Phase:       tmv1beta1.StepPhaseInit,
 		TestDefinition: tmv1beta1.StepStatusTestDefinition{
 			Name:                  td.Info.Name,
 			Owner:                 td.Info.Spec.Owner,

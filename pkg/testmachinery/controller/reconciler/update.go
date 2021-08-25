@@ -53,7 +53,7 @@ func (r *TestmachineryReconciler) updateStatus(ctx context.Context, rCtx *reconc
 		rCtx.updated = true
 	}
 	if rCtx.tr.Status.Phase == "" {
-		rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusPending
+		rCtx.tr.Status.Phase = tmv1beta1.RunPhasePending
 		rCtx.updated = true
 	}
 	if !rCtx.wf.Status.Phase.Completed() {
@@ -92,7 +92,7 @@ func (r *TestmachineryReconciler) completeTestrun(rCtx *reconcileContext) error 
 
 	// Set all init steps to skipped if testrun is completed.
 	for _, step := range rCtx.tr.Status.Steps {
-		if step.Phase == tmv1beta1.PhaseStatusInit {
+		if step.Phase == tmv1beta1.StepPhaseInit {
 			step.Phase = argov1.NodeSkipped
 		}
 	}
@@ -124,7 +124,7 @@ func (r *TestmachineryReconciler) updateStepsStatus(rCtx *reconcileContext) {
 	stepSpecs := getStepsSpecs(rCtx.tr)
 
 	for _, step := range rCtx.tr.Status.Steps {
-		if util.Completed(step.Phase) {
+		if util.CompletedStep(step.Phase) {
 			completedSteps++
 			continue
 		}
@@ -147,7 +147,7 @@ func (r *TestmachineryReconciler) updateStepsStatus(rCtx *reconcileContext) {
 			testDuration := time.Duration(step.TestDefinition.ActiveDeadlineSeconds.IntValue()) * time.Second
 			completionTime := metav1.NewTime(step.StartTime.Add(testDuration))
 
-			step.Phase = tmv1beta1.PhaseStatusTimeout
+			step.Phase = tmv1beta1.StepPhaseTimeout
 			step.Duration = int64(step.TestDefinition.ActiveDeadlineSeconds.IntValue())
 			step.CompletionTime = &completionTime
 			step.PodName = argoNodeStatus.ID
@@ -169,7 +169,7 @@ func (r *TestmachineryReconciler) updateStepsStatus(rCtx *reconcileContext) {
 			step.Duration = int64(stepDuration.Seconds())
 		}
 
-		if util.Completed(step.Phase) {
+		if util.CompletedStep(step.Phase) {
 			completedSteps++
 		}
 	}

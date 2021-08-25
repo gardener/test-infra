@@ -186,7 +186,7 @@ func createOrUpdateOverview(log logr.Logger, overviewFilepath string, testrunsTo
 	}
 	for _, run := range testrunsToUpload {
 		assetItemName := generateTestrunAssetName(*run, prefix)
-		isAssetItemSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
+		isAssetItemSuccessful := run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess
 		assetOverviewItem := assetOverview.Get(assetItemName)
 		if assetOverviewItem.Name != "" {
 			assetOverview.Get(assetItemName).Successful = isAssetItemSuccessful
@@ -251,7 +251,7 @@ func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOvervi
 		}
 
 		testrunAssetName := generateTestrunAssetName(*run, prefix)
-		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess
+		testrunSuccessful := run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess
 		if !assetOverview.Contains(testrunAssetName) || testrunSuccessful && !assetOverview.Get(testrunAssetName).Successful {
 			testrunsToUpload = append(testrunsToUpload, run)
 		}

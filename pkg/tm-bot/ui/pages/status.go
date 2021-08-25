@@ -42,54 +42,74 @@ type IconWithTooltip struct {
 	Color   string
 }
 
-var PhaseIcon = func(phase v1alpha1.NodePhase) IconWithTooltip {
+var StepPhaseIcon = func(phase v1alpha1.NodePhase) IconWithTooltip {
 	switch phase {
-	case v1beta1.PhaseStatusInit:
+	case v1beta1.StepPhaseInit:
+		return RunPhaseIcon(v1beta1.RunPhaseInit)
+	case v1beta1.StepPhasePending:
+		return RunPhaseIcon(v1beta1.RunPhasePending)
+	case v1beta1.StepPhaseRunning:
+		return RunPhaseIcon(v1beta1.RunPhaseRunning)
+	case v1beta1.StepPhaseSuccess:
+		return RunPhaseIcon(v1beta1.RunPhaseSuccess)
+	case v1beta1.StepPhaseFailed:
+		return RunPhaseIcon(v1beta1.RunPhaseFailed)
+	case v1beta1.StepPhaseError:
+		return RunPhaseIcon(v1beta1.RunPhaseError)
+	case v1beta1.StepPhaseTimeout:
+		return RunPhaseIcon(v1beta1.RunPhaseTimeout)
+	default:
 		return IconWithTooltip{
-			Icon:    "schedule",
-			Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.PhaseStatusInit),
+			Icon:    "info",
+			Tooltip: fmt.Sprintf("%s phase", phase),
 			Color:   "grey",
 		}
-	case v1beta1.PhaseStatusSkipped:
-		return IconWithTooltip{
-			Icon:    "remove",
-			Tooltip: fmt.Sprintf("%s phase: Testrun was skipped", v1beta1.PhaseStatusSkipped),
-			Color:   "grey",
-		}
-	case v1beta1.PhaseStatusPending:
+
+	}
+}
+
+var RunPhaseIcon = func(phase v1alpha1.WorkflowPhase) IconWithTooltip {
+	switch phase {
+	case v1beta1.RunPhaseInit:
 		return IconWithTooltip{
 			Icon:    "schedule",
-			Tooltip: fmt.Sprintf("%s phase: Testrun is pending", v1beta1.PhaseStatusSkipped),
+			Tooltip: fmt.Sprintf("%s phase: Testrun is waiting to be scheduled", v1beta1.StepPhaseInit),
+			Color:   "grey",
+		}
+	case v1beta1.RunPhasePending:
+		return IconWithTooltip{
+			Icon:    "schedule",
+			Tooltip: fmt.Sprintf("%s phase: Testrun is pending", v1beta1.RunPhasePending),
 			Color:   "orange",
 		}
-	case v1beta1.PhaseStatusRunning:
+	case v1beta1.RunPhaseRunning:
 		return IconWithTooltip{
 			Icon:    "autorenew",
-			Tooltip: fmt.Sprintf("%s phase: Testrun is running", v1beta1.PhaseStatusRunning),
+			Tooltip: fmt.Sprintf("%s phase: Testrun is running", v1beta1.RunPhaseRunning),
 			Color:   "orange",
 		}
-	case v1beta1.PhaseStatusSuccess:
+	case v1beta1.RunPhaseSuccess:
 		return IconWithTooltip{
 			Icon:    "done",
-			Tooltip: fmt.Sprintf("%s phase: Testrun succeeded", v1beta1.PhaseStatusSuccess),
+			Tooltip: fmt.Sprintf("%s phase: Testrun succeeded", v1beta1.RunPhaseSuccess),
 			Color:   "green",
 		}
-	case v1beta1.PhaseStatusFailed:
+	case v1beta1.RunPhaseFailed:
 		return IconWithTooltip{
 			Icon:    "clear",
-			Tooltip: fmt.Sprintf("%s phase: Testrun failed", v1beta1.PhaseStatusFailed),
+			Tooltip: fmt.Sprintf("%s phase: Testrun failed", v1beta1.RunPhaseFailed),
 			Color:   "red",
 		}
-	case v1beta1.PhaseStatusError:
+	case v1beta1.RunPhaseError:
 		return IconWithTooltip{
 			Icon:    "clear",
-			Tooltip: fmt.Sprintf("%s phase: Testrun errored", v1beta1.PhaseStatusError),
+			Tooltip: fmt.Sprintf("%s phase: Testrun errored", v1beta1.RunPhaseError),
 			Color:   "red",
 		}
-	case v1beta1.PhaseStatusTimeout:
+	case v1beta1.RunPhaseTimeout:
 		return IconWithTooltip{
 			Icon:    "clear",
-			Tooltip: fmt.Sprintf("%s phase: Testrun run longer than the specified timeout", v1beta1.PhaseStatusTimeout),
+			Tooltip: fmt.Sprintf("%s phase: Testrun run longer than the specified timeout", v1beta1.StepPhaseTimeout),
 			Color:   "red",
 		}
 	default:
@@ -143,7 +163,7 @@ func NewPRStatusPage(p *Page) http.HandlerFunc {
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon(util.TestrunStatusPhase(run.Testrun)),
+				Phase:        RunPhaseIcon(util.TestrunStatusPhase(run.Testrun)),
 				Progress:     util.TestrunProgress(run.Testrun),
 			}
 			if isAuthenticated {
@@ -204,7 +224,7 @@ func NewPRStatusDetailPage(logger logr.Logger, auth auth.Provider, basePath stri
 				Repository:   run.Event.GetRepositoryName(),
 				PR:           run.Event.ID,
 				Testrun:      run.Testrun.GetName(),
-				Phase:        PhaseIcon(util.TestrunStatusPhase(run.Testrun)),
+				Phase:        RunPhaseIcon(util.TestrunStatusPhase(run.Testrun)),
 				Progress:     util.TestrunProgress(run.Testrun),
 			},
 			Author:    run.Event.GetAuthorName(),
@@ -227,10 +247,10 @@ var demotest = tests.Run{
 		},
 		Status: v1beta1.TestrunStatus{
 			StartTime: &startTime,
-			Phase:     v1beta1.PhaseStatusRunning,
+			Phase:     v1beta1.RunPhaseRunning,
 			Steps: []*v1beta1.StepStatus{
 				{
-					Phase: v1beta1.PhaseStatusRunning,
+					Phase: v1beta1.StepPhaseRunning,
 				},
 			},
 			Workflow: "tm-test49l44",

@@ -71,7 +71,7 @@ var _ = Describe("Testrunner execution tests", func() {
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(1))
-			Expect(run[0].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(run[0].Testrun.Status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
 		})
 
 		It("should run 2 testruns", func() {
@@ -107,8 +107,8 @@ var _ = Describe("Testrunner execution tests", func() {
 			Expect(run.HasErrors()).To(BeFalse())
 
 			Expect(len(run)).To(Equal(2))
-			Expect(run[0].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
-			Expect(run[1].Testrun.Status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(run[0].Testrun.Status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
+			Expect(run[1].Testrun.Status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
 		})
 
 	})

@@ -71,7 +71,7 @@ var _ = Describe("Testmachinery controller resume", func() {
 					Position: tmv1beta1.StepStatusPosition{
 						Step: "step1",
 					},
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef1",
 					},
@@ -81,7 +81,7 @@ var _ = Describe("Testmachinery controller resume", func() {
 					Position: tmv1beta1.StepStatusPosition{
 						Step: "step2",
 					},
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef2",
 					},

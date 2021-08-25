@@ -44,10 +44,10 @@ func PreComputeTeststepFields(phase argov1.NodePhase, meta metadata.Metadata, cl
 	var preComputed metadata.StepPreComputed
 
 	switch phase {
-	case tmv1beta1.PhaseStatusFailed, tmv1beta1.PhaseStatusTimeout:
+	case tmv1beta1.StepPhaseFailed, tmv1beta1.StepPhaseTimeout:
 		zero := 0
 		preComputed.PhaseNum = &zero
-	case tmv1beta1.PhaseStatusSuccess:
+	case tmv1beta1.StepPhaseSuccess:
 		hundred := 100
 		preComputed.PhaseNum = &hundred
 	}

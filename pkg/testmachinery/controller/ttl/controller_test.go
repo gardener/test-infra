@@ -81,7 +81,7 @@ var _ = Describe("Reconcile", func() {
 		tr.Namespace = namespace
 		tr.Spec.TTLSecondsAfterFinished = pointer.Int32Ptr(10)
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
-		tr.Status.Phase = tmv1beta1.PhaseStatusSuccess
+		tr.Status.Phase = tmv1beta1.RunPhaseSuccess
 		t := metav1.Now()
 		tr.Status.CompletionTime = &t
 		Expect(fakeClient.Status().Update(ctx, tr)).To(Succeed())
@@ -100,7 +100,7 @@ var _ = Describe("Reconcile", func() {
 		tr.Namespace = namespace
 		tr.Spec.TTLSecondsAfterFinished = pointer.Int32Ptr(10)
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
-		tr.Status.Phase = tmv1beta1.PhaseStatusSuccess
+		tr.Status.Phase = tmv1beta1.RunPhaseSuccess
 		tr.Status.CompletionTime = &metav1.Time{Time: metav1.Now().Add(-20 * time.Second)}
 		Expect(fakeClient.Status().Update(ctx, tr)).To(Succeed())
 
@@ -123,7 +123,7 @@ var _ = Describe("Reconcile", func() {
 		tr.Namespace = namespace
 		tr.Spec.TTLSecondsAfterFinished = pointer.Int32Ptr(10)
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
-		tr.Status.Phase = tmv1beta1.PhaseStatusError
+		tr.Status.Phase = tmv1beta1.RunPhaseError
 		Expect(fakeClient.Status().Update(ctx, tr)).To(Succeed())
 
 		res, err := controller.Reconcile(ctx, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(tr)})

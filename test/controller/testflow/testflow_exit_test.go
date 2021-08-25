@@ -37,7 +37,7 @@ var _ = Describe("testflow exit tests", func() {
 			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeSuccess)
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -56,7 +56,7 @@ var _ = Describe("testflow exit tests", func() {
 			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeError)
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -75,7 +75,7 @@ var _ = Describe("testflow exit tests", func() {
 			defer ctx.Done()
 			tr := resources.GetTestrunWithExitHandler(resources.GetFailingTestrun(operation.TestNamespace(), operation.Commit()), tmv1beta1.ConditionTypeError)
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowFailed, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -136,7 +136,7 @@ var _ = Describe("testflow exit tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 

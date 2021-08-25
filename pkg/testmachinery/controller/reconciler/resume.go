@@ -54,7 +54,7 @@ func (r *TestmachineryReconciler) checkResume(rCtx *reconcileContext, step *v1be
 	}
 
 	// node has to be in running state
-	if argoNodeStatus.Phase != v1beta1.PhaseStatusRunning {
+	if argoNodeStatus.Phase != v1beta1.StepPhaseRunning {
 		return
 	}
 

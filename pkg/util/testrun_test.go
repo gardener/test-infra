@@ -28,52 +28,52 @@ var _ = Describe("testrun util test", func() {
 
 	Context("TestrunStatusPhase", func() {
 		It("should return success when the testrun was successfull", func() {
-			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{Phase: v1beta1.PhaseStatusSuccess}}
-			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusSuccess))
+			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{Phase: v1beta1.RunPhaseSuccess}}
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.RunPhaseSuccess))
 		})
 
 		It("should return success even if a system component failed", func() {
 			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
-				Phase: v1beta1.PhaseStatusError,
+				Phase: v1beta1.RunPhaseError,
 				Steps: []*v1beta1.StepStatus{
-					newStepStatus(v1beta1.PhaseStatusSuccess, false),
-					newStepStatus(v1beta1.PhaseStatusError, true),
+					newStepStatus(v1beta1.StepPhaseSuccess, false),
+					newStepStatus(v1beta1.StepPhaseError, true),
 				},
 			}}
-			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusSuccess))
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.RunPhaseSuccess))
 		})
 
 		It("should return error if one non system step fails", func() {
 			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
-				Phase: v1beta1.PhaseStatusError,
+				Phase: v1beta1.RunPhaseError,
 				Steps: []*v1beta1.StepStatus{
-					newStepStatus(v1beta1.PhaseStatusSuccess, true),
-					newStepStatus(v1beta1.PhaseStatusError, false),
+					newStepStatus(v1beta1.StepPhaseSuccess, true),
+					newStepStatus(v1beta1.StepPhaseError, false),
 				},
 			}}
-			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.RunPhaseError))
 		})
 
 		It("should return the testrun state if all steps are in init state", func() {
 			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
-				Phase: v1beta1.PhaseStatusError,
+				Phase: v1beta1.RunPhaseError,
 				Steps: []*v1beta1.StepStatus{
-					newStepStatus(v1beta1.PhaseStatusInit, true),
-					newStepStatus(v1beta1.PhaseStatusInit, false),
+					newStepStatus(v1beta1.StepPhaseInit, true),
+					newStepStatus(v1beta1.StepPhaseInit, false),
 				},
 			}}
-			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.RunPhaseError))
 		})
 
 		It("should return the testrun state if all steps are in skipped state", func() {
 			tr := &v1beta1.Testrun{Status: v1beta1.TestrunStatus{
-				Phase: v1beta1.PhaseStatusError,
+				Phase: v1beta1.RunPhaseError,
 				Steps: []*v1beta1.StepStatus{
-					newStepStatus(v1beta1.PhaseStatusSkipped, true),
-					newStepStatus(v1beta1.PhaseStatusSkipped, false),
+					newStepStatus(v1beta1.StepPhaseSkipped, true),
+					newStepStatus(v1beta1.StepPhaseSkipped, false),
 				},
 			}}
-			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.PhaseStatusError))
+			Expect(util.TestrunStatusPhase(tr)).To(Equal(v1beta1.RunPhaseError))
 		})
 	})
 })

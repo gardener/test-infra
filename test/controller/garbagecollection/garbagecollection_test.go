@@ -41,7 +41,7 @@ var _ = Describe("Garbage collection tests", func() {
 		defer ctx.Done()
 		tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-		tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+		tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 		Expect(err).ToNot(HaveOccurred())
 		utils.DeleteTestrun(operation.Client(), tr)
 

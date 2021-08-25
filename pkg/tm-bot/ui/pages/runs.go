@@ -53,7 +53,7 @@ type testrunItem struct {
 
 type rungroupItem struct {
 	testruns  []*v1beta1.Testrun
-	phase     argov1alpha1.NodePhase
+	phase     argov1alpha1.WorkflowPhase
 	startTime *metav1.Time
 	completed int
 
@@ -112,7 +112,7 @@ func NewTestrunsPage(p *Page) http.HandlerFunc {
 				testrun:   &testrun,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				Phase:     PhaseIcon(tr.Status.Phase),
+				Phase:     RunPhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(&tr),
@@ -165,7 +165,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 	}
 
 	isCompleted := 0
-	if util.Completed(tr.Status.Phase) {
+	if util.CompletedRun(tr.Status.Phase) {
 		isCompleted = 1
 	}
 
@@ -173,7 +173,7 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		if run.Name == runId {
 			list[i].testruns = append(run.testruns, tr)
 			list[i].phase = mergePhases(run.phase, tr.Status.Phase)
-			list[i].Phase = PhaseIcon(list[i].phase)
+			list[i].Phase = RunPhaseIcon(list[i].phase)
 			list[i].completed = list[i].completed + isCompleted
 			list[i].State = fmt.Sprintf("%d/%d Testruns are completed", list[i].completed, len(list[i].testruns))
 			return
@@ -194,22 +194,22 @@ func (l *rungroupItemList) Add(tr *v1beta1.Testrun) {
 		Name:        runId,
 		StartTime:   startTime.Format(time.RFC822),
 		State:       fmt.Sprintf("%d/%d Testruns are completed", isCompleted, 1),
-		Phase:       PhaseIcon(util.TestrunStatusPhase(tr)),
+		Phase:       RunPhaseIcon(util.TestrunStatusPhase(tr)),
 	})
 }
 func (l rungroupItemList) Less(a, b int) bool {
 	if l[a].phase != l[b].phase {
-		if l[a].phase == v1beta1.PhaseStatusRunning {
+		if l[a].phase == v1beta1.RunPhaseRunning {
 			return true
 		}
-		if l[b].phase == v1beta1.PhaseStatusRunning {
+		if l[b].phase == v1beta1.RunPhaseRunning {
 			return false
 		}
 
-		if l[a].phase == v1beta1.PhaseStatusInit {
+		if l[a].phase == v1beta1.RunPhaseInit {
 			return false
 		}
-		if l[b].phase == v1beta1.PhaseStatusInit {
+		if l[b].phase == v1beta1.RunPhaseInit {
 			return true
 		}
 	}
@@ -219,18 +219,18 @@ func (l rungroupItemList) Less(a, b int) bool {
 	return l[b].startTime.Before(l[a].startTime)
 }
 
-func mergePhases(a, b argov1alpha1.NodePhase) argov1alpha1.NodePhase {
-	if a == v1beta1.PhaseStatusRunning || b == v1beta1.PhaseStatusRunning {
-		return v1beta1.PhaseStatusRunning
+func mergePhases(a, b argov1alpha1.WorkflowPhase) argov1alpha1.WorkflowPhase {
+	if a == v1beta1.RunPhaseRunning || b == v1beta1.RunPhaseRunning {
+		return v1beta1.RunPhaseRunning
 	}
-	if a == v1beta1.PhaseStatusFailed || b == v1beta1.PhaseStatusFailed {
-		return v1beta1.PhaseStatusFailed
+	if a == v1beta1.RunPhaseFailed || b == v1beta1.RunPhaseFailed {
+		return v1beta1.RunPhaseFailed
 	}
-	if a == v1beta1.PhaseStatusError || b == v1beta1.PhaseStatusError {
-		return v1beta1.PhaseStatusError
+	if a == v1beta1.RunPhaseError || b == v1beta1.RunPhaseError {
+		return v1beta1.RunPhaseError
 	}
-	if a == v1beta1.PhaseStatusTimeout || b == v1beta1.PhaseStatusTimeout {
-		return v1beta1.PhaseStatusTimeout
+	if a == v1beta1.RunPhaseTimeout || b == v1beta1.RunPhaseTimeout {
+		return v1beta1.RunPhaseTimeout
 	}
 	return a
 }

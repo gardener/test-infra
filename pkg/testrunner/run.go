@@ -87,7 +87,7 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 		log.WithValues("testrun", r.Testrun.GetName()).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
 	}
 
-	testrunPhase := tmv1beta1.PhaseStatusInit
+	testrunPhase := tmv1beta1.RunPhaseInit
 	err = config.Watch.WatchUntil(config.Timeout, r.Testrun.GetNamespace(), r.Testrun.GetName(), func(new *tmv1beta1.Testrun) (bool, error) {
 		*r.Testrun = *new
 		if r.Testrun.Status.State != "" {
@@ -96,10 +96,10 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 		} else {
 			log.Info(fmt.Sprintf("Testrun %s is in %s phase. Waiting ...", r.Testrun.GetName(), testrunPhase))
 		}
-		return util.Completed(testrunPhase), nil
+		return util.CompletedRun(testrunPhase), nil
 	})
 	if err != nil {
-		r.Testrun.Status.Phase = tmv1beta1.PhaseStatusTimeout
+		r.Testrun.Status.Phase = tmv1beta1.RunPhaseTimeout
 		r.Error = trerrors.NewTimeoutError(fmt.Sprintf("maximum wait time of %d is exceeded by Testrun %s", config.Timeout, r.Testrun.GetName()))
 	}
 

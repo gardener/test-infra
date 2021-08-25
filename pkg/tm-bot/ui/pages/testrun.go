@@ -93,7 +93,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				testrun:   tr,
 				ID:        tr.GetName(),
 				Namespace: tr.GetNamespace(),
-				Phase:     PhaseIcon(tr.Status.Phase),
+				Phase:     RunPhaseIcon(tr.Status.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Progress:  util.TestrunProgress(tr),
@@ -132,7 +132,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 				step:      step,
 				Name:      step.TestDefinition.Name,
 				Step:      step.Position.Step,
-				Phase:     PhaseIcon(step.Phase),
+				Phase:     StepPhaseIcon(step.Phase),
 				StartTime: startTime,
 				Duration:  d.String(),
 				Location:  fmt.Sprintf("%s:%s", step.TestDefinition.Location.Repo, step.TestDefinition.Location.Revision),
@@ -168,10 +168,10 @@ func (l testrunItemList) Less(a, b int) bool {
 	aTr := l[a].testrun
 	bTr := l[b].testrun
 	if aTr.Status.Phase != bTr.Status.Phase {
-		if aTr.Status.Phase == v1beta1.PhaseStatusRunning {
+		if aTr.Status.Phase == v1beta1.RunPhaseRunning {
 			return true
 		}
-		if bTr.Status.Phase == v1beta1.PhaseStatusRunning {
+		if bTr.Status.Phase == v1beta1.RunPhaseRunning {
 			return false
 		}
 	}
@@ -188,17 +188,17 @@ func (l testrunStepStatusItemList) Len() int      { return len(l) }
 func (l testrunStepStatusItemList) Swap(a, b int) { l[a], l[b] = l[b], l[a] }
 func (l testrunStepStatusItemList) Less(a, b int) bool {
 	if l[a].step.Phase != l[b].step.Phase {
-		if l[a].step.Phase == v1beta1.PhaseStatusRunning {
+		if l[a].step.Phase == v1beta1.StepPhaseRunning {
 			return true
 		}
-		if l[b].step.Phase == v1beta1.PhaseStatusRunning {
+		if l[b].step.Phase == v1beta1.StepPhaseRunning {
 			return false
 		}
 
-		if l[a].step.Phase == v1beta1.PhaseStatusInit {
+		if l[a].step.Phase == v1beta1.StepPhaseInit {
 			return false
 		}
-		if l[b].step.Phase == v1beta1.PhaseStatusInit {
+		if l[b].step.Phase == v1beta1.StepPhaseInit {
 			return true
 		}
 	}

@@ -36,15 +36,14 @@ const (
 	GitHubCtxPrefix = "TM/"
 )
 
-var GitHubState = map[argov1.NodePhase]github.State{
-	tmv1beta1.PhaseStatusInit:    github.StatePending,
-	tmv1beta1.PhaseStatusPending: github.StatePending,
-	tmv1beta1.PhaseStatusRunning: github.StatePending,
-	tmv1beta1.PhaseStatusSuccess: github.StateSuccess,
-	tmv1beta1.PhaseStatusSkipped: github.StatePending,
-	tmv1beta1.PhaseStatusFailed:  github.StateFailure,
-	tmv1beta1.PhaseStatusError:   github.StateError,
-	tmv1beta1.PhaseStatusTimeout: github.StateError,
+var GitHubState = map[argov1.WorkflowPhase]github.State{
+	tmv1beta1.RunPhaseInit:    github.StatePending,
+	tmv1beta1.RunPhasePending: github.StatePending,
+	tmv1beta1.RunPhaseRunning: github.StatePending,
+	tmv1beta1.RunPhaseSuccess: github.StateSuccess,
+	tmv1beta1.RunPhaseFailed:  github.StateFailure,
+	tmv1beta1.RunPhaseError:   github.StateError,
+	tmv1beta1.RunPhaseTimeout: github.StateError,
 }
 
 type StatusUpdater struct {

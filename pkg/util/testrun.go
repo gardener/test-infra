@@ -27,26 +27,37 @@ import (
 )
 
 // TestrunStatusPhase determines the real testrun phase of a testrun by ignoring exit handler failures and system component failures if all other tests passed.
-func TestrunStatusPhase(tr *tmv1beta1.Testrun) argov1alpha1.NodePhase {
-	if tr.Status.Phase == tmv1beta1.PhaseStatusSuccess {
-		return tmv1beta1.PhaseStatusSuccess
+func TestrunStatusPhase(tr *tmv1beta1.Testrun) argov1alpha1.WorkflowPhase {
+	if tr.Status.Phase == tmv1beta1.RunPhaseSuccess {
+		return tmv1beta1.RunPhaseSuccess
 	}
 
 	stepsRun := false
 	for _, step := range tr.Status.Steps {
-		if !stepsRun && (step.Phase != tmv1beta1.PhaseStatusInit && step.Phase != tmv1beta1.PhaseStatusSkipped) {
-			stepsRun = true
+		if !stepsRun && (step.Phase != tmv1beta1.StepPhaseInit && step.Phase != tmv1beta1.StepPhaseSkipped) {
+			stepsRun = true // at least "some" steps were run
 		}
-		if step.Phase == tmv1beta1.PhaseStatusInit || step.Phase == tmv1beta1.PhaseStatusSkipped {
+		if step.Phase == tmv1beta1.StepPhaseInit || step.Phase == tmv1beta1.StepPhaseSkipped {
 			continue
 		}
-		if step.Phase != tmv1beta1.PhaseStatusSuccess && step.Annotations[common.AnnotationSystemStep] != "true" {
-			return step.Phase
+		if step.Phase != tmv1beta1.StepPhaseSuccess && step.Annotations[common.AnnotationSystemStep] != "true" {
+			switch step.Phase {
+			case tmv1beta1.StepPhasePending:
+				return tmv1beta1.RunPhasePending
+			case tmv1beta1.StepPhaseFailed:
+				return tmv1beta1.RunPhaseFailed
+			case tmv1beta1.StepPhaseError:
+				return tmv1beta1.RunPhaseError
+			case tmv1beta1.StepPhaseRunning:
+				return tmv1beta1.RunPhaseRunning
+			case tmv1beta1.StepPhaseTimeout:
+				return tmv1beta1.RunPhaseTimeout
+			}
 		}
 	}
 
 	if stepsRun {
-		return tmv1beta1.PhaseStatusSuccess
+		return tmv1beta1.RunPhaseSuccess
 	}
 
 	return tr.Status.Phase
@@ -86,7 +97,7 @@ func TestrunProgress(tr *tmv1beta1.Testrun) string {
 	for _, step := range tr.Status.Steps {
 		if step.Annotations[common.AnnotationSystemStep] != "true" {
 			allSteps++
-			if step.Phase != tmv1beta1.PhaseStatusSkipped && Completed(step.Phase) {
+			if step.Phase != tmv1beta1.StepPhaseSkipped && CompletedStep(step.Phase) {
 				completedSteps++
 			}
 		}

@@ -77,13 +77,13 @@ type StepExportMetadata struct {
 
 // TestrunSummary is the result of the overall testrun.
 type TestrunSummary struct {
-	Metadata      *Metadata          `json:"tm,omitempty"`
-	Type          SummaryType        `json:"type,omitempty"`
-	Phase         v1alpha1.NodePhase `json:"phase,omitempty"`
-	StartTime     *v1.Time           `json:"startTime,omitempty"`
-	Duration      int64              `json:"duration,omitempty"`
-	TestsRun      int                `json:"testsRun,omitempty"`
-	TelemetryData *TelemetryData     `json:"telemetry,omitempty"`
+	Metadata      *Metadata              `json:"tm,omitempty"`
+	Type          SummaryType            `json:"type,omitempty"`
+	Phase         v1alpha1.WorkflowPhase `json:"phase,omitempty"`
+	StartTime     *v1.Time               `json:"startTime,omitempty"`
+	Duration      int64                  `json:"duration,omitempty"`
+	TestsRun      int                    `json:"testsRun,omitempty"`
+	TelemetryData *TelemetryData         `json:"telemetry,omitempty"`
 }
 
 // StepSummaryMetadata is the metadata for a specific step result.

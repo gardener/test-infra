@@ -22,15 +22,18 @@ import (
 
 // WorkflowPhase calculates the phase for a completed workflow.
 // In contrast to the argo status, we need to also consider continueOn steps as failures.
-func WorkflowPhase(wf *argov1.Workflow) argov1.NodePhase {
+func WorkflowPhase(wf *argov1.Workflow) argov1.WorkflowPhase {
 	if !wf.Status.Phase.Completed() {
 		return wf.Status.Phase
 	}
 
 	phase := wf.Status.Phase
 	for _, node := range wf.Status.Nodes {
-		if node.Phase == tmv1beta1.PhaseStatusError || node.Phase == tmv1beta1.PhaseStatusFailed {
-			return node.Phase
+		if node.Phase == tmv1beta1.StepPhaseError {
+			return tmv1beta1.RunPhaseError
+		}
+		if node.Phase == tmv1beta1.StepPhaseFailed {
+			return tmv1beta1.RunPhaseFailed
 		}
 	}
 

@@ -96,7 +96,7 @@ func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconci
 
 		if err, retry := testrun.Validate(log, rCtx.tr); err != nil {
 			if !retry || RetryTimeoutExceeded(rCtx.tr) {
-				rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusError
+				rCtx.tr.Status.Phase = tmv1beta1.RunPhaseError
 				t := metav1.Now()
 				rCtx.tr.Status.CompletionTime = &t
 			}
@@ -158,7 +158,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	}
 
 	rCtx.tr.Status.Workflow = rCtx.wf.Name
-	rCtx.tr.Status.Phase = tmv1beta1.PhaseStatusRunning
+	rCtx.tr.Status.Phase = tmv1beta1.RunPhaseRunning
 
 	// add finalizers for testrun
 	trFinalizers := sets.NewString(rCtx.tr.Finalizers...)
