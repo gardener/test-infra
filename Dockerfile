@@ -79,6 +79,9 @@ RUN  \
     rsync \
     bc \
     linux-headers \
+  # need to install the specific google-crc32c version as newer version failed to install due to missing "crc32c/crc32c.h"
+  # see https://github.com/googleapis/python-crc32c/issues/83
+  && pip install google-crc32c==1.1.2 \
   && pip install --upgrade pip \
     gardener-cicd-cli \
     gardener-cicd-libs \
