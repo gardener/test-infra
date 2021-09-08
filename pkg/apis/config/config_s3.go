@@ -14,8 +14,6 @@
 
 package config
 
-import "encoding/json"
-
 // S3 holds information about the s3 endpoint
 type S3 struct {
 	Server     S3Server `json:"server"`
@@ -25,26 +23,7 @@ type S3 struct {
 }
 
 // S3Server defines the used s3 server
-// The endpoint and ssl is not needed if minio should be deployed.
-// Minio is deployed when the struct is defined
 type S3Server struct {
-	// +optional
-	Minio *MinioConfiguration `json:"minio"`
-
 	Endpoint string `json:"endpoint,omitempty"`
 	SSL      bool   `json:"ssl,omitempty"`
-}
-
-// MinioConfiguration configures optional minio deployment
-type MinioConfiguration struct {
-	// Distributed specified that minio should be deployed in cluster mode
-	Distributed bool `json:"distributed"`
-
-	// Ingress is the ingress configuration to expose minio
-	// +optional
-	Ingress Ingress `json:"ingress,omitempty"`
-
-	// Specify additional values that are passed to the minio helm chart
-	// +optional
-	ChartValues json.RawMessage `json:"chartValues,omitempty"`
 }

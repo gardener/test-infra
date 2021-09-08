@@ -92,11 +92,8 @@ testmachinery:
 
   s3Configuration:
     server:
-      minio:
-        distributed: false
-        ingress:
-          enabled: false
       ssl: false
+      endpoint: "tbd"
     bucketName: testmachinery
     accessKey: IbnGHa4V6ypsm
     secretKey: l9rJ0XR65Rkvc9g9fyOf

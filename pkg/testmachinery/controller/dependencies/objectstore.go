@@ -16,20 +16,11 @@ package dependencies
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"path/filepath"
 
-	"github.com/gardener/gardener/pkg/utils"
-	"github.com/pkg/errors"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	controllerruntime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery/imagevector"
 )
 
 // checkResourceManager checks if a resource manager ist deployed
@@ -38,94 +29,6 @@ func (e *DependencyEnsurer) ensureObjectStore(ctx context.Context, namespace str
 	// ensure secret deployment
 	if err := e.ensureS3Secret(ctx, s3, namespace); err != nil {
 		return err
-	}
-
-	if s3.Server.Minio != nil {
-		if err := e.validateMinioDeployment(ctx, namespace, s3); err != nil {
-			return err
-		}
-		return e.ensureMinio(ctx, namespace, s3)
-	}
-
-	return nil
-}
-
-// validateMinioDeployment validates if the minio deployment method has not changed
-func (e *DependencyEnsurer) validateMinioDeployment(ctx context.Context, namespace string, s3 *config.S3) error {
-	// check if the minio deployment has changed (distributed or not)
-	sts := &appsv1.StatefulSet{}
-	if err := e.client.Get(ctx, client.ObjectKey{Name: config.MinioDeploymentName, Namespace: namespace}, sts); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	// minio is distributed which means that the replicas are greater than 1
-	if s3.Server.Minio.Distributed && *sts.Spec.Replicas > 1 {
-		return nil
-	}
-
-	// minio runs as single deployment
-	if *sts.Spec.Replicas == 1 {
-		return nil
-	}
-
-	return errors.New("Deployment method of minio cannot be changed")
-}
-
-func (e *DependencyEnsurer) ensureMinio(ctx context.Context, namespace string, s3 *config.S3) error {
-	e.log.Info("Ensuring minio deployment")
-	values := map[string]interface{}{
-		"minio": map[string]interface{}{
-			"name": config.MinioDeploymentName,
-			"distributed": map[string]interface{}{
-				"enabled": s3.Server.Minio.Distributed,
-			},
-			"ingress": map[string]interface{}{
-				"enabled": s3.Server.Minio.Ingress.Enabled,
-				"host":    s3.Server.Minio.Ingress.Host,
-			},
-			"service": map[string]interface{}{
-				"name": config.MinioServiceName,
-				"port": config.MinioServicePort,
-			},
-		},
-		"bucketName": s3.BucketName,
-		"secret": map[string]string{
-			"name": config.S3SecretName,
-		},
-	}
-
-	if s3.Server.Minio.ChartValues != nil {
-		additionalValues := map[string]interface{}{}
-		if err := json.Unmarshal(s3.Server.Minio.ChartValues, &additionalValues); err != nil {
-			return err
-		}
-		values = utils.MergeMaps(additionalValues, values)
-	}
-
-	minioChart := &helmChart{
-		Name: config.MinioChartName,
-		Path: filepath.Join(config.ChartsPath, config.MinioChartName),
-		Images: []string{
-			config.MinioImageName,
-		},
-		Values: values,
-	}
-	err := e.createManagedResource(ctx,
-		namespace,
-		config.MinioManagedResourceName,
-		minioChart,
-		imagevector.ImageVector(),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to create managed resource: %w", err)
-	}
-
-	// set the endpoint to use the internal minio service
-	if len(s3.Server.Endpoint) == 0 {
-		s3.Server.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:%d", config.MinioServiceName, namespace, config.MinioServicePort)
 	}
 
 	return nil
