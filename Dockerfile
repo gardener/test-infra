@@ -83,8 +83,8 @@ RUN  \
   # see https://github.com/googleapis/python-crc32c/issues/83
   && pip install google-crc32c==1.1.2 \
   && pip install --upgrade pip \
-    "gardener-cicd-cli>=1.1433.0" \
-    "gardener-cicd-libs>=1.1433.0" \
+    "gardener-cicd-cli>=1.1437.0" \
+    "gardener-cicd-libs>=1.1437.0" \
     awscli \
   && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
