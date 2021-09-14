@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v27/github"
 

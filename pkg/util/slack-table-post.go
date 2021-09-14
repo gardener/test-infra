@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 )
