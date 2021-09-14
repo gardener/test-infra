@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"k8s.io/helm/pkg/strvals"
 
 	"github.com/gardener/test-infra/pkg/common"

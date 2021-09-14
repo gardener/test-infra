@@ -9,7 +9,7 @@ import (
 	json "encoding/json"
 	reflect "reflect"
 
-	semver "github.com/Masterminds/semver"
+	semver "github.com/Masterminds/semver/v3"
 	gomock "github.com/golang/mock/gomock"
 	github0 "github.com/google/go-github/v27/github"
 

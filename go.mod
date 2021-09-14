@@ -5,7 +5,7 @@ go 1.14
 require (
 	cloud.google.com/go v0.81.0
 	cloud.google.com/go/storage v1.10.0
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo/v2 v2.12.10
 	github.com/bradleyfalzon/ghinstallation v1.1.1

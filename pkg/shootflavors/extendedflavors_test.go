@@ -120,6 +120,37 @@ var _ = Describe("extended flavor test", func() {
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
+	It("should select the correct 3 versions", func() {
+		versionPattern := ">=1.14 <= 1.15"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Pattern: &versionPattern,
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
+			*obj = cloudprofile
+			return nil
+		})
+		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(3))
+
+		for _, shoot := range flavors.GetShoots() {
+			Expect(shoot.Get().Shoot.KubernetesVersion.Version).To(Or(Equal("1.14.3"), Equal("1.15.1"), Equal("1.15.2")))
+			Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+		}
+	})
+
 	It("should add a prefix to the shoot name", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
