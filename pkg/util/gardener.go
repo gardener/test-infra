@@ -128,10 +128,11 @@ func FilterExpiredVersions(versions []gardencorev1beta1.ExpirableVersion) []gard
 
 // DecMinorVersion decreases the minor version of 1 and sets the patch version to 0.
 func DecMinorVersion(v *semver.Version) (*semver.Version, error) {
-	minor := v.Minor() - 1
-	if minor < 0 {
-		minor = 0
+	minor := uint64(0)
+	if v.Minor() > 0 {
+		minor = v.Minor() - 1
 	}
+
 	vPrev := fmt.Sprintf("%d.%d.%d", v.Major(), minor, 0)
 	return semver.NewVersion(vPrev)
 }
