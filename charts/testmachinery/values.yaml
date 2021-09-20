@@ -71,11 +71,6 @@ testmachinery:
 
   s3Configuration:
     server:
-#      minio:
-#        distributed: false
-#        ingress:
-#          enabled: false
-#          host: argoui.example.com
       endpoint: ""
       ssl: false
     bucketName: testmachinery

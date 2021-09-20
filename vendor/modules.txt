@@ -182,25 +182,8 @@ github.com/go-openapi/jsonreference
 github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.19.8
 github.com/go-openapi/swag
-# github.com/gobuffalo/logger v1.0.3
-github.com/gobuffalo/logger
-# github.com/gobuffalo/packd v1.0.0
-github.com/gobuffalo/packd
-github.com/gobuffalo/packd/internal/takeon/github.com/markbates/errx
 # github.com/gobuffalo/packr/v2 v2.8.0
 ## explicit
-github.com/gobuffalo/packr/v2
-github.com/gobuffalo/packr/v2/file
-github.com/gobuffalo/packr/v2/file/resolver
-github.com/gobuffalo/packr/v2/file/resolver/encoding/hex
-github.com/gobuffalo/packr/v2/internal
-github.com/gobuffalo/packr/v2/jam
-github.com/gobuffalo/packr/v2/jam/parser
-github.com/gobuffalo/packr/v2/jam/store
-github.com/gobuffalo/packr/v2/packr2
-github.com/gobuffalo/packr/v2/packr2/cmd
-github.com/gobuffalo/packr/v2/packr2/cmd/fix
-github.com/gobuffalo/packr/v2/plog
 # github.com/gobwas/glob v0.2.3
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler
@@ -319,7 +302,6 @@ github.com/jstemmer/go-junit-report/formatter
 github.com/jstemmer/go-junit-report/parser
 # github.com/karrick/godirwalk v1.15.5
 ## explicit
-github.com/karrick/godirwalk
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
@@ -338,12 +320,6 @@ github.com/mandelsoft/vfs/pkg/osfs
 github.com/mandelsoft/vfs/pkg/projectionfs
 github.com/mandelsoft/vfs/pkg/utils
 github.com/mandelsoft/vfs/pkg/vfs
-# github.com/markbates/errx v1.1.0
-github.com/markbates/errx
-# github.com/markbates/oncer v1.0.0
-github.com/markbates/oncer
-# github.com/markbates/safe v1.0.1
-github.com/markbates/safe
 # github.com/mattn/go-runewidth v0.0.8
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
@@ -448,10 +424,6 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/rogpeppe/go-internal v1.5.2
-github.com/rogpeppe/go-internal/modfile
-github.com/rogpeppe/go-internal/module
-github.com/rogpeppe/go-internal/semver
 # github.com/russross/blackfriday/v2 v2.0.1
 github.com/russross/blackfriday/v2
 # github.com/shopspring/decimal v1.2.0
