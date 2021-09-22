@@ -1,31 +1,45 @@
 
 ---
 {{ if .Values.argoui.ingress.enabled }}
-apiVersion: extensions/v1beta1
+{{- if semverCompare ">= 1.19-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: networking.k8s.io/v1
+  {{- else -}}
+apiVersion: networking.k8s.io/v1beta1
+  {{- end }}
 kind: Ingress
 metadata:
-    annotations:
-        {{- range $key, $value := .Values.argoui.ingress.annotations }}
-        {{ $key }}: {{ $value }}
-        {{- end }}
-    labels:
-        garden.sapcloud.io/purpose: managed-cert
-        {{- range $key, $value := .Values.argoui.ingress.labels }}
-        {{ $key }}: {{ $value }}
-        {{- end }}
-    name: {{ .Values.argoui.ingress.name }}
-    namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- range $key, $value := .Values.argoui.ingress.annotations }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  labels:
+    garden.sapcloud.io/purpose: managed-cert
+    {{- range $key, $value := .Values.argoui.ingress.labels }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  name: {{ .Values.argoui.ingress.name }}
+  namespace: {{ .Release.Namespace }}
 spec:
-    rules:
+  rules:
     - host: {{ .Values.argoui.ingress.host }}
       http:
-          paths:
+        paths:
+          {{- if semverCompare ">= 1.19-0" .Capabilities.KubeVersion.GitVersion }}
           - backend:
-                serviceName: argo-ui
-                servicePort: 80
+              service:
+                name: argo-ui
+                port:
+                  number: 80
             path: /
-    tls:
+            pathType: Prefix
+          {{- else }}
+          - backend:
+              serviceName: argo-ui
+              servicePort: 80
+            path: /
+  {{- end }}
+  tls:
     - hosts:
-      - {{ .Values.argoui.ingress.host }}
+        - {{ .Values.argoui.ingress.host }}
       secretName: argo-ui-tls
-{{ end }}
+  {{ end }}
