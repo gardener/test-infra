@@ -19,6 +19,16 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sync"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
+
+	appsv1 "k8s.io/api/apps/v1"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
 	admissionv1 "k8s.io/api/admission/v1"
@@ -27,6 +37,41 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
 )
+
+var (
+	healthMutex sync.Mutex
+	healthErr   error
+)
+
+// StartHealthCheck will start a go routine periodically checking the health of a specified deployment
+// The result of the checks is available to the testRunValidator only
+func StartHealthCheck(ctx context.Context, reader client.Reader, namespace string, deploymentName string, interval metav1.Duration) {
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				return
+			}
+			checkDeploymentHealth(ctx, reader, namespace, deploymentName)
+			time.Sleep(interval.Duration)
+		}
+	}()
+}
+
+func checkDeploymentHealth(ctx context.Context, reader client.Reader, namespace string, deploymentName string) {
+	deployment := &appsv1.Deployment{}
+	err := reader.Get(ctx, client.ObjectKey{Name: deploymentName, Namespace: namespace}, deployment)
+	if err != nil {
+		healthMutex.Lock()
+		defer healthMutex.Unlock()
+		healthErr = err
+		return
+	}
+
+	err = kutil.CheckDeployment(deployment)
+	healthMutex.Lock()
+	defer healthMutex.Unlock()
+	healthErr = err
+}
 
 type testrunValidator struct {
 	log     logr.Logger
@@ -48,6 +93,13 @@ func (v *testrunValidator) InjectDecoder(d *admission.Decoder) error {
 
 // Handle validates a testrun
 func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
+	healthMutex.Lock()
+	if healthErr != nil {
+		defer healthMutex.Unlock()
+		return admission.Errored(http.StatusFailedDependency, healthErr)
+	}
+	healthMutex.Unlock()
+
 	tr := &tmv1beta1.Testrun{}
 	if err := v.decoder.Decode(req, tr); err != nil {
 		return admission.Errored(http.StatusBadRequest, err)

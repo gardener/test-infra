@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	mrv1alpha1 "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -27,8 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/yaml"
 
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/util/gardener"
 	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
 	"io/ioutil"
@@ -196,27 +193,12 @@ func WaitForClusterReadiness(log logr.Logger, clusterClient client.Client, names
 	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
 		var (
 			tmControllerStatus = deploymentIsReady(ctx, log, clusterClient, namespace, "testmachinery-controller")
-			argoStatus         = managedresourceIsReady(ctx, log, clusterClient, namespace, config.ArgoManagedResourceName)
-			minioStatus        = managedresourceIsReady(ctx, log, clusterClient, namespace, config.MinioManagedResourceName)
 		)
-		if tmControllerStatus && argoStatus && minioStatus {
+		if tmControllerStatus {
 			return true, nil
 		}
-		log.Info("waiting for Test Machinery components to become ready", "TestMachinery-controller", tmControllerStatus, "argo", argoStatus, "minio", minioStatus)
+		log.Info("waiting for Test Machinery components to become ready", "TestMachinery-controller", tmControllerStatus)
 		return false, nil
-	})
-}
-
-// WaitForMinioService waits for the minio service to get an external IP and return the minio config.
-func WaitForMinioService(minioEndpoint string, maxWaitTime time.Duration) error {
-	// wait for service to get endpoint ip
-	return wait.PollImmediate(10*time.Second, maxWaitTime, func() (bool, error) {
-		_, err := HTTPGet("http://" + minioEndpoint)
-		if err != nil {
-			return retry.MinorError(err)
-		}
-
-		return retry.Ok()
 	})
 }
 
@@ -228,17 +210,6 @@ func deploymentIsReady(ctx context.Context, log logr.Logger, clusterClient clien
 		return false
 	}
 	err = kutil.CheckDeployment(deployment)
-	return err == nil
-}
-
-func managedresourceIsReady(ctx context.Context, log logr.Logger, clusterClient client.Client, namespace, name string) bool {
-	mr := &mrv1alpha1.ManagedResource{}
-	err := clusterClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, mr)
-	if err != nil {
-		log.V(3).Info(err.Error())
-		return false
-	}
-	err = gardener.CheckManagedResource(mr)
 	return err == nil
 }
 

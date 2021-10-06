@@ -59,12 +59,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(operation.WaitForClusterReadiness(ClusterReadinessTimeout)).ToNot(HaveOccurred())
 
-	s3Config, err := operation.WaitForMinioServiceReadiness(MinioServiceReadinessTimeout)
-	Expect(err).ToNot(HaveOccurred())
-
-	minioBucket = s3Config.BucketName
-	minioClient, err = minio.New(s3Config.Server.Endpoint, s3Config.AccessKey, s3Config.SecretKey, false)
-	Expect(err).ToNot(HaveOccurred())
 }, InitializationTimeout.Seconds())
 
 var _ = AfterSuite(func() {

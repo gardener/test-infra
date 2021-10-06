@@ -16,9 +16,8 @@ package v1beta1
 
 import (
 	"fmt"
+	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/gardener/test-infra/pkg/version"
@@ -32,15 +31,6 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 func SetDefaults_Configuration(obj *Configuration) {
 	SetDefaults_ControllerConfig(&obj.Controller)
 	SetDefaults_TestMachineryConfiguration(&obj.TestMachinery)
-	SetDefaults_ReservedExcessCapacity(obj.ReservedExcessCapacity)
-	if obj.Observability.Logging != nil {
-		if len(obj.Observability.Logging.Namespace) == 0 {
-			obj.Observability.Logging.Namespace = obj.TestMachinery.Namespace
-		}
-		if len(obj.Observability.Logging.StorageClass) == 0 {
-			obj.Observability.Logging.StorageClass = "default"
-		}
-	}
 }
 
 // SetDefaults_ControllerConfig sets default values for the Controller objects
@@ -60,6 +50,18 @@ func SetDefaults_ControllerConfig(obj *Controller) {
 	if obj.WebhookConfig.Port == 0 {
 		obj.WebhookConfig.Port = 443
 	}
+
+	if len(obj.DependencyHealthCheck.Namespace) == 0 {
+		obj.DependencyHealthCheck.Namespace = "default"
+	}
+
+	if len(obj.DependencyHealthCheck.DeploymentName) == 0 {
+		obj.DependencyHealthCheck.DeploymentName = "workflow-controller"
+	}
+
+	if obj.DependencyHealthCheck.Interval.Duration == 0 {
+		obj.DependencyHealthCheck.Interval.Duration = time.Minute
+	}
 }
 
 // SetDefaults_TestMachineryConfiguration sets default values for the TestMachinery objects
@@ -76,30 +78,6 @@ func SetDefaults_TestMachineryConfiguration(obj *TestMachinery) {
 
 	if len(obj.Namespace) == 0 {
 		obj.Namespace = "default"
-	}
-}
-
-// SetDefaults_Configuration sets default values for the Configuration objects
-func SetDefaults_ReservedExcessCapacity(obj *ReservedExcessCapacity) {
-	if obj == nil {
-		return
-	}
-
-	if obj.Replicas == 0 {
-		obj.Replicas = 5
-	}
-
-	if obj.Resources == nil {
-		obj.Resources = &corev1.ResourceRequirements{
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.Quantity{Format: "1000m"},
-				corev1.ResourceMemory: resource.Quantity{Format: "1000Mi"},
-			},
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.Quantity{Format: "1000m"},
-				corev1.ResourceMemory: resource.Quantity{Format: "1000Mi"},
-			},
-		}
 	}
 }
 

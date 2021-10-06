@@ -15,7 +15,6 @@
 package config
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,16 +23,13 @@ import (
 
 // Configuration contains the testmachinery configuration values
 type Configuration struct {
-	metav1.TypeMeta        `json:",inline"`
-	Controller             Controller              `json:"controller"`
-	TestMachinery          TestMachinery           `json:"testmachinery"`
-	Argo                   Argo                    `json:"argo"`
-	GitHub                 GitHub                  `json:"github,omitempty"`
-	S3                     *S3                     `json:"s3Configuration,omitempty"`
-	ElasticSearch          *ElasticSearch          `json:"esConfiguration,omitempty"`
-	ReservedExcessCapacity *ReservedExcessCapacity `json:"reservedExcessCapacity,omitempty"`
-	Observability          Observability           `json:"observability,omitempty"`
-	ImagePullSecretNames   []string                `json:"imagePullSecretNames,omitempty"`
+	metav1.TypeMeta      `json:",inline"`
+	Controller           Controller     `json:"controller"`
+	TestMachinery        TestMachinery  `json:"testmachinery"`
+	GitHub               GitHub         `json:"github,omitempty"`
+	S3                   *S3            `json:"s3Configuration,omitempty"`
+	ElasticSearch        *ElasticSearch `json:"esConfiguration,omitempty"`
+	ImagePullSecretNames []string       `json:"imagePullSecretNames,omitempty"`
 }
 
 // Controller holds information about the testmachinery controller
@@ -55,6 +51,9 @@ type Controller struct {
 
 	// WebhookConfig holds the validating webhook configuration.
 	WebhookConfig WebhookConfig `json:"webhook,omitempty"`
+
+	// DependencyHealthCheck specifies a deployment whose health is relevant for the controller.
+	DependencyHealthCheck HealthCheckTarget `json:"dependencyHealthCheck,omitempty"`
 }
 
 // TTLController contains the ttl controller configuration.
@@ -81,18 +80,12 @@ type ElasticSearch struct {
 	Password string `json:"password,omitempty"`
 }
 
-// ReservedExcessCapacity holds information about additionally deployed reserved excess capacity pods.
-type ReservedExcessCapacity struct {
-	// Replicas is the amount of reserve excess capacity pods.
-	Replicas int32 `json:"replicas"`
-
-	// Resources specifies the resources of the single excess capacity pods
-	// + optional
-	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
-}
-
-// Ingress holds information about a ingress
-type Ingress struct {
-	Enabled bool   `json:"enabled"`
-	Host    string `json:"host"`
+// HealthCheckTarget specifies a deployment whose health should be checked.
+type HealthCheckTarget struct {
+	//Namespace specifies the namespace where resources relevant for a health check exist in.
+	Namespace string `json:"namespace,omitempty"`
+	// DeploymentName is the name of a deployment whose health will be checked.
+	DeploymentName string `json:"deploymentName,omitempty"`
+	//Interval specifies the frequency of the health check
+	Interval metav1.Duration `json:"interval,omitempty"`
 }
