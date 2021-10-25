@@ -25,7 +25,7 @@ loki:
   # password: pass
 
 nameOverride: promtail
-fullnameOverride: tm-promtail
+fullnameOverride: logging-promtail
 
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/

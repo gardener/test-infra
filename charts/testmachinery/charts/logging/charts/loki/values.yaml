@@ -1,5 +1,5 @@
 nameOverride: loki
-fullnameOverride: tm-loki
+fullnameOverride: logging-loki
 
 image:
   repository: grafana/loki
