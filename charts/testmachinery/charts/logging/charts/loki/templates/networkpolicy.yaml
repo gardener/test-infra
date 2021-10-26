@@ -9,20 +9,20 @@ metadata:
   labels:
     app: {{ template "loki.name" . }}
     chart: {{ template "loki.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ template "logging.releaseName" . }}
     heritage: {{ .Release.Service }}
 spec:
   podSelector:
     matchLabels:
       name: {{ template "loki.fullname" . }}
       app: {{ template "loki.name" . }}
-      release: {{ .Release.Name }}
+      release: {{ template "logging.releaseName" . }}
   ingress:
     - from:
       - podSelector:
           matchLabels:
             app: {{ template "client.name" . }}
-            release: {{ .Release.Name }}
+            release: {{ template "logging.releaseName" . }}
     - ports:
       - port: {{ .Values.service.port }}
 {{- end -}}

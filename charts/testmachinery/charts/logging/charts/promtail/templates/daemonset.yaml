@@ -8,7 +8,7 @@ metadata:
   labels:
     app: {{ template "promtail.name" . }}
     chart: {{ template "promtail.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ template "logging.releaseName" . }}
     heritage: {{ .Release.Service }}
   annotations:
     {{- toYaml .Values.annotations | nindent 4 }}
@@ -16,7 +16,7 @@ spec:
   selector:
     matchLabels:
       app: {{ template "promtail.name" . }}
-      release: {{ .Release.Name }}
+      release: {{ template "logging.releaseName" . }}
   updateStrategy:
     type: {{ .Values.deploymentStrategy }}
   {{- if ne .Values.deploymentStrategy "RollingUpdate" }}
@@ -26,7 +26,7 @@ spec:
     metadata:
       labels:
         app: {{ template "promtail.name" . }}
-        release: {{ .Release.Name }}
+        release: {{ template "logging.releaseName" . }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}          

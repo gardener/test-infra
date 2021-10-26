@@ -9,7 +9,7 @@ metadata:
   labels:
     app: {{ template "loki.name" . }}
     chart: {{ template "loki.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ template "logging.releaseName" . }}
     heritage: {{ .Release.Service }}
     {{- if .Values.serviceMonitor.additionalLabels }}
 {{ toYaml .Values.serviceMonitor.additionalLabels | indent 4 }}
@@ -18,7 +18,7 @@ spec:
   selector:
     matchLabels:
       app: {{ template "loki.name" . }}
-      release: {{ .Release.Name | quote }}
+      release: {{ template "logging.releaseName" . | quote }}
   namespaceSelector:
     matchNames:
       - {{ .Values.global.loggingNamespace | quote }}

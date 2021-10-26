@@ -8,7 +8,7 @@ metadata:
   labels:
     app: {{ template "promtail.name" . }}
     chart: {{ template "promtail.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ template "logging.releaseName" . }}
     heritage: {{ .Release.Service }}
 subjects:
   - kind: ServiceAccount

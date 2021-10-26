@@ -1,6 +1,7 @@
 global:
   loggingNamespace: default
   loggingEnabled: true
+  overwriteLoggingReleaseName: logging
 loki:
   nameOverride: loki
   image:

@@ -8,7 +8,7 @@ metadata:
   labels:
     app: {{ template "loki.name" . }}
     chart: {{ template "loki.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ template "logging.releaseName" . }}
     heritage: {{ .Release.Service }}
   annotations:
   {{- toYaml .Values.annotations | nindent 4 }}
@@ -18,7 +18,7 @@ spec:
   selector:
     matchLabels:
       app: {{ template "loki.name" . }}
-      release: {{ .Release.Name }}
+      release: {{ template "logging.releaseName" . }}
   serviceName: {{ template "loki.fullname" . }}-headless
   updateStrategy:
   {{- toYaml .Values.updateStrategy | nindent 4 }}
@@ -27,7 +27,7 @@ spec:
       labels:
         app: {{ template "loki.name" . }}
         name: {{ template "loki.name" . }}
-        release: {{ .Release.Name }}
+        release: {{ template "logging.releaseName" . }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
