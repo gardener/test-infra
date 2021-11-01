@@ -13,7 +13,11 @@
 # limitations under the License.
 
 ---
+{{- if semverCompare ">= 1.16-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: admissionregistration.k8s.io/v1
+{{- else }}
 apiVersion: admissionregistration.k8s.io/v1beta1
+{{- end }}
 kind: ValidatingWebhookConfiguration
 metadata:
   name: testmachinery-controller
@@ -21,6 +25,12 @@ metadata:
     {{- include "defaultLabels" . | nindent 4 }}
 webhooks:
 - name: validate-testrun.tm.garden.cloud
+  {{- if semverCompare ">= 1.16-0" .Capabilities.KubeVersion.GitVersion }}
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: "None"
+  {{- else }}
+  admissionReviewVersions: ["v1beta1"]
+  {{- end }}
   rules:
   - apiGroups: ["testmachinery.sapcloud.io"]
     apiVersions: [v1beta1]

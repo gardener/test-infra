@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: extensions/v1beta1
+{{- if semverCompare ">= 1.19-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: networking.k8s.io/v1
+{{- else -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
   name: tm-bot
@@ -31,7 +35,17 @@ spec:
   - host: {{ .Values.ingress.host }}
     http:
       paths:
+      {{- if semverCompare ">= 1.19-0" .Capabilities.KubeVersion.GitVersion }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tm-bot
+            port:
+              number: 80
+      {{- else }}
       - path: /
         backend:
           serviceName: tm-bot
           servicePort: 80
+      {{- end }}

@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 
 	"github.com/gardener/test-infra/pkg/common"

@@ -1,11 +1,11 @@
 module github.com/gardener/test-infra
 
-go 1.14
+go 1.16
 
 require (
 	cloud.google.com/go v0.81.0
 	cloud.google.com/go/storage v1.10.0
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo/v2 v2.12.10
 	github.com/bradleyfalzon/ghinstallation v1.1.1
@@ -21,7 +21,6 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.3.0
 	github.com/go-openapi/spec v0.19.8
-	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/mock v1.5.0
 	github.com/google/go-github/v27 v27.0.4
 	github.com/google/uuid v1.1.2
@@ -30,7 +29,6 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/joho/godotenv v1.3.0
-	github.com/karrick/godirwalk v1.15.5 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/mandelsoft/vfs v0.0.0-20210530103237-5249dc39ce91
 	github.com/minio/minio-go v6.0.14+incompatible

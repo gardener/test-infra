@@ -81,7 +81,6 @@ all: generate format verify install
 install-requirements:
 	@curl -sfL "https://install.goreleaser.com/github.com/golangci/golangci-lint.sh" | sh -s -- -b $(go env GOPATH)/bin v1.32.2
 	@GO111MODULE=off go get golang.org/x/tools/cmd/goimports
-	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/gobuffalo/packr/v2/packr2
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
 
 .PHONY: gen-certs
