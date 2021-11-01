@@ -39,7 +39,7 @@ func ValidateConfiguration(config *config.Configuration) field.ErrorList {
 func validateS3Config(s3 *config.S3, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if s3.Server.Minio == nil && len(s3.Server.Endpoint) == 0 {
+	if len(s3.Server.Endpoint) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("server.endpoint"), "endpoint or minio has to be defined"))
 	}
 	if len(s3.AccessKey) == 0 {

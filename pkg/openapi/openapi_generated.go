@@ -46,7 +46,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress":                         schema_pkg_apis_config_v1beta1_Ingress(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations":                       schema_pkg_apis_config_v1beta1_Locations(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Logging":                         schema_pkg_apis_config_v1beta1_Logging(ref),
-		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration":              schema_pkg_apis_config_v1beta1_MinioConfiguration(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth":                           schema_pkg_apis_config_v1beta1_OAuth(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Observability":                   schema_pkg_apis_config_v1beta1_Observability(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.ReservedExcessCapacity":          schema_pkg_apis_config_v1beta1_ReservedExcessCapacity(ref),
@@ -720,44 +719,6 @@ func schema_pkg_apis_config_v1beta1_Logging(ref common.ReferenceCallback) common
 	}
 }
 
-func schema_pkg_apis_config_v1beta1_MinioConfiguration(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "MinioConfiguration configures optional minio deployment",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"distributed": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Distributed specified that minio should be deployed in cluster mode",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"ingress": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ingress is the ingress configuration to expose minio",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"),
-						},
-					},
-					"chartValues": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Specify additional values that are passed to the minio helm chart",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-				},
-				Required: []string{"distributed"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Ingress"},
-	}
-}
-
 func schema_pkg_apis_config_v1beta1_OAuth(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -890,11 +851,6 @@ func schema_pkg_apis_config_v1beta1_S3Server(ref common.ReferenceCallback) commo
 				Description: "S3Server defines the used s3 server The endpoint and ssl is not needed if minio should be deployed. Minio is deployed when the struct is defined",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"minio": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration"),
-						},
-					},
 					"endpoint": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -910,8 +866,6 @@ func schema_pkg_apis_config_v1beta1_S3Server(ref common.ReferenceCallback) commo
 				},
 			},
 		},
-		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.MinioConfiguration"},
 	}
 }
 

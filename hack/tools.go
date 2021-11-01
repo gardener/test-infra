@@ -20,7 +20,6 @@ package tools
 import (
 	_ "github.com/gardener/gardener/.github"
 	_ "github.com/gardener/gardener/.github/ISSUE_TEMPLATE"
-	_ "github.com/gobuffalo/packr/v2/packr2"
 	_ "github.com/golang/mock/mockgen"
 	_ "github.com/onsi/ginkgo/ginkgo"
 	_ "golang.org/x/lint/golint"

@@ -31,7 +31,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
 	tmhealth "github.com/gardener/test-infra/pkg/testmachinery/controller/health"
-	"github.com/gardener/test-infra/pkg/util/gardener"
 )
 
 // DependencyEnsurer reconciles all dependencies that are needed by the testmachinery
@@ -108,15 +107,6 @@ func (e *DependencyEnsurer) CheckHealth(ctx context.Context) error {
 		return err
 	}
 
-	if config.S3.Server.Minio != nil {
-		mr := &mrv1alpha1.ManagedResource{}
-		if err := e.client.Get(ctx, client.ObjectKey{Name: intconfig.ArgoManagedResourceName, Namespace: namespace}, mr); err != nil {
-			return err
-		}
-		if err := gardener.CheckManagedResourceHealthy(mr); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

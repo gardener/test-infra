@@ -13,7 +13,11 @@
 # limitations under the License.
 
 ---
+{{- if semverCompare ">= 1.16-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: apiextensions.k8s.io/v1
+{{- else }}
 apiVersion: apiextensions.k8s.io/v1beta1
+{{- end }}
 kind: CustomResourceDefinition
 metadata:
   labels:
@@ -21,6 +25,43 @@ metadata:
   name: testruns.testmachinery.sapcloud.io
 spec:
   group: testmachinery.sapcloud.io
+{{- if semverCompare ">= 1.16-0" .Capabilities.KubeVersion.GitVersion }}
+  names:
+    kind: Testrun
+    listKind: TestrunList
+    plural: testruns
+    shortNames:
+      - tr
+    singular: testrun
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns:
+        - description: The corresponding Argo Workflow.
+          jsonPath: .status.workflow
+          name: Workflow
+          type: string
+        - description: The phase indicates the current status of the overall testrun.
+          jsonPath: .status.phase
+          name: Phase
+          type: string
+        - description: The StarTime indicates the time the testrun was triggered.
+          jsonPath: .status.startTime
+          name: StartTime
+          type: date
+        - description: The Duration indicates the complete duration of the workflow.
+          jsonPath: .status.duration
+          name: Duration
+          type: number
+      name: v1beta1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
+{{- else }}
   versions:
   - name: v1beta1
     served: true
@@ -51,3 +92,4 @@ spec:
     type: number
     description: The Duration indicates the complete duration of the workflow.
     JSONPath: .status.duration
+{{- end }}
