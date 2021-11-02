@@ -52,8 +52,7 @@ var _ = BeforeSuite(func() {
 	operation, err = framework.New(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)), cfg)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(operation.WaitForClusterReadiness(ClusterReadinessTimeout)).ToNot(HaveOccurred())
-	_, err = operation.WaitForMinioServiceReadiness(MinioServiceReadinessTimeout)
-	Expect(err).ToNot(HaveOccurred())
+
 }, InitializationTimeout.Seconds())
 
 var _ = AfterSuite(func() {

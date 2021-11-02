@@ -15,6 +15,7 @@
 package app
 
 import (
+	"context"
 	goflag "flag"
 
 	"github.com/go-logr/logr"
@@ -26,7 +27,7 @@ import (
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/dependencies/configwatcher"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/configwatcher"
 )
 
 type options struct {
@@ -63,9 +64,10 @@ func (o *options) Complete() error {
 	return testmachinery.Setup(o.configwatcher.GetConfiguration())
 }
 
-func (o *options) ApplyWebhooks(mgr manager.Manager) {
+func (o *options) ApplyWebhooks(ctx context.Context, mgr manager.Manager) {
 	config := o.configwatcher.GetConfiguration()
 	if !config.TestMachinery.Local {
+		webhooks.StartHealthCheck(ctx, mgr.GetAPIReader(), config.Controller.DependencyHealthCheck.Namespace, config.Controller.DependencyHealthCheck.DeploymentName, config.Controller.DependencyHealthCheck.Interval)
 		o.log.Info("Setup webhooks")
 		hookServer := mgr.GetWebhookServer()
 		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidator(logger.Log.WithName("validator"))})

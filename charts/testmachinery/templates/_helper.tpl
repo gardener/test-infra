@@ -31,6 +31,10 @@ controller:
   webhook:
     port: {{ .Values.controller.webhook.port }}
     certDir: /etc/testmachinery-controller/srv
+  dependencyHealthCheck:
+    namespace: {{ .Release.Namespace }}
+    deploymentName: {{ .Values.argo.argo.name }}
+    interval: {{ .Values.controller.argoHealthCheckInterval }}
 
 testmachinery:
   namespace: {{ .Release.Namespace }}
@@ -45,16 +49,6 @@ testmachinery:
 {{ toYaml .Values.testmachinery.locations | indent 4 }}
   {{- end }}
 
-argo:
-  argoUI:
-    ingress:
-      enabled: {{ .Values.testmachinery.argo.argoUI.ingress.enabled }}
-      host: {{ .Values.testmachinery.argo.argoUI.ingress.host }}
-{{- if .Values.testmachinery.argo.chartValues }}
-  chartValues:
-{{ toYaml .Values.testmachinery.argo.chartValues | indent 4 }}
-{{- end }}
-
 github:
   cache:
     cacheDir: {{ .Values.testmachinery.github.cache.cacheDir }}
@@ -66,29 +60,15 @@ github:
 
 s3Configuration:
   server:
-    {{- if .Values.testmachinery.s3Configuration.server.minio }}
-    minio:
-{{ toYaml .Values.testmachinery.s3Configuration.server.minio | indent 6 }}
-    {{- end }}
-    endpoint: {{ .Values.testmachinery.s3Configuration.server.endpoint }}
-    ssl: {{ .Values.testmachinery.s3Configuration.server.ssl }}
-  bucketName: {{ .Values.testmachinery.s3Configuration.bucketName }}
-  accessKey: {{ .Values.testmachinery.s3Configuration.accessKey }}
-  secretKey: {{ .Values.testmachinery.s3Configuration.secretKey }}
+    endpoint: {{ required "Missing an entry for .Values.global.s3Configuration.server.endpoint!" .Values.global.s3Configuration.server.endpoint }}
+    ssl: {{ required "Missing an entry for .Values.global.s3Configuration.server.ssl!" .Values.global.s3Configuration.server.ssl }}
+  bucketName: {{ required "Missing an entry for .Values.global.s3Configuration.bucketName!" .Values.global.s3Configuration.bucketName }}
+  accessKey: {{ required "Missing an entry for Values.global.s3Configuration.accessKey!" .Values.global.s3Configuration.accessKey }}
+  secretKey: {{ required "Missing an entry for .Values.global.s3Configuration.secretKey!" .Values.global.s3Configuration.secretKey }}
 
 {{- if .Values.testmachinery.esConfiguration }}
 esConfiguration:
 {{ toYaml .Values.testmachinery.esConfiguration | indent 2 }}
-{{- end }}
-
-{{- if .Values.testmachinery.reservedExcessCapacity }}
-reservedExcessCapacity:
-{{ toYaml .Values.testmachinery.reservedExcessCapacity | indent 2 }}
-{{- end }}
-
-{{- if .Values.testmachinery.observability }}
-observability:
-{{ toYaml .Values.testmachinery.observability | indent 2 }}
 {{- end }}
 
 {{- if .Values.testmachinery.imagePullSecrets }}

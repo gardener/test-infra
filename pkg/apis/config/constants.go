@@ -25,9 +25,6 @@ const GitHubSecretKeyName = "config.yaml"
 // S3SecretName is the name of the secret containing the s3 credentials
 const S3SecretName = "s3-secret"
 
-// ResourceManagerDeploymentName is the name of the gardener resource manager deployment
-const ResourceManagerDeploymentName = "gardener-resource-manager"
-
 // Argo constants
 const (
 	// ArgoChartName is the name of the chart to bootstrap argo

@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+global:
+  s3Configuration: {}
+#    server:
+#      ssl: false
+#      endpoint: "tbd"
+#    bucketName: testmachinery
+#    accessKey: IbnGHa4V6ypsm
+#    secretKey: l9rJ0XR65Rkvc9g9fyOf
 
 controller:
   tag: latest
@@ -90,10 +98,5 @@ testmachinery:
 
   disableCollector: true
 
-  s3Configuration:
-    server:
-      ssl: false
-      endpoint: "tbd"
-    bucketName: testmachinery
-    accessKey: IbnGHa4V6ypsm
-    secretKey: l9rJ0XR65Rkvc9g9fyOf
+reserve-excess-capacity:
+  enabled: false

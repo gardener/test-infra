@@ -95,20 +95,6 @@ func (o *Operation) WaitForClusterReadiness(maxWaitTime time.Duration) error {
 	return utils.WaitForClusterReadiness(o.Log(), o.tmClient, o.testConfig.TmNamespace, maxWaitTime)
 }
 
-// WaitForMinioServiceReadiness waits until the minio service in the testcluster is ready
-func (o *Operation) WaitForMinioServiceReadiness(maxWaitTime time.Duration) (*config.S3, error) {
-	if o.IsLocal() {
-		return nil, nil
-	}
-
-	s3Config, err := o.S3Config()
-	if err != nil {
-		return nil, err
-	}
-
-	return s3Config, utils.WaitForMinioService(s3Config.Server.Endpoint, maxWaitTime)
-}
-
 func (o *Operation) RunTestrunUntilCompleted(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return utils.RunTestrunUntilCompleted(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout)
 }

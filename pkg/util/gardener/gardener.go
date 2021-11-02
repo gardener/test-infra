@@ -7,8 +7,6 @@ package gardener
 import (
 	"fmt"
 
-	mrv1alpha1 "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1"
-	mrhelper "github.com/gardener/gardener-resource-manager/api/resources/v1alpha1/helper"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
 	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
@@ -36,7 +34,6 @@ func init() {
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
 		gardenextensionsscheme.AddToScheme,
-		mrv1alpha1.AddToScheme,
 	)
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 
@@ -74,50 +71,4 @@ func ShootCreationCompleted(newShoot *gardencorev1beta1.Shoot) (bool, string) {
 	}
 
 	return true, ""
-}
-
-// CheckManagedResource checks if all conditions of a ManagedResource ('ResourcesApplied' and 'ResourcesHealthy')
-// are True and .status.observedGeneration matches the current .metadata.generation
-func CheckManagedResource(mr *mrv1alpha1.ManagedResource) error {
-	if err := CheckManagedResourceApplied(mr); err != nil {
-		return err
-	}
-	if err := CheckManagedResourceHealthy(mr); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// CheckManagedResourceApplied checks if the condition 'ResourcesApplied' of a ManagedResource
-// is True and the .status.observedGeneration matches the current .metadata.generation
-func CheckManagedResourceApplied(mr *mrv1alpha1.ManagedResource) error {
-	status := mr.Status
-	if status.ObservedGeneration != mr.GetGeneration() {
-		return fmt.Errorf("observed generation of managed resource %s/%s outdated (%d/%d)", mr.GetNamespace(), mr.GetName(), status.ObservedGeneration, mr.GetGeneration())
-	}
-
-	conditionApplied := mrhelper.GetCondition(status.Conditions, mrv1alpha1.ResourcesApplied)
-
-	if conditionApplied == nil {
-		return fmt.Errorf("condition %s for managed resource %s/%s has not been reported yet", mrv1alpha1.ResourcesApplied, mr.GetNamespace(), mr.GetName())
-	} else if conditionApplied.Status != mrv1alpha1.ConditionTrue {
-		return fmt.Errorf("condition %s of managed resource %s/%s is %s: %s", mrv1alpha1.ResourcesApplied, mr.GetNamespace(), mr.GetName(), conditionApplied.Status, conditionApplied.Message)
-	}
-
-	return nil
-}
-
-// CheckManagedResourceHealthy checks if the condition 'ResourcesHealthy' of a ManagedResource is True
-func CheckManagedResourceHealthy(mr *mrv1alpha1.ManagedResource) error {
-	status := mr.Status
-	conditionHealthy := mrhelper.GetCondition(status.Conditions, mrv1alpha1.ResourcesHealthy)
-
-	if conditionHealthy == nil {
-		return fmt.Errorf("condition %s for managed resource %s/%s has not been reported yet", mrv1alpha1.ResourcesHealthy, mr.GetNamespace(), mr.GetName())
-	} else if conditionHealthy.Status != mrv1alpha1.ConditionTrue {
-		return fmt.Errorf("condition %s of managed resource %s/%s is %s: %s", mrv1alpha1.ResourcesHealthy, mr.GetNamespace(), mr.GetName(), conditionHealthy.Status, conditionHealthy.Message)
-	}
-
-	return nil
 }

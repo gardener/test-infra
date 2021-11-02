@@ -24,6 +24,10 @@ var basicTestrun = &tmv1beta1.Testrun{
 	ObjectMeta: metav1.ObjectMeta{
 		GenerateName: "integration-test-tm",
 	},
+	TypeMeta: metav1.TypeMeta{
+		Kind:       "Testrun",
+		APIVersion: "testmachinery.sapcloud.io/v1beta1",
+	},
 	Spec: tmv1beta1.TestrunSpec{
 		Creator: "tm-integration",
 		LocationSets: []tmv1beta1.LocationSet{
