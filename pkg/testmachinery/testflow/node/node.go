@@ -17,6 +17,8 @@ package node
 import (
 	"fmt"
 
+	apiv1 "k8s.io/api/core/v1"
+
 	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -147,15 +149,15 @@ func (n *Node) SetStep(step *tmv1beta1.DAGStep) {
 }
 
 // Task returns the argo task definition for the node.
-func (n *Node) Task(phase testmachinery.Phase) []argov1.DAGTask {
+func (n *Node) Task(phase testmachinery.Phase, trustedTokenMounts, untrustedTokenMounts []ProjectedTokenMount) []argov1.DAGTask {
 	tasks := make([]argov1.DAGTask, 0)
 	var task argov1.DAGTask
 	if n.step.Pause != nil && n.step.Pause.Enabled {
 		suspendTask := argo.CreateSuspendTask(n.TestDefinition.GetName(), n.ParentNames())
-		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, []string{suspendTask.Name}, n.GetOrDetermineArtifacts())
+		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, []string{suspendTask.Name}, n.GetOrDetermineArtifacts(trustedTokenMounts, untrustedTokenMounts))
 		tasks = append(tasks, suspendTask)
 	} else {
-		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts())
+		task = argo.CreateTask(n.TestDefinition.GetName(), n.TestDefinition.GetName(), string(phase), n.step.Definition.ContinueOnError, n.ParentNames(), n.GetOrDetermineArtifacts(trustedTokenMounts, untrustedTokenMounts))
 	}
 
 	switch n.step.Definition.Condition {
@@ -202,20 +204,34 @@ func (n *Node) isRootNode() bool {
 	return n.inputSource == nil
 }
 
-func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
-	artifactsMap := make(map[string]argov1.Artifact)
-	if !n.isRootNode() {
+// ProjectedTokenMount transports information how a projected service account token should be mounted
+type ProjectedTokenMount struct {
+	Audience          string
+	ExpirationSeconds int64
+	Name              string
+	MountPath         string
+}
 
+func (n *Node) GetOrDetermineArtifacts(trustedTokenMounts, untrustedTokenMounts []ProjectedTokenMount) []argov1.Artifact {
+	artifactsMap := make(map[string]argov1.Artifact)
+
+	// RootNode == prepare step
+	if !n.isRootNode() {
 		if n.Step().Definition.Untrusted {
 			artifactsMap[testmachinery.ArtifactUntrustedKubeconfigs] = argov1.Artifact{
 				Name: testmachinery.ArtifactUntrustedKubeconfigs,
 				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactUntrustedKubeconfigs),
 			}
+			n.addProjectedToken(untrustedTokenMounts)
+
 		} else {
 			artifactsMap[testmachinery.ArtifactKubeconfigs] = argov1.Artifact{
 				Name: testmachinery.ArtifactKubeconfigs,
 				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactKubeconfigs),
 			}
+
+			n.addProjectedToken(trustedTokenMounts)
+
 			artifactsMap[testmachinery.ArtifactSharedFolder] = argov1.Artifact{
 				Name: testmachinery.ArtifactSharedFolder,
 				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactSharedFolder),
@@ -248,6 +264,59 @@ func (n *Node) GetOrDetermineArtifacts() []argov1.Artifact {
 		}
 	}
 	return artifactsMapToList(artifactsMap)
+}
+
+func (n *Node) addProjectedToken(projectedTokenMounts []ProjectedTokenMount) {
+
+	if len(projectedTokenMounts) == 0 {
+		return
+	}
+
+	for i, projectedTokenMount := range projectedTokenMounts {
+
+		volumeProjection := apiv1.VolumeProjection{
+			ServiceAccountToken: &apiv1.ServiceAccountTokenProjection{
+				Audience:          projectedTokenMount.Audience,
+				ExpirationSeconds: &projectedTokenMounts[i].ExpirationSeconds,
+				Path:              projectedTokenMount.Name,
+			},
+		}
+
+		volumeName := ""
+		if n.TestDefinition.Template != nil && n.TestDefinition.Template.Container != nil {
+			for _, vol := range n.TestDefinition.Template.Container.VolumeMounts {
+				if vol.MountPath == projectedTokenMount.MountPath {
+					volumeName = vol.Name
+				}
+			}
+		}
+
+		if volumeName != "" {
+			for _, vol := range n.TestDefinition.Template.Volumes {
+				if vol.Name == volumeName {
+					if vol.VolumeSource.Projected != nil && vol.VolumeSource.Projected.Sources != nil {
+						vol.VolumeSource.Projected.Sources = append(vol.VolumeSource.Projected.Sources, volumeProjection)
+					}
+				}
+			}
+
+		} else {
+
+			name := fmt.Sprintf("token-%d", i)
+
+			n.TestDefinition.AddVolumeMount(name, projectedTokenMount.MountPath, "", true)
+
+			n.TestDefinition.AddVolume(apiv1.Volume{
+				Name: name,
+				VolumeSource: apiv1.VolumeSource{
+					Projected: &apiv1.ProjectedVolumeSource{
+						Sources: []apiv1.VolumeProjection{volumeProjection},
+					},
+				},
+			})
+		}
+
+	}
 }
 
 func artifactsMapToList(m map[string]argov1.Artifact) []argov1.Artifact {

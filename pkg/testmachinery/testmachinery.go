@@ -129,6 +129,10 @@ func IsRunInsecure() bool {
 	return tmConfig.TestMachinery.Insecure
 }
 
+func GetLandscapeMappings() []config.LandscapeMapping {
+	return tmConfig.TestMachinery.LandscapeMappings
+}
+
 // GetRetryTimeout returns the retry
 func GetRetryTimeout() *time.Duration {
 	return tmConfig.TestMachinery.RetryTimeoutDuration

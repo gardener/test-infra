@@ -3,6 +3,8 @@ package testflow_test
 import (
 	"fmt"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
+
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
@@ -85,7 +87,9 @@ var _ = Describe("flow", func() {
 			flow, err := testflow.NewFlow("testid", rootNode, tf, locs, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			tmpl := flow.GetDAGTemplate(testmachinery.PhaseRunning)
+			trustedProjectedMounts := make([]node.ProjectedTokenMount, 0)
+			unttrustedProjectedMounts := make([]node.ProjectedTokenMount, 0)
+			tmpl := flow.GetDAGTemplate(testmachinery.PhaseRunning, trustedProjectedMounts, unttrustedProjectedMounts)
 
 			for _, task := range tmpl.Tasks {
 				if task.Name != "root" {

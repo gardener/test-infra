@@ -49,6 +49,11 @@ testmachinery:
 {{ toYaml .Values.testmachinery.locations | indent 4 }}
   {{- end }}
 
+  {{- if .Values.testmachinery.landscapeMappings }}
+  landscapeMappings:
+  {{- toYaml .Values.testmachinery.landscapeMappings | nindent 4 }}
+  {{- end }}
+
 github:
   cache:
     cacheDir: {{ .Values.testmachinery.github.cache.cacheDir }}

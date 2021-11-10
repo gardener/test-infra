@@ -541,3 +541,41 @@ Note that if a step is untrusted, only the shoot kubeconfig is mounted.<br>
           key: "kubeconfig"
       shoot: "abc"
   ```
+
+If [OpenID Connect Webhook Authenticator](https://github.com/gardener/oidc-webhook-authenticator) is used to establish trust with another cluster, a kubeconfig may specify the usage of a `tokenFile` instead of a static `token`. 
+To make the referenced token available, an additional volume/mount has to be created for each relevant template of the workflow. 
+The details for the volume, like `audience` or `expirationSecconds` are read from the `landscapeMappings` as defined in the central testmachinery configuration.
+
+A `landscapeMapping` could look like this:
+```yaml
+testmachinery:
+  landscapeMappings:
+    - allowUntrustedUsage: false
+      apiServerUrl: https://api.server.com
+      audience: dev
+      expirationSeconds: 7200
+      namespace: default
+```
+
+It would create a volume and mount for the specified `tokenFile`, if the kubeconfig's API Server URL matches the address specified by the `landscapeMapping` and the testrun is deployed to namespace `default`.
+
+```yaml
+volumes:
+- name: token-0
+  projected:
+    sources:
+      - serviceAccountToken:
+          audience: dev
+          expirationSeconds: 7200
+          path: dev-token
+
+...
+
+container:
+    volumeMounts:
+    - mountPath: /var/run/secrets/gardener/serviceaccount/
+      name: token-0
+      readOnly: true
+```
+
+Unless `allowUntrustedUsage` is set to `true` shoot kubeconfigs are not entitled to make use of a `tokenFile`.

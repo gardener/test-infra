@@ -9,6 +9,11 @@ controller:
   webhook:
     port: 443
     certDir: ""
+  dependencyHealthCheck:
+    namespace: ""
+    deploymentName: workflow-controller
+    interval: 1m
+
 
 testmachinery:
   namespace: default
@@ -19,6 +24,13 @@ testmachinery:
   insecure: false
   disableCollector: false
   cleanWorkflowPods: false
+#  landscapeMappings: # specify, if a service account is configured for trust via OpenID Connect Webhook Authenticator
+#    - allowUntrustedUsage: false
+#      apiServerUrl: https://api.server.com
+#      audience: dev
+#      expirationSeconds: 7200
+#      namespace: default
+
 
 argo:
   argoUI:
@@ -52,19 +64,3 @@ esConfiguration:
   endpoint: https:...:9200
   username: user
   password: my-password
-
-reservedExcessCapacity:
-  replicas: 5
-  resources:
-    requests:
-      cpu: "1000m"
-      memory: "1000Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1000Mi"
-
-observability:
-  logging:
-    namespace: default
-    storageClass: default
-    chartValues: {}
