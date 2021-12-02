@@ -36,7 +36,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/pkg/errors"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

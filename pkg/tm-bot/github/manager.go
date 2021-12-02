@@ -21,7 +21,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
+	"github.com/google/go-github/v39/github"
 	"sigs.k8s.io/yaml"
 
 	"github.com/gardener/test-infra/pkg/apis/config"

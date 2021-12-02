@@ -78,7 +78,7 @@ func (c *client) isInRequestedTeam(ctx context.Context, event *GenericRequestEve
 
 	// use default team if there is no requested team
 	if c.defaultTeam != nil && len(pr.RequestedTeams) == 0 {
-		membership, _, err := c.client.Teams.GetTeamMembership(ctx, c.defaultTeam.GetID(), event.GetAuthorName())
+		membership, _, err := c.client.Teams.GetTeamMembershipByID(ctx, c.defaultTeam.Organization.GetID(), c.defaultTeam.GetID(), event.GetAuthorName())
 		if err != nil {
 			c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
 			return false
@@ -90,7 +90,7 @@ func (c *client) isInRequestedTeam(ctx context.Context, event *GenericRequestEve
 	}
 
 	for _, team := range pr.RequestedTeams {
-		membership, _, err := c.client.Teams.GetTeamMembership(ctx, team.GetID(), event.GetAuthorName())
+		membership, _, err := c.client.Teams.GetTeamMembershipByID(ctx, team.Organization.GetID(), team.GetID(), event.GetAuthorName())
 		if err != nil {
 			c.log.V(3).Info(err.Error(), "team", team.GetName())
 			return false
@@ -108,7 +108,7 @@ func (c *client) isInDefaultTeam(ctx context.Context, event *GenericRequestEvent
 		c.log.Info("no default team defined", "repository", event.GetRepositoryName(), "owner", event.GetOwnerName())
 		return false
 	}
-	membership, _, err := c.client.Teams.GetTeamMembership(ctx, c.defaultTeam.GetID(), event.GetAuthorName())
+	membership, _, err := c.client.Teams.GetTeamMembershipByID(ctx, c.defaultTeam.Organization.GetID(), c.defaultTeam.GetID(), event.GetAuthorName())
 	if err != nil {
 		c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
 		return false
