@@ -63,7 +63,7 @@ testmachinery:
   locations:
     excludeDomains: [ ]
 
-#  landscapeMappings:
+  landscapeMappings: []
 #    - namespace: default
 #      apiServerUrl: https://api.server.com
 #      audience: dev
