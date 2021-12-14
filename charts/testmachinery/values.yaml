@@ -63,12 +63,20 @@ testmachinery:
   locations:
     excludeDomains: [ ]
 
+  landscapeMappings: []
+#    - namespace: default
+#      apiServerUrl: https://api.server.com
+#      audience: dev
+#      expirationSeconds: 7200
+#      allowUntrustedUsage: false
+
   github:
     cache:
       cacheDir: /tmp/tm/cache
       cacheDiskSizeGB: 5
       maxAgeSeconds: 60
     credentials: "" # base64 encoded secrets
+
 
   imagePullSecrets: [ ]
   # - name: myDockerPullSecretName

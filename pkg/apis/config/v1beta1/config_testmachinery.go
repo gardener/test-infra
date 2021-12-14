@@ -51,6 +51,9 @@ type TestMachinery struct {
 
 	// CleanWorkflowPods indicates if workflow pods should be directly cleaned up by the testmachinery.
 	CleanWorkflowPods bool `json:"cleanWorkflowPods,omitempty"`
+
+	//LandscapeMappings defines how to connect to landscapes using the respective OpenIDConnect IDP
+	LandscapeMappings []LandscapeMapping `json:"landscapeMappings,omitempty"`
 }
 
 // Locations defines test location configurations.
@@ -73,4 +76,22 @@ type GitHubCache struct {
 	CacheDir        string `json:"cacheDir,omitempty"`
 	CacheDiskSizeGB int    `json:"cacheDiskSizeGB,omitempty"`
 	MaxAgeSeconds   int    `json:"maxAgeSeconds,omitempty"`
+}
+
+//LandscapeMapping defines how to connect to a landscape using an OpenIDConnect IDP
+type LandscapeMapping struct {
+	// Namespace indicates the namespace where TestRuns for a specific landscape should run
+	Namespace string `json:"namespace,omitempty"`
+
+	// ApiServerUrl discloses the allowed target APi server
+	ApiServerUrl string `json:"apiServerUrl,omitempty"`
+
+	// Audience is the audience/client ID, which has to be used for requests to this landscape
+	Audience string `json:"audience"`
+
+	//ExpirationSeconds specifies the lifetime of issued tokens
+	ExpirationSeconds int64 `json:"expirationSeconds"`
+
+	//AllowUntrustedUsage defines, if a token is allowed to be used in untrusted steps
+	AllowUntrustedUsage bool `json:"allowUntrustedUsage"`
 }

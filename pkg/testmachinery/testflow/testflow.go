@@ -58,11 +58,11 @@ func New(flowID FlowIdentifier, tf tmv1beta1.TestFlow, locs locations.Locations,
 }
 
 // GetTemplates returns all TestDefinitions templates and the DAG of the testrun
-func (tf *Testflow) GetTemplates(name string, phase testmachinery.Phase) ([]argov1.Template, error) {
+func (tf *Testflow) GetTemplates(name string, phase testmachinery.Phase, trustedTokenMounts, untrustedTokenMounts []node.ProjectedTokenMount) ([]argov1.Template, error) {
 	templates := []argov1.Template{
 		{
 			Name: name,
-			DAG:  tf.Flow.GetDAGTemplate(phase),
+			DAG:  tf.Flow.GetDAGTemplate(phase, trustedTokenMounts, untrustedTokenMounts),
 		},
 	}
 

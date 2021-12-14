@@ -15,8 +15,13 @@
 package testrun
 
 import (
+	"context"
+
 	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -29,7 +34,13 @@ import (
 
 // New takes a testrun crd and creates a new Testrun representation.
 // It fetches testruns from specified testdeflocations and generates a testflow object.
-func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
+func New(ctx context.Context, log logr.Logger, tr *tmv1beta1.Testrun, reader client.Reader) (*Testrun, error) {
+
+	kubeconfigs, secrets, projectedTokenMounts, err := ParseKubeconfigs(ctx, reader, tr)
+	if err != nil {
+		return nil, err
+	}
+
 	locs, err := locations.NewLocations(log, tr.Spec)
 	if err != nil {
 		return nil, err
@@ -37,11 +48,6 @@ func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
 
 	globalConfig := config.New(tr.Spec.Config, config.LevelGlobal)
 	globalConfig = append(globalConfig, config.NewElement(createTestrunIDConfig(tr.Name), config.LevelGlobal))
-
-	kubeconfigs, secrets, err := ParseKubeconfigs(tr)
-	if err != nil {
-		return nil, err
-	}
 
 	// create initial prepare step
 	prepareDef, err := prepare.New("Prepare", false, true)
@@ -69,6 +75,7 @@ func New(log logr.Logger, tr *tmv1beta1.Testrun) (*Testrun, error) {
 		Testflow:        tf,
 		OnExitTestflow:  onExitFlow,
 		HelperResources: secrets,
+		ProjectedTokens: projectedTokenMounts,
 	}, nil
 }
 
@@ -77,11 +84,24 @@ func (tr *Testrun) GetWorkflow(name, namespace string, pullImageSecretNames []st
 	testrunName := "testrun"
 	onExitName := "exit-handler"
 
-	templates, err := tr.Testflow.GetTemplates(testrunName, testmachinery.PhaseRunning)
+	trustedTokenMounts := make([]node.ProjectedTokenMount, 0)
+	untrustedTokenMounts := make([]node.ProjectedTokenMount, 0)
+
+	for name, tokenMount := range tr.ProjectedTokens {
+		switch name {
+		case shootKubeconfig:
+			untrustedTokenMounts = append(untrustedTokenMounts, *tokenMount)
+			trustedTokenMounts = append(trustedTokenMounts, *tokenMount)
+		default:
+			trustedTokenMounts = append(trustedTokenMounts, *tokenMount)
+		}
+	}
+
+	templates, err := tr.Testflow.GetTemplates(testrunName, testmachinery.PhaseRunning, trustedTokenMounts, untrustedTokenMounts)
 	if err != nil {
 		return nil, err
 	}
-	onExitTemplates, err := tr.OnExitTestflow.GetTemplates(onExitName, testmachinery.PhaseExit)
+	onExitTemplates, err := tr.OnExitTestflow.GetTemplates(onExitName, testmachinery.PhaseExit, trustedTokenMounts, untrustedTokenMounts)
 	if err != nil {
 		return nil, err
 	}

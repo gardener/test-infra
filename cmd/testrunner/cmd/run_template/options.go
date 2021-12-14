@@ -46,14 +46,15 @@ type options struct {
 
 	shootFlavors []*shootflavors.ExtendedFlavorInstance
 
-	fs                  *pflag.FlagSet
-	dryRun              bool
-	testrunNamePrefix   string
-	shootPrefix         string
-	tmKubeconfigPath    string
-	filterPatchVersions bool
-	failOnError         bool
-	timeout             int64
+	fs                       *pflag.FlagSet
+	dryRun                   bool
+	testrunNamePrefix        string
+	shootPrefix              string
+	tmKubeconfigPath         string
+	testrunnerKubeconfigPath string
+	filterPatchVersions      bool
+	failOnError              bool
+	timeout                  int64
 }
 
 // NewOptions creates a new options struct.
@@ -81,7 +82,7 @@ func (o *options) Complete() error {
 	o.collectConfig.OCIOpts = o.ociOpts
 
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
-		gardenK8sClient, err := kutil.NewClientFromFile(o.shootParameters.GardenKubeconfigPath, client.Options{
+		gardenK8sClient, err := kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
 			Scheme: gardener.GardenScheme,
 		})
 		if err != nil {
@@ -125,6 +126,9 @@ func (o *options) Validate() error {
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
 		if len(o.shootParameters.GardenKubeconfigPath) == 0 {
 			return errors.New("gardener-kubeconfig-path is required")
+		}
+		if len(o.testrunnerKubeconfigPath) == 0 {
+			o.testrunnerKubeconfigPath = o.shootParameters.GardenKubeconfigPath
 		}
 		if len(o.shootPrefix) == 0 {
 			return errors.New("shoot-name is required")
@@ -170,7 +174,8 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	// parameter flags
 	fs.StringVar(&o.shootParameters.DefaultTestrunChartPath, "testruns-chart-path", "", "Path to the default testruns chart.")
 	fs.StringVar(&o.shootParameters.FlavoredTestrunChartPath, "flavored-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
-	fs.StringVar(&o.shootParameters.GardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig.")
+	fs.StringVar(&o.shootParameters.GardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig used by the testrun.")
+	fs.StringVar(&o.testrunnerKubeconfigPath, "testrunner-kubeconfig-path", "", "Path to the gardener kubeconfig used by testrunner.")
 
 	fs.StringVar(&o.shootParameters.FlavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
 

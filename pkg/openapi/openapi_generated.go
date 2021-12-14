@@ -43,6 +43,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubBot":                       schema_pkg_apis_config_v1beta1_GitHubBot(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubCache":                     schema_pkg_apis_config_v1beta1_GitHubCache(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.HealthCheckTarget":               schema_pkg_apis_config_v1beta1_HealthCheckTarget(ref),
+		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.LandscapeMapping":                schema_pkg_apis_config_v1beta1_LandscapeMapping(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations":                       schema_pkg_apis_config_v1beta1_Locations(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth":                           schema_pkg_apis_config_v1beta1_OAuth(ref),
 		"github.com/gardener/test-infra/pkg/apis/config/v1beta1.S3":                              schema_pkg_apis_config_v1beta1_S3(ref),
@@ -582,7 +583,7 @@ func schema_pkg_apis_config_v1beta1_HealthCheckTarget(ref common.ReferenceCallba
 					},
 					"interval": {
 						SchemaProps: spec.SchemaProps{
-							Description: "IntervalSeconds specifies the frequency of the health check in seconds",
+							Description: "Interval specifies the frequency of the health check",
 							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
 						},
@@ -592,6 +593,58 @@ func schema_pkg_apis_config_v1beta1_HealthCheckTarget(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Duration"},
+	}
+}
+
+func schema_pkg_apis_config_v1beta1_LandscapeMapping(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LandscapeMapping defines how to connect to a landscape using an OpenIDConnect IDP",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace indicates the namespace where TestRuns for a specific landscape should run",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiServerUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ApiServerUrl discloses the allowed target APi server",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"audience": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Audience is the audience/client ID, which has to be used for requests to this landscape",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"expirationSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExpirationSeconds specifies the lifetime of issued tokens",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"allowUntrustedUsage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AllowUntrustedUsage defines, if a token is allowed to be used in untrusted steps",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"audience", "expirationSeconds", "allowUntrustedUsage"},
+			},
+		},
 	}
 }
 
@@ -830,12 +883,26 @@ func schema_pkg_apis_config_v1beta1_TestMachinery(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"landscapeMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LandscapeMappings defines how to connect to landscapes using the respective OpenIDConnect IDP",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.LandscapeMapping"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"testdefPath", "prepareImage", "baseImage", "disableCollector"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations"},
+			"github.com/gardener/test-infra/pkg/apis/config/v1beta1.LandscapeMapping", "github.com/gardener/test-infra/pkg/apis/config/v1beta1.Locations"},
 	}
 }
 

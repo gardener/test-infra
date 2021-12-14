@@ -42,4 +42,6 @@ type Node struct {
 	// metadata
 	step *tmv1beta1.DAGStep
 	flow string
+
+	// TODO ??expand struct with mountPath, audience, etc
 }

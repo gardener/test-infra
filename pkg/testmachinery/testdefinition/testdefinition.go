@@ -261,6 +261,11 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 	})
 }
 
+// AddVolume adds a volume to a TestDefinitions's template.
+func (td *TestDefinition) AddVolume(volume apiv1.Volume) {
+	td.Template.Volumes = append(td.Template.Volumes, volume)
+}
+
 // AddStdOutput adds the Kubeconfig output to the TestDefinitions's template.
 func (td *TestDefinition) AddStdOutput(global bool) {
 	td.AddOutputArtifacts(GetStdOutputArtifacts(global)...)

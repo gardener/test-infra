@@ -125,11 +125,11 @@ func (f *Flow) Iterate() <-chan *node.Node {
 	return c
 }
 
-func (f *Flow) GetDAGTemplate(phase testmachinery.Phase) *argov1.DAGTemplate {
+func (f *Flow) GetDAGTemplate(phase testmachinery.Phase, trustedTokenMounts, untrustedTokenMounts []node.ProjectedTokenMount) *argov1.DAGTemplate {
 	dag := &argov1.DAGTemplate{}
 
 	for n := range f.Iterate() {
-		dag.Tasks = append(dag.Tasks, n.Task(phase)...)
+		dag.Tasks = append(dag.Tasks, n.Task(phase, trustedTokenMounts, untrustedTokenMounts)...)
 	}
 
 	return dag

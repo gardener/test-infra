@@ -180,7 +180,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 }
 
 func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunDef *tmv1beta1.Testrun) (*argov1.Workflow, []client.Object, error) {
-	tr, err := testrun.New(r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef)
+	tr, err := testrun.New(ctx, r.Logger.WithValues("testrun", types.NamespacedName{Name: testrunDef.Name, Namespace: testrunDef.Namespace}), testrunDef, r.Client)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing testrun: %s", err.Error())
 	}
