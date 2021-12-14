@@ -19,7 +19,7 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/pkg/errors"
 
 	ghutils "github.com/gardener/test-infra/pkg/tm-bot/github"

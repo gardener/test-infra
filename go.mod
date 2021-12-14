@@ -8,12 +8,9 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/Microsoft/go-winio v0.4.16 // indirect
-	github.com/Microsoft/hcsshim v0.8.14 // indirect
 	github.com/argoproj/argo/v2 v2.12.10
-	github.com/bradleyfalzon/ghinstallation v1.1.1
+	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/containerd/containerd v1.4.3 // indirect
-	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
 	github.com/docker/cli v20.10.3+incompatible // indirect
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
@@ -25,8 +22,10 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.3.0
 	github.com/go-openapi/spec v0.19.8
+	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/mock v1.5.0
 	github.com/google/go-github/v27 v27.0.4
+	github.com/google/go-github/v39 v39.2.0 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/sessions v1.1.3
@@ -40,7 +39,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
@@ -48,9 +46,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.8.1
 	go.uber.org/zap v1.17.0
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
@@ -71,7 +69,7 @@ require (
 replace (
 	// helm dependencies
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
+	github.com/docker/docker => github.com/moby/moby v20.10.11+incompatible
 	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
@@ -80,5 +78,5 @@ replace (
 	k8s.io/apimachinery => k8s.io/apimachinery v0.19.9
 	k8s.io/client-go => k8s.io/client-go v0.19.9
 	k8s.io/code-generator => k8s.io/code-generator v0.19.9
-	k8s.io/helm => k8s.io/helm v2.13.1+incompatible
+	k8s.io/helm => k8s.io/helm v2.17.0+incompatible
 )

@@ -15,7 +15,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v27/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -313,7 +313,7 @@ func downloadReleaseAssetByName(log logr.Logger, component ComponentExtended, fi
 	if err != nil {
 		return errors.Wrapf(err, "failed to get github asset ID of %s in %s", filename, component.Name)
 	}
-	assetReader, redirectURL, err := component.GithubClient.Repositories.DownloadReleaseAsset(context.Background(), component.Owner, component.Name, remoteAssetID)
+	assetReader, redirectURL, err := component.GithubClient.Repositories.DownloadReleaseAsset(context.Background(), component.Owner, component.Name, remoteAssetID, nil)
 	if assetReader != nil {
 		defer assetReader.Close()
 	}
