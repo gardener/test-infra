@@ -33,4 +33,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/logging --kubeconfig=$TM_KUBECONFIG_PATH/host.config --output=$TM_EXPORT_PATH
-  image: golang:1.13
+  image: golang:1.15
