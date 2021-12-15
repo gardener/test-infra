@@ -72,7 +72,7 @@ Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluste
 
 ```bash
 #first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config golang:1.13 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config golang:1.15 bash
 # run all commands below within container
 go get github.com/gardener/test-infra; cd /go/src/github.com/gardener/test-infra
 export GO111MODULE=on; export E2E_EXPORT_PATH=/tmp/export; export KUBECONFIG=/mye2e/shoot.config; export GINKGO_PARALLEL=false
