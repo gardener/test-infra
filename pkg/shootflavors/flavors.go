@@ -53,6 +53,20 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 		}
 	}
 
+	if len(flavor.AdditionalLocations) != 0 {
+		for i, location := range flavor.AdditionalLocations {
+			if location.Type == "" {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s.additionalLocations[%d].type: value has to be defined", identifier, i))
+			}
+			if location.Repo == "" {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s.additionalLocations[%d].repo: value has to be defined", identifier, i))
+			}
+			if location.Revision == "" {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s.additionalLocations[%d].revision: value has to be defined", identifier, i))
+			}
+		}
+	}
+
 	return util.ReturnMultiError(allErrs)
 }
 

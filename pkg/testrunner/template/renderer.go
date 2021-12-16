@@ -209,7 +209,7 @@ func parseTestrunsFromChart(log logr.Logger, files map[string]string) []*v1beta1
 	for filename, file := range files {
 		tr, err := testmachinery.ParseTestrun([]byte(file))
 		if err != nil {
-			log.Info(fmt.Sprintf("cannot parse rendered file: %s", err.Error()))
+			log.Info(fmt.Sprintf("cannot parse rendered file %s: %s", filename, err.Error()))
 			continue
 		}
 		metav1.SetMetaDataAnnotation(&tr.ObjectMeta, common.AnnotationTemplateIDTestrun, filename)
