@@ -129,6 +129,78 @@ var _ = Describe("flavor test", func() {
 		))
 	})
 
+	It("should fail with an incomplete additional location missing 'repo'", func() {
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider:            common.CloudProviderGCP,
+				AdditionalLocations: []common.AdditionalLocation{{Type: "git", Revision: "1.2.3"}},
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+			},
+		}
+		_, err := New(rawFlavors)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with an incomplete additional location missing 'revision'", func() {
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider:            common.CloudProviderGCP,
+				AdditionalLocations: []common.AdditionalLocation{{Type: "git", Repo: "github.com/org/name"}},
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+			},
+		}
+		_, err := New(rawFlavors)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with an incomplete additional location missing 'type'", func() {
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider:            common.CloudProviderGCP,
+				AdditionalLocations: []common.AdditionalLocation{{Repo: "github.com/org/name", Revision: "1.2.3"}},
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+			},
+		}
+		_, err := New(rawFlavors)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with an incomplete additional location missing multiple fields", func() {
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider:            common.CloudProviderGCP,
+				AdditionalLocations: []common.AdditionalLocation{{}},
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+			},
+		}
+		_, err := New(rawFlavors)
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("should return one shoot with disabled allowPrivilegeContainers", func() {
 		rawFlavors := []*common.ShootFlavor{
 			{
