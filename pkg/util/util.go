@@ -38,7 +38,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v39/github"
 	"github.com/pkg/errors"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	restclient "k8s.io/client-go/rest"
 	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
@@ -486,7 +486,7 @@ func GetClusterDomainURL(tmClient client.Client) (string, error) {
 	if tmClient == nil {
 		return "", nil
 	}
-	ingress := &netv1beta1.Ingress{}
+	ingress := &netv1.Ingress{}
 	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
 	if err != nil {
 		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
