@@ -167,7 +167,7 @@ func cleanResourceFn(ctx context.Context, logger logr.Logger, c client.Client, l
 			}
 
 			for _, obj := range foundObjects {
-				if err := c.Delete(ctx, obj.(client.Object)); err != nil {
+				if err := c.Delete(ctx, obj); err != nil {
 					if apierrors.IsNotFound(err) {
 						continue
 					}

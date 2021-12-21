@@ -79,7 +79,7 @@ all: generate format verify install
 
 .PHONY: install-requirements
 install-requirements:
-	@curl -sfL "https://install.goreleaser.com/github.com/golangci/golangci-lint.sh" | sh -s -- -b $(go env GOPATH)/bin v1.32.2
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
 	@GO111MODULE=off go get golang.org/x/tools/cmd/goimports
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
 
