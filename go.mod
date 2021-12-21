@@ -24,8 +24,7 @@ require (
 	github.com/go-openapi/spec v0.19.8
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/mock v1.5.0
-	github.com/google/go-github/v27 v27.0.4
-	github.com/google/go-github/v39 v39.2.0 // indirect
+	github.com/google/go-github/v39 v39.2.0
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/sessions v1.1.3
