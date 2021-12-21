@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"time"
 
+	netv1 "k8s.io/api/networking/v1"
+
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/retry"
@@ -36,7 +38,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -166,7 +167,7 @@ func cleanResourceFn(ctx context.Context, logger logr.Logger, c client.Client, l
 			}
 
 			for _, obj := range foundObjects {
-				if err := c.Delete(ctx, obj.(client.Object)); err != nil {
+				if err := c.Delete(ctx, obj); err != nil {
 					if apierrors.IsNotFound(err) {
 						continue
 					}
@@ -218,7 +219,7 @@ func CleanKubernetesResources(ctx context.Context, l logr.Logger, c client.Clien
 		cleanResourceFn(ctx, l, c, &corev1.ReplicationControllerList{}, "ReplicationController", false, ReplicationControllerCleanOption, labelOption),
 		cleanResourceFn(ctx, l, c, &appsv1.StatefulSetList{}, "StatefulSet", false, StatefulSetCleanOption, labelOption),
 		cleanResourceFn(ctx, l, c, &corev1.PersistentVolumeClaimList{}, "PVC", false, PersistentVolumeClaimCleanOption, labelOption),
-		cleanResourceFn(ctx, l, c, &extensionsv1beta1.IngressList{}, "Ingress", false, IngressCleanOption, labelOption),
+		cleanResourceFn(ctx, l, c, &netv1.IngressList{}, "Ingress", false, IngressCleanOption, labelOption),
 		cleanResourceFn(ctx, l, c, &corev1.ServiceList{}, "Service", false, ServiceCleanOption, labelOption),
 		cleanResourceFn(ctx, l, c, &corev1.NamespaceList{}, "Namespace", false, NamespaceCleanOption...),
 	)(ctx)
