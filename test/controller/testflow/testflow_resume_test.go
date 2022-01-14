@@ -65,7 +65,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "A",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",

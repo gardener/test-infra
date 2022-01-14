@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardencorescheme "github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme"
-	gardenextensionsscheme "github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	corescheme "k8s.io/client-go/kubernetes/scheme"
@@ -33,7 +33,7 @@ func init() {
 
 	seedSchemeBuilder := runtime.NewSchemeBuilder(
 		corescheme.AddToScheme,
-		gardenextensionsscheme.AddToScheme,
+		extensionsv1alpha1.AddToScheme,
 	)
 	utilruntime.Must(seedSchemeBuilder.AddToScheme(SeedScheme))
 

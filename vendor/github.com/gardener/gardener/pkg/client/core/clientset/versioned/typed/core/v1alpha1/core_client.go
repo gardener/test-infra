@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,14 +29,17 @@ type CoreV1alpha1Interface interface {
 	BackupBucketsGetter
 	BackupEntriesGetter
 	CloudProfilesGetter
+	ControllerDeploymentsGetter
 	ControllerInstallationsGetter
 	ControllerRegistrationsGetter
+	ExposureClassesGetter
 	PlantsGetter
 	ProjectsGetter
 	QuotasGetter
 	SecretBindingsGetter
 	SeedsGetter
 	ShootsGetter
+	ShootExtensionStatusesGetter
 	ShootStatesGetter
 }
 
@@ -57,12 +60,20 @@ func (c *CoreV1alpha1Client) CloudProfiles() CloudProfileInterface {
 	return newCloudProfiles(c)
 }
 
+func (c *CoreV1alpha1Client) ControllerDeployments() ControllerDeploymentInterface {
+	return newControllerDeployments(c)
+}
+
 func (c *CoreV1alpha1Client) ControllerInstallations() ControllerInstallationInterface {
 	return newControllerInstallations(c)
 }
 
 func (c *CoreV1alpha1Client) ControllerRegistrations() ControllerRegistrationInterface {
 	return newControllerRegistrations(c)
+}
+
+func (c *CoreV1alpha1Client) ExposureClasses() ExposureClassInterface {
+	return newExposureClasses(c)
 }
 
 func (c *CoreV1alpha1Client) Plants(namespace string) PlantInterface {
@@ -87,6 +98,10 @@ func (c *CoreV1alpha1Client) Seeds() SeedInterface {
 
 func (c *CoreV1alpha1Client) Shoots(namespace string) ShootInterface {
 	return newShoots(c, namespace)
+}
+
+func (c *CoreV1alpha1Client) ShootExtensionStatuses(namespace string) ShootExtensionStatusInterface {
+	return newShootExtensionStatuses(c, namespace)
 }
 
 func (c *CoreV1alpha1Client) ShootStates(namespace string) ShootStateInterface {

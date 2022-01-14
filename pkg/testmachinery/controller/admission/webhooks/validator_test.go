@@ -54,7 +54,7 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "unit.testdef",

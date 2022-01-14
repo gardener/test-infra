@@ -50,7 +50,7 @@ var _ = Describe("Testflow execution tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromString(base64.StdEncoding.EncodeToString(file))
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-testdef",
@@ -109,7 +109,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			})
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-testdef",
@@ -143,7 +143,7 @@ var _ = Describe("Testflow execution tests", func() {
 			tr.Spec.Kubeconfigs.Gardener = strconf.FromString(base64.StdEncoding.EncodeToString(file))
 			tr.Spec.Kubeconfigs.Shoot = strconf.FromString(base64.StdEncoding.EncodeToString(file))
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "trusted-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-testdef",
@@ -156,7 +156,7 @@ var _ = Describe("Testflow execution tests", func() {
 						},
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name: "untrusted-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name:      "check-file-not-exist-testdef",

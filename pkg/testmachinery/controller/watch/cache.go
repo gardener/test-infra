@@ -57,6 +57,7 @@ func newCachedInformer(log logr.Logger, config *rest.Config, options *Options) (
 			Scheme: options.Scheme,
 			Mapper: mapper,
 		})
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to create chached client: %w", err)
 	}

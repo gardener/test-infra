@@ -91,7 +91,7 @@ func GetExitTestFlow(hostprovider hostscheduler.Provider, gsLocationSet string, 
 	releaseHostCluster.UseGlobalArtifacts = true
 	releaseHostCluster.Definition.Condition = v1beta1.ConditionTypeError
 	return v1beta1.TestFlow{
-		{
+		&v1beta1.DAGStep{
 			Name: "fetch-logs",
 			Definition: v1beta1.StepDefinition{
 				Name:            "log-gardener",
@@ -101,7 +101,7 @@ func GetExitTestFlow(hostprovider hostscheduler.Provider, gsLocationSet string, 
 			},
 			UseGlobalArtifacts: true,
 		},
-		{
+		&v1beta1.DAGStep{
 			Name: "clean-gardener",
 			Definition: v1beta1.StepDefinition{
 				Name:            "clean-gardener",

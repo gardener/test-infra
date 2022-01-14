@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,10 +30,14 @@ type Interface interface {
 	BackupEntries() BackupEntryInformer
 	// CloudProfiles returns a CloudProfileInformer.
 	CloudProfiles() CloudProfileInformer
+	// ControllerDeployments returns a ControllerDeploymentInformer.
+	ControllerDeployments() ControllerDeploymentInformer
 	// ControllerInstallations returns a ControllerInstallationInformer.
 	ControllerInstallations() ControllerInstallationInformer
 	// ControllerRegistrations returns a ControllerRegistrationInformer.
 	ControllerRegistrations() ControllerRegistrationInformer
+	// ExposureClasses returns a ExposureClassInformer.
+	ExposureClasses() ExposureClassInformer
 	// Plants returns a PlantInformer.
 	Plants() PlantInformer
 	// Projects returns a ProjectInformer.
@@ -46,6 +50,8 @@ type Interface interface {
 	Seeds() SeedInformer
 	// Shoots returns a ShootInformer.
 	Shoots() ShootInformer
+	// ShootExtensionStatuses returns a ShootExtensionStatusInformer.
+	ShootExtensionStatuses() ShootExtensionStatusInformer
 	// ShootStates returns a ShootStateInformer.
 	ShootStates() ShootStateInformer
 }
@@ -76,6 +82,11 @@ func (v *version) CloudProfiles() CloudProfileInformer {
 	return &cloudProfileInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
+// ControllerDeployments returns a ControllerDeploymentInformer.
+func (v *version) ControllerDeployments() ControllerDeploymentInformer {
+	return &controllerDeploymentInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
 // ControllerInstallations returns a ControllerInstallationInformer.
 func (v *version) ControllerInstallations() ControllerInstallationInformer {
 	return &controllerInstallationInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
@@ -84,6 +95,11 @@ func (v *version) ControllerInstallations() ControllerInstallationInformer {
 // ControllerRegistrations returns a ControllerRegistrationInformer.
 func (v *version) ControllerRegistrations() ControllerRegistrationInformer {
 	return &controllerRegistrationInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ExposureClasses returns a ExposureClassInformer.
+func (v *version) ExposureClasses() ExposureClassInformer {
+	return &exposureClassInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Plants returns a PlantInformer.
@@ -114,6 +130,11 @@ func (v *version) Seeds() SeedInformer {
 // Shoots returns a ShootInformer.
 func (v *version) Shoots() ShootInformer {
 	return &shootInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ShootExtensionStatuses returns a ShootExtensionStatusInformer.
+func (v *version) ShootExtensionStatuses() ShootExtensionStatusInformer {
+	return &shootExtensionStatusInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ShootStates returns a ShootStateInformer.

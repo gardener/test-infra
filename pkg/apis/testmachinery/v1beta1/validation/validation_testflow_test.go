@@ -28,13 +28,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when step names are not unique", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
@@ -50,13 +50,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when dependent steps do not exist", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"bla"},
 				Definition: tmv1beta1.StepDefinition{
@@ -73,13 +73,13 @@ var _ = Describe("testflow", func() {
 
 	It("should not fail when direct dependent steps does exist", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test"},
 				Definition: tmv1beta1.StepDefinition{
@@ -93,27 +93,27 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when dependencies have a cycle", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test1",
 				DependsOn: []string{"int-test3", "int-test"},
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test1"},
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test3",
 				DependsOn: []string{"int-test1"},
 				Definition: tmv1beta1.StepDefinition{
@@ -130,13 +130,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when artifactsFrom and useGlobalArtifacts are used at the same time", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test"},
 				Definition: tmv1beta1.StepDefinition{
@@ -155,13 +155,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when step with artifactsFrom name does not exist", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test"},
 				Definition: tmv1beta1.StepDefinition{
@@ -179,13 +179,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail when step with artifactsFrom name does not exist", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test"},
 				Definition: tmv1beta1.StepDefinition{
@@ -203,13 +203,13 @@ var _ = Describe("testflow", func() {
 
 	It("should fail artifactsFrom step name represents a preceding step", func() {
 		tf := tmv1beta1.TestFlow{
-			{
+			&tmv1beta1.DAGStep{
 				Name: "int-test",
 				Definition: tmv1beta1.StepDefinition{
 					Name: "testdefname",
 				},
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test2",
 				DependsOn: []string{"int-test"},
 				Definition: tmv1beta1.StepDefinition{
@@ -217,7 +217,7 @@ var _ = Describe("testflow", func() {
 				},
 				ArtifactsFrom: "int-test",
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test3",
 				DependsOn: []string{"int-test2"},
 				Definition: tmv1beta1.StepDefinition{
@@ -225,7 +225,7 @@ var _ = Describe("testflow", func() {
 				},
 				ArtifactsFrom: "int-test4",
 			},
-			{
+			&tmv1beta1.DAGStep{
 				Name:      "int-test4",
 				DependsOn: []string{"int-test2"},
 				Definition: tmv1beta1.StepDefinition{

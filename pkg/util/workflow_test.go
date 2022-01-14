@@ -27,10 +27,10 @@ var _ = Describe("workflow", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
 			Phase: argov1.NodeSucceeded,
 			Nodes: argov1.Nodes{
-				"n1": {
+				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
 				},
-				"n2": {
+				"n2": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
 				},
 			},
@@ -42,10 +42,10 @@ var _ = Describe("workflow", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
 			Phase: argov1.NodeRunning,
 			Nodes: argov1.Nodes{
-				"n1": {
+				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
 				},
-				"n2": {
+				"n2": argov1.NodeStatus{
 					Phase: argov1.NodeFailed,
 				},
 			},
@@ -57,10 +57,10 @@ var _ = Describe("workflow", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
 			Phase: argov1.NodeSucceeded,
 			Nodes: argov1.Nodes{
-				"n1": {
+				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
 				},
-				"n2": {
+				"n2": argov1.NodeStatus{
 					Phase: argov1.NodeFailed,
 				},
 			},
@@ -72,10 +72,10 @@ var _ = Describe("workflow", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
 			Phase: argov1.NodeSucceeded,
 			Nodes: argov1.Nodes{
-				"n1": {
+				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
 				},
-				"n2": {
+				"n2": argov1.NodeStatus{
 					Phase: argov1.NodeError,
 				},
 			},

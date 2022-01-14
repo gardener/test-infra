@@ -52,11 +52,11 @@ var _ = Describe("Testmachinery controller resume", func() {
 		It("should add a timer if a step is paused", func() {
 			tr := testrunTmpl
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name:       "step1",
 					Definition: tmv1beta1.StepDefinition{Name: "testdef1"},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:       "step2",
 					Definition: tmv1beta1.StepDefinition{Name: "testdef2"},
 					Pause: &tmv1beta1.Pause{

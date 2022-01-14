@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ type BackupEntryNamespaceListerExpansion interface{}
 // CloudProfileLister.
 type CloudProfileListerExpansion interface{}
 
+// ControllerDeploymentListerExpansion allows custom methods to be added to
+// ControllerDeploymentLister.
+type ControllerDeploymentListerExpansion interface{}
+
 // ControllerInstallationListerExpansion allows custom methods to be added to
 // ControllerInstallationLister.
 type ControllerInstallationListerExpansion interface{}
@@ -41,6 +45,10 @@ type ControllerInstallationListerExpansion interface{}
 // ControllerRegistrationListerExpansion allows custom methods to be added to
 // ControllerRegistrationLister.
 type ControllerRegistrationListerExpansion interface{}
+
+// ExposureClassListerExpansion allows custom methods to be added to
+// ExposureClassLister.
+type ExposureClassListerExpansion interface{}
 
 // PlantListerExpansion allows custom methods to be added to
 // PlantLister.
@@ -81,6 +89,14 @@ type ShootListerExpansion interface{}
 // ShootNamespaceListerExpansion allows custom methods to be added to
 // ShootNamespaceLister.
 type ShootNamespaceListerExpansion interface{}
+
+// ShootExtensionStatusListerExpansion allows custom methods to be added to
+// ShootExtensionStatusLister.
+type ShootExtensionStatusListerExpansion interface{}
+
+// ShootExtensionStatusNamespaceListerExpansion allows custom methods to be added to
+// ShootExtensionStatusNamespaceLister.
+type ShootExtensionStatusNamespaceListerExpansion interface{}
 
 // ShootStateListerExpansion allows custom methods to be added to
 // ShootStateLister.

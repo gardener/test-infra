@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ type CoreV1beta1Interface interface {
 	BackupBucketsGetter
 	BackupEntriesGetter
 	CloudProfilesGetter
+	ControllerDeploymentsGetter
 	ControllerInstallationsGetter
 	ControllerRegistrationsGetter
 	PlantsGetter
@@ -54,6 +55,10 @@ func (c *CoreV1beta1Client) BackupEntries(namespace string) BackupEntryInterface
 
 func (c *CoreV1beta1Client) CloudProfiles() CloudProfileInterface {
 	return newCloudProfiles(c)
+}
+
+func (c *CoreV1beta1Client) ControllerDeployments() ControllerDeploymentInterface {
+	return newControllerDeployments(c)
 }
 
 func (c *CoreV1beta1Client) ControllerInstallations() ControllerInstallationInterface {
