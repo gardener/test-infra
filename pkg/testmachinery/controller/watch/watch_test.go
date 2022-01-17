@@ -21,7 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,22 +48,29 @@ var _ = BeforeSuite(func() {
 	ctx := context.Background()
 	defer ctx.Done()
 	var err error
-	crd := &v1beta1.CustomResourceDefinition{}
+	xPreserveUnknownFields := true
+	crd := &v1.CustomResourceDefinition{}
 	crd.Name = "testruns.testmachinery.sapcloud.io"
 	crd.Spec.Group = testmachinery.GroupName
-	crd.Spec.Scope = v1beta1.NamespaceScoped
-	crd.Spec.Names = v1beta1.CustomResourceDefinitionNames{
+	crd.Spec.Scope = v1.NamespaceScoped
+	crd.Spec.Names = v1.CustomResourceDefinitionNames{
 		Kind:     "Testrun",
 		Plural:   "testruns",
 		Singular: "testrun",
 	}
-	crd.Spec.Versions = []v1beta1.CustomResourceDefinitionVersion{{
+	crd.Spec.Versions = []v1.CustomResourceDefinitionVersion{{
 		Name:    "v1beta1",
 		Served:  true,
 		Storage: true,
+		Schema: &v1.CustomResourceValidation{
+			OpenAPIV3Schema: &v1.JSONSchemaProps{
+				Type:                   "object",
+				XPreserveUnknownFields: &xPreserveUnknownFields,
+			},
+		},
 	}}
-	crd.Spec.Subresources = &v1beta1.CustomResourceSubresources{
-		Status: &v1beta1.CustomResourceSubresourceStatus{},
+	crd.Spec.Versions[0].Subresources = &v1.CustomResourceSubresources{
+		Status: &v1.CustomResourceSubresourceStatus{},
 	}
 	testenv = &envtest.Environment{
 		CRDs: []client.Object{crd},

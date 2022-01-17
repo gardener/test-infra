@@ -21,7 +21,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -89,7 +89,7 @@ func GetTmDashboardURLFromHostForTestrun(host string, tr *tmv1beta1.Testrun) str
 
 // GetTMDashboardHost returns the host of the TestMachinery Dashboard
 func GetTMDashboardHost(tmClient client.Client) (string, error) {
-	ingressList := &netv1beta1.IngressList{}
+	ingressList := &netv1.IngressList{}
 	if err := tmClient.List(context.TODO(), ingressList, client.MatchingLabels{common.LabelTMDashboardIngress: "true"}); err != nil {
 		return "", errors.Wrapf(err, "unable to list TestMachinery Dashboard ingress with label %s", common.LabelTMDashboardIngress)
 	}
@@ -108,7 +108,7 @@ func GetHostURLFromIngress(ctx context.Context, tmClient client.Client, obj type
 	if tmClient == nil {
 		return "", nil
 	}
-	ingress := &netv1beta1.Ingress{}
+	ingress := &netv1.Ingress{}
 	err := tmClient.Get(ctx, obj, ingress)
 	if err != nil {
 		return "", errors.Errorf("cannot get grafana ingress: %v", err)
@@ -118,7 +118,7 @@ func GetHostURLFromIngress(ctx context.Context, tmClient client.Client, obj type
 }
 
 // GetHostURLFromIngressObject tries to derive the cluster domain url from an ingeress object. Returns an error if the ingress is in unexpected form.
-func GetHostURLFromIngressObject(ingress *netv1beta1.Ingress) (string, error) {
+func GetHostURLFromIngressObject(ingress *netv1.Ingress) (string, error) {
 	if len(ingress.Spec.Rules) == 0 {
 		return "", errors.New("no rules defined")
 	}
