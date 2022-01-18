@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,9 +24,13 @@ type BackupEntryExpansion interface{}
 
 type CloudProfileExpansion interface{}
 
+type ControllerDeploymentExpansion interface{}
+
 type ControllerInstallationExpansion interface{}
 
 type ControllerRegistrationExpansion interface{}
+
+type ExposureClassExpansion interface{}
 
 type PlantExpansion interface{}
 
@@ -39,5 +43,7 @@ type SecretBindingExpansion interface{}
 type SeedExpansion interface{}
 
 type ShootExpansion interface{}
+
+type ShootExtensionStatusExpansion interface{}
 
 type ShootStateExpansion interface{}

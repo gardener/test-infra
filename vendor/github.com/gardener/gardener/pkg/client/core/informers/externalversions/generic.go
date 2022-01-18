@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,10 +60,14 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().BackupEntries().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("cloudprofiles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().CloudProfiles().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("controllerdeployments"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ControllerDeployments().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("controllerinstallations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ControllerInstallations().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("controllerregistrations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ControllerRegistrations().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("exposureclasses"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ExposureClasses().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("plants"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().Plants().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("projects"):
@@ -76,6 +80,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().Seeds().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("shoots"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().Shoots().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("shootextensionstatuses"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ShootExtensionStatuses().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("shootstates"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().ShootStates().Informer()}, nil
 
@@ -86,6 +92,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1beta1().BackupEntries().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("cloudprofiles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1beta1().CloudProfiles().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("controllerdeployments"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1beta1().ControllerDeployments().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("controllerinstallations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1beta1().ControllerInstallations().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("controllerregistrations"):

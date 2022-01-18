@@ -45,13 +45,13 @@ var _ = Describe("Testflow", func() {
 
 		It("should fail when a test step specifies a label with non existent testdefinitions", func() {
 			tf := tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Label: "somelabel",
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "testdefname",
@@ -67,7 +67,7 @@ var _ = Describe("Testflow", func() {
 
 		It("should fail when labels without matching testdefs are found", func() {
 			tf := tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "noMatchingLabel",
@@ -83,7 +83,7 @@ var _ = Describe("Testflow", func() {
 
 		It("should succeed when an empty flow is ignored", func() {
 			tf := tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Label: "testdefname",
@@ -95,7 +95,7 @@ var _ = Describe("Testflow", func() {
 
 		It("should succeed when a testdef can be found", func() {
 			tf := tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Label: "noMatchingLabel",

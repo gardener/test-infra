@@ -60,7 +60,7 @@ var _ = Describe("Testrunner execution tests", func() {
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{
-				{
+				&testrunner.Run{
 					Testrun:  tr,
 					Metadata: &metadata.Metadata{},
 				},
@@ -91,11 +91,11 @@ var _ = Describe("Testrunner execution tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr2 := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			run := testrunner.RunList{
-				{
+				&testrunner.Run{
 					Testrun:  tr,
 					Metadata: &metadata.Metadata{},
 				},
-				{
+				&testrunner.Run{
 					Testrun:  tr2,
 					Metadata: &metadata.Metadata{},
 				},

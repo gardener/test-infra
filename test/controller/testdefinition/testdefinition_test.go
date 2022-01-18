@@ -37,7 +37,7 @@ var _ = Describe("Testrun tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "value-config-testdef",
@@ -55,7 +55,7 @@ var _ = Describe("Testrun tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "secret-config-testdef",
@@ -92,7 +92,7 @@ var _ = Describe("Testrun tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "secret-config-file-testdef",

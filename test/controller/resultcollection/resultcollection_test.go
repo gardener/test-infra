@@ -98,13 +98,13 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "A",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:      "C",
 					DependsOn: []string{"A"},
 					Definition: tmv1beta1.StepDefinition{
@@ -136,19 +136,19 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "A",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "integration-testdef",
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name: "B",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "failing-integration-testdef",
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:      "C",
 					DependsOn: []string{"A", "B"},
 					Definition: tmv1beta1.StepDefinition{
@@ -188,7 +188,7 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "timeout-integration-testdef",

@@ -34,11 +34,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/gardener/gardener/pkg/utils/flow"
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -186,8 +186,8 @@ func CleanWebhooks(ctx context.Context, l logr.Logger, c client.Client, requirem
 	sel.Add(requirements...)
 
 	return flow.Parallel(
-		cleanResourceFn(ctx, l, c, &admissionregistrationv1beta1.MutatingWebhookConfigurationList{}, "MutationsWebhook", true, MutatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
-		cleanResourceFn(ctx, l, c, &admissionregistrationv1beta1.ValidatingWebhookConfigurationList{}, "ValidationWebhook", true, ValidatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
+		cleanResourceFn(ctx, l, c, &admissionregistrationv1.MutatingWebhookConfigurationList{}, "MutationsWebhook", true, MutatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
+		cleanResourceFn(ctx, l, c, &admissionregistrationv1.ValidatingWebhookConfigurationList{}, "ValidationWebhook", true, ValidatingWebhookConfigurationCleanOption, client.MatchingLabelsSelector{Selector: sel}),
 	)(ctx)
 }
 
@@ -197,7 +197,7 @@ func CleanExtendedAPIs(ctx context.Context, l logr.Logger, c client.Client, requ
 	sel.Add(requirements...)
 
 	return flow.Parallel(
-		cleanResourceFn(ctx, l, c, &apiextensionsv1beta1.CustomResourceDefinitionList{}, "CRD", true, CustomResourceDefinitionCleanOption, client.MatchingLabelsSelector{Selector: sel}),
+		cleanResourceFn(ctx, l, c, &apiextensionsv1.CustomResourceDefinitionList{}, "CRD", true, CustomResourceDefinitionCleanOption, client.MatchingLabelsSelector{Selector: sel}),
 	)(ctx)
 }
 

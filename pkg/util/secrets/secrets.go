@@ -3,6 +3,8 @@ package secrets
 import (
 	"github.com/gardener/gardener/pkg/utils"
 	"k8s.io/client-go/rest"
+
+	render_template "github.com/gardener/test-infra/pkg/util/render-template"
 )
 
 // GenerateKubeconfigFromRestConfig generates a kubernetes kubeconfig from a rest client
@@ -20,7 +22,7 @@ func GenerateKubeconfigFromRestConfig(cfg *rest.Config, name string) ([]byte, er
 		values["BasicAuthPassword"] = cfg.Password
 	}
 
-	return utils.RenderLocalTemplate(kubeconfigTemplate, values)
+	return render_template.RenderLocalTemplate(kubeconfigTemplate, values)
 }
 
 const kubeconfigTemplate = `---

@@ -96,7 +96,7 @@ var _ = Describe("testflow exit tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-dynamic-envvar-testdef",
@@ -116,7 +116,7 @@ var _ = Describe("testflow exit tests", func() {
 				},
 			}
 			tr.Spec.OnExit = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-dynamic-envvar-testdef",

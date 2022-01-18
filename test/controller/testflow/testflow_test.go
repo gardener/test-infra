@@ -128,7 +128,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Label: "tm-integration",
@@ -199,7 +199,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "int-test",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "serial-testdef",
@@ -279,7 +279,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "create-artifact",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-content-testdef",
@@ -298,7 +298,7 @@ var _ = Describe("Testflow execution tests", func() {
 						},
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:      "check-artifact",
 					DependsOn: []string{"create-artifact"},
 					Definition: tmv1beta1.StepDefinition{
@@ -323,7 +323,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow = tmv1beta1.TestFlow{
-				{
+				&tmv1beta1.DAGStep{
 					Name: "create-artifact",
 					Definition: tmv1beta1.StepDefinition{
 						Name: "check-file-content-testdef",
@@ -342,7 +342,7 @@ var _ = Describe("Testflow execution tests", func() {
 						},
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:      "check-artifact",
 					DependsOn: []string{"create-artifact"},
 					Definition: tmv1beta1.StepDefinition{
@@ -356,7 +356,7 @@ var _ = Describe("Testflow execution tests", func() {
 						},
 					},
 				},
-				{
+				&tmv1beta1.DAGStep{
 					Name:          "check-artifact2",
 					DependsOn:     []string{"check-artifact"},
 					ArtifactsFrom: "create-artifact",
@@ -386,7 +386,7 @@ var _ = Describe("Testflow execution tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "check-envvar-testdef",
@@ -412,7 +412,7 @@ var _ = Describe("Testflow execution tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "check-envvar-testdef",
@@ -439,7 +439,7 @@ var _ = Describe("Testflow execution tests", func() {
 				defer ctx.Done()
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
@@ -487,7 +487,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
@@ -542,7 +542,7 @@ var _ = Describe("Testflow execution tests", func() {
 
 				tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 				tr.Spec.TestFlow = tmv1beta1.TestFlow{
-					{
+					&tmv1beta1.DAGStep{
 						Name: "int-test",
 						Definition: tmv1beta1.StepDefinition{
 							Name: "check-file-content-testdef",
