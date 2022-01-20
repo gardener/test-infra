@@ -272,4 +272,44 @@ var _ = Describe("extended flavor test", func() {
 		Expect(*flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
 	})
 
+	It("should generate a shoot with correct networkingType", func() {
+		defaultExtendedCfg.NetworkingType = "calico"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				AllowPrivilegedContainers: pointer.BoolPtr(true),
+				AdditionalAnnotations:     map[string]string{"a": "b"},
+				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+				Provider:                  common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
+		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+
+		shoot := flavors.GetShoots()[0]
+		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
+			Provider:                  common.CloudProviderGCP,
+			AllowPrivilegedContainers: pointer.BoolPtr(true),
+			AdditionalAnnotations:     map[string]string{"a": "b"},
+			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1"}},
+		}))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+	})
 })
