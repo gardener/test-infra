@@ -40,4 +40,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/hostscheduler gardener lock --id=$TM_TESTRUN_ID --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --cloudprovider=$HOST_CLOUDPROVIDER
-  image: golang:1.15
+  image: golang:1.16
