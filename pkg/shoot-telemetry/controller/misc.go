@@ -48,7 +48,7 @@ func (c *controller) determineShootInternalEndpoint(shoot *gardencorev1beta1.Sho
 }
 
 func (c *controller) fetchInternalDomain() error {
-	selector := map[string]string{"garden.sapcloud.io/role": "internal-domain"}
+	selector := map[string]string{"gardener.cloud/role": "internal-domain"}
 	secrets, err := c.secrets.Lister().Secrets("garden").List(labels.SelectorFromSet(labels.Set(selector)))
 	if err != nil {
 		return err
