@@ -64,6 +64,7 @@ RUN  \
     gcc \
     git \
     jq \
+    yq \
     libc-dev \
     libev-dev \
     libffi-dev \
