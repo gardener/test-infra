@@ -140,6 +140,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 			"k8sPrevPrePatchVersion": prevPrePatchVersion.Version,
 			"k8sPrevPatchVersion":    prevPatchVersion.Version,
 			"floatingPoolName":       shoot.FloatingPoolName,
+			"networkingType":         shoot.NetworkingType,
 			"loadbalancerProvider":   shoot.LoadbalancerProvider,
 			"infrastructureConfig":   infrastructure,
 			"networkingConfig":       networkingConfig,
