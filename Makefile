@@ -74,6 +74,10 @@ install:
 .PHONY: verify
 verify: check
 
+.PHONY: build-test-defs
+build-test-defs:
+	@./hack/build-test-defs.sh
+
 .PHONY: all
 all: generate format verify install
 
