@@ -53,7 +53,6 @@ require (
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/code-generator v0.22.2
-	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027 // indirect
 	k8s.io/helm v2.16.1+incompatible
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e
 	k8s.io/metrics v0.22.2
@@ -68,14 +67,14 @@ replace (
 	github.com/docker/docker => github.com/moby/moby v20.10.11+incompatible
 	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
-	k8s.io/api => k8s.io/api v0.19.9
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.9
-	k8s.io/apimachinery => k8s.io/apimachinery v0.19.9
-	k8s.io/client-go => k8s.io/client-go v0.19.9
-	k8s.io/code-generator => k8s.io/code-generator v0.19.9
+	//	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
+	k8s.io/api => k8s.io/api v0.21.5
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.21.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.21.5
+	k8s.io/client-go => k8s.io/client-go v0.21.5
+	k8s.io/code-generator => k8s.io/code-generator v0.21.5
 	k8s.io/helm => k8s.io/helm v2.17.0+incompatible
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 	// needed because of https://github.com/kubernetes-sigs/controller-runtime/issues/1538
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.8.3
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.7
 )
