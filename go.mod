@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/argoproj/argo-workflows/v3 v3.1.8
+	github.com/argoproj/argo-workflows/v3 v3.2.8
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/docker/cli v20.10.3+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
@@ -24,7 +24,7 @@ require (
 	github.com/google/go-github/v39 v39.2.0
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/sessions v1.1.3
+	github.com/gorilla/sessions v1.2.1
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/joho/godotenv v1.3.0
@@ -53,6 +53,7 @@ require (
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/code-generator v0.22.2
+	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027 // indirect
 	k8s.io/helm v2.16.1+incompatible
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e
 	k8s.io/metrics v0.22.2
