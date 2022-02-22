@@ -33,9 +33,7 @@ github.com/argoproj/argo-workflows/v3/pkg/apis/workflow
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1
 github.com/argoproj/argo-workflows/v3/util/json
 github.com/argoproj/argo-workflows/v3/util/slice
-# github.com/argoproj/argo/v2 v2.12.13
-## explicit
-# github.com/beorn7/perks v1.0.1
+# github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
 # github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 ## explicit
