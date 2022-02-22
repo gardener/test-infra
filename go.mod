@@ -65,8 +65,8 @@ replace (
 	// helm dependencies
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v20.10.11+incompatible
-	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
+	//  github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
+	//  github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
 	//	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 	k8s.io/api => k8s.io/api v0.21.5
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.21.5
