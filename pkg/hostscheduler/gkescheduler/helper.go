@@ -110,7 +110,7 @@ func (s *gkescheduler) waitUntilOperationFinishedSuccessfully(ctx context.Contex
 		return err
 	}
 	if operation.Status == containerpb.Operation_ABORTING {
-		return fmt.Errorf("operation was aborted: %s", operation.GetStatusMessage())
+		return fmt.Errorf("operation was aborted: %s", operation.GetError().Message)
 	}
 	return nil
 }

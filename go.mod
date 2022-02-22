@@ -3,8 +3,8 @@ module github.com/gardener/test-infra
 go 1.16
 
 require (
-	cloud.google.com/go v0.81.0
-	cloud.google.com/go/storage v1.10.0
+	cloud.google.com/go/container v1.1.0
+	cloud.google.com/go/storage v1.21.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo-workflows/v3 v3.2.8
@@ -43,10 +43,10 @@ require (
 	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
-	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
-	google.golang.org/api v0.44.0
-	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	google.golang.org/api v0.69.0
+	google.golang.org/genproto v0.0.0-20220216160803-4663080d8bc8
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.2
 	k8s.io/apiextensions-apiserver v0.22.2
