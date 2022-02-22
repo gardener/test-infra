@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/argoproj/argo-workflows/v3 v3.1.8
-	github.com/argoproj/argo/v2 v2.12.13
+	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/docker/cli v20.10.3+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9

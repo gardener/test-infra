@@ -35,9 +35,6 @@ github.com/argoproj/argo-workflows/v3/util/json
 github.com/argoproj/argo-workflows/v3/util/slice
 # github.com/argoproj/argo/v2 v2.12.13
 ## explicit
-github.com/argoproj/argo/v2/pkg/apis/workflow
-github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1
-github.com/argoproj/argo/v2/util/slice
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
 # github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
@@ -1141,6 +1138,7 @@ sigs.k8s.io/yaml
 # github.com/docker/docker => github.com/moby/moby v20.10.11+incompatible
 # github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
 # github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 # k8s.io/api => k8s.io/api v0.19.9
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.9
 # k8s.io/apimachinery => k8s.io/apimachinery v0.19.9
@@ -1149,4 +1147,3 @@ sigs.k8s.io/yaml
 # k8s.io/helm => k8s.io/helm v2.17.0+incompatible
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.8.3
-# github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
