@@ -15,126 +15,297 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  labels:
+    argo-version: v3
   name: argo
   namespace: {{.Release.Namespace}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: argo-ui
+  labels:
+    argo-version: v3
+  name: argo-server
   namespace: {{.Release.Namespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-# argo needs Cluster wide permissions, otherwise it won't watch workflows at all (not even ones in the same namespace)
+kind: Role
+metadata:
+  labels:
+    argo-version: v3
+  name: argo-role
+  namespace: {{.Release.Namespace}}
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: argo-role
+  labels:
+    argo-version: v3
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  name: argo-aggregate-to-admin
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - pods/exec
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - get
-  - watch
-  - list
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims
-  verbs:
-  - create
-  - delete
-- apiGroups:
-  - argoproj.io
-  resources:
-  - workflows
-  - workflows/finalizers
-  - workflowtemplates
-  - workflowtemplates/finalizers
-  - cronworkflows
-  - cronworkflows/finalizers
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-  - patch
-  - delete
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+      - workflows/finalizers
+      - workfloweventbindings
+      - workfloweventbindings/finalizers
+      - workflowtemplates
+      - workflowtemplates/finalizers
+      - cronworkflows
+      - cronworkflows/finalizers
+      - clusterworkflowtemplates
+      - clusterworkflowtemplates/finalizers
+      - workflowtasksets
+      - workflowtasksets/finalizers
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    argo-version: v3
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+  name: argo-aggregate-to-edit
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+      - workflows/finalizers
+      - workfloweventbindings
+      - workfloweventbindings/finalizers
+      - workflowtemplates
+      - workflowtemplates/finalizers
+      - cronworkflows
+      - cronworkflows/finalizers
+      - clusterworkflowtemplates
+      - clusterworkflowtemplates/finalizers
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    argo-version: v3
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+  name: argo-aggregate-to-view
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+      - workflows/finalizers
+      - workfloweventbindings
+      - workfloweventbindings/finalizers
+      - workflowtemplates
+      - workflowtemplates/finalizers
+      - cronworkflows
+      - cronworkflows/finalizers
+      - clusterworkflowtemplates
+      - clusterworkflowtemplates/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    argo-version: v3
+  name: argo-cluster-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/exec
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - create
+      - delete
+      - get
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+      - workflows/finalizers
+      - workflowtasksets
+      - workflowtasksets/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+      - create
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflowtemplates
+      - workflowtemplates/finalizers
+      - clusterworkflowtemplates
+      - clusterworkflowtemplates/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - cronworkflows
+      - cronworkflows/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - create
+      - get
+      - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 # needs to be Cluster wide as UI wants to list workflows for the whole cluster
 kind: ClusterRole
 metadata:
-  name: argo-ui-role
+  labels:
+    argo-version: v3
+  name: argo-server-role
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - pods/exec
-  - pods/log
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-- apiGroups:
-  - argoproj.io
-  resources:
-  - workflows
-  - workflowtemplates
-  - cronworkflows
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - update
-  - patch
-  - delete
----
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/exec
+      - pods/log
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - watch
+      - create
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - eventsources
+      - sensors
+      - workflows
+      - workfloweventbindings
+      - workflowtemplates
+      - cronworkflows
+      - clusterworkflowtemplates
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+--- # TODO still needed?
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -158,25 +329,34 @@ rules:
   verbs:
   - get
   - watch
-# secrets get is used to retrieve credentials to artifact repository. NOTE: starting n Argo v2.3,
-# the API secret access will be removed in favor of volume mounting the secrets to the workflow pod
-# (issue #1072)
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    argo-version: v3
+  name: argo-binding
+  namespace: {{.Release.Namespace}}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-role
+subjects:
+- kind: ServiceAccount
+  name: argo
+  namespace: {{.Release.Namespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 # argo needs Cluster wide permissions, otherwise it won't watch workflows at all (not even ones in the same namespace)
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    argo-version: v3
   name: argo-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: argo-role
+  name: argo-cluster-role
 subjects:
 - kind: ServiceAccount
   name: argo
@@ -199,12 +379,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 # needs to be Cluster wide as UI wants to list workflows for the whole cluster
 kind: ClusterRoleBinding
 metadata:
-  name: argo-ui-binding
+  labels:
+    argo-version: v3
+  name: argo-server-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: argo-ui-role
+  name: argo-server-role
 subjects:
 - kind: ServiceAccount
-  name: argo-ui
+  name: argo-server
   namespace: {{.Release.Namespace}}

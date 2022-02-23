@@ -14,9 +14,9 @@
 
 # overriden in images.yaml
 images:
-  argo-workflow-controller: argoproj/workflow-controller:v2.6.3
-  argo-executor: argoproj/argoexec:v2.6.3
-  argo-ui: argoproj/argocli:v2.6.3
+  argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.2.8
+  argo-executor: quay.io/argoproj/argoexec:v3.2.8
+  argo-server: quay.io/argoproj/argocli:v3.2.8
 
 argo:
   name: workflow-controller
@@ -46,10 +46,10 @@ argo:
 configmap:
   name: tm-config
 
-argoui:
+argoserver:
   ingress:
     enabled: true
-    name: "argo-ui"
+    name: "argo-server"
     host: ""
     annotations: { }
     labels: { }
