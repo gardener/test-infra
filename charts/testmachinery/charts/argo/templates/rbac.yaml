@@ -146,7 +146,7 @@ kind: ClusterRole
 metadata:
   labels:
     argo-version: v3
-  name: argo-cluster-role
+  name: argo-role
 rules:
   - apiGroups:
       - ""
@@ -356,7 +356,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: argo-cluster-role
+  name: argo-role
 subjects:
 - kind: ServiceAccount
   name: argo
