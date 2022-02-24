@@ -20,6 +20,10 @@ metadata:
 data:
   config: |
     containerRuntimeExecutor: {{ .Values.argo.executor.containerRuntimeExecutor }}
+    {{- with .Values.argo.executor.containerRuntimeExecutors }}
+    containerRuntimeExecutors:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
     executor:
       resources:
         requests:

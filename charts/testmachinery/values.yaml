@@ -111,6 +111,12 @@ argo:
     name: workflow-controller
     executor:
       containerRuntimeExecutor: docker
+      containerRuntimeExecutors: []
+        # - name: emissary
+        #  selector:
+        #    matchLabels:
+        #      workflows.argoproj.io/container-runtime-executor: emissary
+
     resources: {}
     # requests:
     #   cpu: 200m
