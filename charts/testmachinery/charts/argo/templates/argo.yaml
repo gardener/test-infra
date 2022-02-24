@@ -50,9 +50,10 @@ spec:
         name: argo-server
         args:
         - server
+        - --auth-mode=server
         env:
           - name: BASE_HREF
-            value: /argo/
+            value: /
         ports:
         - containerPort: 2746
           name: web

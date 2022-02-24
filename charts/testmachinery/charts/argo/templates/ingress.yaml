@@ -22,7 +22,6 @@ kind: Ingress
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-    ingress.kubernetes.io/rewrite-target: /$2
     {{- range $key, $value := .Values.argoserver.ingress.annotations }}
     {{ $key }}: {{ $value }}
   {{- end }}
@@ -45,13 +44,13 @@ spec:
                 name: argo-server
                 port:
                   number: 80
-            path: /argo(/|$)(.*)
+            path: /
             pathType: Prefix
           {{- else }}
           - backend:
               serviceName: argos-server
               servicePort: 80
-            path: /argo(/|$)(.*)
+            path: /
   {{- end }}
   tls:
     - hosts:
