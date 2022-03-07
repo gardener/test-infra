@@ -59,7 +59,7 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 			run.Metadata.TelemetryData = telemetryData
 		}
 
-		if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+		if run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess {
 			runLogger.Info("Testrun finished successfully")
 		} else {
 			testrunsFailed = true

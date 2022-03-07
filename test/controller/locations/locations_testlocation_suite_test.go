@@ -40,7 +40,7 @@ var _ = Describe("Locations TestLocations tests", func() {
 			},
 		}
 
-		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, tmv1beta1.PhaseStatusSuccess, TestrunDurationTimeout)
+		tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, tmv1beta1.RunPhaseSuccess, TestrunDurationTimeout)
 		defer utils.DeleteTestrun(operation.Client(), tr)
 		Expect(err).ToNot(HaveOccurred())
 	})

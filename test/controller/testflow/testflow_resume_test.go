@@ -18,7 +18,7 @@ import (
 	"context"
 	"time"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -51,7 +51,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			})
 
-			tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -76,7 +76,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err = operation.RunTestrun(ctx, tr, tmv1beta1.PhaseStatusRunning, 2*time.Minute, utils.WatchUntil(2*time.Minute))
+			tr, _, err = operation.RunTestrun(ctx, tr, tmv1beta1.RunPhaseRunning, 2*time.Minute, utils.WatchUntil(2*time.Minute))
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})

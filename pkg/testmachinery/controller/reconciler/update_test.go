@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -45,7 +45,7 @@ var _ = Describe("Testmachinery controller update", func() {
 				Steps: []*tmv1beta1.StepStatus{
 					{
 						Name:  "template1",
-						Phase: tmv1beta1.PhaseStatusInit,
+						Phase: tmv1beta1.StepPhaseInit,
 						TestDefinition: tmv1beta1.StepStatusTestDefinition{
 							Name: "testdef1",
 						},
@@ -104,28 +104,28 @@ var _ = Describe("Testmachinery controller update", func() {
 			tr.Status.Steps = []*tmv1beta1.StepStatus{
 				{
 					Name:  "template1",
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef1",
 					},
 				},
 				{
 					Name:  "template2",
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef2",
 					},
 				},
 				{
 					Name:  "template3",
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef3",
 					},
 				},
 				{
 					Name:  "template4",
-					Phase: tmv1beta1.PhaseStatusInit,
+					Phase: tmv1beta1.StepPhaseInit,
 					TestDefinition: tmv1beta1.StepStatusTestDefinition{
 						Name: "testdef2",
 					},

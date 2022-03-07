@@ -33,7 +33,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
@@ -44,10 +44,10 @@ func PreComputeTeststepFields(phase argov1.NodePhase, meta metadata.Metadata, cl
 	var preComputed metadata.StepPreComputed
 
 	switch phase {
-	case tmv1beta1.PhaseStatusFailed, tmv1beta1.PhaseStatusTimeout:
+	case tmv1beta1.StepPhaseFailed, tmv1beta1.StepPhaseTimeout:
 		zero := 0
 		preComputed.PhaseNum = &zero
-	case tmv1beta1.PhaseStatusSuccess:
+	case tmv1beta1.StepPhaseSuccess:
 		hundred := 100
 		preComputed.PhaseNum = &hundred
 	}

@@ -17,7 +17,7 @@ package v1beta1
 import (
 	"fmt"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -70,16 +70,28 @@ const (
 	ConfigTypeFile = "file"
 )
 
+// Teststep statuses
+const (
+	StepPhaseInit    argov1.NodePhase = "Init"
+	StepPhasePending                  = argov1.NodePending
+	StepPhaseRunning                  = argov1.NodeRunning
+	StepPhaseSuccess                  = argov1.NodeSucceeded
+	StepPhaseSkipped                  = argov1.NodeSkipped
+	StepPhaseFailed                   = argov1.NodeFailed
+	StepPhaseError                    = argov1.NodeError
+	StepPhaseTimeout argov1.NodePhase = "Timeout"
+)
+
 // Testrun statuses
 const (
-	PhaseStatusInit    argov1.NodePhase = "Init"
-	PhaseStatusPending                  = argov1.NodePending
-	PhaseStatusRunning                  = argov1.NodeRunning
-	PhaseStatusSuccess                  = argov1.NodeSucceeded
-	PhaseStatusSkipped                  = argov1.NodeSkipped
-	PhaseStatusFailed                   = argov1.NodeFailed
-	PhaseStatusError                    = argov1.NodeError
-	PhaseStatusTimeout argov1.NodePhase = "Timeout"
+	RunPhaseInit    argov1.WorkflowPhase = "Init"
+	RunPhasePending                      = argov1.WorkflowPending
+	RunPhaseRunning                      = argov1.WorkflowRunning
+	RunPhaseSuccess                      = argov1.WorkflowSucceeded
+	// RunPhaseSkipped                  = argov1.Skipped
+	RunPhaseFailed                       = argov1.WorkflowFailed
+	RunPhaseError                        = argov1.WorkflowError
+	RunPhaseTimeout argov1.WorkflowPhase = "Timeout"
 )
 
 // +genclient
@@ -138,7 +150,7 @@ type TestrunSpec struct {
 // TestrunStatus is the status of the Testrun.
 type TestrunStatus struct {
 	// Phase is the summary of all executed steps.
-	Phase argov1.NodePhase `json:"phase,omitempty"`
+	Phase argov1.WorkflowPhase `json:"phase,omitempty"`
 
 	// State is a string that represents the actual state and/or process of the testrun.
 	State string `json:"state,omitempty"`

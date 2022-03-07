@@ -17,7 +17,7 @@ package testdefinition_test
 import (
 	"context"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -45,7 +45,7 @@ var _ = Describe("Testrun tests", func() {
 					},
 				}
 
-				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -80,7 +80,7 @@ var _ = Describe("Testrun tests", func() {
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 
-				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -117,7 +117,7 @@ var _ = Describe("Testrun tests", func() {
 					Expect(err).ToNot(HaveOccurred(), "Cannot delete secret")
 				}()
 
-				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 			})

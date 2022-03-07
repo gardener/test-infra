@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,7 +49,7 @@ var _ = Describe("Result collection tests", func() {
 			Expect(tr.Status.Steps).To(HaveLen(1), "Should be one steps status")
 			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusInit), "Tests should be initially in 'init' phase")
+			Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseInit), "Tests should be initially in 'init' phase")
 		})
 
 		It("should collect status of all workflow nodes", func() {
@@ -57,7 +57,7 @@ var _ = Describe("Result collection tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -66,7 +66,7 @@ var _ = Describe("Result collection tests", func() {
 			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
 
 		})
 
@@ -83,7 +83,7 @@ var _ = Describe("Result collection tests", func() {
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 			tr.Spec.TestFlow[0].Definition.Config = []tmv1beta1.ConfigElement{configElement}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -113,7 +113,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -122,12 +122,12 @@ var _ = Describe("Result collection tests", func() {
 			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
 
 			status = tr.Status.Steps[1]
 			Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 			Expect(status.ExportArtifactKey).ToNot(BeZero())
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSuccess))
+			Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseSuccess))
 
 		})
 
@@ -157,7 +157,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowFailed, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -168,7 +168,7 @@ var _ = Describe("Result collection tests", func() {
 
 				if status.TestDefinition.Name == "failing-integration-testdef" {
 					Expect(status.ExportArtifactKey).To(BeZero()) // needs to be zero as argo does not upload empty tars anymore (> v2.3.0)
-					Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusFailed))
+					Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseFailed))
 				}
 
 				if status.Position.Step == "A" {
@@ -178,7 +178,7 @@ var _ = Describe("Result collection tests", func() {
 				if status.Position.Step == "C" {
 					Expect(status.TestDefinition.Name).To(Equal("integration-testdef"))
 					Expect(status.ExportArtifactKey).To(BeZero())
-					Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusSkipped))
+					Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseSkipped))
 				}
 			}
 		})
@@ -196,7 +196,7 @@ var _ = Describe("Result collection tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeFailed, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowFailed, TestrunDurationTimeout)
 			//defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -204,7 +204,7 @@ var _ = Describe("Result collection tests", func() {
 
 			status := tr.Status.Steps[0]
 			Expect(status.TestDefinition.Name).To(Equal("timeout-integration-testdef"))
-			Expect(status.Phase).To(Equal(tmv1beta1.PhaseStatusTimeout))
+			Expect(status.Phase).To(Equal(tmv1beta1.StepPhaseTimeout))
 
 		})
 	})

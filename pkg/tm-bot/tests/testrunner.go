@@ -59,7 +59,7 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 		log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
 	}
 
-	testrunPhase := tmv1beta1.PhaseStatusInit
+	testrunPhase := tmv1beta1.RunPhaseInit
 	err = r.watch.WatchUntil(maxWaitTime, tr.GetNamespace(), tr.GetName(), func(new *tmv1beta1.Testrun) (bool, error) {
 		*tr = *new
 		if tr.Status.State != "" {
@@ -69,13 +69,13 @@ func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *Status
 			log.V(3).Info(fmt.Sprintf("Testrun %s is in %s phase. Waiting ...", tr.Name, testrunPhase))
 		}
 
-		if testrunPhase != tmv1beta1.PhaseStatusInit {
+		if testrunPhase != tmv1beta1.RunPhaseInit {
 			if err := statusUpdater.Update(ctx, tr, dashboardURL); err != nil {
 				log.Error(err, "unable to update comment", "Testrun", tr.Name)
 			}
 		}
 
-		return util.Completed(testrunPhase), nil
+		return util.CompletedRun(testrunPhase), nil
 	})
 	if err != nil {
 		if err := statusUpdater.UpdateStatus(ctx, github.StateFailure, "timeout"); err != nil {

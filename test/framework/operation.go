@@ -22,7 +22,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
@@ -95,11 +95,11 @@ func (o *Operation) WaitForClusterReadiness(maxWaitTime time.Duration) error {
 	return utils.WaitForClusterReadiness(o.Log(), o.tmClient, o.testConfig.TmNamespace, maxWaitTime)
 }
 
-func (o *Operation) RunTestrunUntilCompleted(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func (o *Operation) RunTestrunUntilCompleted(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.WorkflowPhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return utils.RunTestrunUntilCompleted(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout)
 }
 
-func (o *Operation) RunTestrun(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, watchFunc utils.WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func (o *Operation) RunTestrun(ctx context.Context, tr *tmv1beta1.Testrun, phase argov1.WorkflowPhase, timeout time.Duration, watchFunc utils.WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return utils.RunTestrun(ctx, o.Log().WithValues("namespace", o.TestNamespace()), o.Client(), tr, phase, timeout, watchFunc)
 }
 

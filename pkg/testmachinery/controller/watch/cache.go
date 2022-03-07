@@ -52,11 +52,10 @@ func newCachedInformer(log logr.Logger, config *rest.Config, options *Options) (
 		return nil, err
 	}
 
-	cachedClient, err := cluster.NewClientBuilder().
-		Build(cache, config, client.Options{
-			Scheme: options.Scheme,
-			Mapper: mapper,
-		})
+	cachedClient, err := cluster.DefaultNewClient(cache, config, client.Options{
+		Scheme: options.Scheme,
+		Mapper: mapper,
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create chached client: %w", err)

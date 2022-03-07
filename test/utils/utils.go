@@ -38,7 +38,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -49,13 +49,13 @@ import (
 // RunTestrunUntilCompleted executes a testrun on a cluster until it is finished and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
 // DEPRECATED: this is just a wrapper function to keep functionality across tests. In the future the RunTestrun function should be directly used.
-func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func RunTestrunUntilCompleted(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.WorkflowPhase, timeout time.Duration) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	return RunTestrun(ctx, log, tmClient, tr, phase, timeout, WatchUntilCompletedFunc)
 }
 
 // RunTestrunUntilCompleted executes a testrun on a cluster until a specific state has been reached and returns the corresponding executed testrun and workflow.
 // Note: Deletion of the workflow on error should be handled by the calling test.
-func RunTestrun(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.NodePhase, timeout time.Duration, f WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
+func RunTestrun(ctx context.Context, log logr.Logger, tmClient client.Client, tr *tmv1beta1.Testrun, phase argov1.WorkflowPhase, timeout time.Duration, f WatchFunc) (*tmv1beta1.Testrun, *argov1.Workflow, error) {
 	err := tmClient.Create(ctx, tr)
 	if err != nil {
 		return nil, nil, err
@@ -129,7 +129,7 @@ func WatchTestrun(ctx context.Context, tmClient client.Client, tr *tmv1beta1.Tes
 // WatchUntilCompletedFunc waits until the testrun is completed
 func WatchUntilCompletedFunc(tr *tmv1beta1.Testrun) (bool, error) {
 	testrunPhase := tr.Status.Phase
-	if util.Completed(testrunPhase) {
+	if util.CompletedRun(testrunPhase) {
 		return retry.Ok()
 	}
 	return retry.NotOk()

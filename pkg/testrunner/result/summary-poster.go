@@ -137,7 +137,7 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 				status = util.StatusSymbolError
 			} else {
-				if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+				if run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess {
 					status = util.StatusSymbolSuccess
 				} else {
 					status = util.StatusSymbolFailure

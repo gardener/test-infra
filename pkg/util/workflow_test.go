@@ -15,7 +15,7 @@
 package util
 
 import (
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -25,7 +25,7 @@ import (
 var _ = Describe("workflow", func() {
 	It("should mark the testrun as success if all nodes are successfull", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
-			Phase: argov1.NodeSucceeded,
+			Phase: argov1.WorkflowSucceeded,
 			Nodes: argov1.Nodes{
 				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
@@ -35,12 +35,12 @@ var _ = Describe("workflow", func() {
 				},
 			},
 		}}
-		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.PhaseStatusSuccess))
+		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.RunPhaseSuccess))
 	})
 
 	It("should mark the testrun as running if it is not completed yet", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
-			Phase: argov1.NodeRunning,
+			Phase: argov1.WorkflowRunning,
 			Nodes: argov1.Nodes{
 				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
@@ -50,12 +50,12 @@ var _ = Describe("workflow", func() {
 				},
 			},
 		}}
-		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.PhaseStatusRunning))
+		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.RunPhaseRunning))
 	})
 
 	It("should mark the testrun as failure if a node are failed", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
-			Phase: argov1.NodeSucceeded,
+			Phase: argov1.WorkflowSucceeded,
 			Nodes: argov1.Nodes{
 				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
@@ -65,12 +65,12 @@ var _ = Describe("workflow", func() {
 				},
 			},
 		}}
-		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.PhaseStatusFailed))
+		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.RunPhaseFailed))
 	})
 
 	It("should mark the testrun as error if a node is erroneous", func() {
 		wf := &argov1.Workflow{Status: argov1.WorkflowStatus{
-			Phase: argov1.NodeSucceeded,
+			Phase: argov1.WorkflowSucceeded,
 			Nodes: argov1.Nodes{
 				"n1": argov1.NodeStatus{
 					Phase: argov1.NodeSucceeded,
@@ -80,6 +80,6 @@ var _ = Describe("workflow", func() {
 				},
 			},
 		}}
-		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.PhaseStatusError))
+		Expect(WorkflowPhase(wf)).To(Equal(tmv1beta1.RunPhaseError))
 	})
 })

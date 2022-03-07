@@ -16,45 +16,85 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: argo-ui
+  name: argo-server
   namespace: {{.Release.Namespace}}
+  labels:
+      argo-version: v3
 spec:
-    type: {{.Values.argoui.serviceType}}
+    type: {{.Values.argoserver.serviceType}}
     ports:
     - port: 80
       targetPort: 2746
+      name: web
     selector:
-        app: argo-ui
+        app: argo-server
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: argo-ui
+  name: argo-server
   namespace: {{.Release.Namespace}}
+  labels:
+    argo-version: v3
 spec:
   selector:
     matchLabels:
-      app: argo-ui
+      app: argo-server
   template:
     metadata:
       labels:
-        app: argo-ui
+        app: argo-server
     spec:
       containers:
-      - image: {{ index .Values.images "argo-ui" }}
-        name: argo-ui
+      - image: {{ index .Values.images "argo-server" }}
+        name: argo-server
         args:
         - server
+        - --auth-mode=server
+        env:
+          - name: BASE_HREF
+            value: /
         ports:
         - containerPort: 2746
+          name: web
         readinessProbe:
             httpGet:
                 path: /
-                port: 2746
-                scheme: HTTP
+                port: web
+                scheme: HTTPS
             initialDelaySeconds: 10
             periodSeconds: 20
-      serviceAccountName: argo-ui
+        securityContext:
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: argo-server
+      volumes:
+        - emptyDir: {}
+          name: tmp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: workflow-controller
+    argo-version: v3
+  name: workflow-controller-metrics
+spec:
+  ports:
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    app: workflow-controller
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -63,6 +103,8 @@ metadata:
   namespace: {{.Release.Namespace}}
   annotations:
     checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+  labels:
+    argo-version: v3
 spec:
   selector:
     matchLabels:
@@ -80,8 +122,35 @@ spec:
         - {{ index .Values.images "argo-executor" }}
         command:
         - workflow-controller
+        env:
+          - name: LEADER_ELECTION_IDENTITY
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
         image: {{ index .Values.images "argo-workflow-controller" }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 6060
+          initialDelaySeconds: 90
+          periodSeconds: 60
+          timeoutSeconds: 30
         name: workflow-controller
         resources:
           {{- toYaml .Values.argo.resources | nindent 10 }}
+        ports:
+          - containerPort: 9090
+            name: metrics
+          - containerPort: 6060
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+      securityContext:
+        runAsNonRoot: true
       serviceAccountName: argo

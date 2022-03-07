@@ -46,7 +46,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"sigs.k8s.io/yaml"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -64,9 +64,17 @@ func MaxTimeExceeded(startTime time.Time, maxWaitTime int64) bool {
 	return maxTime.Before(time.Now())
 }
 
-// Completed checks if the testrun is in a completed phase
-func Completed(phase argov1.NodePhase) bool {
-	if phase == tmv1beta1.PhaseStatusSuccess || phase == tmv1beta1.PhaseStatusFailed || phase == tmv1beta1.PhaseStatusError || phase == tmv1beta1.PhaseStatusSkipped || phase == tmv1beta1.PhaseStatusTimeout {
+// CompletedStep checks if the teststep is in a completed phase
+func CompletedStep(phase argov1.NodePhase) bool {
+	if phase == tmv1beta1.StepPhaseSuccess || phase == tmv1beta1.StepPhaseFailed || phase == tmv1beta1.StepPhaseError || phase == tmv1beta1.StepPhaseSkipped || phase == tmv1beta1.StepPhaseTimeout {
+		return true
+	}
+	return false
+}
+
+// CompletedRun checks if the testrun is in a completed phase
+func CompletedRun(phase argov1.WorkflowPhase) bool {
+	if phase == tmv1beta1.RunPhaseSuccess || phase == tmv1beta1.RunPhaseFailed || phase == tmv1beta1.RunPhaseError || phase == tmv1beta1.RunPhaseTimeout {
 		return true
 	}
 	return false

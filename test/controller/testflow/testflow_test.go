@@ -28,7 +28,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -50,7 +50,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -75,7 +75,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			})
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -109,7 +109,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				})
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -136,7 +136,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -180,7 +180,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, wf, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -207,7 +207,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -242,7 +242,7 @@ var _ = Describe("Testflow execution tests", func() {
 				}
 
 				for _, node := range wf.Status.Nodes {
-					if node.TemplateName == testmachinery.PauseTemplateName && node.Phase == tmv1beta1.PhaseStatusRunning {
+					if node.TemplateName == testmachinery.PauseTemplateName && node.Phase == tmv1beta1.StepPhaseRunning {
 						return retry.Ok()
 					}
 				}
@@ -314,7 +314,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -373,7 +373,7 @@ var _ = Describe("Testflow execution tests", func() {
 				},
 			}
 
-			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+			tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 			defer utils.DeleteTestrun(operation.Client(), tr)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -401,7 +401,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -427,7 +427,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -460,7 +460,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err := operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -515,7 +515,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -570,7 +570,7 @@ var _ = Describe("Testflow execution tests", func() {
 					},
 				}
 
-				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.NodeSucceeded, TestrunDurationTimeout)
+				tr, _, err = operation.RunTestrunUntilCompleted(ctx, tr, argov1.WorkflowSucceeded, TestrunDurationTimeout)
 				defer utils.DeleteTestrun(operation.Client(), tr)
 				Expect(err).ToNot(HaveOccurred())
 

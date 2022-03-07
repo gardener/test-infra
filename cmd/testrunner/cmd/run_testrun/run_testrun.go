@@ -101,7 +101,7 @@ func (o *options) run(ctx context.Context) error {
 		os.Exit(1)
 	}
 
-	if run.Testrun.Status.Phase == tmv1beta1.PhaseStatusSuccess {
+	if run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess {
 		logger.Log.Info("testrunner successfully finished.")
 	} else {
 		logger.Log.Error(nil, "testrunner finished unsuccessful", "phase", run.Testrun.Status.Phase)

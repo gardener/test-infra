@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,7 +54,7 @@ func (r *TestmachineryReconciler) checkResume(rCtx *reconcileContext, step *v1be
 	}
 
 	// node has to be in running state
-	if argoNodeStatus.Phase != v1beta1.PhaseStatusRunning {
+	if argoNodeStatus.Phase != v1beta1.StepPhaseRunning {
 		return
 	}
 

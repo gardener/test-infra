@@ -17,9 +17,8 @@ package node
 import (
 	"fmt"
 
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	apiv1 "k8s.io/api/core/v1"
-
-	argov1 "github.com/argoproj/argo/v2/pkg/apis/workflow/v1alpha1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -180,7 +179,7 @@ func (n *Node) Status() *tmv1beta1.StepStatus {
 			Flow:      n.flow,
 		},
 		Annotations: n.step.Annotations,
-		Phase:       tmv1beta1.PhaseStatusInit,
+		Phase:       tmv1beta1.StepPhaseInit,
 		TestDefinition: tmv1beta1.StepStatusTestDefinition{
 			Name:                  td.Info.Name,
 			Owner:                 td.Info.Spec.Owner,
