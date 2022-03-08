@@ -21,7 +21,7 @@ testmachinery:
   cleanWorkflowPods: false
 
 argo:
-  argoUI:
+  argoserver:
     ingress:
       enabled: true
       host: argoui.example.com

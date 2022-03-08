@@ -45,7 +45,7 @@ func GetArgoURLFromHost(host string, tr *tmv1beta1.Testrun) string {
 
 // GetArgoHost returns the host of the argo ui
 func GetArgoHost(ctx context.Context, tmClient client.Client) (string, error) {
-	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Name: "argo-ui", Namespace: "default"})
+	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Name: "argo-server", Namespace: "default"})
 }
 
 // GetGrafanaURLFromHostForWorkflow returns the path to the logs in grafana for a whole workflow
