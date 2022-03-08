@@ -68,7 +68,22 @@ var _ = Describe("kubernetes version util", func() {
 			))
 		})
 
-		It("should return latest patch of old minor version", func() {
+		It("should return latest patch of old minor version omitting patch and `filterPatchVersions: true`", func() {
+			pattern := "1.14"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return latest patch of old minor version using '*' and `filterPatchVersions: true`", func() {
 			pattern := "1.14.*"
 			filter := true
 			versionFlavor := common.ShootKubernetesVersionFlavor{
@@ -79,6 +94,63 @@ var _ = Describe("kubernetes version util", func() {
 			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return latest patch of old minor version using 'X' and `filterPatchVersions: true`", func() {
+			pattern := "1.14.X"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return all patch versions of an old minor version omitting patch and `filterPatchVersions`", func() {
+			pattern := "1.14"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.5"),
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return all patch versions of an old minor version using `*` and omitting `filterPatchVersions`", func() {
+			pattern := "1.14.*"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.5"),
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return all patch versions of an old minor version using `X` and omitting `filterPatchVersions`", func() {
+			pattern := "1.14.X"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.5"),
 				newExpirableVersion("1.14.6"),
 			))
 		})
