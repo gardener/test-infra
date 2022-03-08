@@ -63,4 +63,4 @@ data:
     metricsConfig:
       enabled: true # fixed in 2.4.2
       path: /metrics
-      port: 8081
+      port: 9090
