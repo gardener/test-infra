@@ -34,7 +34,7 @@ const (
 	ArgoManagedResourceName = "argo"
 
 	// ArgoUIImageName is the name of the argo ui image in the image vector
-	ArgoUIImageName = "argo-ui"
+	ArgoUIImageName = "argo-server"
 
 	// ArgoWorkflowControllerImageName is the name of the argo workflow controller image in the image vector
 	ArgoWorkflowControllerImageName = "argo-workflow-controller"
@@ -43,7 +43,7 @@ const (
 	ArgoExecutorImageName = "argo-executor"
 
 	// ArgoUIIngressName is the name of the argo ui ingress resource deployed to the cluster
-	ArgoUIIngressName = "argo-ui"
+	ArgoUIIngressName = "argo-server"
 
 	// ArgoWorkflowControllerDeploymentName is the name workflow controller deployment
 	ArgoWorkflowControllerDeploymentName = "workflow-controller"
