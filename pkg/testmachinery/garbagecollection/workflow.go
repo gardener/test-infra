@@ -59,7 +59,7 @@ func CleanWorkflowPods(c client.Client, wf *argov1.Workflow) error {
 	if testmachinery.CleanWorkflowPods() {
 		for nodeName, node := range wf.Status.Nodes {
 			if node.Type == argov1.NodeTypePod {
-				if err := deletePod(c, testmachinery.GetNamespace(), nodeName); err != nil {
+				if err := deletePod(c, wf.Namespace, nodeName); err != nil {
 					result = multierror.Append(result, fmt.Errorf("unable delete pod %s: %s", nodeName, err.Error()))
 				}
 			}
