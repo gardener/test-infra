@@ -70,6 +70,7 @@ RUN  \
     openssh \
     openssl \
     openssl-dev \
+    openvpn \
     python3 \
     python3-dev \
     py3-pip \
