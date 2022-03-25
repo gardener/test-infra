@@ -38,7 +38,7 @@ import (
 )
 
 // Collect collects results of all testruns and writes them to a file.
-// It returns a list with the names offailed testruns.
+// It returns a list with the names of failed testruns.
 func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) ([]string, error) {
 	var (
 		testrunsFailed []string
