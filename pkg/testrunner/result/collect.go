@@ -38,10 +38,10 @@ import (
 )
 
 // Collect collects results of all testruns and writes them to a file.
-// It returns whether there are failed testruns or not.
-func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) (bool, error) {
+// It returns a list with the names offailed testruns.
+func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient client.Client, namespace string, runs testrunner.RunList) ([]string, error) {
 	var (
-		testrunsFailed = false
+		testrunsFailed []string
 		result         *multierror.Error
 	)
 
@@ -62,7 +62,7 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 		if run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess {
 			runLogger.Info("Testrun finished successfully")
 		} else {
-			testrunsFailed = true
+			testrunsFailed = append(testrunsFailed, run.Testrun.Name)
 			runLogger.Error(fmt.Errorf("Testrun failed with phase %s", run.Testrun.Status.Phase), "")
 		}
 		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
