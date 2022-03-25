@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -131,8 +132,10 @@ func (o *options) run(ctx context.Context) error {
 	if runs.HasErrors() {
 		return errors.New("At least one testrun failed. Stopping.")
 	}
-	if o.failOnError && failed {
-		return errors.New("Something went wrong during testrun execution")
+	// when there are one or many testruns in phase != succeeded
+	if o.failOnError && len(failed) != 0 {
+		msg := fmt.Sprintf("Something went wrong during testrun execution. Failed testruns: %s ", strings.Join(failed, ", "))
+		return errors.New(msg)
 	}
 
 	return nil

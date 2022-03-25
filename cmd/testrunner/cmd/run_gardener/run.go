@@ -187,7 +187,7 @@ var runCmd = &cobra.Command{
 		if runs.HasErrors() {
 			os.Exit(1)
 		}
-		if failOnError && failed {
+		if failOnError && len(failed) != 0 {
 			os.Exit(1)
 		}
 	},
