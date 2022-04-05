@@ -12,6 +12,7 @@ import random
 import gitutil
 import stat
 import re
+import github.util
 from pprint import pprint
 from gitutil import GitHelper
 from distutils.version import StrictVersion
@@ -31,6 +32,7 @@ ctx = util.ctx()
 f = ctx.cfg_factory()
 ce = f.cfg_set('external_active')
 ci = f.cfg_set('internal_active')
+github_cfg = f.github('github_com')
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 temlate_dir = script_dir + '/'
@@ -71,22 +73,18 @@ def get_gardener_version():
     gardener_version_file = os.environ['LANDSCAPE_COMPONENTS_HOME'] + '/gardener/VERSION'
     try:
         with open(gardener_version_file, 'r') as gardener_version_file_reader:
-            gardener_veresion = gardener_version_file_reader.read()
+            gardener_version = gardener_version_file_reader.read()
     except IOError:
         print("Error: File '" + gardener_version_file + "' does not appear to exist.")
         sys.exit(1)
-    return gardener_veresion
+    return gardener_version
 
 
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
 def cloneForkedRepo():
-    github_cfg = f.github('github_com')
-    subprocess.run(["git", "config", "--global", "user.name", github_cfg.credentials().username()])
-    subprocess.run(["git", "config", "--global", "user.email",
-                    github_cfg.credentials().email_address()])
     gitHelper = GitHelper.clone_into(repo_name, github_cfg, repo_path)
     print('INFO: Cloned ' + repo_path + ' repository into ' + repo_name + ' directory')
     return gitHelper
@@ -103,8 +101,9 @@ def syncForkAndUpstream(gitHelper):
     gitHelper.push("@", "refs/heads/master")
 
 
-def createNewBranch():
-    branch_name_random = id_generator()
+def createNewBranch(product_name, provider_name, k8s_version):
+    random_id = id_generator()
+    branch_name_random = product_name + "-" + provider_name + "-" + k8s_version + "-" + random_id
     subprocess.run(["git", "checkout", "-b", branch_name_random])
     return branch_name_random
 
@@ -133,21 +132,6 @@ def inplace_change(filename, old_string, new_string):
         s = s.replace(old_string, new_string)
         f.write(s)
 
-
-def modifyFiles(product_name):
-    gardener_version = get_gardener_version()
-    subprocess.run(["git", "clean", "-f", "-d"])
-
-    activate_google_application_credentials()
-
-    provider_version_tuples = get_provider_k8s_version_tuples()
-    for provider_version_tuple in provider_version_tuples:
-        provider = provider_version_tuple[0]
-        k8s_version = provider_version_tuple[1]
-        modify_files_for_product(gardener_version=gardener_version,
-                                 product_name=product_name,
-                                 provider=provider,
-                                 k8s_version=k8s_version)
 
 def activate_google_application_credentials():
     cfg_factory = ccc.cfg.cfg_factory()
@@ -180,7 +164,8 @@ def get_provider_k8s_version_tuples():
     return provider_version_tuples
 
 
-def modify_files_for_product(gardener_version, product_name, provider, k8s_version):
+def process_product_provider_k8sVersion(gardener_version, product_name, provider, k8s_version):
+    # check, if k8s version has already been processed
     provider_path = k8s_version + '/' + product_name + '-' + provider
     if os.path.isdir(provider_path):
         print("skipping " + product_name + '-' + provider + '-' + k8s_version + ' because directory already exists.')
@@ -190,6 +175,22 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
         if os.path.isdir(provider_path):
             print("skipping " + product_name + '-gcp-' + k8s_version + ' because directory already exists.')
             return 0  # continue if directory for provider already exists
+
+    # create new branch
+    subprocess.run(["git", "clean", "-f", "-d"])
+    branch_name = createNewBranch(product_name, provider, k8s_version)
+
+    # modify files
+    modify_files_for_product(gardener_version, product_name, provider, k8s_version, provider_path)
+
+    # push changes
+    commitAndPushChanges(gitHelper, branch_name)
+
+    # submit PR
+    createPullRequest(product, pv_tuple, branch_name)
+
+
+def modify_files_for_product(gardener_version, product_name, provider, k8s_version, provider_path):
     os.makedirs(provider_path)
     os.chdir(provider_path)
 
@@ -295,17 +296,45 @@ def commitAndPushChanges(gitHelper, branch_name):
           repo_path + '/branches . TODO: manually send pull request to "' + upstream_repo + '"')
 
 
+def createPullRequest(product, provider_tuple, branch_name):
+    gh = github.util.GitHubRepositoryHelper(
+        owner='cncf',
+        name=repo_name,
+        github_cfg=github_cfg,
+    )
+    repo = gh.repository
+
+    pr_head = "gardener:" + branch_name
+    title = "Conformance Results for " + provider_tuple[1] + "/" + product + "-" + provider_tuple[0]
+    with open(".github/PULL_REQUEST_TEMPLATE.md") as pr_template:
+        body = pr_template.read()
+
+    body = re.sub('\[ \]', '[X]', body)
+    body = body + "\n cc @hendrikKahl @dguendisch"
+    pr = repo.create_pull(
+        title=title,
+        base="master",
+        head=pr_head,
+        body=body
+    )
+    print('Opened PR ' + title + " at " + pr.url)
+
+
 try:
     subprocess.run(['rm', '-Rf', repo_name])
 except subprocess.CalledProcessError as e:
     print('Directory ' + repo_name + ' does not exist.')
+subprocess.run(["git", "config", "--global", "user.name", github_cfg.credentials().username()])
+subprocess.run(["git", "config", "--global", "user.email",
+                github_cfg.credentials().email_address()])
+
 gitHelper = cloneForkedRepo()
 syncForkAndUpstream(gitHelper)
-branch_name = createNewBranch()
-modifyFiles('sap-cp')
-commitAndPushChanges(gitHelper, branch_name)
+activate_google_application_credentials()
+provider_version_tuples = get_provider_k8s_version_tuples()
+gardener_version = get_gardener_version()
 
-subprocess.run(["git", "checkout", "master"])
-branch_name = createNewBranch()
-modifyFiles('gardener')
-commitAndPushChanges(gitHelper, branch_name)
+for product in content_product_yaml.keys():
+    for pv_tuple in provider_version_tuples:
+        subprocess.run(["git", "checkout", "master"])
+        process_product_provider_k8sVersion(gardener_version, product, pv_tuple[0], pv_tuple[1])
