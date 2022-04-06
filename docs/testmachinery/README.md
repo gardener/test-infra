@@ -49,12 +49,12 @@ The following tests should be supported by TM
 Tests are defined in `TestDefinition.yaml` files, a bunch of tests is executed by defining a `TestRun` CRD. The TestMachinery watches a k8s cluster for `TestRun` CRDs and executes them by translating into an argo workflow.
 
 
-- **TestDefinition**: Yaml file defining the test as such: [example](../examples/GuestbookTestDef.yaml).
+- **TestDefinition**: Yaml file defining the test as such: [example](../../examples/20-GuestbookTestDef.yaml).
 
     They are described as a Kubernetes resource but are just used as configuration by the testmachinery.<br>
     If a `TestRun` enumerates tests by a label, all `TestDefinition`s that are found in the given locations and match that label are executed in parallel.
     TestDefinition resources must reside in a folder named `/.test-defs` in the repository of the respective component.
-- **TestRun**: CRD to schedule tests and record result: [example](../examples/int-testrun.yaml).
+- **TestRun**: CRD to schedule tests and record result: [example](../../examples/10-int-testrun.yaml).
 
   Can be created by anyone (e.g. CI/CD pipeline or manually using kubectl).
   Could have different states (init, running, finished), references the tests that will be executed as part of this TestRun instance and finally records test durations and results.
@@ -88,7 +88,7 @@ Furthermore, generated artifacts that are stored in the s3 storage are deleted a
 3. Install the latest TestMachinery with `make deploy-controller VERSION=latest`. Then the controller alongside to a service, validation webhooks and needed rbac permissions is installed.
     * Needed prerequisites like [argo](https://github.com/argoproj/argo) will then be automatically deployed and reconciled by the testmachinery.
     * For proper deployment, the testmachinery has to be configured accordingly. For more information have a look at the configuration section below.
-4. `TestRun`s can be executed by creating them with `kubectl create -f path/to/testrun.yaml` (examples can be found in the [examples folder](examples))
+4. `TestRun`s can be executed by creating them with `kubectl create -f path/to/testrun.yaml` (examples can be found in the [examples folder](../../examples))
 
 ### Configuration
 The testmachinery can be configured with a custom Configuration file (an example can be found [here](../../examples/01-configuration.yaml)).
