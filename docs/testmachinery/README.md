@@ -145,7 +145,7 @@ secrets:
 Another GitHub instance can be added editing the exiting secret and change the base64 encoded data.
 
 ### Testrunner
-See testrunner [docs](docs/Testrunner.md)
+See testrunner [docs](../testrunner/README.md)
 
 ## Local TestMachinery development
 
