@@ -11,7 +11,7 @@ Testrunner is an additional component of the Test Machinery that abstracts templ
 
 
 <p align="center">
-  <img alt= "testrunner overview" src="https://github.com/gardener/test-infra/raw/master/docs/testrunner_overview.png">
+  <img alt= "testrunner overview" src="testrunner_overview.png">
 </p>
 
 ## Usage
@@ -25,7 +25,7 @@ or via the prebuild binary which is updated and kept in sync with each new Test 
 testrunner [flags]
 ```
 
-Available commands ([technical detailed docs](testrunner/testrunner.md)):
+Available commands ([technical detailed docs](testrunner.md)):
 * [run-template](#run-template)
 * run-testrun
 * collect
