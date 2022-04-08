@@ -112,6 +112,10 @@ deploy-controller:
 remove-controller:
 	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml ./charts/testmachinery | kubectl delete -f -
 
+.PHONY: remove-controller-local
+remove-controller-local:
+	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml  --set "testmachinery.local=true,testmachinery.insecure=true,controller.hostPath=/tmp/tm" \
+		./charts/testmachinery | kubectl delete -f -
 
 #####################
 # Local development #
@@ -131,7 +135,7 @@ run-controller:
 
 .PHONY: install-controller-local
 install-controller-local:
-	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml --set "local.enabled=true,local.hostPath=/tmp/tm" \
+	helm template --namespace ${NS} -f ./charts/testmachinery/local-values.yaml --set "testmachinery.local=true,testmachinery.insecure=true,controller.hostPath=/tmp/tm" \
 		./charts/testmachinery | kubectl create -f -
 
 .PHONY: run-it-tests

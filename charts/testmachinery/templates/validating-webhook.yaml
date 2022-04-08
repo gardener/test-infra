@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+{{- if not .Values.testmachinery.local }}
 {{- if semverCompare ">= 1.16-0" .Capabilities.KubeVersion.GitVersion }}
 apiVersion: admissionregistration.k8s.io/v1
 {{- else }}
@@ -42,3 +43,4 @@ webhooks:
       name: testmachinery-controller
       path: /webhooks/validate-testrun
     caBundle: {{ required ".Values.controller.tls.caBundle is required" (b64enc .Values.controller.tls.caBundle) }}
+{{- end }}
