@@ -27,7 +27,7 @@ import (
 // SymbolOffset is the offset that the symbol is prefixed for better readability
 const SymbolOffset = " "
 
-// StatusSymbol is a unicode symbol for dieplaying in a table
+// StatusSymbol is a unicode symbol for displaying in a table
 type StatusSymbol string
 
 const (
@@ -122,7 +122,13 @@ func (r *results) AddResult(meta ItemMeta, symbol StatusSymbol) {
 			content:   content,
 		}
 	}
-	r.content[key].content[cpIndex] = SymbolOffset + string(symbol)
+
+	column := r.content[key].content[cpIndex]
+	if strings.Contains(column, string(StatusSymbolNA)) {
+		r.content[key].content[cpIndex] = SymbolOffset + string(symbol)
+	} else {
+		r.content[key].content[cpIndex] = column + SymbolOffset + string(symbol)
+	}
 }
 
 func computeDimensionKey(meta ItemMeta) string {
