@@ -86,7 +86,7 @@ func (o *options) Complete() error {
 			Scheme: gardener.GardenScheme,
 		})
 		if err != nil {
-			logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.tmKubeconfigPath)
+			logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.testrunnerKubeconfigPath)
 			os.Exit(1)
 		}
 		flavors, err := GetShootFlavors(o.shootParameters.FlavorConfigPath, gardenK8sClient, o.shootPrefix, o.filterPatchVersions)
