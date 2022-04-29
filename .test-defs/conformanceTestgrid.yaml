@@ -56,7 +56,7 @@ spec:
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
     export GARDEN_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/gardener.config &&
     go run -mod=vendor ./integration-tests/e2e --cleanUpAfterwards=true --flakeAttempts=5
-  image: golang:1.16
+  image: golang:1.17
   resources:
     requests:
       memory: "500Mi"

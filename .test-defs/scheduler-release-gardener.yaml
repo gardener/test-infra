@@ -40,4 +40,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/hostscheduler gardener release --kubeconfig=/tmp/secrets/gardener-service-account.kubeconfig --clean=$CLEAN
-  image: golang:1.16
+  image: golang:1.17

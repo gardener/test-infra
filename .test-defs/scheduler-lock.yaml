@@ -52,4 +52,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/hostscheduler gke lock --id=$TM_TESTRUN_ID  --key=/tmp/secrets/gcloud.json --project=$GKE_PROJECT --zone=$GKE_ZONE
-  image: golang:1.16
+  image: golang:1.17
