@@ -40,7 +40,7 @@ github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 ## explicit
 github.com/PuerkitoBio/urlesc
-# github.com/argoproj/argo-workflows/v3 v3.2.8
+# github.com/argoproj/argo-workflows/v3 v3.2.11
 ## explicit; go 1.16
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1
