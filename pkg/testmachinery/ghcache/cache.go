@@ -32,7 +32,7 @@ type cache struct {
 
 var (
 	// parallelRequests stores a Condition for each ongoing http request
-	parallelRequests     map[string]*sync.Cond
+	parallelRequests     = make(map[string]*sync.Cond)
 	parallelRequestsLock sync.Mutex
 )
 
