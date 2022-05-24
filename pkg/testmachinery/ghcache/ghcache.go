@@ -29,6 +29,8 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+var ghCache httpcache.Cache
+
 // Cache adds github caching to a http client.
 // It returns a mem cache by default and a disk cache if a directory is defined
 func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper) (http.RoundTripper, error) {
@@ -48,6 +50,7 @@ func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper)
 	cachedTransport.Transport = &cache{
 		delegate:      delegate,
 		maxAgeSeconds: cfg.MaxAgeSeconds,
+		httpCache:     githubCache,
 	}
 
 	return &rateLimitLogger{
@@ -58,8 +61,14 @@ func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper)
 }
 
 func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
+
+	if ghCache != nil {
+		return ghCache, nil
+	}
+
 	if cfg.CacheDir == "" {
-		return httpcache.NewMemoryCache(), nil
+		ghCache = httpcache.NewMemoryCache()
+		return ghCache, nil
 	}
 
 	if err := os.MkdirAll(cfg.CacheDir, os.ModePerm); err != nil {
@@ -69,12 +78,13 @@ func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
 		return nil, errors.New("disk cache size ha to be grater than 0")
 	}
 
-	return diskcache.NewWithDiskv(
+	ghCache = diskcache.NewWithDiskv(
 		diskv.New(diskv.Options{
 			BasePath:     path.Join(cfg.CacheDir, "data"),
 			TempDir:      path.Join(cfg.CacheDir, "temp"),
 			CacheSizeMax: uint64(cfg.CacheDiskSizeGB) * uint64(1000000000), // GB to B
-		})), nil
+		}))
+	return ghCache, nil
 }
 
 var internalConfig *config.GitHubCache
