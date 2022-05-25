@@ -50,12 +50,12 @@ func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper)
 	cachedTransport.Transport = &cache{
 		delegate:      delegate,
 		maxAgeSeconds: cfg.MaxAgeSeconds,
-		httpCache:     githubCache,
 	}
 
-	return &rateLimitLogger{
+	return &rateLimitControl{
 		log:      log,
 		delegate: cachedTransport,
+		cache:    githubCache,
 	}, nil
 
 }

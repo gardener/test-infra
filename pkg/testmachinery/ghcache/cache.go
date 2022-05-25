@@ -17,9 +17,6 @@ package ghcache
 import (
 	"fmt"
 	"net/http"
-	"sync"
-
-	"github.com/gregjones/httpcache"
 )
 
 // cache extends the default http caching by adding caching behavior to errornous responses like 404.
@@ -27,75 +24,9 @@ import (
 type cache struct {
 	delegate      http.RoundTripper
 	maxAgeSeconds int
-	httpCache     httpcache.Cache
 }
-
-var (
-	// parallelRequests stores a Condition for each ongoing http request
-	parallelRequests     = make(map[string]*sync.Cond)
-	parallelRequestsLock sync.Mutex
-)
 
 func (c *cache) RoundTrip(req *http.Request) (*http.Response, error) {
-
-	// avoid parallel requests in case the response is not yet cached
-	// only GET and HEAD requests are cachable, thus we care only about those here
-	if req.Method != http.MethodGet && req.Method != http.MethodHead {
-		return c.roundTrip(req)
-	}
-
-	isCached, err := httpcache.CachedResponse(c.httpCache, req)
-	if err != nil {
-		return nil, err
-	}
-
-	// in case of a cache miss, we check for parallel requests
-	// if there is an ongoing request, wait on the Condition and proceed to get the response via the cache
-	// if we are the first, a new Condition is added to the map and the request will be sent
-	// once the request returns, remove the condition and then broadcast to awake waiting routines
-	if isCached == nil {
-		key := req.URL.String()
-
-		parallelRequestsLock.Lock()
-		activeRequest, ok := parallelRequests[key]
-		if !ok {
-			// no active request yet, we are the first!
-			activeRequest = sync.NewCond(&sync.Mutex{})
-			parallelRequests[key] = activeRequest
-			parallelRequestsLock.Unlock()
-
-			// run the actual request via the cache
-			res, err := c.roundTrip(req)
-
-			// remove the Condition for this key so no other requests can subscribe here
-			parallelRequestsLock.Lock()
-			delete(parallelRequests, key)
-			parallelRequestsLock.Unlock()
-
-			// lock the condition and wake up all other routines waiting
-			activeRequest.L.Lock()
-			activeRequest.Broadcast()
-			activeRequest.L.Unlock()
-
-			return res, err
-		} else {
-			// first, lock the Condition and then unlock the map access
-			// this ensures Broadcast() will be sent to all subscribers
-			activeRequest.L.Lock()
-			parallelRequestsLock.Unlock()
-
-			// being awaken from Wait() includes acquiring the lock, hence unlock is called
-			activeRequest.Wait()
-			activeRequest.L.Unlock()
-		}
-	}
-
-	// a cache hit can be expected now
-	return c.roundTrip(req)
-
-}
-
-func (c *cache) roundTrip(req *http.Request) (*http.Response, error) {
 	if c.maxAgeSeconds <= 0 {
 		return c.delegate.RoundTrip(req)
 	}
