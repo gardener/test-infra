@@ -118,19 +118,18 @@ func (l *rateLimitControl) wakeUpCallFromCache(req *http.Request, reqCondition *
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	for {
+	for run := true; run; {
 		isCached, err := httpcache.CachedResponse(l.cache, req)
 		if err != nil || isCached != nil {
-			break
+			run = false
 		}
 		select {
 		case <-ctx.Done():
-			break
+			run = false
 		default:
 			time.Sleep(5 * time.Millisecond)
 		}
 	}
-
 	reqCondition.L.Lock()
 	reqCondition.Broadcast()
 	reqCondition.L.Unlock()
