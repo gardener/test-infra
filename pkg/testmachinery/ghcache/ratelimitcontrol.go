@@ -15,8 +15,10 @@
 package ghcache
 
 import (
+	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/gregjones/httpcache"
@@ -69,17 +71,11 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 				delete(parallelRequests, key)
 				parallelRequestsLock.Unlock()
 
-				// lock the condition and wake up all other routines waiting
-				activeRequest.L.Lock()
-				isCached, err = httpcache.CachedResponse(l.cache, req)
-				if isCached == nil {
-					l.log.V(5).Info("Not yet cached", "key", key)
-				} else {
-					l.log.V(5).Info("Cache entry is present", "key", key)
-				}
-				l.log.V(5).Info("Wake up waiting requests", "key", key)
-				activeRequest.Broadcast()
-				activeRequest.L.Unlock()
+				// The cache stores the response only after req.Body has been closed.
+				// This happens way up the call stack, so we cannot wake up routines waiting yet.
+				// They would find the cache still being empty. Hence, the wake-up call has to
+				// run separately with a timeout
+				go l.wakeUpCallFromCache(req, activeRequest)
 
 				l.logRateLimitInfo(req, res)
 				return res, err
@@ -94,10 +90,8 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 				activeRequest.Wait()
 				activeRequest.L.Unlock()
 				l.log.V(5).Info("Awaken", "key", key)
-
 			}
 		}
-
 	}
 
 	l.log.V(5).Info("Roundtrip with cache", "key", key)
@@ -118,4 +112,26 @@ func (l *rateLimitControl) logRateLimitInfo(req *http.Request, resp *http.Respon
 	if remaining == "0" {
 		l.log.Error(nil, "GitHub request limit exceeded", "total", total, "remaining", remaining, "url", req.URL.String())
 	}
+}
+
+func (l *rateLimitControl) wakeUpCallFromCache(req *http.Request, reqCondition *sync.Cond) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	for {
+		isCached, err := httpcache.CachedResponse(l.cache, req)
+		if err != nil || isCached != nil {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			break
+		default:
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+
+	reqCondition.L.Lock()
+	reqCondition.Broadcast()
+	reqCondition.L.Unlock()
 }
