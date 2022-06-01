@@ -58,12 +58,11 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 			activeRequest, ok := parallelRequests[key]
 			if !ok {
 				// no active request yet, we are the first!
-				l.log.V(5).Info("First request", "key", key)
+				l.log.V(5).Info("Roundtrip first request", "key", key)
 				activeRequest = sync.NewCond(&sync.Mutex{})
 				parallelRequests[key] = activeRequest
 				parallelRequestsLock.Unlock()
 
-				l.log.V(5).Info("First request roundtrip", "key", key)
 				// run the actual request via the cache
 				res, err := l.delegate.RoundTrip(req)
 				// remove the Condition for this key so no other requests can subscribe here
@@ -89,7 +88,6 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 				// being awakened from Wait() includes acquiring the lock, hence unlock is called
 				activeRequest.Wait()
 				activeRequest.L.Unlock()
-				l.log.V(5).Info("Awaken", "key", key)
 			}
 		}
 	}
@@ -118,19 +116,22 @@ func (l *rateLimitControl) wakeUpCallFromCache(req *http.Request, reqCondition *
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	for run := true; run; {
+	for {
 		isCached, err := httpcache.CachedResponse(l.cache, req)
 		if err != nil || isCached != nil {
-			run = false
+			reqCondition.L.Lock()
+			reqCondition.Broadcast()
+			reqCondition.L.Unlock()
+			return
 		}
 		select {
 		case <-ctx.Done():
-			run = false
+			reqCondition.L.Lock()
+			reqCondition.Broadcast()
+			reqCondition.L.Unlock()
+			return
 		default:
-			time.Sleep(5 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	reqCondition.L.Lock()
-	reqCondition.Broadcast()
-	reqCondition.L.Unlock()
 }
