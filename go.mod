@@ -10,8 +10,8 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.2.11
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/component-cli v0.32.0
-	github.com/gardener/component-spec/bindings-go v0.0.53
+	github.com/gardener/component-cli v0.40.0
+	github.com/gardener/component-spec/bindings-go v0.0.61
 	github.com/gardener/gardener v1.38.2
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.4.0
