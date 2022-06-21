@@ -39,7 +39,6 @@ type rateLimitControl struct {
 
 func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) {
 	key := req.URL.String()
-	l.log.V(5).Info("Starting RoundTrip", "key", key)
 	// avoid parallel requests in case the response is not yet cached
 	// only GET and HEAD requests are cachable, thus we care only about those here
 	if req.Method == http.MethodGet || req.Method == http.MethodHead {
@@ -57,8 +56,7 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 			parallelRequestsLock.Lock()
 			activeRequest, ok := parallelRequests[key]
 			if !ok {
-				// no active request yet, we are the first!
-				l.log.V(5).Info("Roundtrip first request", "key", key)
+				l.log.V(5).Info("No other requests in-flight, performing full roundtrip to fill cache", "key", key)
 				activeRequest = sync.NewCond(&sync.Mutex{})
 				parallelRequests[key] = activeRequest
 				parallelRequestsLock.Unlock()
@@ -81,7 +79,7 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 			} else {
 				// first, lock the Condition and then unlock the map access
 				// this ensures Broadcast() will be sent to all subscribers
-				l.log.V(5).Info("Similar request already in-flight", "key", key)
+				l.log.V(5).Info("Similar request already in-flight, waiting for it to complete to get cached response", "key", key)
 				activeRequest.L.Lock()
 				parallelRequestsLock.Unlock()
 
@@ -92,8 +90,7 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 	}
 
-	l.log.V(5).Info("Roundtrip with cache", "key", key)
-	// a cache hit for GET/HEAD requests is expected now
+	l.log.V(5).Info("Roundtrip will check for cached response", "key", key)
 	resp, err := l.delegate.RoundTrip(req)
 	if err != nil {
 		return nil, err

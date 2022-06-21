@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 
@@ -29,11 +30,15 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-var ghCache httpcache.Cache
+var (
+	ghCache   httpcache.Cache
+	initCache sync.Mutex
+)
 
-// Cache adds github caching to a http client.
+// WithRateLimitControlCache adds github caching to a http client.
+// The very first call will init the cache once, based on the config handed over.
 // It returns a mem cache by default and a disk cache if a directory is defined
-func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper) (http.RoundTripper, error) {
+func WithRateLimitControlCache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper) (http.RoundTripper, error) {
 	if cfg == nil && internalConfig == nil {
 		return nil, errors.New("no configuration is provided for the github cache")
 	}
@@ -41,7 +46,7 @@ func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper)
 		cfg = internalConfig
 	}
 
-	githubCache, err := getCache(cfg)
+	githubCache, err := getOrCreateCache(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +65,13 @@ func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper)
 
 }
 
-func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
+func getOrCreateCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
+	if ghCache != nil {
+		return ghCache, nil
+	}
 
+	initCache.Lock()
+	defer initCache.Unlock()
 	if ghCache != nil {
 		return ghCache, nil
 	}
