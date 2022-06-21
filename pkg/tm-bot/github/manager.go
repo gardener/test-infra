@@ -91,7 +91,7 @@ func (m *manager) getGitHubClient(installationID int64) (*internalClientItem, er
 		return ghClient, nil
 	}
 
-	trp, err := ghcache.Cache(m.log.WithName("ghCache"), m.cacheConfig, http.DefaultTransport)
+	trp, err := ghcache.WithRateLimitControlCache(m.log.WithName("ghCache"), http.DefaultTransport)
 	if err != nil {
 		return nil, err
 	}

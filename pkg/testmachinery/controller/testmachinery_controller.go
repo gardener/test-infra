@@ -17,6 +17,8 @@ package controller
 import (
 	"fmt"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -75,6 +77,8 @@ func RegisterTestMachineryController(mgr manager.Manager, log logr.Logger, confi
 	if err := bldr.Complete(tmReconciler); err != nil {
 		return err
 	}
+
+	ghcache.InitGitHubCache(config.GitHub.Cache)
 
 	if !config.Controller.TTLController.Disable {
 		return ttl.AddControllerToManager(log, mgr, config.Controller.TTLController)

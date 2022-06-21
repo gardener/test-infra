@@ -18,63 +18,79 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
+
+	"github.com/gregjones/httpcache/diskcache"
+	"github.com/peterbourgon/diskv"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 
 	"github.com/go-logr/logr"
 	"github.com/gregjones/httpcache"
-	"github.com/gregjones/httpcache/diskcache"
-	"github.com/peterbourgon/diskv"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 )
 
-// Cache adds github caching to a http client.
-// It returns a mem cache by default and a disk cache if a directory is defined
-func Cache(log logr.Logger, cfg *config.GitHubCache, delegate http.RoundTripper) (http.RoundTripper, error) {
-	if cfg == nil && internalConfig == nil {
-		return nil, errors.New("no configuration is provided for the github cache")
-	}
-	if cfg == nil {
-		cfg = internalConfig
+var (
+	ghCache       httpcache.Cache
+	maxAgeSeconds int
+	initOnce      sync.Once
+)
+
+// WithRateLimitControlCache adds the central GitHub cache to a http client.
+// Call InitGitHubCache in advance for bootstrapping the cache
+func WithRateLimitControlCache(log logr.Logger, delegate http.RoundTripper) (http.RoundTripper, error) {
+
+	if ghCache == nil {
+		return nil, errors.New("cache has not been initialized yet")
 	}
 
-	githubCache, err := getCache(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	cachedTransport := httpcache.NewTransport(githubCache)
+	cachedTransport := httpcache.NewTransport(ghCache)
 	cachedTransport.Transport = &cache{
 		delegate:      delegate,
-		maxAgeSeconds: cfg.MaxAgeSeconds,
+		maxAgeSeconds: maxAgeSeconds,
 	}
 
-	return &rateLimitLogger{
+	return &rateLimitControl{
 		log:      log,
 		delegate: cachedTransport,
+		cache:    ghCache,
 	}, nil
 
 }
 
-func getCache(cfg *config.GitHubCache) (httpcache.Cache, error) {
-	if cfg.CacheDir == "" {
-		return httpcache.NewMemoryCache(), nil
-	}
+// InitGitHubCache initializes a central cache exactly once
+// It returns a mem cache by default and a disk cache if a directory is defined
+func InitGitHubCache(cfg *config.GitHubCache) {
+	initOnce.Do(func() {
+		if cfg == nil && internalConfig == nil {
+			panic("no configuration is provided for the github cache")
+		}
+		if cfg == nil {
+			cfg = internalConfig
+		}
 
-	if err := os.MkdirAll(cfg.CacheDir, os.ModePerm); err != nil {
-		return nil, err
-	}
-	if cfg.CacheDiskSizeGB == 0 {
-		return nil, errors.New("disk cache size ha to be grater than 0")
-	}
+		maxAgeSeconds = cfg.MaxAgeSeconds
 
-	return diskcache.NewWithDiskv(
-		diskv.New(diskv.Options{
-			BasePath:     path.Join(cfg.CacheDir, "data"),
-			TempDir:      path.Join(cfg.CacheDir, "temp"),
-			CacheSizeMax: uint64(cfg.CacheDiskSizeGB) * uint64(1000000000), // GB to B
-		})), nil
+		if cfg.CacheDir == "" {
+			ghCache = httpcache.NewMemoryCache()
+			return
+		}
+
+		if err := os.MkdirAll(cfg.CacheDir, os.ModePerm); err != nil {
+			panic(err)
+		}
+		if cfg.CacheDiskSizeGB == 0 {
+			panic("disk cache size ha to be grater than 0")
+		}
+
+		ghCache = diskcache.NewWithDiskv(
+			diskv.New(diskv.Options{
+				BasePath:     path.Join(cfg.CacheDir, "data"),
+				TempDir:      path.Join(cfg.CacheDir, "temp"),
+				CacheSizeMax: uint64(cfg.CacheDiskSizeGB) * uint64(1000000000), // GB to B
+			}))
+	})
 }
 
 var internalConfig *config.GitHubCache

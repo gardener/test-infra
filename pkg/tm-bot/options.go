@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
+
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -76,6 +78,7 @@ func (o *options) setupGitHubBot(router *mux.Router, runs *tests.Runs) error {
 	if !cfg.Enabled {
 		return nil
 	}
+	ghcache.InitGitHubCache(&cfg.GitHubCache)
 	ghClient, err := github.NewManager(o.log.WithName("github"), cfg)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize github client")

@@ -176,7 +176,7 @@ func (l *GitLocation) getGitHubClient() (*github.Client, *http.Client, error) {
 
 func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	if l.config != nil {
-		trp, err := ghcache.Cache(l.log.WithName("ghCache"), testmachinery.GetConfig().GitHub.Cache, &http.Transport{
+		trp, err := ghcache.WithRateLimitControlCache(l.log.WithName("ghCache"), &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
 		})
 		if err != nil {
@@ -193,7 +193,7 @@ func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	}
 
 	l.log.V(3).Info("insecure and unauthenticated git connection is used")
-	trp, err := ghcache.Cache(l.log.WithName("ghCache"), testmachinery.GetConfig().GitHub.Cache, &http.Transport{
+	trp, err := ghcache.WithRateLimitControlCache(l.log.WithName("ghCache"), &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	})
 	if err != nil {
