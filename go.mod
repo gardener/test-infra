@@ -7,11 +7,11 @@ require (
 	cloud.google.com/go/storage v1.21.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/argoproj/argo-workflows/v3 v3.2.8
+	github.com/argoproj/argo-workflows/v3 v3.2.11
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/component-cli v0.32.0
-	github.com/gardener/component-spec/bindings-go v0.0.53
+	github.com/gardener/component-cli v0.40.0
+	github.com/gardener/component-spec/bindings-go v0.0.61
 	github.com/gardener/gardener v1.38.2
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.4.0

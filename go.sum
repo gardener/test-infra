@@ -196,8 +196,8 @@ github.com/ardielle/ardielle-go v1.5.2/go.mod h1:I4hy1n795cUhaVt/ojz83SNVCYIGsAF
 github.com/ardielle/ardielle-tools v1.5.4/go.mod h1:oZN+JRMnqGiIhrzkRN9l26Cej9dEx4jeNG6A+AdkShk=
 github.com/argoproj-labs/argo-dataflow v0.0.107/go.mod h1:XQ+s9j5t/7R11Oi+P8dmbX9JRi+UdscGURxC457y6O8=
 github.com/argoproj/argo-events v1.4.0/go.mod h1:wI5A0U3Wj9ZvfPn3ioL18Dz29+7aibtlyU9pS0Ry+bg=
-github.com/argoproj/argo-workflows/v3 v3.2.8 h1:0aa1YRW7fDvmyrSgLeC36zio6qs5TUo1g1+iDI+S1Ig=
-github.com/argoproj/argo-workflows/v3 v3.2.8/go.mod h1:I4+VcUGDm7hsF+pDyrx9+DFD1pjzB+CJU1z+nZ7CpC4=
+github.com/argoproj/argo-workflows/v3 v3.2.11 h1:pJs2Rm/JtbTRrHQArqNXbl34b8AA00Ct+EvD2u1UShM=
+github.com/argoproj/argo-workflows/v3 v3.2.11/go.mod h1:I4+VcUGDm7hsF+pDyrx9+DFD1pjzB+CJU1z+nZ7CpC4=
 github.com/argoproj/pkg v0.9.0/go.mod h1:ra+bQPmbVAoEL+gYSKesuigt4m49i3Qa3mE/xQcjCiA=
 github.com/argoproj/pkg v0.11.0/go.mod h1:ra+bQPmbVAoEL+gYSKesuigt4m49i3Qa3mE/xQcjCiA=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
@@ -526,13 +526,13 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa/go.mod h1:KnogPXtdwXqoenmZCw6S+25EAm2MkxbG0deNDu4cbSA=
-github.com/gardener/component-cli v0.32.0 h1:xknFX0KL+ouhYMYuZoMZ73ogHvG4r4/lyLB5ct3NP1A=
-github.com/gardener/component-cli v0.32.0/go.mod h1:8nPKm/bS2jEeEu5VefDM+SHfa1TsUP/rUC4TV8xBhfE=
+github.com/gardener/component-cli v0.40.0 h1:8CgEd7wsyN6yG20Zm+/XXEfRjS8qz49xR63sFpKnwMM=
+github.com/gardener/component-cli v0.40.0/go.mod h1:vXzTXrnL3D68UiacEVKwHGigArHorV23tc3cqaACBk0=
 github.com/gardener/component-spec/bindings-go v0.0.32/go.mod h1:53EIwICsuMgbY/MFCv5/lbOR5e1MQe1HY674Io+nGYE=
 github.com/gardener/component-spec/bindings-go v0.0.33/go.mod h1:53EIwICsuMgbY/MFCv5/lbOR5e1MQe1HY674Io+nGYE=
 github.com/gardener/component-spec/bindings-go v0.0.52/go.mod h1:kQFMTWowNAp9tOp6aImQa/NoLzfvX29jN5Qgud9rpQU=
-github.com/gardener/component-spec/bindings-go v0.0.53 h1:9M6YOs8FYDSmGJqNqdCFolo3buuQalJSuUy7X8FIXm4=
-github.com/gardener/component-spec/bindings-go v0.0.53/go.mod h1:kQFMTWowNAp9tOp6aImQa/NoLzfvX29jN5Qgud9rpQU=
+github.com/gardener/component-spec/bindings-go v0.0.61 h1:bHnwwwbUDTvjnAbkRsmorwXV32AVUeUd6L1aViZN2YA=
+github.com/gardener/component-spec/bindings-go v0.0.61/go.mod h1:kQFMTWowNAp9tOp6aImQa/NoLzfvX29jN5Qgud9rpQU=
 github.com/gardener/controller-manager-library v0.1.1-0.20191212112146-917449ad760c/go.mod h1:v6cbldxmpL2fYBEB2lSnq3LSEPwIHus9En6iIhwNE1k=
 github.com/gardener/controller-manager-library v0.1.1-0.20200204110458-c263b9bb97ad/go.mod h1:v6cbldxmpL2fYBEB2lSnq3LSEPwIHus9En6iIhwNE1k=
 github.com/gardener/controller-manager-library v0.2.1-0.20200810091329-d980dbe10959/go.mod h1:XMp1tPcX3SP/dMd+3id418f5Cqu44vydeTkBRbW8EvQ=
@@ -561,7 +561,7 @@ github.com/gardener/gardener-resource-manager v0.18.0/go.mod h1:k53Yw2iDAIpTxnCh
 github.com/gardener/hvpa-controller v0.0.0-20191014062307-fad3bdf06a25/go.mod h1:yj7YJ6ijo4adcpXQKutPFZfQuKLdM5UMZZUlpbM3vig=
 github.com/gardener/hvpa-controller v0.2.5/go.mod h1:rjsb3BPKJFMluudZ8/bhCCDQfFCF/0Um+rzXQI/MmfI=
 github.com/gardener/hvpa-controller v0.3.1/go.mod h1:rjsb3BPKJFMluudZ8/bhCCDQfFCF/0Um+rzXQI/MmfI=
-github.com/gardener/image-vector v0.6.0/go.mod h1:32SHGcbmmueeK9VkawsFcEbsoENXQPIuuYiFBUP+vMQ=
+github.com/gardener/image-vector v0.10.0/go.mod h1:32SHGcbmmueeK9VkawsFcEbsoENXQPIuuYiFBUP+vMQ=
 github.com/gardener/landscaper/apis v0.7.0/go.mod h1:++MW27PlSnbWM4AJipikw62RSprxO5TKVxZ8nh0e4Yw=
 github.com/gardener/machine-controller-manager v0.27.0/go.mod h1:zlIxuLQMtRO+aXOFsG6qtYkBmggbWY82K7MSO051ARU=
 github.com/gardener/machine-controller-manager v0.33.0/go.mod h1:jxxE+mGgXwg4iPlCHTG4GtUfK2CcHA6yYoIIowoxOZU=
