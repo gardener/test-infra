@@ -289,7 +289,7 @@ def commitAndPushChanges(gitHelper, branch_name):
     subprocess.run(["git", "add", "*e2e.log"])
     subprocess.run(["git", "add", "*junit_01.xml"])
     subprocess.run(["git", "add", "*README.md"])
-    subprocess.run(["git", "commit", "-m", "gardener supporting new k8s release"])
+    subprocess.run(["git", "commit", "-s",  "-m", "gardener supporting new k8s release"])
     gitHelper.push("@", f"refs/heads/{branch_name}")
     # subprocess.run(["git", "push", "origin", branch_name])
     print('Branch "' + branch_name + '" was successfully created on https://github.com/' +
