@@ -42,8 +42,8 @@ TESTRUN ?= "examples/int-testrun.yaml"
 
 .PHONY: revendor
 revendor:
-	@GO111MODULE=on go mod vendor
 	@GO111MODULE=on go mod tidy
+	@GO111MODULE=on go mod vendor
 	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
 	@$(REPO_ROOT)/hack/update-github-templates.sh
 
