@@ -24,10 +24,9 @@ import (
 	time "time"
 	unsafe "unsafe"
 
+	config "github.com/gardener/test-infra/pkg/apis/config"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-
-	config "github.com/gardener/test-infra/pkg/apis/config"
 )
 
 func init() {

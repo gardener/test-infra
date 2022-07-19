@@ -23,10 +23,9 @@ limitations under the License.
 package openapi
 
 import (
-	spec "github.com/go-openapi/spec"
-	common "k8s.io/kube-openapi/pkg/common"
-
 	strconf "github.com/gardener/test-infra/pkg/util/strconf"
+	common "k8s.io/kube-openapi/pkg/common"
+	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -584,7 +583,6 @@ func schema_pkg_apis_config_v1beta1_HealthCheckTarget(ref common.ReferenceCallba
 					"interval": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Interval specifies the frequency of the health check",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
 						},
 					},
