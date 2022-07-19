@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -260,4 +261,9 @@ func CalculateBlobUploadRef(repoCtx cdv2.OCIRegistryRepository, componentName st
 	}
 
 	return fmt.Sprintf("%s/component-descriptors/%s:%s", repoCtx.BaseURL, componentName, uploadTag)
+}
+
+// ExponentialBackoff calculates an exponential backoff timeout
+func ExponentialBackoff(backoffFactor time.Duration, retries uint64) time.Duration {
+	return time.Duration(float64(backoffFactor.Nanoseconds()) * math.Pow(2, float64(retries)))
 }
