@@ -40,11 +40,12 @@ github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 ## explicit
 github.com/PuerkitoBio/urlesc
-# github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-## explicit
+# github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
+## explicit; go 1.15
 github.com/ahmetb/gen-crd-api-reference-docs
-# github.com/argoproj/argo-workflows/v3 v3.2.11
-## explicit; go 1.16
+# github.com/argoproj/argo-workflows/v3 v3.3.8
+## explicit; go 1.17
+github.com/argoproj/argo-workflows/v3/errors
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1
 github.com/argoproj/argo-workflows/v3/util/json
@@ -52,7 +53,7 @@ github.com/argoproj/argo-workflows/v3/util/slice
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
+# github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 ## explicit; go 1.13
 github.com/bradleyfalzon/ghinstallation/v2
 # github.com/bronze1man/yaml2json v0.0.0-20211227013850-8972abeaea25
@@ -109,7 +110,7 @@ github.com/docker/docker-credential-helpers/credentials
 ## explicit
 github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
-# github.com/evanphx/json-patch v4.12.0+incompatible
+# github.com/evanphx/json-patch v5.6.0+incompatible
 ## explicit
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.13.0
@@ -190,13 +191,13 @@ github.com/go-logr/zapr
 # github.com/go-openapi/jsonpointer v0.19.5
 ## explicit; go 1.13
 github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.19.5
+# github.com/go-openapi/jsonreference v0.19.6
 ## explicit; go 1.13
 github.com/go-openapi/jsonreference
-# github.com/go-openapi/spec v0.20.2
+# github.com/go-openapi/spec v0.20.4
 ## explicit; go 1.13
 github.com/go-openapi/spec
-# github.com/go-openapi/swag v0.19.14
+# github.com/go-openapi/swag v0.19.15
 ## explicit; go 1.11
 github.com/go-openapi/swag
 # github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0
@@ -265,9 +266,6 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/golang/snappy v0.0.4
-## explicit
-github.com/golang/snappy
 # github.com/google/btree v1.0.1
 ## explicit; go 1.12
 github.com/google/btree
@@ -297,16 +295,20 @@ github.com/google/go-containerregistry/pkg/v1/remote/transport
 # github.com/google/go-github/v39 v39.2.0
 ## explicit; go 1.16
 github.com/google/go-github/v39/github
+# github.com/google/go-github/v41 v41.0.0
+## explicit; go 1.16
+github.com/google/go-github/v41/github
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query
-# github.com/google/gofuzz v1.1.0
+# github.com/google/gofuzz v1.2.0
 ## explicit; go 1.12
 github.com/google/gofuzz
+github.com/google/gofuzz/bytesource
 # github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1
 ## explicit; go 1.14
 github.com/google/pprof/profile
-# github.com/google/uuid v1.2.0
+# github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
 # github.com/googleapis/gax-go/v2 v2.3.0
@@ -314,6 +316,8 @@ github.com/google/uuid
 github.com/googleapis/gax-go/v2
 github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
+# github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00
+## explicit
 # github.com/gorilla/mux v1.8.0
 ## explicit; go 1.12
 github.com/gorilla/mux
@@ -371,10 +375,12 @@ github.com/json-iterator/go
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
-# github.com/klauspost/compress v1.13.1
-## explicit; go 1.13
+# github.com/klauspost/compress v1.14.2
+## explicit; go 1.15
+github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
+github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kr/pretty v0.3.0
@@ -382,7 +388,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/magiconair/properties v1.8.6
 ## explicit; go 1.13
 github.com/magiconair/properties
-# github.com/mailru/easyjson v0.7.6
+# github.com/mailru/easyjson v0.7.7
 ## explicit; go 1.12
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
@@ -403,7 +409,7 @@ github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.14
 ## explicit; go 1.12
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.8
+# github.com/mattn/go-runewidth v0.0.9
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
@@ -558,12 +564,16 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/rogpeppe/go-internal v1.8.1
+## explicit; go 1.16
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
 # github.com/sirupsen/logrus v1.8.1
 ## explicit; go 1.13
 github.com/sirupsen/logrus
+# github.com/smartystreets/goconvey v1.7.2
+## explicit; go 1.16
 # github.com/spf13/afero v1.8.2
 ## explicit; go 1.13
 github.com/spf13/afero
@@ -894,6 +904,8 @@ google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/known/wrapperspb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
