@@ -36,6 +36,13 @@ TM_GOLANG_BASE_IMAGE       := $(REGISTRY)/golang
 NS ?= default
 TESTRUN ?= "examples/int-testrun.yaml"
 
+#########################################
+# Tools                                 #
+#########################################
+
+TOOLS_DIR := hack/tools
+include vendor/github.com/gardener/gardener/hack/tools.mk
+
 #####################
 # Utils             #
 #####################
@@ -44,6 +51,7 @@ TESTRUN ?= "examples/int-testrun.yaml"
 revendor:
 	@GO111MODULE=on go mod tidy
 	@GO111MODULE=on go mod vendor
+	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
 	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
 	@$(REPO_ROOT)/hack/update-github-templates.sh
 
@@ -52,16 +60,16 @@ code-gen:
 	@./hack/generate-code
 
 .PHONY: generate
-generate:
+generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(OPENAPI_GEN)
 	@$(REPO_ROOT)/hack/generate.sh ./cmd/... ./pkg/... ./test/...
 
 .PHONY: format
-format:
-	@$(REPO_ROOT)/hack/format.sh ./cmd ./pkg ./test ./integration-tests
+format: $(GOIMPORTS)
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg ./test ./integration-tests
 
 .PHONY: check
-check:
-	@$(REPO_ROOT)/hack/check.sh --golangci-lint-config=./.golangci.yaml $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/... $(REPO_ROOT)/test/...
+check: $(GOIMPORTS) $(GOLANGCI_LINT)
+	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 
 .PHONY: test
 test:

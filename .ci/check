@@ -31,8 +31,6 @@ function arraydiff() {
 
 cd "${SOURCE_PATH}"
 
-make install-requirements
-
 make check
 
 echo > Validate generated files
