@@ -557,8 +557,9 @@ github.com/gardener/component-cli v0.43.0/go.mod h1:nCS+MtoyLQDEJSDKDSWxWXxztzvJ
 github.com/gardener/component-spec/bindings-go v0.0.32/go.mod h1:53EIwICsuMgbY/MFCv5/lbOR5e1MQe1HY674Io+nGYE=
 github.com/gardener/component-spec/bindings-go v0.0.33/go.mod h1:53EIwICsuMgbY/MFCv5/lbOR5e1MQe1HY674Io+nGYE=
 github.com/gardener/component-spec/bindings-go v0.0.52/go.mod h1:kQFMTWowNAp9tOp6aImQa/NoLzfvX29jN5Qgud9rpQU=
-github.com/gardener/component-spec/bindings-go v0.0.65 h1:HHczHWEJUXYcaKr+UWGvXFTHYONeSdlIqlj0T73POiw=
 github.com/gardener/component-spec/bindings-go v0.0.65/go.mod h1:hwdDN2xZhFxv1vdamShz3/29Nqjx4UQlpxjyBZAZh4M=
+github.com/gardener/component-spec/bindings-go v0.0.68 h1:+1Eo+1XEk5If77Pt0d0lYoqQXG/4P3YMBgNTIvjTgPI=
+github.com/gardener/component-spec/bindings-go v0.0.68/go.mod h1:qr7kADDXbXB0huul+ih/B43YkwyiMFYQepp/tqJ331c=
 github.com/gardener/controller-manager-library v0.1.1-0.20191212112146-917449ad760c/go.mod h1:v6cbldxmpL2fYBEB2lSnq3LSEPwIHus9En6iIhwNE1k=
 github.com/gardener/controller-manager-library v0.1.1-0.20200204110458-c263b9bb97ad/go.mod h1:v6cbldxmpL2fYBEB2lSnq3LSEPwIHus9En6iIhwNE1k=
 github.com/gardener/controller-manager-library v0.2.1-0.20200810091329-d980dbe10959/go.mod h1:XMp1tPcX3SP/dMd+3id418f5Cqu44vydeTkBRbW8EvQ=
