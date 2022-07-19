@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
@@ -47,7 +47,7 @@ var _ = Describe("default templates", func() {
 			ComponentDescriptorPath: componentDescriptorPath,
 			OCIOpts:                 &ociopts.Options{},
 		}
-		runs, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
+		runs, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runs.GetTestruns()).To(HaveLen(1))
 	})
@@ -60,7 +60,7 @@ var _ = Describe("default templates", func() {
 			OCIOpts:                 &ociopts.Options{},
 			SetValues:               []string{"addValue1=test,addValue2=test2"},
 		}
-		_, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
+		_, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -72,7 +72,7 @@ var _ = Describe("default templates", func() {
 			OCIOpts:                 &ociopts.Options{},
 			SetValues:               []string{"addValue1=test", "addValue2=test2"},
 		}
-		_, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
+		_, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -84,7 +84,7 @@ var _ = Describe("default templates", func() {
 			ComponentDescriptorPath: componentDescriptorPath,
 			OCIOpts:                 &ociopts.Options{},
 		}
-		runs, err := RenderTestruns(ctx, log.NullLogger{}, params, nil)
+		runs, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runs.GetTestruns()).To(HaveLen(1))
 

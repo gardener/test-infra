@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/json"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -61,7 +61,7 @@ var _ = Describe("collector summary", func() {
 		esClient = mock_elasticsearch.NewMockClient(esCtrl)
 		s3Client = mock_collector.NewMockClient(s3Ctrl)
 		c = &collector{
-			log:      log.NullLogger{},
+			log:      logr.Discard(),
 			esClient: esClient,
 			s3Client: s3Client,
 			s3Config: &config.S3{BucketName: "testbucket"},

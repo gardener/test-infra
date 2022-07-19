@@ -21,10 +21,10 @@ import (
 
 	mock_ociclient "github.com/gardener/component-cli/ociclient/mock"
 	"github.com/gardener/component-cli/pkg/commands/constants"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestConfig(t *testing.T) {
@@ -58,7 +58,7 @@ var _ = Describe("componentdescriptor test", func() {
 		Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, "./testdata")).To(Succeed())
 		defer os.Unsetenv(constants.ComponentRepositoryCacheDirEnvVar)
 
-		dependencies, err := GetComponents(ctx, log.NullLogger{}, mockOCIClient, input)
+		dependencies, err := GetComponents(ctx, logr.Discard(), mockOCIClient, input)
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(len(dependencies)).To(Equal(2))
@@ -73,7 +73,7 @@ var _ = Describe("componentdescriptor test", func() {
 			Expect(os.Remove("./testdata/registry.example/github.com/gardener/gardener-0.18.0")).To(Succeed())
 		}()
 
-		dependencies, err := GetComponents(ctx, log.NullLogger{}, mockOCIClient, input)
+		dependencies, err := GetComponents(ctx, logr.Discard(), mockOCIClient, input)
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(len(dependencies)).To(Equal(2))
@@ -98,7 +98,7 @@ var _ = Describe("componentdescriptor test", func() {
 			},
 		}
 
-		dependencies, err := GetComponents(ctx, log.NullLogger{}, mockOCIClient, input)
+		dependencies, err := GetComponents(ctx, logr.Discard(), mockOCIClient, input)
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(len(dependencies)).To(Equal(3), "There should be 3 dependencies")
