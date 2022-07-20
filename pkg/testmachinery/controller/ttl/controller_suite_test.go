@@ -69,7 +69,7 @@ var _ = BeforeSuite(func() {
 		Status: &v1.CustomResourceSubresourceStatus{},
 	}
 	testenv = &envtest.Environment{
-		CRDs: []client.Object{crd},
+		CRDs: []*v1.CustomResourceDefinition{crd},
 	}
 
 	restConfig, err = testenv.Start()

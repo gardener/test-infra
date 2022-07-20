@@ -460,17 +460,17 @@ const (
 	// SignaturePEMBlockType defines the type of a signature pem block.
 	SignaturePEMBlockType = "SIGNATURE"
 
-	// SignaturePEMBlockAlgorithmHeader defines the header in a signature pem block where the signature algorithm is defined.
-	SignaturePEMBlockAlgorithmHeader = "Algorithm"
+	// SignatureAlgorithmHeader defines a pem header where the signature algorithm is defined.
+	SignatureAlgorithmHeader = "Signature Algorithm"
 
-	// MediaTypePEM defines the media type for PEM formatted data.
+	// MediaTypePEM defines the media type for pem formatted data.
 	MediaTypePEM = "application/x-pem-file"
 
 	// MediaTypeRSASignature defines the media type for a plain RSA signature.
 	MediaTypeRSASignature = "application/vnd.ocm.signature.rsa"
 
-	// SignatureAlgorithmRSA defines the type for the RSA PKCS #1 v1.5 signature algorithm
-	SignatureAlgorithmRSAPKCS1v15 = "RSASSA-PKCS1-V1_5"
+	// RSAPKCS1v15 defines the type for the RSA PKCS #1 v1.5 signature algorithm
+	RSAPKCS1v15 = "RSASSA-PKCS1-V1_5"
 
 	// ExcludeFromSignature used in digest field for normalisationAlgorithm (in combination with NoDigest for hashAlgorithm and value)
 	// to indicate the resource content should not be part of the signature

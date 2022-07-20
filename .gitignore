@@ -4,6 +4,7 @@
 temp/
 tmp
 venv
+hack/tools/bin
 
 # Generated secrets
 assets

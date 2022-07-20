@@ -18,9 +18,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
 )
@@ -30,7 +30,7 @@ var _ = Describe("Executor tests", func() {
 	Context("basic", func() {
 		It("should run a set of functions in serial without backoff", func() {
 			executions := [3]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -59,7 +59,7 @@ var _ = Describe("Executor tests", func() {
 
 		It("should run all functions in parallel", func() {
 			executions := [3]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 			Expect(err).ToNot(HaveOccurred())
 
 			for i := 0; i < 3; i++ {
@@ -85,7 +85,7 @@ var _ = Describe("Executor tests", func() {
 
 		It("should run 3 functions in serial with a backoff", func() {
 			executions := [3]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        true,
 				BackoffBucket: 1,
 				BackoffPeriod: 2 * time.Second,
@@ -113,7 +113,7 @@ var _ = Describe("Executor tests", func() {
 		}, 10)
 
 		It("should run 1 function in serial", func() {
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -131,7 +131,7 @@ var _ = Describe("Executor tests", func() {
 
 		It("should run 3 functions in serial", func() {
 			executions := [3]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -159,7 +159,7 @@ var _ = Describe("Executor tests", func() {
 
 		It("should run 6 functions in parallel with a backoff in a bucket of 2", func() {
 			executions := [6]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        false,
 				BackoffBucket: 2,
 				BackoffPeriod: 2 * time.Second,
@@ -188,7 +188,7 @@ var _ = Describe("Executor tests", func() {
 
 		It("should run 6 functions in serial with a backoff in a bucket of 2", func() {
 			executions := [6]*execution{}
-			executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        true,
 				BackoffBucket: 2,
 				BackoffPeriod: 2 * time.Second,
@@ -218,7 +218,7 @@ var _ = Describe("Executor tests", func() {
 
 	It("should add another test during execution", func() {
 		executions := [3]*execution{}
-		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{
+		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 			Serial: true,
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -249,7 +249,7 @@ var _ = Describe("Executor tests", func() {
 
 	It("should add another test during execution in parallel steps", func() {
 		executions := [3]*execution{}
-		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
 
 		addExecution := newExecution(4)
@@ -277,7 +277,7 @@ var _ = Describe("Executor tests", func() {
 
 	It("should add another test during execution in parallel steps that start immediately", func() {
 		executions := [3]*execution{}
-		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
 
 		addExecution := newExecution(4)
@@ -308,7 +308,7 @@ var _ = Describe("Executor tests", func() {
 
 	It("should add same test during execution in parallel steps", func() {
 		executions := [3]*execution{}
-		executor, err := testrunner.NewExecutor(log.NullLogger{}, testrunner.ExecutorConfig{})
+		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
 
 		for i := 0; i < 3; i++ {

@@ -15,6 +15,7 @@
 package util_test
 
 import (
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -55,7 +56,7 @@ var _ = Describe("Slack Table Post", func() {
 				StatusSymbol: util.StatusSymbolSuccess,
 			}
 			tis := []*util.TableItem{&ti}
-			table, err := util.RenderTableForSlack(nil, tis)
+			table, err := util.RenderTableForSlack(logr.Logger{}, tis)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(table).To(ContainSubstring("(orange)"))
 			Expect(table).To(ContainSubstring("[para]"))

@@ -15,6 +15,7 @@
 package result
 
 import (
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -44,7 +45,7 @@ var _ = Describe("summary-poster", func() {
 		runs = append(runs, run)
 		items := parseTestrunsToTableItems(runs)
 		Expect(items).To(HaveLen(1))
-		slack, err := util.RenderTableForSlack(nil, items)
+		slack, err := util.RenderTableForSlack(logr.Logger{}, items)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(slack).To(ContainSubstring(string(util.StatusSymbolSuccess)))
 		Expect(slack).ToNot(ContainSubstring(string(util.StatusSymbolNA)))
@@ -82,7 +83,7 @@ var _ = Describe("summary-poster", func() {
 		runs = append(runs, run)
 		items := parseTestrunsToTableItems(runs)
 		Expect(items).To(HaveLen(2))
-		slack, err := util.RenderTableForSlack(nil, items)
+		slack, err := util.RenderTableForSlack(logr.Logger{}, items)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(slack).To(ContainSubstring(string(util.StatusSymbolSuccess) + util.SymbolOffset + string(util.StatusSymbolFailure)))
 		Expect(slack).ToNot(ContainSubstring(string(util.StatusSymbolNA)))

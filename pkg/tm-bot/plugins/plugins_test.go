@@ -15,11 +15,11 @@
 package plugins_test
 
 import (
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	mock_github "github.com/gardener/test-infra/pkg/tm-bot/github/mocks"
@@ -62,7 +62,7 @@ var _ = Describe("plugins", func() {
 		It("should register a plugin and retrieve it", func() {
 			mockPlugin.EXPECT().Command().Return("test").AnyTimes()
 			mockPlugin.EXPECT().New(gomock.Any()).Return(mockPlugin).Times(1)
-			p := plugins.New(&log.NullLogger{}, mockPersistence)
+			p := plugins.New(logr.Discard(), mockPersistence)
 
 			p.Register(mockPlugin)
 
@@ -72,7 +72,7 @@ var _ = Describe("plugins", func() {
 		})
 
 		It("should throw an error if a plugin is not defined", func() {
-			p := plugins.New(&log.NullLogger{}, mockPersistence)
+			p := plugins.New(logr.Discard(), mockPersistence)
 			_, _, err := p.Get("test")
 			Expect(err).To(HaveOccurred())
 		})
@@ -93,7 +93,7 @@ var _ = Describe("plugins", func() {
 			mockPlugin.EXPECT().Authorization().Return(github.AuthorizationAll).Times(1)
 			mockPlugin.EXPECT().Run(gomock.Any(), mockGHClient, event).Return(nil).Times(1)
 
-			p := plugins.New(&log.NullLogger{}, mockPersistence)
+			p := plugins.New(logr.Discard(), mockPersistence)
 			p.Register(mockPlugin)
 
 			err := p.HandleRequest(mockGHClient, event)
@@ -128,7 +128,7 @@ var _ = Describe("plugins", func() {
 
 			mockGHMgr.EXPECT().GetClient(event).Return(mockGHClient, nil).Times(1)
 
-			p := plugins.New(&log.NullLogger{}, mockPersistence)
+			p := plugins.New(logr.Discard(), mockPersistence)
 			p.Register(mockPlugin)
 
 			err := p.ResumePlugins(mockGHMgr)

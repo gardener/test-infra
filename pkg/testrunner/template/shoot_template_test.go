@@ -20,6 +20,7 @@ import (
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/go-logr/logr"
 	"k8s.io/utils/pointer"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -27,7 +28,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/common"
 )
@@ -80,7 +80,7 @@ var _ = Describe("shoot templates", func() {
 				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun
@@ -113,7 +113,7 @@ var _ = Describe("shoot templates", func() {
 				Landscape:                "test",
 			}
 
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			meta := runs[0].Metadata
@@ -164,7 +164,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				}),
 			}
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun
@@ -202,7 +202,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				},
 			}))
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(2))
 		})
@@ -218,7 +218,7 @@ var _ = Describe("shoot templates", func() {
 				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(2))
 		})
@@ -250,7 +250,7 @@ var _ = Describe("shoot templates", func() {
 					},
 				},
 			}))
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(3))
 		})
@@ -265,7 +265,7 @@ var _ = Describe("shoot templates", func() {
 				OCIOpts:                  &ociopts.Options{},
 			}
 
-			runs, err := RenderTestruns(ctx, log.NullLogger{}, params, shoots)
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runs.GetTestruns()).To(HaveLen(1))
 			tr := runs[0].Testrun

@@ -25,7 +25,6 @@ type TemplateHolder interface {
 // WorkflowSpecHolder is an object that holds a WorkflowSpec; e.g., WorkflowTemplate, and ClusterWorkflowTemplate
 type WorkflowSpecHolder interface {
 	metav1.Object
-	GetWorkflowMetadata() *metav1.ObjectMeta
 	GetWorkflowSpec() *WorkflowSpec
 }
 
@@ -49,8 +48,6 @@ type SubmitOpts struct {
 	Entrypoint string `json:"entryPoint,omitempty" protobuf:"bytes,4,opt,name=entrypoint"`
 	// Parameters passes input parameters to workflow
 	Parameters []string `json:"parameters,omitempty" protobuf:"bytes,5,rep,name=parameters"`
-	// ParameterFile holds a reference to a parameter file. This option is not supported in API
-	ParameterFile string `json:"parameterFile,omitempty" protobuf:"bytes,6,opt,name=parameterFile"`
 	// ServiceAccount runs all pods in the workflow using specified ServiceAccount.
 	ServiceAccount string `json:"serviceAccount,omitempty" protobuf:"bytes,7,opt,name=serviceAccount"`
 	// DryRun validates the workflow on the client-side without creating it. This option is not supported in API
@@ -63,4 +60,9 @@ type SubmitOpts struct {
 	OwnerReference *metav1.OwnerReference `json:"ownerReference,omitempty" protobuf:"bytes,11,opt,name=ownerReference"`
 	// Annotations adds to metadata.labels
 	Annotations string `json:"annotations,omitempty" protobuf:"bytes,12,opt,name=annotations"`
+	// Set the podPriorityClassName of the workflow
+	PodPriorityClassName string `json:"podPriorityClassName,omitempty" protobuf:"bytes,13,opt,name=podPriorityClassName"`
+	// Priority is used if controller is configured to process limited number of workflows in parallel, higher priority workflows
+	// are processed first.
+	Priority *int32 `json:"priority,omitempty" protobuf:"bytes,14,opt,name=priority"`
 }

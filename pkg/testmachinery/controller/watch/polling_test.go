@@ -21,10 +21,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
@@ -63,7 +63,7 @@ var _ = Describe("Watch Polling Informer", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		w, err := watch.New(log.NullLogger{}, restConfig, options)
+		w, err := watch.New(logr.Discard(), restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
 			err := w.Start(ctx)
@@ -82,7 +82,7 @@ var _ = Describe("Watch Polling Informer", func() {
 	It("watch should reconcile once", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, options)
+		w, err := watch.New(logr.Discard(), restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 
 		go func() {
@@ -116,7 +116,7 @@ var _ = Describe("Watch Polling Informer", func() {
 	It("watch should reconcile until the latest update was received", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, options)
+		w, err := watch.New(logr.Discard(), restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
 			err := w.Start(ctx)
@@ -153,7 +153,7 @@ var _ = Describe("Watch Polling Informer", func() {
 	It("watch should return an error if the watch function returns an error", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		w, err := watch.New(log.NullLogger{}, restConfig, options)
+		w, err := watch.New(logr.Discard(), restConfig, options)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
 			err := w.Start(ctx)

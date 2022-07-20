@@ -18,10 +18,10 @@ import (
 	"time"
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -31,7 +31,7 @@ var _ = Describe("Testmachinery controller resume", func() {
 
 	BeforeEach(func() {
 		reconciler = &TestmachineryReconciler{
-			Logger: log.NullLogger{},
+			Logger: logr.Discard(),
 			timers: make(map[string]*time.Timer),
 		}
 	})

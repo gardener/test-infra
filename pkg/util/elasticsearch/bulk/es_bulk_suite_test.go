@@ -23,8 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -50,7 +49,7 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/json_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/json_output")
 
-			bulks := ParseExportedFiles(log.NullLogger{}, "TestDef", tmMeta, input)
+			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
 			bulkFile, err := bulks.Marshal()
 			Expect(err).ToNot(HaveOccurred())
 
@@ -68,7 +67,7 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/bulk_with_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta_output")
 
-			bulks := ParseExportedFiles(log.NullLogger{}, "TestDef", tmMeta, input)
+			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
 			bulkFile, err := bulks.Marshal()
 			Expect(err).ToNot(HaveOccurred())
 
@@ -84,7 +83,7 @@ var _ = Describe("elasticsearch test", func() {
 			output, err := ioutil.ReadFile("./testdata/bulk_no_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_no_meta_output")
 
-			bulks := ParseExportedFiles(log.NullLogger{}, "TestDef", tmMeta, input)
+			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
 			bulkFile, err := bulks.Marshal()
 			Expect(err).ToNot(HaveOccurred())
 
@@ -97,7 +96,7 @@ var _ = Describe("elasticsearch test", func() {
 			input, err := ioutil.ReadFile("./testdata/large_bulk")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta")
 
-			bulks := ParseExportedFiles(log.NullLogger{}, "TestDef", tmMeta, input)
+			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
 			Expect(len(bulks) != 0).To(BeTrue(), "Expect bulks to not be emtpy")
 
 			_, err = bulks[0].Marshal()

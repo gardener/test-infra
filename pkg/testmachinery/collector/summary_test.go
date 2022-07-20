@@ -15,8 +15,8 @@
 package collector
 
 import (
+	"github.com/go-logr/logr"
 	"github.com/onsi/ginkgo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
@@ -33,7 +33,7 @@ var _ = Describe("output generation tests", func() {
 
 	ginkgo.BeforeEach(func() {
 		c = &collector{
-			log: log.NullLogger{},
+			log: logr.Discard(),
 		}
 	})
 

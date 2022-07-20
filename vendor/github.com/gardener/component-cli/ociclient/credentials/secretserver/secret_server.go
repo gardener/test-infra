@@ -141,7 +141,7 @@ func (kb *KeyringBuilder) Apply(keyring *credentials.GeneralOciKeyring) error {
 		defer file.Close()
 		config := &SecretServerConfig{}
 		if err := json.NewDecoder(file).Decode(config); err != nil {
-			return fmt.Errorf("unable to decode config")
+			return fmt.Errorf("unable to decode config: %w", err)
 		}
 		return newKeyring(keyring, config, kb.minPrivileges, kb.forRef)
 	}

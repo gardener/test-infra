@@ -10,11 +10,10 @@ import (
 	reflect "reflect"
 
 	semver "github.com/Masterminds/semver/v3"
-	gomock "github.com/golang/mock/gomock"
-	github0 "github.com/google/go-github/v39/github"
-
 	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 	ghval "github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
+	gomock "github.com/golang/mock/gomock"
+	github0 "github.com/google/go-github/v39/github"
 )
 
 // MockClient is a mock of Client interface.

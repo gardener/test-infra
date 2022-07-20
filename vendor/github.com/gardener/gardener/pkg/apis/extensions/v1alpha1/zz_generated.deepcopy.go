@@ -340,7 +340,11 @@ func (in *BastionSpec) DeepCopy() *BastionSpec {
 func (in *BastionStatus) DeepCopyInto(out *BastionStatus) {
 	*out = *in
 	in.DefaultStatus.DeepCopyInto(&out.DefaultStatus)
-	in.Ingress.DeepCopyInto(&out.Ingress)
+	if in.Ingress != nil {
+		in, out := &in.Ingress, &out.Ingress
+		*out = new(v1.LoadBalancerIngress)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -1688,6 +1692,11 @@ func (in *WorkerPool) DeepCopyInto(out *WorkerPool) {
 		in, out := &in.NodeTemplate, &out.NodeTemplate
 		*out = new(NodeTemplate)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.Architecture != nil {
+		in, out := &in.Architecture, &out.Architecture
+		*out = new(string)
+		**out = **in
 	}
 	return
 }
