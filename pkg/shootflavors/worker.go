@@ -12,7 +12,7 @@ func SetupWorker(cloudprofile gardencorev1beta1.CloudProfile, workers []gardenco
 	for i, w := range workers {
 		worker := w.DeepCopy()
 		if worker.Machine.Image != nil && (worker.Machine.Image.Version == nil || *worker.Machine.Image.Version == common.PatternLatest) {
-			version, err := util.GetLatestMachineImageVersion(cloudprofile, worker.Machine.Image.Name)
+			version, err := util.GetLatestMachineImageVersion(cloudprofile, worker.Machine.Image.Name, *worker.Machine.Architecture)
 			if err != nil {
 				return nil, err
 			}

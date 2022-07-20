@@ -19,8 +19,11 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"k8s.io/utils/pointer"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util"
@@ -48,6 +51,9 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 			for j, workers := range pool.WorkerPools {
 				if workers.Machine.Image == nil {
 					allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].machine.image: value has to be defined", identifier, j))
+				}
+				if workers.Machine.Architecture != nil && !slices.Contains(v1beta1constants.ValidArchitectures, *workers.Machine.Architecture) {
+					allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].machine.architecture: value is invalid", identifier, j))
 				}
 			}
 		}
