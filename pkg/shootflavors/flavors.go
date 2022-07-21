@@ -91,6 +91,8 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 
 	shoots := make([]*common.Shoot, 0)
 	for i, rawFlavor := range rawFlavors {
+		DefaultShootMachineArchitecture(rawFlavor.Workers)
+
 		if err := Validate(fmt.Sprintf("flavor[%d]", i), rawFlavor); err != nil {
 			return nil, err
 		}

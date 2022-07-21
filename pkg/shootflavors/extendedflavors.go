@@ -70,6 +70,8 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 
 	shoots := make([]*ExtendedFlavorInstance, 0)
 	for i, rawFlavor := range rawFlavors {
+		DefaultShootMachineArchitecture(rawFlavor.Workers)
+
 		if err := ValidateExtendedFlavor(fmt.Sprintf("Flavors.%d", i), rawFlavor); err != nil {
 			return nil, err
 		}
