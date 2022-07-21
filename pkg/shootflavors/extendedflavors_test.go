@@ -62,7 +62,7 @@ var _ = Describe("extended flavor test", func() {
 				MachineImages: []gardencorev1beta1.MachineImage{
 					{
 						Name:     "test-os",
-						Versions: MachineImageVersions("0.0.2", "0.0.1"),
+						Versions: MachineImageVersions(map[string][]string{"0.0.2": []string{"amd64"}, "0.0.1": []string{"amd64"}}),
 					},
 				},
 			},

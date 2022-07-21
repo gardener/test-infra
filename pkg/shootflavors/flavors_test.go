@@ -512,7 +512,7 @@ var _ = Describe("flavor test", func() {
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{{
 				Name:     "coreos",
-				Versions: MachineImageVersions("0.0.1"),
+				Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}}),
 			}}))
 		})
 
@@ -540,8 +540,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
-				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
+				{Name: "coreos", Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}})},
+				{Name: "jeos", Versions: MachineImageVersions(map[string][]string{"0.0.2": []string{"amd64"}})},
 			}))
 		})
 
@@ -575,8 +575,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
-				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
+				{Name: "coreos", Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}})},
+				{Name: "jeos", Versions: MachineImageVersions(map[string][]string{"0.0.2": []string{"amd64"}})},
 			}))
 		})
 	})
