@@ -70,6 +70,17 @@ func Validate(identifier string, flavor *common.ShootFlavor) error {
 	return util.ReturnMultiError(allErrs)
 }
 
+// DefaultShootMachineArchitecture defaults machine architecture of a worker pool to `amd64` if it is not set.
+func DefaultShootMachineArchitecture(workers []common.ShootWorkerFlavor) {
+	for i := range workers {
+		for j := range workers[i].WorkerPools {
+			if workers[i].WorkerPools[j].Machine.Architecture == nil {
+				workers[i].WorkerPools[j].Machine.Architecture = pointer.String(v1beta1constants.ArchitectureAMD64)
+			}
+		}
+	}
+}
+
 // New creates an internal representation of raw shoot flavors.
 // It also parses the flavors and creates the resulting shoots.
 func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
