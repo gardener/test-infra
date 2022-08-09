@@ -25,13 +25,20 @@ import (
 
 var _ = Describe("flavor test", func() {
 	var (
-		defaultMachine gardencorev1beta1.Machine
+		defaultMachine, defaultExpectedMachine gardencorev1beta1.Machine
 	)
 	BeforeEach(func() {
 		defaultMachine = gardencorev1beta1.Machine{
 			Type:  "test-machine",
 			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.StringPtr("0.0.1")},
 		}
+
+		defaultExpectedMachine = gardencorev1beta1.Machine{
+			Type:         "test-machine",
+			Image:        &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.StringPtr("0.0.1")},
+			Architecture: pointer.String("amd64"),
+		}
+
 	})
 	It("should return no shoots if no flavors are defined", func() {
 		rawFlavors := []*common.ShootFlavor{}
@@ -127,6 +134,64 @@ var _ = Describe("flavor test", func() {
 				KubernetesVersion:   gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))
+	})
+
+	It("should return one shoot with worker pool machine architecture arm64", func() {
+		machine := defaultMachine
+		machine.Architecture = pointer.String("arm64")
+
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: machine}},
+					},
+				},
+			},
+		}
+		flavors, err := New(rawFlavors)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+		Expect(flavors.GetShoots()).To(ConsistOf(
+			&common.Shoot{
+				Provider:          common.CloudProviderGCP,
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: machine}},
+			},
+		))
+	})
+
+	It("should fail with an inavlid architecture type", func() {
+		machine := defaultMachine
+		machine.Architecture = pointer.String("foo")
+
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: machine}},
+					},
+				},
+			},
+		}
+		_, err := New(rawFlavors)
+		Expect(err).To(HaveOccurred())
 	})
 
 	It("should fail with an incomplete additional location missing 'repo'", func() {
@@ -289,22 +354,22 @@ var _ = Describe("flavor test", func() {
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultExpectedMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: defaultExpectedMachine}},
 			},
 		))
 	})
@@ -352,17 +417,89 @@ var _ = Describe("flavor test", func() {
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.14"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.13"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}},
 			},
 			&common.Shoot{
 				Provider:          common.CloudProviderGCP,
 				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: defaultMachine}},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}, {Name: "wp2", Machine: defaultExpectedMachine}},
+			},
+		))
+	})
+
+	It("should return 1 gcp shoots with mulitple worker pool of different machine CPU architecture", func() {
+		machine := defaultMachine
+		machine.Architecture = pointer.String("arm64")
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}, {Name: "wp2", Machine: machine}},
+					},
+				},
+			},
+		}
+		flavors, err := New(rawFlavors)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+		Expect(flavors.GetShoots()).To(ConsistOf(
+			&common.Shoot{
+				Provider:          common.CloudProviderGCP,
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}, {Name: "wp2", Machine: machine}},
+			},
+		))
+	})
+
+	It("should return 2 gcp shoots with specified CPU architecture of machine in a worker pool", func() {
+		machine := defaultMachine
+		machine.Architecture = pointer.String("arm64")
+		rawFlavors := []*common.ShootFlavor{
+			{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultMachine}},
+					},
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp2", Machine: machine}},
+					},
+				},
+			},
+		}
+		flavors, err := New(rawFlavors)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(2))
+		Expect(flavors.GetShoots()).To(ConsistOf(
+			&common.Shoot{
+				Provider:          common.CloudProviderGCP,
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp1", Machine: defaultExpectedMachine}},
+			},
+			&common.Shoot{
+				Provider:          common.CloudProviderGCP,
+				KubernetesVersion: gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+				Workers:           []gardencorev1beta1.Worker{{Name: "wp2", Machine: machine}},
 			},
 		))
 	})
@@ -512,7 +649,7 @@ var _ = Describe("flavor test", func() {
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{{
 				Name:     "coreos",
-				Versions: MachineImageVersions("0.0.1"),
+				Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}}),
 			}}))
 		})
 
@@ -540,8 +677,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
-				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
+				{Name: "coreos", Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}})},
+				{Name: "jeos", Versions: MachineImageVersions(map[string][]string{"0.0.2": []string{"amd64"}})},
 			}))
 		})
 
@@ -575,8 +712,8 @@ var _ = Describe("flavor test", func() {
 
 			images := flavors.GetUsedMachineImages()
 			Expect(images).To(HaveKeyWithValue(common.CloudProviderGCP, []gardencorev1beta1.MachineImage{
-				{Name: "coreos", Versions: MachineImageVersions("0.0.1")},
-				{Name: "jeos", Versions: MachineImageVersions("0.0.2")},
+				{Name: "coreos", Versions: MachineImageVersions(map[string][]string{"0.0.1": []string{"amd64"}})},
+				{Name: "jeos", Versions: MachineImageVersions(map[string][]string{"0.0.2": []string{"amd64"}})},
 			}))
 		})
 	})

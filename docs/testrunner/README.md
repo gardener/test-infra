@@ -121,6 +121,7 @@ flavors:
         image:
           name: coreos
           version: latest
+        architecture: amd64 # optional
       minimum: 1
       maximum: 2
       volume:

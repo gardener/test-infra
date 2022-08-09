@@ -18,7 +18,9 @@ import (
 	"fmt"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/common"
@@ -57,6 +59,12 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 		if len(pool.WorkerPools) == 0 {
 			allErrs = multierror.Append(allErrs, fmt.Errorf("%s.%d.workerPools: at least one worker pool has to be defined", identifier, i))
 		}
+
+		for j, worker := range pool.WorkerPools {
+			if worker.Machine.Architecture != nil && !slices.Contains(v1beta1constants.ValidArchitectures, *worker.Machine.Architecture) {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].machine.architecture: value is invalid", identifier, j))
+			}
+		}
 	}
 
 	return util.ReturnMultiError(allErrs)
@@ -70,6 +78,8 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 
 	shoots := make([]*ExtendedFlavorInstance, 0)
 	for i, rawFlavor := range rawFlavors {
+		DefaultShootMachineArchitecture(rawFlavor.Workers)
+
 		if err := ValidateExtendedFlavor(fmt.Sprintf("Flavors.%d", i), rawFlavor); err != nil {
 			return nil, err
 		}
