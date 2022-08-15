@@ -40,7 +40,7 @@ type Page struct {
 }
 
 // defaultItems that are displayed on one page - 1
-const defaultItemsPerPage = 49
+const defaultItemsPerPage = 199
 
 // SliceFromValues slices the given list into the values gathered form the url values
 func SliceFromValues(list Interface, values url.Values) (Interface, Pages) {
