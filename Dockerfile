@@ -45,9 +45,9 @@ ENTRYPOINT ["/telemetry-controller"]
 ############# tm-base-step #############
 FROM golang:1.17-alpine3.16 AS base-step
 
-ENV HELM_TILLER_VERSION=v2.13.0
-ENV KUBECTL_VERSION=v1.19.7
-ENV HELM_V3_VERSION=v3.1.1
+ENV HELM_TILLER_VERSION=v2.16.12
+ENV KUBECTL_VERSION=v1.24.3
+ENV HELM_V3_VERSION=v3.9.3
 
 RUN  \
   apk update \
@@ -79,9 +79,7 @@ RUN  \
     rsync \
     bc \
     linux-headers \
-  # need to install the specific google-crc32c version as newer version failed to install due to missing "crc32c/crc32c.h"
-  # see https://github.com/googleapis/python-crc32c/issues/83
-  && pip install google-crc32c==1.1.2 \
+  && pip install google-crc32c \
   && pip install --upgrade pip \
     "gardener-cicd-cli>=1.1437.0" \
     "gardener-cicd-libs>=1.1437.0" \
