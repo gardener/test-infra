@@ -31,13 +31,8 @@ else
   export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
-export DESIRED_VERSION=v3.2.1
-curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-
 cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite --key password > /tmp/serviceaccount.yaml
 
-
-export HELM_EXPERIMENTAL_OCI=1
 helm registry login eu.gcr.io -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
 cd ${SOURCE_PATH}
 make publish-tm-chart

@@ -22,7 +22,7 @@ REGISTRY            := eu.gcr.io/gardener-project/gardener/testmachinery
 HELM_REGISTRY       := eu.gcr.io/gardener-project/charts/gardener/testmachinery
 
 TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
-TM_CONTROLLER_CHART := $(HELM_REGISTRY)/testmachinery-controller
+TM_CONTROLLER_CHART := testmachinery-controller
 VERSION             ?= $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
@@ -222,8 +222,8 @@ docker-image-golang:
 
 .PHONY: build-tm-chart
 build-tm-chart:
-	@helm chart save $(REPO_ROOT)/charts/testmachinery $(TM_CONTROLLER_CHART):$(VERSION)
+	@helm package $(REPO_ROOT)/charts/testmachinery --version $(VERSION) -d $(REPO_ROOT)/charts
 
 .PHONY: publish-tm-chart
 publish-tm-chart: build-tm-chart
-	@helm chart push $(TM_CONTROLLER_CHART):$(VERSION)
+	@helm push $(REPO_ROOT)/charts/$(TM_CONTROLLER_CHART)-$(VERSION).tgz oci://$(HELM_REGISTRY)
