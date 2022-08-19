@@ -111,7 +111,11 @@ const (
 	GardenSetupRepo = "https://github.com/gardener/garden-setup.git"
 	GardenerRepo    = "https://github.com/gardener/gardener.git"
 
-	PatternLatest = "latest"
+	PatternLatest                 = "latest"
+	PatternOneMinorBeforeLatest   = "oneMinorBeforeLatest"
+	PatternTwoMinorBeforeLatest   = "twoMinorBeforeLatest"
+	PatternThreeMinorBeforeLatest = "threeMinorBeforeLatest"
+	PatternFourMinorBeforeLatest  = "fourMinorBeforeLatest"
 
 	// TM Dashboard
 	DashboardExecutionGroupParameter = "runID"

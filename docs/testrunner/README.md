@@ -84,7 +84,7 @@ For example: 3 kubernetes versions and 4 worker pools will result in 12 differen
 flavors:
 - provider: aws|gcp|azure|alicloud|openstack|...
   kubernetes:
-    pattern: "latest|<semver constraint>" # latest or semver constraint see https://github.com/Masterminds/semver#checking-version-constraints
+    pattern: "latest|oneMinorBeforeLatest|...|fourMinorBeforeLatest|<semver constraint>" # latest or semver constraint see https://github.com/Masterminds/semver#checking-version-constraints
     filterPatchVersions: true|false # filter patch versions and only keep the latest patch versions per minor
     versions: # list of specific versions to test (a version is a expirable version as defined in the cloudprofiles)
     - version: "<specific version>"
