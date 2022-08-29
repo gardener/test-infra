@@ -68,6 +68,69 @@ var _ = Describe("kubernetes version util", func() {
 			))
 		})
 
+		It("should return all patch versions of (latest minor - 1) version", func() {
+			pattern := "oneMinorBeforeLatest"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.5"),
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return latest patch version of (latest minor - 1) version and filtering", func() {
+			pattern := "oneMinorBeforeLatest"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
+		It("should return latest patch version of (latest minor - 2) version and filtering", func() {
+			pattern := "twoMinorBeforeLatest"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.13.5"),
+			))
+		})
+
+		It("should not be possible to decrement beyond 0", func() {
+			pattern := "twoMinorBeforeLatest"
+			filter := true
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern:             &pattern,
+				FilterPatchVersions: &filter,
+			}
+
+			cloudprofile = gardencorev1beta1.CloudProfile{Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
+						newExpirableVersion("2.1.4"),
+					},
+				},
+			}}
+			_, err := util.GetK8sVersions(cloudprofile, versionFlavor, false)
+			Expect(err).To(HaveOccurred())
+		})
+
 		It("should return latest patch of old minor version omitting patch and `filterPatchVersions: true`", func() {
 			pattern := "1.14"
 			filter := true

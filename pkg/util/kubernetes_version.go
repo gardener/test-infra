@@ -29,6 +29,25 @@ func GetK8sVersions(cloudprofile gardencorev1beta1.CloudProfile, config common.S
 		return []gardencorev1beta1.ExpirableVersion{version}, nil
 	}
 
+	var olderMinorPattern *string
+	var err error
+	switch pattern {
+	case common.PatternOneMinorBeforeLatest:
+		olderMinorPattern, err = GetXMinorsBeforeLatestK8sVersion(cloudprofile, 1)
+	case common.PatternTwoMinorBeforeLatest:
+		olderMinorPattern, err = GetXMinorsBeforeLatestK8sVersion(cloudprofile, 2)
+	case common.PatternThreeMinorBeforeLatest:
+		olderMinorPattern, err = GetXMinorsBeforeLatestK8sVersion(cloudprofile, 3)
+	case common.PatternFourMinorBeforeLatest:
+		olderMinorPattern, err = GetXMinorsBeforeLatestK8sVersion(cloudprofile, 4)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if olderMinorPattern != nil {
+		pattern = *olderMinorPattern
+	}
+
 	constraint, err := semver.NewConstraint(pattern)
 	if err != nil {
 		return nil, err
@@ -54,6 +73,24 @@ func GetK8sVersions(cloudprofile gardencorev1beta1.CloudProfile, config common.S
 	}
 
 	return filtered, nil
+}
+
+// GetXMinorsBeforeLatestK8sVersion returns a version with the minor decreased by x from the latest major.minor version and the patch being a wildcard "*", returns an error if minor would become negative.
+func GetXMinorsBeforeLatestK8sVersion(cloudprofile gardencorev1beta1.CloudProfile, x uint64) (*string, error) {
+	latest, err := GetLatestK8sVersion(cloudprofile)
+	if err != nil {
+		return nil, err
+	}
+	latestSemver, err := semver.NewVersion(latest.Version)
+	if err != nil {
+		return nil, err
+	}
+	olderMinor := latestSemver.Minor() - x
+	if olderMinor > latestSemver.Minor() {
+		return nil, fmt.Errorf("decreasing minor version by %v from %s would become negative", x, latest.Version)
+	}
+	olderK8sVersion := fmt.Sprintf("%d.%d.%s", latestSemver.Major(), olderMinor, "*")
+	return &olderK8sVersion, nil
 }
 
 // GetPreviousKubernetesVersions returns the 2 latest previous minor patch versions.
@@ -117,7 +154,7 @@ func GetPreviousKubernetesVersions(cloudprofile gardencorev1beta1.CloudProfile, 
 	return prevPrePatch.expirableVersion, prevPatch.expirableVersion, nil
 }
 
-// GetLatestK8sVersion returns the lates avilable kubernetes version from the cloudprofile
+// GetLatestK8sVersion returns the latest available kubernetes version from the cloudprofile
 func GetLatestK8sVersion(cloudprofile gardencorev1beta1.CloudProfile) (gardencorev1beta1.ExpirableVersion, error) {
 	if len(cloudprofile.Spec.Kubernetes.Versions) == 0 {
 		return gardencorev1beta1.ExpirableVersion{}, fmt.Errorf("no kubernetes versions found for cloudprofle %s", cloudprofile.Name)
