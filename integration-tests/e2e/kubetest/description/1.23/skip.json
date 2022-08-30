@@ -74,6 +74,7 @@
   { "testcase": "[sig-autoscaling] [HPA] Horizontal pod autoscaling (scale resource: Custom Metrics from Stackdriver) should scale up with two External metrics from Stackdriver [Feature:CustomMetricsAutoscaling]"},
   { "testcase": "[sig-autoscaling] [HPA] Horizontal pod autoscaling (scale resource: Custom Metrics from Stackdriver) should scale up with two metrics of type Pod from Stackdriver [Feature:CustomMetricsAutoscaling]"},
   { "testcase": "[sig-cli] Kubectl alpha client [k8s.io] Kubectl run CronJob should create a CronJob"},
+  { "testcase": "[sig-cli] Kubectl client Simple pod should handle in-cluster config", "groups": ["fast"]},
   { "testcase": "[sig-cluster-lifecycle] Addon update should propagate add-on file changes [Slow]"},
   { "testcase": "[sig-cluster-lifecycle] kube-proxy migration [Feature:KubeProxyDaemonSetMigration] Downgrade kube-proxy from a DaemonSet to static pods should maintain a functioning cluster [Feature:KubeProxyDaemonSetDowngrade]"},
   { "testcase": "[sig-cluster-lifecycle] kube-proxy migration [Feature:KubeProxyDaemonSetMigration] Upgrade kube-proxy from static pods to a DaemonSet should maintain a functioning cluster [Feature:KubeProxyDaemonSetUpgrade]"},
