@@ -382,7 +382,6 @@
   { "testcase": "[sig-network] Networking Granular Checks: Services should function for node-Service: udp", "groups": ["fast"]},
   { "testcase": "[sig-cli] Kubectl client Simple pod should return command exit codes", "groups": ["fast"]},
   { "testcase": "[sig-network] Networking Granular Checks: Services should function for pod-Service: http", "groups": ["fast"]},
-  { "testcase": "[sig-cli] Kubectl client Simple pod should handle in-cluster config", "groups": ["fast"]},
   { "testcase": "[sig-apps] Job should remove pods when job is deleted", "groups": ["fast"]},
   { "testcase": "[sig-storage] CSI mock volume CSI Volume expansion should expand volume by restarting pod if attach=off, nodeExpansion=on", "groups": ["fast"]},
   { "testcase": "[sig-network] Networking Granular Checks: Services should function for client IP based session affinity: udp [LinuxOnly]", "groups": ["fast"]},
