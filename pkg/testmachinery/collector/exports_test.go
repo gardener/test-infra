@@ -77,7 +77,7 @@ var _ = Describe("collector summary", func() {
 
 		s3Object, err := mock_collector.CreateS3ObjectFromFile(filepath.Join(testdataDir, "11_export_artifact.tar.gz"))
 		Expect(err).ToNot(HaveOccurred())
-		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz", gomock.Any()).Return(s3Object, nil)
+		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz").Return(s3Object, nil)
 
 		err = c.collectSummaryAndExports(tmpDir, tr, &metadata.Metadata{Testrun: metadata.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
