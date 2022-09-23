@@ -160,6 +160,15 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	rCtx.tr.Status.Workflow = rCtx.wf.Name
 	rCtx.tr.Status.Phase = tmv1beta1.RunPhaseRunning
 
+	// update status first because otherwise it would be lost during the patch call
+	rCtx.tr.Status.ObservedGeneration = rCtx.tr.Generation
+	if err := r.Status().Update(ctx, rCtx.tr); err != nil {
+		log.Error(err, "unable to update testrun status")
+		return reconcile.Result{}, err
+	}
+
+	patch := client.MergeFrom(rCtx.tr.DeepCopy())
+
 	// add finalizers for testrun
 	trFinalizers := sets.NewString(rCtx.tr.Finalizers...)
 	if !trFinalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
@@ -170,8 +179,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	}
 	rCtx.tr.Finalizers = trFinalizers.UnsortedList()
 
-	// update here to add finalizers
-	if err := r.Update(ctx, rCtx.tr); err != nil {
+	if err := r.Patch(ctx, rCtx.tr, patch); err != nil {
 		return reconcile.Result{}, nil
 	}
 
