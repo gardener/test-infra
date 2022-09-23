@@ -27,11 +27,11 @@ data:
     executor:
       resources:
         requests:
-          cpu: "50m"
-          memory: "100Mi"
+          cpu: {{ .Values.argo.executor.waitContainerResources.requests.cpu }}
+          memory: {{ .Values.argo.executor.waitContainerResources.requests.memory }}
         limits:
-          cpu: "100m"
-          memory: "150Mi"
+          cpu: {{ .Values.argo.executor.waitContainerResources.limits.cpu }}
+          memory: {{ .Values.argo.executor.waitContainerResources.limits.memory }}
     {{ if .Values.argo.logging }}
     links:
     {{- if .Values.argo.logging.grafana }}
