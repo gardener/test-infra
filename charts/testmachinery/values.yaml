@@ -110,6 +110,13 @@ argo:
   argo:
     name: workflow-controller
     executor:
+      waitContainerResources:
+        requests:
+          cpu: 50m
+          memory: 150Mi
+        limits:
+          cpu: 100m
+          memory: 300Mi
       containerRuntimeExecutor: docker
       containerRuntimeExecutors: []
         # - name: emissary
