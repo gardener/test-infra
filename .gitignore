@@ -1,5 +1,5 @@
 .vscode
-.idea
+.idea*
 .DS_Store
 temp/
 tmp
