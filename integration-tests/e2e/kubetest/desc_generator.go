@@ -203,7 +203,14 @@ func UnmarshalJunitXMLResult(junitXmlPath string) (junitXml JunitXMLResult, err 
 		return xmlResult, err
 	}
 	if err = xml.Unmarshal(junitXML, &xmlResult); err != nil {
-		return xmlResult, err
+		// alternatively try new K8s 1.25 format
+		log.Infof("couldn't unmarshal pre-1.25 format, trying new format (error was: %s)", err)
+		var nestedXmlResult NestedJunitXMLResult
+		if err = xml.Unmarshal(junitXML, &nestedXmlResult); err != nil {
+			return xmlResult, err
+		}
+		log.Info("success with 1.25 format")
+		xmlResult = nestedXmlResult.SingleResult
 	}
 
 	xmlResult.CalculateAdditionalFields()
