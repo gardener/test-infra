@@ -67,12 +67,18 @@ func Run(descFile string) (resultsPath string) {
 	parallelTestsFocus, serialTestsFocus := escapeAndConcat(descFile)
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
+		if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
+			kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Serial\\].*\\[Conformance\\]"
+		}
 		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs, false)
 	}
 	if parallelTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
+		if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
+			kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Conformance\\] --ginkgo.skip=\\[Serial\\]"
+		}
 		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs, false)

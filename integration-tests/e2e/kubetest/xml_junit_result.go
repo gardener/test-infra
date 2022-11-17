@@ -43,6 +43,11 @@ func (testcase *TestcaseResult) calculateAdditionalFields(regexpSigGroup *regexp
 	testcase.K8sMajor = config.K8sReleaseMajorMinor
 }
 
+type NestedJunitXMLResult struct {
+	XMLName      xml.Name       `xml:"testsuites"`
+	SingleResult JunitXMLResult `xml:"testsuite"`
+}
+
 type JunitXMLResult struct {
 	XMLName         xml.Name         `xml:"testsuite"`
 	ExecutedTests   int              `xml:"tests,attr"`
