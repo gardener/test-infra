@@ -264,6 +264,32 @@ var _ = Describe("kubernetes version util", func() {
 			))
 		})
 
+		It("should return something (real) greater than 1.14", func() {
+			pattern := ">1.14"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, true)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.15.2"),
+			))
+		})
+
+		It("should return versions in between", func() {
+			pattern := ">1.13 <1.15"
+			versionFlavor := common.ShootKubernetesVersionFlavor{
+				Pattern: &pattern,
+			}
+
+			versions, err := util.GetK8sVersions(cloudprofile, versionFlavor, true)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(versions).To(ConsistOf(
+				newExpirableVersion("1.14.6"),
+			))
+		})
+
 		Context("filter patch versions", func() {
 			It("should filter patch versions although default is false", func() {
 				pattern := "*"
