@@ -17,7 +17,7 @@ package template
 import (
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 
@@ -52,7 +52,7 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 	for _, file := range files {
 		var newValues map[string]interface{}
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to read file %s", file)
 		}

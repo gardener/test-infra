@@ -17,7 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -41,7 +41,7 @@ func isHibernated(shoot *gardencorev1beta1.Shoot) bool {
 }
 
 func getNamespaceOfKubeconfig(kubeconfigPath string) (string, error) {
-	data, err := ioutil.ReadFile(kubeconfigPath)
+	data, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return "", errors.Wrapf(err, "cannot read file from %s", kubeconfigPath)
 	}
@@ -139,7 +139,7 @@ func readHostInformationFromFile() (*client.ObjectKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadFile(hostConfigPath)
+	data, err := os.ReadFile(hostConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read file %s: %s", hostConfigPath, err.Error())
 	}

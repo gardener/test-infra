@@ -17,7 +17,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -179,7 +178,7 @@ func downloadHostKubeconfig(ctx context.Context, logger logr.Logger, k8sClient c
 	if err != nil {
 		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(kubeconfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(kubeconfigPath, secret.Data["kubeconfig"], os.ModePerm)
+	err = os.WriteFile(kubeconfigPath, secret.Data["kubeconfig"], os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("cannot write kubeconfig to %s: %s", kubeconfigPath, err.Error())
 	}
@@ -207,7 +206,7 @@ func writeHostInformationToFile(log logr.Logger, shoot *gardencorev1beta1.Shoot)
 	if err != nil {
 		return fmt.Errorf("cannot create folder %s for host config: %s", filepath.Dir(hostConfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(hostConfigPath, data, os.ModePerm)
+	err = os.WriteFile(hostConfigPath, data, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("cannot write host config to %s: %s", hostConfigPath, err.Error())
 	}

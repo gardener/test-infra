@@ -18,7 +18,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -133,7 +132,7 @@ func writeHostInformationToFile(hostName string) error {
 	if err != nil {
 		return fmt.Errorf("cannot create folder %s for host config: %s", filepath.Dir(hostConfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(hostConfigPath, data, os.ModePerm)
+	err = os.WriteFile(hostConfigPath, data, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("cannot write host config to %s: %s", hostConfigPath, err.Error())
 	}
@@ -146,7 +145,7 @@ func readHostInformationFromFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dat, err := ioutil.ReadFile(hostConfigPath)
+	dat, err := os.ReadFile(hostConfigPath)
 	if err != nil {
 		return "", err
 	}

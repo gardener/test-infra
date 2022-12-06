@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -59,7 +58,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		if err != nil {
 			return err
 		}
-		if testrunsToUpload == nil || len(testrunsToUpload) == 0 {
+		if len(testrunsToUpload) == 0 {
 			log.Info("no testrun updates, therefore not assets to upload")
 			continue
 		}
@@ -213,7 +212,7 @@ func writeOverviewToFile(assetOverview AssetOverview, overviewFilepath string) e
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal %s", overviewFilepath)
 	}
-	if err := ioutil.WriteFile(overviewFilepath, overviewJSONBytes, 0644); err != nil {
+	if err := os.WriteFile(overviewFilepath, overviewJSONBytes, 0644); err != nil {
 		return errors.Wrapf(err, "failed to write file %s", overviewFilepath)
 	}
 	return nil
@@ -228,7 +227,7 @@ func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, prefix, de
 		output.RenderStatusTable(&tableString, tr.Status.Steps)
 		statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
 		assetFilepath := filepath.Join(dest, generateTestrunAssetName(*run, prefix))
-		if err := ioutil.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
+		if err := os.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
 			return errors.Wrapf(err, "failed to write file %s", assetFilepath)
 		}
 	}
@@ -297,7 +296,7 @@ func removeFailedItems(assetOverview *AssetOverview) (failedOverviewItems []stri
 
 func unmarshalOverview(overviewFilepath string) (AssetOverview, error) {
 	var assetOverview AssetOverview
-	assetOverviewBytes, err := ioutil.ReadFile(overviewFilepath)
+	assetOverviewBytes, err := os.ReadFile(overviewFilepath)
 	if err != nil {
 		return AssetOverview{}, errors.Wrapf(err, "failed to read file %s", overviewFilepath)
 	}

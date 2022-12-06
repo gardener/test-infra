@@ -62,7 +62,7 @@ func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) error {
 	case config.DummyAuthProvider:
 		authProvider = auth.NewDummyAuth()
 	case config.GitHubAuthProvider:
-		authProvider = auth.NewGitHubOAuth(o.log.WithName("authentication"),
+		authProvider = auth.NewGitHubOAuth(o.log.WithName("authentication"), authCfg.GitHub.Hostname,
 			authCfg.GitHub.Organization, authCfg.GitHub.OAuth.ClientID, authCfg.GitHub.OAuth.ClientSecret,
 			authCfg.GitHub.OAuth.RedirectURL, authCfg.CookieSecret)
 	default:

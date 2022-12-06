@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@ package componentdescriptor
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -53,7 +52,7 @@ var _ = Describe("componentdescriptor test", func() {
 	})
 
 	It("Should parse a component descriptor and return 2 dependencies", func() {
-		input, err := ioutil.ReadFile("./testdata/component_descriptor_1")
+		input, err := os.ReadFile("./testdata/component_descriptor_1")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_1")
 		Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, "./testdata")).To(Succeed())
 		defer os.Unsetenv(constants.ComponentRepositoryCacheDirEnvVar)
@@ -65,7 +64,7 @@ var _ = Describe("componentdescriptor test", func() {
 	})
 
 	It("Should parse a component descriptor that was not already in the local cache", func() {
-		input, err := ioutil.ReadFile("./testdata/component_descriptor_2")
+		input, err := os.ReadFile("./testdata/component_descriptor_2")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_2")
 		Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, "./testdata")).To(Succeed())
 		defer os.Unsetenv(constants.ComponentRepositoryCacheDirEnvVar)
@@ -80,7 +79,7 @@ var _ = Describe("componentdescriptor test", func() {
 	})
 
 	It("Should parse a component descriptor and ignore duplicates", func() {
-		input, err := ioutil.ReadFile("./testdata/registry.example/example.com/repo1-0.17.0")
+		input, err := os.ReadFile("./testdata/registry.example/example.com/repo1-0.17.0")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_2")
 
 		result := []*Component{

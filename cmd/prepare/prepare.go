@@ -41,7 +41,6 @@ done
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -87,7 +86,7 @@ func createTMKubeconfigFile(log logr.Logger) error {
 	}
 
 	log.Info("Write TestMachinery kubeconfig to file", "file", tmFilePath)
-	return ioutil.WriteFile(tmFilePath, kubeconfig, os.ModePerm)
+	return os.WriteFile(tmFilePath, kubeconfig, os.ModePerm)
 }
 
 func createDirectories(log logr.Logger, directories []string) error {
@@ -144,7 +143,7 @@ func cloneRepository(log logr.Logger, repo *prepare.Repository, repoBasePath str
 }
 
 func readConfigFile(file string) (*prepare.Config, error) {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}

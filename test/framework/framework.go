@@ -21,7 +21,6 @@ import (
 	"github.com/gardener/test-infra/pkg/apis/config"
 	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
-	"io/ioutil"
 	"os"
 
 	corev1 "k8s.io/api/core/v1"
@@ -77,7 +76,7 @@ func (o *Operation) setTestMachineryConfig(ctx context.Context) error {
 	)
 
 	if len(o.testConfig.TMConfigPath) != 0 {
-		data, err = ioutil.ReadFile(o.testConfig.TMConfigPath)
+		data, err = os.ReadFile(o.testConfig.TMConfigPath)
 		if err != nil {
 			return err
 		}

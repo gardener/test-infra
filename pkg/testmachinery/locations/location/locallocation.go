@@ -18,7 +18,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"hash/fnv"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -93,14 +93,14 @@ func (l *LocalLocation) Type() tmv1beta1.LocationType {
 
 func (l *LocalLocation) readTestDefs() ([]*testdefinition.TestDefinition, error) {
 	definitions := []*testdefinition.TestDefinition{}
-	files, err := ioutil.ReadDir(l.testdefPath)
+	files, err := os.ReadDir(l.testdefPath)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
 		if !file.IsDir() {
-			data, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", l.testdefPath, file.Name()))
+			data, err := os.ReadFile(fmt.Sprintf("%s/%s", l.testdefPath, file.Name()))
 			if err != nil {
 				l.log.Info(fmt.Sprintf("unable to read file from %s: %s", l.testdefPath, err.Error()), "filename", file.Name())
 				continue

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -186,7 +185,7 @@ func getAllE2eTestCases() sets.StringSet {
 
 func UnmarshalDescription(descPath string) []TestcaseDesc {
 	var testcases []TestcaseDesc
-	descFile, err := ioutil.ReadFile(descPath)
+	descFile, err := os.ReadFile(descPath)
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "couldn't read file %s: %s", descPath, descFile))
 	}
@@ -198,7 +197,7 @@ func UnmarshalDescription(descPath string) []TestcaseDesc {
 
 func UnmarshalJunitXMLResult(junitXmlPath string) (junitXml JunitXMLResult, err error) {
 	var xmlResult JunitXMLResult
-	junitXML, err := ioutil.ReadFile(junitXmlPath)
+	junitXML, err := os.ReadFile(junitXmlPath)
 	if err != nil {
 		return xmlResult, err
 	}

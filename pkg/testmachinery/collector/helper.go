@@ -16,7 +16,6 @@ package collector
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -34,7 +33,7 @@ func writeBulks(path string, bufs [][]byte) error {
 	}
 	for _, buf := range bufs {
 		file := filepath.Join(path, fmt.Sprintf("res-%s", util.RandomString(5)))
-		if err := ioutil.WriteFile(file, buf, 0644); err != nil {
+		if err := os.WriteFile(file, buf, 0644); err != nil {
 			return err
 		}
 	}

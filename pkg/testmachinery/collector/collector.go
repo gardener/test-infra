@@ -15,7 +15,6 @@
 package collector
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/go-logr/logr"
@@ -94,7 +93,7 @@ func (c *collector) Collect(tr *tmv1beta1.Testrun, metadata *metadata.Metadata) 
 	}
 
 	// generate temporary result directory for downloaded artifacts
-	tmpDir, err := ioutil.TempDir("", "collector")
+	tmpDir, err := os.MkdirTemp("", "collector")
 	if err != nil {
 		return errors.Wrapf(err, "unable to create cache directory for results")
 	}

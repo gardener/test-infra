@@ -28,8 +28,8 @@ import (
 
 	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
-	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -234,7 +234,7 @@ func HTTPGet(url string) (*http.Response, error) {
 
 // ReadJSONFile reads a file and deserializes the json into the given object
 func ReadJSONFile(path string, obj interface{}) error {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func ReadJSONFile(path string, obj interface{}) error {
 
 // ReadYAMLFile reads a file and deserializes the yaml into the given object
 func ReadYAMLFile(path string, obj interface{}) error {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}

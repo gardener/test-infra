@@ -350,7 +350,7 @@ func schema_pkg_apis_config_v1beta1_DashboardAuthentication(ref common.Reference
 					},
 					"githubConfig": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GitHub holds the github provider specific configuration",
+							Description: "GitHub holds the GitHub provider specific configuration",
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.GitHubAuthentication"),
 						},
 					},
@@ -429,13 +429,21 @@ func schema_pkg_apis_config_v1beta1_GitHubAuthentication(ref common.ReferenceCal
 				Properties: map[string]spec.Schema{
 					"oAuth": {
 						SchemaProps: spec.SchemaProps{
-							Description: "OAuth Github configuration that is used to protect parts of the dashboard",
+							Description: "OAuth GitHub configuration that is used to protect parts of the dashboard",
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.OAuth"),
 						},
 					},
 					"organization": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Organization is the GitHub organization to restrict access to the bot",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hostname": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Hostname points to the GitHub instance used for the authentication flow",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",

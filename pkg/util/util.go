@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"net/http"
@@ -109,7 +108,7 @@ func DownloadFile(client *http.Client, url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot downdload file from %s: \n %v", url, err.Error())
 	}
@@ -289,7 +288,7 @@ func CreateKubeconfigFromInternal() ([]byte, error) {
 	}
 
 	rootCAFile := "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	caCert, err := ioutil.ReadFile(rootCAFile)
+	caCert, err := os.ReadFile(rootCAFile)
 	if err != nil {
 		return nil, err
 	}

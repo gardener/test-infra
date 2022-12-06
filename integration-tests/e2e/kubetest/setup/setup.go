@@ -2,7 +2,6 @@ package setup
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -155,7 +154,7 @@ func areTestUtilitiesReady() error {
 	}
 
 	kubernetesVersionFile := path.Join(config.K8sRoot, "kubernetes/version")
-	currentKubernetesVersionByte, err := ioutil.ReadFile(kubernetesVersionFile)
+	currentKubernetesVersionByte, err := os.ReadFile(kubernetesVersionFile)
 	if err != nil || len(currentKubernetesVersionByte) == 0 {
 		res = multierror.Append(res, fmt.Errorf("Required file %s does not exist or is empty: ", kubernetesVersionFile))
 	} else if currentKubernetesVersion := strings.TrimSpace(string(currentKubernetesVersionByte[1:])); currentKubernetesVersion != config.K8sRelease {

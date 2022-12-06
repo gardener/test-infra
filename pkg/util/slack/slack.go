@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/go-logr/logr"
@@ -91,7 +91,7 @@ func (s *slack) PostRawMessage(message MessageRequest) error {
 		return errors.New("unable to send slack message")
 	}
 
-	rawBody, err := ioutil.ReadAll(resp.Body)
+	rawBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

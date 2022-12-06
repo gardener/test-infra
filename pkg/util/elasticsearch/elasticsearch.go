@@ -19,9 +19,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 
 	"golang.org/x/net/context"
@@ -95,11 +95,11 @@ func (c *client) RequestWithCtx(ctx context.Context, httpMethod, rawPath string,
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		errorResponse, _ := ioutil.ReadAll(res.Body)
+		errorResponse, _ := io.ReadAll(res.Body)
 		return nil, errors.Errorf("request %s returned status code %d with body %s", esURL, res.StatusCode, errorResponse)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read response body")
 	}
@@ -140,7 +140,7 @@ func (c *client) Bulk(data []byte) error {
 }
 
 func (c *client) BulkFromFile(file string) error {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}

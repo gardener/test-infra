@@ -69,8 +69,11 @@ type githubOAuth struct {
 	org string
 }
 
-func NewGitHubOAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSecret string) *githubOAuth {
+func NewGitHubOAuth(log logr.Logger, githubHostname, org, clientID, clientSecret, redirectURL, cookieSecret string) *githubOAuth {
 	gob.Register(AuthContext{})
+	authURL := "https://" + githubHostname + "/login/oauth/authorize"
+	tokenURL := "https://" + githubHostname + "/login/oauth/access_token"
+
 	return &githubOAuth{
 		log:   log,
 		org:   org,
@@ -79,8 +82,8 @@ func NewGitHubOAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, c
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://github.com/login/oauth/authorize",
-				TokenURL: "https://github.com/login/oauth/access_token",
+				AuthURL:  authURL,
+				TokenURL: tokenURL,
 			},
 			RedirectURL: redirectURL,
 			Scopes:      []string{"read:org"},

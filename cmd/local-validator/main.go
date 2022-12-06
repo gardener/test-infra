@@ -16,7 +16,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -40,7 +39,7 @@ func main() {
 	trFilePath := flag.String("testrun", "examples/int-testrun.yaml", "Filepath to the testrun")
 	flag.Parse()
 
-	data, err := ioutil.ReadFile(*configPath)
+	data, err := os.ReadFile(*configPath)
 	if err != nil {
 		fmt.Print(err.Error())
 		os.Exit(1)

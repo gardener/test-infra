@@ -78,7 +78,7 @@ type GitHubCache struct {
 	MaxAgeSeconds   int    `json:"maxAgeSeconds,omitempty"`
 }
 
-//LandscapeMapping defines how to connect to a landscape using an OpenIDConnect IDP
+// LandscapeMapping defines how to connect to a landscape using an OpenIDConnect IDP
 type LandscapeMapping struct {
 	// Namespace indicates the namespace where TestRuns for a specific landscape should run
 	Namespace string `json:"namespace,omitempty"`

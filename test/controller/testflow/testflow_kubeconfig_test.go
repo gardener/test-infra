@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -44,7 +44,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 
 			// get kubeconfigfile from testdata
-			file, err := ioutil.ReadFile("./testdata/kubeconfig")
+			file, err := os.ReadFile("./testdata/kubeconfig")
 			Expect(err).ToNot(HaveOccurred())
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())
@@ -78,7 +78,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 
 			// get kubeconfigfile from testdata
-			file, err := ioutil.ReadFile("./testdata/kubeconfig")
+			file, err := os.ReadFile("./testdata/kubeconfig")
 			Expect(err).ToNot(HaveOccurred())
 
 			secret := &corev1.Secret{
@@ -136,7 +136,7 @@ var _ = Describe("Testflow execution tests", func() {
 			defer ctx.Done()
 
 			// get kubeconfigfile from testdata
-			file, err := ioutil.ReadFile("./testdata/kubeconfig")
+			file, err := os.ReadFile("./testdata/kubeconfig")
 			Expect(err).ToNot(HaveOccurred())
 
 			tr := resources.GetBasicTestrun(operation.TestNamespace(), operation.Commit())

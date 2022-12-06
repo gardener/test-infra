@@ -19,7 +19,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
@@ -107,7 +106,7 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 		}
 
 		if header.Typeflag == tar.TypeReg && header.Size > 0 {
-			file, err := ioutil.ReadAll(tarReader)
+			file, err := io.ReadAll(tarReader)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read from file %s in tar %s", header.Name, err.Error())
 			}
