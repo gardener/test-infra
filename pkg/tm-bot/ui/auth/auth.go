@@ -247,7 +247,8 @@ func (a *githubOAuth) Logout(w http.ResponseWriter, r *http.Request) {
 // getGHClient returns a GitHub client or GitHub enterprise client based on the hostname of the oauth config
 func (a *githubOAuth) getGHClient(client *http.Client) (*github.Client, error) {
 	if a.hostname != "github.com" {
-		return github.NewEnterpriseClient(a.hostname, a.hostname, client)
+		githubUrl := "https://" + a.hostname
+		return github.NewEnterpriseClient(githubUrl, githubUrl, client)
 	}
 	return github.NewClient(client), nil
 }
