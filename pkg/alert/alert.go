@@ -38,14 +38,14 @@ type Alert struct {
 	cfg Config
 }
 
-//ElasticsearchConfig represents the elasticsearch configuration
+// ElasticsearchConfig represents the elasticsearch configuration
 type ElasticsearchConfig struct {
 	Endpoint *url.URL
 	User     string
 	Pass     string
 }
 
-//Config represents alerting configuration
+// Config represents alerting configuration
 type Config struct {
 	EvalTimeDays                int // EvalTimeDays time range to consinder for evaluation in days (now - n days before)
 	SuccessRateThresholdPercent int // SuccessRateThresholdPercent if test success rate falls below threshold post an alert
@@ -55,7 +55,7 @@ type Config struct {
 	TestsFocus                  []string
 }
 
-//New creates a new instance of alert
+// New creates a new instance of alert
 func New(log logr.Logger, cfg Config) *Alert {
 	return &Alert{
 		log: log,
@@ -182,7 +182,7 @@ func (alerter *Alert) removeExcludedTests(tests *map[string]TestDetails) error {
 	return nil
 }
 
-//removeAlreadyFiledAlerts filters out tests that have already been alerted in recent n days
+// removeAlreadyFiledAlerts filters out tests that have already been alerted in recent n days
 func (alerter *Alert) removeAlreadyFiledAlerts(tests map[string]TestDetails, alreadyFiledAlerts AlertDocs) {
 	testsSizeBefore := len(tests)
 	for _, alertItem := range alreadyFiledAlerts.Hits.AlertItems {
@@ -191,7 +191,7 @@ func (alerter *Alert) removeAlreadyFiledAlerts(tests map[string]TestDetails, alr
 	alerter.log.V(3).Info(fmt.Sprintf("%d/%d tests alerts have been discarded, since they have already been posted in slack", testsSizeBefore-len(tests), testsSizeBefore))
 }
 
-//getFiledAlerts gets list of existing alert docs in elasticsearch
+// getFiledAlerts gets list of existing alert docs in elasticsearch
 func (alerter *Alert) getFiledAlerts() (AlertDocs, error) {
 	var alreadyFiledAlerts AlertDocs
 	if err := alerter.elasticRequest("/tm-alerter*/_search", http.MethodGet, `{"size": 10000}`, &alreadyFiledAlerts); err != nil {
@@ -201,7 +201,7 @@ func (alerter *Alert) getFiledAlerts() (AlertDocs, error) {
 	return alreadyFiledAlerts, nil
 }
 
-//deleteOutdatedAlertDocsPayload deletes all elasticsearch documents that are older than n days
+// deleteOutdatedAlertDocsPayload deletes all elasticsearch documents that are older than n days
 func (alerter *Alert) deleteOutdatedAlertsFromDB() error {
 	alerter.log.V(3).Info("delete outdated elasticsearch alerter docs")
 	deleteOutdatedAlertDocsPayload := fmt.Sprintf(`{ "query": { "range": { "datetime": { "lt": "now-%dd" } } } }`, alerter.cfg.EvalTimeDays)
@@ -211,7 +211,7 @@ func (alerter *Alert) deleteOutdatedAlertsFromDB() error {
 	return nil
 }
 
-//PostAlertMessageToSlack posts alerts to slack
+// PostAlertMessageToSlack posts alerts to slack
 func (alerter *Alert) PostAlertMessageToSlack(client slack.Client, channel string, failedTests map[string]TestDetails) error {
 	if len(failedTests) == 0 {
 		alerter.log.Info("no new failed tests found, nothing to post in slack")
@@ -240,7 +240,7 @@ func (alerter *Alert) PostAlertMessageToSlack(client slack.Client, channel strin
 	return nil
 }
 
-//createAlertMessage creates the alert message
+// createAlertMessage creates the alert message
 func createAlertMessage(failedTests map[string]TestDetails, alert *Alert) string {
 	sortedKeys := make([]string, 0, len(failedTests))
 	for k := range failedTests {
@@ -282,7 +282,7 @@ func createAlertMessage(failedTests map[string]TestDetails, alert *Alert) string
 	return writer.String()
 }
 
-//PostRecoverMessageToSlack posts alerts to slack
+// PostRecoverMessageToSlack posts alerts to slack
 func (alerter *Alert) PostRecoverMessageToSlack(client slack.Client, channel string, recoveredTests map[string]TestDetails) error {
 	if len(recoveredTests) == 0 {
 		alerter.log.Info("no new recovered tests found, nothing to post in slack")
@@ -312,7 +312,7 @@ func (alerter *Alert) PostRecoverMessageToSlack(client slack.Client, channel str
 	return nil
 }
 
-//createAlertMessage creates the alert message
+// createAlertMessage creates the alert message
 func createRecoverMessage(recoveredTests map[string]TestDetails) string {
 	sortedKeys := make([]string, 0, len(recoveredTests))
 	for k := range recoveredTests {
@@ -354,7 +354,7 @@ func (alerter *Alert) deleteRecoveredTestsFromAlertIndex(testNames []string) err
 	return nil
 }
 
-//splitSlackMessage split message line wise based on given characters limit
+// splitSlackMessage split message line wise based on given characters limit
 func splitSlackMessage(message string, charactersLimit int) []string {
 	var messageSplits []string
 	lines := strings.Split(message, "\n")

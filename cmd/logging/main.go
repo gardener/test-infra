@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -81,7 +80,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("host kubeconfig at %s does not exists", kubeconfigPath)
 	}
 
-	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+	kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("unable to read host kubeconfig: %w", err)
 	}
@@ -160,5 +159,5 @@ func writePodLogs(podName, outputPath string, logs []byte) error {
 	}
 	fileName := fmt.Sprintf("%s.log", podName)
 
-	return ioutil.WriteFile(path.Join(outputPath, fileName), logs, os.ModePerm)
+	return os.WriteFile(path.Join(outputPath, fileName), logs, os.ModePerm)
 }

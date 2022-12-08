@@ -16,7 +16,7 @@ package configwatcher
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
@@ -147,7 +147,7 @@ func (cw *ConfigWatcher) GetConfiguration() *config.Configuration {
 
 // ReadConfiguration reads the configuration from the file system
 func (cw *ConfigWatcher) ReadConfiguration() error {
-	file, err := ioutil.ReadFile(cw.configpath)
+	file, err := os.ReadFile(cw.configpath)
 	if err != nil {
 		return err
 	}

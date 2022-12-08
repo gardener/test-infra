@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -63,7 +62,7 @@ func writeSummaryToFile(summary Summary) {
 		log.Fatal(errors.Wrapf(err, "couldn't marshal testsuite summary %s", summary))
 	}
 	summaryFilePath := path.Join(config.ExportPath, TestSummaryFileName)
-	if err := ioutil.WriteFile(summaryFilePath, file, 0644); err != nil {
+	if err := os.WriteFile(summaryFilePath, file, 0644); err != nil {
 		log.Fatal(errors.Wrapf(err, "Couldn't write %s to file", summaryFilePath))
 	}
 }
@@ -192,7 +191,7 @@ func writeTestcaseToJSONFile(testcase TestcaseResult) error {
 
 	jsonFileName := fmt.Sprintf("test-%s.json", strconv.FormatInt(time.Now().UnixNano(), 10))
 	testcaseJsonFilePath := path.Join(config.ExportPath, jsonFileName)
-	if err := ioutil.WriteFile(testcaseJsonFilePath, testcaseJSON, 0644); err != nil {
+	if err := os.WriteFile(testcaseJsonFilePath, testcaseJSON, 0644); err != nil {
 		return errors.Wrapf(err, "Couldn't write %s to file", testcaseJsonFilePath)
 	}
 	return nil
@@ -232,7 +231,7 @@ func saveJunitXmlToFile(junitXMLFilePaths []string, mergedJunitXmlResult *JunitX
 	}
 	output = append([]byte(xml.Header), output...)
 
-	if err = ioutil.WriteFile(mergedJunitXmlFilePath, output, 0644); err != nil {
+	if err = os.WriteFile(mergedJunitXmlFilePath, output, 0644); err != nil {
 		return err
 	}
 	return nil
@@ -265,7 +264,7 @@ func analyzeE2eLogs(e2eLogFilePaths []string) (Summary, error) {
 			}
 		}
 		if summary.TestsuiteDuration == 0 {
-			contentBytes, err := ioutil.ReadFile(e2eLogPath)
+			contentBytes, err := os.ReadFile(e2eLogPath)
 			if err != nil {
 				log.Fatal(err)
 			}

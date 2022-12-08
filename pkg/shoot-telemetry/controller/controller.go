@@ -16,7 +16,6 @@ package controller
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"sync"
@@ -80,7 +79,7 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	// Setup the necessary informer factories to initialize the required informers.
 	if config.KubeConfigPath != "" {
 		// Read the kubeconfig from disk.
-		kubeconfigRaw, err := ioutil.ReadFile(config.KubeConfigPath)
+		kubeconfigRaw, err := os.ReadFile(config.KubeConfigPath)
 		if err != nil {
 			return err
 		}

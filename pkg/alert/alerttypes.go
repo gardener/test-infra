@@ -60,7 +60,7 @@ type AlertDocs struct {
 	} `json:"hits"`
 }
 
-//TestDetails describes a test which is used for alert message
+// TestDetails describes a test which is used for alert message
 type TestDetails struct {
 	Name                string  `json:"name"`               //Name test name
 	Context             string  `json:"testContext"`        //Context is the concatenation of name and several test dimensions
@@ -76,7 +76,7 @@ type TestDetails struct {
 	TestrunID           string  `json:"testrunID"`
 }
 
-//ElasticsearchBulkString creates an elastic search bulk string for ingestion
+// ElasticsearchBulkString creates an elastic search bulk string for ingestion
 func (test TestDetails) ElasticsearchBulkString() (string, error) {
 	testDetailsMarshaled, err := json.Marshal(test)
 	if err != nil {

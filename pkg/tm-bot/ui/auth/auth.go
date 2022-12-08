@@ -66,21 +66,26 @@ type githubOAuth struct {
 	store  sessions.Store
 	config *oauth2.Config
 
-	org string
+	org      string
+	hostname string
 }
 
-func NewGitHubOAuth(log logr.Logger, org, clientID, clientSecret, redirectURL, cookieSecret string) *githubOAuth {
+func NewGitHubOAuth(log logr.Logger, githubHostname, org, clientID, clientSecret, redirectURL, cookieSecret string) *githubOAuth {
 	gob.Register(AuthContext{})
+	authURL := "https://" + githubHostname + "/login/oauth/authorize"
+	tokenURL := "https://" + githubHostname + "/login/oauth/access_token"
+
 	return &githubOAuth{
-		log:   log,
-		org:   org,
-		store: sessions.NewCookieStore([]byte(cookieSecret)),
+		log:      log,
+		org:      org,
+		hostname: githubHostname,
+		store:    sessions.NewCookieStore([]byte(cookieSecret)),
 		config: &oauth2.Config{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://github.com/login/oauth/authorize",
-				TokenURL: "https://github.com/login/oauth/access_token",
+				AuthURL:  authURL,
+				TokenURL: tokenURL,
 			},
 			RedirectURL: redirectURL,
 			Scopes:      []string{"read:org"},
@@ -113,7 +118,12 @@ func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&aCtx.Token))
-		client := github.NewClient(tc)
+		client, err := a.getGHClient(tc)
+		if err != nil {
+			a.log.Error(err, "failed to setup github (enterprise) client")
+			http.Redirect(w, r, "/500", http.StatusInternalServerError)
+			return
+		}
 
 		membership, _, err := client.Organizations.GetOrgMembership(ctx, aCtx.User, a.org)
 		if err != nil {
@@ -152,7 +162,12 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(tok))
-	client := github.NewClient(tc)
+	client, err := a.getGHClient(tc)
+	if err != nil {
+		a.log.Error(err, "failed to setup github (enterprise) client")
+		http.Redirect(w, r, "/500", http.StatusInternalServerError)
+		return
+	}
 
 	user, _, err := client.Users.Get(ctx, "")
 	if err != nil {
@@ -227,4 +242,13 @@ func (a *githubOAuth) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+// getGHClient returns a GitHub client or GitHub enterprise client based on the hostname of the oauth config
+func (a *githubOAuth) getGHClient(client *http.Client) (*github.Client, error) {
+	if a.hostname != "github.com" {
+		githubUrl := "https://" + a.hostname
+		return github.NewEnterpriseClient(githubUrl, githubUrl, client)
+	}
+	return github.NewClient(client), nil
 }

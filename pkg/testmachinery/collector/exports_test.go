@@ -17,7 +17,6 @@ package collector
 import (
 	"bufio"
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -48,7 +47,7 @@ var _ = Describe("collector summary", func() {
 
 	BeforeEach(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "test")
+		tmpDir, err = os.MkdirTemp("", "test")
 		Expect(err).ToNot(HaveOccurred())
 		esCtrl = gomock.NewController(GinkgoT())
 		s3Ctrl = gomock.NewController(GinkgoT())
@@ -84,7 +83,7 @@ var _ = Describe("collector summary", func() {
 		err = c.collectSummaryAndExports(tmpDir, tr, &metadata.Metadata{Testrun: metadata.TestrunMetadata{ID: tr.Name}})
 		Expect(err).ToNot(HaveOccurred())
 
-		files, err := ioutil.ReadDir(tmpDir)
+		files, err := os.ReadDir(tmpDir)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(files)).To(Equal(1), "Expected 1 file output")
 

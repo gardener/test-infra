@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,6 @@ package componentdescriptor
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -92,7 +91,7 @@ func GetComponentsFromFile(ctx context.Context, log logr.Logger, ociClient ocicl
 	if file == "" {
 		return make(ComponentList, 0), nil
 	}
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
 	}
@@ -127,11 +126,12 @@ func GetComponentsFromLocations(tr *tmv1beta1.Testrun) (ComponentList, error) {
 
 // JSON returns the json output for a list of components
 // The list is converted into the format:
-// {
-//	"component_name": {
-//	 	"version": "0.0.0"
+//
+//	{
+//		"component_name": {
+//		 	"version": "0.0.0"
+//		}
 //	}
-// }
 func (c ComponentList) JSON() map[string]ComponentJSON {
 	components := make(map[string]ComponentJSON)
 	for _, component := range c {

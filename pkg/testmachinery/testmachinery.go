@@ -16,7 +16,6 @@ package testmachinery
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -155,7 +154,7 @@ func readSecretsFromFile(path string) ([]GitHubInstanceConfig, error) {
 	if _, err := os.Stat(path); err != nil {
 		return nil, errors.Wrapf(err, "file %s does not exist", path)
 	}
-	rawSecrets, err := ioutil.ReadFile(path)
+	rawSecrets, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to read file from %s", path)
 	}

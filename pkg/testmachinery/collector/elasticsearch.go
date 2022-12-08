@@ -16,7 +16,7 @@ package collector
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -34,7 +34,7 @@ func (c *collector) ingestIntoElasticsearch(path string, tr *tmv1beta1.Testrun) 
 		return nil
 	}
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return fmt.Errorf("cannot read directory '%s'd: %s", path, err.Error())
 	}

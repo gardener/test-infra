@@ -16,7 +16,7 @@ package app
 
 import (
 	goflag "flag"
-	"io/ioutil"
+	"os"
 
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
@@ -69,7 +69,7 @@ func (o *options) Complete() error {
 }
 
 func (o *options) readConfig() error {
-	data, err := ioutil.ReadFile(o.configPath)
+	data, err := os.ReadFile(o.configPath)
 	if err != nil {
 		return err
 	}

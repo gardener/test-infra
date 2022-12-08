@@ -16,7 +16,6 @@ package run_template
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -102,7 +101,7 @@ func (o *options) Complete() error {
 
 func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
 	// read and parse test shoot configuration
-	dat, err := ioutil.ReadFile(cfgPath)
+	dat, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return nil, pkgerrors.Wrapf(err, "unable to read test shoot configuration file from %s", cfgPath)
 	}

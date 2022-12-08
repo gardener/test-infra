@@ -41,7 +41,7 @@ type KubernetesDumper struct {
 	k8sClient client.Client
 }
 
-//NewKubernetesDumper creates a new default k8s dumper.
+// NewKubernetesDumper creates a new default k8s dumper.
 func NewKubernetesDumper(log Logger, k8sClient client.Client) *KubernetesDumper {
 	return &KubernetesDumper{
 		log:       log,

@@ -19,7 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -43,10 +43,10 @@ var _ = Describe("elasticsearch test", func() {
 
 	Context("Parse default json format", func() {
 		It("should parse default json and add testmachinery index", func() {
-			input, err := ioutil.ReadFile("./testdata/json")
+			input, err := os.ReadFile("./testdata/json")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/json")
 
-			output, err := ioutil.ReadFile("./testdata/json_output")
+			output, err := os.ReadFile("./testdata/json_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/json_output")
 
 			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
@@ -61,10 +61,10 @@ var _ = Describe("elasticsearch test", func() {
 
 	Context("Parse bulk format", func() {
 		It("should parse bulk with index and not add an testmachinery index", func() {
-			input, err := ioutil.ReadFile("./testdata/bulk_with_meta")
+			input, err := os.ReadFile("./testdata/bulk_with_meta")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta")
 
-			output, err := ioutil.ReadFile("./testdata/bulk_with_meta_output")
+			output, err := os.ReadFile("./testdata/bulk_with_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta_output")
 
 			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
@@ -77,10 +77,10 @@ var _ = Describe("elasticsearch test", func() {
 		})
 
 		It("should parse bulk with index and add an testmachinery index", func() {
-			input, err := ioutil.ReadFile("./testdata/bulk_no_meta")
+			input, err := os.ReadFile("./testdata/bulk_no_meta")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_no_meta")
 
-			output, err := ioutil.ReadFile("./testdata/bulk_no_meta_output")
+			output, err := os.ReadFile("./testdata/bulk_no_meta_output")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_no_meta_output")
 
 			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)
@@ -93,7 +93,7 @@ var _ = Describe("elasticsearch test", func() {
 		})
 
 		It("should parse a large bulk file", func() {
-			input, err := ioutil.ReadFile("./testdata/large_bulk")
+			input, err := os.ReadFile("./testdata/large_bulk")
 			Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/bulk_with_meta")
 
 			bulks := ParseExportedFiles(logr.Discard(), "TestDef", tmMeta, input)

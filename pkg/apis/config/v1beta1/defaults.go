@@ -117,4 +117,7 @@ func SetDefaults_GitHubAuthentication(obj *GitHubAuthentication) {
 	if len(obj.Organization) == 0 {
 		obj.Organization = "gardener"
 	}
+	if len(obj.Hostname) == 0 {
+		obj.Hostname = "github.com"
+	}
 }

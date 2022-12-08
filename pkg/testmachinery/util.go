@@ -1,7 +1,6 @@
 package testmachinery
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -17,7 +16,7 @@ func ParseTestrunFromFile(filePath string) (*v1beta1.Testrun, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return nil, err
 	}
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

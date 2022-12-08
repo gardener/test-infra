@@ -16,7 +16,6 @@ package hostscheduler
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -45,7 +44,7 @@ func WriteHostKubeconfig(log logr.Logger, restConfig *rest.Config) error {
 	if err != nil {
 		return fmt.Errorf("cannot create folder %s for kubeconfig: %s", filepath.Dir(kubeconfigPath), err.Error())
 	}
-	err = ioutil.WriteFile(kubeconfigPath, kubeconfig, os.ModePerm)
+	err = os.WriteFile(kubeconfigPath, kubeconfig, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("cannot write kubeconfig to %s: %s", kubeconfigPath, err.Error())
 	}

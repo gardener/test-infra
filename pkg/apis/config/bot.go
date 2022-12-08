@@ -79,19 +79,23 @@ type DashboardAuthentication struct {
 	// +optional
 	CookieSecret string `json:"cookieSecret"`
 
-	// GitHub holds the github provider specific configuration
+	// GitHub holds the GitHub provider specific configuration
 	// +optional
 	GitHub *GitHubAuthentication `json:"githubConfig"`
 }
 
 type GitHubAuthentication struct {
-	// OAuth Github configuration that is used to protect parts of the dashboard
+	// OAuth GitHub configuration that is used to protect parts of the dashboard
 	// +optional
 	OAuth *OAuth `json:"oAuth"`
 
 	// Organization is the GitHub organization to restrict access to the bot
 	// +optional
 	Organization string `json:"organization"`
+
+	// Hostname points to the GitHub instance used for the authentication flow
+	// +optional
+	Hostname string `json:"hostname"`
 }
 
 type OAuth struct {

@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 
@@ -163,7 +162,7 @@ func queryAndRecomputeAndStore(esClient elasticsearch.Client, path string, paylo
 	}
 
 	if !updateES {
-		payloadBytes, err := ioutil.ReadAll(payload)
+		payloadBytes, err := io.ReadAll(payload)
 		if err != nil {
 			logger.Log.Error(err, "could not parse bulk update payload into string")
 		}

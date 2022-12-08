@@ -129,7 +129,7 @@ type CmdOutput struct {
 }
 
 /*
-	CommandExists checks whether the given command executable exists and returns a boolean result value
+CommandExists checks whether the given command executable exists and returns a boolean result value
 */
 func CommandExists(cmd string) bool {
 	_, err := exec.LookPath(cmd)

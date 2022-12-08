@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -40,7 +39,7 @@ func Publish(kubetestResultsPath string, resultSummary Summary) {
 
 func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary Summary) {
 	startedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d}", testSummary.StartTime.Unix()))
-	if err := ioutil.WriteFile(startedJsonPath, startedJsonContent, 06444); err != nil {
+	if err := os.WriteFile(startedJsonPath, startedJsonContent, 06444); err != nil {
 		log.Fatal(err)
 	}
 
@@ -49,7 +48,7 @@ func createMetadataFiles(startedJsonPath, finishedJsonPath string, testSummary S
 		testStatus = "SUCCESS"
 	}
 	finishedJsonContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"%s\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testSummary.FinishedTime.Unix(), testStatus, config.K8sRelease, config.GardenerVersion))
-	if err := ioutil.WriteFile(finishedJsonPath, finishedJsonContent, 06444); err != nil {
+	if err := os.WriteFile(finishedJsonPath, finishedJsonContent, 06444); err != nil {
 		log.Fatal(err)
 	}
 

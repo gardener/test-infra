@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -90,7 +89,7 @@ func getFileContent(filepath string) string {
 	if file, err := os.Open(filepath); err != nil {
 		log.Fatal(err)
 	} else {
-		b, err := ioutil.ReadAll(file)
+		b, err := io.ReadAll(file)
 		if err != nil {
 			log.Fatal(err)
 		}

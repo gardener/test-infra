@@ -17,7 +17,7 @@ package template
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -70,7 +70,7 @@ func getInternalParametersFunc(ctx context.Context, log logr.Logger, parameters 
 	}
 	var gardenerKubeconfig []byte
 	if len(parameters.GardenKubeconfigPath) != 0 {
-		gardenerKubeconfig, err = ioutil.ReadFile(parameters.GardenKubeconfigPath)
+		gardenerKubeconfig, err = os.ReadFile(parameters.GardenKubeconfigPath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot read gardener kubeconfig %s", parameters.GardenKubeconfigPath)
 		}

@@ -492,6 +492,7 @@ func Convert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s c
 func autoConvert_v1beta1_GitHubAuthentication_To_config_GitHubAuthentication(in *GitHubAuthentication, out *config.GitHubAuthentication, s conversion.Scope) error {
 	out.OAuth = (*config.OAuth)(unsafe.Pointer(in.OAuth))
 	out.Organization = in.Organization
+	out.Hostname = in.Hostname
 	return nil
 }
 
@@ -503,6 +504,7 @@ func Convert_v1beta1_GitHubAuthentication_To_config_GitHubAuthentication(in *Git
 func autoConvert_config_GitHubAuthentication_To_v1beta1_GitHubAuthentication(in *config.GitHubAuthentication, out *GitHubAuthentication, s conversion.Scope) error {
 	out.OAuth = (*OAuth)(unsafe.Pointer(in.OAuth))
 	out.Organization = in.Organization
+	out.Hostname = in.Hostname
 	return nil
 }
 
