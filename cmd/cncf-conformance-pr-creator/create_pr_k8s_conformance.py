@@ -37,7 +37,7 @@ github_cfg = f.github('github_com')
 script_dir = os.path.dirname(os.path.realpath(__file__))
 temlate_dir = script_dir + '/'
 gs_bucket_name = 'k8s-conformance-gardener'
-conformance_tests_passed_string = "0 Failed | 0 Flaked | 0 Pending"
+conformance_tests_passed_string = "0 Failed | 0 Pending"
 
 provider_list = ['gce', 'aws', 'azure', 'openstack', 'alicloud']
 content_product_yaml = {}
@@ -269,9 +269,9 @@ def isConformanceTestSuccessful(e2e_log_file, k8s_version):
         log_status_line_number = -4
     with open(e2e_log_file) as fp:
         e2e_log_status_line = (list(fp)[log_status_line_number])
-    pattern = re.compile("^(FAIL|SUCCESS).*Passed.*Failed.*Flaked.*")
+    pattern = re.compile("^(FAIL|SUCCESS).*Passed.*Failed.*")
     if not pattern.match(e2e_log_status_line):
-        print("Error: " + str(log_status_line_number) + " line of e2e.log is not of format ^(FAIL|SUCCESS).*Passed.*Failed.*Flaked.*$. Actual line content: '" + e2e_log_status_line + "'")
+        print("Error: " + str(log_status_line_number) + " line of e2e.log is not of format ^(FAIL|SUCCESS).*Passed.*Failed.*$. Actual line content: '" + e2e_log_status_line + "'")
         return False
     if conformance_tests_passed_string in e2e_log_status_line:
         # this is certification requirement
