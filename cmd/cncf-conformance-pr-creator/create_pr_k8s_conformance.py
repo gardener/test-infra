@@ -39,6 +39,12 @@ temlate_dir = script_dir + '/'
 gs_bucket_name = 'k8s-conformance-gardener'
 conformance_tests_passed_string = "0 Failed | 0 Pending"
 
+try:
+    contact_email_address = os.environ['CONTACT_EMAIL_ADDRESS']
+except KeyError:
+    print("Error: Environment variable CONTACT_EMAIL_ADDRESS not set. This is required for opening any conformance PR.")
+    sys.exit(1)
+
 provider_list = ['gce', 'aws', 'azure', 'openstack', 'alicloud']
 content_product_yaml = {}
 content_product_yaml['gardener'] = """vendor: SAP
@@ -49,7 +55,8 @@ repo_url: https://github.com/gardener/
 documentation_url: https://github.com/gardener/documentation/wiki
 product_logo_url: https://raw.githubusercontent.com/gardener/documentation/master/images/logo_w_saplogo.svg
 type: installer
-description: The Gardener implements automated management and operation of Kubernetes clusters as a service and aims to support that service on multiple Cloud providers."""
+description: The Gardener implements automated management and operation of Kubernetes clusters as a service and aims to support that service on multiple Cloud providers.
+contact_email_address: {2}"""
 content_product_yaml['sap-cp'] = """vendor: SAP
 name: Cloud Platform - Gardener (https://github.com/gardener/gardener) shoot cluster deployed on {0}
 version: {1}
@@ -57,7 +64,8 @@ website_url: https://cloudplatform.sap.com/index.html
 documentation_url: https://help.sap.com/viewer/65de2977205c403bbc107264b8eccf4b/Cloud/en-US/
 product_logo_url: https://www.sap.com/dam/application/shared/logos/sap-logo-svg.svg
 type: hosted
-description: The Gardener implements automated management and operation of Kubernetes clusters as a service and aims to support that service on multiple Cloud providers."""
+description: The Gardener implements automated management and operation of Kubernetes clusters as a service and aims to support that service on multiple Cloud providers.
+contact_email_address: {2}"""
 
 
 class QuitHack(object):  # shortcut-hack for quitting with a simple 'q'
@@ -197,7 +205,7 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
     # create PRODUCT.yaml
     try:
         f = open(product_yaml_filename, 'w')
-        f.write(content_product_yaml[product_name].format(provider.upper(), gardener_version))
+        f.write(content_product_yaml[product_name].format(provider.upper(), gardener_version, contact_email_address))
         f.close()
     except IOError:
         print("Was not able to open " + f)
