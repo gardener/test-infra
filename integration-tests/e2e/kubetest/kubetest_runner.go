@@ -67,7 +67,11 @@ func Run(descFile string) (resultsPath string) {
 	if serialTestsFocus != "" {
 		kubtestArgs := createKubetestArgs(serialTestsFocus, false, false, config.FlakeAttempts)
 		if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
-			kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Serial\\].*\\[Conformance\\]"
+			if parallelTestsFocus != "" { // only execute serial tests as parallel tests will be invoked with dedicated parallelization flags
+				kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Serial\\].*\\[Conformance\\]"
+			} else { // invoke all conformance tests in a serial fashion
+				kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Conformance\\]"
+			}
 		}
 		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
@@ -115,7 +119,7 @@ func createKubetestArgs(ginkgoFocus string, parallel, dryRun bool, flakeAttempts
 func runKubetest(args KubetestArgs, logToStd bool) {
 	//  -clean-start
 	//    	If true, purge all namespaces except default and system before running tests. This serves to Cleanup test namespaces from failed/interrupted e2e runs in a long-lived cluster.
-	ginkgoArgs := fmt.Sprintf("--test_args=--ginkgo.flakeAttempts=%o --ginkgo.dryRun=%t --minStartupPods=1 %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
+	ginkgoArgs := fmt.Sprintf("--test_args=--ginkgo.flake-attempts=%o --ginkgo.dryRun=%t --minStartupPods=1 %s", args.FlakeAttempts, args.DryRun, args.GinkgoFocus)
 	cmd := exec.Command("kubetest", "--provider=skeleton", "--deployment=local", "--test", "--check-version-skew=false", args.GinkgoParallel, ginkgoArgs, fmt.Sprintf("--dump=%s", args.LogDir))
 	cmd.Dir = config.KubernetesPath
 
