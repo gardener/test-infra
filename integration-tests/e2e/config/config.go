@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 
 	flag "github.com/spf13/pflag"
@@ -175,8 +174,8 @@ func init() {
 	if _, err := os.Stat(DescriptionFilePath); err != nil {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", DescriptionFilePath))
 	}
-	if FlakeAttempts == 0 || FlakeAttempts == 2 {
-		FlakeAttempts, _ = strconv.Atoi(tiutil.Getenv("FLAKE_ATTEMPTS", "2"))
+	if FlakeAttempts == 0 {
+		log.Fatal("flakeAttempts of 0 zero doesn't make sense. Use >= 1 to have at least 1 execution.")
 	}
 	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
 	IgnoreSkipList = tiutil.GetenvBool("IGNORE_SKIP_LIST", false)
