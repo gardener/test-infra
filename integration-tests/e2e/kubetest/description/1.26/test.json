@@ -1,0 +1,2 @@
+[ { "testcase": "[sig-storage] In-tree Volumes [Driver: ceph][Feature:Volumes] [Testpattern: Inline-volume (xfs)] volumes should allow exec of files on the volume"}
+]
