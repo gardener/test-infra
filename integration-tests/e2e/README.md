@@ -9,17 +9,39 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 ## Usage
 
 ### Example usage (Conformance tests)
-Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster (you can find the kubeconfig e.g. in the Gardener dashboard). Follow the instructions below to run the Kubernetes e2e conformance tests. Adjust values for arguments `k8sVersion` and `cloudprovider` respective to your new cluster.
+Follow the instructions below to run the Kubernetes e2e conformance tests.
+
+Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
 
 ```bash
-#first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra --workdir /go/src/github.com/gardener/test-infra golang:1.17 bash
+# first set KUBECONFIG to your cluster
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --workdir /go/src/github.com/gardener/test-infra golang:1.17 bash
 
-# run all commands below within container
-export GO111MODULE=on; export E2E_EXPORT_PATH=/tmp/export; export KUBECONFIG=/mye2e/shoot.config; export GINKGO_PARALLEL=true
-go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.22.2 --cloudprovider=azure --testcasegroup="conformance"
+# run command below within container to invoke tests in a parallelized way
+GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.26.0 --cloudprovider=skeleton --testcasegroup="conformance"
 ```
 
+### Run conformance tests against new K8s versions
+To test whether the conformance testing machinery will work with a new, not-yet-Gardener-supported K8s version, you can create a kind cluster and invoke the machinery against it.
+
+Create a kind cluster with two worker nodes and the desired version (see https://github.com/kubernetes-sigs/kind/releases for image links to other K8s versions)
+```bash
+cat > kind.yaml <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+EOF
+
+kind create cluster  --config kind.yaml --image kindest/node:v1.26.0@sha256:691e24bd2417609db7e589e1a479b902d2e209892a10ce375fab60a8407c7352
+```
+
+Invoke the steps from [Example usage (Conformance tests)](#example-usage-conformance-tests) and ensure the output has executed some > 300 tests, similar to
+```shell
+INFO[2133] test suite summary: {ExecutedTestcases:371 SuccessfulTestcases:371 FailedTestcases:0...
+```
 
 ### Environment Prerequisites:
 
