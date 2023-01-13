@@ -103,9 +103,9 @@ reserve-excess-capacity:
 
 argo:
   images:
-    argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.3.8
-    argo-executor: quay.io/argoproj/argoexec:v3.3.8
-    argo-server: quay.io/argoproj/argocli:v3.3.8
+    argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.4.4
+    argo-executor: quay.io/argoproj/argoexec:v3.4.4
+    argo-server: quay.io/argoproj/argocli:v3.4.4
 
   argo:
     name: workflow-controller
@@ -117,12 +117,7 @@ argo:
         limits:
           cpu: 100m
           memory: 300Mi
-      containerRuntimeExecutor: docker
-      containerRuntimeExecutors: []
-        # - name: emissary
-        #  selector:
-        #    matchLabels:
-        #      workflows.argoproj.io/container-runtime-executor: emissary
+      containerRuntimeExecutor: emissary
 
     resources: {}
     # requests:
