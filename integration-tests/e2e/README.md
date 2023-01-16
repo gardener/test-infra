@@ -15,7 +15,7 @@ Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluste
 
 ```bash
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --workdir /go/src/github.com/gardener/test-infra golang:1.17 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --workdir /go/src/github.com/gardener/test-infra golang:1.19 bash
 
 # run command below within container to invoke tests in a parallelized way
 GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.26.0 --cloudprovider=skeleton --testcasegroup="conformance"

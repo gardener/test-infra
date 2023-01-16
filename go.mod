@@ -1,6 +1,6 @@
 module github.com/gardener/test-infra
 
-go 1.17
+go 1.19
 
 require (
 	cloud.google.com/go/container v1.1.0

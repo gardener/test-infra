@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #############      builder       #############
-FROM golang:1.17 AS builder
+FROM golang:1.19 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 COPY . .
@@ -21,7 +21,7 @@ COPY . .
 RUN make install
 
 ############# tm-controller #############
-FROM alpine:3.16 AS tm-controller
+FROM alpine:3.17 AS tm-controller
 
 COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
@@ -31,7 +31,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# telemetry-controller #############
-FROM alpine:3.16 AS telemetry-controller
+FROM alpine:3.17 AS telemetry-controller
 
 RUN apk add --update bash curl
 
@@ -43,7 +43,7 @@ WORKDIR /
 ENTRYPOINT ["/telemetry-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.17-alpine3.16 AS base-step
+FROM golang:1.19-alpine AS base-step
 
 ENV HELM_TILLER_VERSION=v2.16.12
 ENV KUBECTL_VERSION=v1.24.3
@@ -128,7 +128,7 @@ WORKDIR /
 ENTRYPOINT ["/testrunner"]
 
 ############# tm-bot #############
-FROM alpine:3.16 AS tm-bot
+FROM alpine:3.17 AS tm-bot
 
 RUN apk add --update bash curl
 
