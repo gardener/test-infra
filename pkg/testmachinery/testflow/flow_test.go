@@ -11,7 +11,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
 	testutils "github.com/gardener/test-infra/test/utils"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

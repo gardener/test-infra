@@ -20,7 +20,7 @@ import (
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"

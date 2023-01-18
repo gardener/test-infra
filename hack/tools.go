@@ -23,7 +23,7 @@ import (
 	_ "github.com/gardener/gardener/.github/ISSUE_TEMPLATE"
 	_ "github.com/gardener/gardener/hack"
 	_ "github.com/golang/mock/mockgen"
-	_ "github.com/onsi/ginkgo/ginkgo"
+	_ "github.com/onsi/ginkgo/v2/ginkgo"
 	_ "golang.org/x/lint/golint"
 
 	_ "k8s.io/code-generator"
