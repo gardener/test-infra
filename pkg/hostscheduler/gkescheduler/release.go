@@ -17,9 +17,9 @@ import (
 	"context"
 	"fmt"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 )

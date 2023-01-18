@@ -105,6 +105,8 @@ type ShootSpec struct {
 	ExposureClassName *string
 	// SystemComponents contains the settings of system components in the control or data plane of the Shoot cluster.
 	SystemComponents *SystemComponents
+	// ControlPlane contains general settings for the control plane of the shoot.
+	ControlPlane *ControlPlane
 }
 
 // GetProviderType gets the type of the provider.
@@ -152,6 +154,20 @@ type ShootStatus struct {
 	MigrationStartTime *metav1.Time
 	// Credentials contains information about the shoot credentials.
 	Credentials *ShootCredentials
+	// LastMaintenance holds information about the last maintenance operations on the Shoot.
+	LastMaintenance *LastMaintenance
+}
+
+// LastMaintenance holds information about a maintenance operation on the Shoot.
+type LastMaintenance struct {
+	// A human-readable message containing details about the operations performed in the last maintenance.
+	Description string
+	// TriggeredTime is the time when maintenance was triggered.
+	TriggeredTime metav1.Time
+	// Status of the last maintenance operation, one of Processing, Succeeded, Error.
+	State LastOperationState
+	// FailureReason holds the information about the last maintenance operation failure reason.
+	FailureReason *string
 }
 
 // ShootCredentials contains information about the shoot credentials.
@@ -163,7 +179,7 @@ type ShootCredentials struct {
 // ShootCredentialsRotation contains information about the rotation of credentials.
 type ShootCredentialsRotation struct {
 	// CertificateAuthorities contains information about the certificate authority credential rotation.
-	CertificateAuthorities *ShootCARotation
+	CertificateAuthorities *CARotation
 	// Kubeconfig contains information about the kubeconfig credential rotation.
 	Kubeconfig *ShootKubeconfigRotation
 	// SSHKeypair contains information about the ssh-keypair credential rotation.
@@ -176,10 +192,10 @@ type ShootCredentialsRotation struct {
 	ETCDEncryptionKey *ShootETCDEncryptionKeyRotation
 }
 
-// ShootCARotation contains information about the certificate authority credential rotation.
-type ShootCARotation struct {
+// CARotation contains information about the certificate authority credential rotation.
+type CARotation struct {
 	// Phase describes the phase of the certificate authority credential rotation.
-	Phase ShootCredentialsRotationPhase
+	Phase CredentialsRotationPhase
 	// LastInitiationTime is the most recent time when the certificate authority credential rotation was initiated.
 	LastInitiationTime *metav1.Time
 	// LastCompletionTime is the most recent time when the certificate authority credential rotation was successfully
@@ -214,7 +230,7 @@ type ShootObservabilityRotation struct {
 // ShootServiceAccountKeyRotation contains information about the service account key credential rotation.
 type ShootServiceAccountKeyRotation struct {
 	// Phase describes the phase of the service account key credential rotation.
-	Phase ShootCredentialsRotationPhase
+	Phase CredentialsRotationPhase
 	// LastInitiationTime is the most recent time when the service account key credential rotation was initiated.
 	LastInitiationTime *metav1.Time
 	// LastCompletionTime is the most recent time when the service account key credential rotation was successfully
@@ -225,7 +241,7 @@ type ShootServiceAccountKeyRotation struct {
 // ShootETCDEncryptionKeyRotation contains information about the ETCD encryption key credential rotation.
 type ShootETCDEncryptionKeyRotation struct {
 	// Phase describes the phase of the ETCD encryption key credential rotation.
-	Phase ShootCredentialsRotationPhase
+	Phase CredentialsRotationPhase
 	// LastInitiationTime is the most recent time when the ETCD encryption key credential rotation was initiated.
 	LastInitiationTime *metav1.Time
 	// LastCompletionTime is the most recent time when the ETCD encryption key credential rotation was successfully
@@ -233,19 +249,19 @@ type ShootETCDEncryptionKeyRotation struct {
 	LastCompletionTime *metav1.Time
 }
 
-// ShootCredentialsRotationPhase is a string alias.
-type ShootCredentialsRotationPhase string
+// CredentialsRotationPhase is a string alias.
+type CredentialsRotationPhase string
 
 const (
 	// RotationPreparing is a constant for the credentials rotation phase describing that the procedure is being prepared.
-	RotationPreparing ShootCredentialsRotationPhase = "Preparing"
+	RotationPreparing CredentialsRotationPhase = "Preparing"
 	// RotationPrepared is a constant for the credentials rotation phase describing that the procedure was prepared.
-	RotationPrepared ShootCredentialsRotationPhase = "Prepared"
+	RotationPrepared CredentialsRotationPhase = "Prepared"
 	// RotationCompleting is a constant for the credentials rotation phase describing that the procedure is being
 	// completed.
-	RotationCompleting ShootCredentialsRotationPhase = "Completing"
+	RotationCompleting CredentialsRotationPhase = "Completing"
 	// RotationCompleted is a constant for the credentials rotation phase describing that the procedure was completed.
-	RotationCompleted ShootCredentialsRotationPhase = "Completed"
+	RotationCompleted CredentialsRotationPhase = "Completed"
 )
 
 // ShootAdvertisedAddress contains information for the shoot's Kube API server.
@@ -283,6 +299,7 @@ type KubernetesDashboard struct {
 
 const (
 	// KubernetesDashboardAuthModeBasic uses basic authentication mode for auth.
+	// Deprecated: basic authentication has been removed in Kubernetes v1.19+.
 	KubernetesDashboardAuthModeBasic = "basic"
 	// KubernetesDashboardAuthModeToken uses token-based mode for auth.
 	KubernetesDashboardAuthModeToken = "token"
@@ -299,6 +316,17 @@ type NginxIngress struct {
 	// ExternalTrafficPolicy controls the `.spec.externalTrafficPolicy` value of the load balancer `Service`
 	// exposing the nginx-ingress. Defaults to `Cluster`.
 	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// ControlPlane relevant types                                                             //
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ControlPlane holds information about the general settings for the control plane of a shoot.
+type ControlPlane struct {
+	// HighAvailability holds the configuration settings for high availability of the
+	// control plane of a shoot.
+	HighAvailability *HighAvailability
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -401,7 +429,8 @@ type HibernationSchedule struct {
 
 // Kubernetes contains the version and configuration variables for the Shoot control plane.
 type Kubernetes struct {
-	// AllowPrivilegedContainers indicates whether privileged containers are allowed in the Shoot (default: true).
+	// AllowPrivilegedContainers indicates whether privileged containers are allowed in the Shoot.
+	// Defaults to true for Kubernetes versions below v1.25. Unusable for Kubernetes versions v1.25 and higher.
 	AllowPrivilegedContainers *bool
 	// ClusterAutoscaler contains the configuration flags for the Kubernetes cluster autoscaler.
 	ClusterAutoscaler *ClusterAutoscaler
@@ -512,6 +541,8 @@ type KubeAPIServerConfig struct {
 	// AuditConfig contains configuration settings for the audit of the kube-apiserver.
 	AuditConfig *AuditConfig
 	// EnableBasicAuthentication defines whether basic authentication should be enabled for this cluster or not.
+	// Defaults to false.
+	// Deprecated: basic authentication has been removed in Kubernetes v1.19+. This field will be removed in a future version.
 	EnableBasicAuthentication *bool
 	// OIDCConfig contains configuration settings for the OIDC provider.
 	OIDCConfig *OIDCConfig
@@ -522,7 +553,7 @@ type KubeAPIServerConfig struct {
 	ServiceAccountConfig *ServiceAccountConfig
 	// WatchCacheSizes contains configuration of the API server's watch cache sizes.
 	// Configuring these flags might be useful for large-scale Shoot clusters with a lot of parallel update requests
-	// and a lot of watching controllers (e.g. large shooted Seed clusters). When the API server's watch cache's
+	// and a lot of watching controllers (e.g. large ManagedSeed clusters). When the API server's watch cache's
 	// capacity is too small to cope with the amount of update requests and watchers for a particular resource, it
 	// might happen that controller watches are permanently stopped with `too old resource version` errors.
 	// Starting from kubernetes v1.19, the API server's watch cache size is adapted dynamically and setting the watch
@@ -536,6 +567,16 @@ type KubeAPIServerConfig struct {
 	EnableAnonymousAuthentication *bool
 	// EventTTL controls the amount of time to retain events.
 	EventTTL *metav1.Duration
+	// Logging contains configuration settings for the log verbosity and access logging
+	Logging *KubeAPIServerLogging
+}
+
+// KubeAPIServerLogging contains configuration for the logs level and http access logs
+type KubeAPIServerLogging struct {
+	// Verbosity is the kube-apiserver log verbosity level
+	Verbosity *int32
+	// HTTPAccessVerbosity is the kube-apiserver access logs level
+	HTTPAccessVerbosity *int32
 }
 
 // KubeAPIServerRequests contains configuration for request-specific settings for the kube-apiserver.
@@ -627,6 +668,8 @@ type OpenIDConnectClientAuthentication struct {
 type AdmissionPlugin struct {
 	// Name is the name of the plugin.
 	Name string
+	// Disabled specifies whether this plugin should be disabled.
+	Disabled *bool
 	// Config is the configuration of the plugin.
 	Config *runtime.RawExtension
 }
@@ -739,6 +782,10 @@ const (
 // KubeletConfig contains configuration settings for the kubelet.
 type KubeletConfig struct {
 	KubernetesConfig
+	// ContainerLogMaxSize defines the maximum size of the container log file before it is rotated. For example: "5Mi" or "256Ki".
+	ContainerLogMaxSize *resource.Quantity
+	// ContainerLogMaxFiles is the maximum number of container log files that can be present for a container.
+	ContainerLogMaxFiles *int32
 	// CPUCFSQuota allows you to disable/enable CPU throttling for Pods.
 	CPUCFSQuota *bool
 	// CPUManagerPolicy allows to set alternative CPU management policies (default: none).
@@ -799,6 +846,26 @@ type KubeletConfig struct {
 	ImageGCLowThresholdPercent *int32
 	// SerializeImagePulls describes whether the images are pulled one at a time.
 	SerializeImagePulls *bool
+	// RegistryPullQPS is the limit of registry pulls per second. The value must not be a negative number.
+	// Setting it to 0 means no limit.
+	RegistryPullQPS *int32
+	// RegistryBurst is the maximum size of bursty pulls, temporarily allows pulls to burst to this number,
+	// while still not exceeding registryPullQPS. The value must not be a negative number.
+	// Only used if registryPullQPS is greater than 0.
+	RegistryBurst *int32
+	// SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads.
+	// This requires the corresponding SeccompDefault feature gate to be enabled as well.
+	// This field is only available for Kubernetes v1.25 or later.
+	SeccompDefault *bool
+	// ProtectKernelDefaults ensures that the kernel tunables are equal to the kubelet defaults.
+	// Defaults to true for Kubernetes v1.26 or later.
+	ProtectKernelDefaults *bool
+	// StreamingConnectionIdleTimeout is the maximum time a streaming connection can be idle before the connection is automatically closed.
+	// This field cannot be set lower than "30s" or greater than "4h".
+	// Default:
+	//  "4h" for Kubernetes < v1.26.
+	//  "5m" for Kubernetes >= v1.26.
+	StreamingConnectionIdleTimeout *metav1.Duration
 }
 
 // KubeletConfigEviction contains kubelet eviction thresholds supporting either a resource.Quantity or a percentage based value.
@@ -1129,6 +1196,8 @@ type SystemComponents struct {
 type CoreDNS struct {
 	// Autoscaling contains the settings related to autoscaling of the Core DNS components running in the data plane of the Shoot cluster.
 	Autoscaling *CoreDNSAutoscaling
+	// Rewriting contains the setting related to rewriting of requests, which are obviously incorrect due to the unnecessary application of the search path.
+	Rewriting *CoreDNSRewriting
 }
 
 // CoreDNSAutoscaling contains the settings related to autoscaling of the Core DNS components running in the data plane of the Shoot cluster.
@@ -1148,6 +1217,12 @@ const (
 	CoreDNSAutoscalingModeClusterProportional CoreDNSAutoscalingMode = "cluster-proportional"
 )
 
+// CoreDNSRewriting contains the setting related to rewriting requests, which are obviously incorrect due to the unnecessary application of the search path.
+type CoreDNSRewriting struct {
+	// CommonSuffixes are expected to be the suffix of a fully qualified domain name. Each suffix should contain at least one or two dots ('.') to prevent accidental clashes.
+	CommonSuffixes []string
+}
+
 // NodeLocalDNS contains the settings of the node local DNS components running in the data plane of the Shoot cluster.
 type NodeLocalDNS struct {
 	// Enabled indicates whether node local DNS is enabled or not.
@@ -1158,6 +1233,10 @@ type NodeLocalDNS struct {
 	// ForceTCPToUpstreamDNS indicates whether the connection from the node local DNS to the upstream DNS (infrastructure DNS) will be forced to TCP or not.
 	// Default, if unspecified, is to enforce TCP.
 	ForceTCPToUpstreamDNS *bool
+	// DisableForwardToUpstreamDNS indicates whether requests from node local DNS to upstream DNS should be disabled.
+	// Default, if unspecified, is to forward requests for external domains to upstream DNS
+	// +optional
+	DisableForwardToUpstreamDNS *bool `json:"disableForwardToUpstreamDNS,omitempty" protobuf:"varint,4,opt,name=disableForwardToUpstreamDNS"`
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

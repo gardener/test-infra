@@ -14,7 +14,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v39/github"
+	"github.com/google/go-github/v49/github"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

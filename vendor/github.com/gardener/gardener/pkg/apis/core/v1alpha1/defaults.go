@@ -81,6 +81,21 @@ func defaultSubject(obj *rbacv1.Subject) {
 	}
 }
 
+// SetDefaults_MachineImageVersion sets default values for MachineImageVersion objects.
+func SetDefaults_MachineImageVersion(obj *MachineImageVersion) {
+	if len(obj.CRI) == 0 {
+		obj.CRI = []CRI{
+			{
+				Name: CRINameDocker,
+			},
+		}
+	}
+
+	if len(obj.Architectures) == 0 {
+		obj.Architectures = []string{v1beta1constants.ArchitectureAMD64}
+	}
+}
+
 // SetDefaults_MachineType sets default values for MachineType objects.
 func SetDefaults_MachineType(obj *MachineType) {
 	if obj.Usable == nil {
@@ -140,10 +155,11 @@ func SetDefaults_SeedSettingDependencyWatchdog(obj *SeedSettingDependencyWatchdo
 
 // SetDefaults_Shoot sets default values for Shoot objects.
 func SetDefaults_Shoot(obj *Shoot) {
-	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil {
+	// Errors are ignored here because we cannot do anything meaningful with them - variables will default to `false`.
+	k8sLess125, _ := versionutils.CheckVersionMeetsConstraint(obj.Spec.Kubernetes.Version, "< 1.25")
+	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil && k8sLess125 && !isPSPDisabled(obj) {
 		obj.Spec.Kubernetes.AllowPrivilegedContainers = pointer.Bool(true)
 	}
-
 	if obj.Spec.Kubernetes.KubeAPIServer == nil {
 		obj.Spec.Kubernetes.KubeAPIServer = &KubeAPIServerConfig{}
 	}
@@ -272,6 +288,14 @@ func SetDefaults_Shoot(obj *Shoot) {
 		obj.Spec.Kubernetes.KubeAPIServer.EnableAnonymousAuthentication = pointer.Bool(false)
 	}
 
+	if obj.Spec.Kubernetes.KubeAPIServer.Logging == nil {
+		obj.Spec.Kubernetes.KubeAPIServer.Logging = &KubeAPIServerLogging{}
+	}
+
+	if obj.Spec.Kubernetes.KubeAPIServer.Logging.Verbosity == nil {
+		obj.Spec.Kubernetes.KubeAPIServer.Logging.Verbosity = pointer.Int32(2)
+	}
+
 	for i, worker := range obj.Spec.Provider.Workers {
 		kubernetesVersion := obj.Spec.Kubernetes.Version
 		if worker.Kubernetes != nil && worker.Kubernetes.Version != nil {
@@ -288,11 +312,9 @@ func SetDefaults_Shoot(obj *Shoot) {
 			continue
 		}
 
-		if worker.CRI != nil {
-			continue
+		if worker.CRI == nil {
+			obj.Spec.Provider.Workers[i].CRI = &CRI{Name: CRINameContainerD}
 		}
-
-		obj.Spec.Provider.Workers[i].CRI = &CRI{Name: CRINameContainerD}
 	}
 
 	if obj.Spec.SystemComponents == nil {
@@ -419,6 +441,31 @@ func SetDefaults_ControllerResource(obj *ControllerResource) {
 	if obj.Primary == nil {
 		obj.Primary = pointer.Bool(true)
 	}
+	if obj.Kind == "Extension" {
+		if obj.GloballyEnabled == nil {
+			obj.GloballyEnabled = pointer.Bool(false)
+		}
+
+		if obj.ReconcileTimeout == nil {
+			obj.ReconcileTimeout = &metav1.Duration{Duration: time.Minute * 3}
+		}
+
+		if obj.Lifecycle == nil {
+			obj.Lifecycle = &ControllerResourceLifecycle{}
+		}
+		if obj.Lifecycle.Reconcile == nil {
+			afterKubeAPIServer := AfterKubeAPIServer
+			obj.Lifecycle.Reconcile = &afterKubeAPIServer
+		}
+		if obj.Lifecycle.Delete == nil {
+			beforeKubeAPIServer := BeforeKubeAPIServer
+			obj.Lifecycle.Delete = &beforeKubeAPIServer
+		}
+		if obj.Lifecycle.Migrate == nil {
+			beforeKubeAPIServer := BeforeKubeAPIServer
+			obj.Lifecycle.Migrate = &beforeKubeAPIServer
+		}
+	}
 }
 
 // SetDefaults_ControllerRegistrationDeployment sets default values for ControllerDeployment objects.
@@ -464,4 +511,15 @@ func addTolerations(tolerations *[]Toleration, additionalTolerations ...Tolerati
 		}
 		*tolerations = append(*tolerations, toleration)
 	}
+}
+
+func isPSPDisabled(shoot *Shoot) bool {
+	if shoot.Spec.Kubernetes.KubeAPIServer != nil {
+		for _, plugin := range shoot.Spec.Kubernetes.KubeAPIServer.AdmissionPlugins {
+			if plugin.Name == "PodSecurityPolicy" && pointer.BoolDeref(plugin.Disabled, false) {
+				return true
+			}
+		}
+	}
+	return false
 }

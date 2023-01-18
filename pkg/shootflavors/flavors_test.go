@@ -30,12 +30,12 @@ var _ = Describe("flavor test", func() {
 	BeforeEach(func() {
 		defaultMachine = gardencorev1beta1.Machine{
 			Type:  "test-machine",
-			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.StringPtr("0.0.1")},
+			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.String("0.0.1")},
 		}
 
 		defaultExpectedMachine = gardencorev1beta1.Machine{
 			Type:         "test-machine",
-			Image:        &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.StringPtr("0.0.1")},
+			Image:        &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.String("0.0.1")},
 			Architecture: pointer.String("amd64"),
 		}
 
@@ -270,7 +270,7 @@ var _ = Describe("flavor test", func() {
 		rawFlavors := []*common.ShootFlavor{
 			{
 				Provider:                  common.CloudProviderGCP,
-				AllowPrivilegedContainers: pointer.BoolPtr(false),
+				AllowPrivilegedContainers: pointer.Bool(false),
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
 					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
@@ -286,7 +286,7 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:                  common.CloudProviderGCP,
-				AllowPrivilegedContainers: pointer.BoolPtr(false),
+				AllowPrivilegedContainers: pointer.Bool(false),
 				KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))

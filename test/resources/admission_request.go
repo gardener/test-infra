@@ -33,7 +33,7 @@ type MockReader struct {
 	Error error
 }
 
-func (m MockReader) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (m MockReader) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return m.Error
 }
 

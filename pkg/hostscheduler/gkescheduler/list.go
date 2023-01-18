@@ -27,8 +27,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/cmdutil"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	flag "github.com/spf13/pflag"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
