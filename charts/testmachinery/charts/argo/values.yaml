@@ -28,7 +28,6 @@ argo:
       limits:
         cpu: 100m
         memory: 300Mi
-    containerRuntimeExecutor: emissary
   resources: { }
   # requests:
   #   cpu: 200m
