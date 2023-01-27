@@ -209,7 +209,7 @@ func ValidateComponentReferences(fldPath *field.Path, refs []v2.ComponentReferen
 
 		id := string(ref.GetIdentityDigest())
 		if _, ok := refIDs[id]; ok {
-			allErrs = append(allErrs, field.Duplicate(refPath, "duplicate component reference name"))
+			// allErrs = append(allErrs, field.Duplicate(refPath, "duplicate component reference name"))
 			continue
 		}
 		refIDs[id] = struct{}{}
