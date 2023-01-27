@@ -66,7 +66,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bronze1man/yaml2json v0.0.0-20211227013850-8972abeaea25 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/containerd/containerd v1.6.6 // indirect
+	github.com/containerd/containerd v1.6.12 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -176,11 +176,8 @@ require (
 
 replace (
 	// helm dependencies
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v20.10.12+incompatible
-	//  github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.8.0
-	//  github.com/onsi/gomega => github.com/onsi/gomega v1.5.0
-	//	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
+	// github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+	github.com/docker/docker => github.com/moby/moby v20.10.23+incompatible
 	k8s.io/api => k8s.io/api v0.25.5
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.25.5
 	k8s.io/apimachinery => k8s.io/apimachinery v0.25.5
