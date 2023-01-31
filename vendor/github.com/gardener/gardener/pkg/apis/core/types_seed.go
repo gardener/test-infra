@@ -184,7 +184,7 @@ type ShootNetworks struct {
 	Services *string
 }
 
-// SeedProvider defines the provider type and region for this Seed cluster.
+// SeedProvider defines the provider-specific information of this Seed cluster.
 type SeedProvider struct {
 	// Type is the name of the provider.
 	Type string
@@ -192,6 +192,8 @@ type SeedProvider struct {
 	ProviderConfig *runtime.RawExtension
 	// Region is a name of a region.
 	Region string
+	// Zones is the list of availability zones the seed cluster is deployed to.
+	Zones []string
 }
 
 // SeedSettings contains certain settings for this seed cluster.

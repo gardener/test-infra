@@ -39,13 +39,22 @@ func Setup() error {
 }
 
 func getKubetestAndUtilities() error {
-	goModuleOriginValue := os.Getenv("GO111MODULE")
-	_ = os.Setenv("GO111MODULE", "on")
-	if _, err := util.RunCmd(fmt.Sprintf("go get k8s.io/test-infra/kubetest@%s", config.TestInfraVersion), "/"); err != nil {
+	// go get does not support installation with golang 1.18 or higher.
+	// However, go install is flawed in a sense that it does not support the replace directive in a go.mod file
+	// see https://github.com/golang/go/issues/44840 and https://github.com/kubernetes/test-infra/issues/25950#issuecomment-1101933386 for reference
+	// the "solution" seems to be to git clone and run a go build
+	log.Info("Setting up kubetest binary...")
+	if _, err := util.RunCmd("git clone -n https://github.com/kubernetes/test-infra.git /go/src/github.com/kubernetes/test-infra/", "/"); err != nil {
 		return err
 	}
-	_ = os.Setenv("GO111MODULE", goModuleOriginValue)
+	if _, err := util.RunCmd(fmt.Sprintf("git checkout %s", config.TestInfraVersion), "/go/src/github.com/kubernetes/test-infra/"); err != nil {
+		return err
+	}
+	if _, err := util.RunCmd("go build -o /go/bin", "/go/src/github.com/kubernetes/test-infra/kubetest"); err != nil {
+		return err
+	}
 
+	log.Info("Setting up tools...")
 	if err := os.MkdirAll(config.K8sRoot, os.ModePerm); err != nil {
 		return errors.Wrapf(err, "unable to create directories %s", config.K8sRoot)
 	}

@@ -16,9 +16,9 @@ package gkescheduler
 import (
 	"context"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 

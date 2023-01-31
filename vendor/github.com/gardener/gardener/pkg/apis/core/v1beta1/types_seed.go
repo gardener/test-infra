@@ -210,7 +210,7 @@ type ShootNetworks struct {
 	Services *string `json:"services,omitempty" protobuf:"bytes,2,opt,name=services"`
 }
 
-// SeedProvider defines the provider type and region for this Seed cluster.
+// SeedProvider defines the provider-specific information of this Seed cluster.
 type SeedProvider struct {
 	// Type is the name of the provider.
 	Type string `json:"type" protobuf:"bytes,1,opt,name=type"`
@@ -219,6 +219,9 @@ type SeedProvider struct {
 	ProviderConfig *runtime.RawExtension `json:"providerConfig,omitempty" protobuf:"bytes,2,opt,name=providerConfig"`
 	// Region is a name of a region.
 	Region string `json:"region" protobuf:"bytes,3,opt,name=region"`
+	// Zones is the list of availability zones the seed cluster is deployed to.
+	// +optional
+	Zones []string `json:"zones,omitempty" protobuf:"bytes,4,rep,name=zones"`
 }
 
 // SeedSettings contains certain settings for this seed cluster.

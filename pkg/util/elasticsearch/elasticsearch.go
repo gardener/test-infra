@@ -24,7 +24,7 @@ import (
 	"os"
 	"path"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 

@@ -54,6 +54,8 @@ spec:
         env:
           - name: BASE_HREF
             value: /
+          - name: POD_NAMES
+            value: v1 #TODO remove in future version to switch to default (v2)
         ports:
         - containerPort: 2746
           name: web
@@ -128,6 +130,8 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: metadata.name
+          - name: POD_NAMES
+            value: v1 #TODO remove in future version to switch to default (v2)
         image: {{ index .Values.images "argo-workflow-controller" }}
         livenessProbe:
           failureThreshold: 3

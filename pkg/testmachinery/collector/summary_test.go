@@ -15,14 +15,13 @@
 package collector
 
 import (
-	"github.com/go-logr/logr"
-	"github.com/onsi/ginkgo"
-
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/test/resources"
+	"github.com/go-logr/logr"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

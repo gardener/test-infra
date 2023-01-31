@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -43,7 +43,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		w      watch.Watch
 	)
 
-	BeforeEach(func() {
+	BeforeEach(func(sCtx SpecContext) {
 		ctx, cancel = context.WithCancel(context.Background())
 		tr = &tmv1beta1.Testrun{
 			ObjectMeta: metav1.ObjectMeta{
@@ -68,16 +68,16 @@ var _ = Describe("Watch Cache Informer", func() {
 		}()
 		err = watch.WaitForCacheSyncWithTimeout(w, 2*time.Minute)
 		Expect(err).ToNot(HaveOccurred())
-	}, 5)
+	}, NodeTimeout(5*time.Second))
 
-	AfterEach(func() {
+	AfterEach(func(sCtx SpecContext) {
 		defer cancel()
 		err := fakeClient.Delete(context.TODO(), tr)
 		Expect(err).ToNot(HaveOccurred())
 
 		cancel()
 		wg.Wait()
-	}, 3)
+	}, NodeTimeout(5*time.Second))
 
 	It("watch should timeout after 2 seconds", func() {
 		startTime := time.Now()
@@ -86,7 +86,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		Expect(time.Since(startTime).Seconds()).To(BeNumerically("~", 2, 0.01))
 	})
 
-	It("watch should reconcile once", func() {
+	It("watch should reconcile once", func(sCtx SpecContext) {
 		sendWG := sync.WaitGroup{}
 		sendWG.Add(1)
 		go func() {
@@ -109,9 +109,9 @@ var _ = Describe("Watch Cache Informer", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(count).To(Equal(1))
 		sendWG.Wait()
-	}, 12)
+	}, NodeTimeout(12*time.Second))
 
-	It("watch should get triggered for 10 changes", func() {
+	It("watch should get triggered for 10 changes", func(sCtx SpecContext) {
 		sendWG := sync.WaitGroup{}
 		sendWG.Add(1)
 		go func() {
@@ -143,7 +143,7 @@ var _ = Describe("Watch Cache Informer", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(count).To(Equal(10))
 		sendWG.Wait()
-	}, 12)
+	}, NodeTimeout(12*time.Second))
 
 	It("watch should return an error if the watch function returns an error", func() {
 		sendWG := sync.WaitGroup{}

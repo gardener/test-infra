@@ -20,11 +20,11 @@ import (
 	"time"
 
 	container "cloud.google.com/go/container/apiv1"
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	"k8s.io/client-go/rest"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"

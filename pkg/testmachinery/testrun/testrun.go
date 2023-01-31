@@ -50,7 +50,7 @@ func New(ctx context.Context, log logr.Logger, tr *tmv1beta1.Testrun, reader cli
 	globalConfig = append(globalConfig, config.NewElement(createTestrunIDConfig(tr.Name), config.LevelGlobal))
 
 	// create initial prepare step
-	prepareDef, err := prepare.New("Prepare", false, true)
+	prepareDef, err := prepare.New("prepare", false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func New(ctx context.Context, log logr.Logger, tr *tmv1beta1.Testrun, reader cli
 		return nil, err
 	}
 
-	postPrepareDef, err := prepare.New("PostPrepare", true, false)
+	postPrepareDef, err := prepare.New("post-prepare", true, false)
 	if err != nil {
 		return nil, err
 	}

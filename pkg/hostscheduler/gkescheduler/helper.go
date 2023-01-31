@@ -34,7 +34,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
+	"cloud.google.com/go/container/apiv1/containerpb"
 )
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use

@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -28,7 +28,7 @@ import (
 var _ = Describe("Executor tests", func() {
 
 	Context("basic", func() {
-		It("should run a set of functions in serial without backoff", func() {
+		It("should run a set of functions in serial without backoff", func(sCtx SpecContext) {
 			executions := [3]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
@@ -55,9 +55,9 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically(">=", 1))
 			}
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run all functions in parallel", func() {
+		It("should run all functions in parallel", func(sCtx SpecContext) {
 			executions := [3]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 			Expect(err).ToNot(HaveOccurred())
@@ -81,9 +81,9 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically("~", 0, 0.1))
 			}
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run 3 functions in serial with a backoff", func() {
+		It("should run 3 functions in serial with a backoff", func(sCtx SpecContext) {
 			executions := [3]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        true,
@@ -110,9 +110,9 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically(">=", 2))
 			}
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run 1 function in serial", func() {
+		It("should run 1 function in serial", func(sCtx SpecContext) {
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
 			})
@@ -127,9 +127,9 @@ var _ = Describe("Executor tests", func() {
 
 			executor.Run()
 			Expect(called).To(Equal(1))
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run 3 functions in serial", func() {
+		It("should run 3 functions in serial", func(sCtx SpecContext) {
 			executions := [3]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial: true,
@@ -155,9 +155,9 @@ var _ = Describe("Executor tests", func() {
 				b := e.start.Sub(before.start)
 				Expect(b.Seconds()).To(BeNumerically(">=", 1))
 			}
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run 6 functions in parallel with a backoff in a bucket of 2", func() {
+		It("should run 6 functions in parallel with a backoff in a bucket of 2", func(sCtx SpecContext) {
 			executions := [6]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        false,
@@ -184,9 +184,9 @@ var _ = Describe("Executor tests", func() {
 
 			expectExecutionsToHaveBeenStartedAfter(executions[2], executions[0], 2)
 			expectExecutionsToHaveBeenStartedAfter(executions[4], executions[2], 2)
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 
-		It("should run 6 functions in serial with a backoff in a bucket of 2", func() {
+		It("should run 6 functions in serial with a backoff in a bucket of 2", func(sCtx SpecContext) {
 			executions := [6]*execution{}
 			executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 				Serial:        true,
@@ -213,10 +213,10 @@ var _ = Describe("Executor tests", func() {
 
 			expectExecutionsToHaveBeenStartedAfter(executions[2], executions[0], 3)
 			expectExecutionsToHaveBeenStartedAfter(executions[4], executions[2], 3)
-		}, 10)
+		}, NodeTimeout(20*time.Second))
 	})
 
-	It("should add another test during execution", func() {
+	It("should add another test during execution", func(sCtx SpecContext) {
 		executions := [3]*execution{}
 		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{
 			Serial: true,
@@ -245,9 +245,9 @@ var _ = Describe("Executor tests", func() {
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[2], 5)
 
-	}, 10)
+	}, NodeTimeout(20*time.Second))
 
-	It("should add another test during execution in parallel steps", func() {
+	It("should add another test during execution in parallel steps", func(sCtx SpecContext) {
 		executions := [3]*execution{}
 		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
@@ -273,9 +273,9 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[2], 5)
-	}, 10)
+	}, NodeTimeout(20*time.Second))
 
-	It("should add another test during execution in parallel steps that start immediately", func() {
+	It("should add another test during execution in parallel steps that start immediately", func(sCtx SpecContext) {
 		executions := [3]*execution{}
 		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
@@ -304,9 +304,9 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(addExecution.start.IsZero()).To(BeFalse())
 		expectExecutionsToHaveBeenStartedAfter(addExecution, executions[0], 5)
-	}, 10)
+	}, NodeTimeout(20*time.Second))
 
-	It("should add same test during execution in parallel steps", func() {
+	It("should add same test during execution in parallel steps", func(sCtx SpecContext) {
 		executions := [3]*execution{}
 		executor, err := testrunner.NewExecutor(logr.Discard(), testrunner.ExecutorConfig{})
 		Expect(err).ToNot(HaveOccurred())
@@ -330,7 +330,7 @@ var _ = Describe("Executor tests", func() {
 
 		Expect(executions[1].value).To(Equal(3))
 		expectExecutionsToHaveBeenStartedAfter(executions[1], executions[2], 5)
-	}, 10)
+	}, NodeTimeout(20*time.Second))
 
 })
 

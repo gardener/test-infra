@@ -31,7 +31,7 @@ import (
 	mock_elasticsearch "github.com/gardener/test-infra/pkg/util/elasticsearch/mocks"
 	mock_collector "github.com/gardener/test-infra/pkg/util/s3/mocks"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

@@ -57,6 +57,10 @@ message AdmissionPlugin {
   // Config is the configuration of the plugin.
   // +optional
   optional k8s.io.apimachinery.pkg.runtime.RawExtension config = 2;
+
+  // Disabled specifies whether this plugin should be disabled.
+  // +optional
+  optional bool disabled = 3;
 }
 
 // Alerting contains information about how alerting will be done (i.e. who will receive alerts and how).
@@ -228,6 +232,21 @@ message BackupEntryStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time migrationStartTime = 5;
 }
 
+// CARotation contains information about the certificate authority credential rotation.
+message CARotation {
+  // Phase describes the phase of the certificate authority credential rotation.
+  optional string phase = 1;
+
+  // LastInitiationTime is the most recent time when the certificate authority credential rotation was initiated.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastInitiationTime = 3;
+
+  // LastCompletionTime is the most recent time when the certificate authority credential rotation was successfully
+  // completed.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTime = 2;
+}
+
 // CRI contains information about the Container Runtimes.
 message CRI {
   // The name of the CRI library. Supported values are `docker` and `containerd`.
@@ -236,15 +255,6 @@ message CRI {
   // ContainerRuntimes is the list of the required container runtimes supported for a worker pool.
   // +optional
   repeated ContainerRuntime containerRuntimes = 2;
-}
-
-// CloudInfo contains information about the cloud
-message CloudInfo {
-  // Type is the cloud type
-  optional string type = 1;
-
-  // Region is the cloud region
-  optional string region = 2;
 }
 
 // CloudProfile represents certain properties about a provider environment.
@@ -359,15 +369,6 @@ message ClusterAutoscaler {
   repeated string ignoreTaints = 10;
 }
 
-// ClusterInfo contains information about the Plant cluster
-message ClusterInfo {
-  // Cloud describes the cloud information
-  optional CloudInfo cloud = 1;
-
-  // Kubernetes describes kubernetes meta information (e.g., version)
-  optional KubernetesInfo kubernetes = 2;
-}
-
 // Condition holds the information about the state of a resource.
 message Condition {
   // Type of the condition.
@@ -401,6 +402,14 @@ message ContainerRuntime {
   // ProviderConfig is the configuration passed to container runtime resource.
   // +optional
   optional k8s.io.apimachinery.pkg.runtime.RawExtension providerConfig = 2;
+}
+
+// ControlPlane holds information about the general settings for the control plane of a shoot.
+message ControlPlane {
+  // HighAvailability holds the configuration settings for high availability of the
+  // control plane of a shoot.
+  // +optional
+  optional HighAvailability highAvailability = 1;
 }
 
 // ControllerDeployment contains information about how this controller is deployed.
@@ -534,10 +543,12 @@ message ControllerResource {
   optional string type = 2;
 
   // GloballyEnabled determines if this ControllerResource is required by all Shoot clusters.
+  // This field is defaulted to false when kind is "Extension".
   // +optional
   optional bool globallyEnabled = 3;
 
   // ReconcileTimeout defines how long Gardener should wait for the resource reconciliation.
+  // This field is defaulted to 3m0s when kind is "Extension".
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration reconcileTimeout = 4;
 
@@ -546,6 +557,29 @@ message ControllerResource {
   // combination. This field is immutable.
   // +optional
   optional bool primary = 5;
+
+  // Lifecycle defines a strategy that determines when different operations on a ControllerResource should be performed.
+  // This field is defaulted in the following way when kind is "Extension".
+  //  Reconcile: "AfterKubeAPIServer"
+  //  Delete: "BeforeKubeAPIServer"
+  //  Migrate: "BeforeKubeAPIServer"
+  // +optional
+  optional ControllerResourceLifecycle lifecycle = 6;
+}
+
+// ControllerResourceLifecycle defines the lifecycle of a controller resource.
+message ControllerResourceLifecycle {
+  // Reconcile defines the strategy during reconciliation.
+  // +optional
+  optional string reconcile = 1;
+
+  // Delete defines the strategy during deletion.
+  // +optional
+  optional string delete = 2;
+
+  // Migrate defines the strategy during migration.
+  // +optional
+  optional string migrate = 3;
 }
 
 // CoreDNS contains the settings of the Core DNS components running in the data plane of the Shoot cluster.
@@ -553,6 +587,10 @@ message CoreDNS {
   // Autoscaling contains the settings related to autoscaling of the Core DNS components running in the data plane of the Shoot cluster.
   // +optional
   optional CoreDNSAutoscaling autoscaling = 1;
+
+  // Rewriting contains the setting related to rewriting of requests, which are obviously incorrect due to the unnecessary application of the search path.
+  // +optional
+  optional CoreDNSRewriting rewriting = 2;
 }
 
 // CoreDNSAutoscaling contains the settings related to autoscaling of the Core DNS components running in the data plane of the Shoot cluster.
@@ -560,6 +598,13 @@ message CoreDNSAutoscaling {
   // The mode of the autoscaling to be used for the Core DNS components running in the data plane of the Shoot cluster.
   // Supported values are `horizontal` and `cluster-proportional`.
   optional string mode = 1;
+}
+
+// CoreDNSRewriting contains the setting related to rewriting requests, which are obviously incorrect due to the unnecessary application of the search path.
+message CoreDNSRewriting {
+  // CommonSuffixes are expected to be the suffix of a fully qualified domain name. Each suffix should contain at least one or two dots ('.') to prevent accidental clashes.
+  // +optional
+  repeated string commonSuffixes = 1;
 }
 
 // DNS holds information about the provider, the hosted zone id and the domain.
@@ -637,18 +682,6 @@ message DeploymentRef {
   optional string name = 1;
 }
 
-// Endpoint is an endpoint for monitoring, logging and other services around the plant.
-message Endpoint {
-  // Name is the name of the endpoint
-  optional string name = 1;
-
-  // URL is the url of the endpoint
-  optional string url = 2;
-
-  // Purpose is the purpose of the endpoint
-  optional string purpose = 3;
-}
-
 // ExpirableVersion contains a version and an expiration date.
 message ExpirableVersion {
   // Version is the version identifier.
@@ -675,6 +708,12 @@ message Extension {
   // Disabled allows to disable extensions that were marked as 'globally enabled' by Gardener administrators.
   // +optional
   optional bool disabled = 3;
+}
+
+// FailureTolerance describes information about failure tolerance level of a highly available resource.
+message FailureTolerance {
+  // Type specifies the type of failure that the highly available resource can tolerate
+  optional string type = 1;
 }
 
 // Gardener holds the information about the Gardener version that operated a resource.
@@ -716,6 +755,13 @@ message HibernationSchedule {
   // Location is the time location in which both start and and shall be evaluated.
   // +optional
   optional string location = 3;
+}
+
+// HighAvailability specifies the configuration settings for high availability for a resource. Typical
+// usages could be to configure HA for shoot control plane or for seed system components.
+message HighAvailability {
+  // FailureTolerance holds information about failure tolerance level of a highly available resource.
+  optional FailureTolerance failureTolerance = 1;
 }
 
 // HorizontalPodAutoscalerConfig contains horizontal pod autoscaler configuration settings for the kube-controller-manager.
@@ -785,6 +831,8 @@ message KubeAPIServerConfig {
 
   // EnableBasicAuthentication defines whether basic authentication should be enabled for this cluster or not.
   // +optional
+  // Defaults to false.
+  // Deprecated: basic authentication has been removed in Kubernetes v1.19+. This field will be removed in a future version.
   optional bool enableBasicAuthentication = 5;
 
   // OIDCConfig contains configuration settings for the OIDC provider.
@@ -802,7 +850,7 @@ message KubeAPIServerConfig {
 
   // WatchCacheSizes contains configuration of the API server's watch cache sizes.
   // Configuring these flags might be useful for large-scale Shoot clusters with a lot of parallel update requests
-  // and a lot of watching controllers (e.g. large shooted Seed clusters). When the API server's watch cache's
+  // and a lot of watching controllers (e.g. large ManagedSeed clusters). When the API server's watch cache's
   // capacity is too small to cope with the amount of update requests and watchers for a particular resource, it
   // might happen that controller watches are permanently stopped with `too old resource version` errors.
   // Starting from kubernetes v1.19, the API server's watch cache size is adapted dynamically and setting the watch
@@ -824,6 +872,22 @@ message KubeAPIServerConfig {
   // Defaults to 1h.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration eventTTL = 12;
+
+  // Logging contains configuration for the log level and HTTP access logs.
+  // +optional
+  optional KubeAPIServerLogging logging = 13;
+}
+
+// KubeAPIServerLogging contains configuration for the logs level and http access logs
+message KubeAPIServerLogging {
+  // Verbosity is the kube-apiserver log verbosity level
+  // Defaults to 2.
+  // +optional
+  optional int32 verbosity = 1;
+
+  // HTTPAccessVerbosity is the kube-apiserver access logs level
+  // +optional
+  optional int32 httpAccessVerbosity = 2;
 }
 
 // KubeAPIServerRequests contains configuration for request-specific settings for the kube-apiserver.
@@ -993,6 +1057,47 @@ message KubeletConfig {
   // +optional
   // Default: true
   optional bool serializeImagePulls = 18;
+
+  // RegistryPullQPS is the limit of registry pulls per second. The value must not be a negative number.
+  // Setting it to 0 means no limit.
+  // Default: 5
+  // +optional
+  optional int32 registryPullQPS = 19;
+
+  // RegistryBurst is the maximum size of bursty pulls, temporarily allows pulls to burst to this number,
+  // while still not exceeding registryPullQPS. The value must not be a negative number.
+  // Only used if registryPullQPS is greater than 0.
+  // Default: 10
+  // +optional
+  optional int32 registryBurst = 20;
+
+  // SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads.
+  // This requires the corresponding SeccompDefault feature gate to be enabled as well.
+  // This field is only available for Kubernetes v1.25 or later.
+  // +optional
+  optional bool seccompDefault = 21;
+
+  // A quantity defines the maximum size of the container log file before it is rotated. For example: "5Mi" or "256Ki".
+  // +optional
+  // Default: 100Mi
+  optional k8s.io.apimachinery.pkg.api.resource.Quantity containerLogMaxSize = 22;
+
+  // Maximum number of container log files that can be present for a container.
+  // +optional
+  optional int32 containerLogMaxFiles = 23;
+
+  // ProtectKernelDefaults ensures that the kernel tunables are equal to the kubelet defaults.
+  // Defaults to true for Kubernetes v1.26 or later.
+  // +optional
+  optional bool protectKernelDefaults = 24;
+
+  // StreamingConnectionIdleTimeout is the maximum time a streaming connection can be idle before the connection is automatically closed.
+  // This field cannot be set lower than "30s" or greater than "4h".
+  // Default:
+  //  "4h" for Kubernetes < v1.26.
+  //  "5m" for Kubernetes >= v1.26.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration streamingConnectionIdleTimeout = 25;
 }
 
 // KubeletConfigEviction contains kubelet eviction thresholds supporting either a resource.Quantity or a percentage based value.
@@ -1085,7 +1190,8 @@ message KubeletConfigReserved {
 
 // Kubernetes contains the version and configuration variables for the Shoot control plane.
 message Kubernetes {
-  // AllowPrivilegedContainers indicates whether privileged containers are allowed in the Shoot (default: true).
+  // AllowPrivilegedContainers indicates whether privileged containers are allowed in the Shoot.
+  // Defaults to true for Kubernetes versions below v1.25. Unusable for Kubernetes versions v1.25 and higher.
   // +optional
   optional bool allowPrivilegedContainers = 1;
 
@@ -1142,12 +1248,6 @@ message KubernetesDashboard {
   optional string authenticationMode = 1;
 }
 
-// KubernetesInfo contains the version and configuration variables for the Plant cluster.
-message KubernetesInfo {
-  // Version is the semantic Kubernetes version to use for the Plant cluster.
-  optional string version = 1;
-}
-
 // KubernetesSettings contains constraints regarding allowed values of the 'kubernetes' block in the Shoot specification.
 message KubernetesSettings {
   // Versions is the list of allowed Kubernetes versions with optional expiration dates for Shoot clusters.
@@ -1175,6 +1275,22 @@ message LastError {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastUpdateTime = 4;
 }
 
+// LastMaintenance holds information about a maintenance operation on the Shoot.
+message LastMaintenance {
+  // A human-readable message containing details about the operations performed in the last maintenance.
+  optional string description = 1;
+
+  // TriggeredTime is the time when maintenance was triggered.
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time triggeredTime = 2;
+
+  // Status of the last maintenance operation, one of Processing, Succeeded, Error.
+  optional string state = 3;
+
+  // FailureReason holds the information about the last maintenance operation failure reason.
+  // +optional
+  optional string failureReason = 4;
+}
+
 // LastOperation indicates the type and the state of the last operation, along with a description
 // message and a progress indicator.
 message LastOperation {
@@ -1190,7 +1306,7 @@ message LastOperation {
   // Status of the last operation, one of Aborted, Processing, Succeeded, Error, Failed.
   optional string state = 4;
 
-  // Type of the last operation, one of Create, Reconcile, Delete.
+  // Type of the last operation, one of Create, Reconcile, Delete, Migrate, Restore.
   optional string type = 5;
 }
 
@@ -1332,10 +1448,14 @@ message MaintenanceAutoUpdate {
 message MaintenanceTimeWindow {
   // Begin is the beginning of the time window in the format HHMMSS+ZONE, e.g. "220000+0100".
   // If not present, a random value will be computed.
+  // +kubebuilder:validation:Required
+  // +kubebuilder:validation:Pattern=`([0-1][0-9]|2[0-3])[0-5][0-9][0-5][0-9]\+[0-1][0-4]00`
   optional string begin = 1;
 
   // End is the end of the time window in the format HHMMSS+ZONE, e.g. "220000+0100".
   // If not present, the value will be computed based on the "Begin" value.
+  // +kubebuilder:validation:Required
+  // +kubebuilder:validation:Pattern=`([0-1][0-9]|2[0-3])[0-5][0-9][0-5][0-9]\+[0-1][0-4]00`
   optional string end = 2;
 }
 
@@ -1410,6 +1530,11 @@ message NodeLocalDNS {
   // Default, if unspecified, is to enforce TCP.
   // +optional
   optional bool forceTCPToUpstreamDNS = 3;
+
+  // DisableForwardToUpstreamDNS indicates whether requests from node local DNS to upstream DNS should be disabled.
+  // Default, if unspecified, is to forward requests for external domains to upstream DNS
+  // +optional
+  optional bool disableForwardToUpstreamDNS = 4;
 }
 
 // OIDCConfig contains configuration settings for the OIDC provider.
@@ -1466,60 +1591,6 @@ message OpenIDConnectClientAuthentication {
   // The client Secret for the OpenID Connect client.
   // +optional
   optional string secret = 2;
-}
-
-// Plant represents an external kubernetes cluster.
-message Plant {
-  // Standard object metadata.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec contains the specification of this Plant.
-  // If the object's deletion timestamp is set, this field is immutable.
-  optional PlantSpec spec = 2;
-
-  // Status contains the status of this Plant.
-  optional PlantStatus status = 3;
-}
-
-// PlantList is a collection of Plants.
-message PlantList {
-  // Standard list object metadata.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // Items is the list of Plants.
-  repeated Plant items = 2;
-}
-
-// PlantSpec is the specification of a Plant.
-message PlantSpec {
-  // SecretRef is a reference to a Secret object containing the Kubeconfig of the external kubernetes
-  // clusters to be added to Gardener.
-  optional k8s.io.api.core.v1.LocalObjectReference secretRef = 1;
-
-  // Endpoints is the configuration plant endpoints
-  // +patchMergeKey=name
-  // +patchStrategy=merge
-  // +optional
-  repeated Endpoint endpoints = 2;
-}
-
-// PlantStatus is the status of a Plant.
-message PlantStatus {
-  // Conditions represents the latest available observations of a Plant's current state.
-  // +patchMergeKey=type
-  // +patchStrategy=merge
-  // +optional
-  repeated Condition conditions = 1;
-
-  // ObservedGeneration is the most recent generation observed for this Plant. It corresponds to the
-  // Plant's generation, which is updated on mutation by the API Server.
-  // +optional
-  optional int64 observedGeneration = 2;
-
-  // ClusterInfo is additional computed information about the newly added cluster (Plant)
-  optional ClusterInfo clusterInfo = 3;
 }
 
 // Project holds certain properties about a Gardener project.
@@ -1748,7 +1819,7 @@ message SecretBinding {
   repeated k8s.io.api.core.v1.ObjectReference quotas = 3;
 
   // Provider defines the provider type of the SecretBinding.
-  // This field is immutable when the SecretBindingProviderValidation feature gate is enabled.
+  // This field is immutable.
   // +optional
   optional SecretBindingProvider provider = 4;
 }
@@ -1865,7 +1936,7 @@ message SeedNetworks {
   repeated string blockCIDRs = 5;
 }
 
-// SeedProvider defines the provider type and region for this Seed cluster.
+// SeedProvider defines the provider-specific information of this Seed cluster.
 message SeedProvider {
   // Type is the name of the provider.
   optional string type = 1;
@@ -1876,6 +1947,10 @@ message SeedProvider {
 
   // Region is a name of a region.
   optional string region = 3;
+
+  // Zones is the list of availability zones the seed cluster is deployed to.
+  // +optional
+  repeated string zones = 4;
 }
 
 // SeedSelector contains constraints for selecting seed to be usable for shoots using a profile
@@ -2177,21 +2252,6 @@ message ShootAdvertisedAddress {
   optional string url = 2;
 }
 
-// ShootCARotation contains information about the certificate authority credential rotation.
-message ShootCARotation {
-  // Phase describes the phase of the certificate authority credential rotation.
-  optional string phase = 1;
-
-  // LastInitiationTime is the most recent time when the certificate authority credential rotation was initiated.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastInitiationTime = 3;
-
-  // LastCompletionTime is the most recent time when the certificate authority credential rotation was successfully
-  // completed.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTime = 2;
-}
-
 // ShootCredentials contains information about the shoot credentials.
 message ShootCredentials {
   // Rotation contains information about the credential rotations.
@@ -2203,7 +2263,7 @@ message ShootCredentials {
 message ShootCredentialsRotation {
   // CertificateAuthorities contains information about the certificate authority credential rotation.
   // +optional
-  optional ShootCARotation certificateAuthorities = 1;
+  optional CARotation certificateAuthorities = 1;
 
   // Kubeconfig contains information about the kubeconfig credential rotation.
   // +optional
@@ -2404,6 +2464,10 @@ message ShootSpec {
   // SystemComponents contains the settings of system components in the control or data plane of the Shoot cluster.
   // +optional
   optional SystemComponents systemComponents = 19;
+
+  // ControlPlane contains general settings for the control plane of the shoot.
+  // +optional
+  optional ControlPlane controlPlane = 20;
 }
 
 // ShootStatus holds the most recently observed status of the Shoot cluster.
@@ -2479,6 +2543,10 @@ message ShootStatus {
   // managed to change the hibernation settings of the cluster
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastHibernationTriggerTime = 16;
+
+  // LastMaintenance holds information about the last maintenance operations on the Shoot.
+  // +optional
+  optional LastMaintenance lastMaintenance = 17;
 }
 
 // ShootTemplate is a template for creating a Shoot object.

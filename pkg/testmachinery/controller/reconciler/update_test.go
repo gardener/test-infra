@@ -20,7 +20,7 @@ import (
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -37,40 +37,40 @@ var (
 	reconciler   *TestmachineryReconciler
 )
 
-var _ = Describe("Testmachinery controller update", func() {
+var _ = BeforeSuite(func() {
+	testrunTmpl = tmv1beta1.Testrun{
+		Status: tmv1beta1.TestrunStatus{
+			Steps: []*tmv1beta1.StepStatus{
+				{
+					Name:  "template1",
+					Phase: tmv1beta1.StepPhaseInit,
+					TestDefinition: tmv1beta1.StepStatusTestDefinition{
+						Name: "testdef1",
+					},
+				},
+			},
+		},
+	}
+	workflowTmpl = argov1.Workflow{
+		Spec: argov1.WorkflowSpec{
+			Templates: []argov1.Template{
+				{
+					Name: "template1",
+				},
+			},
+		},
+		Status: argov1.WorkflowStatus{
+			Nodes: map[string]argov1.NodeStatus{
+				"node1": {
+					DisplayName: "template1",
+					Phase:       argov1.NodeRunning,
+				},
+			},
+		},
+	}
+})
 
-	BeforeSuite(func() {
-		testrunTmpl = tmv1beta1.Testrun{
-			Status: tmv1beta1.TestrunStatus{
-				Steps: []*tmv1beta1.StepStatus{
-					{
-						Name:  "template1",
-						Phase: tmv1beta1.StepPhaseInit,
-						TestDefinition: tmv1beta1.StepStatusTestDefinition{
-							Name: "testdef1",
-						},
-					},
-				},
-			},
-		}
-		workflowTmpl = argov1.Workflow{
-			Spec: argov1.WorkflowSpec{
-				Templates: []argov1.Template{
-					{
-						Name: "template1",
-					},
-				},
-			},
-			Status: argov1.WorkflowStatus{
-				Nodes: map[string]argov1.NodeStatus{
-					"node1": {
-						DisplayName: "template1",
-						Phase:       argov1.NodeRunning,
-					},
-				},
-			},
-		}
-	})
+var _ = Describe("Testmachinery controller update", func() {
 
 	BeforeEach(func() {
 		reconciler = &TestmachineryReconciler{

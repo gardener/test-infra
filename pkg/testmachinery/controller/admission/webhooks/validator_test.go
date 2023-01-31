@@ -17,7 +17,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"

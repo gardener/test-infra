@@ -22,7 +22,7 @@ import (
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"github.com/gardener/test-infra/test/utils"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 

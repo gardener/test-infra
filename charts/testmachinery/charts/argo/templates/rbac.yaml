@@ -74,6 +74,8 @@ rules:
       - clusterworkflowtemplates/finalizers
       - workflowtasksets
       - workflowtasksets/finalizers
+      - workflowtaskresults
+      - workflowtaskresults/finalizers
     verbs:
       - create
       - delete
@@ -88,7 +90,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    argo-version: v3
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
   name: argo-aggregate-to-edit
 rules:
@@ -105,6 +106,8 @@ rules:
       - cronworkflows/finalizers
       - clusterworkflowtemplates
       - clusterworkflowtemplates/finalizers
+      - workflowtaskresults
+      - workflowtaskresults/finalizers
     verbs:
       - create
       - delete
@@ -136,6 +139,8 @@ rules:
       - cronworkflows/finalizers
       - clusterworkflowtemplates
       - clusterworkflowtemplates/finalizers
+      - workflowtaskresults
+      - workflowtaskresults/finalizers
     verbs:
       - get
       - list
@@ -173,8 +178,10 @@ rules:
       - ""
     resources:
       - persistentvolumeclaims
+      - persistentvolumeclaims/finalizers
     verbs:
       - create
+      - update
       - delete
       - get
   - apiGroups:
@@ -184,6 +191,7 @@ rules:
       - workflows/finalizers
       - workflowtasksets
       - workflowtasksets/finalizers
+      - workflowartifactgctasks
     verbs:
       - get
       - list
@@ -295,6 +303,7 @@ rules:
     verbs:
       - get
       - list
+      - watch
   - apiGroups:
       - argoproj.io
     resources:

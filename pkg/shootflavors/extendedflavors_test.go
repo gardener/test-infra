@@ -20,7 +20,7 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	mockclient "github.com/gardener/gardener/pkg/mock/controller-runtime/client"
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,7 +88,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.BoolPtr(true),
+				AllowPrivilegedContainers: pointer.Bool(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -115,7 +115,7 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.BoolPtr(true),
+			AllowPrivilegedContainers: pointer.Bool(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
@@ -128,7 +128,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.BoolPtr(true),
+				AllowPrivilegedContainers: pointer.Bool(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -155,7 +155,7 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.BoolPtr(true),
+			AllowPrivilegedContainers: pointer.Bool(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
@@ -168,7 +168,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.BoolPtr(true),
+				AllowPrivilegedContainers: pointer.Bool(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -208,7 +208,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -268,7 +268,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -298,7 +298,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -324,7 +324,7 @@ var _ = Describe("extended flavor test", func() {
 								Machine: gardencorev1beta1.Machine{
 									Image: &gardencorev1beta1.ShootMachineImage{
 										Name:    "test-os",
-										Version: pointer.StringPtr("latest"),
+										Version: pointer.String("latest"),
 									},
 								},
 							},
@@ -333,7 +333,7 @@ var _ = Describe("extended flavor test", func() {
 								Machine: gardencorev1beta1.Machine{
 									Image: &gardencorev1beta1.ShootMachineImage{
 										Name:    "test-os-2",
-										Version: pointer.StringPtr("latest"),
+										Version: pointer.String("latest"),
 									},
 									Architecture: pointer.String("arm64"),
 								},
@@ -344,7 +344,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile) error {
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
 			*obj = cloudprofile
 			return nil
 		})
@@ -361,7 +361,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.BoolPtr(true),
+				AllowPrivilegedContainers: pointer.Bool(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -388,7 +388,7 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.BoolPtr(true),
+			AllowPrivilegedContainers: pointer.Bool(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},

@@ -15,8 +15,8 @@
 package tests_test
 
 import (
-	"github.com/google/go-github/v39/github"
-	. "github.com/onsi/ginkgo"
+	"github.com/google/go-github/v49/github"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"

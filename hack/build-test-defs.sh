@@ -23,7 +23,7 @@ fi
 
 DOCKERFILE_DIR="$REPO_ROOT/tmp/build-defs-dockerfiles"
 mkdir -p $DOCKERFILE_DIR
-BASE_IMAGE="golang:1.17"
+BASE_IMAGE="golang:1.19"
 
 # build integration-tests/e2e
 cat << __EOF > $DOCKERFILE_DIR/e2e
