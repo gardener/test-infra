@@ -71,7 +71,7 @@ var (
 
 const (
 	// points to a commit in https://github.com/kubernetes/test-infra/commits/master
-	TestInfraVersion = "590bc3fef25c06032c5cc53792c2a444a257d575"
+	TestInfraVersion = "0fdffe60e81f1a3e22d5c1ae86e9e2631c5eb96a"
 )
 
 var Debug bool
