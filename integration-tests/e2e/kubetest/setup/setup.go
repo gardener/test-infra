@@ -19,6 +19,10 @@ import (
 )
 
 func Setup() error {
+	if err := setupKubeconfig(); err != nil {
+		return err
+	}
+
 	cleanUpPreviousRuns()
 	if err := areTestUtilitiesReady(); err == nil {
 		log.Info("all test utilities were already ready")

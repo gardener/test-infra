@@ -72,13 +72,10 @@ var (
 const (
 	// points to a commit in https://github.com/kubernetes/test-infra/commits/master
 	TestInfraVersion = "0fdffe60e81f1a3e22d5c1ae86e9e2631c5eb96a"
+	workingDescFile  = "working.json"
 )
 
 var Debug bool
-
-const (
-	workingDescFile = "working.json"
-)
 
 func init() {
 	flag.BoolVar(&Debug, "debug", false, "Run e2e in debug mode")
@@ -122,12 +119,6 @@ func init() {
 	K8sRoot = filepath.Join(GoPath, "src/k8s.io")
 	KubernetesPath = filepath.Join(K8sRoot, "kubernetes")
 	TestInfraPath = filepath.Join(K8sRoot, "test-infra")
-	if ShootKubeconfigPath == "" {
-		ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", os.Getenv("KUBECONFIG"))
-	}
-	if ShootKubeconfigPath == "" {
-		log.Fatal("shoot config not set")
-	}
 	if GardenKubeconfigPath == "" {
 		GardenKubeconfigPath = os.Getenv("GARDEN_KUBECONFIG_PATH")
 	}
@@ -137,9 +128,26 @@ func init() {
 	if ShootName == "" {
 		ShootName = os.Getenv("SHOOT_NAME")
 	}
-	if _, err := os.Stat(ShootKubeconfigPath); err != nil {
-		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
+	if ShootName != "" && ProjectNamespace != "" && GardenKubeconfigPath != "" {
+		ShootKubeconfigPath = "/tmp/shoot.config"
+		if _, err := os.Create(ShootKubeconfigPath); err != nil {
+			log.Fatal(errors.Wrapf(err, "Cannot create or truncate %s: ", ShootKubeconfigPath))
+		}
+		log.Info("Changing E2E_KUBECONFIG_PATH and KUBECONFIG environment variables for creating a shoot/adminkubeconfig resource")
+		os.Setenv("E2E_KUBECONFIG_PATH", ShootKubeconfigPath)
+		os.Setenv("KUBECONFIG", ShootKubeconfigPath)
+	} else {
+		if ShootKubeconfigPath == "" {
+			ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", os.Getenv("KUBECONFIG"))
+		}
+		if ShootKubeconfigPath == "" {
+			log.Fatal("shoot config not set")
+		}
+		if _, err := os.Stat(ShootKubeconfigPath); err != nil {
+			log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
+		}
 	}
+
 	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
 	DescriptionFile = tiutil.Getenv("DESCRIPTION_FILE", workingDescFile)
 	if K8sRelease == "" {
