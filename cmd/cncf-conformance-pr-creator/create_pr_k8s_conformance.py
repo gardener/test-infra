@@ -304,7 +304,7 @@ def commitAndPushChanges(gitHelper, branch_name):
     gitHelper.push("@", f"refs/heads/{branch_name}")
     # subprocess.run(["git", "push", "origin", branch_name])
     print('Branch "' + branch_name + '" was successfully created on https://github.com/' +
-          repo_path + '/branches . TODO: manually send pull request to "' + upstream_repo + '"')
+          repo_path + '/branches . TODO: sanity-check the pull requests that were automatically created in "' + upstream_repo + '"')
 
 
 def createPullRequest(product, provider_tuple, branch_name):
