@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"k8s.io/helm/pkg/strvals"
+	"helm.sh/helm/v3/pkg/strvals"
 
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
