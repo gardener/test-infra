@@ -1,26 +1,24 @@
 package template
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
 	"github.com/gardener/gardener/pkg/utils"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/engine"
-	chartapi "k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/strvals"
-	"k8s.io/helm/pkg/timeconv"
-
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
+	"helm.sh/helm/v3/pkg/strvals"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // templateRenderer is the internal template templateRenderer
@@ -41,7 +39,9 @@ type renderState struct {
 }
 
 func newTemplateRenderer(log logr.Logger, setValues, fileValues []string) (*templateRenderer, error) {
-	chartRenderer := engine.New()
+	// init engine.Engine without a restConfig and mimic helm3 defaults
+	var chartRenderer engine.Engine
+	chartRenderer.EnableDNS = false
 	values, err := determineDefaultValues(setValues, fileValues)
 	if err != nil {
 		return nil, err
@@ -49,12 +49,12 @@ func newTemplateRenderer(log logr.Logger, setValues, fileValues []string) (*temp
 	log.V(3).Info(fmt.Sprintf("Values: \n%s \n", util.PrettyPrintStruct(values)))
 	return &templateRenderer{
 		log:           log,
-		renderer:      chartRenderer,
+		renderer:      &chartRenderer,
 		defaultValues: values,
 	}, nil
 }
 
-// Render renders a helm chart of multiple testruns with values and returns a list of runs.
+// Render renders a helm chart of multiple TestRuns with values and returns a list of runs.
 func (r *templateRenderer) Render(parameters *internalParameters, chartPath string, valueRenderer ValueRenderer) (testrunner.RunList, error) {
 	if chartPath == "" {
 		return make(testrunner.RunList, 0), nil
@@ -67,13 +67,13 @@ func (r *templateRenderer) Render(parameters *internalParameters, chartPath stri
 		parameters:       parameters,
 	}
 
-	c, err := chartutil.Load(chartPath)
+	c, err := loader.Load(chartPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// split all found templates into separate charts
-	templates, files := splitTemplates(c.GetTemplates())
+	templates, files := splitTemplates(c.Templates)
 	runs := make(testrunner.RunList, 0)
 	for _, tmpl := range files {
 		values, metadata, info, err := valueRenderer.Render(r.defaultValues)
@@ -116,38 +116,21 @@ func (r *templateRenderer) Render(parameters *internalParameters, chartPath stri
 	return runs, nil
 }
 
-func (r *templateRenderer) RenderChart(chart *chartapi.Chart, namespace string, values map[string]interface{}) (map[string]string, error) {
-	chartName := chart.GetMetadata().GetName()
-
-	parsedValues, err := json.Marshal(values)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse variables for chart %s: ,%s", chartName, err)
-	}
-	chartConfig := &chartapi.Config{Raw: string(parsedValues)}
-
-	err = chartutil.ProcessRequirementsEnabled(chart, chartConfig)
-	if err != nil {
-		return nil, fmt.Errorf("can't process requirements for chart %s: ,%s", chartName, err)
-	}
-	err = chartutil.ProcessRequirementsImportValues(chart)
-	if err != nil {
-		return nil, fmt.Errorf("can't process requirements for import values for chart %s: ,%s", chartName, err)
-	}
+func (r *templateRenderer) RenderChart(chart *chart.Chart, namespace string, values map[string]interface{}) (map[string]string, error) {
 
 	revision := 1
-	ts := timeconv.Now()
 	options := chartutil.ReleaseOptions{
 		Name:      util.RandomString(5),
-		Time:      ts,
 		Namespace: namespace,
 		Revision:  revision,
 		IsInstall: true,
 	}
 
-	valuesToRender, err := chartutil.ToRenderValuesCaps(chart, chartConfig, options, nil)
+	valuesToRender, err := chartutil.ToRenderValues(chart, values, options, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	return r.renderer.Render(chart, valuesToRender)
 }
 
@@ -189,10 +172,10 @@ func determineDefaultValues(setValues []string, fileValues []string) (map[string
 
 // splitTemplates splits all found templates into 2 lists of .tpl and other files
 // todo: improve to check whether the template is a testrun
-func splitTemplates(all []*chartapi.Template) ([]*chartapi.Template, []*chartapi.Template) {
+func splitTemplates(all []*chart.File) ([]*chart.File, []*chart.File) {
 	var (
-		templates = make([]*chartapi.Template, 0)
-		others    = make([]*chartapi.Template, 0)
+		templates = make([]*chart.File, 0)
+		others    = make([]*chart.File, 0)
 	)
 	for _, tmpl := range all {
 		if filepath.Ext(tmpl.Name) == ".tpl" {

@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/Masterminds/sprig"
+	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/go-logr/logr"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
