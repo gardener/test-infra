@@ -20,19 +20,15 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/types"
-
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
-	"github.com/gardener/test-infra/pkg/util"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // ErrDeadlineExceeded indicates the operation exceeded its deadline for execution

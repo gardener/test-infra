@@ -20,18 +20,14 @@ import (
 	"net/http"
 	"os"
 
-	flag "github.com/spf13/pflag"
-
-	"github.com/gardener/test-infra/pkg/logger"
-
-	"github.com/gardener/test-infra/pkg/version"
-
 	"github.com/joho/godotenv"
+	flag "github.com/spf13/pflag"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/telemetry/controller"
-
-	ctrl "sigs.k8s.io/controller-runtime"
+	"github.com/gardener/test-infra/pkg/version"
 )
 
 var (

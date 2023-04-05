@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/gardener/gardener/pkg/utils/retry"
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	telcommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/util/gardener"
-
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/utils/retry"
-	"github.com/go-logr/logr"
 )
 
 func GetUnhealthyShoots(log logr.Logger, ctx context.Context, k8sClient client.Client) (map[string]bool, error) {

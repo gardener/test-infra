@@ -23,7 +23,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/gardener/test-infra/pkg/logger"
-
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"
 )

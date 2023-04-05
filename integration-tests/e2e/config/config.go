@@ -10,10 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	flag "github.com/spf13/pflag"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
 
 	tiutil "github.com/gardener/test-infra/pkg/util"
 )

@@ -1,5 +1,27 @@
 # Changes
 
+
+## [1.0.0](https://github.com/googleapis/google-cloud-go/compare/iam/v0.13.0...iam/v1.0.0) (2023-04-04)
+
+
+### Features
+
+* **iam:** Promote to GA ([#7627](https://github.com/googleapis/google-cloud-go/issues/7627)) ([b351906](https://github.com/googleapis/google-cloud-go/commit/b351906a10e17a02d7f7e2551bc1585fd9dc3742))
+
+## [0.13.0](https://github.com/googleapis/google-cloud-go/compare/iam/v0.12.0...iam/v0.13.0) (2023-03-15)
+
+
+### Features
+
+* **iam:** Update iam and longrunning deps ([91a1f78](https://github.com/googleapis/google-cloud-go/commit/91a1f784a109da70f63b96414bba8a9b4254cddd))
+
+## [0.12.0](https://github.com/googleapis/google-cloud-go/compare/iam/v0.11.0...iam/v0.12.0) (2023-02-17)
+
+
+### Features
+
+* **iam:** Migrate to new stubs ([a61ddcd](https://github.com/googleapis/google-cloud-go/commit/a61ddcd3041c7af4a15109dc4431f9b327c497fb))
+
 ## [0.11.0](https://github.com/googleapis/google-cloud-go/compare/iam/v0.10.0...iam/v0.11.0) (2023-02-16)
 
 

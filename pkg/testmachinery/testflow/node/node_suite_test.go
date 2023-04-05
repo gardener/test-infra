@@ -3,16 +3,14 @@ package node
 import (
 	"testing"
 
-	apiv1 "k8s.io/api/core/v1"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	apiv1 "k8s.io/api/core/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	testutils "github.com/gardener/test-infra/test/utils"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func TestConfig(t *testing.T) {

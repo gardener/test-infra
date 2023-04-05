@@ -19,24 +19,22 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/collector"
-	"github.com/gardener/test-infra/pkg/util/s3"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
+	"github.com/gardener/test-infra/pkg/util/s3"
 )
 
 // New returns a new testmachinery reconciler
@@ -170,7 +168,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	patch := client.MergeFrom(rCtx.tr.DeepCopy())
 
 	// add finalizers for testrun
-	trFinalizers := sets.NewString(rCtx.tr.Finalizers...)
+	trFinalizers := sets.New[string](rCtx.tr.Finalizers...)
 	if !trFinalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		trFinalizers.Insert(tmv1beta1.SchemeGroupVersion.Group)
 	}
@@ -202,7 +200,7 @@ func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunD
 		return nil, nil, err
 	}
 
-	wfFinalizers := sets.NewString(wf.Finalizers...)
+	wfFinalizers := sets.New[string](wf.Finalizers...)
 	if !wfFinalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		wfFinalizers.Insert(tmv1beta1.SchemeGroupVersion.Group)
 		wf.Finalizers = wfFinalizers.UnsortedList()

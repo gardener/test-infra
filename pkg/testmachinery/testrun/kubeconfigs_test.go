@@ -17,12 +17,12 @@ package testrun
 import (
 	"fmt"
 
-	"github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
 const (

@@ -18,9 +18,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gardener/test-infra/pkg/common"
-
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
 )
 

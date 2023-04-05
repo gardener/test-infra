@@ -20,14 +20,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v49/github"
-
-	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
-
 	"github.com/go-logr/logr"
+	"github.com/google/go-github/v50/github"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
+
+	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
 )
 
 const (

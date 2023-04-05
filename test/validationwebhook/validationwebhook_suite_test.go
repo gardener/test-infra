@@ -15,6 +15,7 @@
 package validationwebhook_test
 
 import (
+	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -22,8 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/test-infra/test/framework"
-
-	"testing"
 )
 
 func TestValidationWebhook(t *testing.T) {

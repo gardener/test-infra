@@ -18,24 +18,22 @@ import (
 	"context"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/garbagecollection"
 )
 
 func (r *TestmachineryReconciler) deleteTestrun(ctx context.Context, rCtx *reconcileContext) (reconcile.Result, error) {
 	log := r.Logger.WithValues("testrun", types.NamespacedName{Name: rCtx.tr.Name, Namespace: rCtx.tr.Namespace})
 
-	if finalizers := sets.NewString(rCtx.tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
+	if finalizers := sets.New[string](rCtx.tr.GetFinalizers()...); !finalizers.Has(tmv1beta1.SchemeGroupVersion.Group) {
 		return reconcile.Result{}, nil
 	}
 
@@ -83,7 +81,7 @@ func (r *TestmachineryReconciler) deleteTestrun(ctx context.Context, rCtx *recon
 }
 
 func removeFinalizer(obj metav1.Object, finalizer string) bool {
-	finalizers := sets.NewString(obj.GetFinalizers()...)
+	finalizers := sets.New[string](obj.GetFinalizers()...)
 	if !finalizers.Has(finalizer) {
 		return false
 	}

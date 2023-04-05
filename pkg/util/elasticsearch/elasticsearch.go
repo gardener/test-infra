@@ -16,6 +16,7 @@ package elasticsearch
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,12 +25,10 @@ import (
 	"os"
 	"path"
 
-	"context"
-
-	"github.com/gardener/test-infra/pkg/apis/config"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 )
 
 // Client defines an interface to interact with an elastic search instance

@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	admissionv1 "k8s.io/api/admission/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"

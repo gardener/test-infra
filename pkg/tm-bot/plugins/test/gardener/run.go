@@ -21,22 +21,20 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/spf13/pflag"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testrun_renderer"
+	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
+	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/plugins"
 	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	testutil "github.com/gardener/test-infra/pkg/tm-bot/plugins/test"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"
 	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/output"
-
-	"github.com/spf13/pflag"
-
-	"github.com/gardener/test-infra/pkg/testrun_renderer"
-	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
-	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
 )
 
 func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {

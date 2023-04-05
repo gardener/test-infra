@@ -52,4 +52,4 @@ spec:
   args:
   - >-
     go run -mod=vendor ./cmd/hostscheduler gke release --key=/tmp/secrets/gcloud.json --project=$PROJECT --zone=$ZONE --clean=$CLEAN
-  image: golang:1.19
+  image: golang:1.20

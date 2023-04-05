@@ -15,6 +15,7 @@
 package garbagecollection_test
 
 import (
+	"testing"
 	"time"
 
 	"github.com/minio/minio-go"
@@ -23,8 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/test-infra/test/framework"
-
-	"testing"
 )
 
 func TestGarbageCollection(t *testing.T) {

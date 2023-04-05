@@ -21,16 +21,14 @@ import (
 	"strconv"
 	"time"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-
-	"github.com/gardener/test-infra/pkg/util"
-	"github.com/gardener/test-infra/pkg/util/cmdutil"
-
-	"cloud.google.com/go/container/apiv1/containerpb"
 	flag "github.com/spf13/pflag"
 
 	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/cmdutil"
 )
 
 func (s *gkescheduler) List(flagset *flag.FlagSet) (hostscheduler.SchedulerFunc, error) {

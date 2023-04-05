@@ -48,10 +48,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-
 	"github.com/go-logr/logr"
 
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	prepare "github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/util"

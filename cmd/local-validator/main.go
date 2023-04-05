@@ -18,17 +18,13 @@ import (
 	"fmt"
 	"os"
 
+	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
 	intconfig "github.com/gardener/test-infra/pkg/apis/config"
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
-	flag "github.com/spf13/pflag"
-
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-
 	"github.com/gardener/test-infra/pkg/logger"
-
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 )
 

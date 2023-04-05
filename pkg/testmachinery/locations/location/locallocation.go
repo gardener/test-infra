@@ -22,14 +22,11 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-
 	apiv1 "k8s.io/api/core/v1"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/util"
 )
 

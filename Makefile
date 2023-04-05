@@ -64,7 +64,7 @@ generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(O
 	@$(REPO_ROOT)/hack/generate.sh ./cmd/... ./pkg/... ./test/...
 
 .PHONY: format
-format: $(GOIMPORTS)
+format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg ./test ./integration-tests
 
 .PHONY: check
@@ -227,3 +227,4 @@ build-tm-chart:
 .PHONY: publish-tm-chart
 publish-tm-chart: build-tm-chart
 	@helm push $(REPO_ROOT)/charts/$(TM_CONTROLLER_CHART)-$(VERSION).tgz oci://$(HELM_REGISTRY)
+

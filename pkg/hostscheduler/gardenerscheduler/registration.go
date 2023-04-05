@@ -18,21 +18,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
-	"github.com/gardener/test-infra/pkg/util/cmdvalues"
-	"github.com/gardener/test-infra/pkg/util/gardener"
-	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
-
 	"github.com/pkg/errors"
-
-	"github.com/gardener/test-infra/pkg/logger"
-
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler"
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/util/cmdutil/viper"
+	"github.com/gardener/test-infra/pkg/util/cmdvalues"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 const (

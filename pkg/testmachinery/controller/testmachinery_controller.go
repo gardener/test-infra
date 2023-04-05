@@ -17,21 +17,19 @@ package controller
 import (
 	"fmt"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/ttl"
-
 	"github.com/gardener/test-infra/pkg/apis/config"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/collector"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/reconciler"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/ttl"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/util/s3"
 )
 

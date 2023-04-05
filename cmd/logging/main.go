@@ -22,16 +22,13 @@ import (
 	"os"
 	"path"
 
-	flag "github.com/spf13/pflag"
-	"k8s.io/client-go/tools/clientcmd"
-
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-
-	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	flag "github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	kubernetesclientset "k8s.io/client-go/kubernetes"
-
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/util/gardener"

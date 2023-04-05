@@ -27,8 +27,8 @@ make kind-operator-up
 
 # export all container logs and events after test execution
 trap "
-  ( export KUBECONFIG=$PWD/example/gardener-local/kind/operator/kubeconfig; export_logs 'gardener-operator-local' )
-  ( make kind-down )
+  ( export KUBECONFIG=$PWD/example/gardener-local/kind/operator/kubeconfig; export_artifacts 'gardener-operator-local' )
+  ( make kind-operator-down )
 " EXIT
 
 make operator-up

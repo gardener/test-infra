@@ -20,14 +20,12 @@ import (
 	"reflect"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/gardener/test-infra/pkg/util/strconf"
-
-	"k8s.io/apimachinery/pkg/util/validation"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 )
 
 // ValidateConfigList validates a list of configurations.

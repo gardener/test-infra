@@ -14,11 +14,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gardener/test-infra/integration-tests/e2e/config"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type TestsKind string

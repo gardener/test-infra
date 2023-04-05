@@ -21,10 +21,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gardener/test-infra/pkg/logger"
-
 	"github.com/spf13/cobra"
 
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	cfg "github.com/gardener/test-infra/pkg/shoot-telemetry/config"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/controller"

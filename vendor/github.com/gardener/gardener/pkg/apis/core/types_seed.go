@@ -1,4 +1,4 @@
-// Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,10 +124,6 @@ type SeedBackup struct {
 
 // SeedDNS contains the external domain and configuration for the DNS provider
 type SeedDNS struct {
-	// IngressDomain is the domain of the Seed cluster pointing to the ingress controller endpoint. It will be used
-	// to construct ingress URLs for system applications running in Shoot clusters. This field is immutable.
-	// This will be removed in the next API version and replaced by spec.ingress.domain.
-	IngressDomain *string
 	// Provider configures a DNSProvider
 	Provider *SeedDNSProvider
 }
@@ -138,10 +134,6 @@ type SeedDNSProvider struct {
 	Type string
 	// SecretRef is a reference to a Secret object containing cloud provider credentials used for registering external domains.
 	SecretRef corev1.SecretReference
-	// Domains contains information about which domains shall be included/excluded for this provider.
-	Domains *DNSIncludeExclude
-	// Zones contains information about which hosted zones shall be included/excluded for this provider.
-	Zones *DNSIncludeExclude
 }
 
 // Ingress configures the Ingress specific settings of the Seed cluster
@@ -174,6 +166,10 @@ type SeedNetworks struct {
 	// BlockCIDRs is a list of network addresses that should be blocked for shoot control plane components running
 	// in the seed cluster.
 	BlockCIDRs []string
+	// IPFamilies specifies the IP protocol versions to use for seed networking. This field is immutable.
+	// See https://github.com/gardener/gardener/blob/master/docs/usage/ipv6.md.
+	// Defaults to ["IPv4"].
+	IPFamilies []IPFamily
 }
 
 // ShootNetworks contains the default networks CIDRs for shoots.
@@ -202,9 +198,6 @@ type SeedSettings struct {
 	ExcessCapacityReservation *SeedSettingExcessCapacityReservation
 	// Scheduling controls settings for scheduling decisions for the seed.
 	Scheduling *SeedSettingScheduling
-	// ShootDNS controls the shoot DNS settings for the seed.
-	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Do not use it.
-	ShootDNS *SeedSettingShootDNS
 	// LoadBalancerServices controls certain settings for services of type load balancer that are created in the seed.
 	LoadBalancerServices *SeedSettingLoadBalancerServices
 	// VerticalPodAutoscaler controls certain settings for the vertical pod autoscaler components deployed in the seed.
@@ -213,20 +206,15 @@ type SeedSettings struct {
 	OwnerChecks *SeedSettingOwnerChecks
 	// DependencyWatchdog controls certain settings for the dependency-watchdog components deployed in the seed.
 	DependencyWatchdog *SeedSettingDependencyWatchdog
+	// TopologyAwareRouting controls certain settings for topology-aware traffic routing in the seed.
+	// See https://github.com/gardener/gardener/blob/master/docs/usage/topology_aware_routing.md.
+	TopologyAwareRouting *SeedSettingTopologyAwareRouting
 }
 
 // SeedSettingExcessCapacityReservation controls the excess capacity reservation for shoot control planes in the
 // seed.
 type SeedSettingExcessCapacityReservation struct {
 	// Enabled controls whether the excess capacity reservation should be enabled.
-	Enabled bool
-}
-
-// SeedSettingShootDNS controls the shoot DNS settings for the seed.
-type SeedSettingShootDNS struct {
-	// Enabled controls whether the DNS for shoot clusters should be enabled. When disabled then all shoots using the
-	// seed won't get any DNS providers, DNS records, and no DNS extension controller is required to be installed here.
-	// This is useful for environments where DNS is not required.
 	Enabled bool
 }
 
@@ -242,6 +230,26 @@ type SeedSettingScheduling struct {
 type SeedSettingLoadBalancerServices struct {
 	// Annotations is a map of annotations that will be injected/merged into every load balancer service object.
 	Annotations map[string]string
+	// ExternalTrafficPolicy describes how nodes distribute service traffic they
+	// receive on one of the service's "externally-facing" addresses.
+	// Defaults to "Cluster".
+	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType
+	// Zones controls settings, which are specific to the single-zone load balancers in a multi-zonal setup.
+	// Can be empty for single-zone seeds. Each specified zone has to relate to one of the zones in seed.spec.provider.zones.
+	Zones []SeedSettingLoadBalancerServicesZones
+}
+
+// SeedSettingLoadBalancerServicesZones controls settings, which are specific to the single-zone load balancers in a
+// multi-zonal setup.
+type SeedSettingLoadBalancerServicesZones struct {
+	// Name is the name of the zone as specified in seed.spec.provider.zones.
+	Name string
+	// Annotations is a map of annotations that will be injected/merged into the zone-specific load balancer service object.
+	Annotations map[string]string
+	// ExternalTrafficPolicy describes how nodes distribute service traffic they
+	// receive on one of the service's "externally-facing" addresses.
+	// Defaults to "Cluster".
+	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType
 }
 
 // SeedSettingVerticalPodAutoscaler controls certain settings for the vertical pod autoscaler components deployed in the
@@ -263,12 +271,19 @@ type SeedSettingOwnerChecks struct {
 // SeedSettingDependencyWatchdog controls the dependency-watchdog settings for the seed.
 type SeedSettingDependencyWatchdog struct {
 	// Endpoint controls the endpoint settings for the dependency-watchdog for the seed.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Use `Weeder` instead.
 	Endpoint *SeedSettingDependencyWatchdogEndpoint
 	// Probe controls the probe settings for the dependency-watchdog for the seed.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Use `Prober` instead.
 	Probe *SeedSettingDependencyWatchdogProbe
+	// Weeder controls the weeder settings for the dependency-watchdog for the seed.
+	Weeder *SeedSettingDependencyWatchdogWeeder
+	// Prober controls the prober settings for the dependency-watchdog for the seed.
+	Prober *SeedSettingDependencyWatchdogProber
 }
 
 // SeedSettingDependencyWatchdogEndpoint controls the endpoint settings for the dependency-watchdog for the seed.
+// Deprecated: This type is deprecated and will be removed in a future version of Gardener. Use type `SeedSettingDependencyWatchdogWeeder` instead.
 type SeedSettingDependencyWatchdogEndpoint struct {
 	// Enabled controls whether the endpoint controller of the dependency-watchdog should be enabled. This controller
 	// helps to alleviate the delay where control plane components remain unavailable by finding the respective pods in
@@ -277,10 +292,34 @@ type SeedSettingDependencyWatchdogEndpoint struct {
 }
 
 // SeedSettingDependencyWatchdogProbe controls the probe settings for the dependency-watchdog for the seed.
+// Deprecated: This type is deprecated and will be removed in a future version of Gardener. Use type `SeedSettingDependencyWatchdogProber` instead.
 type SeedSettingDependencyWatchdogProbe struct {
 	// Enabled controls whether the probe controller of the dependency-watchdog should be enabled. This controller
-	// scales down the kube-controller-manager of shoot clusters in case their respective kube-apiserver is not
+	// scales down the kube-controller-manager, machine-controller-manager and cluster-autoscaler of shoot clusters in case their respective kube-apiserver is not
 	// reachable via its external ingress in order to avoid melt-down situations.
+	Enabled bool
+}
+
+// SeedSettingDependencyWatchdogWeeder controls the weeder settings for the dependency-watchdog for the seed.
+type SeedSettingDependencyWatchdogWeeder struct {
+	// Enabled controls whether the weeder of the dependency-watchdog should be enabled. This controller
+	// helps to alleviate the delay where control plane components remain unavailable by finding the respective pods in
+	// CrashLoopBackoff status and restarting them once their dependants become ready and available again.
+	Enabled bool
+}
+
+// SeedSettingDependencyWatchdogProber controls the prober settings for the dependency-watchdog for the seed.
+type SeedSettingDependencyWatchdogProber struct {
+	// Enabled controls whether the prober of the dependency-watchdog should be enabled.
+	// reachable via its external ingress in order to avoid melt-down situations.
+	Enabled bool
+}
+
+// SeedSettingTopologyAwareRouting controls certain settings for topology-aware traffic routing in the seed.
+// See https://github.com/gardener/gardener/blob/master/docs/usage/topology_aware_routing.md.
+type SeedSettingTopologyAwareRouting struct {
+	// Enabled controls whether certain Services deployed in the seed cluster should be topology-aware.
+	// These Services are etcd-main-client, etcd-events-client, kube-apiserver, gardener-resource-manager and vpa-webhook.
 	Enabled bool
 }
 

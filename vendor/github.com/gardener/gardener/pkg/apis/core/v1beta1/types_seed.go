@@ -1,4 +1,4 @@
-// Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -140,11 +140,9 @@ type SeedBackup struct {
 
 // SeedDNS contains DNS-relevant information about this seed cluster.
 type SeedDNS struct {
-	// IngressDomain is the domain of the Seed cluster pointing to the ingress controller endpoint. It will be used
-	// to construct ingress URLs for system applications running in Shoot clusters. This field is immutable.
-	// This will be removed in the next API version and replaced by spec.ingress.domain.
-	// +optional
-	IngressDomain *string `json:"ingressDomain,omitempty" protobuf:"bytes,1,opt,name=ingressDomain"`
+	// IngressDomain is tombstoned to show why 1 is reserved protobuf tag.
+	// IngressDomain *string `json:"ingressDomain,omitempty" protobuf:"bytes,1,opt,name=ingressDomain"`
+
 	// Provider configures a DNSProvider
 	// +optional
 	Provider *SeedDNSProvider `json:"provider,omitempty" protobuf:"bytes,2,opt,name=provider"`
@@ -156,12 +154,12 @@ type SeedDNSProvider struct {
 	Type string `json:"type" protobuf:"bytes,1,opt,name=type"`
 	// SecretRef is a reference to a Secret object containing cloud provider credentials used for registering external domains.
 	SecretRef corev1.SecretReference `json:"secretRef" protobuf:"bytes,2,opt,name=secretRef"`
-	// Domains contains information about which domains shall be included/excluded for this provider.
-	// +optional
-	Domains *DNSIncludeExclude `json:"domains,omitempty" protobuf:"bytes,3,opt,name=domains"`
-	// Zones contains information about which hosted zones shall be included/excluded for this provider.
-	// +optional
-	Zones *DNSIncludeExclude `json:"zones,omitempty" protobuf:"bytes,4,opt,name=zones"`
+
+	// Domains is tombstoned to show why 3 is reserved protobuf tag.
+	// Domains *DNSIncludeExclude `json:"domains,omitempty" protobuf:"bytes,3,opt,name=domains"`
+
+	// Zones is tombstoned to show why 4 is reserved protobuf tag.
+	// Zones *DNSIncludeExclude `json:"zones,omitempty" protobuf:"bytes,4,opt,name=zones"`
 }
 
 // Ingress configures the Ingress specific settings of the Seed cluster
@@ -198,6 +196,11 @@ type SeedNetworks struct {
 	// in the seed cluster.
 	// +optional
 	BlockCIDRs []string `json:"blockCIDRs,omitempty" protobuf:"bytes,5,rep,name=blockCIDRs"`
+	// IPFamilies specifies the IP protocol versions to use for seed networking. This field is immutable.
+	// See https://github.com/gardener/gardener/blob/master/docs/usage/ipv6.md.
+	// Defaults to ["IPv4"].
+	// +optional
+	IPFamilies []IPFamily `json:"ipFamilies,omitempty" protobuf:"bytes,6,rep,name=ipFamilies,casttype=IPFamily"`
 }
 
 // ShootNetworks contains the default networks CIDRs for shoots.
@@ -232,10 +235,10 @@ type SeedSettings struct {
 	// Scheduling controls settings for scheduling decisions for the seed.
 	// +optional
 	Scheduling *SeedSettingScheduling `json:"scheduling,omitempty" protobuf:"bytes,2,opt,name=scheduling"`
-	// ShootDNS controls the shoot DNS settings for the seed.
-	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Do not use it.
-	// +optional
-	ShootDNS *SeedSettingShootDNS `json:"shootDNS,omitempty" protobuf:"bytes,3,opt,name=shootDNS"`
+
+	// ShootDNS is tombstoned to show why 3 is reserved protobuf tag.
+	// ShootDNS *SeedSettingShootDNS `json:"shootDNS,omitempty" protobuf:"bytes,3,opt,name=shootDNS"`
+
 	// LoadBalancerServices controls certain settings for services of type load balancer that are created in the seed.
 	// +optional
 	LoadBalancerServices *SeedSettingLoadBalancerServices `json:"loadBalancerServices,omitempty" protobuf:"bytes,4,opt,name=loadBalancerServices"`
@@ -248,19 +251,15 @@ type SeedSettings struct {
 	// DependencyWatchdog controls certain settings for the dependency-watchdog components deployed in the seed.
 	// +optional
 	DependencyWatchdog *SeedSettingDependencyWatchdog `json:"dependencyWatchdog,omitempty" protobuf:"bytes,7,opt,name=dependencyWatchdog"`
+	// TopologyAwareRouting controls certain settings for topology-aware traffic routing in the seed.
+	// See https://github.com/gardener/gardener/blob/master/docs/usage/topology_aware_routing.md.
+	// +optional
+	TopologyAwareRouting *SeedSettingTopologyAwareRouting `json:"topologyAwareRouting,omitempty" protobuf:"bytes,8,opt,name=topologyAwareRouting"`
 }
 
 // SeedSettingExcessCapacityReservation controls the excess capacity reservation for shoot control planes in the seed.
 type SeedSettingExcessCapacityReservation struct {
 	// Enabled controls whether the excess capacity reservation should be enabled.
-	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
-}
-
-// SeedSettingShootDNS controls the shoot DNS settings for the seed.
-type SeedSettingShootDNS struct {
-	// Enabled controls whether the DNS for shoot clusters should be enabled. When disabled then all shoots using the
-	// seed won't get any DNS providers, DNS records, and no DNS extension controller is required to be installed here.
-	// This is useful for environments where DNS is not required.
 	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
 }
 
@@ -277,6 +276,30 @@ type SeedSettingLoadBalancerServices struct {
 	// Annotations is a map of annotations that will be injected/merged into every load balancer service object.
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty" protobuf:"bytes,1,rep,name=annotations"`
+	// ExternalTrafficPolicy describes how nodes distribute service traffic they
+	// receive on one of the service's "externally-facing" addresses.
+	// Defaults to "Cluster".
+	// +optional
+	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty" protobuf:"bytes,2,opt,name=externalTrafficPolicy"`
+	// Zones controls settings, which are specific to the single-zone load balancers in a multi-zonal setup.
+	// Can be empty for single-zone seeds. Each specified zone has to relate to one of the zones in seed.spec.provider.zones.
+	// +optional
+	Zones []SeedSettingLoadBalancerServicesZones `json:"zones,omitempty" protobuf:"bytes,3,rep,name=zones"`
+}
+
+// SeedSettingLoadBalancerServicesZones controls settings, which are specific to the single-zone load balancers in a
+// multi-zonal setup.
+type SeedSettingLoadBalancerServicesZones struct {
+	// Name is the name of the zone as specified in seed.spec.provider.zones.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// Annotations is a map of annotations that will be injected/merged into the zone-specific load balancer service object.
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty" protobuf:"bytes,2,rep,name=annotations"`
+	// ExternalTrafficPolicy describes how nodes distribute service traffic they
+	// receive on one of the service's "externally-facing" addresses.
+	// Defaults to "Cluster".
+	// +optional
+	ExternalTrafficPolicy *corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty" protobuf:"bytes,3,opt,name=externalTrafficPolicy"`
 }
 
 // SeedSettingVerticalPodAutoscaler controls certain settings for the vertical pod autoscaler components deployed in the
@@ -298,14 +321,23 @@ type SeedSettingOwnerChecks struct {
 // SeedSettingDependencyWatchdog controls the dependency-watchdog settings for the seed.
 type SeedSettingDependencyWatchdog struct {
 	// Endpoint controls the endpoint settings for the dependency-watchdog for the seed.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Use `Weeder` instead.
 	// +optional
 	Endpoint *SeedSettingDependencyWatchdogEndpoint `json:"endpoint,omitempty" protobuf:"bytes,1,opt,name=endpoint"`
 	// Probe controls the probe settings for the dependency-watchdog for the seed.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Use `Prober` instead.
 	// +optional
 	Probe *SeedSettingDependencyWatchdogProbe `json:"probe,omitempty" protobuf:"bytes,2,opt,name=probe"`
+	// Weeder controls the weeder settings for the dependency-watchdog for the seed.
+	// +optional
+	Weeder *SeedSettingDependencyWatchdogWeeder `json:"weeder,omitempty" protobuf:"bytes,3,opt,name=weeder"`
+	// Prober controls the prober settings for the dependency-watchdog for the seed.
+	// +optional
+	Prober *SeedSettingDependencyWatchdogProber `json:"prober,omitempty" protobuf:"bytes,4,opt,name=prober"`
 }
 
 // SeedSettingDependencyWatchdogEndpoint controls the endpoint settings for the dependency-watchdog for the seed.
+// Deprecated: This type is deprecated and will be removed in a future version of Gardener. Use type `SeedSettingDependencyWatchdogWeeder` instead.
 type SeedSettingDependencyWatchdogEndpoint struct {
 	// Enabled controls whether the endpoint controller of the dependency-watchdog should be enabled. This controller
 	// helps to alleviate the delay where control plane components remain unavailable by finding the respective pods in
@@ -314,10 +346,35 @@ type SeedSettingDependencyWatchdogEndpoint struct {
 }
 
 // SeedSettingDependencyWatchdogProbe controls the probe settings for the dependency-watchdog for the seed.
+// Deprecated: This type is deprecated and will be removed in a future version of Gardener. Use type `SeedSettingDependencyWatchdogProber` instead.
 type SeedSettingDependencyWatchdogProbe struct {
 	// Enabled controls whether the probe controller of the dependency-watchdog should be enabled. This controller
-	// scales down the kube-controller-manager of shoot clusters in case their respective kube-apiserver is not
+	// scales down the kube-controller-manager, machine-controller-manager and cluster-autoscaler of shoot clusters in case their respective kube-apiserver is not
 	// reachable via its external ingress in order to avoid melt-down situations.
+	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
+}
+
+// SeedSettingDependencyWatchdogWeeder controls the weeder settings for the dependency-watchdog for the seed.
+type SeedSettingDependencyWatchdogWeeder struct {
+	// Enabled controls whether the endpoint controller(weeder) of the dependency-watchdog should be enabled. This controller
+	// helps to alleviate the delay where control plane components remain unavailable by finding the respective pods in
+	// CrashLoopBackoff status and restarting them once their dependants become ready and available again.
+	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
+}
+
+// SeedSettingDependencyWatchdogProber controls the prober settings for the dependency-watchdog for the seed.
+type SeedSettingDependencyWatchdogProber struct {
+	// Enabled controls whether the probe controller(prober) of the dependency-watchdog should be enabled. This controller
+	// scales down the kube-controller-manager, machine-controller-manager and cluster-autoscaler of shoot clusters in case their respective kube-apiserver is not
+	// reachable via its external ingress in order to avoid melt-down situations.
+	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
+}
+
+// SeedSettingTopologyAwareRouting controls certain settings for topology-aware traffic routing in the seed.
+// See https://github.com/gardener/gardener/blob/master/docs/usage/topology_aware_routing.md.
+type SeedSettingTopologyAwareRouting struct {
+	// Enabled controls whether certain Services deployed in the seed cluster should be topology-aware.
+	// These Services are etcd-main-client, etcd-events-client, kube-apiserver, gardener-resource-manager and vpa-webhook.
 	Enabled bool `json:"enabled" protobuf:"bytes,1,opt,name=enabled"`
 }
 

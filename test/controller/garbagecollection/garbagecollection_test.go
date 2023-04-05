@@ -20,15 +20,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gardener/gardener/pkg/utils/retry"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/test/resources"
 	"github.com/gardener/test-infra/test/utils"

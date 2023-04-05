@@ -22,20 +22,16 @@ import (
 	"sync"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
-
-	appsv1 "k8s.io/api/apps/v1"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/go-logr/logr"
 	admissionv1 "k8s.io/api/admission/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 var (

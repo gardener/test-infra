@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
-
 	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -27,6 +25,7 @@ import (
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
+	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/tm-bot/hook"
 	"github.com/gardener/test-infra/pkg/tm-bot/tests"

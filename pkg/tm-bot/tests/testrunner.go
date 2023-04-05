@@ -19,15 +19,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
-
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 	"github.com/gardener/test-infra/pkg/util"
 )
 

@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/cmd/elasticsearch/cmd/precompute"
 	"github.com/gardener/test-infra/pkg/logger"
-
-	"github.com/spf13/cobra"
 )
 
 var RootFlags struct {

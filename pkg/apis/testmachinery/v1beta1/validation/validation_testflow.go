@@ -105,13 +105,13 @@ func ValidateStep(fldPath *field.Path, definition tmv1beta1.StepDefinition) fiel
 type testflowValidationHelper struct {
 	stepNameToStep    map[string]*tmv1beta1.DAGStep
 	dependentStepName string
-	alreadyChecked    sets.String
+	alreadyChecked    sets.Set[string]
 }
 
 func newTFValidationHelper(stepNameToStep map[string]*tmv1beta1.DAGStep) *testflowValidationHelper {
 	return &testflowValidationHelper{
 		stepNameToStep: stepNameToStep,
-		alreadyChecked: sets.NewString(),
+		alreadyChecked: sets.New[string](),
 	}
 }
 
@@ -121,7 +121,7 @@ func newTFValidationHelper(stepNameToStep map[string]*tmv1beta1.DAGStep) *testfl
 func (v *testflowValidationHelper) HasDependentStep(dependentStepName string, step *tmv1beta1.DAGStep) (bool, string) {
 	v.dependentStepName = dependentStepName
 	defer func() {
-		v.alreadyChecked = sets.NewString()
+		v.alreadyChecked = sets.New[string]()
 		v.dependentStepName = ""
 	}()
 	return v.checkPreviousStepHasDependentStep(field.NewPath(v.dependentStepName), v.dependentStepName, step.DependsOn)

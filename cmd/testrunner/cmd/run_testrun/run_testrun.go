@@ -20,17 +20,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/cobra"
+
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-
-	"github.com/spf13/cobra"
-
-	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/util"
-
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
 func NewRunTestrunCommand() (*cobra.Command, error) {
