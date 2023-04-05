@@ -1,5 +1,5 @@
 /*
-Copyright (c) SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+Copyright SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ type CoreV1beta1Interface interface {
 	ControllerDeploymentsGetter
 	ControllerInstallationsGetter
 	ControllerRegistrationsGetter
+	ExposureClassesGetter
 	ProjectsGetter
 	QuotasGetter
 	SecretBindingsGetter
 	SeedsGetter
 	ShootsGetter
+	ShootStatesGetter
 }
 
 // CoreV1beta1Client is used to interact with features provided by the core.gardener.cloud group.
@@ -70,6 +72,10 @@ func (c *CoreV1beta1Client) ControllerRegistrations() ControllerRegistrationInte
 	return newControllerRegistrations(c)
 }
 
+func (c *CoreV1beta1Client) ExposureClasses() ExposureClassInterface {
+	return newExposureClasses(c)
+}
+
 func (c *CoreV1beta1Client) Projects() ProjectInterface {
 	return newProjects(c)
 }
@@ -88,6 +94,10 @@ func (c *CoreV1beta1Client) Seeds() SeedInterface {
 
 func (c *CoreV1beta1Client) Shoots(namespace string) ShootInterface {
 	return newShoots(c, namespace)
+}
+
+func (c *CoreV1beta1Client) ShootStates(namespace string) ShootStateInterface {
+	return newShootStates(c, namespace)
 }
 
 // NewForConfig creates a new CoreV1beta1Client for the given config.

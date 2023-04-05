@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v50/github"
 
 	github2 "github.com/gardener/test-infra/pkg/tm-bot/github"
 

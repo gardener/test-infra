@@ -15,7 +15,7 @@ import (
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
-	policyv1beta "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -200,23 +200,6 @@ func (w *Workflow) GetExecSpec() *WorkflowSpec {
 		return w.Status.StoredWorkflowSpec
 	}
 	return &w.Spec
-}
-
-func (w *Workflow) HasArtifactGC() bool {
-
-	if w.Spec.ArtifactGC != nil && w.Spec.ArtifactGC.Strategy != ArtifactGCNever && w.Spec.ArtifactGC.Strategy != ArtifactGCStrategyUndefined {
-		return true
-	}
-
-	// either it's defined by an Output Artifact or by the WorkflowSpec itself, or both
-	for _, template := range w.GetTemplates() {
-		for _, artifact := range template.Outputs.Artifacts {
-			if artifact.GetArtifactGC().Strategy != ArtifactGCNever && artifact.GetArtifactGC().Strategy != ArtifactGCStrategyUndefined {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // return the ultimate ArtifactGCStrategy for the Artifact
@@ -407,7 +390,7 @@ type WorkflowSpec struct {
 	// Controller will automatically add the selector with workflow name, if selector is empty.
 	// Optional: Defaults to empty.
 	// +optional
-	PodDisruptionBudget *policyv1beta.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty" protobuf:"bytes,31,opt,name=podDisruptionBudget"`
+	PodDisruptionBudget *policyv1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty" protobuf:"bytes,31,opt,name=podDisruptionBudget"`
 
 	// Metrics are a list of metrics emitted from this Workflow
 	Metrics *Metrics `json:"metrics,omitempty" protobuf:"bytes,32,opt,name=metrics"`
@@ -641,7 +624,7 @@ type Template struct {
 	// Metdata sets the pods's metadata, i.e. annotations and labels
 	Metadata Metadata `json:"metadata,omitempty" protobuf:"bytes,9,opt,name=metadata"`
 
-	// Deamon will allow a workflow to proceed to the next step so long as the container reaches readiness
+	// Daemon will allow a workflow to proceed to the next step so long as the container reaches readiness
 	Daemon *bool `json:"daemon,omitempty" protobuf:"bytes,10,opt,name=daemon"`
 
 	// Steps define a series of sequential/parallel workflow steps
@@ -1666,11 +1649,11 @@ type WorkflowTemplateRef struct {
 	ClusterScope bool `json:"clusterScope,omitempty" protobuf:"varint,2,opt,name=clusterScope"`
 }
 
-func (ref *WorkflowTemplateRef) ToTemplateRef(entrypoint string) *TemplateRef {
+func (ref *WorkflowTemplateRef) ToTemplateRef(template string) *TemplateRef {
 	return &TemplateRef{
 		Name:         ref.Name,
 		ClusterScope: ref.ClusterScope,
-		Template:     entrypoint,
+		Template:     template,
 	}
 }
 
@@ -1750,6 +1733,33 @@ func (s Nodes) Children(parentNodeId string) Nodes {
 		}
 	}
 	return childNodes
+}
+
+// NestedChildrenStatus takes in a nodeID and returns all its children, this involves a tree search using DFS.
+// This is needed to mark all children nodes as failed for example.
+func (s Nodes) NestedChildrenStatus(parentNodeId string) ([]NodeStatus, error) {
+	parentNode, ok := s[parentNodeId]
+	if !ok {
+		return nil, fmt.Errorf("could not find %s in nodes when searching for nested children", parentNodeId)
+	}
+
+	children := []NodeStatus{}
+	toexplore := []NodeStatus{parentNode}
+
+	for len(toexplore) > 0 {
+		childNode := toexplore[0]
+		toexplore = toexplore[1:]
+		for _, nodeID := range childNode.Children {
+			toexplore = append(toexplore, s[nodeID])
+		}
+
+		if childNode.Name == parentNode.Name {
+			continue
+		}
+		children = append(children, childNode)
+	}
+
+	return children, nil
 }
 
 // Filter returns the subset of the nodes that match the predicate, e.g. only failed nodes
@@ -2212,7 +2222,7 @@ func (n NodeStatus) Pending() bool {
 	return n.Phase == NodePending
 }
 
-// IsDaemoned returns whether or not the node is deamoned
+// IsDaemoned returns whether or not the node is daemoned
 func (n NodeStatus) IsDaemoned() bool {
 	if n.Daemoned == nil || !*n.Daemoned {
 		return false
@@ -3191,13 +3201,6 @@ func (wf *Workflow) GetTemplateByName(name string) *Template {
 		}
 	}
 	return nil
-}
-
-func (w *Workflow) GetTemplates() []Template {
-	return append(
-		w.GetExecSpec().Templates,
-		w.Status.GetStoredTemplates()...,
-	)
 }
 
 func (wf *Workflow) GetNodeByName(nodeName string) *NodeStatus {

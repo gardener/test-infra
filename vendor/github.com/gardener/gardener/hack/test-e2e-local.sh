@@ -1,4 +1,18 @@
 #!/usr/bin/env bash
+# Copyright 2023 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 set -o errexit
 set -o nounset
@@ -43,6 +57,14 @@ if [[ "$1" != "operator" ]]; then
 
   if [ -n "${CI:-}" -a -n "${ARTIFACTS:-}" ]; then
     for shoot in "${shoot_names[@]}" ; do
+      if [ "${SHOOT_FAILURE_TOLERANCE_TYPE:-}" = "zone" -a "$shoot" = "e2e-update-zone.local" ]; then
+        # Do not add the entry for the e2e-update-zone test as the target ip is dynamic.
+        # The shoot cluster in e2e-update-zone is created as single-zone control plane and afterwards updated to a multi-zone control plane.
+        # This means that the external loadbalancer IP will change from a zone-specific istio ingress gateway to the default istio ingress gateway.
+        # A static mapping (to the default istio ingress gateway) as done here will not work in this scenario.
+        # The e2e-update-zone test uses the in-cluster coredns for name resolution and can therefore resolve the api endpoint.
+        continue
+      fi
       printf "\n127.0.0.1 api.%s.external.local.gardener.cloud\n127.0.0.1 api.%s.internal.local.gardener.cloud\n" $shoot $shoot >>/etc/hosts
     done
     printf "\n127.0.0.1 gu-local--e2e-rotate.ingress.$seed_name.seed.local.gardener.cloud\n" >>/etc/hosts
@@ -59,4 +81,4 @@ if [[ "$1" != "operator" ]]; then
   fi
 fi
 
-GO111MODULE=on ginkgo run --timeout=1h $ginkgo_flags --v --progress "$@"
+GO111MODULE=on ginkgo run --timeout=1h $ginkgo_flags --v --show-node-events "$@"
