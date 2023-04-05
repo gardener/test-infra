@@ -23,20 +23,17 @@ import (
 	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1"
+	v1 "k8s.io/client-go/informers/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
-	"github.com/gardener/test-infra/pkg/util/gardener"
-
-	v1 "k8s.io/client-go/informers/core/v1"
-	"k8s.io/client-go/tools/cache"
-
-	gardeninformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1"
-
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/config"
+	"github.com/gardener/test-infra/pkg/util/gardener"
 )
 
 type controller struct {
@@ -153,10 +150,13 @@ func StartController(config *config.Config, signalCh chan os.Signal) error {
 	}
 
 	// Register event handlers for new Shoots and Shoot updates.
-	controller.shootInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = controller.shootInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    controller.addShoot,
 		UpdateFunc: controller.updateShoot,
 	})
+	if err != nil {
+		return err
+	}
 
 	// Start the observation of the Shoot apiserver and etcd availability.
 	go common.Waiter(func() {

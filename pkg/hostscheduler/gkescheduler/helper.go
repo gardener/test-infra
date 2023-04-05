@@ -23,18 +23,15 @@ import (
 	"time"
 
 	container "cloud.google.com/go/container/apiv1"
+	"cloud.google.com/go/container/apiv1/containerpb"
+	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s.io/client-go/rest"
-
 	"github.com/gardener/test-infra/pkg/hostscheduler"
-
-	"github.com/gardener/gardener/pkg/utils/retry"
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"cloud.google.com/go/container/apiv1/containerpb"
 )
 
 // WaitUntilShootIsReconciled waits until a cluster is reconciled and ready to use

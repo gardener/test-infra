@@ -21,21 +21,18 @@ import (
 	"path"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
-	"github.com/gardener/test-infra/pkg/common"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/config"
-	"github.com/gardener/test-infra/pkg/util"
-
 	argov1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	apiv1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1/validation"
+	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/config"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 var (

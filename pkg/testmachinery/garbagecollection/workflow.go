@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/gardener/test-infra/pkg/util/s3"
-
-	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/util/s3"
 )
 
 // GCWorkflowArtifacts collects all outputs of a workflow by traversing through nodes and collect outputs artifacts from the s3 storage.

@@ -22,18 +22,16 @@ import (
 	"time"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
+	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
-	"github.com/gardener/test-infra/pkg/util/gardener"
-	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
+	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	telemetryctrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
-
-	"github.com/spf13/cobra"
+	"github.com/gardener/test-infra/pkg/util/gardener"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 var (

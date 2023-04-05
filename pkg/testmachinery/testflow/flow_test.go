@@ -3,16 +3,15 @@ package testflow_test
 import (
 	"fmt"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 	testutils "github.com/gardener/test-infra/test/utils"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("flow", func() {

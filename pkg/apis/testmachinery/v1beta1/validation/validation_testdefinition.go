@@ -18,11 +18,10 @@ import (
 	"regexp"
 	"strings"
 
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-
-	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
 // ValidateTestDefinition validates a testdefinition.

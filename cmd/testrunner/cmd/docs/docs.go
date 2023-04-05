@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gardener/test-infra/pkg/logger"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+
+	"github.com/gardener/test-infra/pkg/logger"
 )
 
 var (

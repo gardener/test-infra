@@ -22,18 +22,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
-
-	"github.com/gardener/test-infra/pkg/logger"
-
-	"github.com/gardener/test-infra/pkg/util"
-
 	"github.com/spf13/cobra"
 
+	"github.com/gardener/test-infra/pkg/logger"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/result"
 	testrunnerTemplate "github.com/gardener/test-infra/pkg/testrunner/template"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // NewRunTemplateCommand creates a new run template command.

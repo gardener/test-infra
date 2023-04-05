@@ -23,6 +23,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
@@ -30,9 +32,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	mock_elasticsearch "github.com/gardener/test-infra/pkg/util/elasticsearch/mocks"
 	mock_collector "github.com/gardener/test-infra/pkg/util/s3/mocks"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var (

@@ -29,7 +29,6 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/ghcache"
 	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-
 	"github.com/gardener/test-infra/pkg/util"
 )
 

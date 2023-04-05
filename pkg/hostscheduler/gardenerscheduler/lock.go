@@ -22,16 +22,12 @@ import (
 	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	"github.com/pkg/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/go-logr/logr"
-
-	flag "github.com/spf13/pflag"
-
 	"github.com/gardener/gardener/pkg/utils/retry"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

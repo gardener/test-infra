@@ -76,11 +76,14 @@ func (c *cachedInformer) Start(ctx context.Context) error {
 		}
 		return err
 	}
-	i.AddEventHandler(toolscache.ResourceEventHandlerFuncs{
+	_, err = i.AddEventHandler(toolscache.ResourceEventHandlerFuncs{
 		AddFunc:    c.addItemToQueue,
 		UpdateFunc: func(old, new interface{}) { c.addItemToQueue(new) },
 		DeleteFunc: c.addItemToQueue,
 	})
+	if err != nil {
+		return err
+	}
 
 	return c.cache.Start(ctx)
 }

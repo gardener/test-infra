@@ -19,20 +19,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/testrunner/result"
-	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
-
-	"github.com/spf13/cobra"
-
 	"github.com/gardener/test-infra/pkg/testrunner"
+	"github.com/gardener/test-infra/pkg/testrunner/result"
 	"github.com/gardener/test-infra/pkg/util"
-
-	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 var (

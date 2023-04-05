@@ -16,10 +16,9 @@ package testrun
 import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 )
 
 // Testrun is the internal representation of a testrun crd

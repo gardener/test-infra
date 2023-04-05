@@ -21,28 +21,25 @@ import (
 	"time"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
+	"github.com/spf13/cobra"
 
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/hostscheduler/gardenerscheduler"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/shootflavors"
+	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/watch"
 	metadata2 "github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testmachinery/testrun"
 	"github.com/gardener/test-infra/pkg/testrun_renderer"
 	_default "github.com/gardener/test-infra/pkg/testrun_renderer/default"
 	"github.com/gardener/test-infra/pkg/testrun_renderer/templates"
+	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
+	"github.com/gardener/test-infra/pkg/testrunner/result"
+	"github.com/gardener/test-infra/pkg/util"
 	"github.com/gardener/test-infra/pkg/util/cmdvalues"
 	"github.com/gardener/test-infra/pkg/util/gardensetup"
-
-	"github.com/gardener/test-infra/pkg/logger"
-	"github.com/gardener/test-infra/pkg/util"
-
-	"github.com/spf13/cobra"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testrunner"
-	"github.com/gardener/test-infra/pkg/testrunner/result"
 )
 
 var (

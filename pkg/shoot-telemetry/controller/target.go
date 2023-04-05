@@ -22,10 +22,9 @@ import (
 	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	gardenv1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/common"
 	"github.com/gardener/test-infra/pkg/shoot-telemetry/sample"

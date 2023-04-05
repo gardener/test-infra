@@ -126,7 +126,7 @@ func (r *telemetryReconciler) delete(ctx context.Context, log logr.Logger, st *t
 	}
 
 	// remove finalizer and update
-	stFinalizers := sets.NewString(st.Finalizers...)
+	stFinalizers := sets.New[string](st.Finalizers...)
 	stFinalizers.Delete(telv1beta1.SchemeGroupVersion.Group)
 	st.Finalizers = stFinalizers.UnsortedList()
 	if err := r.client.Update(ctx, st); err != nil {
@@ -147,7 +147,7 @@ func (r *telemetryReconciler) updateStatus(ctx context.Context, st *telv1beta1.S
 // addFinalizer adds the controllers finalizer to the measurement and returns true if the finalizer was added
 func addFinalizer(st *telv1beta1.ShootsMeasurement) bool {
 	// add finalizers if not yet set
-	stFinalizers := sets.NewString(st.Finalizers...)
+	stFinalizers := sets.New[string](st.Finalizers...)
 	if stFinalizers.Has(telv1beta1.SchemeGroupVersion.Group) {
 		return false
 	}

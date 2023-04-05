@@ -21,14 +21,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gardener/test-infra/pkg/util/output"
-
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	"github.com/gardener/test-infra/pkg/util"
+	"github.com/gardener/test-infra/pkg/util/output"
 )
 
 const (

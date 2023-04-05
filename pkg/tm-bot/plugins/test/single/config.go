@@ -15,13 +15,13 @@
 package single
 
 import (
-	comerrors "github.com/gardener/test-infra/pkg/common/error"
-	"github.com/gardener/test-infra/pkg/tm-bot/github"
-	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
-
 	"strings"
 
 	"github.com/spf13/pflag"
+
+	comerrors "github.com/gardener/test-infra/pkg/common/error"
+	"github.com/gardener/test-infra/pkg/tm-bot/github"
+	pluginerr "github.com/gardener/test-infra/pkg/tm-bot/plugins/errors"
 )
 
 // Config is the defaults configuration that can be configured using the repository configuration for the test-single command

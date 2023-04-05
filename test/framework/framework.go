@@ -17,21 +17,18 @@ package framework
 import (
 	"context"
 	"flag"
-
-	"github.com/gardener/test-infra/pkg/apis/config"
-	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
-
 	"os"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/util"
+	kutil "github.com/gardener/test-infra/pkg/util/kubernetes"
 )
 
 // New creates a new test operation with a logger and a framework configuration.

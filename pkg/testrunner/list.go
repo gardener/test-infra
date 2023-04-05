@@ -20,17 +20,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
-	"github.com/gardener/test-infra/pkg/util"
-
-	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 // GetTestruns returns all testruns of a RunList as testrun array

@@ -34,6 +34,7 @@ import (
 	"strings"
 	"time"
 
+	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v50/github"
 	"github.com/pkg/errors"
@@ -42,18 +43,11 @@ import (
 	restclient "k8s.io/client-go/rest"
 	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/test-infra/pkg/util/elasticsearch"
-
-	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"sigs.k8s.io/yaml"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz1234567890"
 

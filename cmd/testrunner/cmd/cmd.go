@@ -18,19 +18,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
 	collectcmd "github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
-	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
-	versioncmd "github.com/gardener/test-infra/cmd/testrunner/cmd/version"
-
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
 	gardener_telemetry "github.com/gardener/test-infra/cmd/testrunner/cmd/gardener_telemetry"
+	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_gardener"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_template"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_testrun"
+	versioncmd "github.com/gardener/test-infra/cmd/testrunner/cmd/version"
 	"github.com/gardener/test-infra/pkg/logger"
-
-	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{

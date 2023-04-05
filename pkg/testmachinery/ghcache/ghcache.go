@@ -20,15 +20,14 @@ import (
 	"path"
 	"sync"
 
-	"github.com/gregjones/httpcache/diskcache"
-	"github.com/peterbourgon/diskv"
-
-	"github.com/gardener/test-infra/pkg/apis/config"
-
 	"github.com/go-logr/logr"
 	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
+	"github.com/peterbourgon/diskv"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
+
+	"github.com/gardener/test-infra/pkg/apis/config"
 )
 
 var (

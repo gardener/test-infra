@@ -6,21 +6,16 @@ import (
 	"testing"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/gardener/test-infra/pkg/util/strconf"
-
-	"github.com/gardener/test-infra/pkg/testmachinery"
-
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
+	"github.com/gardener/test-infra/pkg/util/strconf"
 	"github.com/gardener/test-infra/test/resources"
 )
 

@@ -21,8 +21,6 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
-
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/argo"
@@ -30,6 +28,7 @@ import (
 	"github.com/gardener/test-infra/pkg/testmachinery/locations"
 	"github.com/gardener/test-infra/pkg/testmachinery/prepare"
 	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow/node"
 )
 
 // New takes a testrun crd and creates a new Testrun representation.

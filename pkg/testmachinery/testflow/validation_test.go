@@ -15,19 +15,16 @@
 package testflow_test
 
 import (
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
-	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
-	testutils "github.com/gardener/test-infra/test/utils"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/testmachinery/testdefinition"
+	"github.com/gardener/test-infra/pkg/testmachinery/testflow"
+	testutils "github.com/gardener/test-infra/test/utils"
 )
 
 var stdPath = field.NewPath("identifier")
