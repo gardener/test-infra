@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/minio/minio-go"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
@@ -44,7 +43,7 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 				Duration:  step.Duration,
 				PodName:   step.PodName,
 			}
-			reader, err := c.s3Client.GetObject(c.s3Config.BucketName, step.ExportArtifactKey, minio.GetObjectOptions{})
+			reader, err := c.s3Client.GetObject(c.s3Config.BucketName, step.ExportArtifactKey)
 			if err != nil {
 				c.log.Info(fmt.Sprintf("cannot get exportet artifact %s", err.Error()), "artifact", step.ExportArtifactKey)
 				if reader != nil {

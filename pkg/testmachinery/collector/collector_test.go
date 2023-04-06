@@ -158,7 +158,7 @@ var _ = Describe("collector summary", func() {
 		Expect(err).ToNot(HaveOccurred())
 		s3Object, err := mock_collector.CreateS3ObjectFromFile(filepath.Join(testdataDir, "11_export_artifact.tar.gz"))
 		Expect(err).ToNot(HaveOccurred())
-		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz", gomock.Any()).Return(s3Object, nil)
+		s3Client.EXPECT().GetObject("testbucket", "/testing/my/export.tar.gz").Return(s3Object, nil)
 
 		// esClient.Request(http.MethodGet, "/testmachinery-*/_search", strings.NewReader(payload))
 		hits := `{ "hits": { "total": { "value": 0 } } }`
