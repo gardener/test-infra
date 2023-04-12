@@ -103,9 +103,9 @@ reserve-excess-capacity:
 
 argo:
   images:
-    argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.4.6
-    argo-executor: quay.io/argoproj/argoexec:v3.4.6
-    argo-server: quay.io/argoproj/argocli:v3.4.6
+    argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.4.7
+    argo-executor: quay.io/argoproj/argoexec:v3.4.7
+    argo-server: quay.io/argoproj/argocli:v3.4.7
 
   argo:
     name: workflow-controller
