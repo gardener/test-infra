@@ -157,7 +157,7 @@ github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
-# github.com/gardener/component-cli v0.53.0
+# github.com/gardener/component-cli v0.54.0
 ## explicit; go 1.20
 github.com/gardener/component-cli/ociclient
 github.com/gardener/component-cli/ociclient/cache
@@ -171,7 +171,7 @@ github.com/gardener/component-cli/pkg/commands/constants
 github.com/gardener/component-cli/pkg/components
 github.com/gardener/component-cli/pkg/logcontext
 github.com/gardener/component-cli/pkg/utils
-# github.com/gardener/component-spec/bindings-go v0.0.89
+# github.com/gardener/component-spec/bindings-go v0.0.90
 ## explicit; go 1.18
 github.com/gardener/component-spec/bindings-go/apis
 github.com/gardener/component-spec/bindings-go/apis/v2

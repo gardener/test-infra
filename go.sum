@@ -137,10 +137,10 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
-github.com/gardener/component-cli v0.53.0 h1:BR/TU84oQT2r0dggiFSXtcT0uYpQlC3Op+0bD0J52zo=
-github.com/gardener/component-cli v0.53.0/go.mod h1:gJcVAmf145mGKlc/4OjLthbED+tLHyAAIzxTnrimsXs=
-github.com/gardener/component-spec/bindings-go v0.0.89 h1:qfyvYzXv1Sw5TCDmujzovZWXO/6Qfzbq0RA8hzpqcpo=
-github.com/gardener/component-spec/bindings-go v0.0.89/go.mod h1:qr7kADDXbXB0huul+ih/B43YkwyiMFYQepp/tqJ331c=
+github.com/gardener/component-cli v0.54.0 h1:LXoVMccVSfqgnwZ2N4o/AaZcQ0f8sbMQCHb/dKGwzvQ=
+github.com/gardener/component-cli v0.54.0/go.mod h1:1xuQBqh9JH8dqpoISPzagYRbs9ngktqauzOJRNAEQMc=
+github.com/gardener/component-spec/bindings-go v0.0.90 h1:N8VcBifjRPzrtxxyuTvKzuSUd6wnXCgNYUtyLcTUq5k=
+github.com/gardener/component-spec/bindings-go v0.0.90/go.mod h1:qr7kADDXbXB0huul+ih/B43YkwyiMFYQepp/tqJ331c=
 github.com/gardener/gardener v1.67.2 h1:iQgixvt9IaV+P1Q7n9FoQNZAzyxZrkbequCOtWhpQxw=
 github.com/gardener/gardener v1.67.2/go.mod h1:LOelF1QZM+flQ9qbEBOY73JJJSnyLd8fuZ2pQfreGxU=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
