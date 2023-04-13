@@ -35,25 +35,3 @@ RUN go install -mod=vendor ./integration-tests/e2e
 __EOF
 
 docker build -t tm-test-e2e-inst:latest -f $DOCKERFILE_DIR/e2e $REPO_ROOT
-
-# build cmd/logging
-cat << __EOF > $DOCKERFILE_DIR/logging
-FROM $BASE_IMAGE
-WORKDIR /go/src/github.com/gardener/test-infra
-COPY . .
-
-RUN go install -mod=vendor ./cmd/logging
-__EOF
-
-docker build -t tm-test-logging-inst:latest -f $DOCKERFILE_DIR/logging $REPO_ROOT
-
-# build cmd/hostscheduler
-cat << __EOF > $DOCKERFILE_DIR/hostscheduler
-FROM $BASE_IMAGE
-WORKDIR /go/src/github.com/gardener/test-infra
-COPY . .
-
-RUN go install -mod=vendor ./cmd/hostscheduler
-__EOF
-
-docker build -t tm-test-hostscheduler-inst:latest -f $DOCKERFILE_DIR/hostscheduler $REPO_ROOT

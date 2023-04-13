@@ -18,7 +18,7 @@
   - [x] testflow:
     - [x] no testdefs found or defined
     - [x] label with no testdefs
-  - [x] invalid kubeconfig synatx (no connection test)
+  - [x] invalid kubeconfig syntax (no connection test)
 
 - validating succeed
   - [x] no testruns in onExit
@@ -28,7 +28,7 @@
 - [x] testflow with name
 - [x] testflow with label
 - [ ] onExit
-  - [x] success condition (called when tesrun succeeds, not called when testrun fails)
+  - [x] success condition (called when testrun succeeds, not called when testrun fails)
   - [x] failing condition
   - [ ] always
 - [x] TTL termination after workflow is completed
@@ -38,4 +38,4 @@
 ## Testrunner tests
 
 - [x] Test result summary as elastic search bulk request.
-- [x] Test result summary with exportted artifacts of specific test steps.
+- [x] Test result summary with exported artifacts of specific test steps.
