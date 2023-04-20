@@ -17,7 +17,6 @@ package result
 import (
 	"context"
 	"fmt"
-	"math"
 	"os"
 
 	ociopts "github.com/gardener/component-cli/ociclient/options"
@@ -27,10 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
-	telemetrycommon "github.com/gardener/test-infra/pkg/shoot-telemetry/common"
-	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
@@ -45,18 +41,12 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 		result         *multierror.Error
 	)
 
-	c.fetchTelemetryResults()
 	for _, run := range runs {
 		runLogger := log.WithValues("testrun", run.Testrun.Name, "namespace", run.Testrun.Namespace)
 		// Do only try to collect testruns results of testruns that ran into a timeout.
 		// Any other error can not be retrieved.
 		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 			continue
-		}
-
-		// add telemetry results to metadata
-		if telemetryData := c.getTelemetryResultsForRun(run); telemetryData != nil {
-			run.Metadata.TelemetryData = telemetryData
 		}
 
 		if run.Testrun.Status.Phase == tmv1beta1.RunPhaseSuccess {
@@ -124,57 +114,4 @@ func (c *Collector) uploadStatusAssets(ctx context.Context, cfg Config, log logr
 	if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {
 		log.Error(err, "unable to mark testrun status as uploaded to github")
 	}
-}
-
-func (c *Collector) fetchTelemetryResults() {
-	if c.telemetry != nil {
-		c.log.Info("fetch telemetry controller summaryPath")
-		_, figures, err := c.telemetry.StopAndAnalyze("", "text")
-		if err != nil {
-			c.log.Error(err, "unable to fetch telemetry measurements")
-			return
-		}
-		c.telemetryResults = figures
-	}
-}
-
-func (c *Collector) getTelemetryResultsForRun(run *testrunner.Run) *metadata.TelemetryData {
-	if c.telemetry != nil && c.telemetryResults != nil {
-		var shoot *common.ExtendedShoot
-		switch s := run.Info.(type) {
-		case *common.ExtendedShoot:
-			shoot = s
-		default:
-			return nil
-		}
-		shootKey := telemetrycommon.GetShootKey(shoot.Name, shoot.Namespace)
-		figure, ok := c.telemetryResults[shootKey]
-		if !ok {
-			return nil
-		}
-
-		dat := &metadata.TelemetryData{}
-		if figure.ResponseTimeDuration != nil {
-			dat.ResponseTime = &metadata.TelemetryResponseTimeDuration{
-				Min:    figure.ResponseTimeDuration.Min,
-				Max:    figure.ResponseTimeDuration.Max,
-				Avg:    int64(math.Round(figure.ResponseTimeDuration.Avg)),
-				Median: int64(math.Round(figure.ResponseTimeDuration.Median)),
-				Std:    int64(math.Round(figure.ResponseTimeDuration.Std)),
-			}
-			dat.DowntimePeriods = &metadata.TelemetryDowntimePeriods{}
-		}
-		if figure.DownPeriods != nil {
-			dat.DowntimePeriods = &metadata.TelemetryDowntimePeriods{
-				Min:    int64(math.Round(figure.DownPeriods.Min)),
-				Max:    int64(math.Round(figure.DownPeriods.Max)),
-				Avg:    int64(math.Round(figure.DownPeriods.Avg)),
-				Median: int64(math.Round(figure.DownPeriods.Median)),
-				Std:    int64(math.Round(figure.DownPeriods.Std)),
-			}
-		}
-
-		return dat
-	}
-	return nil
 }

@@ -147,7 +147,6 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.Int64Var(&o.timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	fs.IntVar(&o.testrunnerConfig.FlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 	fs.BoolVar(&o.failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
-	fs.BoolVar(&o.collectConfig.EnableTelemetry, "enable-telemetry", false, "Enables the measurements of metrics during execution")
 	fs.BoolVar(&o.testrunnerConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
 	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")

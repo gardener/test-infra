@@ -18,9 +18,7 @@ import (
 	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/go-logr/logr"
 
-	"github.com/gardener/test-infra/pkg/shoot-telemetry/analyse"
 	"github.com/gardener/test-infra/pkg/testrunner"
-	telemetryCtrl "github.com/gardener/test-infra/pkg/testrunner/telemetry"
 )
 
 // Config represents the configuration for collecting and storing results from a testrun.
@@ -30,9 +28,6 @@ type Config struct {
 
 	// Path to the error directory of concourse to put the notify.cfg in.
 	ConcourseOnErrorDir string
-
-	// EnableTelemetry enables the measurement of shoot downtimes during execution
-	EnableTelemetry bool
 
 	// ComponentDescriptorPath path to the component descriptor file
 	ComponentDescriptorPath string
@@ -74,9 +69,6 @@ type Collector struct {
 	log            logr.Logger
 	config         Config
 	kubeconfigPath string
-
-	telemetry        *telemetryCtrl.Telemetry
-	telemetryResults map[string]*analyse.Figures
 
 	// RunExecCh is called when a new testrun is executed
 	RunExecCh chan *testrunner.Run
