@@ -53,15 +53,6 @@ ${GOPATH}/bin/deepcopy-gen \
 
 go install ./$(dirname "${0}")/../vendor/k8s.io/kube-openapi/cmd/openapi-gen
 
-echo "> Generating internal groups for Telemetry"
-"${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
-  deepcopy,defaulter,conversio \
-  $PROJECT_MOD_ROOT/pkg/client/telemetry \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  telemetry:v1beta1 \
-  -h $(dirname $0)/boilerplate.go.txt
-
 echo "Generating openapi definitions"
 ${GOPATH}/bin/openapi-gen "$@" \
   --v 1 \

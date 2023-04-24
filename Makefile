@@ -200,10 +200,6 @@ docker-image-run:
 docker-image-bot:
 	@docker build -t $(TM_BOT_IMAGE):$(IMAGE_TAG) -t $(TM_BOT_IMAGE):latest --target tm-bot .
 
-.PHONY: docker-image-telemetry
-docker-image-telemetry:
-	@docker build -t $(TELEMETRY_CONTROLLER_IMAGE):$(IMAGE_TAG) -t $(TELEMETRY_CONTROLLER_IMAGE):latest --target telemetry-controller .
-
 .PHONY: docker-image-prepare
 docker-image-prepare:
 	@docker build -t $(PREPARESTEP_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target tm-prepare .
@@ -227,4 +223,3 @@ build-tm-chart:
 .PHONY: publish-tm-chart
 publish-tm-chart: build-tm-chart
 	@helm push $(REPO_ROOT)/charts/$(TM_CONTROLLER_CHART)-$(VERSION).tgz oci://$(HELM_REGISTRY)
-

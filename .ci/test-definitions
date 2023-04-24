@@ -28,9 +28,3 @@ cd "${SOURCE_PATH}"
 
 printf "\nNow installing: integration-tests/e2e ...\n"
 go install -mod=vendor ./integration-tests/e2e
-
-printf "\nNow installing: cmd/logging ...\n"
-go install -mod=vendor ./cmd/logging
-
-printf "\nNow installing: ./cmd/hostscheduler ...\n"
-go install -mod=vendor ./cmd/hostscheduler

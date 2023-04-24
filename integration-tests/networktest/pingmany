@@ -1,6 +1,0 @@
-#!/bin/sh
-
-for ip in $* ; do
-    ping -W 2 -c 1 $ip
-done
-

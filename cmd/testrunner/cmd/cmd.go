@@ -23,9 +23,7 @@ import (
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
 	collectcmd "github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/docs"
-	gardener_telemetry "github.com/gardener/test-infra/cmd/testrunner/cmd/gardener_telemetry"
 	notifycmd "github.com/gardener/test-infra/cmd/testrunner/cmd/notify"
-	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_gardener"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_template"
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/run_testrun"
 	versioncmd "github.com/gardener/test-infra/cmd/testrunner/cmd/version"
@@ -61,10 +59,8 @@ func init() {
 	alert.AddCommand(rootCmd)
 	addCommand(run_template.NewRunTemplateCommand)
 	addCommand(run_testrun.NewRunTestrunCommand)
-	run_gardener.AddCommand(rootCmd)
 	collectcmd.AddCommand(rootCmd)
 	notifycmd.AddCommand(rootCmd)
-	gardener_telemetry.AddCommand(rootCmd)
 	docs.AddCommand(rootCmd)
 	versioncmd.AddCommand(rootCmd)
 }

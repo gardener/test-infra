@@ -30,24 +30,12 @@ WORKDIR /
 
 ENTRYPOINT ["/testmachinery-controller"]
 
-############# telemetry-controller #############
-FROM alpine:3.17 AS telemetry-controller
-
-RUN apk add --update bash curl
-
-COPY --from=builder /go/bin/telemetry-controller /telemetry-controller
-COPY ./.env /
-
-WORKDIR /
-
-ENTRYPOINT ["/telemetry-controller"]
-
 ############# tm-base-step #############
 FROM golang:1.19-alpine AS base-step
 
 ENV HELM_TILLER_VERSION=v2.16.12
-ENV KUBECTL_VERSION=v1.24.3
-ENV HELM_V3_VERSION=v3.9.3
+ENV KUBECTL_VERSION=v1.26.3
+ENV HELM_V3_VERSION=v3.11.3
 
 RUN  \
   apk update \

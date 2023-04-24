@@ -106,9 +106,6 @@ func (o *options) run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize collector")
 	}
-	if err := collector.PreRunShoots(o.shootParameters.GardenKubeconfigPath, runs); err != nil {
-		return errors.Wrap(err, "unable to setup collector")
-	}
 
 	if err := testrunner.ExecuteTestruns(logger.Log.WithName("Execute"), &o.testrunnerConfig, runs, o.testrunNamePrefix, collector.RunExecCh); err != nil {
 		return errors.Wrap(err, "unable to run testruns")
