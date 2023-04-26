@@ -46,7 +46,7 @@ podAnnotations:
 
 rbac:
   create: true
-  pspEnabled: true
+  pspEnabled: false
 
 readinessProbe:
   failureThreshold: 5

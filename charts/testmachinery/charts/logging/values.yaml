@@ -27,7 +27,7 @@ loki:
       memory: 8Gi
   terminationGracePeriodSeconds: 300
   rbac:
-    pspEnabled: true
+    pspEnabled: false
 
 promtail:
   nameOverride: promtail
@@ -47,7 +47,7 @@ promtail:
       value: testload
       effect: NoSchedule
   rbac:
-    pspEnabled: true
+    pspEnabled: false
   scrapeConfigs:
     - job_name: pods
       pipeline_stages:
