@@ -198,7 +198,7 @@ func (r *Resolver) resolve(ctx context.Context, repoCtx v2.Repository, name, ver
 
 	componentDescriptorBytes := componentDescriptorLayerBytes.Bytes()
 	switch componentDescriptorLayer.MediaType {
-	case ComponentDescriptorTarMimeType, LegacyComponentDescriptorTarMimeType:
+	case ComponentDescriptorTarMimeTypeOCM, ComponentDescriptorTarMimeType, LegacyComponentDescriptorTarMimeType:
 		componentDescriptorBytes, err = ReadComponentDescriptorFromTar(&componentDescriptorLayerBytes)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to read component descriptor from tar: %w", err)
@@ -264,8 +264,8 @@ func (r *Resolver) ToComponentArchive(ctx context.Context, repoCtx v2.Repository
 
 func (r *Resolver) getComponentConfig(ctx context.Context, ref string, manifest *ocispecv1.Manifest) (*ComponentDescriptorConfig, error) {
 	if manifest.Config.MediaType != ComponentDescriptorConfigMimeType &&
-		manifest.Config.MediaType != ComponentDescriptorLegacyConfigMimeType {
-		return nil, fmt.Errorf("unknown component config type '%s' expected '%s'", manifest.Config.MediaType, ComponentDescriptorConfigMimeType)
+		manifest.Config.MediaType != ComponentDescriptorLegacyConfigMimeType && manifest.Config.MediaType != ComponentDescriptorConfigMimeTypeOCM {
+		return nil, fmt.Errorf("unknown component config type '%s' expected '%s' or '%s'", manifest.Config.MediaType, ComponentDescriptorConfigMimeType, ComponentDescriptorConfigMimeTypeOCM)
 	}
 
 	var data bytes.Buffer
