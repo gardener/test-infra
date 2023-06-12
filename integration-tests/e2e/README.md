@@ -11,14 +11,14 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 ### Example usage (Conformance tests)
 Follow the instructions below to run the Kubernetes e2e conformance tests.
 
-Set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
+cd into your local `gardener/test-infra` folder and set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
 
 ```bash
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --workdir /go/src/github.com/gardener/test-infra golang:1.19 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra golang:1.20 bash
 
 # run command below within container to invoke tests in a parallelized way
-GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.26.0 --cloudprovider=skeleton --testcasegroup="conformance"
+GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.27.1 --cloudprovider=skeleton --testcasegroup="conformance"
 ```
 
 ### Run conformance tests against new K8s versions
@@ -35,12 +35,17 @@ nodes:
 - role: worker
 EOF
 
-kind create cluster  --config kind.yaml --image kindest/node:v1.26.0@sha256:691e24bd2417609db7e589e1a479b902d2e209892a10ce375fab60a8407c7352
+kind create cluster  --config kind.yaml --image kindest/node:v1.27.1@sha256:b7d12ed662b873bd8510879c1846e87c7e676a79fefc93e17b2a52989d3ff42b
 ```
 
 Invoke the steps from [Example usage (Conformance tests)](#example-usage-conformance-tests) and ensure the output has executed some > 300 tests, similar to
 ```shell
 INFO[2133] test suite summary: {ExecutedTestcases:371 SuccessfulTestcases:371 FailedTestcases:0...
+```
+
+Tear down the kind cluster with
+```shell
+kind delete cluster
 ```
 
 ### Environment Prerequisites:
