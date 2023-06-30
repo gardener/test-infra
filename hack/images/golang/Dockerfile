@@ -1,8 +1,8 @@
-FROM golang:1.14.1 AS ginkgo
+FROM golang:1.20 AS ginkgo
 
 RUN  \
   apt-get update \
   && apt-get install rsync -y \
-  && go get -u github.com/onsi/ginkgo/ginkgo
+  && go install github.com/onsi/ginkgo/ginkgo@latest
 
 COPY ./setup /tm/setup
