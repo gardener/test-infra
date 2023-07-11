@@ -65,7 +65,7 @@ func GetK8sVersions(cloudprofile gardencorev1beta1.CloudProfile, config common.S
 	}
 
 	if len(filtered) == 0 {
-		return nil, fmt.Errorf("no K8s version can be specified")
+		return nil, fmt.Errorf("no non-expired K8s version could be found in current cloudprofiles for testflavor pattern %s", pattern)
 	}
 
 	if (config.FilterPatchVersions != nil && *config.FilterPatchVersions) || (config.FilterPatchVersions == nil && filterPatchVersions) {
