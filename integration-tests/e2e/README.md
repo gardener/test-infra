@@ -8,18 +8,27 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 
 ## Usage
 
-### Example usage (Conformance tests)
-Follow the instructions below to run the Kubernetes e2e conformance tests.
-
-cd into your local `gardener/test-infra` folder and set the `KUBECONFIG` as path to the kubeconfig file of your newly created cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
+### Run conformance tests via Gardener's test automation
+`cd` into your local `gardener/test-infra` folder and target some cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
 
 ```bash
 # first set KUBECONFIG to your cluster
 docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra golang:1.20 bash
 
-# run command below within container to invoke tests in a parallelized way
+# run command below within container to invoke tests in a parallelized way (keep --cloudprovider=skeleton, it means that the tests won't utilize any cloud provider specifics but only resort to kube-apiserver access to the cluster, most likely this is anyway not relevant for the conformance tests, but only for other e2e tests)
 GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.27.1 --cloudprovider=skeleton --testcasegroup="conformance"
 ```
+
+### Run conformance tests (or single tests) directly (without Gardener's test automation)
+```shell
+# target some cluster
+# cd into your k/k folder
+# (if not done already: go install github.com/onsi/ginkgo/v2/ginkgo)
+# all conformance tests:
+ginkgo --focus "\[Conformance\]" -p ./test/e2e
+# single test:
+ginkgo --focus "should detect duplicates in a CR when preserving unknown fields" -p ./test/e2e
+``````
 
 ### Run conformance tests against new K8s versions
 To test whether the conformance testing machinery will work with a new, not-yet-Gardener-supported K8s version, you can create a kind cluster and invoke the machinery against it.
@@ -38,7 +47,7 @@ EOF
 kind create cluster  --config kind.yaml --image kindest/node:v1.27.1@sha256:b7d12ed662b873bd8510879c1846e87c7e676a79fefc93e17b2a52989d3ff42b
 ```
 
-Invoke the steps from [Example usage (Conformance tests)](#example-usage-conformance-tests) and ensure the output has executed some > 300 tests, similar to
+Invoke the steps from [Run conformance tests via Gardener's test automation](#run-conformance-tests-via-gardeners-test-automation) and ensure the output has executed some > 300 tests, similar to
 ```shell
 INFO[2133] test suite summary: {ExecutedTestcases:371 SuccessfulTestcases:371 FailedTestcases:0...
 ```
