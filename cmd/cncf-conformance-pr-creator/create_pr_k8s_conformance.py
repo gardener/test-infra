@@ -45,7 +45,7 @@ except KeyError:
     print("Error: Environment variable CONTACT_EMAIL_ADDRESS not set. This is required for opening any conformance PR.")
     sys.exit(1)
 
-provider_list = ['gce', 'aws', 'azure', 'openstack', 'alicloud']
+provider_list = ['gce', 'aws', 'azure', 'openstack', 'alicloud', 'vsphere']
 content_product_yaml = {}
 content_product_yaml['gardener'] = """vendor: SAP
 name: Gardener (https://github.com/gardener/gardener) shoot cluster deployed on {0}
