@@ -51,6 +51,7 @@ RUN  \
     file \
     gcc \
     git \
+    git-crypt \
     jq \
     libc-dev \
     libev-dev \
