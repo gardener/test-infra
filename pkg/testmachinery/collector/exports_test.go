@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/gardener/test-infra/pkg/apis/config"

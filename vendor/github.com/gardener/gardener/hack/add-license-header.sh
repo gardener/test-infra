@@ -30,5 +30,6 @@ addlicense \
   -ignore "**/*.yaml" \
   -ignore "**/Dockerfile" \
   -ignore "hack/tools/gomegacheck/**" \
-  -ignore "pkg/operation/botanist/**/*.sh" \
+  -ignore "pkg/component/**/*.sh" \
+  -ignore "third_party/gopkg.in/yaml.v2/**" \
   .

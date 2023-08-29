@@ -1,4 +1,4 @@
-# Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+# Copyright 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ LOGCHECK                   := $(TOOLS_BIN_DIR)/logcheck.so # plugin binary
 MOCKGEN                    := $(TOOLS_BIN_DIR)/mockgen
 OPENAPI_GEN                := $(TOOLS_BIN_DIR)/openapi-gen
 PROMTOOL                   := $(TOOLS_BIN_DIR)/promtool
+PROTOC                     := $(TOOLS_BIN_DIR)/protoc
 PROTOC_GEN_GOGO            := $(TOOLS_BIN_DIR)/protoc-gen-gogo
 REPORT_COLLECTOR           := $(TOOLS_BIN_DIR)/report-collector
 SETUP_ENVTEST              := $(TOOLS_BIN_DIR)/setup-envtest
@@ -58,14 +59,15 @@ YQ                         := $(TOOLS_BIN_DIR)/yq
 
 # default tool versions
 DOCFORGE_VERSION ?= v0.33.0
-GOLANGCI_LINT_VERSION ?= v1.51.2
+GOLANGCI_LINT_VERSION ?= v1.54.1
 GO_APIDIFF_VERSION ?= v0.5.0
 GO_ADD_LICENSE_VERSION ?= v1.1.1
-GOIMPORTSREVISER_VERSION ?= v3.3.1
+GOIMPORTSREVISER_VERSION ?= v3.4.0
 GO_VULN_CHECK_VERSION ?= latest
 HELM_VERSION ?= v3.11.2
-KIND_VERSION ?= v0.14.0
+KIND_VERSION ?= v0.18.0
 KUBECTL_VERSION ?= v1.24.11
+PROTOC_VERSION ?= 23.4
 SKAFFOLD_VERSION ?= v2.2.0
 YQ_VERSION ?= v4.31.2
 
@@ -167,13 +169,16 @@ $(LOGCHECK): go.mod
 endif
 
 $(MOCKGEN): go.mod
-	go build -o $(MOCKGEN) github.com/golang/mock/mockgen
+	go build -o $(MOCKGEN) go.uber.org/mock/mockgen
 
 $(OPENAPI_GEN): go.mod
 	go build -o $(OPENAPI_GEN) k8s.io/kube-openapi/cmd/openapi-gen
 
 $(PROMTOOL): $(TOOLS_PKG_PATH)/install-promtool.sh
 	@$(TOOLS_PKG_PATH)/install-promtool.sh
+
+$(PROTOC): $(call tool_version_file,$(PROTOC),$(PROTOC_VERSION))
+	@PROTOC_VERSION=$(PROTOC_VERSION) $(TOOLS_PKG_PATH)/install-protoc.sh
 
 $(PROTOC_GEN_GOGO): go.mod
 	go build -o $(PROTOC_GEN_GOGO) k8s.io/code-generator/cmd/go-to-protobuf/protoc-gen-gogo

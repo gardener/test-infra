@@ -8,8 +8,8 @@ import (
 	reflect "reflect"
 
 	s3 "github.com/gardener/test-infra/pkg/util/s3"
-	gomock "github.com/golang/mock/gomock"
 	minio "github.com/minio/minio-go"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockClient is a mock of Client interface.

@@ -7,7 +7,7 @@ package mock_github
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 )
