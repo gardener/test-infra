@@ -18,7 +18,7 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/gardener/test-infra/pkg/common"
 )
@@ -30,13 +30,13 @@ var _ = Describe("flavor test", func() {
 	BeforeEach(func() {
 		defaultMachine = gardencorev1beta1.Machine{
 			Type:  "test-machine",
-			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.String("0.0.1")},
+			Image: &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: ptr.To("0.0.1")},
 		}
 
 		defaultExpectedMachine = gardencorev1beta1.Machine{
 			Type:         "test-machine",
-			Image:        &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: pointer.String("0.0.1")},
-			Architecture: pointer.String("amd64"),
+			Image:        &gardencorev1beta1.ShootMachineImage{Name: "coreos", Version: ptr.To("0.0.1")},
+			Architecture: ptr.To("amd64"),
 		}
 
 	})
@@ -138,7 +138,7 @@ var _ = Describe("flavor test", func() {
 
 	It("should return one shoot with worker pool machine architecture arm64", func() {
 		machine := defaultMachine
-		machine.Architecture = pointer.String("arm64")
+		machine.Architecture = ptr.To("arm64")
 
 		rawFlavors := []*common.ShootFlavor{
 			{
@@ -171,7 +171,7 @@ var _ = Describe("flavor test", func() {
 
 	It("should fail with an inavlid architecture type", func() {
 		machine := defaultMachine
-		machine.Architecture = pointer.String("foo")
+		machine.Architecture = ptr.To("foo")
 
 		rawFlavors := []*common.ShootFlavor{
 			{
@@ -270,7 +270,7 @@ var _ = Describe("flavor test", func() {
 		rawFlavors := []*common.ShootFlavor{
 			{
 				Provider:                  common.CloudProviderGCP,
-				AllowPrivilegedContainers: pointer.Bool(false),
+				AllowPrivilegedContainers: ptr.To(false),
 				KubernetesVersions: common.ShootKubernetesVersionFlavor{
 					Versions: &[]gardencorev1beta1.ExpirableVersion{
 						{
@@ -286,7 +286,7 @@ var _ = Describe("flavor test", func() {
 		Expect(flavors.GetShoots()).To(ConsistOf(
 			&common.Shoot{
 				Provider:                  common.CloudProviderGCP,
-				AllowPrivilegedContainers: pointer.Bool(false),
+				AllowPrivilegedContainers: ptr.To(false),
 				KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
 			},
 		))
@@ -434,7 +434,7 @@ var _ = Describe("flavor test", func() {
 
 	It("should return 1 gcp shoots with mulitple worker pool of different machine CPU architecture", func() {
 		machine := defaultMachine
-		machine.Architecture = pointer.String("arm64")
+		machine.Architecture = ptr.To("arm64")
 		rawFlavors := []*common.ShootFlavor{
 			{
 				Provider: common.CloudProviderGCP,
@@ -466,7 +466,7 @@ var _ = Describe("flavor test", func() {
 
 	It("should return 2 gcp shoots with specified CPU architecture of machine in a worker pool", func() {
 		machine := defaultMachine
-		machine.Architecture = pointer.String("arm64")
+		machine.Architecture = ptr.To("arm64")
 		rawFlavors := []*common.ShootFlavor{
 			{
 				Provider: common.CloudProviderGCP,

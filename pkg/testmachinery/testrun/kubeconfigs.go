@@ -23,7 +23,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -97,8 +97,8 @@ func addKubeconfig(ctx context.Context, reader client.Reader, configs *[]*config
 						Kind:               tr.Kind,
 						Name:               tr.GetName(),
 						UID:                tr.GetUID(),
-						BlockOwnerDeletion: pointer.Bool(true),
-						Controller:         pointer.Bool(false),
+						BlockOwnerDeletion: ptr.To(true),
+						Controller:         ptr.To(false),
 					},
 				},
 			},

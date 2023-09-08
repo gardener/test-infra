@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/common"
@@ -88,7 +88,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.Bool(true),
+				AllowPrivilegedContainers: ptr.To(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -115,11 +115,11 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.Bool(true),
+			AllowPrivilegedContainers: ptr.To(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: pointer.String("amd64")}}},
+			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("amd64")}}},
 		}))
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
@@ -128,7 +128,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.Bool(true),
+				AllowPrivilegedContainers: ptr.To(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -141,7 +141,7 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: pointer.String("arm64")}}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("arm64")}}},
 					},
 				},
 			},
@@ -155,11 +155,11 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.Bool(true),
+			AllowPrivilegedContainers: ptr.To(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: pointer.String("arm64")}}},
+			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("arm64")}}},
 		}))
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
@@ -168,7 +168,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.Bool(true),
+				AllowPrivilegedContainers: ptr.To(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -181,7 +181,7 @@ var _ = Describe("extended flavor test", func() {
 				},
 				Workers: []common.ShootWorkerFlavor{
 					{
-						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: pointer.String("foo")}}},
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("foo")}}},
 					},
 				},
 			},
@@ -324,7 +324,7 @@ var _ = Describe("extended flavor test", func() {
 								Machine: gardencorev1beta1.Machine{
 									Image: &gardencorev1beta1.ShootMachineImage{
 										Name:    "test-os",
-										Version: pointer.String("latest"),
+										Version: ptr.To("latest"),
 									},
 								},
 							},
@@ -333,9 +333,9 @@ var _ = Describe("extended flavor test", func() {
 								Machine: gardencorev1beta1.Machine{
 									Image: &gardencorev1beta1.ShootMachineImage{
 										Name:    "test-os-2",
-										Version: pointer.String("latest"),
+										Version: ptr.To("latest"),
 									},
-									Architecture: pointer.String("arm64"),
+									Architecture: ptr.To("arm64"),
 								},
 							},
 						},
@@ -361,7 +361,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
-				AllowPrivilegedContainers: pointer.Bool(true),
+				AllowPrivilegedContainers: ptr.To(true),
 				AdditionalAnnotations:     map[string]string{"a": "b"},
 				AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 				Provider:                  common.CloudProviderGCP,
@@ -388,11 +388,11 @@ var _ = Describe("extended flavor test", func() {
 		shoot := flavors.GetShoots()[0]
 		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
 			Provider:                  common.CloudProviderGCP,
-			AllowPrivilegedContainers: pointer.Bool(true),
+			AllowPrivilegedContainers: ptr.To(true),
 			AdditionalAnnotations:     map[string]string{"a": "b"},
 			AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
 			KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15"},
-			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: pointer.String("amd64")}}},
+			Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("amd64")}}},
 		}))
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
