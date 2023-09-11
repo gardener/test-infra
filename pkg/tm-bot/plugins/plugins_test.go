@@ -16,10 +16,10 @@ package plugins_test
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
+	"go.uber.org/mock/gomock"
 
 	"github.com/gardener/test-infra/pkg/tm-bot/github"
 	mock_github "github.com/gardener/test-infra/pkg/tm-bot/github/mocks"

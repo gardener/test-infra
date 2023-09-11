@@ -22,7 +22,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/gardener/test-infra/pkg/common"
@@ -81,7 +81,7 @@ func DefaultShootMachineArchitecture(workers []common.ShootWorkerFlavor) {
 	for i := range workers {
 		for j := range workers[i].WorkerPools {
 			if workers[i].WorkerPools[j].Machine.Architecture == nil {
-				workers[i].WorkerPools[j].Machine.Architecture = pointer.String(v1beta1constants.ArchitectureAMD64)
+				workers[i].WorkerPools[j].Machine.Architecture = ptr.To(v1beta1constants.ArchitectureAMD64)
 			}
 		}
 	}

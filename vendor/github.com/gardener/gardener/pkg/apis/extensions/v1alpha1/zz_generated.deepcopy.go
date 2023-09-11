@@ -1483,6 +1483,11 @@ func (in *OperatingSystemConfigStatus) DeepCopyInto(out *OperatingSystemConfigSt
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Files != nil {
+		in, out := &in.Files, &out.Files
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -1759,6 +1764,10 @@ func (in *WorkerStatus) DeepCopyInto(out *WorkerStatus) {
 		in, out := &in.MachineDeployments, &out.MachineDeployments
 		*out = make([]MachineDeployment, len(*in))
 		copy(*out, *in)
+	}
+	if in.MachineDeploymentsLastUpdateTime != nil {
+		in, out := &in.MachineDeploymentsLastUpdateTime, &out.MachineDeploymentsLastUpdateTime
+		*out = (*in).DeepCopy()
 	}
 	return
 }

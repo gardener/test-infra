@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v50/github"
+	"github.com/google/go-github/v53/github"
 )
 
 const (
@@ -62,6 +62,11 @@ type HTTPError struct {
 
 func (e *HTTPError) Error() string {
 	return e.Message
+}
+
+// Unwrap implements the standard library's error wrapping. It unwraps to the root cause.
+func (e *HTTPError) Unwrap() error {
+	return e.RootCause
 }
 
 var _ http.RoundTripper = &Transport{}
@@ -184,6 +189,16 @@ func (t *Transport) Expiry() (expiresAt time.Time, refreshAt time.Time, err erro
 		return time.Time{}, time.Time{}, errors.New("Expiry() = unknown, err: nil token")
 	}
 	return t.token.ExpiresAt, t.token.getRefreshTime(), nil
+}
+
+// AppID returns the app ID associated with the transport
+func (t *Transport) AppID() int64 {
+	return t.appID
+}
+
+// InstallationID returns the installation ID associated with the transport
+func (t *Transport) InstallationID() int64 {
+	return t.installationID
 }
 
 func (t *Transport) refreshToken(ctx context.Context) error {

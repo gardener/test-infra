@@ -24,7 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -79,7 +79,7 @@ var _ = Describe("Reconcile", func() {
 		tr := &tmv1beta1.Testrun{}
 		tr.Name = "not-exceeded"
 		tr.Namespace = namespace
-		tr.Spec.TTLSecondsAfterFinished = pointer.Int32(10)
+		tr.Spec.TTLSecondsAfterFinished = ptr.To(int32(10))
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
 		tr.Status.Phase = tmv1beta1.RunPhaseSuccess
 		t := metav1.Now()
@@ -98,7 +98,7 @@ var _ = Describe("Reconcile", func() {
 		tr := &tmv1beta1.Testrun{}
 		tr.Name = "exceeded"
 		tr.Namespace = namespace
-		tr.Spec.TTLSecondsAfterFinished = pointer.Int32(10)
+		tr.Spec.TTLSecondsAfterFinished = ptr.To(int32(10))
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
 		tr.Status.Phase = tmv1beta1.RunPhaseSuccess
 		tr.Status.CompletionTime = &metav1.Time{Time: metav1.Now().Add(-20 * time.Second)}
@@ -121,7 +121,7 @@ var _ = Describe("Reconcile", func() {
 		tr := &tmv1beta1.Testrun{}
 		tr.Name = "no-ts"
 		tr.Namespace = namespace
-		tr.Spec.TTLSecondsAfterFinished = pointer.Int32(10)
+		tr.Spec.TTLSecondsAfterFinished = ptr.To(int32(10))
 		Expect(fakeClient.Create(ctx, tr)).To(Succeed())
 		tr.Status.Phase = tmv1beta1.RunPhaseError
 		Expect(fakeClient.Status().Update(ctx, tr)).To(Succeed())

@@ -36,7 +36,7 @@ import (
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v50/github"
+	"github.com/google/go-github/v54/github"
 	"github.com/pkg/errors"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

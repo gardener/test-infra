@@ -12,8 +12,8 @@ import (
 	semver "github.com/Masterminds/semver/v3"
 	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 	ghval "github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
-	gomock "github.com/golang/mock/gomock"
-	github0 "github.com/google/go-github/v50/github"
+	github0 "github.com/google/go-github/v54/github"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockClient is a mock of Client interface.
