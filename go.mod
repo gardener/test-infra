@@ -11,7 +11,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.6.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gardener/component-cli v0.55.0
-	github.com/gardener/component-spec/bindings-go v0.0.94
+	github.com/gardener/component-spec/bindings-go v0.0.98
 	github.com/gardener/gardener v1.78.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v1.2.4
