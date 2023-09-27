@@ -30,6 +30,12 @@ var _ = Describe("util test", func() {
 			Expect(repo).To(Equal("gardener-extensions"))
 			Expect(owner).To(Equal("gardener"))
 		})
+		It("urls without owner/repo scheme should not panic", func() {
+			ghUrl := "https://example.com/example"
+
+			_, _, err := ParseRepoURLFromString(ghUrl)
+			Expect(err).To(HaveOccurred())
+		})
 		It("domain should parse from grafana url", func() {
 			hostname := "grafana.ingress.tm.core.shoot.live.k8s-hana.ondemand.com"
 			domain, err := parseDomain(hostname)

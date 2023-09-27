@@ -24,6 +24,7 @@ import (
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v54/github"
+	"github.com/pkg/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
@@ -53,7 +54,10 @@ func NewGitLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) (t
 		return nil, fmt.Errorf("unable to parse url %s", testDefLocation.Repo)
 	}
 	config := getGitConfig(log, repoURL)
-	repoOwner, repoName := util.ParseRepoURL(repoURL)
+	repoOwner, repoName, err := util.ParseRepoURL(repoURL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to parse repo url %s", repoURL)
+	}
 
 	return &GitLocation{
 		Info:      testDefLocation,

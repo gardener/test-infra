@@ -351,7 +351,10 @@ func getGithubArtifacts(componentName, githubUser, githubPassword string) (githu
 	if err != nil {
 		return nil, "", "", errors.Wrapf(err, "url parse failed for %s", urlRaw)
 	}
-	repoOwner, repoName = util.ParseRepoURL(repoURL)
+	repoOwner, repoName, err = util.ParseRepoURL(repoURL)
+	if err != nil {
+		return nil, "", "", errors.Wrapf(err, "repoURL parse failed for %s", repoURL)
+	}
 	githubClient, err = getGithubClient(componentName, githubUser, githubPassword)
 	if err != nil {
 		return nil, "", "", err

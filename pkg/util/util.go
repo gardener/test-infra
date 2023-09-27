@@ -233,13 +233,19 @@ func ParseRepoURLFromString(repoURL string) (repoOwner, repoName string, err err
 		return "", "", err
 	}
 
-	repoOwner, repoName = ParseRepoURL(u)
+	repoOwner, repoName, err = ParseRepoURL(u)
+	if err != nil {
+		return "", "", err
+	}
 	return repoOwner, repoName, nil
 }
 
 // ParseRepoURL returns the repository owner and name of a github repo url
-func ParseRepoURL(url *url.URL) (repoOwner, repoName string) {
+func ParseRepoURL(url *url.URL) (repoOwner, repoName string, err error) {
 	repoNameComponents := strings.Split(url.Path, "/")
+	if len(repoNameComponents) < 3 {
+		return "", "", errors.Errorf("cannot parse url '%s' into owner/repo scheme", url.Path)
+	}
 	repoOwner = repoNameComponents[1]
 	repoName = strings.Replace(repoNameComponents[2], ".git", "", 1)
 	return
