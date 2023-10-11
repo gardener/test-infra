@@ -21,6 +21,7 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
@@ -396,8 +397,10 @@ func getAssetIDByName(component ComponentExtended, filename string) (int64, erro
 	return 0, nil
 }
 
-// gets a github release of a repo based on given version
+// gets a GitHub release of a repo based on given version
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
+	log := logger.Log.WithName("GetGithubReleases")
+
 	version, err := semver.NewVersion(componentVersion)
 	if err != nil {
 		return nil, errors.Wrapf(err, "version parse failed of %s", componentVersion)
@@ -406,18 +409,19 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	draft := version.Prerelease() != "" // assumption is that draft versions have always a prerelease e.g. 0.100.0-dev-s5d4f6sdf45s65df4sdf4s4sf
 	if !draft {
 		release, response, err := githubClient.Repositories.GetReleaseByTag(context.Background(), repoOwner, repoName, componentVersion)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get github release by tag %s in %s", componentVersion, repoName)
-		} else if response.StatusCode != 200 {
-			return nil, errors.Errorf("release retrival failed with status code %d", response.StatusCode)
+		if err == nil {
+			return release, nil
 		}
-		return release, nil
+
+		// At this point an error occurred. But instead of failing, we log error and try to find a release by its name.
+		log.Info(errors.WithMessagef(err, "failed to get github release by tag %s in %s with status code %d", componentVersion, repoName, response.StatusCode).Error())
 	}
 
 	releaseName, err := version.SetPrerelease("")
 	if err != nil {
 		return nil, err
 	}
+	log.Info("continuing to search for a release in %s by name %s", repoName, releaseName)
 
 	opt := &github.ListOptions{
 		PerPage: 50,
@@ -425,7 +429,7 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	for {
 		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, opt)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get github release by tag %s in %s", componentVersion, repoName)
+			return nil, errors.Wrapf(err, "component %s failed to list github releases at %s", componentVersion, repoName)
 		} else if response.StatusCode != 200 {
 			return nil, errors.Errorf("github releases GET failed with status code %d", response.StatusCode)
 		}
