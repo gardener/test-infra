@@ -421,7 +421,7 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 	if err != nil {
 		return nil, err
 	}
-	log.Info("continuing to search for a release in %s by name %s", repoName, releaseName)
+	log.Info(fmt.Sprintf("continuing to search for a release in %s by name %s", repoName, releaseName))
 
 	opt := &github.ListOptions{
 		PerPage: 50,
