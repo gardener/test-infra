@@ -74,14 +74,19 @@ func getComponentsForUpload(
 	runLogger logr.Logger,
 	componentdescriptorPath string,
 	assetComponents []string,
-	ociOpts *ociopts.Options) ([]*componentdescriptor.Component, error) {
-	componentsFromFile, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(ctx, runLogger, ociOpts, componentdescriptorPath)
+	ociOpts *ociopts.Options,
+	repository string,
+	ocmConfigPath string) ([]*componentdescriptor.Component, error) {
+
+	components, err := componentdescriptor.GetComponentsWithOCM(ctx, runLogger, componentdescriptorPath, repository, func(opts *componentdescriptor.Options) {
+		opts.CfgPath = ocmConfigPath
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Unable to get component '%s'", componentdescriptorPath))
+		return nil, err
 	}
 	var componentsForUpload []*componentdescriptor.Component
 	for _, componentName := range assetComponents {
-		if component := componentsFromFile.Get(componentName); component == nil {
+		if component := components.Get(componentName); component == nil {
 			runLogger.Error(err, "can't find component", "component", assetComponents)
 		} else {
 			componentsForUpload = append(componentsForUpload, component)
@@ -101,7 +106,7 @@ func (c *Collector) uploadStatusAssets(ctx context.Context, cfg Config, log logr
 		return
 	}
 
-	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.OCIOpts)
+	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.OCIOpts, cfg.Repository, cfg.OCMConfigPath)
 	if err != nil {
 		log.Error(err, "unable to get component for upload")
 		return

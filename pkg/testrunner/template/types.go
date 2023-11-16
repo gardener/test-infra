@@ -35,6 +35,8 @@ type Parameters struct {
 	Landscape               string
 	ComponentDescriptorPath string
 	OCIOpts                 *ociopts.Options
+	Repository              string
+	OCMConfigPath           string
 
 	SetValues  []string
 	FileValues []string

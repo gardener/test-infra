@@ -1,0 +1,11 @@
+component:
+  componentReferences: []
+  creationTime: "2023-11-16T21:46:20Z"
+  name: github.com/component-2-2
+  provider: internal
+  repositoryContexts: []
+  resources: []
+  sources: []
+  version: v1.0.0
+meta:
+  schemaVersion: v2

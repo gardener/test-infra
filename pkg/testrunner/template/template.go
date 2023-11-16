@@ -63,10 +63,11 @@ func RenderTestruns(ctx context.Context, log logr.Logger, parameters *Parameters
 }
 
 func getInternalParametersFunc(ctx context.Context, log logr.Logger, parameters *Parameters) (func(string) *internalParameters, error) {
-	componentDescriptor, err := componentdescriptor.GetComponentsFromFileWithOCIOptions(
-		ctx, log, parameters.OCIOpts, parameters.ComponentDescriptorPath)
+	components, err := componentdescriptor.GetComponentsWithOCM(ctx, log, parameters.ComponentDescriptorPath, parameters.Repository, func(opts *componentdescriptor.Options) {
+		opts.CfgPath = parameters.OCMConfigPath
+	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode and parse the component descriptor: %s", err.Error())
+		return nil, err
 	}
 	var gardenerKubeconfig []byte
 	if len(parameters.GardenKubeconfigPath) != 0 {
@@ -75,12 +76,12 @@ func getInternalParametersFunc(ctx context.Context, log logr.Logger, parameters 
 			return nil, errors.Wrapf(err, "cannot read gardener kubeconfig %s", parameters.GardenKubeconfigPath)
 		}
 	}
-	gardenerVersion := getGardenerVersionFromComponentDescriptor(componentDescriptor)
+	gardenerVersion := getGardenerVersionFromComponentDescriptor(components)
 
 	return func(chartPath string) *internalParameters {
 		return &internalParameters{
 			FlavorConfigPath:    parameters.FlavorConfigPath,
-			ComponentDescriptor: componentDescriptor,
+			ComponentDescriptor: components,
 			ChartPath:           chartPath,
 			Namespace:           parameters.Namespace,
 			GardenerKubeconfig:  gardenerKubeconfig,

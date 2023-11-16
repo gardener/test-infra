@@ -2,21 +2,20 @@ meta:
   schemaVersion: v2
 
 component:
-  name: github.com/root-component
-  version: v1.0.0
+  name: github.com/valid-component1
+  version: 1.0.0
 
   provider: internal
 
   repositoryContexts:
   - type: ociRegistry
-    baseUrl: "nobody.io/cares"
+    baseUrl: "ghcr.io/fabianburth"
 
   sources: []
 
   resources: []
 
   componentReferences:
-  - name: non-existing-reference
+  - name: referenced-component 
     version: v1.0.0
-    componentName: github.com/non-existing-component
-
+    componentName: ocm.software/test

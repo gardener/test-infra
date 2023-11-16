@@ -51,6 +51,32 @@ var _ = Describe("componentdescriptor test", func() {
 		ctx.Done()
 	})
 
+	DescribeTable("list the transitive closure of the component", func(cdPath, repoRef, configPath string) {
+		opts := func(opts *Options) {
+			opts.CfgPath = configPath
+		}
+		components, err := GetComponentsWithOCM(ctx, logr.Discard(), cdPath, repoRef, opts)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(len(components)).To(Equal(7))
+	},
+		Entry("repository from argument", "./testdata/root-component.yaml", "CommonTransportFormat::testdata/ocm-repo-ctf", ""),
+		Entry("repository from ocm config file", "./testdata/root-component.yaml", "", "./testdata/.ocmconfig-single-repo"),
+		Entry("mulitple repositories from ocm config file", "./testdata/root-component.yaml", "", "./testdata/.ocmconfig-multi-repo"),
+	)
+
+	DescribeTable("fail if referenced component cannot be found", func(cdPath, repoRef, configPath string) {
+		opts := func(opts *Options) {
+			opts.CfgPath = configPath
+		}
+		components, err := GetComponentsWithOCM(ctx, logr.Discard(), cdPath, repoRef, opts)
+		Expect(err).To(HaveOccurred())
+		Expect(components).To(BeNil())
+	},
+		Entry("referenced component does not exist in registry", "./testdata/root-component-with-invalid-ref.yaml", "./testdata/ocm-repo-ctf", ""),
+		Entry("repository specified in argument cannot be found", "./testdata/root-component.yaml", "./testdata/non-existing-repo", ""),
+		Entry("repository specified in ocm config file cannot be found", "./testdata/root-component.yaml", "", "./testdata/.ocmconfig-non-existing-repo"),
+	)
+
 	It("Should parse a component descriptor and return 2 dependencies", func() {
 		input, err := os.ReadFile("./testdata/component_descriptor_1")
 		Expect(err).ToNot(HaveOccurred(), "Cannot read json file from ./testdata/component_descriptor_1")
