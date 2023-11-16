@@ -10,9 +10,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"io"
-
 	"github.com/ProtonMail/go-crypto/openpgp/errors"
+	"io"
 )
 
 // A Block represents an OpenPGP armored structure.
@@ -209,16 +208,12 @@ TryNextBlock:
 			break
 		}
 
-		i := bytes.Index(line, []byte(":"))
+		i := bytes.Index(line, []byte(": "))
 		if i == -1 {
 			goto TryNextBlock
 		}
 		lastKey = string(line[:i])
-		var value string
-		if len(line) > i+2 {
-			value = string(line[i+2:])
-		}
-		p.Header[lastKey] = value
+		p.Header[lastKey] = string(line[i+2:])
 	}
 
 	p.lReader.in = r

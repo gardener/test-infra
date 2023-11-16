@@ -1,0 +1,28 @@
+meta:
+  schemaVersion: v2
+
+component:
+  name: github.com/root-component
+  version: 1.0.0
+
+  provider: internal
+
+  repositoryContexts:
+  - type: ociRegistry
+    baseUrl: "ghcr.io/fabianburth"
+
+  sources: []
+
+  resources: []
+
+  componentReferences:
+  - name: referenced-component-1 
+    version: v1.0.0
+    componentName: github.com/component-1
+  - name: referenced-component-2 
+    version: v1.0.0
+    componentName: github.com/component-2
+  - name: referenced-component-3 
+    version: v1.0.0
+    componentName: github.com/component-3
+

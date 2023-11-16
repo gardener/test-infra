@@ -80,6 +80,13 @@ func NewValidator(log logr.Logger) admission.Handler {
 	}
 }
 
+func NewValidatorWithDecoder(log logr.Logger, decoder *admission.Decoder) admission.Handler {
+	return &testrunValidator{
+		log:     log,
+		decoder: decoder,
+	}
+}
+
 // InjectDecoder injects the decoder.
 // A decoder will be automatically injected.
 func (v *testrunValidator) InjectDecoder(d *admission.Decoder) error {

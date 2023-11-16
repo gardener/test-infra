@@ -7,11 +7,13 @@ package packet
 import (
 	"bytes"
 	"crypto/cipher"
+	"crypto/sha256"
 	"io"
 	"strconv"
 
 	"github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/s2k"
+	"golang.org/x/crypto/hkdf"
 )
 
 // This is the largest session key that we'll support. Since at most 256-bit cipher
@@ -43,6 +45,13 @@ func (ske *SymmetricKeyEncrypted) parse(r io.Reader) error {
 		return errors.UnsupportedError("unknown SymmetricKeyEncrypted version")
 	}
 
+	if ske.Version == 5 {
+		// Scalar octet count
+		if _, err := readFull(r, buf[:]); err != nil {
+			return err
+		}
+	}
+
 	// Cipher function
 	if _, err := readFull(r, buf[:]); err != nil {
 		return err
@@ -58,6 +67,11 @@ func (ske *SymmetricKeyEncrypted) parse(r io.Reader) error {
 			return errors.StructuralError("cannot read AEAD octet from packet")
 		}
 		ske.Mode = AEADMode(buf[0])
+
+		// Scalar octet count
+		if _, err := readFull(r, buf[:]); err != nil {
+			return err
+		}
 	}
 
 	var err error
@@ -206,7 +220,7 @@ func SerializeSymmetricKeyEncryptedReuseKey(w io.Writer, sessionKey []byte, pass
 	case 5:
 		ivLen := config.AEAD().Mode().IvLength()
 		tagLen := config.AEAD().Mode().TagLength()
-		packetLength = 3 + len(s2kBytes) + ivLen + keySize + tagLen
+		packetLength = 5 + len(s2kBytes) + ivLen + keySize + tagLen
 	}
 	err = serializeHeader(w, packetTypeSymmetricKeyEncrypted, packetLength)
 	if err != nil {
@@ -216,12 +230,20 @@ func SerializeSymmetricKeyEncryptedReuseKey(w io.Writer, sessionKey []byte, pass
 	// Symmetric Key Encrypted Version
 	buf := []byte{byte(version)}
 
+	if version == 5 {
+		// Scalar octet count
+		buf = append(buf, byte(3+len(s2kBytes)+config.AEAD().Mode().IvLength()))
+	}
+
 	// Cipher function
 	buf = append(buf, byte(cipherFunc))
 
 	if version == 5 {
 		// AEAD mode
 		buf = append(buf, byte(config.AEAD().Mode()))
+
+		// Scalar octet count
+		buf = append(buf, byte(len(s2kBytes)))
 	}
 	_, err = w.Write(buf)
 	if err != nil {
@@ -271,6 +293,11 @@ func SerializeSymmetricKeyEncryptedReuseKey(w io.Writer, sessionKey []byte, pass
 }
 
 func getEncryptedKeyAeadInstance(c CipherFunction, mode AEADMode, inputKey, associatedData []byte) (aead cipher.AEAD) {
-	blockCipher := c.new(inputKey)
+	hkdfReader := hkdf.New(sha256.New, inputKey, []byte{}, associatedData)
+
+	encryptionKey := make([]byte, c.KeySize())
+	_, _ = readFull(hkdfReader, encryptionKey)
+
+	blockCipher := c.new(encryptionKey)
 	return mode.new(blockCipher)
 }

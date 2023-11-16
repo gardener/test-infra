@@ -7,10 +7,9 @@ package packet
 import (
 	"crypto/cipher"
 	"crypto/sha256"
-	"io"
-
 	"github.com/ProtonMail/go-crypto/openpgp/errors"
 	"golang.org/x/crypto/hkdf"
+	"io"
 )
 
 // parseAead parses a V2 SEIPD packet (AEAD) as specified in
@@ -22,26 +21,26 @@ func (se *SymmetricallyEncrypted) parseAead(r io.Reader) error {
 	}
 
 	// Cipher
-	se.Cipher = CipherFunction(headerData[0])
+	se.cipher = CipherFunction(headerData[0])
 	// cipherFunc must have block size 16 to use AEAD
-	if se.Cipher.blockSize() != 16 {
-		return errors.UnsupportedError("invalid aead cipher: " + string(se.Cipher))
+	if se.cipher.blockSize() != 16 {
+		return errors.UnsupportedError("invalid aead cipher: " + string(se.cipher))
 	}
 
 	// Mode
-	se.Mode = AEADMode(headerData[1])
-	if se.Mode.TagLength() == 0 {
-		return errors.UnsupportedError("unknown aead mode: " + string(se.Mode))
+	se.mode = AEADMode(headerData[1])
+	if se.mode.TagLength() == 0 {
+		return errors.UnsupportedError("unknown aead mode: " + string(se.mode))
 	}
 
 	// Chunk size
-	se.ChunkSizeByte = headerData[2]
-	if se.ChunkSizeByte > 16 {
-		return errors.UnsupportedError("invalid aead chunk size byte: " + string(se.ChunkSizeByte))
+	se.chunkSizeByte = headerData[2]
+	if se.chunkSizeByte > 16 {
+		return errors.UnsupportedError("invalid aead chunk size byte: " + string(se.chunkSizeByte))
 	}
 
 	// Salt
-	if n, err := io.ReadFull(r, se.Salt[:]); n < aeadSaltSize {
+	if n, err := io.ReadFull(r, se.salt[:]); n < aeadSaltSize {
 		return errors.StructuralError("could not read aead salt: " + err.Error())
 	}
 
@@ -53,19 +52,19 @@ func (se *SymmetricallyEncrypted) associatedData() []byte {
 	return []byte{
 		0xD2,
 		symmetricallyEncryptedVersionAead,
-		byte(se.Cipher),
-		byte(se.Mode),
-		se.ChunkSizeByte,
+		byte(se.cipher),
+		byte(se.mode),
+		se.chunkSizeByte,
 	}
 }
 
 // decryptAead decrypts a V2 SEIPD packet (AEAD) as specified in
 // https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-07.html#section-5.13.2
 func (se *SymmetricallyEncrypted) decryptAead(inputKey []byte) (io.ReadCloser, error) {
-	aead, nonce := getSymmetricallyEncryptedAeadInstance(se.Cipher, se.Mode, inputKey, se.Salt[:], se.associatedData())
+	aead, nonce := getSymmetricallyEncryptedAeadInstance(se.cipher, se.mode, inputKey, se.salt[:], se.associatedData())
 
 	// Carry the first tagLen bytes
-	tagLen := se.Mode.TagLength()
+	tagLen := se.mode.TagLength()
 	peekedBytes := make([]byte, tagLen)
 	n, err := io.ReadFull(se.Contents, peekedBytes)
 	if n < tagLen || (err != nil && err != io.EOF) {
@@ -75,7 +74,7 @@ func (se *SymmetricallyEncrypted) decryptAead(inputKey []byte) (io.ReadCloser, e
 	return &aeadDecrypter{
 		aeadCrypter: aeadCrypter{
 			aead:           aead,
-			chunkSize:      decodeAEADChunkSize(se.ChunkSizeByte),
+			chunkSize:      decodeAEADChunkSize(se.chunkSizeByte),
 			initialNonce:   nonce,
 			associatedData: se.associatedData(),
 			chunkIndex:     make([]byte, 8),

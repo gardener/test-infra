@@ -22,6 +22,7 @@ import (
 	flag "github.com/spf13/pflag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/gardener/test-infra/pkg/logger"
@@ -76,22 +77,28 @@ func (o *options) ApplyWebhooks(ctx context.Context, mgr manager.Manager) {
 
 func (o *options) GetManagerOptions() manager.Options {
 	c := o.configwatcher.GetConfiguration()
-	opts := manager.Options{
-		LeaderElection:     c.Controller.EnableLeaderElection,
-		CertDir:            c.Controller.WebhookConfig.CertDir,
-		MetricsBindAddress: "0", // disable the metrics serving by default
+
+	webhookOpts := webhook.Options{
+		CertDir: c.Controller.WebhookConfig.CertDir,
+	}
+	if !c.TestMachinery.Local {
+		webhookOpts.Port = c.Controller.WebhookConfig.Port
+	}
+
+	mgrOpts := manager.Options{
+		LeaderElection: c.Controller.EnableLeaderElection,
+		WebhookServer:  webhook.NewServer(webhookOpts),
+		Metrics: server.Options{
+			BindAddress: "0",
+		}, // disable the metrics serving by default
 	}
 
 	if len(c.Controller.HealthAddr) != 0 {
-		opts.HealthProbeBindAddress = c.Controller.HealthAddr
+		mgrOpts.HealthProbeBindAddress = c.Controller.HealthAddr
 	}
 	if len(c.Controller.MetricsAddr) != 0 {
-		opts.MetricsBindAddress = c.Controller.MetricsAddr
+		mgrOpts.Metrics.BindAddress = c.Controller.MetricsAddr
 	}
 
-	if !c.TestMachinery.Local {
-		opts.Port = c.Controller.WebhookConfig.Port
-	}
-
-	return opts
+	return mgrOpts
 }
