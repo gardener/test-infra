@@ -26,6 +26,9 @@ import (
 
 var _ = Describe("default templates", func() {
 	const (
+		DEFAULT_TESTDATA_DIR = "./testdata/default"
+		GARDENER_KUBECONFIG  = "./testdata/test-kubeconfig.yaml"
+
 		COMPONENT_TESTDATA_PATH = "../componentdescriptor/testdata/"
 		ROOT_COMPONENT          = "root-component.yaml"
 		REPOSITORY              = "repositories/ocm-repo-ctf"
@@ -45,8 +48,8 @@ var _ = Describe("default templates", func() {
 
 	It("should render the basic chart with all its necessary parameters", func() {
 		params := &Parameters{
-			GardenKubeconfigPath:    gardenerKubeconfig,
-			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
+			GardenKubeconfigPath:    GARDENER_KUBECONFIG,
+			DefaultTestrunChartPath: filepath.Join(DEFAULT_TESTDATA_DIR, "basic"),
 			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 		}
@@ -60,8 +63,8 @@ var _ = Describe("default templates", func() {
 
 	It("should render additional values to the chart", func() {
 		params := &Parameters{
-			GardenKubeconfigPath:    gardenerKubeconfig,
-			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
+			GardenKubeconfigPath:    GARDENER_KUBECONFIG,
+			DefaultTestrunChartPath: filepath.Join(DEFAULT_TESTDATA_DIR, "add-values"),
 			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			SetValues:               []string{"addValue1=test,addValue2=test2"},
@@ -73,8 +76,8 @@ var _ = Describe("default templates", func() {
 
 	It("should add landscape and component descriptor as metadata", func() {
 		params := &Parameters{
-			GardenKubeconfigPath:    gardenerKubeconfig,
-			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
+			GardenKubeconfigPath:    GARDENER_KUBECONFIG,
+			DefaultTestrunChartPath: filepath.Join(DEFAULT_TESTDATA_DIR, "basic"),
 			Landscape:               "test-landscape",
 			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),

@@ -30,6 +30,10 @@ import (
 var _ = Describe("shoot templates", func() {
 
 	const (
+		DEFAULT_TESTDATA_DIR = "./testdata/default"
+		SHOOT_TESTDATA_DIR   = "./testdata/shoot"
+		GARDENER_KUBECONFIG  = "./testdata/test-kubeconfig.yaml"
+
 		COMPONENT_TESTDATA_PATH = "../componentdescriptor/testdata/"
 		ROOT_COMPONENT          = "root-component.yaml"
 		REPOSITORY              = "repositories/ocm-repo-ctf"
@@ -75,8 +79,8 @@ var _ = Describe("shoot templates", func() {
 	Context("shoot", func() {
 		It("should render the basic shoot chart with all its necessary parameters", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -107,8 +111,8 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render the basic shoot chart and write correct metadata", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 				Landscape:                "test",
@@ -131,8 +135,8 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render the basic shoot chart and fetch all correct k8s versions", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -179,8 +183,8 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render 2 basic shoot charts", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -212,9 +216,9 @@ var _ = Describe("shoot templates", func() {
 	Context("both", func() {
 		It("should render the basic shoot chart and the default testrun", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(DEFAULT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -226,9 +230,9 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render the basic shoot chart and the default testrun", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(DEFAULT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -240,9 +244,9 @@ var _ = Describe("shoot templates", func() {
 
 		It("should render 2 basic shoot charts and 1 default testrun", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(DEFAULT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
@@ -274,8 +278,8 @@ var _ = Describe("shoot templates", func() {
 	Context("rerender", func() {
 		It("should rerender the basic shoot chart with different shoot name but with all other same values", func() {
 			params := &Parameters{
-				GardenKubeconfigPath:     gardenerKubeconfig,
-				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
 				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
 				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
