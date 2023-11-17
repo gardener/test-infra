@@ -49,7 +49,7 @@ var _ = Describe("componentdescriptor test", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(components)).To(Equal(7))
 	},
-		Entry("repository from argument", "./testdata/root-component.yaml", "CommonTransportFormat::testdata/repositories/ocm-repo-ctf", ""),
+		Entry("repository from argument", "./testdata/root-component.yaml", "./testdata/repositories/ocm-repo-ctf", ""),
 		Entry("repository from ocm config file", "./testdata/root-component.yaml", "", "./testdata/ocmconfigs/.ocmconfig-single-repo"),
 		Entry("mulitple repositories from ocm config file", "./testdata/root-component.yaml", "", "./testdata/ocmconfigs/.ocmconfig-multi-repo"),
 	)

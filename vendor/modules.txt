@@ -537,31 +537,6 @@ github.com/gabriel-vasile/mimetype
 github.com/gabriel-vasile/mimetype/internal/charset
 github.com/gabriel-vasile/mimetype/internal/json
 github.com/gabriel-vasile/mimetype/internal/magic
-# github.com/gardener/component-cli v0.55.0
-## explicit; go 1.20
-github.com/gardener/component-cli/ociclient
-github.com/gardener/component-cli/ociclient/cache
-github.com/gardener/component-cli/ociclient/credentials
-github.com/gardener/component-cli/ociclient/credentials/secretserver
-github.com/gardener/component-cli/ociclient/metrics
-github.com/gardener/component-cli/ociclient/mock
-github.com/gardener/component-cli/ociclient/oci
-github.com/gardener/component-cli/ociclient/options
-github.com/gardener/component-cli/pkg/commands/constants
-github.com/gardener/component-cli/pkg/components
-github.com/gardener/component-cli/pkg/logcontext
-github.com/gardener/component-cli/pkg/utils
-# github.com/gardener/component-spec/bindings-go v0.0.98
-## explicit; go 1.18
-github.com/gardener/component-spec/bindings-go/apis
-github.com/gardener/component-spec/bindings-go/apis/v2
-github.com/gardener/component-spec/bindings-go/apis/v2/jsonscheme
-github.com/gardener/component-spec/bindings-go/apis/v2/validation
-github.com/gardener/component-spec/bindings-go/codec
-github.com/gardener/component-spec/bindings-go/ctf
-github.com/gardener/component-spec/bindings-go/ctf/ctfutils
-github.com/gardener/component-spec/bindings-go/oci
-github.com/gardener/component-spec/bindings-go/utils/selector
 # github.com/gardener/gardener v1.83.1
 ## explicit; go 1.21
 github.com/gardener/gardener/.github
@@ -715,7 +690,6 @@ github.com/golang-jwt/jwt/v4
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.6.0
 ## explicit; go 1.11
-github.com/golang/mock/gomock
 github.com/golang/mock/mockgen
 github.com/golang/mock/mockgen/model
 # github.com/golang/protobuf v1.5.3
@@ -990,7 +964,6 @@ github.com/mandelsoft/spiff/yaml
 # github.com/mandelsoft/vfs v0.4.0
 ## explicit; go 1.19
 github.com/mandelsoft/vfs/pkg/layerfs
-github.com/mandelsoft/vfs/pkg/memoryfs
 github.com/mandelsoft/vfs/pkg/osfs
 github.com/mandelsoft/vfs/pkg/projectionfs
 github.com/mandelsoft/vfs/pkg/utils
@@ -1283,9 +1256,6 @@ github.com/open-component-model/ocm/pkg/signing/norm/jcs
 github.com/open-component-model/ocm/pkg/utils
 github.com/open-component-model/ocm/pkg/utils/selector
 github.com/open-component-model/ocm/pkg/utils/tarutils
-# github.com/opencontainers/distribution-spec v1.0.1
-## explicit
-github.com/opencontainers/distribution-spec/specs-go/v1
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest

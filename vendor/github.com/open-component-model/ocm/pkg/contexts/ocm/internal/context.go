@@ -299,7 +299,6 @@ func (c *_context) SetAlias(name string, spec RepositorySpec) {
 }
 
 func (c *_context) GetResolver() ComponentVersionResolver {
-	c.Update()
 	if len(c.resolver.rules) == 0 {
 		return nil
 	}

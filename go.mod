@@ -10,8 +10,6 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.5.1
 	github.com/bradleyfalzon/ghinstallation/v2 v2.8.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gardener/component-cli v0.55.0
-	github.com/gardener/component-spec/bindings-go v0.0.98
 	github.com/gardener/gardener v1.83.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.3.0
@@ -24,7 +22,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/mandelsoft/vfs v0.4.0
+	github.com/mandelsoft/logging v0.0.0-20230905123808-7042ee3aae45
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.13.1
@@ -214,8 +212,8 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mandelsoft/filepath v0.0.0-20230412200429-36b1eb66bd27 // indirect
-	github.com/mandelsoft/logging v0.0.0-20230905123808-7042ee3aae45 // indirect
 	github.com/mandelsoft/spiff v1.7.0-beta-5 // indirect
+	github.com/mandelsoft/vfs v0.4.0 // indirect
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
@@ -237,7 +235,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/opencontainers/distribution-spec v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
