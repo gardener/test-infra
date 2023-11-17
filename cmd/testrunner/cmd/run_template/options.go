@@ -19,7 +19,6 @@ import (
 	"os"
 	"time"
 
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,7 +40,6 @@ type options struct {
 	watchOptions     watch.Options
 	collectConfig    result.Config
 	shootParameters  testrunnerTemplate.Parameters
-	ociOpts          *ociopts.Options
 
 	shootFlavors []*shootflavors.ExtendedFlavorInstance
 
@@ -66,7 +64,6 @@ func NewOptions() *options {
 		},
 		collectConfig:   result.Config{},
 		shootParameters: testrunnerTemplate.Parameters{},
-		ociOpts:         &ociopts.Options{},
 	}
 }
 
@@ -76,9 +73,6 @@ func (o *options) Complete() error {
 
 	o.testrunnerConfig.Timeout = time.Duration(o.timeout) * time.Second
 	o.collectConfig.ComponentDescriptorPath = o.shootParameters.ComponentDescriptorPath
-
-	o.shootParameters.OCIOpts = o.ociOpts
-	o.collectConfig.OCIOpts = o.ociOpts
 
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
 		gardenK8sClient, err := kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
@@ -182,7 +176,8 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 
 	fs.StringVar(&o.shootParameters.Landscape, "landscape", "", "Current gardener landscape.")
 	fs.StringVar(&o.shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
-	o.ociOpts.AddFlags(fs)
+	fs.StringVar(&o.shootParameters.Repository, "repo", "", "Repository to resolve the component reference of the component described in the file at the component descriptor path")
+	fs.StringVar(&o.shootParameters.OCMConfigPath, "ocm-config-path", "", "Path to the ocm config")
 
 	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")

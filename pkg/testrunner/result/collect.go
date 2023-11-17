@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -74,11 +73,10 @@ func getComponentsForUpload(
 	runLogger logr.Logger,
 	componentdescriptorPath string,
 	assetComponents []string,
-	ociOpts *ociopts.Options,
 	repository string,
 	ocmConfigPath string) ([]*componentdescriptor.Component, error) {
 
-	components, err := componentdescriptor.GetComponentsWithOCM(ctx, runLogger, componentdescriptorPath, repository, func(opts *componentdescriptor.Options) {
+	components, err := componentdescriptor.GetComponents(ctx, runLogger, componentdescriptorPath, repository, func(opts *componentdescriptor.Options) {
 		opts.CfgPath = ocmConfigPath
 	})
 	if err != nil {
@@ -106,7 +104,7 @@ func (c *Collector) uploadStatusAssets(ctx context.Context, cfg Config, log logr
 		return
 	}
 
-	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.OCIOpts, cfg.Repository, cfg.OCMConfigPath)
+	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.Repository, cfg.OCMConfigPath)
 	if err != nil {
 		log.Error(err, "unable to get component for upload")
 		return

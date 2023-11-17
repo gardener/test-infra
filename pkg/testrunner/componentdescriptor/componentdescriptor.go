@@ -17,79 +17,17 @@ package componentdescriptor
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/component-cli/pkg/commands/constants"
-	cdcomponents "github.com/gardener/component-cli/pkg/components"
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/codec"
-	"github.com/gardener/component-spec/bindings-go/ctf/ctfutils"
-	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/mandelsoft/logging"
-	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"os"
 	"strings"
 
-	"github.com/gardener/component-cli/ociclient"
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/go-logr/logr"
-	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/open-component-model/ocm/pkg/contexts/config/configutils"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 )
-
-// GetComponents returns a list of all git/component dependencies.
-// todo: re-enable component validation
-func GetComponents(ctx context.Context, log logr.Logger, ociClient ociclient.Client, content []byte) (ComponentList, error) {
-	components := components{
-		components:   make([]*Component, 0),
-		componentSet: make(map[Component]bool),
-	}
-
-	fs := osfs.New()
-	if len(os.Getenv(constants.ComponentRepositoryCacheDirEnvVar)) == 0 {
-		// always use a local cache
-		log.Info(fmt.Sprintf("no cache set (%s) using temporary dir", constants.ComponentRepositoryCacheDirEnvVar))
-		tmpCacheDir, err := vfs.TempDir(fs, fs.FSTempDir(), "cache-")
-		if err != nil {
-			return nil, fmt.Errorf("unable to create temporary cache: %w", err)
-		}
-		if err := os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, tmpCacheDir); err != nil {
-			return nil, fmt.Errorf("unable to set cache dir environment variable: %w", err)
-		}
-	}
-
-	localCache := cdcomponents.NewLocalComponentCache(osfs.New())
-	resolver := cdoci.NewResolver(ociClient, codec.DisableValidation(true)).WithLog(log).WithCache(localCache)
-
-	compDesc := &cdv2.ComponentDescriptor{}
-	if err := codec.Decode(content, compDesc, codec.DisableValidation(true)); err != nil {
-		return nil, err
-	}
-	if err := localCache.Store(ctx, compDesc); err != nil {
-		return nil, err
-	}
-
-	compList, err := ctfutils.ResolveList(ctx, resolver, compDesc.GetEffectiveRepositoryContext(), compDesc.GetName(), compDesc.GetVersion())
-	if err != nil {
-		return nil, err
-	}
-	// add current component to list
-	components.add(Component{
-		Name:    compDesc.GetName(),
-		Version: compDesc.GetVersion(),
-	})
-	for _, comp := range compList.Components {
-		// todo: use the source to fetch the git repository and the real version/commit
-		components.add(Component{
-			Name:    comp.Name,
-			Version: comp.Version,
-		})
-	}
-
-	return components.components, nil
-}
 
 type Options struct {
 	// CfgPath is the path to the .ocmconfig file. Per default, the library checks for the config file at
@@ -99,13 +37,17 @@ type Options struct {
 
 type Option func(options *Options)
 
-// GetComponentsWithOCM returns a list of all components that are direct or transitive dependencies (the transitive closure) of
-// the component described by the component descriptor stored in a file at cdPath.
+// GetComponents returns a list of all components that are direct or transitive dependencies (the transitive
+// closure) of the component described by the component descriptor stored in a file at cdPath.
+//
 // repoRef is expected to be an ocm repository reference ([<repo type>::]<host>[:<port>][/<base path>],
 // e.g. ocm::example.com/example). It may be left empty, if one or multiple repositories are specified in the
-// .ocmconfig file (in fact, it has to be left empty, if the repositories configured in the .ocmconfig shall be used).
+// ocm config file (in fact, it has to be left empty, if the repositories configured in the ocm config shall be used).
 // Credentials to the ocm repository can also be set in the .ocmconfig file.
-func GetComponentsWithOCM(ctx context.Context, log logr.Logger, cdPath string, repoRef string, opts ...Option) (ComponentList, error) {
+//
+// For detailed information, for detailed information on how to configure the ocm config file, check the ocm command
+// line tool help with 'ocm configfile --help'
+func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef string, opts ...Option) (ComponentList, error) {
 	// enables the ocm library to log with the logger configuration of this library
 	logging.DefaultContext().SetBaseLogger(log)
 
@@ -200,27 +142,6 @@ func resolveReferences(c *compdesc.ComponentDescriptor, resolver ocm.ComponentVe
 		}
 	}
 	return components, nil
-}
-
-// GetComponentsFromFile read a component descriptor and returns a ComponentList
-func GetComponentsFromFile(ctx context.Context, log logr.Logger, ociClient ociclient.Client, file string) (ComponentList, error) {
-	if file == "" {
-		return make(ComponentList, 0), nil
-	}
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
-	}
-	return GetComponents(ctx, log, ociClient, data)
-}
-
-// GetComponentsFromFileWithOCIOptions read a component descriptor and returns a ComponentList
-func GetComponentsFromFileWithOCIOptions(ctx context.Context, log logr.Logger, ociOpts *ociopts.Options, file string) (ComponentList, error) {
-	ociClient, _, err := ociOpts.Build(log, osfs.New())
-	if err != nil {
-		return nil, err
-	}
-	return GetComponentsFromFile(ctx, log, ociClient, file)
 }
 
 // GetComponentsFromLocations parses a list of components from a testruns's locations
