@@ -1,8 +1,8 @@
 # Testdata
 
-The ocm-repo-ctf, ocm-repo-ctf-partial-1 and ocm-repo-ctf-partial-2 are ocm ctf's (common transport archives) containing
-all the components present in ocm-repo-cas. The ocm library implements the same interface for ctf as it does for oci 
-registries which makes it a convenient repository representation for tests.
+The ocm-repo-ctf, ocm-repo-ctf-partial-1 and ocm-repo-ctf-partial-2 ([here](./repositories)) are ocm ctf's (common 
+transport archives) containing all the components present in [components](./components). The ocm library implements the 
+same interface for ctf as it does for oci registries which makes it a convenient repository representation for tests.
 
 #### All components in a single repository
 Thereby, the root-component is the component described in the root-component.yaml and the other components are contained

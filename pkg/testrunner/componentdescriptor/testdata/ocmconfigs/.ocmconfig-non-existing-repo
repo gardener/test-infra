@@ -4,6 +4,6 @@ configurations:
   resolvers:
     - repository:
         type: CommonTransportFormat/v1
-        filePath: ./testdata/non-existing-repo
+        filePath: ./testdata/repositories/non-existing-repo
         fileFormat: directory
       priority: 10

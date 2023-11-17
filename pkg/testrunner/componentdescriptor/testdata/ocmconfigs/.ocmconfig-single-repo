@@ -4,6 +4,6 @@ configurations:
   resolvers:
     - repository:
         type: CommonTransportFormat/v1
-        filePath: ./testdata/ocm-repo-ctf
+        filePath: ./testdata/repositories/ocm-repo-ctf
         fileFormat: directory
       priority: 10

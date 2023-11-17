@@ -16,21 +16,24 @@ package template
 
 import (
 	"context"
-	"path/filepath"
-
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/shootflavors"
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/ptr"
-
-	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/common"
-	"github.com/gardener/test-infra/pkg/shootflavors"
+	"path/filepath"
 )
 
 var _ = Describe("shoot templates", func() {
+
+	const (
+		COMPONENT_TESTDATA_PATH = "../componentdescriptor/testdata/"
+		ROOT_COMPONENT          = "root-component.yaml"
+		REPOSITORY              = "repositories/ocm-repo-ctf"
+	)
 
 	var (
 		ctx    context.Context
@@ -74,8 +77,8 @@ var _ = Describe("shoot templates", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 
 			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
@@ -106,8 +109,8 @@ var _ = Describe("shoot templates", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 				Landscape:                "test",
 			}
 
@@ -130,8 +133,8 @@ var _ = Describe("shoot templates", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 			shoots = []*shootflavors.ExtendedFlavorInstance{
 				shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
@@ -178,8 +181,8 @@ var _ = Describe("shoot templates", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -212,8 +215,22 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
+			}
+
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(runs.GetTestruns()).To(HaveLen(2))
+		})
+
+		It("should render the basic shoot chart and the default testrun", func() {
+			params := &Parameters{
+				GardenKubeconfigPath:     gardenerKubeconfig,
+				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
+				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 
 			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
@@ -226,8 +243,8 @@ var _ = Describe("shoot templates", func() {
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
 				DefaultTestrunChartPath:  filepath.Join(defaultTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 			shoots = append(shoots, shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
@@ -259,8 +276,8 @@ var _ = Describe("shoot templates", func() {
 			params := &Parameters{
 				GardenKubeconfigPath:     gardenerKubeconfig,
 				FlavoredTestrunChartPath: filepath.Join(shootTestdataDir, "basic"),
-				ComponentDescriptorPath:  componentDescriptorPath,
-				OCIOpts:                  &ociopts.Options{},
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			}
 
 			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)

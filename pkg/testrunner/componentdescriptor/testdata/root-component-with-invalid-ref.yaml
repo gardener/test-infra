@@ -2,7 +2,10 @@ meta:
   schemaVersion: v2
 
 component:
-  name: github.com/root-component
+  # The templating functionality requires that at least one of the components
+  # has the name 'github.com/gardener/gardener' to extract the version of the
+  # corresponding gardener landscape
+  name: github.com/gardener/gardener
   version: v1.0.0
 
   provider: internal

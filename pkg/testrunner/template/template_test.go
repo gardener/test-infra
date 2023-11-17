@@ -16,17 +16,20 @@ package template
 
 import (
 	"context"
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"path/filepath"
 
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
 var _ = Describe("default templates", func() {
+	const (
+		COMPONENT_TESTDATA_PATH = "../componentdescriptor/testdata/"
+		ROOT_COMPONENT          = "root-component.yaml"
+		REPOSITORY              = "repositories/ocm-repo-ctf"
+	)
 
 	var (
 		ctx context.Context
@@ -44,34 +47,26 @@ var _ = Describe("default templates", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
-			ComponentDescriptorPath: componentDescriptorPath,
-			OCIOpts:                 &ociopts.Options{},
+			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 		}
 		runs, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runs.GetTestruns()).To(HaveLen(1))
+		// expect 8 locations - the one predefined in the basic template and the locations extracted from the 7
+		// components
+		Expect(len(runs.GetTestruns()[0].Spec.LocationSets[0].Locations)).To(Equal(8))
 	})
 
 	It("should render additional values to the chart", func() {
 		params := &Parameters{
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
-			ComponentDescriptorPath: componentDescriptorPath,
-			OCIOpts:                 &ociopts.Options{},
+			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 			SetValues:               []string{"addValue1=test,addValue2=test2"},
 		}
-		_, err := RenderTestruns(ctx, logr.Discard(), params, nil)
-		Expect(err).ToNot(HaveOccurred())
-	})
 
-	It("should render multiple additional values to the chart", func() {
-		params := &Parameters{
-			GardenKubeconfigPath:    gardenerKubeconfig,
-			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "add-values"),
-			ComponentDescriptorPath: componentDescriptorPath,
-			OCIOpts:                 &ociopts.Options{},
-			SetValues:               []string{"addValue1=test", "addValue2=test2"},
-		}
 		_, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
@@ -81,8 +76,8 @@ var _ = Describe("default templates", func() {
 			GardenKubeconfigPath:    gardenerKubeconfig,
 			DefaultTestrunChartPath: filepath.Join(defaultTestdataDir, "basic"),
 			Landscape:               "test-landscape",
-			ComponentDescriptorPath: componentDescriptorPath,
-			OCIOpts:                 &ociopts.Options{},
+			ComponentDescriptorPath: filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+			Repository:              filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
 		}
 		runs, err := RenderTestruns(ctx, logr.Discard(), params, nil)
 		Expect(err).ToNot(HaveOccurred())
@@ -91,10 +86,13 @@ var _ = Describe("default templates", func() {
 		Expect(runs[0].Metadata).ToNot(BeNil())
 		Expect(runs[0].Metadata.Landscape).To(Equal("test-landscape"))
 		Expect(runs[0].Metadata.ComponentDescriptor).To(Equal(map[string]componentdescriptor.ComponentJSON{
-			"github.com/gardener/gardener": {
-				Version: "0.30.0",
-			},
+			"github.com/component-3":       {Version: "v1.0.0"},
+			"github.com/component-1-1":     {Version: "v1.0.0"},
+			"github.com/component-2-1":     {Version: "v1.0.0"},
+			"github.com/component-2-2":     {Version: "v1.0.0"},
+			"github.com/gardener/gardener": {Version: "v1.0.0"},
+			"github.com/component-1":       {Version: "v1.0.0"},
+			"github.com/component-2":       {Version: "v1.0.0"},
 		}))
 	})
-
 })
