@@ -58,11 +58,10 @@ func newPollingInformer(log logr.Logger, config *rest.Config, options *Options) 
 
 // Start starts the polling
 func (p *pollingInformer) Start(ctx context.Context) error {
-	return wait.PollImmediateUntil(p.pollInterval, p.process, ctx.Done())
+	return wait.PollUntilContextCancel(ctx, p.pollInterval, true, p.process)
 }
 
-func (p *pollingInformer) process() (done bool, err error) {
-	ctx := context.Background()
+func (p *pollingInformer) process(ctx context.Context) (done bool, err error) {
 	defer ctx.Done()
 
 	newOldCache := make(map[string]*tmv1beta1.Testrun)

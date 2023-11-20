@@ -110,7 +110,7 @@ type WatchFunc = func(*tmv1beta1.Testrun) (bool, error)
 // WatchTestrun watches a testrun until the maxwait is reached.
 // Every time a testrun can be found without a problem the function f is called.
 func WatchTestrun(ctx context.Context, tmClient client.Client, tr *tmv1beta1.Testrun, timeout time.Duration, f WatchFunc) error {
-	return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 5*time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		updatedTestrun := &tmv1beta1.Testrun{}
 		if err := tmClient.Get(ctx, client.ObjectKey{Namespace: tr.Namespace, Name: tr.Name}, updatedTestrun); err != nil {
 			return retry.MinorError(err)
@@ -184,7 +184,7 @@ func DumpState(ctx context.Context, log logr.Logger, client client.Client, tr, f
 func WaitForClusterReadiness(log logr.Logger, clusterClient client.Client, namespace string, maxWaitTime time.Duration) error {
 	ctx := context.Background()
 	defer ctx.Done()
-	return wait.PollImmediate(5*time.Second, maxWaitTime, func() (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 5*time.Second, maxWaitTime, true, func(context context.Context) (bool, error) {
 		var (
 			tmControllerStatus = deploymentIsReady(ctx, log, clusterClient, namespace, "testmachinery-controller")
 		)
