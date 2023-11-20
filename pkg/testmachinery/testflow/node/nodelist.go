@@ -1,6 +1,8 @@
 package node
 
-import "k8s.io/apimachinery/pkg/util/sets"
+import (
+	"k8s.io/apimachinery/pkg/util/sets"
+)
 
 // NewSet creates a new set of nodes
 func NewSet(nodes ...*Node) *Set {

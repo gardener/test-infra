@@ -14,7 +14,9 @@
 
 package github
 
-import "context"
+import (
+	"context"
+)
 
 // IsAuthorized checks if the author of the event is authorized to perform actions on the service
 func (c *client) IsAuthorized(authorizationType AuthorizationType, event *GenericRequestEvent) bool {

@@ -17,8 +17,9 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/gardener/test-infra/pkg/testmachinery"

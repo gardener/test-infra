@@ -14,7 +14,9 @@
 
 package errors
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PluginError struct {
 	ShortMsg string

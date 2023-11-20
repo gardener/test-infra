@@ -14,7 +14,9 @@
 
 package errors
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // error reasons
 type CommonReason string

@@ -16,12 +16,13 @@ package template
 
 import (
 	"context"
-	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"path/filepath"
 
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
 var _ = Describe("default templates", func() {

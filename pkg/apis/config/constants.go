@@ -14,7 +14,9 @@
 
 package config
 
-import "path/filepath"
+import (
+	"path/filepath"
+)
 
 // ChartsPath is the path to the charts
 var ChartsPath = filepath.Join("charts", "internal")

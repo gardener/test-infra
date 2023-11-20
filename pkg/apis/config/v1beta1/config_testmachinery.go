@@ -14,7 +14,9 @@
 
 package v1beta1
 
-import "time"
+import (
+	"time"
+)
 
 // TestMachinery holds information about the testmachinery
 type TestMachinery struct {
