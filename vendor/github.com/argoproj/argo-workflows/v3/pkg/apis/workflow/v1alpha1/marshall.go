@@ -3,7 +3,7 @@ package v1alpha1
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 
 	"sigs.k8s.io/yaml"
@@ -22,7 +22,7 @@ func MustUnmarshal(text, v interface{}) {
 		}
 		if x[0] == '@' {
 			filename := string(x[1:])
-			y, err := os.ReadFile(filepath.Clean(filename))
+			y, err := ioutil.ReadFile(filepath.Clean(filename))
 			if err != nil {
 				panic(fmt.Errorf("failed to read file %s: %w", filename, err))
 			}

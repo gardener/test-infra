@@ -100,7 +100,7 @@ message Artifact {
   optional bool deleted = 13;
 }
 
-// ArtifactGC describes how to delete artifacts from completed Workflows - this is embedded into the WorkflowLevelArtifactGC, and also used for individual Artifacts to override that as needed
+// ArtifactGC describes how to delete artifacts from completed Workflows
 message ArtifactGC {
   // Strategy is the strategy to use.
   // +kubebuilder:validation:Enum="";OnWorkflowCompletion;OnWorkflowDeletion;Never
@@ -275,9 +275,6 @@ message ArtifactoryArtifactRepository {
 
   // RepoURL is the url for artifactory repo.
   optional string repoURL = 2;
-
-  // KeyFormat defines the format of how to store keys and can reference workflow variables.
-  optional string keyFormat = 3;
 }
 
 // ArtifactoryAuth describes the secret selectors required for authenticating to artifactory
@@ -328,7 +325,7 @@ message Backoff {
   // Factor is a factor to multiply the base duration after each failed retry
   optional k8s.io.apimachinery.pkg.util.intstr.IntOrString factor = 2;
 
-  // MaxDuration is the maximum amount of time allowed for a workflow in the backoff strategy
+  // MaxDuration is the maximum amount of time allowed for the backoff strategy
   optional string maxDuration = 3;
 }
 
@@ -618,7 +615,7 @@ message GCSArtifact {
 message GCSArtifactRepository {
   optional GCSBucket gCSBucket = 1;
 
-  // KeyFormat defines the format of how to store keys and can reference workflow variables.
+  // KeyFormat is defines the format of how to store keys. Can reference workflow variables
   optional string keyFormat = 2;
 }
 
@@ -633,16 +630,11 @@ message GCSBucket {
 
 // Gauge is a Gauge prometheus metric
 message Gauge {
-  // Value is the value to be used in the operation with the metric's current value. If no operation is set,
-  // value is the value of the metric
+  // Value is the value of the metric
   optional string value = 1;
 
   // Realtime emits this metric in real time if applicable
   optional bool realtime = 2;
-
-  // Operation defines the operation to apply with value and the metrics' current value
-  // +optional
-  optional string operation = 3;
 }
 
 // GitArtifact is the location of an git artifact
@@ -943,9 +935,6 @@ message Metrics {
 message Mutex {
   // name of the mutex
   optional string name = 1;
-
-  // Namespace is the namespace of the mutex, default: [namespace of workflow]
-  optional string namespace = 2;
 }
 
 // MutexHolding describes the mutex and the object which is holding it.
@@ -973,14 +962,6 @@ message MutexStatus {
   // Waiting is a list of mutexes and their respective objects this workflow is waiting for.
   // +listType=atomic
   repeated MutexHolding waiting = 2;
-}
-
-message NodeFlag {
-  // Hooked tracks whether or not this node was triggered by hook or onExit
-  optional bool hooked = 1;
-
-  // Retried tracks whether or not this node was retried by retryStrategy
-  optional bool retried = 2;
 }
 
 message NodeResult {
@@ -1051,9 +1032,6 @@ message NodeStatus {
 
   // Daemoned tracks whether or not this node was daemoned and need to be terminated
   optional bool daemoned = 13;
-
-  // NodeFlag tracks some history of node. e.g.) hooked, retried, etc.
-  optional NodeFlag nodeFlag = 27;
 
   // Inputs captures input parameter values and artifact locations supplied to this template invocation
   optional Inputs inputs = 14;
@@ -1134,7 +1112,7 @@ message OSSArtifact {
 message OSSArtifactRepository {
   optional OSSBucket oSSBucket = 1;
 
-  // KeyFormat defines the format of how to store keys and can reference workflow variables.
+  // KeyFormat is defines the format of how to store keys. Can reference workflow variables
   optional string keyFormat = 2;
 }
 
@@ -1160,9 +1138,6 @@ message OSSBucket {
 
   // LifecycleRule specifies how to manage bucket's lifecycle
   optional OSSLifecycleRule lifecycleRule = 7;
-
-  // UseSDKCreds tells the driver to figure out credentials based on sdk defaults.
-  optional bool useSDKCreds = 8;
 }
 
 // OSSLifecycleRule specifies how to manage bucket's lifecycle
@@ -1235,14 +1210,11 @@ message Plugin {
 
 // PodGC describes how to delete completed pods as they complete
 message PodGC {
-  // Strategy is the strategy to use. One of "OnPodCompletion", "OnPodSuccess", "OnWorkflowCompletion", "OnWorkflowSuccess". If unset, does not delete Pods
+  // Strategy is the strategy to use. One of "OnPodCompletion", "OnPodSuccess", "OnWorkflowCompletion", "OnWorkflowSuccess"
   optional string strategy = 1;
 
   // LabelSelector is the label selector to check if the pods match the labels before being added to the pod GC queue.
   optional k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector labelSelector = 2;
-
-  // DeleteDelayDuration specifies the duration before pods in the GC queue get deleted.
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration deleteDelayDuration = 3;
 }
 
 // Prometheus is a prometheus metric to be emitted
@@ -1352,7 +1324,7 @@ message S3Artifact {
 message S3ArtifactRepository {
   optional S3Bucket s3Bucket = 1;
 
-  // KeyFormat defines the format of how to store keys and can reference workflow variables.
+  // KeyFormat is defines the format of how to store keys. Can reference workflow variables
   optional string keyFormat = 2;
 
   // KeyPrefix is prefix used as part of the bucket key in which the controller will store artifacts.
@@ -1390,9 +1362,6 @@ message S3Bucket {
   optional CreateS3BucketOptions createBucketIfNotPresent = 9;
 
   optional S3EncryptionOptions encryptionOptions = 10;
-
-  // CASecret specifies the secret that contains the CA, used to verify the TLS connection
-  optional k8s.io.api.core.v1.SecretKeySelector caSecret = 11;
 }
 
 // S3EncryptionOptions used to determine encryption options during s3 operations
@@ -1431,9 +1400,6 @@ message SemaphoreHolding {
 message SemaphoreRef {
   // ConfigMapKeyRef is configmap selector for Semaphore configuration
   optional k8s.io.api.core.v1.ConfigMapKeySelector configMapKeyRef = 1;
-
-  // Namespace is the namespace of the configmap, default: [namespace of workflow]
-  optional string namespace = 2;
 }
 
 message SemaphoreStatus {
@@ -1517,7 +1483,7 @@ message SuppliedValueFrom {
 // SuspendTemplate is a template subtype to suspend a workflow at a predetermined point in time
 message SuspendTemplate {
   // Duration is the seconds to wait before automatically resuming a template. Must be a string. Default unit is seconds.
-  // Could also be a Duration, e.g.: "2m", "6h"
+  // Could also be a Duration, e.g.: "2m", "6h", "1d"
   optional string duration = 1;
 }
 
@@ -1786,7 +1752,7 @@ message Version {
 
 // VolumeClaimGC describes how to delete volumes from completed Workflows
 message VolumeClaimGC {
-  // Strategy is the strategy to use. One of "OnWorkflowCompletion", "OnWorkflowSuccess". Defaults to "OnWorkflowSuccess"
+  // Strategy is the strategy to use. One of "OnWorkflowCompletion", "OnWorkflowSuccess"
   optional string strategy = 1;
 }
 
@@ -1853,18 +1819,6 @@ message WorkflowEventBindingSpec {
 
   // Submit is the workflow template to submit
   optional Submit submit = 2;
-}
-
-// WorkflowLevelArtifactGC describes how to delete artifacts from completed Workflows - this spec is used on the Workflow level
-message WorkflowLevelArtifactGC {
-  // ArtifactGC is an embedded struct
-  optional ArtifactGC artifactGC = 1;
-
-  // ForceFinalizerRemoval: if set to true, the finalizer will be removed in the case that Artifact GC fails
-  optional bool forceFinalizerRemoval = 2;
-
-  // PodSpecPatch holds strategic merge patch to apply against the artgc pod spec.
-  optional string podSpecPatch = 3;
 }
 
 // WorkflowList is list of Workflow resources
@@ -2054,7 +2008,7 @@ message WorkflowSpec {
 
   // ArtifactGC describes the strategy to use when deleting artifacts from completed or deleted workflows (applies to all output Artifacts
   // unless Artifact.ArtifactGC is specified, which overrides this)
-  optional WorkflowLevelArtifactGC artifactGC = 43;
+  optional ArtifactGC artifactGC = 43;
 }
 
 // WorkflowStatus contains overall status information about a workflow

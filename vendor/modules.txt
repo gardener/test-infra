@@ -155,8 +155,8 @@ github.com/aliyun/credentials-go/credentials
 github.com/aliyun/credentials-go/credentials/request
 github.com/aliyun/credentials-go/credentials/response
 github.com/aliyun/credentials-go/credentials/utils
-# github.com/argoproj/argo-workflows/v3 v3.5.1
-## explicit; go 1.21
+# github.com/argoproj/argo-workflows/v3 v3.4.13
+## explicit; go 1.20
 github.com/argoproj/argo-workflows/v3/errors
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow
 github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1
