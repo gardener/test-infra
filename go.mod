@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/argoproj/argo-workflows/v3 v3.5.1
+	github.com/argoproj/argo-workflows/v3 v3.4.13
 	github.com/bradleyfalzon/ghinstallation/v2 v2.8.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gardener/gardener v1.83.1
