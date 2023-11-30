@@ -1,5 +1,107 @@
 test-infra:
+  base_definition:
+    traits:
+      component_descriptor: ~
+      scheduling:
+        suppress_parallel_execution: true
+      version:
+        preprocess:
+          'inject-commit-hash'
+        inject_effective_version: true
+      notifications:
+        default:
+          on_error:
+            triggering_policy: 'only_first'
+      publish:
+        oci-builder: 'docker-buildx'
   jobs:
     head-update:
       traits:
-        version: ~
+        publish:
+          dockerimages: &default_images
+              tm-base-image:
+                registry: 'gcr-readwrite'
+                image: eu.gcr.io/gardener-project/gardener/testmachinery/base-step
+                dockerfile: 'Dockerfile'
+                target: base-step
+                tag_as_latest: true
+              tm-controller:
+                registry: 'gcr-readwrite'
+                image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
+                dockerfile: 'Dockerfile'
+                target: tm-controller
+                tag_as_latest: true
+              tm-run:
+                registry: 'gcr-readwrite'
+                image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run
+                dockerfile: 'Dockerfile'
+                target: tm-run
+                tag_as_latest: true
+              tm-bot:
+                registry: 'gcr-readwrite'
+                image: eu.gcr.io/gardener-project/gardener/testmachinery/bot
+                dockerfile: 'Dockerfile'
+                target: tm-bot
+                tag_as_latest: true
+              tm-prepare-image:
+                registry: 'gcr-readwrite'
+                image: eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step
+                dockerfile: 'Dockerfile'
+                target: tm-prepare
+                tag_as_latest: true
+        draft_release: ~
+      steps: &default_steps
+        check:
+          image: 'golang:1.20.3'
+        test:
+          image: 'golang:1.20.3'
+        test-definitions:
+          image: 'golang:1.20.3'
+    pull-request:
+      traits:
+        publish:
+          dockerimages:
+            <<: *default_images
+      steps:
+        <<: *default_steps
+    release:
+      traits:
+        version:
+          preprocess: 'finalize'
+        release:
+          nextversion: 'bump_minor'
+        slack:
+          default_channel: 'internal_ti_workspace'
+          channel_cfgs:
+            internal_ti_workspace:
+              channel_name: 'gardener-oq'
+              slack_cfg_name: 'ti_workspace'
+        scheduling:
+          suppress_parallel_execution: true
+        publish:
+          dockerimages:
+            <<: *default_images
+      steps:
+        <<: *default_steps
+        publish-helm:
+          execute:
+          - ./publish-helm
+          trait_depends:
+          - release
+
+    #####################
+    #      Images       #
+    #####################
+    tm-golang-image:
+      repo:
+        trigger: false
+      traits:
+        version:
+          preprocess: 'finalize'
+        publish:
+          dockerimages:
+            tm-golang-image:
+              image: eu.gcr.io/gardener-project/gardener/testmachinery/golang
+              dockerfile: 'Dockerfile'
+              dir: 'hack/images/golang'
+              tag_as_latest: true
