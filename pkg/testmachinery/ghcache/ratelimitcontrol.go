@@ -100,6 +100,15 @@ func (l *rateLimitControl) RoundTrip(req *http.Request) (*http.Response, error) 
 }
 
 func (l *rateLimitControl) logRateLimitInfo(req *http.Request, resp *http.Response) {
+	if req == nil {
+		l.log.V(2).Info("Rate limit logger: Request is nil")
+		return
+	}
+	if resp == nil {
+		l.log.V(2).Info("Rate limit logger: Response is nil")
+		return
+	}
+
 	total := resp.Header.Get("X-RateLimit-Limit")
 	remaining := resp.Header.Get("X-RateLimit-Remaining")
 	hit := resp.Header.Get(httpcache.XFromCache)
