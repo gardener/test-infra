@@ -10,5 +10,5 @@ The following charts of the [`charts`](charts) directory were seeded based on a 
 
 ## Container Images
 
-* eu.gcr.io/sap-se-gcp-scp-k8s/gardener/testmachinery/testmachinery-controller
-* eu.gcr.io/sap-se-gcp-scp-k8s/gardener/testmachinery/prepare-step
+* europe-docker.pkg.dev/gardener/releases/testmachinery/testmachinery-controller
+* europe-docker.pkg.dev/gardener/releases/testmachinery/prepare-step

@@ -17,7 +17,7 @@ ingress:
   labels: {}
 
 bot:
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/bot
+  image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/bot
   tag: latest
   pullPolicy: IfNotPresent
   imagePullSecretName: ""

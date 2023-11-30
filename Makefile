@@ -18,8 +18,8 @@ mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(shell dirname $(mkfile_path))
 current_sha := $(shell GIT_DIR=${current_dir}/.git git rev-parse @)
 
-REGISTRY            := eu.gcr.io/gardener-project/gardener/testmachinery
-HELM_REGISTRY       := eu.gcr.io/gardener-project/charts/gardener/testmachinery
+REGISTRY            := europe-docker.pkg.dev/gardener-project/releases/testmachinery
+HELM_REGISTRY       := europe-docker.pkg.dev/gardener-project/releases/charts/gardener/testmachinery
 
 TM_CONTROLLER_IMAGE := $(REGISTRY)/testmachinery-controller
 TM_CONTROLLER_CHART := testmachinery-controller
