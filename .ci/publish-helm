@@ -31,7 +31,7 @@ else
   export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
-cli.py config attribute --cfg-type container_registry --cfg-name ar-delivery-readwrite --key password > /tmp/serviceaccount.yaml
+cli.py config attribute --cfg-type container_registry --cfg-name gcr-readwrite --key password > /tmp/serviceaccount.yaml
 
 helm registry login europe-docker.pkg.dev -u _json_key -p "$(cat /tmp/serviceaccount.yaml)"
 cd ${SOURCE_PATH}
