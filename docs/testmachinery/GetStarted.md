@@ -51,7 +51,7 @@ spec:
   # Arguments to the entrypoint. The docker image's CMD is used if this is not provided.
   args: ["test.sh"]
 
-  image: golang:1.11.2 # optional, default image is "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.27.0"
+  image: golang:1.21 # optional, default image is "europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:latest"
 
   # optional; Configuration of a TestDefinition.
   # Environment Variables can be configured per TestDefinition
@@ -149,7 +149,7 @@ Data that is stored in `TM_SHARED_PATH` location, can be accessed from within an
 
 The Testmachinery provides some images to run your Integration Tests (Dockerfiles can be found in hack/images).
 
-#### Base image (eu.gcr.io/gardener-project/gardener/testmachinery/base-step:0.32.0) <!-- omit in toc -->
+#### Base image (europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:latest) <!-- omit in toc -->
 - Kubectl
 - Helm
 - coreutils
@@ -157,9 +157,9 @@ The Testmachinery provides some images to run your Integration Tests (Dockerfile
 - [cc-utils](https://github.com/gardener/cc-utils) at `/cc/utils` and cli.py added to $PATH
 - SAP Root CA
 
-#### Golang image (eu.gcr.io/gardener-project/gardener/testmachinery/golang:0.32.0) <!-- omit in toc -->
+#### Golang image (europe-docker.pkg.dev/gardener-project/releases/testmachinery/golang:latest) <!-- omit in toc -->
 - FROM base image
-- Golang v1.11.5
+- Golang v1.21
 - ginkgo test suite at $GOPATH/src/github.com/onsi/ginkgo
 - Go project setup script
   - automatically setup test repository at the provided gopath and cd's into it

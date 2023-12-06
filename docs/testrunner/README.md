@@ -20,7 +20,7 @@ The testrunner is a basic go commandline tool that can be run by either calling 
 ```
 go run -mod=vendor cmd/testrunner/main.go [flags]
 ```
-or via the prebuild binary which is updated and kept in sync with each new Test Machinery version (also available in the image `eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run`)
+or via the prebuild binary which is updated and kept in sync with each new Test Machinery version (also available in the image `europe-docker.pkg.dev/gardener-project/releases/testmachinery/testmachinery-run`)
 ```
 testrunner [flags]
 ```
