@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 )
 
@@ -30,14 +32,43 @@ func AddLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, compon
 	if tr == nil || len(components) == 0 {
 		return nil
 	}
-
 	locations := make([]tmv1beta1.TestLocation, 0)
 	for _, component := range components {
-		locations = append(locations, tmv1beta1.TestLocation{
-			Type:     tmv1beta1.LocationTypeGit,
-			Repo:     fmt.Sprintf("https://%s", component.Name),
-			Revision: GetRevisionFromVersion(component.Version),
-		})
+		var found bool
+		repo := fmt.Sprintf("https://%s", component.Name)
+		revision := GetRevisionFromVersion(component.Version)
+
+		for i, l := range locations {
+			if l.Repo == repo {
+				found = true
+				if revision == "master" || revision == "main" {
+					locations[i].Revision = revision
+				} else {
+					existingVersion, err := semver.NewVersion(l.Revision)
+					if err != nil {
+						logger.Log.V(3).Info("Location's Duplicate Repo check for: %s: Failed to parse %s into a semVer compatible format. Only revision %s will be kept. Consider using additionalLocations to overwrite. Error: %s", repo, l.Revision, l.Revision, err.Error())
+						break
+					}
+					incomingVersion, err := semver.NewVersion(revision)
+					if err != nil {
+						logger.Log.V(3).Info("Location's Duplicate Repo check for: %s: Failed to parse %s into a semVer compatible format. Only revision %s will be kept. Consider using additionalLocations to overwrite. Error: %s", repo, revision, l.Revision, err.Error())
+						break
+					}
+					if incomingVersion.GreaterThan(existingVersion) {
+						locations[i].Revision = revision
+					}
+				}
+				break
+			}
+		}
+
+		if !found {
+			locations = append(locations, tmv1beta1.TestLocation{
+				Type:     tmv1beta1.LocationTypeGit,
+				Repo:     repo,
+				Revision: revision,
+			})
+		}
 	}
 
 	for _, location := range additionalLocations {
