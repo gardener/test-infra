@@ -55,6 +55,7 @@ test-infra:
           image: 'golang:1.20.3'
     pull-request:
       traits:
+        pull-request: ~
         publish:
           dockerimages:
             <<: *default_images
