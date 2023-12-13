@@ -68,8 +68,8 @@ RUN  \
     rsync \
     bc \
     linux-headers \
-  && pip install google-crc32c \
-  && pip install --upgrade pip \
+  && pip install --break-system-packages google-crc32c \
+  && pip install --break-system-packages --upgrade pip \
     "gardener-cicd-cli>=1.1437.0" \
     "gardener-cicd-libs>=1.1437.0" \
     awscli \
