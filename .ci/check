@@ -35,6 +35,9 @@ make check
 
 echo > Validate generated files
 
+mkdir -p /go/src/github.com/gardener/
+ln -s $SOURCE_PATH /go/src/github.com/gardener/test-infra
+
 state=($(git status --porcelain | awk '{ print $2 }' | sort -u))
 make generate
 changed_state=($(git status --porcelain | awk '{ print $2 }' | sort -u))
