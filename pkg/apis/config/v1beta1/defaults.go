@@ -70,10 +70,10 @@ func SetDefaults_TestMachineryConfiguration(obj *TestMachinery) {
 		obj.TestDefPath = ".test-defs"
 	}
 	if len(obj.PrepareImage) == 0 {
-		obj.PrepareImage = fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:%s", version.Get().GitVersion)
+		obj.PrepareImage = fmt.Sprintf("europe-docker.pkg.dev/gardener-project/releases/testmachinery/prepare-step:%s", version.Get().GitVersion)
 	}
 	if len(obj.BaseImage) == 0 {
-		obj.BaseImage = fmt.Sprintf("eu.gcr.io/gardener-project/gardener/testmachinery/base-step:%s", version.Get().GitVersion)
+		obj.BaseImage = fmt.Sprintf("europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:%s", version.Get().GitVersion)
 	}
 
 	if len(obj.Namespace) == 0 {

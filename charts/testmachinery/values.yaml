@@ -23,7 +23,7 @@ global:
 
 controller:
   hostPath: ""
-  image: eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-controller
+  image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/testmachinery-controller
   tag: latest
   pullPolicy: IfNotPresent
 

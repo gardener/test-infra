@@ -13,8 +13,8 @@ controller:
 testmachinery:
   namespace: default
   testdefPath: test/.test-defs
-  prepareImage: "eu.gcr.io/gardener-project/gardener/testmachinery/prepare-step:latest"
-  baseImage: "eu.gcr.io/gardener-project/gardener/testmachinery/base-step:latest"
+  prepareImage: "europe-docker.pkg.dev/gardener-project/releases/testmachinery/prepare-step:latest"
+  baseImage: "europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:latest"
   local: true
   insecure: true
   disableCollector: true
