@@ -17,6 +17,7 @@ package app
 import (
 	"context"
 	goflag "flag"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
@@ -71,7 +72,8 @@ func (o *options) ApplyWebhooks(ctx context.Context, mgr manager.Manager) {
 		webhooks.StartHealthCheck(ctx, mgr.GetAPIReader(), config.Controller.DependencyHealthCheck.Namespace, config.Controller.DependencyHealthCheck.DeploymentName, config.Controller.DependencyHealthCheck.Interval)
 		o.log.Info("Setup webhooks")
 		hookServer := mgr.GetWebhookServer()
-		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidator(logger.Log.WithName("validator"))})
+		decoder := admission.NewDecoder(testmachinery.TestMachineryScheme)
+		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidatorWithDecoder(logger.Log.WithName("validator"), decoder)})
 	}
 }
 

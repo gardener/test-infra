@@ -80,6 +80,8 @@ func NewValidator(log logr.Logger) admission.Handler {
 	}
 }
 
+// TODO: refactor testrunValidator corresponding to the controller-runtime changes from v0.14 to v0.15 (see
+// https://github.com/kubernetes-sigs/controller-runtime/blob/v0.15.0/examples/builtins/validatingwebhook.go)
 func NewValidatorWithDecoder(log logr.Logger, decoder *admission.Decoder) admission.Handler {
 	return &testrunValidator{
 		log:     log,
