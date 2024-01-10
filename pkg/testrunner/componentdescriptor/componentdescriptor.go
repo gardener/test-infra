@@ -94,9 +94,6 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 		log.Info("using repository specified by the repository argument to resolve referenced components, " +
 			"resolvers defined in .ocmconfig are ignored!")
 	} else {
-		// TODO: remove after upgrading to ocm release >0.4.3
-		// indirectly call the update method on the context (otherwise resolvers are not actually configured)
-		_ = octx.BlobHandlers()
 		resolver = octx.GetResolver()
 		log.Info("using repositories specified in the .ocmconfig")
 	}
