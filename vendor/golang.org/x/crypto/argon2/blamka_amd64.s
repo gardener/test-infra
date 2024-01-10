@@ -199,8 +199,8 @@ TEXT ·mixBlocksSSE2(SB), 4, $0-32
 	MOVQ out+0(FP), DX
 	MOVQ a+8(FP), AX
 	MOVQ b+16(FP), BX
-	MOVQ c+24(FP), CX
-	MOVQ $128, DI
+	MOVQ a+24(FP), CX
+	MOVQ $128, BP
 
 loop:
 	MOVOU 0(AX), X0
@@ -213,7 +213,7 @@ loop:
 	ADDQ  $16, BX
 	ADDQ  $16, CX
 	ADDQ  $16, DX
-	SUBQ  $2, DI
+	SUBQ  $2, BP
 	JA    loop
 	RET
 
@@ -222,8 +222,8 @@ TEXT ·xorBlocksSSE2(SB), 4, $0-32
 	MOVQ out+0(FP), DX
 	MOVQ a+8(FP), AX
 	MOVQ b+16(FP), BX
-	MOVQ c+24(FP), CX
-	MOVQ $128, DI
+	MOVQ a+24(FP), CX
+	MOVQ $128, BP
 
 loop:
 	MOVOU 0(AX), X0
@@ -238,6 +238,6 @@ loop:
 	ADDQ  $16, BX
 	ADDQ  $16, CX
 	ADDQ  $16, DX
-	SUBQ  $2, DI
+	SUBQ  $2, BP
 	JA    loop
 	RET

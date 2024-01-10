@@ -1,0 +1,25 @@
+meta:
+  schemaVersion: v2
+
+component:
+  # The templating functionality requires that at least one of the components
+  # has the name 'github.com/gardener/gardener' to extract the version of the
+  # corresponding gardener landscape
+  name: github.com/gardener/gardener
+  version: v1.0.0
+
+  provider: internal
+
+  repositoryContexts:
+  - type: ociRegistry
+    baseUrl: "nobody.io/cares"
+
+  sources: []
+
+  resources: []
+
+  componentReferences:
+  - name: non-existing-reference
+    version: v1.0.0
+    componentName: github.com/non-existing-component
+

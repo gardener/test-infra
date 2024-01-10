@@ -158,6 +158,9 @@ const (
 	// DeploymentNameKubeStateMetrics is a constant for the name of a Kubernetes deployment object that contains
 	// the kube-state-metrics pod.
 	DeploymentNameKubeStateMetrics = "kube-state-metrics"
+	// DeploymentNameGardenerMetricsExporter is a constant for the name of a Kubernetes deployment object that contains
+	// the gardener-metrics-exporter pod.
+	DeploymentNameGardenerMetricsExporter = "gardener-metrics-exporter"
 
 	// DeploymentNameVPAAdmissionController is a constant for the name of the VPA admission controller deployment.
 	DeploymentNameVPAAdmissionController = "vpa-admission-controller"
@@ -230,7 +233,8 @@ const (
 	// GardenerOperationKeepalive is a constant for the value of the operation annotation describing an
 	// operation that extends the lifetime of the object having the operation annotation.
 	GardenerOperationKeepalive = "keepalive"
-	// GardenerOperationRenewKubeconfig is a constant for the value of the operation annotation to renew the gardenlet's kubeconfig secret.
+	// GardenerOperationRenewKubeconfig is a constant for the value of the operation annotation to renew the gardenlet's
+	// kubeconfig secret.
 	GardenerOperationRenewKubeconfig = "renew-kubeconfig"
 
 	// GardenRole is a constant for a label that describes a role.
@@ -308,12 +312,6 @@ const (
 	// ShootNoCleanup is a constant for a label on a resource indicating that the Gardener cleaner should not delete this
 	// resource when cleaning a shoot during the deletion flow.
 	ShootNoCleanup = "shoot.gardener.cloud/no-cleanup"
-	// ShootAlphaScalingAPIServerClass is a constant for an annotation on the shoot stating the initial API server class.
-	// It influences the size of the initial resource requests/limits.
-	// Possible values are [small, medium, large, xlarge, 2xlarge].
-	// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
-	// what you do.
-	ShootAlphaScalingAPIServerClass = "alpha.kube-apiserver.scaling.shoot.gardener.cloud/class"
 
 	// ShootAlphaControlPlaneScaleDownDisabled is a constant for an annotation on the Shoot resource stating that the
 	// automatic scale-down shall be disabled for the etcd, kube-apiserver, kube-controller-manager.
@@ -382,10 +380,10 @@ const (
 	// OperationRotateCAComplete is a constant for an annotation indicating that the rotation of the certificate
 	// authorities shall be completed.
 	OperationRotateCAComplete = "rotate-ca-complete"
-	// ShootOperationRotateObservabilityCredentials is a constant for an annotation on a Shoot indicating that the
+	// OperationRotateObservabilityCredentials is a constant for an annotation indicating that the
 	// credentials for the observability stack secret shall be rotated. Note that this only affects the user credentials
 	// since the operator credentials are rotated automatically each `30d`.
-	ShootOperationRotateObservabilityCredentials = "rotate-observability-credentials"
+	OperationRotateObservabilityCredentials = "rotate-observability-credentials"
 	// OperationRotateServiceAccountKeyStart is a constant for an annotation on a Shoot indicating that the
 	// rotation of the service account signing key shall be started.
 	OperationRotateServiceAccountKeyStart = "rotate-serviceaccount-key-start"
@@ -401,6 +399,9 @@ const (
 	// SeedOperationRenewGardenAccessSecrets is a constant for an annotation on a Seed indicating that the
 	// all garden access secrets on the seed shall be renewed.
 	SeedOperationRenewGardenAccessSecrets = "renew-garden-access-secrets"
+	// KubeconfigSecretOperationRenew is a constant for an annotation on the secret in a Seed containing the garden
+	// cluster kubeconfig of a gardenlet indicating that it should be renewed.
+	KubeconfigSecretOperationRenew = "renew"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -529,16 +530,6 @@ const (
 	// LabelExtensionProjectRole is a constant for a label value for extension project roles
 	LabelExtensionProjectRole = "extension-project-role"
 
-	// LabelAPIServerExposure is a constant for label key which gardener can add to various objects related
-	// to kube-apiserver exposure.
-	// Deprecated: This label key is deprecated and will be removed after Gardener v1.80 has been released.
-	// TODO(rfranzke): Drop this after v1.80 has been released.
-	LabelAPIServerExposure = "core.gardener.cloud/apiserver-exposure"
-	// LabelAPIServerExposureGardenerManaged is a constant for label value which gardener sets on the label key
-	// "core.gardener.cloud/apiserver-exposure" to indicate that it's responsible for apiserver exposure (via SNI).
-	// Deprecated: This label key is deprecated and will be removed after Gardener v1.80 has been released.
-	// TODO(rfranzke): Drop this after v1.80 has been released.
-	LabelAPIServerExposureGardenerManaged = "gardener-managed"
 	// LabelExposureClassHandlerName is the label key for exposure class handler names.
 	LabelExposureClassHandlerName = "handler.exposureclass.gardener.cloud/name"
 
@@ -552,6 +543,8 @@ const (
 	GardenNamespace = "garden"
 	// IstioSystemNamespace is the istio-system namespace.
 	IstioSystemNamespace = "istio-system"
+	// KubernetesDashboardNamespace is the kubernetes-dashboard namespace.
+	KubernetesDashboardNamespace = "kubernetes-dashboard"
 
 	// DefaultSNIIngressNamespace is the default sni ingress namespace.
 	DefaultSNIIngressNamespace = "istio-ingress"
@@ -559,6 +552,13 @@ const (
 	DefaultSNIIngressServiceName = "istio-ingressgateway"
 	// DefaultIngressGatewayAppLabelValue is the ingress gateway value for the app label.
 	DefaultIngressGatewayAppLabelValue = "istio-ingressgateway"
+
+	// DataTypeSecret is a constant for a value of the 'Type' field in 'GardenerResourceData' structs describing that
+	// the data is a secret.
+	DataTypeSecret = "secret"
+	// DataTypeMachineState is a constant for a value of the 'Type' field in 'GardenerResourceData' structs describing
+	// that the data is machine state.
+	DataTypeMachineState = "machine-state"
 
 	// DefaultSchedulerName is the name of the default scheduler.
 	DefaultSchedulerName = "default-scheduler"
@@ -570,6 +570,9 @@ const (
 	// the linked cloudprofiles containing the region distances.
 	AnnotationSchedulingCloudProfiles = "scheduling.gardener.cloud/cloudprofiles"
 
+	// AnnotationConfirmationForceDeletion is a constant for an annotation on a Shoot resource whose value must be set to "true" in order to
+	// trigger force-deletion of the cluster. It can only be set if the Shoot has a deletion timestamp and contains an ErrorCode in the Shoot Status.
+	AnnotationConfirmationForceDeletion = "confirmation.gardener.cloud/force-deletion"
 	// AnnotationManagedSeedAPIServer is a constant for an annotation on a Shoot resource containing the API server settings for a managed seed.
 	AnnotationManagedSeedAPIServer = "shoot.gardener.cloud/managed-seed-api-server"
 	// AnnotationShootIgnoreAlerts is the key for an annotation of a Shoot cluster whose value indicates
@@ -657,10 +660,6 @@ const (
 	LabelPodMaintenanceRestart = "maintenance.gardener.cloud/restart"
 	// LabelWorkerPool is a constant for a label that indicates the worker pool the node belongs to
 	LabelWorkerPool = "worker.gardener.cloud/pool"
-	// LabelWorkerPoolImageName is a label that indicates the name of the OS image for that worker pool
-	LabelWorkerPoolImageName = "worker.gardener.cloud/image-name"
-	// LabelWorkerPoolImageVersion is a label that indicates the version of the OS image for that worker pool
-	LabelWorkerPoolImageVersion = "worker.gardener.cloud/image-version"
 	// LabelWorkerKubernetesVersion is a constant for a label that indicates the Kubernetes version used for the worker pool nodes.
 	LabelWorkerKubernetesVersion = "worker.gardener.cloud/kubernetes-version"
 	// LabelWorkerPoolDeprecated is a deprecated constant for a label that indicates the worker pool the node belongs to
@@ -843,7 +842,10 @@ const (
 	TaintNodeCriticalComponentsNotReady = "node.gardener.cloud/critical-components-not-ready"
 	// LabelNodeCriticalComponent is the label key for marking node-critical component pods.
 	LabelNodeCriticalComponent = "node.gardener.cloud/critical-component"
-	// AnnotationWaitForCSINode is the annotation key for csi-driver-node pods,
-	// indicating they use the driver specified in the value.
+	// AnnotationPrefixWaitForCSINode is the annotation key for csi-driver-node pods, indicating they use the driver
+	// specified in the value.
 	AnnotationPrefixWaitForCSINode = "node.gardener.cloud/wait-for-csi-node-"
+
+	// GardenPurposeMachineClass is a constant for the 'machineclass' value in a label.
+	GardenPurposeMachineClass = "machineclass"
 )

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package componentdescriptor
 
 import (
@@ -19,92 +20,126 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gardener/component-cli/ociclient"
-	ociopts "github.com/gardener/component-cli/ociclient/options"
-	"github.com/gardener/component-cli/pkg/commands/constants"
-	cdcomponents "github.com/gardener/component-cli/pkg/components"
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/codec"
-	"github.com/gardener/component-spec/bindings-go/ctf/ctfutils"
-	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/go-logr/logr"
-	"github.com/mandelsoft/vfs/pkg/osfs"
-	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/mandelsoft/logging"
+	"github.com/open-component-model/ocm/pkg/contexts/config/configutils"
+	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
-// GetComponents returns a list of all git/component dependencies.
-// todo: re-enable component validation
-func GetComponents(ctx context.Context, log logr.Logger, ociClient ociclient.Client, content []byte) (ComponentList, error) {
-	components := components{
-		components:   make([]*Component, 0),
-		componentSet: make(map[Component]bool),
+type Options struct {
+	// CfgPath is the path to the .ocmconfig file. Per default, the library checks for the config file at
+	// $HOME/.ocmconfig.
+	CfgPath string
+}
+
+type Option func(options *Options)
+
+// GetComponents returns a list of all components that are direct or transitive dependencies (the transitive
+// closure) of the component described by the component descriptor stored in a file at cdPath.
+//
+// repoRef is expected to be an ocm repository reference ([<repo type>::]<host>[:<port>][/<base path>],
+// e.g. ocm::example.com/example). It may be left empty, if one or multiple repositories are specified in the
+// ocm config file (in fact, it has to be left empty, if the repositories configured in the ocm config shall be used).
+// Credentials to the ocm repository can also be set in the .ocmconfig file.
+//
+// For detailed information, for detailed information on how to configure the ocm config file, check the ocm command
+// line tool help with 'ocm configfile --help'
+func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef string, opts ...Option) (ComponentList, error) {
+	// enables the ocm library to log with the logger configuration of this library
+	logging.DefaultContext().SetBaseLogger(log)
+
+	options := Options{}
+	for _, opt := range opts {
+		opt(&options)
 	}
 
-	fs := osfs.New()
-	if len(os.Getenv(constants.ComponentRepositoryCacheDirEnvVar)) == 0 {
-		// always use a local cache
-		log.Info(fmt.Sprintf("no cache set (%s) using temporary dir", constants.ComponentRepositoryCacheDirEnvVar))
-		tmpCacheDir, err := vfs.TempDir(fs, fs.FSTempDir(), "cache-")
+	if cdPath == "" {
+		return make([]*Component, 0), nil
+	}
+	data, err := os.ReadFile(cdPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", cdPath, err.Error())
+	}
+
+	cd, err := compdesc.Decode(data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode component descriptor: %w", err)
+	}
+
+	if len(cd.References) == 0 {
+		return []*Component{NewFromVersionedElement(cd)}, nil
+	}
+
+	octx := ocm.New(datacontext.MODE_EXTENDED)
+	err = configutils.ConfigureContext(octx, options.CfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("error configuring ocm context: %w", err)
+	}
+
+	var resolver ocm.ComponentVersionResolver
+	if repoRef != "" {
+		repoSpec, err := ocm.ParseRepoToSpec(octx, repoRef)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create temporary cache: %w", err)
+			return nil, fmt.Errorf("error parsing repository reference: %w", err)
 		}
-		if err := os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, tmpCacheDir); err != nil {
-			return nil, fmt.Errorf("unable to set cache dir environment variable: %w", err)
+		repo, err := octx.RepositoryForSpec(repoSpec)
+		if err != nil {
+			return nil, err
 		}
+		resolver = repo
+		log.Info("using repository specified by the repository argument to resolve referenced components, " +
+			"resolvers defined in .ocmconfig are ignored!")
+	} else {
+		resolver = octx.GetResolver()
+		log.Info("using repositories specified in the .ocmconfig")
 	}
 
-	localCache := cdcomponents.NewLocalComponentCache(osfs.New())
-	resolver := cdoci.NewResolver(ociClient, codec.DisableValidation(true)).WithLog(log).WithCache(localCache)
-
-	compDesc := &cdv2.ComponentDescriptor{}
-	if err := codec.Decode(content, compDesc, codec.DisableValidation(true)); err != nil {
-		return nil, err
-	}
-	if err := localCache.Store(ctx, compDesc); err != nil {
-		return nil, err
+	if resolver == nil {
+		return nil, fmt.Errorf("no repositories configured, specify either a specific repository in the " +
+			"repository argument or one or multiple repositories in the .ocmconfig file")
 	}
 
-	compList, err := ctfutils.ResolveList(ctx, resolver, compDesc.GetEffectiveRepositoryContext(), compDesc.GetName(), compDesc.GetVersion())
-	if err != nil {
-		return nil, err
-	}
-	// add current component to list
-	components.add(Component{
-		Name:    compDesc.GetName(),
-		Version: compDesc.GetVersion(),
-	})
-	for _, comp := range compList.Components {
-		// todo: use the source to fetch the git repository and the real version/commit
-		components.add(Component{
-			Name:    comp.Name,
-			Version: comp.Version,
-		})
-	}
-
-	return components.components, nil
+	return resolveReferences(cd, resolver)
 }
 
-// GetComponentsFromFile read a component descriptor and returns a ComponentList
-func GetComponentsFromFile(ctx context.Context, log logr.Logger, ociClient ociclient.Client, file string) (ComponentList, error) {
-	if file == "" {
-		return make(ComponentList, 0), nil
-	}
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", file, err.Error())
-	}
-	return GetComponents(ctx, log, ociClient, data)
-}
+// The resolveReferences function is an auxiliary function for GetComponents. It implements a typical Breadth First
+// Search (BFS) algorithm to traverse the (directed acyclic) graph of components (or rather component versions) to
+// provide a flat list containing (name, version) of all components that are direct or transitive dependencies (the
+// transitive closure) of the root component c.
+// resolver can either a specific ocm repository (if all components are in the same repository) or a compound resolver
+// covering multiple repositories
+func resolveReferences(c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver) ([]*Component, error) {
+	components := make([]*Component, 0)
+	// Set size to 0, as we cannot know the number of component version beforehand
+	visited := make(map[Component]struct{}, 0)
+	queue := make([]*compdesc.ComponentDescriptor, 0)
 
-// GetComponentsFromFileWithOCIOptions read a component descriptor and returns a ComponentList
-func GetComponentsFromFileWithOCIOptions(ctx context.Context, log logr.Logger, ociOpts *ociopts.Options, file string) (ComponentList, error) {
-	ociClient, _, err := ociOpts.Build(log, osfs.New())
-	if err != nil {
-		return nil, err
+	visited[*NewFromVersionedElement(c)] = struct{}{}
+	queue = append(queue, c)
+
+	for len(queue) > 0 {
+		c = queue[0]
+		queue = queue[1:]
+
+		components = append(components, NewFromVersionedElement(c))
+
+		for _, ref := range c.References {
+			ac, err := resolver.LookupComponentVersion(ref.GetComponentName(), ref.GetVersion())
+			if err != nil {
+				return nil, fmt.Errorf("error resolving component references: %w", err)
+			}
+
+			if _, ok := visited[*NewFromVersionedElement(ac)]; !ok {
+				visited[*NewFromVersionedElement(ac)] = struct{}{}
+				queue = append(queue, ac.GetDescriptor())
+			}
+		}
 	}
-	return GetComponentsFromFile(ctx, log, ociClient, file)
+	return components, nil
 }
 
 // GetComponentsFromLocations parses a list of components from a testruns's locations

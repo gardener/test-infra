@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Mandelsoft. All rights reserved.
+ * Copyright 2022 Mandelsoft. All rights reserved.
  *  This file is licensed under the Apache Software License, v. 2 except as noted
  *  otherwise in the LICENSE file
  *
@@ -20,6 +20,7 @@ package utils
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -77,7 +78,15 @@ func (m *FileSystemSupport) Create(name string) (vfs.File, error) {
 		return nil, err
 	}
 	if f != nil {
-		return nil, os.ErrExist
+		if f.Mode()&fs.ModeType != 0 {
+			return nil, fs.ErrExist
+		}
+		h := newFileHandle(n, f)
+		err := h.Truncate(0)
+		if err != nil {
+			return nil, err
+		}
+		return h, nil
 	}
 
 	f = m.adapter.CreateFile(os.ModePerm)

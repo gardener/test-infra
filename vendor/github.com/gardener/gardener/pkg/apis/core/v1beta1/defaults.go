@@ -51,8 +51,19 @@ func SetDefaults_Seed(obj *Seed) {
 		obj.Spec.Settings = &SeedSettings{}
 	}
 
+	var defaultExcessCapacityReservationConfigs = []SeedSettingExcessCapacityReservationConfig{
+		// This roughly corresponds to a single, moderately large control-plane.
+		{Resources: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("2"), corev1.ResourceMemory: resource.MustParse("6Gi")}},
+	}
+
 	if obj.Spec.Settings.ExcessCapacityReservation == nil {
-		obj.Spec.Settings.ExcessCapacityReservation = &SeedSettingExcessCapacityReservation{Enabled: true}
+		obj.Spec.Settings.ExcessCapacityReservation = &SeedSettingExcessCapacityReservation{
+			Configs: defaultExcessCapacityReservationConfigs,
+		}
+	}
+
+	if pointer.BoolDeref(obj.Spec.Settings.ExcessCapacityReservation.Enabled, true) && len(obj.Spec.Settings.ExcessCapacityReservation.Configs) == 0 {
+		obj.Spec.Settings.ExcessCapacityReservation.Configs = defaultExcessCapacityReservationConfigs
 	}
 
 	if obj.Spec.Settings.Scheduling == nil {
@@ -80,7 +91,7 @@ func SetDefaults_SeedNetworks(obj *SeedNetworks) {
 }
 
 // SetDefaults_SeedSettingDependencyWatchdog sets defaults for SeedSettingDependencyWatchdog objects.
-func SetDefaults_SeedSettingDependencyWatchdog(obj *SeedSettingDependencyWatchdog) {
+func SetDefaults_SeedSettingDependencyWatchdog(_ *SeedSettingDependencyWatchdog) {
 }
 
 // SetDefaults_Shoot sets default values for Shoot objects.

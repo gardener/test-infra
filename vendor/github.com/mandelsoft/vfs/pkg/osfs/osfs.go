@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Mandelsoft. All rights reserved.
+ * Copyright 2022 Mandelsoft. All rights reserved.
  *  This file is licensed under the Apache Software License, v. 2 except as noted
  *  otherwise in the LICENSE file
  *
@@ -27,6 +27,8 @@ import (
 	"github.com/mandelsoft/vfs/pkg/utils"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 )
+
+var OsFs = &osFileSystem{}
 
 type osFileSystem struct {
 }

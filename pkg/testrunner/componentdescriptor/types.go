@@ -13,10 +13,21 @@
 // limitations under the License.
 package componentdescriptor
 
+import (
+	"github.com/open-component-model/ocm/pkg/common"
+)
+
 // Component describes a component consisting of the git repository url and a version.
 type Component struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+}
+
+func NewFromVersionedElement(e common.VersionedElement) *Component {
+	return &Component{
+		Name:    e.GetName(),
+		Version: e.GetVersion(),
+	}
 }
 
 // ComponentList is a set of multiple components.

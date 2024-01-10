@@ -187,7 +187,7 @@ func (w *watch) WatchUntil(timeout time.Duration, namespace, name string, f Watc
 				return nil
 			}
 		case <-after:
-			return wait.ErrWaitTimeout
+			return wait.ErrorInterrupted(errors.New("timed out waiting for the condition"))
 		}
 	}
 }

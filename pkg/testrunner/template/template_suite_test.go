@@ -15,40 +15,13 @@
 package template
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/gardener/component-cli/pkg/commands/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-)
-
-var (
-	testdataDir             string
-	defaultTestdataDir      string
-	shootTestdataDir        string
-	gardenerKubeconfig      string
-	componentCacheDir       string
-	componentDescriptorPath string
 )
 
 func TestTestrunnerTemplate(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Testrunner Template Test Suite")
 }
-
-var _ = BeforeSuite(func() {
-	wd, err := os.Getwd()
-	Expect(err).ToNot(HaveOccurred())
-	testdataDir, err = filepath.Abs(filepath.Join(wd, "testdata"))
-	Expect(err).ToNot(HaveOccurred())
-	componentCacheDir = testdataDir
-
-	defaultTestdataDir = filepath.Join(testdataDir, "default")
-	shootTestdataDir = filepath.Join(testdataDir, "shoot")
-
-	gardenerKubeconfig = filepath.Join(testdataDir, "test-kubeconfig.yaml")
-	componentDescriptorPath = filepath.Join(componentCacheDir, "registry.example/github.com/gardener/gardener-0.30.0")
-	Expect(os.Setenv(constants.ComponentRepositoryCacheDirEnvVar, componentCacheDir))
-})

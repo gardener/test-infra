@@ -15,7 +15,6 @@
 package result
 
 import (
-	ociopts "github.com/gardener/component-cli/ociclient/options"
 	"github.com/go-logr/logr"
 
 	"github.com/gardener/test-infra/pkg/testrunner"
@@ -32,8 +31,13 @@ type Config struct {
 	// ComponentDescriptorPath path to the component descriptor file
 	ComponentDescriptorPath string
 
-	// OCIOpts describe options to build a oci client
-	OCIOpts *ociopts.Options
+	// Repository specifies the repository used to resolve the component references of the component specified in
+	// ComponentDescriptorPath
+	Repository string
+
+	// OCMConfigPath is the path to the .ocmconfig file
+	// Per default, the file is expected to be at $HOME/.ocmconfig
+	OCMConfigPath string
 
 	// AssetComponents indicates to upload the testrun status to the github component as an asset
 	AssetComponents []string

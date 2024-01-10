@@ -14,7 +14,9 @@
 
 package logger
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func Logf(logFunc func(msg string, keysAndValues ...interface{}), format string, a ...interface{}) {
 	message := fmt.Sprintf(format, a...)

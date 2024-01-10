@@ -1,0 +1,14 @@
+type: generic.config.ocm.software/v1
+configurations:
+- type: ocm.config.ocm.software
+  resolvers:
+    - repository:
+        type: CommonTransportFormat/v1
+        filePath: ./testdata/repositories/ocm-repo-ctf-partial-1
+        fileFormat: directory
+      priority: 10
+    - repository:
+        type: CommonTransportFormat/v1
+        filePath: ./testdata/repositories/ocm-repo-ctf-partial-2
+        fileFormat: directory
+      priority: 10

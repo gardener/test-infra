@@ -14,7 +14,9 @@
 
 package errors
 
-import "k8s.io/apimachinery/pkg/util/validation/field"
+import (
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
 
 var RecoverableErrors = []field.ErrorType{ErrorTestDefinitionRetrieveError}
 

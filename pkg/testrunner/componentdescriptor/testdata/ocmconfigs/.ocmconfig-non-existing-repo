@@ -1,0 +1,9 @@
+type: generic.config.ocm.software/v1
+configurations:
+- type: ocm.config.ocm.software
+  resolvers:
+    - repository:
+        type: CommonTransportFormat/v1
+        filePath: ./testdata/repositories/non-existing-repo
+        fileFormat: directory
+      priority: 10

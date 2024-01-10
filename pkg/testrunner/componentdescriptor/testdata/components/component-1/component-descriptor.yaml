@@ -1,0 +1,29 @@
+component:
+  componentReferences:
+  - componentName: github.com/component-2
+    name: referenced-component-2
+    version: v1.0.0
+  - componentName: github.com/component-1-1
+    name: referenced-component-1-1
+    version: v1.0.0
+  creationTime: "2023-11-16T21:33:50Z"
+  name: github.com/component-1
+  provider: internal
+  repositoryContexts: []
+  resources:
+  - access:
+      localReference: sha256.af7aad21e094edc5045b3b226896cd97e279c03d44551140e6634c7ece0b54b9
+      mediaType: text/plain
+      type: localBlob
+    digest:
+      hashAlgorithm: SHA-256
+      normalisationAlgorithm: genericBlobDigest/v1
+      value: af7aad21e094edc5045b3b226896cd97e279c03d44551140e6634c7ece0b54b9
+    name: resource
+    relation: local
+    type: PlainText
+    version: v1.0.0
+  sources: []
+  version: v1.0.0
+meta:
+  schemaVersion: v2

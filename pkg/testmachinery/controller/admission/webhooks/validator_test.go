@@ -34,13 +34,8 @@ var _ = Describe("Testrun validation tests", func() {
 	var testRunValidator admission.Handler
 
 	BeforeEach(func() {
-		testRunValidator = webhooks.NewValidator(logr.Discard())
-
-		decoder, err := admission.NewDecoder(testmachinery.TestMachineryScheme)
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = admission.InjectDecoderInto(decoder, testRunValidator)
-		Expect(err).NotTo(HaveOccurred())
+		decoder := admission.NewDecoder(testmachinery.TestMachineryScheme)
+		testRunValidator = webhooks.NewValidatorWithDecoder(logr.Discard(), decoder)
 	})
 
 	Context("Metadata", func() {
@@ -63,7 +58,7 @@ var _ = Describe("Testrun validation tests", func() {
 			resp := testRunValidator.Handle(ctx, *req)
 
 			Expect(resp.Allowed).To(BeFalse())
-			Expect(string(resp.Result.Reason)).To(ContainSubstring("name must not contain '.'"))
+			Expect(resp.Result.Message).To(ContainSubstring("name must not contain '.'"))
 
 		})
 	})
@@ -82,7 +77,7 @@ var _ = Describe("Testrun validation tests", func() {
 			resp := testRunValidator.Handle(ctx, *req)
 
 			Expect(resp.Allowed).To(BeFalse())
-			Expect(string(resp.Result.Reason)).To(ContainSubstring("no location for TestDefinitions defined"))
+			Expect(resp.Result.Message).To(ContainSubstring("no location for TestDefinitions defined"))
 		})
 
 		It("should reject when a local location is defined", func() {
@@ -100,7 +95,7 @@ var _ = Describe("Testrun validation tests", func() {
 
 			resp := testRunValidator.Handle(ctx, *req)
 			Expect(resp.Allowed).To(BeFalse())
-			Expect(string(resp.Result.Reason)).To(ContainSubstring("Local testDefinition locations are only available in insecure mode"))
+			Expect(string(resp.Result.Message)).To(ContainSubstring("Local testDefinition locations are only available in insecure mode"))
 		})
 	})
 
@@ -116,7 +111,7 @@ var _ = Describe("Testrun validation tests", func() {
 
 			resp := testRunValidator.Handle(ctx, *req)
 			Expect(resp.Allowed).To(BeFalse())
-			Expect(string(resp.Result.Reason)).To(ContainSubstring("Cannot build config"))
+			Expect(resp.Result.Message).To(ContainSubstring("Cannot build config"))
 		})
 	})
 

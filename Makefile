@@ -26,6 +26,8 @@ TM_CONTROLLER_CHART := testmachinery-controller
 VERSION             ?= $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
+ENVTEST_K8S_VERSION := 1.27.x
+
 TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
 TM_RUN_IMAGE               := $(REGISTRY)/testmachinery-run
 TM_BOT_IMAGE               := $(REGISTRY)/bot
@@ -73,7 +75,8 @@ check: $(GOIMPORTS) $(GOLANGCI_LINT)
 
 .PHONY: test
 test:
-	@go test -mod=vendor $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${K8S_VERSION})" go test -mod=vendor $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
+
 
 .PHONY: install
 install:
@@ -91,7 +94,8 @@ all: generate format verify install
 
 .PHONY: install-requirements
 install-requirements:
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
+	@go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
 

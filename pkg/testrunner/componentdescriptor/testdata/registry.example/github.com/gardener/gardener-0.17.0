@@ -1,1 +1,0 @@
-{"meta":{"schemaVersion":"v2"},"component":{"name":"github.com/gardener/gardener","version":"0.17.0","repositoryContexts":[{"baseUrl":"registry.example","type":"ociRegistry"}],"provider":"internal","sources":[],"componentReferences":[{"name":"dashboard","componentName":"github.com/gardener/dashboard","version":"1.27.0"}],"resources":[]}}

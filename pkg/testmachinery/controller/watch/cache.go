@@ -22,10 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/rest"
 	toolscache "k8s.io/client-go/tools/cache"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
+	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-	"sigs.k8s.io/controller-runtime/pkg/cluster"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
@@ -36,29 +35,37 @@ const CachedInformerType InformerType = "cached"
 type cachedInformer struct {
 	log      logr.Logger
 	client   client.Client
-	cache    cache.Cache
+	cache    ctrlcache.Cache
 	eventbus EventBus
 }
 
 func newCachedInformer(log logr.Logger, config *rest.Config, options *Options) (Informer, error) {
-	mapper, err := apiutil.NewDynamicRESTMapper(config)
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create the informer for the cached read client and registering informers
-	cache, err := cache.New(config, cache.Options{Scheme: options.Scheme, Mapper: mapper, Resync: options.SyncPeriod, Namespace: options.Namespace})
+	cache, err := ctrlcache.New(config, ctrlcache.Options{Scheme: options.Scheme, Mapper: mapper, SyncPeriod: options.SyncPeriod, DefaultNamespaces: map[string]ctrlcache.Config{
+		options.Namespace: {},
+	}})
 	if err != nil {
 		return nil, err
 	}
 
-	cachedClient, err := cluster.DefaultNewClient(cache, config, client.Options{
-		Scheme: options.Scheme,
-		Mapper: mapper,
-	})
+	clientOpts := client.Options{}
+	clientOpts.Scheme = options.Scheme
+	clientOpts.Mapper = mapper
+	clientOpts.Cache = &client.CacheOptions{}
+	clientOpts.Cache.Reader = cache
 
+	cachedClient, err := client.New(config, clientOpts)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create chached client: %w", err)
+		return nil, fmt.Errorf("unable to create cached client: %w", err)
 	}
 	return &cachedInformer{
 		log:    log,
