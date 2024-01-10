@@ -72,6 +72,9 @@ func Run(descFile string) (resultsPath string) {
 				kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Conformance\\]"
 			}
 		}
+		if config.SkipIndividualTestCases != "" {
+			kubtestArgs.GinkgoFocus += " --ginkgo.skip=" + config.SkipIndividualTestCases
+		}
 		log.Info("run kubetest in serial way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)
 		runKubetest(kubtestArgs, false)
@@ -80,6 +83,9 @@ func Run(descFile string) (resultsPath string) {
 		kubtestArgs := createKubetestArgs(parallelTestsFocus, true, false, config.FlakeAttempts)
 		if len(config.TestcaseGroup) == 1 && config.TestcaseGroup[0] == "conformance" {
 			kubtestArgs.GinkgoFocus = "--ginkgo.focus=\\[Conformance\\] --ginkgo.skip=\\[Serial\\]"
+		}
+		if config.SkipIndividualTestCases != "" {
+			kubtestArgs.GinkgoFocus += " --ginkgo.skip=" + config.SkipIndividualTestCases
 		}
 		log.Info("run kubetest in parallel way")
 		log.Infof("kubetest dump dir: %s", kubtestArgs.LogDir)

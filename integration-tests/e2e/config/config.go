@@ -62,6 +62,7 @@ var (
 	TestcaseGroup            []string
 	TestcaseGroupString      string
 	ExplicitTestcases        arrayTestcase
+	SkipIndividualTestCases  string
 	DownloadsDir             string
 	RunCleanUpAfterTest      bool
 	RetryFailedTestcases     bool
@@ -91,6 +92,7 @@ func init() {
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.StringVar(&TestcaseGroupString, "testcasegroup", "", "Testcase groups to run (conformance, fast, slow")
 	flag.Var(&ExplicitTestcases, "testcase", "List of testcases. If used description file and execution group are ingored.")
+	flag.StringVar(&SkipIndividualTestCases, "skipIndividualTestCases", "", "A list of ginkgo.skip patterns (regex based) to skip individual test cases, use \"|\" as delimiter.")
 	flag.BoolVar(&RetryFailedTestcases, "retryFailedTestcases", false, "runs an additional kubetest run for failed tests only")
 	flag.BoolVar(&DryRun, "dryRun", false, "specify dryRun = true to only display all testcases")
 	flag.Parse()
@@ -159,6 +161,9 @@ func init() {
 	if len(TestcaseGroup) == 0 {
 		log.Fatal("TESTCASE_GROUP environment variable not found")
 	}
+	if SkipIndividualTestCases == "" {
+		SkipIndividualTestCases = os.Getenv("SKIP_INDIVIDUAL_TEST_CASES")
+	}
 	if CloudProvider == "" {
 		CloudProvider = os.Getenv("PROVIDER_TYPE")
 	}
@@ -202,4 +207,5 @@ func init() {
 	log.Debugf("RetestFlaggedOnly: %t", RetestFlaggedOnly)
 	log.Debugf("TestcaseGroup: %v", TestcaseGroup)
 	log.Debugf("ExplicitTestcases: %v", strings.Join(ExplicitTestcases, ", "))
+	log.Debugf("SkipIndividualTestCases: %v", SkipIndividualTestCases)
 }

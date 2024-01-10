@@ -82,6 +82,7 @@ kind delete cluster
 | E2E_KUBECONFIG_PATH | kubeconfig | $E2E_EXPORT_PATH/shoot.config | File path of kubeconfig file |
 | - | debug | false | Runs application in debug mode |
 | - | testcase |  | List of explicit testcases to test. If used, `TESTCASE_GROUPS` and `TESTCASE_GROUPS` are ignored.  |
+| SKIP_INDIVIDUAL_TEST_CASES | skipIndividualTestCases |  | A list of ginkgo.skip patterns (regex based) to skip individual test cases. Use "\|" as delimiter. |
 | - | cleanUpAfterwards | false | Removes downloaded or existings kubernetes files to reduce memory footprint. |
 | - | dryRun | false | Dry Run mode, get all test cases and save them to a file, then print the filename path. |
 ### Description Files
