@@ -59,6 +59,8 @@ testmachinery:
   insecure: false
   disableCollector: false
   cleanWorkflowPods: false
+#  prepareImage: ""
+#  baseImage: ""
 
   locations:
     excludeDomains: [ ]

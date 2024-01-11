@@ -43,7 +43,12 @@ testmachinery:
   insecure: {{ .Values.testmachinery.insecure }}
   disableCollector: {{ .Values.testmachinery.disableCollector }}
   cleanWorkflowPods: {{ .Values.testmachinery.cleanWorkflowPods }}
-
+  {{- if .Values.testmachinery.baseImage }}
+  baseImage: {{ .Values.testmachinery.baseImage }}
+  {{- end }}
+  {{- if .Values.testmachinery.prepareImage }}
+  prepareImage: {{ .Values.testmachinery.prepareImage }}
+  {{- end }}
   {{- if .Values.testmachinery.locations }}
   locations:
 {{ toYaml .Values.testmachinery.locations | indent 4 }}
