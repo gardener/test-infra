@@ -12,10 +12,11 @@ import random
 import gitutil
 import stat
 import re
+import glob
+from semver.version import Version
 import github.util
 from pprint import pprint
 from gitutil import GitHelper
-from distutils.version import StrictVersion
 from shutil import copyfile
 from google.cloud import storage
 from model import ConfigFactory
@@ -33,6 +34,12 @@ f = ctx.cfg_factory()
 ce = f.cfg_set('external_active')
 ci = f.cfg_set('internal_active')
 github_cfg = f.github('github_com')
+gh = github.util.GitHubRepositoryHelper(
+    owner='cncf',
+    name=repo_name,
+    github_cfg=github_cfg,
+)
+repo = gh.repository
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 temlate_dir = script_dir + '/'
@@ -116,16 +123,6 @@ def createNewBranch(product_name, provider_name, k8s_version):
     return branch_name_random
 
 
-def getLowestVersion(versions):
-    lowestVersion = versions[0]
-    for i in range(len(versions) - 1):
-        if (StrictVersion(versions[i]) < StrictVersion(versions[i+1])) is True:
-            lowestVersion = versions[i]
-        else:
-            lowestVersion = versions[i+1]
-    return lowestVersion
-
-
 def inplace_change(filename, old_string, new_string):
     # Safely read the input filename using 'with'
     with open(filename) as f:
@@ -155,6 +152,8 @@ def activate_google_application_credentials():
 
 
 def get_provider_k8s_version_tuples():
+    # determine the smallest version still submittable to the cncf repo. Check the repo's folder structure for it.
+    min_version = min(map(lambda x: Version.parse(re.sub(r'^v', '', x), optional_minor_and_patch=True), glob.glob('v1.*')))
     storage_client = storage.Client()
     prefix = "ci-gardener-e2e-conformance"
     bucket = storage_client.get_bucket(gs_bucket_name)
@@ -166,8 +165,8 @@ def get_provider_k8s_version_tuples():
             if provider not in provider_list:
                 continue  # if the provider is not supported, continue
             k8s_version = re.search('-(v\d+\.\d+)\/', blob_name).group(1)
-            if k8s_version == 'v1.13': # TODO: use semver and skip all older versions, only recent 3 versions shall be considered
-                continue  # k8s release 1.13 can't be added anymore, since only recent 3 release versions are considered
+            if Version.parse(re.sub(r'^v', '', k8s_version), optional_minor_and_patch=True) < min_version:
+                continue  # never submit PRs for versions that have already been archived
             provider_version_tuples.append((provider, k8s_version))
     return provider_version_tuples
 
@@ -308,13 +307,6 @@ def commitAndPushChanges(gitHelper, branch_name):
 
 
 def createPullRequest(product, provider_tuple, branch_name):
-    gh = github.util.GitHubRepositoryHelper(
-        owner='cncf',
-        name=repo_name,
-        github_cfg=github_cfg,
-    )
-    repo = gh.repository
-
     pr_head = "gardener:" + branch_name
     title = "Conformance Results for " + provider_tuple[1] + "/" + product + "-" + provider_tuple[0]
     with open(".github/PULL_REQUEST_TEMPLATE.md") as pr_template:
@@ -344,8 +336,16 @@ syncForkAndUpstream(gitHelper)
 activate_google_application_credentials()
 provider_version_tuples = get_provider_k8s_version_tuples()
 gardener_version = get_gardener_version()
+upstream_prs = repo.pull_requests(state='open')
 
 for product in content_product_yaml.keys():
     for pv_tuple in provider_version_tuples:
         subprocess.run(["git", "checkout", "master"])
+        matcher = re.compile("gardener:" + product + "-" + pv_tuple[0] + "-" + pv_tuple[1])
+        for pr in upstream_prs:
+            m = matcher.search(pr.head)
+            if m:
+                print('Skipping ' + product + "-" + pv_tuple[0] + "-" + pv_tuple[1]
+                      + " because a PR for this combination already exists.")
+                continue
         process_product_provider_k8sVersion(gardener_version, product, pv_tuple[0], pv_tuple[1])
