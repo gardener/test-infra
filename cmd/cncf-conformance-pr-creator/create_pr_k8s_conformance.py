@@ -343,7 +343,7 @@ for product in content_product_yaml.keys():
         subprocess.run(["git", "checkout", "master"])
         matcher = re.compile("gardener:" + product + "-" + pv_tuple[0] + "-" + pv_tuple[1])
         for pr in upstream_prs:
-            m = matcher.search(pr.head)
+            m = matcher.search(str(pr.head))
             if m:
                 print('Skipping ' + product + "-" + pv_tuple[0] + "-" + pv_tuple[1]
                       + " because a PR for this combination already exists.")
