@@ -336,16 +336,15 @@ syncForkAndUpstream(gitHelper)
 activate_google_application_credentials()
 provider_version_tuples = get_provider_k8s_version_tuples()
 gardener_version = get_gardener_version()
-upstream_prs = repo.pull_requests(state='open')
+upstream_prs = list(map(lambda x: str(x.head), repo.pull_requests(state='open')))
 
 for product in content_product_yaml.keys():
     for pv_tuple in provider_version_tuples:
         subprocess.run(["git", "checkout", "master"])
         matcher = re.compile("gardener:" + product + "-" + pv_tuple[0] + "-" + pv_tuple[1])
-        for pr in upstream_prs:
-            m = matcher.search(str(pr.head))
-            if m:
-                print('Skipping ' + product + "-" + pv_tuple[0] + "-" + pv_tuple[1]
+        match = list(filter(matcher.search, upstream_prs))
+        if match:
+            print('Skipping ' + product + "-" + pv_tuple[0] + "-" + pv_tuple[1]
                       + " because a PR for this combination already exists.")
-                continue
+            continue
         process_product_provider_k8sVersion(gardener_version, product, pv_tuple[0], pv_tuple[1])
