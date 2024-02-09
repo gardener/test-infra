@@ -23,12 +23,21 @@ PROJECT_MOD_ROOT="github.com/gardener/test-infra"
 CURRENT_DIR=$(dirname $0)
 PROJECT_ROOT="${CURRENT_DIR}"/..
 
+# setup virtual GOPATH
+source "$GARDENER_HACK_DIR"/vgopath-setup.sh
+
+CODE_GEN_DIR=$(go list -m -f '{{.Dir}}' k8s.io/code-generator)
+
+# We need to explicitly pass GO111MODULE=off to k8s.io/code-generator as it is significantly slower otherwise,
+# see https://github.com/kubernetes/code-generator/issues/100.
+export GO111MODULE=off
+
 rm -f ${GOPATH}/bin/*-gen
 
-chmod +x "${PROJECT_ROOT}"/vendor/k8s.io/code-generator/*.sh
+chmod +x "${CODE_GEN_DIR}"/*.sh
 
 echo "> Generating internal groups for TestMachinery"
-"${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
+"${CODE_GEN_DIR}"/generate-internal-groups.sh \
   deep-copy,defaulter,conversion \
   $PROJECT_MOD_ROOT/pkg/client/testmachinery \
   $PROJECT_MOD_ROOT/pkg/apis \
@@ -37,7 +46,7 @@ echo "> Generating internal groups for TestMachinery"
   -h $(dirname $0)/boilerplate.go.txt
 
 echo "> Generating internal groups for TestMachinery config"
-"${PROJECT_ROOT}"/vendor/k8s.io/code-generator/generate-internal-groups.sh \
+"${CODE_GEN_DIR}"/generate-internal-groups.sh \
   deepcopy,defaulter,conversion \
   $PROJECT_MOD_ROOT/pkg/client/config \
   $PROJECT_MOD_ROOT/pkg/apis \
@@ -51,7 +60,7 @@ ${GOPATH}/bin/deepcopy-gen \
   -O zz_generated.deepcopy \
   -h $(dirname $0)/boilerplate.go.txt
 
-go install ./$(dirname "${0}")/../vendor/k8s.io/kube-openapi/cmd/openapi-gen
+go install k8s.io/kube-openapi/cmd/openapi-gen
 
 echo "Generating openapi definitions"
 ${GOPATH}/bin/openapi-gen "$@" \

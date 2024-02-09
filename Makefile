@@ -13,6 +13,8 @@
 # limitations under the License.
 
 SHELL = /bin/sh
+ENSURE_GARDENER_MOD         := $(shell go get github.com/gardener/gardener@$$(go list -m -f "{{.Version}}" github.com/gardener/gardener))
+GARDENER_HACK_DIR    		:= $(shell go list -m -f "{{.Dir}}" github.com/gardener/gardener)/hack
 REPO_ROOT   := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(shell dirname $(mkfile_path))
@@ -43,39 +45,38 @@ TESTRUN ?= "examples/int-testrun.yaml"
 #########################################
 
 TOOLS_DIR := hack/tools
-include vendor/github.com/gardener/gardener/hack/tools.mk
+include $(GARDENER_HACK_DIR)/tools.mk
 
 #####################
 # Utils             #
 #####################
 
-.PHONY: revendor
-revendor:
-	@GO111MODULE=on go mod tidy
-	@GO111MODULE=on go mod vendor
-	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
-	@chmod +x $(REPO_ROOT)/vendor/k8s.io/code-generator/generate-internal-groups.sh
-	@$(REPO_ROOT)/hack/update-github-templates.sh
+.PHONY: tidy
+tidy:
+	@go mod tidy
+	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: code-gen
 code-gen:
 	@./hack/generate-code
+	$(MAKE) format
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(OPENAPI_GEN)
-	@$(REPO_ROOT)/hack/generate.sh ./cmd/... ./pkg/... ./test/...
+generate: $(VGOPATH) $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(OPENAPI_GEN)
+	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./cmd/... ./pkg/... ./test/...
+	$(MAKE) format
 
 .PHONY: format
 format: $(GOIMPORTS) $(GOIMPORTSREVISER)
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg ./test ./integration-tests
+	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./pkg ./test ./integration-tests
 
 .PHONY: check
 check: $(GOIMPORTS) $(GOLANGCI_LINT)
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
+	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 
 .PHONY: test
 test:
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${K8S_VERSION})" go test -mod=vendor $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${K8S_VERSION})" go test -mod=mod $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
 
 
 .PHONY: install
@@ -97,7 +98,7 @@ install-requirements:
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
 	@go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	@go install golang.org/x/tools/cmd/goimports@latest
-	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/golang/mock/mockgen
+	@go install github.com/golang/mock/mockgen
 
 .PHONY: gen-certs
 gen-certs:

@@ -29,9 +29,17 @@ BASE_IMAGE="golang:1.21"
 cat << __EOF > $DOCKERFILE_DIR/e2e
 FROM $BASE_IMAGE
 WORKDIR /go/src/github.com/gardener/test-infra
+
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
 COPY . .
 
-RUN go install -mod=vendor ./integration-tests/e2e
+RUN go install -mod=mod ./integration-tests/e2e
 __EOF
 
 docker build -t tm-test-e2e-inst:latest -f $DOCKERFILE_DIR/e2e $REPO_ROOT
