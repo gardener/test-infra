@@ -28,7 +28,7 @@ TM_CONTROLLER_CHART := testmachinery-controller
 VERSION             ?= $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
-ENVTEST_K8S_VERSION := 1.27.x
+ENVTEST_K8S_VERSION := 1.28.x
 
 TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
 TM_RUN_IMAGE               := $(REGISTRY)/testmachinery-run
