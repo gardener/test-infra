@@ -72,7 +72,7 @@ format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 
 .PHONY: check
 check: $(GOIMPORTS) $(GOLANGCI_LINT)
-	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
+	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 
 .PHONY: test
 test:
