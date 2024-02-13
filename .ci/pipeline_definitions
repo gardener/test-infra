@@ -95,13 +95,6 @@ test-infra:
             tm-prepare-image:
               <<: *prepare_image
               image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/prepare-step
-      steps:
-        <<: *default_steps
-        publish-helm:
-          execute:
-          - ./publish-helm
-          trait_depends:
-          - release
 
     #####################
     #      Images       #

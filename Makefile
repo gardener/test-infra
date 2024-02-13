@@ -216,15 +216,3 @@ docker-image-base:
 .PHONY: docker-image-golang
 docker-image-golang:
 	@docker build -t $(TM_GOLANG_BASE_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/golang/Dockerfile ./hack/images/golang
-
-##################################
-# Helm charts                    #
-##################################
-
-.PHONY: build-tm-chart
-build-tm-chart:
-	@helm package $(REPO_ROOT)/charts/testmachinery --version $(VERSION) -d $(REPO_ROOT)/charts
-
-.PHONY: publish-tm-chart
-publish-tm-chart: build-tm-chart
-	@helm push $(REPO_ROOT)/charts/$(TM_CONTROLLER_CHART)-$(VERSION).tgz oci://$(HELM_REGISTRY)
