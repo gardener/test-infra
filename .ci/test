@@ -26,8 +26,8 @@ fi
 cd "${SOURCE_PATH}"
 
 # Download kubernetes binaries
-K8S_VERSION=1.24.12
-ETCD_VER=v3.4.25
+K8S_VERSION=1.28.6
+ETCD_VER=v3.4.30
 
 mkdir -p /usr/local/kubebuilder/bin
 curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
@@ -42,4 +42,4 @@ curl -L https://storage.googleapis.com/etcd/${ETCD_VER}/etcd-${ETCD_VER}-linux-a
 tar xzvf /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz  etcd-${ETCD_VER}-linux-amd64/etcd
 mv etcd-${ETCD_VER}-linux-amd64/etcd /usr/local/kubebuilder/bin/etcd
 
-go test -mod=vendor ./cmd/... ./pkg/...
+go test -mod=mod ./cmd/... ./pkg/...

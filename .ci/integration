@@ -50,7 +50,7 @@ fi
 
 # Install Ginkgo (test framework) to be able to execute the tests.
 cd "${SOURCE_PATH}"
-go install -mod=vendor ./vendor/github.com/onsi/ginkgo/ginkgo
+go install -mod=mod github.com/onsi/ginkgo/ginkgo
 
 
 # Download Testmachinery Kubeconfig
@@ -117,9 +117,9 @@ echo "$controller_chart" | kubectl --kubeconfig=$TM_KUBECONFIG create -f -
 
 # run integration tests with ginkgo
 
-ginkgo -mod=vendor --slowSpecThreshold=30 -p --nodes=5 ./test/validationwebhook -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
-ginkgo -mod=vendor --slowSpecThreshold=600 -r -p --nodes=5 ./test/controller -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
-ginkgo -mod=vendor --slowSpecThreshold=600 -p --nodes=5 ./test/testrunner/... -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
+ginkgo -mod=mod --slowSpecThreshold=30 -p --nodes=5 ./test/validationwebhook -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
+ginkgo -mod=mod --slowSpecThreshold=600 -r -p --nodes=5 ./test/controller -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
+ginkgo -mod=mod --slowSpecThreshold=600 -p --nodes=5 ./test/testrunner/... -- --tm-namespace=${NAMESPACE} --kubecfg=${TM_KUBECONFIG} --git-commit-sha=${GIT_COMMIT_SHA}
 
 #######################
 # clean installation  #

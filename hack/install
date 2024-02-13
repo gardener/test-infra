@@ -23,7 +23,7 @@ PROJECT_ROOT="${CURRENT_DIR}"/..
 
 VERSION=$(cat $PROJECT_ROOT/VERSION)
 
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install -mod=vendor \
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install \
        -ldflags "-X github.com/gardener/test-infra/pkg/version.gitVersion=$VERSION \
                    -X github.com/gardener/test-infra/pkg/version.gitTreeState=$([ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty) \
                    -X github.com/gardener/test-infra/pkg/version.gitCommit=$(git rev-parse --verify HEAD) \

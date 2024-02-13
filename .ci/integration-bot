@@ -51,7 +51,7 @@ fi
 
 # Install Ginkgo (test framework) to be able to execute the tests.
 cd "${SOURCE_PATH}"
-go install -mod=vendor ./vendor/github.com/onsi/ginkgo/ginkgo
+go install -mod=mod github.com/onsi/ginkgo/ginkgo
 
 
 # Download Testmachinery Kubeconfig

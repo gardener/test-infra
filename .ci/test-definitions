@@ -27,4 +27,4 @@ fi
 cd "${SOURCE_PATH}"
 
 printf "\nNow installing: integration-tests/e2e ...\n"
-go install -mod=vendor ./integration-tests/e2e
+go install -mod=mod ./integration-tests/e2e
