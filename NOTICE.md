@@ -6,9 +6,4 @@ Copyright (c) 2018-2019 SAP SE or an SAP affiliate company. All rights reserved.
 
 The following charts of the [`charts`](charts) directory were seeded based on a copy of the following origins:
 
-* charts/bootstrap_tm_prerequisites/templates/argo.yaml is based on [https://github.com/argoproj/argo/blob/f92284d7108ebf92907008d8f12a0696ee467a43/manifests/install.yaml](https://github.com/argoproj/argo/blob/f92284d7108ebf92907008d8f12a0696ee467a43/manifests/install.yaml)
-
-## Container Images
-
-* europe-docker.pkg.dev/gardener/releases/testmachinery/testmachinery-controller
-* europe-docker.pkg.dev/gardener/releases/testmachinery/prepare-step
+* charts/testmachinery/charts/argo/templates is based on [https://github.com/argoproj/argo/blob/f92284d7108ebf92907008d8f12a0696ee467a43/manifests/install.yaml](https://github.com/argoproj/argo/blob/f92284d7108ebf92907008d8f12a0696ee467a43/manifests/install.yaml)

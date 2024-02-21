@@ -1,7 +1,7 @@
 # Test Machinery
-
 <img src="docs/images/gardener-test-machinery.svg" width="150px"></img>
 
+[![REUSE status](https://api.reuse.software/badge/github.com/gardener/test-infra)](https://api.reuse.software/info/github.com/gardener/test-infra)
 [![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener-tests/pipelines/test-infra-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener-tests/pipelines/test-infra-master/jobs/master-head-update-job)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/test-infra)](https://goreportcard.com/report/github.com/gardener/test-infra)
 
