@@ -144,9 +144,6 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 			"gardener": string(r.parameters.GardenerKubeconfig),
 		},
 	}
-	if shoot.AllowPrivilegedContainers != nil {
-		values["shoot"].(map[string]interface{})["allowPrivilegedContainers"] = shoot.AllowPrivilegedContainers
-	}
 	if shoot.AdditionalAnnotations != nil {
 		values["shoot"].(map[string]interface{})["shootAnnotations"] = util.MarshalMap(shoot.AdditionalAnnotations)
 	}
@@ -163,17 +160,16 @@ func (r *shootValueRenderer) GetMetadata(shoot *common.ExtendedShoot) (*metadata
 		containerRuntime = string(shoot.Workers[0].CRI.Name)
 	}
 	return &metadata.Metadata{
-		FlavorDescription:         shoot.Description,
-		Landscape:                 r.parameters.Landscape,
-		ComponentDescriptor:       r.parameters.ComponentDescriptor.JSON(),
-		CloudProvider:             string(shoot.Provider),
-		KubernetesVersion:         shoot.KubernetesVersion.Version,
-		Region:                    shoot.Region,
-		Zone:                      shoot.Zone,
-		AllowPrivilegedContainers: shoot.AllowPrivilegedContainers,
-		OperatingSystem:           shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
-		OperatingSystemVersion:    operatingsystemversion,
-		ContainerRuntime:          containerRuntime,
-		Annotations:               shoot.AdditionalAnnotations,
+		FlavorDescription:      shoot.Description,
+		Landscape:              r.parameters.Landscape,
+		ComponentDescriptor:    r.parameters.ComponentDescriptor.JSON(),
+		CloudProvider:          string(shoot.Provider),
+		KubernetesVersion:      shoot.KubernetesVersion.Version,
+		Region:                 shoot.Region,
+		Zone:                   shoot.Zone,
+		OperatingSystem:        shoot.Workers[0].Machine.Image.Name, // todo: check if there a possible multiple workerpools with different images
+		OperatingSystemVersion: operatingsystemversion,
+		ContainerRuntime:       containerRuntime,
+		Annotations:            shoot.AdditionalAnnotations,
 	}, nil
 }

@@ -59,9 +59,6 @@ func PreComputeTeststepFields(phase argov1.NodePhase, meta metadata.Metadata, cl
 	if meta.FlavorDescription != "" {
 		providerEnhanced += "_" + meta.FlavorDescription
 	}
-	if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
-		providerEnhanced += "(NoPrivCtrs)"
-	}
 	if meta.ContainerRuntime != "" {
 		providerEnhanced += fmt.Sprintf("{%s}", meta.ContainerRuntime)
 	}

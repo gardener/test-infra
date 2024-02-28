@@ -186,9 +186,6 @@ func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
 
 func getDimensionFromMetadata(meta *metadata.Metadata) string {
 	d := fmt.Sprintf("%s/%s/%s", meta.CloudProvider, meta.KubernetesVersion, meta.OperatingSystem)
-	if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
-		d = fmt.Sprintf("%s [%s]", d, "NoPrivCtrs")
-	}
 	if meta.FlavorDescription != "" {
 		d = fmt.Sprintf("%s\n(%s)", d, meta.FlavorDescription)
 	}

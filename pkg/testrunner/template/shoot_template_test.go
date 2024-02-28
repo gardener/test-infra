@@ -12,7 +12,6 @@ import (
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/utils/ptr"
 
 	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
@@ -41,12 +40,11 @@ var _ = Describe("shoot templates", func() {
 		shoots = []*shootflavors.ExtendedFlavorInstance{
 			shootflavors.NewExtendedFlavorInstance(&common.ExtendedShoot{
 				Shoot: common.Shoot{
-					Provider:                  common.CloudProviderGCP,
-					KubernetesVersion:         gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
-					Workers:                   []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
-					AllowPrivilegedContainers: ptr.To(false),
-					AdditionalAnnotations:     map[string]string{"a": "b"},
-					AdditionalLocations:       []common.AdditionalLocation{{Type: "git", Repo: "https://github.com/gardener/gardener", Revision: "1.2.3"}},
+					Provider:              common.CloudProviderGCP,
+					KubernetesVersion:     gardencorev1beta1.ExpirableVersion{Version: "1.15.2"},
+					Workers:               []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Image: &gardencorev1beta1.ShootMachineImage{Name: "core-os"}}}},
+					AdditionalAnnotations: map[string]string{"a": "b"},
+					AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https://github.com/gardener/gardener", Revision: "1.2.3"}},
 				},
 				ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 					Name:         "test-name",
@@ -88,7 +86,6 @@ var _ = Describe("shoot templates", func() {
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.secretBinding", "test-sb"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
-			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.allowPrivilegedContainers", "false"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.shootAnnotations", "a=b"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
@@ -120,7 +117,6 @@ var _ = Describe("shoot templates", func() {
 			Expect(meta.CloudProvider).To(Equal("gcp"))
 			Expect(meta.Region).To(Equal("region-1"))
 			Expect(meta.Zone).To(Equal("region-1-1"))
-			Expect(meta.AllowPrivilegedContainers).To(Equal(ptr.To(false)))
 			Expect(meta.Annotations).To(Equal(map[string]string{"a": "b"}))
 			Expect(meta.OperatingSystem).To(Equal("core-os"))
 		})

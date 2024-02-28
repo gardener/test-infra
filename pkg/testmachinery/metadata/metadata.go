@@ -29,18 +29,12 @@ func (m *Metadata) CreateAnnotations() map[string]string {
 		common.AnnotationRetries:                strconv.Itoa(m.Retries),
 		common.AnnotationShootAnnotations:       util.MarshalMap(m.Annotations),
 	}
-	if m.AllowPrivilegedContainers != nil {
-		annotations[common.AnnotationAllowPrivilegedContainers] = strconv.FormatBool(*m.AllowPrivilegedContainers)
-	}
 	return annotations
 }
 
 // GetDimensionFromMetadata returns a string describing the dimension of the metadata
 func (m *Metadata) GetDimensionFromMetadata(sep string) string {
 	d := fmt.Sprintf("%s"+sep+"%s"+sep+"%s", m.CloudProvider, m.KubernetesVersion, m.OperatingSystem)
-	if m.AllowPrivilegedContainers != nil && !*m.AllowPrivilegedContainers {
-		d = fmt.Sprintf("%s"+sep+"%s", d, "NoPrivCtrs")
-	}
 	if m.FlavorDescription != "" {
 		d = fmt.Sprintf("%s"+sep+"%s", d, m.FlavorDescription)
 	}
@@ -79,11 +73,6 @@ func FromTestrun(tr *tmv1beta1.Testrun) *Metadata {
 			StartTime:      tr.Status.StartTime,
 			ExecutionGroup: tr.Labels[common.LabelTestrunExecutionGroup],
 		},
-	}
-	if a, ok := tr.Annotations[common.AnnotationAllowPrivilegedContainers]; ok {
-		if b, err := strconv.ParseBool(a); err == nil {
-			metadata.AllowPrivilegedContainers = &b
-		}
 	}
 	return metadata
 }
