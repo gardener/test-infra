@@ -71,6 +71,7 @@ RUN  \
     "gardener-cicd-cli>=1.1437.0" \
     "gardener-cicd-libs>=1.1437.0" \
     awscli \
+    pytz \
   && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
