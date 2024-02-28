@@ -12,9 +12,6 @@ metadata:
         shoot.secretBinding: {{ required "secretBinding is required" .Values.shoot.secretBinding }}
         shoot.region: {{ required "region is required" .Values.shoot.region }}
         shoot.zone: {{ required "zone is required" .Values.shoot.zone }}
-        {{- if  hasKey .Values.shoot "allowPrivilegedContainers" }}
-        shoot.allowPrivilegedContainers: "{{ .Values.shoot.allowPrivilegedContainers }}"
-        {{- end }}
         {{- if  hasKey .Values.shoot "shootAnnotations" }}
         shoot.shootAnnotations: "{{ .Values.shoot.shootAnnotations }}"
         {{- end }}

@@ -93,13 +93,12 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 				shoots = append(shoots, &ExtendedFlavorInstance{
 					shoot: &common.ExtendedShoot{
 						Shoot: common.Shoot{
-							Description:               rawFlavor.Description,
-							AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
-							AdditionalLocations:       rawFlavor.AdditionalLocations,
-							Provider:                  rawFlavor.Provider,
-							KubernetesVersion:         k8sVersion,
-							AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,
-							Workers:                   pools,
+							Description:           rawFlavor.Description,
+							AdditionalAnnotations: rawFlavor.AdditionalAnnotations,
+							AdditionalLocations:   rawFlavor.AdditionalLocations,
+							Provider:              rawFlavor.Provider,
+							KubernetesVersion:     k8sVersion,
+							Workers:               pools,
 						},
 						ExtendedShootConfiguration: common.ExtendedShootConfiguration{
 							Name:                  fmt.Sprintf("%s%s", shootPrefix, util.RandomString(3)),

@@ -135,9 +135,6 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			}
 
 			var additionalDimensionInfo string
-			if meta.AllowPrivilegedContainers != nil && !*meta.AllowPrivilegedContainers {
-				additionalDimensionInfo = "NoPrivCtrs"
-			}
 			item := &util.TableItem{
 				Meta:         util.ItemMeta{CloudProvider: meta.CloudProvider, TestrunID: meta.Testrun.ID, OperatingSystem: meta.OperatingSystem, KubernetesVersion: meta.KubernetesVersion, FlavorDescription: meta.FlavorDescription, AdditionalDimensionInfo: additionalDimensionInfo},
 				StatusSymbol: status,

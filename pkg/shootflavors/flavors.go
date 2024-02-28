@@ -107,22 +107,20 @@ func New(rawFlavors []*common.ShootFlavor) (*Flavors, error) {
 					}
 
 					shoots = append(shoots, &common.Shoot{
-						AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
-						AdditionalLocations:       rawFlavor.AdditionalLocations,
-						Provider:                  rawFlavor.Provider,
-						KubernetesVersion:         k8sVersion,
-						AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,
-						Workers:                   workers.WorkerPools,
+						AdditionalAnnotations: rawFlavor.AdditionalAnnotations,
+						AdditionalLocations:   rawFlavor.AdditionalLocations,
+						Provider:              rawFlavor.Provider,
+						KubernetesVersion:     k8sVersion,
+						Workers:               workers.WorkerPools,
 					})
 				}
 				continue
 			}
 			shoots = append(shoots, &common.Shoot{
-				AdditionalAnnotations:     rawFlavor.AdditionalAnnotations,
-				AdditionalLocations:       rawFlavor.AdditionalLocations,
-				Provider:                  rawFlavor.Provider,
-				KubernetesVersion:         k8sVersion,
-				AllowPrivilegedContainers: rawFlavor.AllowPrivilegedContainers,
+				AdditionalAnnotations: rawFlavor.AdditionalAnnotations,
+				AdditionalLocations:   rawFlavor.AdditionalLocations,
+				Provider:              rawFlavor.Provider,
+				KubernetesVersion:     k8sVersion,
 			})
 		}
 	}

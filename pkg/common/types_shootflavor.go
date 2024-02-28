@@ -38,9 +38,6 @@ type Shoot struct {
 	// Kubernetes versions to test
 	KubernetesVersion gardencorev1beta1.ExpirableVersion
 
-	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
-	AllowPrivilegedContainers *bool
-
 	// AdditionalAnnotations holds annotations to be added to created shoots
 	AdditionalAnnotations map[string]string
 
@@ -62,10 +59,6 @@ type ShootFlavor struct {
 
 	// Kubernetes versions to test
 	KubernetesVersions ShootKubernetesVersionFlavor `json:"kubernetes"`
-
-	// AllowPrivilegedContainers defines whether privileged containers will be allowed in the given shoot or not
-	// +optional
-	AllowPrivilegedContainers *bool `json:"allowPrivilegedContainers"`
 
 	// AdditionalAnnotations allows to optionally define additional annotations for the created shoot resources
 	// +optional
