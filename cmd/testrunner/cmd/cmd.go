@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/gardener/test-infra/cmd/testrunner/cmd/alert"
 	collectcmd "github.com/gardener/test-infra/cmd/testrunner/cmd/collect"
@@ -29,6 +30,7 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 		logger.SetLogger(log)
+		ctrl.SetLogger(log)
 		return nil
 	},
 }
