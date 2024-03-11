@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/client.go github.com/gardener/test-infra/pkg/util/elasticsearch Client
 //
+
 // Package mock_elasticsearch is a generated GoMock package.
 package mock_elasticsearch
 

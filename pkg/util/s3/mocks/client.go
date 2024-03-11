@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/client.go github.com/gardener/test-infra/pkg/util/s3 Client,Object
 //
+
 // Package mock_s3 is a generated GoMock package.
 package mock_s3
 

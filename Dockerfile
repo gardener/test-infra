@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #############      builder       #############
-FROM golang:1.21 AS builder
+FROM golang:1.22 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 
@@ -29,7 +29,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.21-alpine AS base-step
+FROM golang:1.22-alpine AS base-step
 
 ENV HELM_TILLER_VERSION=v2.16.12
 ENV KUBECTL_VERSION=v1.26.6
