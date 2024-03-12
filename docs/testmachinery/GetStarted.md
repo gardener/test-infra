@@ -51,7 +51,7 @@ spec:
   # Arguments to the entrypoint. The docker image's CMD is used if this is not provided.
   args: ["test.sh"]
 
-  image: golang:1.21 # optional, default image is "europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:latest"
+  image: golang:1.22 # optional, default image is "europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:latest"
 
   # optional; Configuration of a TestDefinition.
   # Environment Variables can be configured per TestDefinition
@@ -159,7 +159,7 @@ The Testmachinery provides some images to run your Integration Tests (Dockerfile
 
 #### Golang image (europe-docker.pkg.dev/gardener-project/releases/testmachinery/golang:latest) <!-- omit in toc -->
 - FROM base image
-- Golang v1.21
+- Golang v1.22
 - ginkgo test suite at $GOPATH/src/github.com/onsi/ginkgo
 - Go project setup script
   - automatically setup test repository at the provided gopath and cd's into it

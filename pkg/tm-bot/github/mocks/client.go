@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/client.go github.com/gardener/test-infra/pkg/tm-bot/github Client
 //
+
 // Package mock_github is a generated GoMock package.
 package mock_github
 
