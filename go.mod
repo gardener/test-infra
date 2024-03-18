@@ -11,6 +11,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.8.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gardener/gardener v1.90.1
+	github.com/gardener/gardener-extension-provider-aws v1.53.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0

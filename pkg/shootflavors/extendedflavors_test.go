@@ -7,11 +7,13 @@ package shootflavors
 import (
 	"context"
 
+	"github.com/gardener/gardener-extension-provider-aws/pkg/apis/aws/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	mockclient "github.com/gardener/gardener/third_party/mock/controller-runtime/client"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
+	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -339,6 +341,63 @@ var _ = Describe("extended flavor test", func() {
 
 		Expect(*flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
 		Expect(*flavors.GetShoots()[0].Get().Workers[1].Machine.Image.Version).To(Equal("0.0.4"))
+	})
+
+	It("should generate a providerConfig for workers on aws", func() {
+		versionPattern := "latest"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				Provider: common.CloudProviderAWS,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Pattern: &versionPattern,
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{
+							{
+								Name: "wp1",
+								Machine: gardencorev1beta1.Machine{
+									Image: &gardencorev1beta1.ShootMachineImage{
+										Name:    "test-os",
+										Version: ptr.To("latest"),
+									},
+								},
+							},
+							{
+								Name: "wp1",
+								Machine: gardencorev1beta1.Machine{
+									Image: &gardencorev1beta1.ShootMachineImage{
+										Name:    "test-os-2",
+										Version: ptr.To("latest"),
+									},
+									Architecture: ptr.To("arm64"),
+								},
+							},
+						},
+					},
+				},
+			},
+		}}
+
+		cloudprofile.Spec.Type = "aws"
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
+			*obj = cloudprofile
+			return nil
+		})
+		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+
+		Expect(*flavors.GetShoots()[0].Get().Workers[1].Machine.Image.Version).To(Equal("0.0.4"))
+		Expect(*flavors.GetShoots()[0].Get().Workers[1].ProviderConfig).ToNot(BeNil())
+		worker := v1alpha1.WorkerConfig{}
+		err = json.Unmarshal(flavors.GetShoots()[0].Get().Workers[1].ProviderConfig.Raw, &worker)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(*worker.InstanceMetadataOptions.HTTPTokens).To(Equal(v1alpha1.HTTPTokensRequired))
+		Expect(*worker.InstanceMetadataOptions.HTTPPutResponseHopLimit).To(Equal(int64(2)))
+		Expect(*flavors.GetShoots()[0].Get().Workers[0].Machine.Image.Version).To(Equal("0.0.2"))
+		Expect(*flavors.GetShoots()[0].Get().Workers[0].ProviderConfig).ToNot(BeNil())
 	})
 
 	It("should generate a shoot with correct networkingType", func() {
