@@ -63,6 +63,8 @@ func (o *options) Complete() error {
 
 	o.testrunnerConfig.Timeout = time.Duration(o.timeout) * time.Second
 	o.collectConfig.ComponentDescriptorPath = o.shootParameters.ComponentDescriptorPath
+	o.collectConfig.OCMConfigPath = o.shootParameters.OCMConfigPath
+	o.collectConfig.Repository = o.shootParameters.Repository
 
 	if len(o.shootParameters.FlavorConfigPath) != 0 {
 		gardenK8sClient, err := kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
