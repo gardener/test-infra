@@ -8,6 +8,7 @@ import sys
 import subprocess
 import git
 import string
+import json
 import random
 import gitutil
 import stat
@@ -145,7 +146,7 @@ def activate_google_application_credentials():
                                       cfg_name='gardener_cloud_storage_read')
     google_credentials_content = config.raw['service_account_key']
     with open(google_credentials_filename, "w") as google_credentials:
-        google_credentials.write(str(google_credentials_content))
+        json.dump(google_credentials_content, google_credentials)
     print(google_credentials_filename + " created")
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_credentials_filename
 
