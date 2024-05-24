@@ -141,9 +141,9 @@ def inplace_change(filename, old_string, new_string):
 def activate_google_application_credentials():
     cfg_factory = ccc.cfg.cfg_factory()
 
-    config = cfg_factory._cfg_element(cfg_type_name='gcloud_account',
+    config = cfg_factory._cfg_element(cfg_type_name='gcp',
                                       cfg_name='gardener_cloud_storage_read')
-    google_credentials_content = config.raw['credentials']['storage_object_read']['auth_secret']
+    google_credentials_content = config.raw['service_account_key']
     google_credentials = open(google_credentials_filename, "w")
     google_credentials.write(google_credentials_content)
     google_credentials.close()
