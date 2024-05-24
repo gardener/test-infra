@@ -144,9 +144,8 @@ def activate_google_application_credentials():
     config = cfg_factory._cfg_element(cfg_type_name='gcp',
                                       cfg_name='gardener_cloud_storage_read')
     google_credentials_content = config.raw['service_account_key']
-    google_credentials = open(google_credentials_filename, "w")
-    google_credentials.write(google_credentials_content)
-    google_credentials.close()
+    with open(google_credentials_filename, "w") as google_credentials:
+        google_credentials.write(str(google_credentials_content))
     print(google_credentials_filename + " created")
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_credentials_filename
 
