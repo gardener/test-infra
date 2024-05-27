@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v54/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -237,7 +237,7 @@ func (a *githubOAuth) Logout(w http.ResponseWriter, r *http.Request) {
 func (a *githubOAuth) getGHClient(client *http.Client) (*github.Client, error) {
 	if a.hostname != "github.com" {
 		githubUrl := "https://" + a.hostname
-		return github.NewEnterpriseClient(githubUrl, githubUrl, client)
+		return github.NewClient(client).WithEnterpriseURLs(githubUrl, "")
 	}
 	return github.NewClient(client), nil
 }

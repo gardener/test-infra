@@ -11,7 +11,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/Masterminds/sprig"
+	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"

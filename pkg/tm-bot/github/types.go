@@ -11,7 +11,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v54/github"
+	"github.com/google/go-github/v60/github"
 
 	"github.com/gardener/test-infra/pkg/apis/config"
 	"github.com/gardener/test-infra/pkg/tm-bot/github/ghval"

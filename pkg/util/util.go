@@ -26,7 +26,7 @@ import (
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v54/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/pkg/errors"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -243,7 +243,7 @@ func ParseRepoURL(url *url.URL) (repoOwner, repoName string, err error) {
 
 // GetGitHubClient returns a new github enterprise client with basic auth and optional tls verification
 func GetGitHubClient(apiURL, username, password, uploadURL string, skipTLS bool) (*github.Client, error) {
-	ghClient, err := github.NewEnterpriseClient(apiURL, uploadURL, GetHTTPClient(username, password, skipTLS))
+	ghClient, err := github.NewClient(GetHTTPClient(username, password, skipTLS)).WithEnterpriseURLs(apiURL, uploadURL)
 	if err != nil {
 		return nil, err
 	}
