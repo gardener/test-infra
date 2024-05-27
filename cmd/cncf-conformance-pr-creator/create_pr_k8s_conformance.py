@@ -1,40 +1,30 @@
 #!/usr/bin/env python3
-import shutil
-
-import util
-import types
-import os
-import sys
-import subprocess
-import git
-import string
-import json
-import random
-import gitutil
-import stat
-import re
 import glob
-from semver.version import Version
-import github.util
-from pprint import pprint
-from gitutil import GitHelper
-from shutil import copyfile
-from google.cloud import storage
-from model import ConfigFactory
+import json
+import os
+import random
+import re
+import shutil
+import string
+import subprocess
+import sys
 
-# from gardener-cicd-libs
-import ccc.cfg
+import google.cloud.storage
+import semver.version
+
+import ctx
+import gitutil
+import github.util
+import model
+
 
 repo_name = 'k8s-conformance'
 product_yaml_filename = "PRODUCT.yaml"
 google_credentials_filename = os.path.dirname(os.path.realpath(__file__)) + '/' + 'google_credentials.json'
 repo_path = os.environ['FORK_OWNER'] + '/' + repo_name
 upstream_repo = 'https://github.com/cncf/k8s-conformance'
-ctx = util.ctx()
-f = ctx.cfg_factory()
-ce = f.cfg_set('external_active')
-ci = f.cfg_set('internal_active')
-github_cfg = f.github('github_com')
+cfg_factory = ctx.cfg_factory()
+github_cfg = cfg_factory.github('github_com')
 gh = github.util.GitHubRepositoryHelper(
     owner='cncf',
     name=repo_name,
@@ -101,7 +91,7 @@ def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
 
 
 def cloneForkedRepo():
-    gitHelper = GitHelper.clone_into(repo_name, github_cfg, repo_path)
+    gitHelper = gitutil.GitHelper.clone_into(repo_name, github_cfg, repo_path)
     print('INFO: Cloned ' + repo_path + ' repository into ' + repo_name + ' directory')
     return gitHelper
 
@@ -139,9 +129,7 @@ def inplace_change(filename, old_string, new_string):
         f.write(s)
 
 
-def activate_google_application_credentials():
-    cfg_factory = ccc.cfg.cfg_factory()
-
+def activate_google_application_credentials(cfg_factory: model.ConfigFactory):
     config = cfg_factory._cfg_element(cfg_type_name='gcp',
                                       cfg_name='gardener_cloud_storage_read')
     google_credentials_content = config.raw['service_account_key']
@@ -153,8 +141,8 @@ def activate_google_application_credentials():
 
 def get_provider_k8s_version_tuples():
     # determine the smallest version still submittable to the cncf repo. Check the repo's folder structure for it.
-    min_version = min(map(lambda x: Version.parse(re.sub(r'^v', '', x), optional_minor_and_patch=True), glob.glob('v1.*')))
-    storage_client = storage.Client()
+    min_version = min(map(lambda x: semver.version.Version.parse(re.sub(r'^v', '', x), optional_minor_and_patch=True), glob.glob('v1.*')))
+    storage_client = google.cloud.storage.Client()
     prefix = "ci-gardener-e2e-conformance"
     bucket = storage_client.get_bucket(gs_bucket_name)
     iterator = bucket.list_blobs(prefix=prefix, delimiter='/')
@@ -165,7 +153,7 @@ def get_provider_k8s_version_tuples():
             if provider not in provider_list:
                 continue  # if the provider is not supported, continue
             k8s_version = re.search('-(v\d+\.\d+)\/', blob_name).group(1)
-            if Version.parse(re.sub(r'^v', '', k8s_version), optional_minor_and_patch=True) < min_version:
+            if semver.version.Version.parse(re.sub(r'^v', '', k8s_version), optional_minor_and_patch=True) < min_version:
                 continue  # never submit PRs for versions that have already been archived
             provider_version_tuples.append((provider, k8s_version))
     return provider_version_tuples
@@ -210,7 +198,7 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
         print("Was not able to open " + f)
 
     # create readme
-    copyfile(temlate_dir + '/gardener_readme.txt', 'README.md')
+    shutil.copyfile(temlate_dir + '/gardener_readme.txt', 'README.md')
 
     # download e2e.log and junit_01.xml
     downloadingE2eLogFileSuccessful = download_files_from_gcloud_storage(provider, k8s_version)
@@ -227,7 +215,7 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
 
 def download_files_from_gcloud_storage(provider, k8s_version):
     e2e_log_file = 'e2e.log'
-    storage_client = storage.Client()
+    storage_client = google.cloud.storage.Client()
     blob_prefix = 'ci-gardener-e2e-conformance-' + provider + '-' + k8s_version + '/'
     bucket = storage_client.get_bucket(gs_bucket_name)
 
@@ -333,7 +321,7 @@ subprocess.run(["git", "config", "--global", "user.email",
 
 gitHelper = cloneForkedRepo()
 syncForkAndUpstream(gitHelper)
-activate_google_application_credentials()
+activate_google_application_credentials(cfg_factory=cfg_factory)
 provider_version_tuples = get_provider_k8s_version_tuples()
 gardener_version = get_gardener_version()
 upstream_prs = list(map(lambda x: str(x.head), repo.pull_requests(state='open')))
