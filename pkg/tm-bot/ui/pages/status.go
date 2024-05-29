@@ -13,7 +13,7 @@ import (
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	github2 "github.com/google/go-github/v54/github"
+	github2 "github.com/google/go-github/v60/github"
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

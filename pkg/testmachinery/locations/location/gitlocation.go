@@ -13,7 +13,7 @@ import (
 
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v54/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/pkg/errors"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -160,7 +160,7 @@ func (l *GitLocation) getGitHubClient() (*github.Client, *http.Client, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	client, err := github.NewEnterpriseClient(l.getGitHubAPI(), "", httpClient)
+	client, err := github.NewClient(httpClient).WithEnterpriseURLs(l.getGitHubAPI(), "")
 	if err != nil {
 		return nil, nil, err
 	}
