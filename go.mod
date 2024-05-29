@@ -9,8 +9,8 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.5.7
 	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gardener/gardener v1.90.1
-	github.com/gardener/gardener-extension-provider-aws v1.53.1
+	github.com/gardener/gardener v1.95.2
+	github.com/gardener/gardener-extension-provider-aws v1.54.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
@@ -39,7 +39,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.14.2
+	helm.sh/helm/v3 v3.14.4
 	k8s.io/api v0.29.5
 	k8s.io/apiextensions-apiserver v0.29.5
 	k8s.io/apimachinery v0.29.5
@@ -47,7 +47,7 @@ require (
 	k8s.io/code-generator v0.29.5
 	k8s.io/kube-openapi v0.0.0-20240221221325-2ac9dc51f3f1
 	k8s.io/metrics v0.29.5
-	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
+	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
 	sigs.k8s.io/controller-runtime v0.17.5
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -122,7 +122,7 @@ require (
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
-	github.com/containerd/containerd v1.7.13 // indirect
+	github.com/containerd/containerd v1.7.16 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containers/image/v5 v5.21.1 // indirect
