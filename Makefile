@@ -95,11 +95,9 @@ gen-certs:
 	rm -rf assets
 	@mkdir -p assets
 	@openssl genrsa -out assets/ca.key 2048
-	@openssl req -config charts/testmachinery/ca.cnf -new -key assets/ca.key -out assets/ca.csr \
-		-subj "/C=DE/O=SAP SE/OU=testmachinery"
-	@openssl x509 -req -sha256 -days 365 -in assets/ca.csr -signkey assets/ca.key -out assets/ca.crt
+	@openssl req -x509 -new -noenc -key assets/ca.key -sha256 -days 365  -out assets/ca.crt -subj "/CN=SA SE CA/C=DE/ST=Walldorf/L=Walldorf/O=testmachinery"
 	@openssl genrsa -out assets/tls.key 2048
-	@openssl req -new -sha256 -nodes -extensions v3_req -config charts/testmachinery/controller.cnf -key assets/tls.key -out assets/tls.csr
+	@openssl req -new -sha256 -noenc -extensions v3_req -config charts/testmachinery/controller.cnf -key assets/tls.key -out assets/tls.csr
 	@openssl x509 -req -sha256 -days 365 -extensions v3_req -extfile charts/testmachinery/controller.cnf -in assets/tls.csr -CA assets/ca.crt -CAkey assets/ca.key -CAcreateserial -out assets/tls.crt
 
 
