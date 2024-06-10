@@ -64,6 +64,9 @@ func getLatestMachineImageVersion(rawVersions []gardencorev1beta1.MachineImageVe
 		if err != nil {
 			return gardencorev1beta1.MachineImageVersion{}, err
 		}
+		if v.Metadata() != "" {
+			continue
+		}
 		if latestVersion == nil || v.GreaterThan(latestVersion) {
 			latestVersion = v
 			latestExpVersion = rawVersion
