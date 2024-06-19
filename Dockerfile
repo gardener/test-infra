@@ -19,7 +19,7 @@ COPY . .
 RUN make install
 
 ############# tm-controller #############
-FROM alpine:3.18 AS tm-controller
+FROM alpine:3.20 AS tm-controller
 
 COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
@@ -32,8 +32,8 @@ ENTRYPOINT ["/testmachinery-controller"]
 FROM golang:1.22-alpine AS base-step
 
 ENV HELM_TILLER_VERSION=v2.16.12
-ENV KUBECTL_VERSION=v1.26.6
-ENV HELM_V3_VERSION=v3.12.1
+ENV KUBECTL_VERSION=v1.30.2
+ENV HELM_V3_VERSION=v3.15.2
 
 RUN  \
   apk update \
@@ -116,7 +116,7 @@ WORKDIR /
 ENTRYPOINT ["/testrunner"]
 
 ############# tm-bot #############
-FROM alpine:3.18 AS tm-bot
+FROM alpine:3.20 AS tm-bot
 
 RUN apk add --update bash curl
 
