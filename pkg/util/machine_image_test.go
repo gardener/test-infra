@@ -38,6 +38,10 @@ var _ = Describe("get machine images from a cloudprofile", func() {
 								ExpirationDate: &futureTime,
 							}, Architectures: []string{arch_amd64, arch_arm64}},
 							{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+								Version:        "2.3.3",
+								ExpirationDate: &futureTime,
+							}, Architectures: []string{arch_amd64, arch_arm64}},
+							{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 								Version:        "2.3.4",
 								ExpirationDate: &futureTime,
 							}, Architectures: []string{arch_amd64, arch_arm64}},
