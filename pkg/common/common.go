@@ -103,6 +103,10 @@ const (
 	PatternTwoMinorBeforeLatest   = "twoMinorBeforeLatest"
 	PatternThreeMinorBeforeLatest = "threeMinorBeforeLatest"
 	PatternFourMinorBeforeLatest  = "fourMinorBeforeLatest"
+	PatternOneMajorBeforeLatest   = "oneMajorBeforeLatest"
+	PatternTwoMajorBeforeLatest   = "twoMajorBeforeLatest"
+	PatternThreeMajorBeforeLatest = "threeMajorBeforeLatest"
+	PatternFourMajorBeforeLatest  = "fourMajorBeforeLatest"
 
 	// TM Dashboard
 	DashboardExecutionGroupParameter = "runID"

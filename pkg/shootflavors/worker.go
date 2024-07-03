@@ -17,8 +17,11 @@ func SetupWorker(cloudprofile gardencorev1beta1.CloudProfile, workers []gardenco
 	res := make([]gardencorev1beta1.Worker, len(workers))
 	for i, w := range workers {
 		worker := w.DeepCopy()
-		if worker.Machine.Image != nil && (worker.Machine.Image.Version == nil || *worker.Machine.Image.Version == common.PatternLatest) {
-			version, err := util.GetLatestMachineImageVersion(cloudprofile, worker.Machine.Image.Name, *worker.Machine.Architecture)
+		if worker.Machine.Image != nil {
+			if worker.Machine.Image.Version == nil {
+				*worker.Machine.Image.Version = common.PatternLatest
+			}
+			version, err := util.GetMachineImageVersion(cloudprofile, *worker.Machine.Image.Version, worker.Machine.Image.Name, *worker.Machine.Architecture)
 			if err != nil {
 				return nil, err
 			}
