@@ -102,7 +102,9 @@ RUN  \
       /usr/local/share/ca-certificates/SAP_Global_Sub_CA_04.crt \
   && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2005.crt -o \
       /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
-  && update-ca-certificates
+  && update-ca-certificates \
+  && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
+  && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
 
 ENV PATH /cc/utils/bin:$PATH
 
