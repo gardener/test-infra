@@ -4,9 +4,9 @@
 
 # overriden in images.yaml
 images:
-  argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.5.7
-  argo-executor: quay.io/argoproj/argoexec:v3.5.7
-  argo-server: quay.io/argoproj/argocli:v3.5.7
+  argo-workflow-controller: quay.io/argoproj/workflow-controller:v3.5.10
+  argo-executor: quay.io/argoproj/argoexec:v3.5.10
+  argo-server: quay.io/argoproj/argocli:v3.5.10
 
 argo:
   name: workflow-controller
