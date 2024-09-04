@@ -96,16 +96,12 @@ RUN  \
     /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
   && curl http://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt -o \
       /usr/local/share/ca-certificates/SAPNetCA_G2.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2002.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_02.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2004.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_04.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2005.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
+  && curl https://aia.pki.co.sap.com/aia/SAPNetCA_G2_2.crt -o \
+    /usr/local/share/ca-certificates/SAPNetCA_G2_2.crt \
   && update-ca-certificates \
   && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
   && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
-
+# SAPNetCA_G2.crt will expire 2025-03-17 -> remove
 ENV PATH /cc/utils/bin:$PATH
 
 ############# tm-run #############
