@@ -13,17 +13,17 @@ The e2e test runner leverages kubetest to execute e2e tests and has a few additi
 
 ```bash
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra golang:1.21 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.23 bash
 
 # run command below within container to invoke tests in a parallelized way (keep --cloudprovider=skeleton, it means that the tests won't utilize any cloud provider specifics but only resort to kube-apiserver access to the cluster, most likely this is anyway not relevant for the conformance tests, but only for other e2e tests)
-GINKGO_PARALLEL=true go run -mod=vendor ./integration-tests/e2e --k8sVersion=1.27.1 --cloudprovider=skeleton --testcasegroup="conformance"
+GINKGO_PARALLEL=true go run ./integration-tests/e2e --k8sVersion=1.27.1 --cloudprovider=skeleton --testcasegroup="conformance"
 ```
 
 ### Run conformance tests (or single tests) directly (without Gardener's test automation)
 ```shell
 # target some cluster
 # cd into your k/k folder
-# (if not done already: go install github.com/onsi/ginkgo/v2/ginkgo)
+# (if not done already: go install github.com/onsi/ginkgo/v2/ginkgo)11
 # all conformance tests:
 ginkgo --focus "\[Conformance\]" -p ./test/e2e
 # single test:
