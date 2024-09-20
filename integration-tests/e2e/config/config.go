@@ -120,7 +120,7 @@ func init() {
 		}
 	}
 
-	K8sRoot = filepath.Join(GoPath, "src/k8s.io")
+	K8sRoot = filepath.Join(GoPath, "src/k8s.io/kubernetes")
 	KubernetesPath = filepath.Join(K8sRoot, "kubernetes")
 	TestInfraPath = filepath.Join(K8sRoot, "test-infra")
 	if ShootKubeconfigPath == "" {

@@ -2,13 +2,14 @@ package setup
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/gardener/test-infra/integration-tests/e2e/kubetest"
 	"github.com/gardener/test-infra/integration-tests/e2e/util"
 	tmutil "github.com/gardener/test-infra/pkg/util"
+	k8sutil "k8s.io/test-infra/kubetest/util"
 )
 
 func Setup() error {
@@ -54,11 +56,55 @@ func getKubetestAndUtilities() error {
 		return err
 	}
 
+	downloadRoot := k8sutil.K8s("kubernetes", "_output", "gcs-stage")
+	downloadFolderVersion := fmt.Sprintf("%s/v%s", downloadRoot, config.K8sRelease)
+
+	log.Infof("Creating K8s directory at %s ...", downloadFolderVersion)
+	err := os.MkdirAll(downloadFolderVersion, 700)
+	if err != nil {
+		return err
+	}
+
+	downloadUrlBase := fmt.Sprintf("https://dl.k8s.io/v%s", config.K8sRelease)
+	fileNames := []string{
+		"kubernetes.tar.gz",
+		"kubernetes-client-linux-amd64.tar.gz",
+		"kubernetes-server-linux-amd64.tar.gz",
+		"kubernetes-test-linux-amd64.tar.gz",
+		"kubernetes-test-portable.tar.gz",
+	}
+
+	for _, resource := range fileNames {
+
+		downloadURL := fmt.Sprintf("%s/%s", downloadUrlBase, resource)
+		log.Infof("Downloading K8s archive from %s ...", downloadURL)
+		response, err := http.Get(downloadURL)
+		if err != nil {
+			return err
+		}
+		defer response.Body.Close()
+
+		k8sFilePath := fmt.Sprintf("%s/%s", downloadFolderVersion, resource)
+		log.Infof("Create archive file at %s ...", k8sFilePath)
+		f, err := os.Create(k8sFilePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		_, err = io.Copy(f, response.Body)
+		if err != nil {
+			return err
+		}
+	}
+	log.Info("Finished downloading and storing K8s archive for kubetest")
+
 	log.Info("Setting up tools...")
 	if err := os.MkdirAll(config.K8sRoot, os.ModePerm); err != nil {
 		return errors.Wrapf(err, "unable to create directories %s", config.K8sRoot)
 	}
-	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=v%s", config.K8sRelease), config.K8sRoot); err != nil {
+
+	if _, err := util.RunCmd(fmt.Sprintf("kubetest --provider=skeleton --extract=local"), config.K8sRoot); err != nil {
 		return err
 	}
 	if err := cleanUpLargeUnsedFiles(); err != nil {
@@ -70,34 +116,12 @@ func getKubetestAndUtilities() error {
 func cleanUpLargeUnsedFiles() error {
 	// at this point all archive files should have been extracted and therefore are not needed anymore
 	unusedFiles := util.GetFilesByPattern(config.K8sRoot, "tar.gz$")
-	// in k8s < 1.14.* all platforms and archictures are downloaded, but we want to keep only the necessary one
-	platformsDir := filepath.Join(config.KubernetesPath, "platforms")
-	unusedFiles = append(unusedFiles, platformsDir)
-	currentPlatformArchitecture := filepath.Join(config.KubernetesPath, "platforms", runtime.GOOS, runtime.GOARCH)
-	backupOfCurrentPlatformArchitecture := filepath.Join(config.KubernetesPath, fmt.Sprintf("platforms_backup_%s_%s", runtime.GOOS, runtime.GOARCH))
-
-	// backup e2e platform binaries
-	// the backup is necessary, because only a subset of subfolders is needed and the rest is disposable
-	log.Infof("Backup '%s' in '%s'", currentPlatformArchitecture, backupOfCurrentPlatformArchitecture)
-	if err := os.Rename(currentPlatformArchitecture, backupOfCurrentPlatformArchitecture); err != nil {
-		return err
-	}
-
 	// delete unused files / directories
 	for _, unusedFile := range unusedFiles {
 		log.Infof("Removing unused directory/file: %s", unusedFile)
 		if err := os.RemoveAll(unusedFile); err != nil {
 			return err
 		}
-	}
-
-	// enable e2e platform binaries backup
-	log.Infof("Install backup '%s' in '%s'", backupOfCurrentPlatformArchitecture, currentPlatformArchitecture)
-	if err := os.MkdirAll(filepath.Dir(currentPlatformArchitecture), os.FileMode(int(0777))); err != nil {
-		return err
-	}
-	if err := os.Rename(backupOfCurrentPlatformArchitecture, currentPlatformArchitecture); err != nil {
-		return err
 	}
 	return nil
 }
