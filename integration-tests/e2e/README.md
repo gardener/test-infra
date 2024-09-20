@@ -23,7 +23,7 @@ GINKGO_PARALLEL=true go run ./integration-tests/e2e --k8sVersion=1.27.1 --cloudp
 ```shell
 # target some cluster
 # cd into your k/k folder
-# (if not done already: go install github.com/onsi/ginkgo/v2/ginkgo)11
+# (if not done already: go install github.com/onsi/ginkgo/v2/ginkgo)
 # all conformance tests:
 ginkgo --focus "\[Conformance\]" -p ./test/e2e
 # single test:
