@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package hydrophone
 
 import (
@@ -10,12 +14,14 @@ import (
 	"github.com/gardener/test-infra/conformance-tests/util"
 )
 
+// Setup installs a given version of Hydrophone using the "go install" command
 func Setup(log logr.Logger) error {
 	moduleVersion := fmt.Sprintf("sigs.k8s.io/hydrophone@%s", config.HydrophoneVersion)
 	log.Info("Setting up Hydrophone ...")
 	return util.RunCommand(log, "go", "install", moduleVersion)
 }
 
+// Run compiles arguments and runs K8s conformance tests using Hydrophone
 func Run(log logr.Logger) error {
 	log.Info("Starting Conformance tests with Hydrophone")
 

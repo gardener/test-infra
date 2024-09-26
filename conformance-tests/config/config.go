@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package config
 
 import (
@@ -13,19 +17,20 @@ import (
 )
 
 var (
-	ConformanceLogLevel     int
-	HydrophoneVersion       string
-	K8sRelease              string
-	SkipIndividualTestCases string
-	GinkgoParallel          bool
-	FlakeAttempts           int
-	ExportPath              string
-	ShootKubeconfigPath     string
-	GardenKubeconfigPath    string
-	ProjectNamespace        string
-	ShootName               string
-	CloudProvider           string
-	DryRun                  bool
+	ConformanceLogLevel      int
+	HydrophoneVersion        string
+	K8sRelease               string
+	SkipIndividualTestCases  string
+	GinkgoParallel           bool
+	FlakeAttempts            int
+	ExportPath               string
+	PublishResultsToTestgrid bool
+	ShootKubeconfigPath      string
+	CloudProvider            string
+	GardenerVersion          string
+	DryRun                   bool
+	GcsBucket                string
+	GcsProjectID             string
 )
 
 func init() {
@@ -35,13 +40,8 @@ func init() {
 	flag.StringVar(&SkipIndividualTestCases, "skipIndividualTestCases", "", "A list of ginkgo.skip patterns (regex based) to skip individual test cases, use \"|\" as delimiter.")
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
-	flag.StringVar(&GardenKubeconfigPath, "gardenKubeconfig", "", "kubeconfig file path of the virtual garden cluster")
-	flag.StringVar(&ShootName, "shoot", "", "name of the shoot cluster")
-	flag.StringVar(&ProjectNamespace, "project", "", "name of the garden project")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
 	flag.BoolVar(&DryRun, "dryRun", false, "use in combination with --conformanceLogLevel to output testcases")
-	// publish??
-
 	flag.Parse()
 
 	if K8sRelease == "" {
@@ -69,6 +69,10 @@ func init() {
 		log.Fatal("flakeAttempts of 0 zero doesn't make sense. Use >= 1 to have at least 1 execution.")
 	}
 
+	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
+	GcsBucket = tiutil.Getenv("GCS_BUCKET", "k8s-conformance-gardener")
+	GcsProjectID = tiutil.Getenv("GCS_PROJECT_ID", "gardener")
+
 	if ShootKubeconfigPath == "" {
 		ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", os.Getenv("KUBECONFIG"))
 	}
@@ -79,27 +83,14 @@ func init() {
 		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", ShootKubeconfigPath))
 	}
 
-	if GardenKubeconfigPath == "" {
-		GardenKubeconfigPath = os.Getenv("GARDEN_KUBECONFIG_PATH")
-	}
-	if _, err := os.Stat(GardenKubeconfigPath); err != nil {
-		log.Fatal(errors.Wrapf(err, "file %s does not exist: ", GardenKubeconfigPath))
-	}
-
-	if ProjectNamespace == "" {
-		ProjectNamespace = os.Getenv("PROJECT_NAMESPACE")
-	}
-
-	if ShootName == "" {
-		ShootName = os.Getenv("SHOOT_NAME")
-	}
-
 	if CloudProvider == "" {
 		CloudProvider = os.Getenv("PROVIDER_TYPE")
 	}
 	if CloudProvider == "" {
 		log.Fatal("PROVIDER_TYPE environment variable not found")
 	}
+
+	GardenerVersion = tiutil.Getenv("GARDENER_VERSION", "")
 
 	tmpDir := "/tmp/e2e"
 	ExportPath = tiutil.Getenv("E2E_EXPORT_PATH", path.Join(tmpDir, "export"))
@@ -110,6 +101,7 @@ func init() {
 	}
 }
 
+// LogConfig sends the most relevant configuration options and their values to its logger
 func LogConfig(log logr.Logger) {
 	log.Info("Running with configuration",
 		"ExportPath", ExportPath,
@@ -118,6 +110,7 @@ func LogConfig(log logr.Logger) {
 		"HydrophoneVersion", HydrophoneVersion,
 		"GinkgoParallel", GinkgoParallel,
 		"FlakeAttempts", FlakeAttempts,
+		"PublishResultsToTestgrid", PublishResultsToTestgrid,
 		"SkipIndividualTestCases", SkipIndividualTestCases,
 	)
 }
