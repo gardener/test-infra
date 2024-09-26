@@ -36,8 +36,13 @@ func Run(log logr.Logger) error {
 	if config.SkipIndividualTestCases != "" {
 		hydrophoneArgs = append(hydrophoneArgs, "--skip", config.SkipIndividualTestCases)
 	}
+
+	if config.DryRun {
+		hydrophoneArgs = append(hydrophoneArgs, "--dry-run")
+	}
+
 	// ginkgo cannot do a dry-run with multiple nodes
-	if !config.DryRun && config.GinkgoParallel {
+	if config.GinkgoParallel && !config.DryRun {
 		hydrophoneArgs = append(hydrophoneArgs, "-p", "8")
 	}
 	if config.FlakeAttempts != 1 {
