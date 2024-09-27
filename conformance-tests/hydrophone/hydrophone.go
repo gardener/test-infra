@@ -46,7 +46,7 @@ func Run(log logr.Logger) error {
 	if config.GinkgoParallel && !config.DryRun {
 		hydrophoneArgs = append(hydrophoneArgs, "-p", "8")
 	}
-	if config.FlakeAttempts != 1 || config.FlakeAttempts != 0 {
+	if config.FlakeAttempts != 1 {
 		hydrophoneArgs = append(hydrophoneArgs, "--extra-ginkgo-args", fmt.Sprintf("--flake-attempts=%d", config.FlakeAttempts))
 	}
 
