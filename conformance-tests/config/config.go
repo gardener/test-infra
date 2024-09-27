@@ -65,10 +65,6 @@ func init() {
 
 	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
 
-	if FlakeAttempts == 0 {
-		log.Fatal("flakeAttempts of 0 zero doesn't make sense. Use >= 1 to have at least 1 execution.")
-	}
-
 	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
 	GcsBucket = tiutil.Getenv("GCS_BUCKET", "k8s-conformance-gardener")
 	GcsProjectID = tiutil.Getenv("GCS_PROJECT_ID", "gardener")
@@ -113,4 +109,7 @@ func LogConfig(log logr.Logger) {
 		"PublishResultsToTestgrid", PublishResultsToTestgrid,
 		"SkipIndividualTestCases", SkipIndividualTestCases,
 	)
+	if PublishResultsToTestgrid {
+		log.Info("Test results will be uploaded to:", "Project", GcsProjectID, "Bucket", GcsBucket)
+	}
 }

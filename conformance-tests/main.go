@@ -10,7 +10,7 @@ import (
 
 	"github.com/gardener/test-infra/conformance-tests/config"
 	"github.com/gardener/test-infra/conformance-tests/hydrophone"
-	"github.com/gardener/test-infra/conformance-tests/util"
+	"github.com/gardener/test-infra/conformance-tests/publish"
 	"github.com/gardener/test-infra/pkg/logger"
 )
 
@@ -31,18 +31,17 @@ func main() {
 
 	err = hydrophone.Run(log.WithName("RunHydrophone"))
 	if err != nil {
-		log.WithName("RunHydrophone").Error(err, "Conformance tests with Hydrophone did not finish successful")
+		log.WithName("RunHydrophone").Error(err, "Conformance tests with Hydrophone failed")
 		os.Exit(1)
 	}
 
 	if config.PublishResultsToTestgrid {
-		// analyze logs (write start/end files, gg version, ...)
-		err = util.Publish(log.WithName("PublishResults"))
+		err = publish.Publish(log.WithName("PublishResults"))
 		if err != nil {
-			log.WithName("PublishResults").Error(err, "Failed to publish test results")
+			log.WithName("PublishResults").Error(nil, "Failed to publish test results")
 			os.Exit(1)
 		}
 	}
 
-	log.Info("Finished conformance test setp successfully")
+	log.Info("Conformance tests finished successfully")
 }

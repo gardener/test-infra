@@ -6,19 +6,20 @@ package hydrophone
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/go-logr/logr"
 
 	"github.com/gardener/test-infra/conformance-tests/config"
-	"github.com/gardener/test-infra/conformance-tests/util"
 )
 
 // Setup installs a given version of Hydrophone using the "go install" command
 func Setup(log logr.Logger) error {
 	moduleVersion := fmt.Sprintf("sigs.k8s.io/hydrophone@%s", config.HydrophoneVersion)
 	log.Info("Setting up Hydrophone ...")
-	return util.RunCommand(log, "go", "install", moduleVersion)
+	return runCommand(log, "go", "install", moduleVersion)
 }
 
 // Run compiles arguments and runs K8s conformance tests using Hydrophone
@@ -45,11 +46,18 @@ func Run(log logr.Logger) error {
 	if config.GinkgoParallel && !config.DryRun {
 		hydrophoneArgs = append(hydrophoneArgs, "-p", "8")
 	}
-	if config.FlakeAttempts != 1 {
+	if config.FlakeAttempts != 1 || config.FlakeAttempts != 0 {
 		hydrophoneArgs = append(hydrophoneArgs, "--extra-ginkgo-args", fmt.Sprintf("--flake-attempts=%d", config.FlakeAttempts))
 	}
 
-	err := util.RunCommand(log, "hydrophone", hydrophoneArgs...)
+	return runCommand(log, "hydrophone", hydrophoneArgs...)
+}
 
-	return err
+// runCommand constructs a command, logs it with all arguments and executes it.
+func runCommand(log logr.Logger, command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	log.Info(cmd.String())
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	return cmd.Run()
 }
