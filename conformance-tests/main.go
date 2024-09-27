@@ -35,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if config.PublishResultsToTestgrid {
+	if config.PublishResultsToTestgrid && !config.DryRun {
 		err = publish.Publish(log.WithName("PublishResults"))
 		if err != nil {
 			log.WithName("PublishResults").Error(nil, "Failed to publish test results")

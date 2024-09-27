@@ -12,13 +12,13 @@ Run K8s conformance tests using [Hydrophone](https://github.com/kubernetes-sigs/
 docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.23 bash
 
 # run command below within container to invoke tests in a parallelized way (keep --cloudprovider=dummy, it means that the tests won't utilize any cloud provider specifics)
-go run conformance-tests --k8sVersion=1.30.4 --gardenKubeconfig=$KUBECONFIG --cloudprovider=dummy --flakeAttempts=5
+go run ./conformance-tests --k8sVersion=1.30.4 --cloudprovider=dummy --flakeAttempts=5
 
 # run the command below to invoke tests in a serial way and without any flakes
-GINKGO_PARALLEL=false go run conformance-tests --k8sVersion=1.30.4 --gardenKubeconfig=$KUBECONFIG --cloudprovider=dummy
+GINKGO_PARALLEL=false go run ./conformance-tests --k8sVersion=1.30.4 --cloudprovider=dummy
 
 # use the dry-run flag in combination with the hydrophone log level to see what tests to execute
-go run conformance-tests --k8sVersion=1.30.4 --gardenKubeconfig=$KUBECONFIG --cloudprovider=dummy --dryRun
+go run ./conformance-tests --k8sVersion=1.30.4 --cloudprovider=dummy --dryRun
 ```
 
 ### Run conformance tests (or single tests) directly (without Gardener's test automation)
