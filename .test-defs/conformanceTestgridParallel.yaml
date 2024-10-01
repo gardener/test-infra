@@ -15,6 +15,11 @@ spec:
   activeDeadlineSeconds: 10800
   behavior: ["serial"]
 
+  config:
+  - type: env
+    name: HYDROPHONE_VERSION
+    value: "v0.6.0"
+
   command: [bash, -c]
   args:
   - >-

@@ -32,6 +32,9 @@ spec:
   - type: env
     name: GINKGO_PARALLEL
     value: "false"
+  - type: env
+    name: HYDROPHONE_VERSION
+    value: "v0.6.0"
 
   command: [bash, -c]
   args:
