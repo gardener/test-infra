@@ -92,10 +92,9 @@ func runCommand(log logr.Logger, command string, args ...string) error {
 
 // isRetryable returns true if the conformance namespace is still active and an e2e pod exists.
 func isRetryable(log logr.Logger, cl client.Client) bool {
-	retries := 6
-	backOff := 1 * time.Second
+	retries := 30
+	backOff := 20 * time.Second
 	for {
-		backOff = 2 * backOff
 		conformanceNamespace := &v1.Namespace{}
 		if err := cl.Get(context.Background(), client.ObjectKey{Name: "conformance"}, conformanceNamespace); err != nil {
 			if errors.IsNotFound(err) {
