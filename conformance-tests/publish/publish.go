@@ -74,11 +74,6 @@ func uploadResultsToBucket(log logr.Logger, files []string, k8sReleaseMajorMinor
 		log.Error(err, "Cannot set GOOGLE_CLOUD_PROJECT env variable")
 		return err
 	}
-	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
-		err := fmt.Errorf("environment variable GOOGLE_APPLICATION_CREDENTIALS is not set. Hence no upload to google cloud storage possible.")
-		log.Error(err, "No credentials for upload provided")
-		return err
-	}
 
 	ctx := context.Background()
 	gcsClient, err := storage.NewClient(ctx)

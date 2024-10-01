@@ -68,6 +68,9 @@ func init() {
 	PublishResultsToTestgrid = tiutil.GetenvBool("PUBLISH_RESULTS_TO_TESTGRID", false)
 	GcsBucket = tiutil.Getenv("GCS_BUCKET", "k8s-conformance-gardener")
 	GcsProjectID = tiutil.Getenv("GCS_PROJECT_ID", "gardener")
+	if PublishResultsToTestgrid && os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
+		log.Fatal("PUBLISH_RESULTS_TO_TESTGRID is true, but environment variable GOOGLE_APPLICATION_CREDENTIALS is not set. Hence no upload to google cloud storage possible.")
+	}
 
 	if ShootKubeconfigPath == "" {
 		ShootKubeconfigPath = tiutil.Getenv("E2E_KUBECONFIG_PATH", os.Getenv("KUBECONFIG"))
@@ -82,8 +85,8 @@ func init() {
 	if CloudProvider == "" {
 		CloudProvider = os.Getenv("PROVIDER_TYPE")
 	}
-	if CloudProvider == "" {
-		log.Fatal("PROVIDER_TYPE environment variable not found")
+	if CloudProvider == "" && PublishResultsToTestgrid {
+		log.Fatal("PROVIDER_TYPE environment variable not found but required for publishing")
 	}
 
 	GardenerVersion = tiutil.Getenv("GARDENER_VERSION", "")

@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 	"strconv"
 	"time"
 
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/conformance-tests/config"
