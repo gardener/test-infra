@@ -72,7 +72,7 @@ RUN  \
     linux-headers \
   && pkgdir=/tmp/packages \
   && ocm_repo="europe-docker.pkg.dev/gardener-project/releases" \
-  && cc_utils_version=1.2490.0 \
+  && cc_utils_version=1.2515.0 \
   && cc_utils_ref="OCIRegistry::${ocm_repo}//github.com/gardener/cc-utils" \
   && mkdir "${pkgdir}" \
   && for resource in gardener-cicd-cli gardener-cicd-libs gardener-oci; do \
