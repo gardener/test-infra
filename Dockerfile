@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:latest AS ocmcli
 #############      builder       #############
 FROM golang:1.22 AS builder
 
@@ -35,6 +36,8 @@ ENV HELM_TILLER_VERSION=v2.16.12
 ENV KUBECTL_VERSION=v1.30.2
 ENV HELM_V3_VERSION=v3.15.2
 
+COPY --from=ocmcli /bin/ocm /bin/ocm
+
 RUN  \
   apk update \
   && apk add \
@@ -65,13 +68,27 @@ RUN  \
     findutils \
     rsync \
     bc \
+    xz \
     linux-headers \
+  && pkgdir=/tmp/packages \
+  && ocm_repo="europe-docker.pkg.dev/gardener-project/releases" \
+  && cc_utils_version=1.2515.0 \
+  && cc_utils_ref="OCIRegistry::${ocm_repo}//github.com/gardener/cc-utils" \
+  && mkdir "${pkgdir}" \
+  && for resource in gardener-cicd-cli gardener-cicd-libs gardener-oci; do \
+    ocm download resources \
+      "${cc_utils_ref}:${cc_utils_version}" \
+      "${resource}" \
+      -O - | tar xJ -C "${pkgdir}"; \
+    done \
   && pip install --break-system-packages google-crc32c \
-  && pip install --break-system-packages --upgrade pip \
-    "gardener-cicd-cli>=1.1437.0" \
-    "gardener-cicd-libs>=1.1437.0" \
+  && pip install --break-system-packages --upgrade --find-links "${pkgdir}" \
+    pip \
+    "gardener-cicd-cli==${cc_utils_version}" \
+    "gardener-cicd-libs==${cc_utils_version}" \
     awscli \
     pytz \
+  && rm -rf "${pkgdir}" \
   && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
@@ -96,16 +113,12 @@ RUN  \
     /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
   && curl http://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt -o \
       /usr/local/share/ca-certificates/SAPNetCA_G2.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2002.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_02.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2004.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_04.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Sub%20CA%2005.crt -o \
-      /usr/local/share/ca-certificates/SAP_Global_Sub_CA_05.crt \
+  && curl https://aia.pki.co.sap.com/aia/SAPNetCA_G2_2.crt -o \
+    /usr/local/share/ca-certificates/SAPNetCA_G2_2.crt \
   && update-ca-certificates \
   && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
   && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
-
+# SAPNetCA_G2.crt will expire 2025-03-17 -> remove
 ENV PATH /cc/utils/bin:$PATH
 
 ############# tm-run #############
