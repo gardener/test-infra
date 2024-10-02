@@ -7,8 +7,6 @@
 
 set -e
 
-export GO111MODULE=on
-
 if [[ -z "${SOURCE_PATH}" ]]; then
   export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
 else
@@ -18,15 +16,15 @@ fi
 cd "${SOURCE_PATH}"
 
 # Download kubernetes binaries
-K8S_VERSION=1.28.6
+K8S_VERSION=1.30.5
 ETCD_VER=v3.4.30
 
 mkdir -p /usr/local/kubebuilder/bin
-curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
+curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
 chmod +x kubectl
 mv kubectl /usr/local/kubebuilder/bin/kubectl
 
-curl -LO https://storage.googleapis.com/kubernetes-release/release/v${K8S_VERSION}/bin/linux/amd64/kube-apiserver
+curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kube-apiserver
 chmod +x kube-apiserver
 mv kube-apiserver /usr/local/kubebuilder/bin/kube-apiserver
 
@@ -34,4 +32,4 @@ curl -L https://storage.googleapis.com/etcd/${ETCD_VER}/etcd-${ETCD_VER}-linux-a
 tar xzvf /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz  etcd-${ETCD_VER}-linux-amd64/etcd
 mv etcd-${ETCD_VER}-linux-amd64/etcd /usr/local/kubebuilder/bin/etcd
 
-go test -mod=mod ./cmd/... ./pkg/...
+go test ./cmd/... ./pkg/...
