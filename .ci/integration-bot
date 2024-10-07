@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
-export GO111MODULE=on
 
 printf "\nIntegration tests tm-bot\n"
 
@@ -23,19 +22,18 @@ GIT_COMMIT_SHA="$(GIT_DIR=$SOURCE_PATH/.git git rev-parse @)"
 NAMESPACE=tm-bot
 
 # Install Kubectl
-curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl
+K8S_VERSION=1.30.5
+curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 mv ./kubectl /usr/local/bin/kubectl
 
 # Install Helm (see https://docs.helm.sh/using_helm/#from-script).
 if ! which helm 1>/dev/null; then
   echo -n "Installing helm... "
-  install_helm_path="./get_helm.sh"
-  curl https://raw.githubusercontent.com/helm/helm/v2.16.9/scripts/get > "${install_helm_path}"
-  chmod 700 "${install_helm_path}"
-  export DESIRED_VERSION=v2.13.0
-  bash "${install_helm_path}"
-  rm ./"${install_helm_path}"
+  curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+  chmod 700 ./get_helm.sh
+  bash ./get_helm.sh
+  rm ./get_helm.sh
   echo "done."
 fi
 

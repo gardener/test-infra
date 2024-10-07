@@ -16,9 +16,6 @@ spec:
   behavior: ["serial"]
 
   config:
-  - name: GO111MODULE
-    value: "on"
-    type: env
   - type: env
     name: PUBLISH_RESULTS_TO_TESTGRID
     value: "true"
@@ -33,20 +30,19 @@ spec:
         name: testgrid-gcs-secret
         key: gcloud.json
   - type: env
-    name: TESTCASE_GROUPS
-    value: 'conformance'
-  - type: env
     name: GINKGO_PARALLEL
     value: "false"
+  - type: env
+    name: HYDROPHONE_VERSION
+    value: "v0.6.0"
 
   command: [bash, -c]
   args:
   - >-
     export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
-    export GARDEN_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/gardener.config &&
-    go run -mod=mod ./integration-tests/e2e --cleanUpAfterwards=true --flakeAttempts=1
-  image: golang:1.22
+    go run ./conformance-tests
+  image: golang:1.23
   resources:
     requests:
       memory: "500Mi"

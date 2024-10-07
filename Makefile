@@ -58,11 +58,11 @@ generate: $(VGOPATH) $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(M
 
 .PHONY: format
 format: $(GOIMPORTS) $(GOIMPORTSREVISER)
-	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./pkg ./test ./integration-tests
+	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./pkg ./test ./conformance-tests
 
 .PHONY: check
 check: $(GOIMPORTS) $(GOLANGCI_LINT)
-	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
+	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/... ./conformance-tests/...
 
 .PHONY: test
 test:

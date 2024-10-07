@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 import google.cloud.storage
+from google.cloud.exceptions import NotFound
 import semver.version
 
 import ctx
@@ -236,10 +237,17 @@ def download_files_from_gcloud_storage(provider, k8s_version):
 
     for latest_dictionary in directory_names:
         # download e2e.log
-        source_blob_name = blob_prefix + latest_dictionary + '/build-log.txt'
-        print('Evaluating ' + source_blob_name)
-        blob = bucket.blob(source_blob_name)
-        blob.download_to_filename(e2e_log_file)
+        try:
+            source_blob_name = blob_prefix + latest_dictionary + '/e2e.log'
+            print('Evaluating ' + source_blob_name)
+            blob = bucket.blob(source_blob_name)
+            blob.download_to_filename(e2e_log_file)
+        except NotFound:
+            print('File names e2e.log not found, trying with old logic...')
+            source_blob_name = blob_prefix + latest_dictionary + '/build-log.txt'
+            print('Evaluating ' + source_blob_name)
+            blob = bucket.blob(source_blob_name)
+            blob.download_to_filename(e2e_log_file)
         if isConformanceTestSuccessful(e2e_log_file, k8s_version):
             # download junit_01.xml
             source_blob_name = blob_prefix + latest_dictionary + '/artifacts/junit_01.xml'
