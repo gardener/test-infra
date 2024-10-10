@@ -36,7 +36,7 @@ func preprocessTestflow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.Tes
 // CreateInitialDAG creates a DAG by evaluating the dependsOn steps.
 func CreateInitialDAG(steps map[string]*Step, root *node.Node) {
 	for _, step := range steps {
-		if step.Info.DependsOn == nil || len(step.Info.DependsOn) == 0 {
+		if len(step.Info.DependsOn) == 0 {
 			// add the root node as parent
 			step.Nodes.AddParents(root)
 			root.AddChildren(step.Nodes.List()...)

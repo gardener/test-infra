@@ -16,7 +16,7 @@ fi
 cd "${SOURCE_PATH}"
 
 # Download kubernetes binaries
-K8S_VERSION=1.30.5
+K8S_VERSION=1.31.2
 ETCD_VER=v3.4.30
 
 mkdir -p /usr/local/kubebuilder/bin

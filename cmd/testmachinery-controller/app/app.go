@@ -11,9 +11,13 @@ import (
 
 	"github.com/spf13/cobra"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 
+	"github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller"
+	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/health"
 	"github.com/gardener/test-infra/pkg/version"
 )
@@ -66,7 +70,18 @@ func (o *options) run(ctx context.Context) {
 		}
 	}
 
-	o.ApplyWebhooks(ctx, mgr)
+	config := o.configwatcher.GetConfiguration()
+	if !config.TestMachinery.Local {
+		webhooks.StartHealthCheck(ctx, mgr.GetAPIReader(), config.Controller.DependencyHealthCheck.Namespace, config.Controller.DependencyHealthCheck.DeploymentName, config.Controller.DependencyHealthCheck.Interval)
+		o.log.Info("Setup webhooks")
+		if err := builder.WebhookManagedBy(mgr).
+			For(&v1beta1.Testrun{}).
+			WithValidator(&webhooks.TestRunCustomValidator{Log: logger.Log.WithName("validator")}).
+			Complete(); err != nil {
+			o.log.Error(err, "unable to create webhook to validate TestRuns")
+			os.Exit(1)
+		}
+	}
 
 	o.log.Info("starting the controller", "controllers", "Testrun")
 	if err := mgr.Start(ctx); err != nil {

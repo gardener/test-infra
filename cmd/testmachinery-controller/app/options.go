@@ -5,7 +5,6 @@
 package app
 
 import (
-	"context"
 	goflag "flag"
 
 	"github.com/go-logr/logr"
@@ -14,11 +13,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery"
-	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/configwatcher"
 )
 
@@ -54,17 +51,6 @@ func (o *options) Complete() error {
 		return err
 	}
 	return testmachinery.Setup(o.configwatcher.GetConfiguration())
-}
-
-func (o *options) ApplyWebhooks(ctx context.Context, mgr manager.Manager) {
-	config := o.configwatcher.GetConfiguration()
-	if !config.TestMachinery.Local {
-		webhooks.StartHealthCheck(ctx, mgr.GetAPIReader(), config.Controller.DependencyHealthCheck.Namespace, config.Controller.DependencyHealthCheck.DeploymentName, config.Controller.DependencyHealthCheck.Interval)
-		o.log.Info("Setup webhooks")
-		hookServer := mgr.GetWebhookServer()
-		decoder := admission.NewDecoder(testmachinery.TestMachineryScheme)
-		hookServer.Register("/webhooks/validate-testrun", &webhook.Admission{Handler: webhooks.NewValidatorWithDecoder(logger.Log.WithName("validator"), decoder)})
-	}
 }
 
 func (o *options) GetManagerOptions() manager.Options {

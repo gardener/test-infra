@@ -7,15 +7,17 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
-	admissionv1 "k8s.io/api/admission/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -59,68 +61,60 @@ func checkDeploymentHealth(ctx context.Context, reader client.Reader, namespace 
 	healthErr = err
 }
 
-type testrunValidator struct {
-	log     logr.Logger
-	decoder *admission.Decoder
+type TestRunCustomValidator struct {
+	Log logr.Logger
 }
 
-func NewValidator(log logr.Logger) admission.Handler {
-	return &testrunValidator{
-		log: log,
-	}
-}
-
-// TODO: refactor testrunValidator corresponding to the controller-runtime changes from v0.14 to v0.15 (see
-// https://github.com/kubernetes-sigs/controller-runtime/blob/v0.15.0/examples/builtins/validatingwebhook.go)
-func NewValidatorWithDecoder(log logr.Logger, decoder *admission.Decoder) admission.Handler {
-	return &testrunValidator{
-		log:     log,
-		decoder: decoder,
-	}
-}
-
-// InjectDecoder injects the decoder.
-// A decoder will be automatically injected.
-func (v *testrunValidator) InjectDecoder(d *admission.Decoder) error {
-	v.decoder = d
-	return nil
-}
-
-// Handle validates a testrun
-func (v *testrunValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (v *TestRunCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
+	// permit new TestRuns only when the dependency health check is successful
 	healthMutex.Lock()
 	if healthErr != nil {
 		defer healthMutex.Unlock()
-		return admission.Errored(http.StatusFailedDependency, healthErr)
+		return nil, healthErr
 	}
 	healthMutex.Unlock()
 
-	tr := &tmv1beta1.Testrun{}
-	if err := v.decoder.Decode(req, tr); err != nil {
-		return admission.Errored(http.StatusBadRequest, err)
+	tr, ok := obj.(*tmv1beta1.Testrun)
+	if !ok {
+		return nil, fmt.Errorf("expected a TestRun object but got type: %T", obj)
+	}
+	if err := validation.ValidateTestrun(tr); err != nil {
+		v.Log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (v *TestRunCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (warnings admission.Warnings, err error) {
+	newTr, ok := newObj.(*tmv1beta1.Testrun)
+	if !ok {
+		return nil, fmt.Errorf("expected a TestRun as new object but got type: %T", newObj)
 	}
 
-	switch req.Operation {
-	case admissionv1.Create:
-		if err := validation.ValidateTestrun(tr); err != nil {
-			v.log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
-			v.log.V(7).Info(string(req.Object.Raw))
-			return admission.Denied(err.Error())
-		}
-	case admissionv1.Update:
-		// forbid any update to the spec after the testrun was created
-		oldObj := &tmv1beta1.Testrun{}
-		if err := v.decoder.DecodeRaw(req.OldObject, oldObj); err != nil {
-			return admission.Errored(http.StatusBadRequest, err)
-		}
-		if !reflect.DeepEqual(oldObj.Spec, tr.Spec) {
-			v.log.V(5).Info(fmt.Sprintf("updated testrun spec %s", tr.Name))
-			v.log.V(7).Info(string(req.Object.Raw))
-			return admission.Denied("testrun spec is not allowed to be updated")
-		}
-	default:
-		v.log.V(5).Info("Webhook not responsible")
+	oldTr, ok := oldObj.(*tmv1beta1.Testrun)
+	if !ok {
+		return nil, fmt.Errorf("expected a TestRun old object but got type: %T", oldObj)
 	}
 
-	return admission.Allowed("")
+	if !reflect.DeepEqual(oldTr.Spec, newTr.Spec) {
+		v.Log.V(5).Info(fmt.Sprintf("forbidden update of testrun spec for %s", newTr.Name))
+		return nil, errors.NewInvalid(
+			schema.GroupKind{
+				Group: tmv1beta1.SchemeGroupVersion.Group,
+				Kind:  newTr.GetObjectKind().GroupVersionKind().Kind},
+			newTr.Name,
+			field.ErrorList{
+				field.Forbidden(field.NewPath("spec"), "testrun spec is not allowed to be updated"),
+			},
+		)
+	}
+	return nil, nil
+}
+
+func (v *TestRunCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
+	_, ok := obj.(*tmv1beta1.Testrun)
+	if !ok {
+		return admission.Warnings{}, fmt.Errorf("expected a TestRun object but got object type: %T", obj)
+	}
+	return nil, nil
 }

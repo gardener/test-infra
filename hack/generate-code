@@ -12,54 +12,56 @@ PROJECT_MOD_ROOT="github.com/gardener/test-infra"
 
 CURRENT_DIR=$(dirname $0)
 PROJECT_ROOT="${CURRENT_DIR}"/..
+export PROJECT_ROOT
 
 # setup virtual GOPATH
-source "$GARDENER_HACK_DIR"/vgopath-setup.sh
+source "${GARDENER_HACK_DIR}"/vgopath-setup.sh
 
 CODE_GEN_DIR=$(go list -m -f '{{.Dir}}' k8s.io/code-generator)
-
-# We need to explicitly pass GO111MODULE=off to k8s.io/code-generator as it is significantly slower otherwise,
-# see https://github.com/kubernetes/code-generator/issues/100.
-export GO111MODULE=off
+source "${CODE_GEN_DIR}/kube_codegen.sh"
 
 rm -f ${GOPATH}/bin/*-gen
 
-chmod +x "${CODE_GEN_DIR}"/*.sh
-
 echo "> Generating internal groups for TestMachinery"
-"${CODE_GEN_DIR}"/generate-internal-groups.sh \
-  deep-copy,defaulter,conversion \
-  $PROJECT_MOD_ROOT/pkg/client/testmachinery \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  testmachinery:v1beta1 \
-  -h $(dirname $0)/boilerplate.go.txt
 
-echo "> Generating internal groups for TestMachinery config"
-"${CODE_GEN_DIR}"/generate-internal-groups.sh \
-  deepcopy,defaulter,conversion \
-  $PROJECT_MOD_ROOT/pkg/client/config \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  $PROJECT_MOD_ROOT/pkg/apis \
-  config:v1beta1 \
-  -h $(dirname $0)/boilerplate.go.txt
+kube::codegen::gen_helpers \
+  --boilerplate "${CURRENT_DIR}/boilerplate.go.txt" \
+  -- extra-peer-dir "${PROJECT_MOD_ROOT}/pkg/util/strconf" \
+  "${PROJECT_MOD_ROOT}/pkg/apis"
 
-echo "> Generating deepcopy for $PROJECT_ROOT/pkg/util/strconf"
-${GOPATH}/bin/deepcopy-gen \
-  --input-dirs $PROJECT_MOD_ROOT/pkg/util/strconf \
-  -O zz_generated.deepcopy \
-  -h $(dirname $0)/boilerplate.go.txt
+#"${CODE_GEN_DIR}"/generate-internal-groups.sh \
+#  deep-copy,defaulter,conversion \
+#  $PROJECT_MOD_ROOT/pkg/client/testmachinery \
+#  $PROJECT_MOD_ROOT/pkg/apis \
+#  $PROJECT_MOD_ROOT/pkg/apis \
+#  testmachinery:v1beta1 \
+#  -h $(dirname $0)/boilerplate.go.txt
 
-go install k8s.io/kube-openapi/cmd/openapi-gen
-
-echo "Generating openapi definitions"
-${GOPATH}/bin/openapi-gen "$@" \
-  --v 1 \
-  --logtostderr \
-  --input-dirs=$PROJECT_MOD_ROOT/pkg/apis/testmachinery/v1beta1,$PROJECT_MOD_ROOT/pkg/apis/config/v1beta1,$PROJECT_MOD_ROOT/pkg/apis/telemetry/v1beta1,$PROJECT_MOD_ROOT/pkg/util/strconf \
-  --report-filename=./$(dirname "${0}")/../pkg/openapi/api_violations.report \
-  --output-package=$PROJECT_MOD_ROOT/pkg/openapi \
-  -h $(dirname $0)/boilerplate.go.txt
+#echo "> Generating internal groups for TestMachinery config"
+#"${CODE_GEN_DIR}"/generate-internal-groups.sh \
+#  deepcopy,defaulter,conversion \
+#  $PROJECT_MOD_ROOT/pkg/client/config \
+#  $PROJECT_MOD_ROOT/pkg/apis \
+#  $PROJECT_MOD_ROOT/pkg/apis \
+#  config:v1beta1 \
+#  -h $(dirname $0)/boilerplate.go.txt
+#
+#echo "> Generating deepcopy for $PROJECT_ROOT/pkg/util/strconf"
+#${GOPATH}/bin/deepcopy-gen \
+#  --input-dirs $PROJECT_MOD_ROOT/pkg/util/strconf \
+#  -O zz_generated.deepcopy \
+#  -h $(dirname $0)/boilerplate.go.txt
+#
+#go install k8s.io/kube-openapi/cmd/openapi-gen
+#
+#echo "Generating openapi definitions"
+#${GOPATH}/bin/openapi-gen "$@" \
+#  --v 1 \
+#  --logtostderr \
+#  --input-dirs=$PROJECT_MOD_ROOT/pkg/apis/testmachinery/v1beta1,$PROJECT_MOD_ROOT/pkg/apis/config/v1beta1,$PROJECT_MOD_ROOT/pkg/apis/telemetry/v1beta1,$PROJECT_MOD_ROOT/pkg/util/strconf \
+#  --report-filename=./$(dirname "${0}")/../pkg/openapi/api_violations.report \
+#  --output-package=$PROJECT_MOD_ROOT/pkg/openapi \
+#  -h $(dirname $0)/boilerplate.go.txt
 
 # echo "Generating groups for $PROJECT_ROOT"
 # $(dirname $0)/../vendor/k8s.io/code-generator/generate-groups.sh \

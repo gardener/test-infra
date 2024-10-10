@@ -40,7 +40,7 @@ type EventBus interface {
 
 type eventbus struct {
 	log     logr.Logger
-	queue   workqueue.RateLimitingInterface
+	queue   workqueue.TypedRateLimitingInterface[any]
 	watches map[string]map[EventBusHandle]TestrunChannel
 	mux     sync.RWMutex
 }
@@ -54,7 +54,8 @@ func NewEventBus(log logr.Logger) EventBus {
 }
 
 func (e *eventbus) Start(stop <-chan struct{}) error {
-	e.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "watch")
+	e.queue = workqueue.NewTypedRateLimitingQueueWithConfig[any](workqueue.DefaultTypedControllerRateLimiter[any](), workqueue.TypedRateLimitingQueueConfig[any]{
+		Name: "watch"})
 	defer e.queue.ShutDown()
 
 	const jitterPeriod = 1 * time.Second
