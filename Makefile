@@ -46,7 +46,7 @@ tidy:
 
 .PHONY: code-gen
 code-gen: $(VGOPATH) $(CONTROLLER_GEN)
-	@VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash ./hack/generate-code
+	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash ./hack/generate-code
 	$(MAKE) format
 
 .PHONY: generate
