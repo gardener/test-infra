@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.15.0 AS ocmcli
+FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.17.0 AS ocmcli
 #############      builder       #############
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 
@@ -30,11 +30,10 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.22-alpine AS base-step
+FROM golang:1.23-alpine AS base-step
 
-ENV HELM_TILLER_VERSION=v2.16.12
-ENV KUBECTL_VERSION=v1.30.2
-ENV HELM_V3_VERSION=v3.15.2
+ENV KUBECTL_VERSION=v1.31.2
+ENV HELM_V3_VERSION=v3.16.2
 
 COPY --from=ocmcli /bin/ocm /bin/ocm
 
@@ -94,12 +93,10 @@ RUN  \
     https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
   && curl -L \
-    https://get.helm.sh/helm-${HELM_TILLER_VERSION}-linux-amd64.tar.gz \
-    | tar xz -C /bin --strip=1 \
-  && chmod +x /bin/helm \
-  && curl -L \
     https://get.helm.sh/helm-${HELM_V3_VERSION}-linux-amd64.tar.gz | tar xz -C /tmp --strip=1 \
   && mv /tmp/helm /bin/helm3 \
+  && chmod +x /bin/helm3 \
+  && ln -s /bin/helm3 /bin/helm \
   && curl -Lo /bin/yaml2json \
     https://github.com/bronze1man/yaml2json/releases/download/v1.2/yaml2json_linux_amd64 \
   && chmod +x /bin/yaml2json \
