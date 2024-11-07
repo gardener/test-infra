@@ -90,7 +90,7 @@ RUN  \
   && rm -rf "${pkgdir}" \
   && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
-    https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+     https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
   && curl -L \
     https://get.helm.sh/helm-${HELM_V3_VERSION}-linux-amd64.tar.gz | tar xz -C /tmp --strip=1 \
