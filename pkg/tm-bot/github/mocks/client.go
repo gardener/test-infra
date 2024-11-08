@@ -25,6 +25,7 @@ import (
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -59,177 +60,177 @@ func (mr *MockClientMockRecorder) Client() *gomock.Call {
 }
 
 // Comment mocks base method.
-func (m *MockClient) Comment(arg0 context.Context, arg1 *github.GenericRequestEvent, arg2 string) (int64, error) {
+func (m *MockClient) Comment(ctx context.Context, event *github.GenericRequestEvent, message string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Comment", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Comment", ctx, event, message)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Comment indicates an expected call of Comment.
-func (mr *MockClientMockRecorder) Comment(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) Comment(ctx, event, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Comment", reflect.TypeOf((*MockClient)(nil).Comment), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Comment", reflect.TypeOf((*MockClient)(nil).Comment), ctx, event, message)
 }
 
 // GetConfig mocks base method.
-func (m *MockClient) GetConfig(arg0 string, arg1 any) error {
+func (m *MockClient) GetConfig(name string, obj any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfig", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetConfig", name, obj)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GetConfig indicates an expected call of GetConfig.
-func (mr *MockClientMockRecorder) GetConfig(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetConfig(name, obj any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockClient)(nil).GetConfig), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockClient)(nil).GetConfig), name, obj)
 }
 
 // GetContent mocks base method.
-func (m *MockClient) GetContent(arg0 context.Context, arg1 *github.GenericRequestEvent, arg2 string) ([]byte, error) {
+func (m *MockClient) GetContent(ctx context.Context, event *github.GenericRequestEvent, path string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContent", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetContent", ctx, event, path)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetContent indicates an expected call of GetContent.
-func (mr *MockClientMockRecorder) GetContent(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetContent(ctx, event, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContent", reflect.TypeOf((*MockClient)(nil).GetContent), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContent", reflect.TypeOf((*MockClient)(nil).GetContent), ctx, event, path)
 }
 
 // GetHead mocks base method.
-func (m *MockClient) GetHead(arg0 context.Context, arg1 *github.GenericRequestEvent) (string, error) {
+func (m *MockClient) GetHead(ctx context.Context, event *github.GenericRequestEvent) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHead", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetHead", ctx, event)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetHead indicates an expected call of GetHead.
-func (mr *MockClientMockRecorder) GetHead(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetHead(ctx, event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHead", reflect.TypeOf((*MockClient)(nil).GetHead), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHead", reflect.TypeOf((*MockClient)(nil).GetHead), ctx, event)
 }
 
 // GetIssue mocks base method.
-func (m *MockClient) GetIssue(arg0 *github.GenericRequestEvent) (*github0.Issue, error) {
+func (m *MockClient) GetIssue(event *github.GenericRequestEvent) (*github0.Issue, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIssue", arg0)
+	ret := m.ctrl.Call(m, "GetIssue", event)
 	ret0, _ := ret[0].(*github0.Issue)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetIssue indicates an expected call of GetIssue.
-func (mr *MockClientMockRecorder) GetIssue(arg0 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetIssue(event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIssue", reflect.TypeOf((*MockClient)(nil).GetIssue), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIssue", reflect.TypeOf((*MockClient)(nil).GetIssue), event)
 }
 
 // GetPullRequest mocks base method.
-func (m *MockClient) GetPullRequest(arg0 context.Context, arg1 *github.GenericRequestEvent) (*github0.PullRequest, error) {
+func (m *MockClient) GetPullRequest(ctx context.Context, event *github.GenericRequestEvent) (*github0.PullRequest, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPullRequest", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetPullRequest", ctx, event)
 	ret0, _ := ret[0].(*github0.PullRequest)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPullRequest indicates an expected call of GetPullRequest.
-func (mr *MockClientMockRecorder) GetPullRequest(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetPullRequest(ctx, event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPullRequest", reflect.TypeOf((*MockClient)(nil).GetPullRequest), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPullRequest", reflect.TypeOf((*MockClient)(nil).GetPullRequest), ctx, event)
 }
 
 // GetRawConfig mocks base method.
-func (m *MockClient) GetRawConfig(arg0 string) (json.RawMessage, error) {
+func (m *MockClient) GetRawConfig(name string) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRawConfig", arg0)
+	ret := m.ctrl.Call(m, "GetRawConfig", name)
 	ret0, _ := ret[0].(json.RawMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRawConfig indicates an expected call of GetRawConfig.
-func (mr *MockClientMockRecorder) GetRawConfig(arg0 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetRawConfig(name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawConfig", reflect.TypeOf((*MockClient)(nil).GetRawConfig), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawConfig", reflect.TypeOf((*MockClient)(nil).GetRawConfig), name)
 }
 
 // GetVersions mocks base method.
-func (m *MockClient) GetVersions(arg0, arg1 string) ([]*semver.Version, error) {
+func (m *MockClient) GetVersions(owner, repo string) ([]*semver.Version, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVersions", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetVersions", owner, repo)
 	ret0, _ := ret[0].([]*semver.Version)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVersions indicates an expected call of GetVersions.
-func (mr *MockClientMockRecorder) GetVersions(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetVersions(owner, repo any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersions", reflect.TypeOf((*MockClient)(nil).GetVersions), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersions", reflect.TypeOf((*MockClient)(nil).GetVersions), owner, repo)
 }
 
 // IsAuthorized mocks base method.
-func (m *MockClient) IsAuthorized(arg0 github.AuthorizationType, arg1 *github.GenericRequestEvent) bool {
+func (m *MockClient) IsAuthorized(authorizationType github.AuthorizationType, event *github.GenericRequestEvent) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAuthorized", arg0, arg1)
+	ret := m.ctrl.Call(m, "IsAuthorized", authorizationType, event)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsAuthorized indicates an expected call of IsAuthorized.
-func (mr *MockClientMockRecorder) IsAuthorized(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) IsAuthorized(authorizationType, event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAuthorized", reflect.TypeOf((*MockClient)(nil).IsAuthorized), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAuthorized", reflect.TypeOf((*MockClient)(nil).IsAuthorized), authorizationType, event)
 }
 
 // ResolveConfigValue mocks base method.
-func (m *MockClient) ResolveConfigValue(arg0 context.Context, arg1 *github.GenericRequestEvent, arg2 *ghval.GitHubValue) (string, error) {
+func (m *MockClient) ResolveConfigValue(ctx context.Context, event *github.GenericRequestEvent, value *ghval.GitHubValue) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolveConfigValue", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ResolveConfigValue", ctx, event, value)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ResolveConfigValue indicates an expected call of ResolveConfigValue.
-func (mr *MockClientMockRecorder) ResolveConfigValue(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) ResolveConfigValue(ctx, event, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveConfigValue", reflect.TypeOf((*MockClient)(nil).ResolveConfigValue), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveConfigValue", reflect.TypeOf((*MockClient)(nil).ResolveConfigValue), ctx, event, value)
 }
 
 // UpdateComment mocks base method.
-func (m *MockClient) UpdateComment(arg0 *github.GenericRequestEvent, arg1 int64, arg2 string) error {
+func (m *MockClient) UpdateComment(event *github.GenericRequestEvent, commentID int64, message string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateComment", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UpdateComment", event, commentID, message)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateComment indicates an expected call of UpdateComment.
-func (mr *MockClientMockRecorder) UpdateComment(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) UpdateComment(event, commentID, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateComment", reflect.TypeOf((*MockClient)(nil).UpdateComment), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateComment", reflect.TypeOf((*MockClient)(nil).UpdateComment), event, commentID, message)
 }
 
 // UpdateStatus mocks base method.
-func (m *MockClient) UpdateStatus(arg0 context.Context, arg1 *github.GenericRequestEvent, arg2 github.State, arg3, arg4 string) error {
+func (m *MockClient) UpdateStatus(ctx context.Context, event *github.GenericRequestEvent, state github.State, statusContext, description string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateStatus", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "UpdateStatus", ctx, event, state, statusContext, description)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateStatus indicates an expected call of UpdateStatus.
-func (mr *MockClientMockRecorder) UpdateStatus(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockClientMockRecorder) UpdateStatus(ctx, event, state, statusContext, description any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockClient)(nil).UpdateStatus), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockClient)(nil).UpdateStatus), ctx, event, state, statusContext, description)
 }

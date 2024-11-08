@@ -10,10 +10,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
-	"github.com/gardener/test-infra/pkg/testmachinery"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
 	"github.com/gardener/test-infra/pkg/util/strconf"
 	"github.com/gardener/test-infra/test/resources"
@@ -31,12 +30,7 @@ const (
 
 var _ = Describe("Testrun validation tests", func() {
 
-	var testRunValidator admission.Handler
-
-	BeforeEach(func() {
-		decoder := admission.NewDecoder(testmachinery.TestMachineryScheme)
-		testRunValidator = webhooks.NewValidatorWithDecoder(logr.Discard(), decoder)
-	})
+	var testRunValidator = webhooks.TestRunCustomValidator{Log: logr.Discard()}
 
 	Context("Metadata", func() {
 		It("should reject when name contains '.'", func() {
@@ -52,13 +46,11 @@ var _ = Describe("Testrun validation tests", func() {
 				},
 			}
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
-			Expect(err).NotTo(HaveOccurred())
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
+			Expect(err).To(HaveOccurred())
 
-			resp := testRunValidator.Handle(ctx, *req)
-
-			Expect(resp.Allowed).To(BeFalse())
-			Expect(resp.Result.Message).To(ContainSubstring("name must not contain '.'"))
+			Expect(err.Error()).To(ContainSubstring("name must not contain '.'"))
 
 		})
 	})
@@ -71,13 +63,11 @@ var _ = Describe("Testrun validation tests", func() {
 			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
 			tr.Spec.LocationSets = nil
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
-			Expect(err).ToNot(HaveOccurred())
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
+			Expect(err).To(HaveOccurred())
 
-			resp := testRunValidator.Handle(ctx, *req)
-
-			Expect(resp.Allowed).To(BeFalse())
-			Expect(resp.Result.Message).To(ContainSubstring("no location for TestDefinitions defined"))
+			Expect(err.Error()).To(ContainSubstring("no location for TestDefinitions defined"))
 		})
 
 		It("should reject when a local location is defined", func() {
@@ -90,12 +80,11 @@ var _ = Describe("Testrun validation tests", func() {
 				Type: tmv1beta1.LocationTypeLocal,
 			})
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
-			Expect(err).ToNot(HaveOccurred())
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
+			Expect(err).To(HaveOccurred())
 
-			resp := testRunValidator.Handle(ctx, *req)
-			Expect(resp.Allowed).To(BeFalse())
-			Expect(string(resp.Result.Message)).To(ContainSubstring("Local testDefinition locations are only available in insecure mode"))
+			Expect(err.Error()).To(ContainSubstring("Local testDefinition locations are only available in insecure mode"))
 		})
 	})
 
@@ -106,12 +95,11 @@ var _ = Describe("Testrun validation tests", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.Kubeconfigs.Gardener = strconf.FromString("dGVzdGluZwo=")
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
-			Expect(err).ToNot(HaveOccurred())
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
+			Expect(err).To(HaveOccurred())
 
-			resp := testRunValidator.Handle(ctx, *req)
-			Expect(resp.Allowed).To(BeFalse())
-			Expect(resp.Result.Message).To(ContainSubstring("Cannot build config"))
+			Expect(err.Error()).To(ContainSubstring("Cannot build config"))
 		})
 	})
 
@@ -121,11 +109,9 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
 			Expect(err).ToNot(HaveOccurred())
-
-			resp := testRunValidator.Handle(ctx, *req)
-			Expect(resp.Allowed).To(BeTrue())
 
 		})
 	})
@@ -136,9 +122,6 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			req, err := resources.GetCreateAdmissionRequest(tr)
-			Expect(err).ToNot(HaveOccurred())
-
 			mockReader := resources.MockReader{
 				Error: errors.New("Argo deployment not found"),
 			}
@@ -146,10 +129,10 @@ var _ = Describe("Testrun validation tests", func() {
 			webhooks.StartHealthCheck(ctx, mockReader, namespace, "argo", duration)
 			time.Sleep(2 * time.Second)
 
-			resp := testRunValidator.Handle(ctx, *req)
-			Expect(resp.Allowed).To(BeFalse())
-			Expect(resp.Result.Code).To(Equal(int32(424)))
-			Expect(string(resp.Result.Message)).To(ContainSubstring("Argo deployment not found"))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			Expect(warnings).To(BeNil())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Argo deployment not found"))
 		})
 	})
 })

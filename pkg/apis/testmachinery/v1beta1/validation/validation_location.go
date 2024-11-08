@@ -43,7 +43,7 @@ func ValidateLocationSet(fldPath *field.Path, set tmv1beta1.LocationSet) field.E
 	if set.Name == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("name"), "name has to be defined for locationSets"))
 	}
-	if set.Locations == nil || len(set.Locations) == 0 {
+	if len(set.Locations) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("locations"), "locations has to be defined for locationSets"))
 	}
 	allErrs = append(allErrs, ValidateTestLocations(fldPath.Child("locations"), set.Locations)...)

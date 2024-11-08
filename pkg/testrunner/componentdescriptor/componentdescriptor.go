@@ -12,10 +12,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/logging"
-	"github.com/open-component-model/ocm/pkg/contexts/config/configutils"
-	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"ocm.software/ocm/api/config/configutils"
+	"ocm.software/ocm/api/datacontext"
+	"ocm.software/ocm/api/ocm"
+	"ocm.software/ocm/api/ocm/compdesc"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )

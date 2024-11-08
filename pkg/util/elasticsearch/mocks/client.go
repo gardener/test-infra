@@ -21,6 +21,7 @@ import (
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -55,45 +56,45 @@ func (mr *MockClientMockRecorder) Bulk(arg0 any) *gomock.Call {
 }
 
 // BulkFromFile mocks base method.
-func (m *MockClient) BulkFromFile(arg0 string) error {
+func (m *MockClient) BulkFromFile(file string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BulkFromFile", arg0)
+	ret := m.ctrl.Call(m, "BulkFromFile", file)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // BulkFromFile indicates an expected call of BulkFromFile.
-func (mr *MockClientMockRecorder) BulkFromFile(arg0 any) *gomock.Call {
+func (mr *MockClientMockRecorder) BulkFromFile(file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkFromFile", reflect.TypeOf((*MockClient)(nil).BulkFromFile), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkFromFile", reflect.TypeOf((*MockClient)(nil).BulkFromFile), file)
 }
 
 // Request mocks base method.
-func (m *MockClient) Request(arg0, arg1 string, arg2 io.Reader) ([]byte, error) {
+func (m *MockClient) Request(httpMethod, path string, payload io.Reader) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Request", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Request", httpMethod, path, payload)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Request indicates an expected call of Request.
-func (mr *MockClientMockRecorder) Request(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) Request(httpMethod, path, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockClient)(nil).Request), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockClient)(nil).Request), httpMethod, path, payload)
 }
 
 // RequestWithCtx mocks base method.
-func (m *MockClient) RequestWithCtx(arg0 context.Context, arg1, arg2 string, arg3 io.Reader) ([]byte, error) {
+func (m *MockClient) RequestWithCtx(ctx context.Context, httpMethod, path string, payload io.Reader) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RequestWithCtx", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "RequestWithCtx", ctx, httpMethod, path, payload)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RequestWithCtx indicates an expected call of RequestWithCtx.
-func (mr *MockClientMockRecorder) RequestWithCtx(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockClientMockRecorder) RequestWithCtx(ctx, httpMethod, path, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestWithCtx", reflect.TypeOf((*MockClient)(nil).RequestWithCtx), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestWithCtx", reflect.TypeOf((*MockClient)(nil).RequestWithCtx), ctx, httpMethod, path, payload)
 }

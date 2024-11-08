@@ -18,14 +18,12 @@ TM_CONTROLLER_CHART := testmachinery-controller
 VERSION             ?= $(shell cat ${REPO_ROOT}/VERSION)
 IMAGE_TAG           := ${VERSION}
 
-ENVTEST_K8S_VERSION := 1.28.x
+ENVTEST_K8S_VERSION := 1.31.x
 
-TELEMETRY_CONTROLLER_IMAGE := $(REGISTRY)/telemetry-controller
 TM_RUN_IMAGE               := $(REGISTRY)/testmachinery-run
 TM_BOT_IMAGE               := $(REGISTRY)/bot
 PREPARESTEP_IMAGE          := $(REGISTRY)/prepare-step
 TM_BASE_IMAGE              := $(REGISTRY)/base
-TM_GOLANG_BASE_IMAGE       := $(REGISTRY)/golang
 
 NS ?= default
 TESTRUN ?= "examples/int-testrun.yaml"
@@ -47,8 +45,8 @@ tidy:
 	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: code-gen
-code-gen:
-	@./hack/generate-code
+code-gen: $(VGOPATH) $(CONTROLLER_GEN)
+	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash ./hack/generate-code
 	$(MAKE) format
 
 .PHONY: generate
@@ -66,7 +64,7 @@ check: $(GOIMPORTS) $(GOLANGCI_LINT)
 
 .PHONY: test
 test:
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${K8S_VERSION})" go test -mod=mod $(REPO_ROOT)/cmd/... $(REPO_ROOT)/pkg/...
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${ENVTEST_K8S_VERSION})" go test -mod=mod ./cmd/... ./pkg/...
 
 
 .PHONY: install
@@ -200,7 +198,3 @@ docker-image-prepare:
 .PHONY: docker-image-base
 docker-image-base:
 	@docker build -t $(TM_BASE_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest --target base-step .
-
-.PHONY: docker-image-golang
-docker-image-golang:
-	@docker build -t $(TM_GOLANG_BASE_IMAGE):$(IMAGE_TAG) -t $(PREPARESTEP_IMAGE):latest -f ./hack/images/golang/Dockerfile ./hack/images/golang

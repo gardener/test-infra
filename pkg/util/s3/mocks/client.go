@@ -21,6 +21,7 @@ import (
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -41,38 +42,39 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetObject mocks base method.
-func (m *MockClient) GetObject(arg0, arg1 string) (s3.Object, error) {
+func (m *MockClient) GetObject(bucketName, objectName string) (s3.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetObject", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetObject", bucketName, objectName)
 	ret0, _ := ret[0].(s3.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetObject indicates an expected call of GetObject.
-func (mr *MockClientMockRecorder) GetObject(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetObject(bucketName, objectName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockClient)(nil).GetObject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockClient)(nil).GetObject), bucketName, objectName)
 }
 
 // RemoveObject mocks base method.
-func (m *MockClient) RemoveObject(arg0, arg1 string) error {
+func (m *MockClient) RemoveObject(bucketName, key string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveObject", arg0, arg1)
+	ret := m.ctrl.Call(m, "RemoveObject", bucketName, key)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveObject indicates an expected call of RemoveObject.
-func (mr *MockClientMockRecorder) RemoveObject(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) RemoveObject(bucketName, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveObject", reflect.TypeOf((*MockClient)(nil).RemoveObject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveObject", reflect.TypeOf((*MockClient)(nil).RemoveObject), bucketName, key)
 }
 
 // MockObject is a mock of Object interface.
 type MockObject struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectMockRecorder
+	isgomock struct{}
 }
 
 // MockObjectMockRecorder is the mock recorder for MockObject.
@@ -107,18 +109,18 @@ func (mr *MockObjectMockRecorder) Close() *gomock.Call {
 }
 
 // Read mocks base method.
-func (m *MockObject) Read(arg0 []byte) (int, error) {
+func (m *MockObject) Read(p []byte) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Read", arg0)
+	ret := m.ctrl.Call(m, "Read", p)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Read indicates an expected call of Read.
-func (mr *MockObjectMockRecorder) Read(arg0 any) *gomock.Call {
+func (mr *MockObjectMockRecorder) Read(p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockObject)(nil).Read), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockObject)(nil).Read), p)
 }
 
 // Stat mocks base method.

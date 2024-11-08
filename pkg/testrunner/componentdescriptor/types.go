@@ -4,7 +4,7 @@
 package componentdescriptor
 
 import (
-	"github.com/open-component-model/ocm/pkg/common"
+	common "ocm.software/ocm/api/utils/misc"
 )
 
 // Component describes a component consisting of the git repository url and a version.

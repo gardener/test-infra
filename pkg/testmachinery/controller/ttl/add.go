@@ -18,7 +18,9 @@ import (
 func AddControllerToManager(log logr.Logger, mgr manager.Manager, config config.TTLController) error {
 	c := New(log.WithName("TTL"), mgr.GetClient(), mgr.GetScheme())
 
-	bldr := ctrl.NewControllerManagedBy(mgr).For(&tmv1beta1.Testrun{})
+	bldr := ctrl.NewControllerManagedBy(mgr).
+		Named("testrun-ttl").
+		For(&tmv1beta1.Testrun{})
 	if config.MaxConcurrentSyncs != 0 {
 		bldr.WithOptions(controller.Options{
 			MaxConcurrentReconciles: config.MaxConcurrentSyncs,

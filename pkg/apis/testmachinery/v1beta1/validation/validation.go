@@ -5,6 +5,8 @@
 package validation
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -13,7 +15,18 @@ import (
 // ValidateTestrun validates a testrun.
 func ValidateTestrun(tr *tmv1beta1.Testrun) error {
 	errList := ValidateTestrunSpec(tr.Spec)
-	return errList.ToAggregate()
+
+	if len(errList) == 0 {
+		return nil
+	}
+
+	return errors.NewInvalid(
+		schema.GroupKind{
+			Group: tmv1beta1.SchemeGroupVersion.Group,
+			Kind:  tr.GetObjectKind().GroupVersionKind().Kind},
+		tr.Name,
+		errList,
+	)
 }
 
 // ValidateTestrunSpec validates a testrun spec
