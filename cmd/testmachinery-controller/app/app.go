@@ -74,6 +74,7 @@ func (o *options) run(ctx context.Context) {
 	if !config.TestMachinery.Local {
 		webhooks.StartHealthCheck(ctx, mgr.GetAPIReader(), config.Controller.DependencyHealthCheck.Namespace, config.Controller.DependencyHealthCheck.DeploymentName, config.Controller.DependencyHealthCheck.Interval)
 		o.log.Info("Setup webhooks")
+		//TODO use https://github.com/kubernetes-sigs/controller-runtime/pull/2998 when it becomes available in the controller-runtime
 		if err := builder.WebhookManagedBy(mgr).
 			For(&v1beta1.Testrun{}).
 			WithValidator(&webhooks.TestRunCustomValidator{Log: logger.Log.WithName("validator")}).

@@ -31,6 +31,6 @@ webhooks:
     service:
       namespace: {{ .Release.Namespace }}
       name: testmachinery-controller
-      path: /webhooks/validate-testrun
+      path: /validate-testmachinery-sapcloud-io-v1beta1-testrun
     caBundle: {{ required ".Values.controller.tls.caBundle is required" (b64enc .Values.controller.tls.caBundle) }}
 {{- end }}

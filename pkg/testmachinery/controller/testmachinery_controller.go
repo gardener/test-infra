@@ -54,6 +54,7 @@ func RegisterTestMachineryController(mgr manager.Manager, log logr.Logger, confi
 
 	tmReconciler := reconciler.New(log.WithName("controller"), mgr.GetClient(), mgr.GetScheme(), s3Client, collect)
 	bldr := ctrl.NewControllerManagedBy(mgr).
+		Named("testrun-reconciler").
 		For(&tmv1beta1.Testrun{}).
 		Owns(&argov1.Workflow{})
 
