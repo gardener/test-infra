@@ -61,11 +61,19 @@ format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 .PHONY: check
 check: $(GOIMPORTS) $(GOLANGCI_LINT)
 	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/... ./conformance-tests/...
+	$(MAKE) sast-report
 
 .PHONY: test
 test:
 	KUBEBUILDER_ASSETS="$(shell setup-envtest use -p path ${ENVTEST_K8S_VERSION})" go test -mod=mod ./cmd/... ./pkg/...
 
+.PHONY: sast
+sast: $(GOSEC)
+	@bash $(GARDENER_HACK_DIR)/sast.sh
+
+.PHONY: sast-report
+sast-report: $(GOSEC)
+	@bash $(GARDENER_HACK_DIR)/sast.sh --gosec-report true
 
 .PHONY: install
 install:
