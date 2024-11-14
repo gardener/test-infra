@@ -16,14 +16,14 @@ import (
 func writeBulks(path string, bufs [][]byte) error {
 	// check if directory exists and create of not
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.MkdirAll(path, os.ModePerm)
+		err := os.MkdirAll(path, 0750)
 		if err != nil {
 			return err
 		}
 	}
 	for _, buf := range bufs {
 		file := filepath.Join(path, fmt.Sprintf("res-%s", util.RandomString(5)))
-		if err := os.WriteFile(file, buf, 0644); err != nil {
+		if err := os.WriteFile(file, buf, 0600); err != nil {
 			return err
 		}
 	}

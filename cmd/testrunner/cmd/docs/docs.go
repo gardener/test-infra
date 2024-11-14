@@ -43,7 +43,7 @@ var docsCmd = &cobra.Command{
 			}
 			return
 		}
-		err := os.MkdirAll(outputDir, os.ModePerm)
+		err := os.MkdirAll(outputDir, 0750)
 		if err != nil {
 			logger.Log.Error(err, "cannot create directories")
 			os.Exit(1)

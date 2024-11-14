@@ -7,6 +7,7 @@ package mock_s3
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/minio/minio-go"
 
@@ -28,12 +29,12 @@ func (o *mockObject) Close() error { return nil }
 
 // CreateS3ObjectFromFile creates a mock S§ Object from a file
 func CreateS3ObjectFromFile(file string) (s3.Object, error) {
-	fileInfo, err := os.Stat(file)
+	fileInfo, err := os.Stat(filepath.Clean(file))
 	if os.IsExist(err) {
 		return nil, err
 	}
 
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}

@@ -66,7 +66,7 @@ func InitGitHubCache(cfg *config.GitHubCache) {
 			return
 		}
 
-		if err := os.MkdirAll(cfg.CacheDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(cfg.CacheDir, 0750); err != nil {
 			panic(err)
 		}
 		if cfg.CacheDiskSizeGB == 0 {
@@ -77,7 +77,7 @@ func InitGitHubCache(cfg *config.GitHubCache) {
 			diskv.New(diskv.Options{
 				BasePath:     path.Join(cfg.CacheDir, "data"),
 				TempDir:      path.Join(cfg.CacheDir, "temp"),
-				CacheSizeMax: uint64(cfg.CacheDiskSizeGB) * uint64(1000000000), // GB to B
+				CacheSizeMax: cfg.CacheDiskSizeGB * uint64(1000000000), // GB to B
 			}))
 	})
 }
@@ -97,7 +97,7 @@ func AddFlags(flagset *flag.FlagSet) *config.GitHubCache {
 	internalConfig = &config.GitHubCache{}
 	flagset.StringVar(&internalConfig.CacheDir, "github-cache-dir", "",
 		"Path directory that should be used to cache github requests")
-	flagset.IntVar(&internalConfig.CacheDiskSizeGB, "github-cache-size", 1,
+	flagset.Uint64Var(&internalConfig.CacheDiskSizeGB, "github-cache-size", 1,
 		"Size of the github cache in GB")
 	flagset.IntVar(&internalConfig.MaxAgeSeconds, "github-cache-max-age", 3600,
 		"Maximum age of a failed github response in seconds")

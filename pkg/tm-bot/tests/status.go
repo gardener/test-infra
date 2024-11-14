@@ -7,7 +7,7 @@ package tests
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
@@ -109,7 +109,7 @@ func (u *StatusUpdater) UpdateComment(comment string) error {
 	if u.commentID == 0 {
 		return nil
 	}
-	h := sha1.New()
+	h := sha256.New()
 	if _, err := h.Write([]byte(comment)); err != nil {
 		return err
 	}

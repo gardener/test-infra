@@ -7,6 +7,7 @@ package run_template
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"time"
 
 	pkgerrors "github.com/pkg/errors"
@@ -87,7 +88,7 @@ func (o *options) Complete() error {
 
 func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
 	// read and parse test shoot configuration
-	dat, err := os.ReadFile(cfgPath)
+	dat, err := os.ReadFile(filepath.Clean(cfgPath))
 	if err != nil {
 		return nil, pkgerrors.Wrapf(err, "unable to read test shoot configuration file from %s", cfgPath)
 	}

@@ -76,7 +76,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		if err := os.RemoveAll(archiveContentDir); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if err := os.MkdirAll(archiveContentDir, 0777); err != nil {
+		if err := os.MkdirAll(archiveContentDir, 0750); err != nil {
 			return errors.Wrapf(err, "failed to create dir: %s", archiveContentDir)
 		}
 		remoteArchiveAssetID, err := getAssetIDByName(component, archiveFilename)
@@ -130,7 +130,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 func uploadFiles(log logr.Logger, c ComponentExtended, files []string) error {
 	for _, filepathToUpload := range files {
 		log.Info(fmt.Sprintf("uploading asset %s to %s/%s", filepath.Base(filepathToUpload), c.Owner, c.Name))
-		file, err := os.Open(filepathToUpload)
+		file, err := os.Open(filepath.Clean(filepathToUpload))
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Can't open file %s", filepathToUpload))
 			return err
@@ -212,7 +212,7 @@ func writeOverviewToFile(assetOverview AssetOverview, overviewFilepath string) e
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal %s", overviewFilepath)
 	}
-	if err := os.WriteFile(overviewFilepath, overviewJSONBytes, 0644); err != nil {
+	if err := os.WriteFile(overviewFilepath, overviewJSONBytes, 0600); err != nil {
 		return errors.Wrapf(err, "failed to write file %s", overviewFilepath)
 	}
 	return nil
@@ -227,7 +227,7 @@ func storeRunsStatusAsFiles(log logr.Logger, runs testrunner.RunList, prefix, de
 		output.RenderStatusTable(&tableString, tr.Status.Steps)
 		statusOutput := fmt.Sprintf("Testrun: %s\n\n%s\n%s", tr.Name, tableString.String(), util.PrettyPrintStruct(tr.Status))
 		assetFilepath := filepath.Join(dest, generateTestrunAssetName(*run, prefix))
-		if err := os.WriteFile(assetFilepath, []byte(statusOutput), 0644); err != nil {
+		if err := os.WriteFile(assetFilepath, []byte(statusOutput), 0600); err != nil {
 			return errors.Wrapf(err, "failed to write file %s", assetFilepath)
 		}
 	}
@@ -296,7 +296,7 @@ func removeFailedItems(assetOverview *AssetOverview) (failedOverviewItems []stri
 
 func unmarshalOverview(overviewFilepath string) (AssetOverview, error) {
 	var assetOverview AssetOverview
-	assetOverviewBytes, err := os.ReadFile(overviewFilepath)
+	assetOverviewBytes, err := os.ReadFile(filepath.Clean(overviewFilepath))
 	if err != nil {
 		return AssetOverview{}, errors.Wrapf(err, "failed to read file %s", overviewFilepath)
 	}
@@ -314,31 +314,41 @@ func downloadReleaseAssetByName(log logr.Logger, component ComponentExtended, fi
 	}
 	assetReader, redirectURL, err := component.GithubClient.Repositories.DownloadReleaseAsset(context.Background(), component.Owner, component.Name, remoteAssetID, nil)
 	if assetReader != nil {
-		defer assetReader.Close()
+		defer func(assetReader io.ReadCloser) {
+			err := assetReader.Close()
+			if err != nil {
+				log.Error(err, "failed to close asset reader")
+			}
+		}(assetReader)
 	}
 	if err != nil {
 		return err
 	}
 
-	assetFile, err := os.Create(targetPath)
+	assetFile, err := os.Create(filepath.Clean(targetPath))
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", targetPath)
 	}
 	defer assetFile.Close()
+	// filesize is limited to a maximum of 100 MB
+	maxSize := int64(100 << (10 * 2))
 	if redirectURL != "" {
-		res, err := http.Get(redirectURL)
+		res, err := http.Get(redirectURL) // #nosec G107 -- the GitHub release asset is under the user's control and has to be trusted at this stage
 		if err != nil {
 			err := errors.Wrap(err, "http.Get failed:")
 			return errors.Wrapf(err, "failed to HTTP GET %s", redirectURL)
 		}
-		if _, err := io.Copy(assetFile, res.Body); err != nil {
+		if _, err := io.CopyN(assetFile, res.Body, maxSize); err != nil && err != io.EOF {
 			err := errors.Wrap(err, "http.Get failed:")
 			return errors.Wrapf(err, "failed to write data to file %s", assetFile.Name())
 		}
-		res.Body.Close()
+		err = res.Body.Close()
+		if err != nil {
+			return err
+		}
 
 	} else {
-		if _, err = io.Copy(assetFile, assetReader); err != nil {
+		if _, err = io.CopyN(assetFile, assetReader, maxSize); err != nil && err != io.EOF {
 			return errors.Wrapf(err, "failed to write data to file %s", assetFile.Name())
 		}
 	}
@@ -459,7 +469,7 @@ func getGithubClient(component, githubUser, githubPassword string) (*github.Clie
 		apiURL = "https://" + repoURL.Hostname() + "/api/v3"
 		uploadURL = "https://" + repoURL.Hostname() + "/api/uploads"
 	}
-	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, uploadURL, true)
+	githubClient, err := util.GetGitHubClient(apiURL, githubUser, githubPassword, uploadURL, false)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get github client for %s", component)
 	}

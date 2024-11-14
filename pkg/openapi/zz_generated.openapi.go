@@ -607,7 +607,7 @@ func schema_test_infra_pkg_apis_config_GitHubCache(ref common.ReferenceCallback)
 					"cacheDiskSizeGB": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
-							Format: "int32",
+							Format: "int64",
 						},
 					},
 					"maxAgeSeconds": {

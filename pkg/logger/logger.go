@@ -83,7 +83,7 @@ func New(config *Config) (logr.Logger, error) {
 	}
 	zapCfg := determineZapConfig(config)
 
-	level := int8(0 - config.Verbosity)
+	level := 0 - config.Verbosity
 	zapCfg.Level = zap.NewAtomicLevelAt(zapcore.Level(level))
 
 	zapLog, err := zapCfg.Build(zap.AddCallerSkip(1))

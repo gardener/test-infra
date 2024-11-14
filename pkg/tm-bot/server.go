@@ -65,8 +65,8 @@ func Serve(ctx context.Context, log logr.Logger, restConfig *rest.Config, cfg *c
 
 func (o *options) startWebserver(router *mux.Router, stop <-chan struct{}) error {
 	cfg := o.cfg.Webserver
-	serverHTTP := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPPort), Handler: router}
-	serverHTTPS := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPSPort), Handler: router}
+	serverHTTP := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPPort), Handler: router, ReadHeaderTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, ReadTimeout: 10 * time.Second}
+	serverHTTPS := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPSPort), Handler: router, ReadHeaderTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, ReadTimeout: 10 * time.Second}
 	go func() {
 		o.log.Info("starting HTTP server", "port", cfg.HTTPPort)
 		if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {

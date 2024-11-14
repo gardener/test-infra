@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func (ts *timestamp) UnmarshalXMLAttr(attr xml.Attr) error {
 }
 
 func parseJunit(junitFilePath string) (startTime, finishTime time.Time, err error) {
-	data, err := os.ReadFile(junitFilePath)
+	data, err := os.ReadFile(filepath.Clean(junitFilePath))
 	if err != nil {
 		return
 	}

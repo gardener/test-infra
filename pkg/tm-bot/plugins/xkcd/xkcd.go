@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"path"
@@ -86,7 +86,7 @@ func (x *xkcd) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 			return pluginerr.New(fmt.Sprintf("xkcd %d does not exist. The maximum number is currently %d", x.num, max), "")
 		}
 	} else {
-		x.num = rand.Intn(max)
+		x.num = rand.IntN(max) // #nosec: G404 -- No cryptographic context.
 	}
 
 	info, err := x.GetImage(x.num)
