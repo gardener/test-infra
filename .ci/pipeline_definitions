@@ -62,6 +62,9 @@ test-infra:
       steps:
         <<: *default_steps
     release:
+      steps:
+          check:
+            image: 'golang:1.23'
       traits:
         version:
           preprocess: 'finalize'
@@ -69,6 +72,16 @@ test-infra:
           ocm_repository: europe-docker.pkg.dev/gardener-project/releases
         release:
           nextversion: 'bump_minor'
+          assets:
+            - type: build-step-log
+              step_name: check
+              purposes:
+                - lint
+                - sast
+                - gosec
+              comment: |
+                we use gosec (linter) for SAST scans
+                see: https://github.com/securego/gosec
         slack:
           default_channel: 'internal_ti_workspace'
           channel_cfgs:
@@ -95,20 +108,3 @@ test-infra:
             tm-prepare-image:
               <<: *prepare_image
               image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/prepare-step
-
-    #####################
-    #      Images       #
-    #####################
-    tm-golang-image:
-      repo:
-        trigger: false
-      traits:
-        version:
-          preprocess: 'finalize'
-        publish:
-          dockerimages:
-            tm-golang-image:
-              image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/golang
-              dockerfile: 'Dockerfile'
-              dir: 'hack/images/golang'
-              tag_as_latest: true
