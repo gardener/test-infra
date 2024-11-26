@@ -75,13 +75,13 @@ func createTMKubeconfigFile(log logr.Logger) error {
 	}
 
 	log.Info("Write TestMachinery kubeconfig to file", "file", tmFilePath)
-	return os.WriteFile(tmFilePath, kubeconfig, os.ModePerm)
+	return os.WriteFile(tmFilePath, kubeconfig, 0600)
 }
 
 func createDirectories(log logr.Logger, directories []string) error {
 	for _, dir := range directories {
 		log.Info("create directory", "dir", dir)
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return err
 		}
 	}
@@ -132,7 +132,7 @@ func cloneRepository(log logr.Logger, repo *prepare.Repository, repoBasePath str
 }
 
 func readConfigFile(file string) (*prepare.Config, error) {
-	data, err := os.ReadFile(file)
+	data, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}

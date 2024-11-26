@@ -185,12 +185,12 @@ func daemonSetMaxUnavailable(daemonSet *appsv1.DaemonSet) int32 {
 		return 0
 	}
 
-	maxUnavailable, err := intstr.GetValueFromIntOrPercent(rollingUpdate.MaxUnavailable, int(daemonSet.Status.DesiredNumberScheduled), false)
+	maxUnavailable, err := intstr.GetScaledValueFromIntOrPercent(rollingUpdate.MaxUnavailable, int(daemonSet.Status.DesiredNumberScheduled), false)
 	if err != nil {
 		return 0
 	}
 
-	return int32(maxUnavailable)
+	return int32(maxUnavailable) // #nosec G115 -- maxUnavailable is derived from IntOrString, which internally uses an int32 representation or a percentage value derived from a total stored as int32
 }
 
 func getNodeCondition(conditions []corev1.NodeCondition, conditionType corev1.NodeConditionType) *corev1.NodeCondition {

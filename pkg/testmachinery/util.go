@@ -2,6 +2,7 @@ package testmachinery
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -11,12 +12,13 @@ import (
 
 var decoder runtime.Decoder
 
-// ParseTestrunFromFile reads a testrun.yaml file from filePath and parses the yaml.
-func ParseTestrunFromFile(filePath string) (*v1beta1.Testrun, error) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+// ParseTestrunFromFile reads a testrun.yaml file from file and parses the yaml.
+func ParseTestrunFromFile(file string) (*v1beta1.Testrun, error) {
+	f := filepath.Clean(file)
+	if _, err := os.Stat(f); os.IsNotExist(err) {
 		return nil, err
 	}
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}

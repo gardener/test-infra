@@ -42,7 +42,7 @@ func readFileValues(files []string) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 	for _, file := range files {
 		var newValues map[string]interface{}
-		data, err := os.ReadFile(file)
+		data, err := os.ReadFile(filepath.Clean(file))
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to read file %s", file)
 		}

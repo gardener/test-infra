@@ -457,7 +457,15 @@ func Convert_config_ElasticSearch_To_v1beta1_ElasticSearch(in *config.ElasticSea
 }
 
 func autoConvert_v1beta1_GitHub_To_config_GitHub(in *GitHub, out *config.GitHub, s conversion.Scope) error {
-	out.Cache = (*config.GitHubCache)(unsafe.Pointer(in.Cache))
+	if in.Cache != nil {
+		in, out := &in.Cache, &out.Cache
+		*out = new(config.GitHubCache)
+		if err := Convert_v1beta1_GitHubCache_To_config_GitHubCache(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Cache = nil
+	}
 	out.SecretsPath = in.SecretsPath
 	return nil
 }
@@ -468,7 +476,15 @@ func Convert_v1beta1_GitHub_To_config_GitHub(in *GitHub, out *config.GitHub, s c
 }
 
 func autoConvert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s conversion.Scope) error {
-	out.Cache = (*GitHubCache)(unsafe.Pointer(in.Cache))
+	if in.Cache != nil {
+		in, out := &in.Cache, &out.Cache
+		*out = new(GitHubCache)
+		if err := Convert_config_GitHubCache_To_v1beta1_GitHubCache(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Cache = nil
+	}
 	out.SecretsPath = in.SecretsPath
 	return nil
 }
@@ -542,7 +558,7 @@ func Convert_config_GitHubBot_To_v1beta1_GitHubBot(in *config.GitHubBot, out *Gi
 
 func autoConvert_v1beta1_GitHubCache_To_config_GitHubCache(in *GitHubCache, out *config.GitHubCache, s conversion.Scope) error {
 	out.CacheDir = in.CacheDir
-	out.CacheDiskSizeGB = in.CacheDiskSizeGB
+	out.CacheDiskSizeGB = uint64(in.CacheDiskSizeGB)
 	out.MaxAgeSeconds = in.MaxAgeSeconds
 	return nil
 }
@@ -554,7 +570,7 @@ func Convert_v1beta1_GitHubCache_To_config_GitHubCache(in *GitHubCache, out *con
 
 func autoConvert_config_GitHubCache_To_v1beta1_GitHubCache(in *config.GitHubCache, out *GitHubCache, s conversion.Scope) error {
 	out.CacheDir = in.CacheDir
-	out.CacheDiskSizeGB = in.CacheDiskSizeGB
+	out.CacheDiskSizeGB = int(in.CacheDiskSizeGB)
 	out.MaxAgeSeconds = in.MaxAgeSeconds
 	return nil
 }

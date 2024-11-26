@@ -170,7 +170,10 @@ func (l *GitLocation) getGitHubClient() (*github.Client, *http.Client, error) {
 func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 	if l.config != nil {
 		trp, err := ghcache.WithRateLimitControlCache(l.log.WithName("ghCache"), &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: l.config.SkipTls},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: l.config.SkipTls, // #nosec G402 -- option defaults to false, otherwise it is a user's conscious decision.
+				MinVersion:         tls.VersionTLS12,
+			},
 		})
 		if err != nil {
 			return nil, err
@@ -185,9 +188,12 @@ func (l *GitLocation) getHTTPClient() (*http.Client, error) {
 		return basicAuth.Client(), nil
 	}
 
-	l.log.V(3).Info("insecure and unauthenticated git connection is used")
+	l.log.V(3).Info("unauthenticated git connection is used")
 	trp, err := ghcache.WithRateLimitControlCache(l.log.WithName("ghCache"), &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+			MinVersion:         tls.VersionTLS12,
+		},
 	})
 	if err != nil {
 		return nil, err

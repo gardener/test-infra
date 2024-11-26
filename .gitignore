@@ -15,4 +15,8 @@ assets
 
 **/*.coverprofile
 
+# openapi-gen
 **/*.report
+
+# gosec
+gosec-report.sarif

@@ -17,7 +17,7 @@ type Config struct {
 
 	Development       bool
 	Cli               bool
-	Verbosity         int
+	Verbosity         int8
 	DisableStacktrace bool
 	DisableCaller     bool
 	DisableTimestamp  bool
@@ -31,7 +31,7 @@ func InitFlags(flagset *flag.FlagSet) {
 
 	fs.BoolVar(&configFromFlags.Development, "dev", false, "enable development logging which result in console encoding, enabled stacktrace and enabled caller")
 	fs.BoolVar(&configFromFlags.Cli, "cli", util.GetenvBool("CLI", false), "logger runs as cli logger. enables cli logging")
-	fs.IntVarP(&configFromFlags.Verbosity, "verbosity", "v", 1, "number for the log level verbosity")
+	fs.Int8VarP(&configFromFlags.Verbosity, "verbosity", "v", 1, "number for the log level verbosity")
 	fs.BoolVar(&configFromFlags.DisableStacktrace, "disable-stacktrace", true, "disable the stacktrace of error logs")
 	fs.BoolVar(&configFromFlags.DisableCaller, "disable-caller", true, "disable the caller of logs")
 	fs.BoolVar(&configFromFlags.DisableTimestamp, "disable-timestamp", true, "disable timestamp output")

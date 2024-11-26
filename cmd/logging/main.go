@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
@@ -69,7 +70,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("host kubeconfig at %s does not exists", kubeconfigPath)
 	}
 
-	kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
+	kubeconfigBytes, err := os.ReadFile(filepath.Clean(kubeconfigPath))
 	if err != nil {
 		return fmt.Errorf("unable to read host kubeconfig: %w", err)
 	}
@@ -143,10 +144,10 @@ func writePodLogs(podName, outputPath string, logs []byte) error {
 	if outputPath == "" {
 		return nil
 	}
-	if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(outputPath, 0750); err != nil {
 		return err
 	}
 	fileName := fmt.Sprintf("%s.log", podName)
 
-	return os.WriteFile(path.Join(outputPath, fileName), logs, os.ModePerm)
+	return os.WriteFile(path.Join(outputPath, fileName), logs, 0600)
 }

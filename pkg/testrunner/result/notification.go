@@ -27,7 +27,7 @@ func GenerateNotificationConfigForAlerting(tr []*tmv1beta1.Testrun, concourseOnE
 	}
 
 	notifyConfigFilePath := fmt.Sprintf("%s/notify.cfg", concourseOnErrorDir)
-	if err := os.WriteFile(notifyConfigFilePath, notifyConfig, 0777); err != nil {
+	if err := os.WriteFile(notifyConfigFilePath, notifyConfig, 0600); err != nil {
 		log.Warnf("Cannot write file email notification config to %s: %s", notifyConfigFilePath, err.Error())
 		return
 	}

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -50,7 +51,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 	if cdPath == "" {
 		return make([]*Component, 0), nil
 	}
-	data, err := os.ReadFile(cdPath)
+	data, err := os.ReadFile(filepath.Clean(cdPath))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read component descriptor file %s: %s", cdPath, err.Error())
 	}

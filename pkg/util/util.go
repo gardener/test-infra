@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -30,6 +29,7 @@ import (
 	"github.com/pkg/errors"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	restclient "k8s.io/client-go/rest"
 	clientv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,8 +38,6 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/util/elasticsearch"
 )
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyz1234567890"
 
 // MaxTimeExceeded checks if the max time is exceeded.
 func MaxTimeExceeded(startTime time.Time, maxWaitTime int64) bool {
@@ -123,11 +121,7 @@ func GetenvBool(key string, defaultValue bool) bool {
 // RandomString generates a random string out of "abcdefghijklmnopqrstuvwxyz1234567890" with a given length.RandomString
 // The generated string is compatible to k8s name conventions
 func RandomString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
-	}
-	return string(b)
+	return rand.String(n)
 }
 
 // IsAnnotationSubset checks if all items in target are deep equal in src with the same key
@@ -257,7 +251,10 @@ func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
 			Username: username,
 			Password: password,
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: skipTLS},
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: skipTLS, // #nosec G402 -- option defaults to false, otherwise it is a user's conscious decision.
+					MinVersion:         tls.VersionTLS12,
+				},
 			},
 		}
 		return basicAuth.Client()
@@ -265,7 +262,10 @@ func GetHTTPClient(username, password string, skipTLS bool) *http.Client {
 
 	return &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: false,
+				MinVersion:         tls.VersionTLS12,
+			},
 		},
 	}
 }
@@ -325,12 +325,15 @@ func Unzip(archive, target string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(target, 0755); err != nil {
+	if err := os.MkdirAll(target, 0750); err != nil {
 		return err
 	}
 
 	for _, file := range reader.File {
-		path := filepath.Join(target, file.Name)
+		path := filepath.Join(target, file.Name) // #nosec G305 -- below code ensures joined "path" points to "target"
+		if !strings.HasPrefix(path, filepath.Clean(target)) {
+			return fmt.Errorf("%s is an illegal file path", file.Name)
+		}
 		if file.FileInfo().IsDir() {
 			if err := os.MkdirAll(path, file.Mode()); err != nil {
 				return err
@@ -344,13 +347,15 @@ func Unzip(archive, target string) error {
 		}
 		defer fileReader.Close()
 
-		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+		targetFile, err := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
 			return err
 		}
 		defer targetFile.Close()
 
-		if _, err := io.Copy(targetFile, fileReader); err != nil {
+		// max filesize is limited to 100 MB
+		maxSize := int64(100 << (10 * 2))
+		if _, err := io.CopyN(targetFile, fileReader, maxSize); err != nil && err != io.EOF {
 			return err
 		}
 	}
@@ -375,7 +380,7 @@ func IsLastElementOfBucket(value, bucketSize int) bool {
 
 // Zipit zips a source file or directory and writes the archive to the specified target path
 func Zipit(source, target string) error {
-	zipfile, err := os.Create(target)
+	zipfile, err := os.Create(filepath.Clean(target))
 	if err != nil {
 		return err
 	}
@@ -423,7 +428,7 @@ func Zipit(source, target string) error {
 			return nil
 		}
 
-		file, err := os.Open(path)
+		file, err := os.Open(filepath.Clean(path))
 		if err != nil {
 			return err
 		}

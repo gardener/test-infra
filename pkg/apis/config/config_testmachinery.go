@@ -66,7 +66,7 @@ type GitHub struct {
 // GitHubCache is the github cache configuration
 type GitHubCache struct {
 	CacheDir        string `json:"cacheDir,omitempty"`
-	CacheDiskSizeGB int    `json:"cacheDiskSizeGB,omitempty"`
+	CacheDiskSizeGB uint64 `json:"cacheDiskSizeGB,omitempty"`
 	MaxAgeSeconds   int    `json:"maxAgeSeconds,omitempty"`
 }
 

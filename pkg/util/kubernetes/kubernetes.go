@@ -7,6 +7,7 @@ package kubernetes
 import (
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -40,7 +41,7 @@ func NewClientFromSecretObject(secret *corev1.Secret, opts client.Options) (clie
 
 // NewClientFromFile creates a new Client struct from a kubconfig file.
 func NewClientFromFile(kubeconfigPath string, opts client.Options) (client.Client, error) {
-	data, err := os.ReadFile(kubeconfigPath)
+	data, err := os.ReadFile(filepath.Clean(kubeconfigPath))
 	if err != nil {
 		return nil, err
 	}

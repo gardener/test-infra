@@ -52,14 +52,14 @@ func createMetadataFiles(log logr.Logger) error {
 	}
 
 	startedContent := []byte(fmt.Sprintf("{\"timestamp\": %d}", testsuiteStartTime.Unix()))
-	err = os.WriteFile(filepath.Join(config.ExportPath, startedFileName), startedContent, 06444)
+	err = os.WriteFile(filepath.Join(config.ExportPath, startedFileName), startedContent, 0600)
 	if err != nil {
 		log.Error(err, "Failed to write started.json file")
 		return err
 	}
 
 	finishedContent := []byte(fmt.Sprintf("{\"timestamp\": %d, \"result\": \"SUCCESS\", \"metadata\": {\"shoot-k8s-release\": \"%s\", \"gardener\": \"%s\"}}", testsuiteFinishTime.Unix(), config.K8sRelease, config.GardenerVersion))
-	err = os.WriteFile(filepath.Join(config.ExportPath, finishedFileName), finishedContent, 06444)
+	err = os.WriteFile(filepath.Join(config.ExportPath, finishedFileName), finishedContent, 0600)
 	if err != nil {
 		log.Error(err, "Failed to write finished.json file")
 		return err
@@ -107,7 +107,7 @@ func uploadResultsToBucket(log logr.Logger, files []string, k8sReleaseMajorMinor
 
 func upload(client *storage.Client, bucket, sourcePath, targetPath string) error {
 	ctx := context.Background()
-	f, err := os.Open(sourcePath)
+	f, err := os.Open(filepath.Clean(sourcePath))
 	if err != nil {
 		return err
 	}

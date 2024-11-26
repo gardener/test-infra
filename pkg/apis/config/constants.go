@@ -12,7 +12,7 @@ import (
 var ChartsPath = filepath.Join("charts", "internal")
 
 // GitHubSecretKeyName is the name of the secret key that contains the github secrets
-const GitHubSecretKeyName = "config.yaml"
+const GitHubSecretKeyName = "config.yaml" // #nosec G101 -- No credential.
 
 // S3SecretName is the name of the secret containing the s3 credentials
 const S3SecretName = "s3-secret"
