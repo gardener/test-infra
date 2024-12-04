@@ -18,7 +18,7 @@ updates:
         - "*"
         exclude-patterns:
         - "github.com/gardener*"
-        - "github.com/argoproj/argo-workflows
+        - "github.com/argoproj/argo-workflows"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
