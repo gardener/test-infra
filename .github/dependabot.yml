@@ -1,0 +1,31 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    groups:
+    # Group all version-updates, except Gardener and Argo
+      non-gardener-dependencies:
+        applies-to: "version-updates"
+        patterns:
+        - "*"
+        exclude-patterns:
+        - "github.com/gardener*"
+        - "github.com/argoproj/argo-workflows
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-name: "quay.io/argoproj/*"
+      - dependency-name: "golang*"
+      - dependency-name: "alpine*"
+      - dependency-name: "ghcr.io/open-component-model/ocm*"
