@@ -46,6 +46,8 @@ import (
 	"github.com/gardener/test-infra/pkg/util"
 )
 
+const bloblessClone = "--filter=blob:none"
+
 func runPrepare(log logr.Logger, cfg *prepare.Config, repoBasePath string) error {
 	fmt.Printf("\n%s\n\n", util.PrettyPrintStruct(cfg))
 
@@ -96,7 +98,7 @@ func cloneRepository(log logr.Logger, repo *prepare.Repository, repoBasePath str
 	repoPath := path.Join(repoBasePath, repo.Name)
 	log.Info("Clone repo", "repo", repo.URL, "revision", repo.Revision, "path", repoPath)
 
-	if err := runCommand(log, cwd, "git", "clone", "-v", repo.URL, repoPath); err != nil {
+	if err := runCommand(log, cwd, "git", "clone", bloblessClone, "-v", repo.URL, repoPath); err != nil {
 		// do some checks to diagnose why git clone fails
 		if addrs, e := net.LookupHost("github.com"); e == nil {
 			fmt.Printf("LookupHost github.com: %v\n", addrs)
@@ -112,7 +114,7 @@ func cloneRepository(log logr.Logger, repo *prepare.Repository, repoBasePath str
 		_ = runCommand(log, cwd, "nslookup", "kubernetes.default.svc.cluster.local")
 		// for whatever reason, git clone sometimes fails to resolve github.com => workaround by retrying
 		log.Info("git clone failed => retrying once")
-		if err := runCommand(log, cwd, "git", "clone", "-v", repo.URL, repoPath); err != nil {
+		if err := runCommand(log, cwd, "git", "clone", bloblessClone, "-v", repo.URL, repoPath); err != nil {
 			return err
 		}
 	}
