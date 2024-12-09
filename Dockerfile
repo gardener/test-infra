@@ -30,7 +30,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-base-step #############
-FROM alpine:3.21 AS base-step
+FROM golang:1.23-alpine AS base-step
 
 ENV KUBECTL_VERSION v1.31.3
 ENV HELM_V3_VERSION v3.16.3
@@ -81,7 +81,7 @@ RUN  \
       "gardener-cicd-cli==${cc_utils_version}" \
       "gardener-cicd-libs==${cc_utils_version}" \
   && rm -rf "${pkgdir}" \
-  && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
+  && mkdir -p /cc/utils && ln -s /usr/bin/gardener-ci /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
      https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
@@ -100,7 +100,8 @@ RUN  \
   && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
   && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
 # SAPNetCA_G2.crt will expire 2025-03-17 -> remove
-ENV PATH /cc/utils/bin:$PATH
+# TODO: remove after migrating scripts to gardener-ci
+ENV PATH /cc/utils:$PATH
 
 ############# tm-run #############
 FROM base-step AS tm-run
