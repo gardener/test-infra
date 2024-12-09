@@ -22,7 +22,7 @@ GIT_COMMIT_SHA="$(GIT_DIR=$SOURCE_PATH/.git git rev-parse @)"
 NAMESPACE=tm-bot
 
 # Install Kubectl
-K8S_VERSION=1.30.5
+K8S_VERSION=1.31.3
 curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 mv ./kubectl /usr/local/bin/kubectl
