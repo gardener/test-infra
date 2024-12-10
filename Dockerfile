@@ -20,7 +20,7 @@ COPY . .
 RUN make install
 
 ############# tm-controller #############
-FROM alpine:3.20 AS tm-controller
+FROM alpine:3.21 AS tm-controller
 
 COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
@@ -32,63 +32,56 @@ ENTRYPOINT ["/testmachinery-controller"]
 ############# tm-base-step #############
 FROM golang:1.23-alpine AS base-step
 
-ENV KUBECTL_VERSION=v1.31.2
-ENV HELM_V3_VERSION=v3.16.2
+ENV KUBECTL_VERSION v1.31.3
+ENV HELM_V3_VERSION v3.16.3
 
 COPY --from=ocmcli /bin/ocm /bin/ocm
 
 RUN  \
-  apk update \
-  && apk add \
+  apk add --update --no-cache \
     apache2-utils \
+    ca-certificates \
     coreutils \
-    cargo \
     bash \
+    bc \
     binutils \
     bind-tools \
     build-base \
     curl \
     file \
+    findutils \
     gcc \
     git \
     git-crypt \
+    grep \
     jq \
     libc-dev \
-    libev-dev \
-    libffi-dev \
-    openssh \
     openssl \
-    openssl-dev \
     python3 \
     python3-dev \
     py3-pip \
     wget \
-    grep \
-    findutils \
-    rsync \
-    bc \
     xz \
     linux-headers \
+  && mkdir -p $HOME/.config/pip \
+  && echo -e "[global]\nbreak-system-packages = true" >> $HOME/.config/pip/pip.conf \
   && pkgdir=/tmp/packages \
   && ocm_repo="europe-docker.pkg.dev/gardener-project/releases" \
-  && cc_utils_version=1.2515.0 \
   && cc_utils_ref="OCIRegistry::${ocm_repo}//github.com/gardener/cc-utils" \
+  && cc_utils_version="$(ocm show versions ${cc_utils_ref} | sort -r | head -1)" \
   && mkdir "${pkgdir}" \
-  && for resource in gardener-cicd-cli gardener-cicd-libs gardener-oci; do \
+  && for resource in gardener-cicd-cli gardener-cicd-libs gardener-oci gardener-ocm; do \
     ocm download resources \
       "${cc_utils_ref}:${cc_utils_version}" \
       "${resource}" \
       -O - | tar xJ -C "${pkgdir}"; \
     done \
-  && pip install --break-system-packages google-crc32c \
-  && pip install --break-system-packages --upgrade --find-links "${pkgdir}" \
-    pip \
-    "gardener-cicd-cli==${cc_utils_version}" \
-    "gardener-cicd-libs==${cc_utils_version}" \
-    awscli \
-    pytz \
+  && CFLAGS='-Wno-int-conversion' \
+     pip3 install --upgrade --no-cache-dir --find-links "${pkgdir}" \
+      "gardener-cicd-cli==${cc_utils_version}" \
+      "gardener-cicd-libs==${cc_utils_version}" \
   && rm -rf "${pkgdir}" \
-  && mkdir -p /cc/utils && ln -s /usr/bin/cli.py /cc/utils/cli.py \
+  && mkdir -p /cc/utils && ln -s /usr/bin/gardener-ci /cc/utils/cli.py \
   && curl -Lo /bin/kubectl \
      https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
   && chmod +x /bin/kubectl \
@@ -97,26 +90,18 @@ RUN  \
   && mv /tmp/helm /bin/helm3 \
   && chmod +x /bin/helm3 \
   && ln -s /bin/helm3 /bin/helm \
-  && curl -Lo /bin/yaml2json \
-    https://github.com/bronze1man/yaml2json/releases/download/v1.2/yaml2json_linux_amd64 \
-  && chmod +x /bin/yaml2json \
-  && curl -Lo /bin/cfssl \
-    https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 \
-  && chmod +x /bin/cfssl \
-  && curl -Lo /bin/cfssljson \
-    https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 \
-  && chmod +x /bin/cfssljson \
-  &&  curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt -o \
-    /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
-  && curl http://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt -o \
+  && curl https://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt -o \
+      /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
+  && curl https://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt -o \
       /usr/local/share/ca-certificates/SAPNetCA_G2.crt \
   && curl https://aia.pki.co.sap.com/aia/SAPNetCA_G2_2.crt -o \
-    /usr/local/share/ca-certificates/SAPNetCA_G2_2.crt \
+      /usr/local/share/ca-certificates/SAPNetCA_G2_2.crt \
   && update-ca-certificates \
   && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
   && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
 # SAPNetCA_G2.crt will expire 2025-03-17 -> remove
-ENV PATH /cc/utils/bin:$PATH
+# TODO: remove after migrating scripts to gardener-ci
+ENV PATH /cc/utils:$PATH
 
 ############# tm-run #############
 FROM base-step AS tm-run
@@ -128,9 +113,9 @@ WORKDIR /
 ENTRYPOINT ["/testrunner"]
 
 ############# tm-bot #############
-FROM alpine:3.20 AS tm-bot
+FROM alpine:3.21 AS tm-bot
 
-RUN apk add --update bash curl
+RUN apk add --update --no-cache bash curl
 
 COPY ./pkg/tm-bot/ui/static /app/static
 COPY ./pkg/tm-bot/ui/templates /app/templates
