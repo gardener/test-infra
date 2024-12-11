@@ -39,11 +39,11 @@ require (
 	golang.org/x/oauth2 v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.16.3
-	k8s.io/api v0.31.3
-	k8s.io/apiextensions-apiserver v0.31.3
-	k8s.io/apimachinery v0.31.3
-	k8s.io/client-go v0.31.3
-	k8s.io/code-generator v0.31.3
+	k8s.io/api v0.31.4
+	k8s.io/apiextensions-apiserver v0.31.4
+	k8s.io/apimachinery v0.31.4
+	k8s.io/client-go v0.31.4
+	k8s.io/code-generator v0.31.4
 	k8s.io/kube-openapi v0.0.0-20241009091222-67ed5848f094
 	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078
 	ocm.software/ocm v0.18.0
