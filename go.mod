@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.48.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/argoproj/argo-workflows/v3 v3.5.13
+	github.com/argoproj/argo-workflows/v3 v3.6.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.12.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gardener/gardener v1.110.0
@@ -191,7 +191,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gobuffalo/flect v1.0.3 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/gobwas/glob v0.2.4-0.20181002190808-e7a84e9525fe // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/goccy/go-yaml v1.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
