@@ -21,6 +21,11 @@ controller:
 
   serviceAccountName: testmachinery-controller
 
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
   healthEndpointPort: 8081
   metricsEndpointPort: 8080
   enableLeaderElection: false

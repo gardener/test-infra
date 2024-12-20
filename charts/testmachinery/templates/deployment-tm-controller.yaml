@@ -67,6 +67,10 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 30
           failureThreshold: 5
+        resources:
+          requests:
+            cpu: {{ .Values.controller.resources.requests.cpu | quote }}
+            memory: {{ .Values.controller.resources.requests.memory | quote }}
         volumeMounts:
         - name: config
           mountPath: /etc/testmachinery/config
