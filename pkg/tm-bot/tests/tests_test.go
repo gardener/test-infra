@@ -5,7 +5,7 @@
 package tests_test
 
 import (
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v68/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
