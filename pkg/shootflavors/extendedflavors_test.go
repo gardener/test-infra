@@ -439,6 +439,44 @@ var _ = Describe("extended flavor test", func() {
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
+	It("should generate a shoot with the correct ipFamilies set", func() {
+		defaultExtendedCfg.IpFamilies = "ipv4"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				AdditionalAnnotations: map[string]string{"a": "b"},
+				AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+				Provider:              common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
+		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+
+		shoot := flavors.GetShoots()[0]
+		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
+			Provider:              common.CloudProviderGCP,
+			AdditionalAnnotations: map[string]string{"a": "b"},
+			AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+			KubernetesVersion:     gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			Workers:               []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("amd64")}}},
+		}))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+	})
+
 	It("should generate a shoot with the correct controlPlaneFailureTolerance set", func() {
 		const failureToleranceType = "zone"
 		defaultExtendedCfg.ControlPlaneFailureTolerance = failureToleranceType

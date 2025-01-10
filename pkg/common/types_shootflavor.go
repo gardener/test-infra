@@ -110,6 +110,7 @@ type ExtendedConfiguration struct {
 	LoadbalancerProvider string `json:"loadbalancerProvider"`
 
 	NetworkingType string `json:"networkingType"`
+	IpFamilies     string `json:"ipFamilies"`
 
 	ControlPlaneFailureTolerance string `json:"controlPlaneFailureTolerance"`
 

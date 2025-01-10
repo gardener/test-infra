@@ -132,6 +132,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 			"controlPlaneFailureTolerance": shoot.ControlPlaneFailureTolerance,
 			"floatingPoolName":             shoot.FloatingPoolName,
 			"networkingType":               shoot.NetworkingType,
+			"ipFamilies":                   shoot.IpFamilies,
 			"loadbalancerProvider":         shoot.LoadbalancerProvider,
 			"infrastructureConfig":         infrastructure,
 			"networkingConfig":             networkingConfig,
