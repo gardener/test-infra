@@ -440,7 +440,7 @@ var _ = Describe("extended flavor test", func() {
 	})
 
 	It("should generate a shoot with the correct ipFamilies set", func() {
-		defaultExtendedCfg.IpFamilies = "ipv4"
+		defaultExtendedCfg.IpFamilies = "IPv4"
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
 			ShootFlavor: common.ShootFlavor{
