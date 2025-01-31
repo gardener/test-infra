@@ -9,7 +9,7 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.5.13
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/gardener/gardener v1.111.0
+	github.com/gardener/gardener v1.111.1
 	github.com/gardener/gardener-extension-provider-aws v1.60.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.2
@@ -31,7 +31,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
 	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
