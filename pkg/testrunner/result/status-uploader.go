@@ -444,8 +444,13 @@ func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersi
 			return nil, errors.Errorf("github releases GET failed with status code %d", response.StatusCode)
 		}
 		for _, release := range releases {
-			if *release.Draft && strings.Contains(*release.Name, releaseName.String()) {
-				return release, nil
+			if *release.Draft {
+				if release.Name != nil && strings.Contains(*release.Name, releaseName.String()) {
+					return release, nil
+				}
+				if release.TagName != nil && strings.Contains(*release.TagName, releaseName.String()) {
+					return release, nil
+				}
 			}
 		}
 		if response.NextPage == 0 {
