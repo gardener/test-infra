@@ -30,7 +30,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
 	go.uber.org/mock v0.5.0
@@ -46,8 +46,8 @@ require (
 	k8s.io/code-generator v0.32.2
 	k8s.io/kube-openapi v0.0.0-20241127205056-99599406b04f
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
-	ocm.software/ocm v0.20.0
-	sigs.k8s.io/controller-runtime v0.20.1
+	ocm.software/ocm v0.20.1
+	sigs.k8s.io/controller-runtime v0.20.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -131,6 +131,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.3 // indirect
+	github.com/chainguard-dev/git-urls v1.0.2 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/cfssl v1.6.5 // indirect
@@ -147,7 +148,7 @@ require (
 	github.com/containers/ocicrypt v1.2.0 // indirect
 	github.com/containers/storage v1.56.1 // indirect
 	github.com/coreos/go-oidc/v3 v3.12.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20231217050601-ba74d44ecf5f // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -171,7 +172,7 @@ require (
 	github.com/envoyproxy/go-control-plane v0.13.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
-	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -333,7 +334,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vbatts/tar-split v0.11.6 // indirect
-	github.com/whilp/git-urls v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/go-gitlab v0.112.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
