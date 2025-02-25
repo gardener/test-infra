@@ -60,6 +60,8 @@ spec:
           mountPath: /etc/tm-bot/gh
           readOnly: true
         {{ end }}
+        securityContext:
+          allowPrivilegeEscalation: false
       volumes:
       - name: config
         secret:

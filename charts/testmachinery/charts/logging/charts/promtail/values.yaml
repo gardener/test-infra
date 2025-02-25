@@ -76,6 +76,8 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsGroup: 0
   runAsUser: 0
+  allowPrivilegeEscalation: false
+
 
 serviceAccount:
   create: true
