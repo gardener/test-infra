@@ -48,11 +48,11 @@ test-infra:
         draft_release: ~
       steps: &default_steps
         check:
-          image: 'golang:1.23'
+          image: 'golang:1.24'
         test:
-          image: 'golang:1.23'
+          image: 'golang:1.24'
         test-definitions:
-          image: 'golang:1.23'
+          image: 'golang:1.24'
     pull-request:
       traits:
         pull-request: ~
@@ -64,7 +64,7 @@ test-infra:
     release:
       steps:
           check:
-            image: 'golang:1.23'
+            image: 'golang:1.24'
       traits:
         version:
           preprocess: 'finalize'
