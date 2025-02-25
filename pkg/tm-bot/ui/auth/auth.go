@@ -104,8 +104,20 @@ func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 		aCtx, err := a.GetAuthContext(r)
 		if err != nil {
 			a.log.Error(err, "unable to get Token")
+			state, err := generateStateParameter()
+			if err != nil {
+				a.log.Error(err, "unable to generate random state")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			stateCookie := http.Cookie{
+				Name:    oauthStateCookieName,
+				Value:   state,
+				Expires: time.Now().Add(3 * time.Minute),
+			}
 
-			authURL := a.config.AuthCodeURL(r.URL.String(), oauth2.AccessTypeOffline)
+			http.SetCookie(w, &stateCookie)
+			authURL := a.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 			http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 			return
 		}
@@ -148,12 +160,15 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 	oauthState, err := r.Cookie(oauthStateCookieName)
 	if err != nil {
 		a.log.Error(err, "could not get state cookie")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, r, "/404", http.StatusBadRequest)
 		return
 	}
+	oauthState.MaxAge = -1
+	http.SetCookie(w, oauthState)
+
 	if state != oauthState.Value {
 		a.log.Error(err, "oauth state mismatch")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, r, "/404", http.StatusBadRequest)
 		return
 	}
 
@@ -230,18 +245,16 @@ func (a *githubOAuth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b := make([]byte, 20)
-	_, err := rand.Read(b)
+	state, err := generateStateParameter()
 	if err != nil {
 		a.log.Error(err, "unable to generate random state")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	state := base64.URLEncoding.EncodeToString(b)
 	stateCookie := http.Cookie{
 		Name:    oauthStateCookieName,
 		Value:   state,
-		Expires: time.Now().Add(24 * time.Hour),
+		Expires: time.Now().Add(3 * time.Minute),
 	}
 
 	http.SetCookie(w, &stateCookie)
@@ -272,4 +285,14 @@ func (a *githubOAuth) getGHClient(client *http.Client) (*github.Client, error) {
 		return github.NewClient(client).WithEnterpriseURLs(githubUrl, "")
 	}
 	return github.NewClient(client), nil
+}
+
+func generateStateParameter() (string, error) {
+	b := make([]byte, 20)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	state := base64.URLEncoding.EncodeToString(b)
+	return state, nil
 }
