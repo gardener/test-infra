@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.19.1 AS ocmcli
+FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.20.1 AS ocmcli
 #############      builder       #############
 FROM golang:1.24 AS builder
 
@@ -32,8 +32,8 @@ ENTRYPOINT ["/testmachinery-controller"]
 ############# tm-base-step #############
 FROM golang:1.24-alpine AS base-step
 
-ENV KUBECTL_VERSION v1.31.3
-ENV HELM_V3_VERSION v3.16.3
+ENV KUBECTL_VERSION v1.32.2
+ENV HELM_V3_VERSION v3.17.1
 
 COPY --from=ocmcli /bin/ocm /bin/ocm
 
