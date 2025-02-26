@@ -106,7 +106,22 @@ argo:
 
   argo:
     name: workflow-controller
+    mainContainer:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000
     executor:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000
       waitContainerResources:
         requests:
           cpu: 50m

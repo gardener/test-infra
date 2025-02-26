@@ -10,7 +10,10 @@ images:
 
 argo:
   name: workflow-controller
+  mainContainer:
+    securityContext: {}
   executor:
+    securityContext: {}
     waitContainerResources:
       requests:
         cpu: 50m
@@ -18,7 +21,7 @@ argo:
       limits:
         cpu: 100m
         memory: 300Mi
-  resources: { }
+  resources: {}
   # requests:
   #   cpu: 200m
   #   memory: 256Mi

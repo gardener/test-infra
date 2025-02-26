@@ -9,7 +9,10 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
   config: |
+    mainContainer:
+      securityContext: {{- toYaml .Values.mainContainer.securityContext | nindent 8 }}
     executor:
+      securityContext: {{- toYaml .Values.executor.securityContext | nindent 8 }}
       resources:
         requests:
           cpu: {{ .Values.argo.executor.waitContainerResources.requests.cpu }}
