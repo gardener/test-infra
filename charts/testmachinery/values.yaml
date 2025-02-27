@@ -88,7 +88,7 @@ testmachinery:
 reserve-excess-capacity:
   enabled: true
   images:
-    reserve-excess-capacity: gcr.io/google_containers/pause-amd64:3.1
+    reserve-excess-capacity: europe-docker.pkg.dev/sap-se-gcp-k8s-delivery/releases-public/registry_k8s_io/pause@sha256:adafa755d1f0acb952eb9ecde0dbceec4674e8f1042d1c13b15a77f5d78c8160
   replicas: 5
   resources:
     requests:
