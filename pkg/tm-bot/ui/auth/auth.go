@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -23,8 +24,8 @@ import (
 
 const (
 	sessionName = "tm"
-	// max cookie age is 48 hours
-	maxAge = 48 * 60 * 60
+	// max cookie age is 24 hours
+	maxAge = 24 * 60 * 60
 
 	oauthStateCookieName = "oauthstate"
 )
@@ -110,12 +111,23 @@ func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			session, err := a.store.Get(r, sessionName)
+			if err != nil {
+				a.log.Error(err, "unable to get session store")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			session.AddFlash(r.RequestURI)
+			if err := session.Save(r, w); err != nil {
+				a.log.Error(err, "unable to save session store")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			stateCookie := http.Cookie{
 				Name:    oauthStateCookieName,
 				Value:   state,
 				Expires: time.Now().Add(3 * time.Minute),
 			}
-
 			http.SetCookie(w, &stateCookie)
 			authURL := a.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 			http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
@@ -202,9 +214,16 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	if session.Options == nil {
 		session.Options = &sessions.Options{}
+	}
+
+	redirectURI := "/"
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		f := flashes[0].(string)
+		if strings.HasPrefix(f, "/testrun") {
+			redirectURI = f
+		}
 	}
 	session.Options.MaxAge = maxAge
 	session.Values["context"] = AuthContext{
@@ -217,7 +236,7 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirectURI, http.StatusTemporaryRedirect)
 }
 
 // GetAuthContext get the Token from the cookie store
