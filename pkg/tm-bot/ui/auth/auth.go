@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -23,8 +24,8 @@ import (
 
 const (
 	sessionName = "tm"
-	// max cookie age is 48 hours
-	maxAge = 48 * 60 * 60
+	// max cookie age is 24 hours
+	maxAge = 24 * 60 * 60
 
 	oauthStateCookieName = "oauthstate"
 )
@@ -104,8 +105,31 @@ func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 		aCtx, err := a.GetAuthContext(r)
 		if err != nil {
 			a.log.Error(err, "unable to get Token")
-
-			authURL := a.config.AuthCodeURL(r.URL.String(), oauth2.AccessTypeOffline)
+			state, err := generateStateParameter()
+			if err != nil {
+				a.log.Error(err, "unable to generate random state")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			session, err := a.store.Get(r, sessionName)
+			if err != nil {
+				a.log.Error(err, "unable to get session store")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			session.AddFlash(r.RequestURI)
+			if err := session.Save(r, w); err != nil {
+				a.log.Error(err, "unable to save session store")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			stateCookie := http.Cookie{
+				Name:    oauthStateCookieName,
+				Value:   state,
+				Expires: time.Now().Add(3 * time.Minute),
+			}
+			http.SetCookie(w, &stateCookie)
+			authURL := a.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 			http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 			return
 		}
@@ -148,12 +172,15 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 	oauthState, err := r.Cookie(oauthStateCookieName)
 	if err != nil {
 		a.log.Error(err, "could not get state cookie")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, r, "/404", http.StatusBadRequest)
 		return
 	}
+	oauthState.MaxAge = -1
+	http.SetCookie(w, oauthState)
+
 	if state != oauthState.Value {
 		a.log.Error(err, "oauth state mismatch")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, r, "/404", http.StatusBadRequest)
 		return
 	}
 
@@ -187,9 +214,16 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	if session.Options == nil {
 		session.Options = &sessions.Options{}
+	}
+
+	redirectURI := "/"
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		f := flashes[0].(string)
+		if strings.HasPrefix(f, "/testrun") {
+			redirectURI = f
+		}
 	}
 	session.Options.MaxAge = maxAge
 	session.Values["context"] = AuthContext{
@@ -202,7 +236,7 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirectURI, http.StatusTemporaryRedirect)
 }
 
 // GetAuthContext get the Token from the cookie store
@@ -230,18 +264,16 @@ func (a *githubOAuth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b := make([]byte, 20)
-	_, err := rand.Read(b)
+	state, err := generateStateParameter()
 	if err != nil {
 		a.log.Error(err, "unable to generate random state")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	state := base64.URLEncoding.EncodeToString(b)
 	stateCookie := http.Cookie{
 		Name:    oauthStateCookieName,
 		Value:   state,
-		Expires: time.Now().Add(24 * time.Hour),
+		Expires: time.Now().Add(3 * time.Minute),
 	}
 
 	http.SetCookie(w, &stateCookie)
@@ -272,4 +304,14 @@ func (a *githubOAuth) getGHClient(client *http.Client) (*github.Client, error) {
 		return github.NewClient(client).WithEnterpriseURLs(githubUrl, "")
 	}
 	return github.NewClient(client), nil
+}
+
+func generateStateParameter() (string, error) {
+	b := make([]byte, 20)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	state := base64.URLEncoding.EncodeToString(b)
+	return state, nil
 }
