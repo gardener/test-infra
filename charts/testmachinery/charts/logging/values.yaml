@@ -29,11 +29,11 @@ vali:
   rbac:
     pspEnabled: false
 
-promtail:
-  nameOverride: promtail
+valitail:
+  nameOverride: valitail
   image:
-    repository: grafana/promtail
-    tag: 2.0.0
+    repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail
+    tag: v2.2.21
   resources:
     limits:
       cpu: 500m
@@ -70,7 +70,7 @@ promtail:
           source_labels:
             - __meta_kubernetes_pod_node_name
           target_label: node
-        # point promtail to correct log filenames
+        # point valitail to correct log filenames
         - replacement: /var/log/pods/*$1/*.log
           separator: /
           source_labels:
@@ -87,7 +87,7 @@ promtail:
           source_labels:
             - __meta_kubernetes_pod_annotation_workflows_argoproj_io_node_name
           target_label: argo_node
-        # give a TM teststep a friendly grafana label name
+        # give a TM teststep a friendly label name
         - action: replace
           source_labels:
             - __meta_kubernetes_pod_annotation_testmachinery_sapcloud_io_TestDefinition

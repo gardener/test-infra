@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "valitail.fullname" . }}-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "valitail.name" . }}
+    chart: {{ template "valitail.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.config.server.http_listen_port }}
+      protocol: TCP
+      name: http-metrics
+      targetPort: http-metrics
+  selector:
+    app: {{ template "valitail.name" . }}
+    release: {{ .Release.Name }}
+{{- end }}

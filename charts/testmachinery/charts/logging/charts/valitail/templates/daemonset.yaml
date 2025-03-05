@@ -1,42 +1,37 @@
----
-{{- if .Values.global.loggingEnabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ template "promtail.fullname" . }}
-  namespace: {{ .Values.global.loggingNamespace }}
+  name: {{ template "valitail.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ template "promtail.name" . }}
-    chart: {{ template "promtail.chart" . }}
-    release: {{ template "logging.releaseName" . }}
+    app: {{ template "valitail.name" . }}
+    chart: {{ template "valitail.chart" . }}
+    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
     {{- toYaml .Values.annotations | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "promtail.name" . }}
-      release: {{ template "logging.releaseName" . }}
+      app: {{ template "valitail.name" . }}
+      release: {{ .Release.Name }}
   updateStrategy:
-    type: {{ .Values.deploymentStrategy }}
-  {{- if ne .Values.deploymentStrategy "RollingUpdate" }}
-    rollingUpdate: null
-  {{- end }}
+    {{- toYaml .Values.deploymentStrategy | nindent 4 }}
   template:
     metadata:
       labels:
-        app: {{ template "promtail.name" . }}
-        release: {{ template "logging.releaseName" . }}
+        app: {{ template "valitail.name" . }}
+        release: {{ .Release.Name }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}          
+        {{- end }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ template "promtail.serviceAccountName" . }}
+      serviceAccountName: {{ template "valitail.serviceAccountName" . }}
     {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
     {{- end }}
@@ -51,17 +46,23 @@ spec:
         securityContext:
           privileged: true
     {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
       containers:
-        - name: promtail
+        - name: valitail
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - "-config.file=/etc/promtail/promtail.yaml"
+            - "-config.file=/etc/valitail/valitail.yaml"
             {{- if not (or .Values.config.client.url .Values.config.clients) }}
-            {{- if and .Values.loki.user .Values.loki.password }}
-            - "-client.url={{ .Values.loki.serviceScheme }}://{{ .Values.loki.user }}:{{ .Values.loki.password }}@{{ include "loki.serviceName" . }}:{{ .Values.loki.servicePort }}/loki/api/v1/push"
+            {{- if and .Values.vali.user .Values.vali.password }}
+            - "-client.url={{ .Values.vali.serviceScheme }}://{{ .Values.vali.user }}:{{ .Values.vali.password }}@{{ include "vali.serviceName" . }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
             {{- else }}
-            - "-client.url={{ .Values.loki.serviceScheme }}://{{ include "loki.serviceName" . }}:{{ .Values.loki.servicePort }}/loki/api/v1/push"
+            - "-client.url={{ .Values.vali.serviceScheme }}://{{ include "vali.serviceName" . }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
             {{- end }}
             {{- end }}
             {{- if .Values.extraCommandlineArgs }}
@@ -71,10 +72,13 @@ spec:
             {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /etc/promtail
+              mountPath: /etc/valitail
             - name: run
-              mountPath: /run/promtail
+              mountPath: /run/valitail
             {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
@@ -113,11 +117,13 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ template "promtail.fullname" . }}
+            name: {{ template "valitail.fullname" . }}
         - name: run
           hostPath:
-            path: /run/promtail
+            path: /run/valitail
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-{{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
