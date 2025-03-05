@@ -165,7 +165,6 @@ podManagementPolicy: OrderedReady
 
 rbac:
   create: true
-  pspEnabled: true
 
 readinessProbe:
   httpGet:
@@ -216,13 +215,6 @@ podDisruptionBudget: {}
 
 updateStrategy:
   type: RollingUpdate
-
-serviceMonitor:
-  enabled: false
-  interval: ""
-  additionalLabels: {}
-  annotations: {}
-  # scrapeTimeout: 10s
 
 initContainers: []
 ## Init containers to be added to the vali pod.

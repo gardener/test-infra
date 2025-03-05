@@ -9,12 +9,5 @@ metadata:
     chart: {{ template "vali.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-{{- if .Values.rbac.pspEnabled }}
-rules:
-- apiGroups:      ['extensions']
-  resources:      ['podsecuritypolicies']
-  verbs:          ['use']
-  resourceNames:  [{{ template "vali.fullname" . }}]
-{{- end }}
 {{- end }}
 
