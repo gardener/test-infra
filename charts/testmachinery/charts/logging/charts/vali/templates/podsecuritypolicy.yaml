@@ -1,16 +1,13 @@
----
-{{- if .Values.global.loggingEnabled }}
 {{- if .Values.rbac.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ template "loki.fullname" . }}
-  namespace: {{ .Values.global.loggingNamespace }}
+  name: {{ template "vali.fullname" . }}
   labels:
-    app: {{ template "loki.name" . }}
-    chart: {{ template "loki.chart" . }}
+    app: {{ template "vali.name" . }}
+    chart: {{ template "vali.chart" . }}
     heritage: {{ .Release.Service }}
-    release: {{ template "logging.releaseName" . }}
+    release: {{ .Release.Name }}
 spec:
   privileged: false
   allowPrivilegeEscalation: false
@@ -19,6 +16,8 @@ spec:
     - 'emptyDir'
     - 'persistentVolumeClaim'
     - 'secret'
+    - 'projected'
+    - 'downwardAPI'
   hostNetwork: false
   hostIPC: false
   hostPID: false
@@ -40,5 +39,3 @@ spec:
   requiredDropCapabilities:
     - ALL
 {{- end }}
-{{- end }}
-

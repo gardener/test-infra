@@ -1,9 +1,9 @@
-nameOverride: loki
-fullnameOverride: logging-loki
+nameOverride: vali
+fullnameOverride: logging-vali
 
 image:
-  repository: grafana/loki
-  tag: v1.3.0
+  repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali
+  tag: v2.2.21
   pullPolicy: IfNotPresent
 
   ## Optionally specify an array of imagePullSecrets.
@@ -11,13 +11,13 @@ image:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   ##
   # pullSecrets:
-  #   - myRegistrKeySecretName
+  #   - myRegistryKeySecretName
 
 ingress:
   enabled: false
   annotations: {}
-  # kubernetes.io/ingress.class: nginx
-  # kubernetes.io/tls-acme: "true"
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
       paths: []
@@ -36,7 +36,7 @@ affinity: {}
 #       - key: app
 #         operator: In
 #         values:
-#         - loki
+#         - vali
 #     topologyKey: "kubernetes.io/hostname"
 
 ## StatefulSet annotations
@@ -66,37 +66,56 @@ config:
       #   consul:
       #     host: "consul:8500"
       #     prefix: ""
-      #     httpclienttimeout: "20s"
-      #     consistentreads: true
+      #     http_client_timeout: "20s"
+      #     consistent_reads: true
   limits_config:
     enforce_metric_name: false
     reject_old_samples: true
     reject_old_samples_max_age: 168h
   schema_config:
     configs:
-      - from: 2018-04-15
-        store: boltdb
-        object_store: filesystem
-        schema: v9
-        index:
-          prefix: index_
-          period: 168h
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
   server:
     http_listen_port: 3100
   storage_config:
-    boltdb:
-      directory: /data/loki/index
+    boltdb_shipper:
+      active_index_directory: /data/vali/boltdb-shipper-active
+      cache_location: /data/vali/boltdb-shipper-cache
+      cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
+      shared_store: filesystem
     filesystem:
-      directory: /data/loki/chunks
+      directory: /data/vali/chunks
   chunk_store_config:
-    max_look_back_period: 0
+    max_look_back_period: 0s
   table_manager:
     retention_deletes_enabled: false
-    retention_period: 0
+    retention_period: 0s
+  compactor:
+    working_directory: /data/vali/boltdb-shipper-compactor
+    shared_store: filesystem
+# Needed for Alerting: https://grafana.com/docs/loki/latest/alerting/
+# This is just a simple example, for more details: https://grafana.com/docs/loki/latest/configuration/#ruler_config
+#  ruler:
+#    storage:
+#      type: local
+#      local:
+#        directory: /rules
+#    rule_path: /tmp/scratch
+#    alertmanager_url: http://alertmanager.svc.namespace:9093
+#    ring:
+#      kvstore:
+#        store: inmemory
+#    enable_api: true
 
-## Additional Loki container arguments, e.g. log level (debug, info, warn, error)
+## Additional Vali container arguments, e.g. log level (debug, info, warn, error)
 extraArgs: {}
-# log.level: debug
+  # log.level: debug
 
 livenessProbe:
   httpGet:
@@ -108,23 +127,26 @@ livenessProbe:
 networkPolicy:
   enabled: false
 
-## The app name of loki clients
+## The app name of vali clients
 client: {}
-# name:
+  # name:
 
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 nodeSelector: {}
 
 ## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 ## If you set enabled as "True", you need :
-## - create a pv which above 10Gi and has same namespace with loki
+## - create a pv which above 10Gi and has same namespace with vali
 ## - keep storageClassName same with below setting
 persistence:
   enabled: false
   accessModes:
-    - ReadWriteOnce
-  size: 50Gi
+  - ReadWriteOnce
+  size: 10Gi
   annotations: {}
+  # selector:
+  #   matchLabels:
+  #     app.kubernetes.io/name: vali
   # subPath: ""
   # existingClaim:
 
@@ -143,7 +165,7 @@ podManagementPolicy: OrderedReady
 
 rbac:
   create: true
-  pspEnabled: false
+  pspEnabled: true
 
 readinessProbe:
   httpGet:
@@ -173,6 +195,7 @@ service:
   port: 3100
   annotations: {}
   labels: {}
+  targetPort: http-metrics
 
 serviceAccount:
   create: true
@@ -198,16 +221,17 @@ serviceMonitor:
   enabled: false
   interval: ""
   additionalLabels: {}
+  annotations: {}
   # scrapeTimeout: 10s
 
 initContainers: []
-## Init containers to be added to the loki pod.
+## Init containers to be added to the vali pod.
 # - name: my-init-container
 #   image: busybox:latest
 #   command: ['sh', '-c', 'echo hello']
 
 extraContainers: []
-## Additional containers to be added to the loki pod.
+## Additional containers to be added to the vali pod.
 # - name: reverse-proxy
 #   image: angelbarrera92/basic-auth-reverse-proxy:dev
 #   args:
@@ -224,20 +248,29 @@ extraContainers: []
 
 
 extraVolumes: []
-## Additional volumes to the loki pod.
+## Additional volumes to the vali pod.
 # - name: reverse-proxy-auth-config
 #   secret:
 #     secretName: reverse-proxy-auth-config
 
-## Extra volume mounts that will be added to the loki container
+## Extra volume mounts that will be added to the vali container
 extraVolumeMounts: []
 
 extraPorts: []
-## Additional ports to the loki services. Useful to expose extra container ports.
+## Additional ports to the vali services. Useful to expose extra container ports.
 # - port: 11811
 #   protocol: TCP
 #   name: http
 #   targetPort: http
 
-# Extra env variables to pass to the loki container
+# Extra env variables to pass to the vali container
 env: []
+
+# Specify Vali Alerting rules based on this documentation: https://grafana.com/docs/loki/latest/alerting/
+# When specified, you also need to add a ruler config section above. An example is shown in the alerting docs.
+alerting_groups: []
+#  - name: example
+#    rules:
+#    - alert: HighThroughputLogStreams
+#      expr: sum by(container) (rate({job=~"vali-dev/.*"}[1m])) > 1000
+#      for: 2m

@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "loki.name" -}}
+{{- define "vali.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,16 +11,15 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "loki.fullname" -}}
+{{- define "vali.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- $releaseName := include "logging.releaseName" . -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name $releaseName -}}
-{{- $releaseName | trunc 63 | trimSuffix "-" -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -28,23 +27,23 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "loki.chart" -}}
+{{- define "vali.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create the name of the service account
 */}}
-{{- define "loki.serviceAccountName" -}}
+{{- define "vali.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "loki.fullname" .) .Values.serviceAccount.name }}
+    {{ default (include "vali.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Create the app name of loki clients. Defaults to the same logic as "loki.fullname", and default client expects "promtail".
+Create the app name of vali clients. Defaults to the same logic as "vali.fullname", and default client expects "valitail".
 */}}
 {{- define "client.name" -}}
 {{- if .Values.client.name -}}
@@ -52,12 +51,11 @@ Create the app name of loki clients. Defaults to the same logic as "loki.fullnam
 {{- else if .Values.client.fullnameOverride -}}
 {{- .Values.client.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- $releaseName := include "logging.releaseName" . -}}
-{{- $name := default "promtail" .Values.client.nameOverride -}}
-{{- if contains $name $releaseName -}}
-{{- $releaseName | trunc 63 | trimSuffix "-" -}}
+{{- $name := default "valitail" .Values.client.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
