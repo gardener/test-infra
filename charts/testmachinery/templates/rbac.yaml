@@ -47,19 +47,19 @@ rules:
   - list
   - watch
 - apiGroups:
-  - resources.gardener.cloud
-  resources:
-  - managedresources
-  - managedresources/status
-  verbs:
-  - "*"
-- apiGroups:
   - argoproj.io
   resources:
   - workflows
   - workflows/finalizers
   verbs:
-  - "*"
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  - deletecollection
 - apiGroups:
   - testmachinery.sapcloud.io
   resources:
@@ -67,14 +67,27 @@ rules:
   - testruns/status
   - testruns/finalizers
   verbs:
-  - "*"
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  - deletecollection
 {{if .Values.testmachinery.cleanWorkflowPods }}
 - apiGroups:
   - ""
   resources:
   - pods
   verbs:
-  - "*"
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  - deletecollection
 {{ end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
