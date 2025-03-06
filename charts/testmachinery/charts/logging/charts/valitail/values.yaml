@@ -121,9 +121,6 @@ volumeMounts:
 # Custom volumeMounts together with the default ones
 extraVolumeMounts: []
 
-# Add extra Commandline args while starting up valitail.
-# more info : https://github.com/grafana/loki/pull/1530
-
 extraCommandlineArgs: []
 # example:
 # extraCommandlineArgs:

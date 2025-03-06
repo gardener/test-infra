@@ -17,7 +17,7 @@ vali:
       max_entries_limit_per_query: 10000
     table_manager:
       retention_deletes_enabled: true
-      retention_period: 336h # two weeks (but probably when table gets deleted we have max 7 days of history, see https://github.com/grafana/loki/issues/916)
+      retention_period: 336h
   resources:
     requests:
       cpu: "1"
