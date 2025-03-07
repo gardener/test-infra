@@ -1,8 +1,9 @@
+{{- if .Values.global.loggingEnabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ template "valitail.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "valitail.name" . }}
     chart: {{ template "valitail.chart" . }}
@@ -265,3 +266,4 @@ data:
     {{- if .Values.extraScrapeConfigs }}
     {{- toYaml .Values.extraScrapeConfigs | nindent 4 }}
     {{- end }}
+{{- end }}

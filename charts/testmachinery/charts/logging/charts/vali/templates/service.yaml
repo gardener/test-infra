@@ -1,8 +1,9 @@
+{{- if .Values.global.loggingEnabled }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "vali.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "vali.name" . }}
     chart: {{ template "vali.chart" . }}
@@ -41,3 +42,4 @@ spec:
   selector:
     app: {{ template "vali.name" . }}
     release: {{ .Release.Name }}
+{{- end }}

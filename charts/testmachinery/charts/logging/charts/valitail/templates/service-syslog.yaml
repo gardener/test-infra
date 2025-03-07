@@ -1,9 +1,10 @@
+{{- if .Values.global.loggingEnabled }}
 {{- if .Values.syslogService.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "valitail.fullname" . }}-syslog
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "valitail.name" . }}
     chart: {{ template "valitail.chart" . }}
@@ -47,4 +48,5 @@ spec:
   selector:
     app: {{ template "valitail.name" . }}
     release: {{ .Release.Name }}
+{{- end }}
 {{- end }}

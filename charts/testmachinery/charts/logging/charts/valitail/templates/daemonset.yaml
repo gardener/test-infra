@@ -1,8 +1,9 @@
+{{- if .Values.global.loggingEnabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ template "valitail.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "valitail.name" . }}
     chart: {{ template "valitail.chart" . }}
@@ -127,3 +128,4 @@ spec:
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+{{- end }}
