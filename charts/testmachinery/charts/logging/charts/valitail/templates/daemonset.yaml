@@ -61,9 +61,9 @@ spec:
             - "-config.file=/etc/valitail/valitail.yaml"
             {{- if not (or .Values.config.client.url .Values.config.clients) }}
             {{- if and .Values.vali.user .Values.vali.password }}
-            - "-client.url={{ .Values.vali.serviceScheme }}://{{ .Values.vali.user }}:{{ .Values.vali.password }}@{{ include "vali.serviceName" . }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
+            - "-client.url={{ .Values.vali.serviceScheme }}://{{ .Values.vali.user }}:{{ .Values.vali.password }}@{{ .Values.global.valiServiceName }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
             {{- else }}
-            - "-client.url={{ .Values.vali.serviceScheme }}://{{ include "vali.serviceName" . }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
+            - "-client.url={{ .Values.vali.serviceScheme }}://{{ .Values.global.valiServiceName }}:{{ .Values.vali.servicePort }}/vali/api/v1/push"
             {{- end }}
             {{- end }}
             {{- if .Values.extraCommandlineArgs }}

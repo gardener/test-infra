@@ -62,21 +62,6 @@ const (
 	MinioServicePort = 9000
 )
 
-// Logging constants
-const (
-	// LoggingChartName is the name of the chart to bootstrap logging
-	LoggingChartName = "logging"
-
-	// LoggingManagedResourceName is the name of the managed resource deployment
-	LoggingManagedResourceName = "logging"
-
-	// LokiImageName is the name of the loki image in the image vector
-	LokiImageName = "loki"
-
-	// PromtailImageName is the name of the promtail image in the image vector
-	PromtailImageName = "promtail"
-)
-
 // Reserve excess capacity
 const (
 	// ReserveExcessCapacityChartName is the name of the chart to deploy reserved excess capacity pods

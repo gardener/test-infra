@@ -1,7 +1,8 @@
 global:
-  loggingNamespace: default
+  loggingNamespace: logging
   loggingEnabled: true
   overwriteLoggingReleaseName: logging
+  valiServiceName: logging-vali
 vali:
   nameOverride: vali
   image:
