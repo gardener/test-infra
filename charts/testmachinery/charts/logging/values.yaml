@@ -2,11 +2,11 @@ global:
   loggingNamespace: default
   loggingEnabled: true
   overwriteLoggingReleaseName: logging
-loki:
-  nameOverride: loki
+vali:
+  nameOverride: vali
   image:
-    repository: grafana/loki
-    tag: 2.0.0
+    repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali
+    tag: v2.2.21
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   persistence:
@@ -17,7 +17,7 @@ loki:
       max_entries_limit_per_query: 10000
     table_manager:
       retention_deletes_enabled: true
-      retention_period: 336h # two weeks (but probably when table gets deleted we have max 7 days of history, see https://github.com/grafana/loki/issues/916)
+      retention_period: 336h
   resources:
     requests:
       cpu: "1"
@@ -29,11 +29,11 @@ loki:
   rbac:
     pspEnabled: false
 
-promtail:
-  nameOverride: promtail
+valitail:
+  nameOverride: valitail
   image:
-    repository: grafana/promtail
-    tag: 2.0.0
+    repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail
+    tag: v2.2.21
   resources:
     limits:
       cpu: 500m
@@ -70,7 +70,7 @@ promtail:
           source_labels:
             - __meta_kubernetes_pod_node_name
           target_label: node
-        # point promtail to correct log filenames
+        # point valitail to correct log filenames
         - replacement: /var/log/pods/*$1/*.log
           separator: /
           source_labels:
@@ -87,7 +87,7 @@ promtail:
           source_labels:
             - __meta_kubernetes_pod_annotation_workflows_argoproj_io_node_name
           target_label: argo_node
-        # give a TM teststep a friendly grafana label name
+        # give a TM teststep a friendly label name
         - action: replace
           source_labels:
             - __meta_kubernetes_pod_annotation_testmachinery_sapcloud_io_TestDefinition

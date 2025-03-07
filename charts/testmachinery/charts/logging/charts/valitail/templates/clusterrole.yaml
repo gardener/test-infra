@@ -1,0 +1,20 @@
+{{- if .Values.rbac.create }}
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: {{ template "valitail.name" . }}
+    chart: {{ template "valitail.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ template "valitail.fullname" . }}-clusterrole
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "watch", "list"]
+{{- end }}

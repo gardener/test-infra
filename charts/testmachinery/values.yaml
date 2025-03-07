@@ -167,17 +167,13 @@ logging:
   global:
     loggingNamespace: logging
     loggingEnabled: true
-  promtail:
-    rbac:
-      pspEnabled: false
+  valitail:
     image:
-      repository: grafana/promtail
-      tag: 2.0.0
-  loki:
-    rbac:
-      pspEnabled: false
+      repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail
+      tag: v2.2.21
+  vali:
     image:
-      repository: grafana/loki
-      tag: 2.0.0
+      repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali
+      tag: v2.2.21
     persistence:
       storageClassName: default

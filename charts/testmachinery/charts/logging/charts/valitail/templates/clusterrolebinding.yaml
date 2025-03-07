@@ -1,0 +1,19 @@
+{{- if .Values.rbac.create }}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "valitail.fullname" . }}-clusterrolebinding
+  labels:
+    app: {{ template "valitail.name" . }}
+    chart: {{ template "valitail.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "valitail.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ template "valitail.fullname" . }}-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
