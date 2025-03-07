@@ -1,3 +1,4 @@
+{{- if .Values.global.loggingEnabled }}
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "vali.fullname" . -}}
 {{- $svcPort := .Values.service.port -}}
@@ -9,7 +10,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "vali.name" . }}
     chart: {{ template "vali.chart" . }}
@@ -42,4 +43,5 @@ spec:
               servicePort: {{ $svcPort }}
         {{- end }}
   {{- end }}
+{{- end }}
 {{- end }}

@@ -1,9 +1,10 @@
+{{- if .Values.global.loggingEnabled }}
 {{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ template "valitail.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.loggingNamespace }}
   labels:
     app: {{ template "valitail.name" . }}
     chart: {{ template "valitail.chart" . }}
@@ -17,4 +18,4 @@ subjects:
 - kind: ServiceAccount
   name: {{ template "valitail.serviceAccountName" . }}
 {{- end }}
-
+{{- end }}
