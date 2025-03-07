@@ -49,56 +49,43 @@ tracing:
 config:
   auth_enabled: false
   ingester:
+    chunk_target_size: 1536000
     chunk_idle_period: 3m
     chunk_block_size: 262144
-    chunk_retain_period: 1m
-    max_transfer_retries: 0
+    chunk_retain_period: 3m
+    max_transfer_retries: 3
     lifecycler:
       ring:
         kvstore:
           store: inmemory
         replication_factor: 1
-
-      ## Different ring configs can be used. E.g. Consul
-      # ring:
-      #   store: consul
-      #   replication_factor: 1
-      #   consul:
-      #     host: "consul:8500"
-      #     prefix: ""
-      #     http_client_timeout: "20s"
-      #     consistent_reads: true
+      final_sleep: 0s
+      min_ready_duration: 1s
   limits_config:
     enforce_metric_name: false
     reject_old_samples: true
     reject_old_samples_max_age: 168h
   schema_config:
     configs:
-    - from: 2020-10-24
-      store: boltdb-shipper
+    - from: 2018-04-15
+      store: boltdb
       object_store: filesystem
       schema: v11
       index:
         prefix: index_
-        period: 24h
+        period: 168h
   server:
     http_listen_port: 3100
   storage_config:
-    boltdb_shipper:
-      active_index_directory: /data/vali/boltdb-shipper-active
-      cache_location: /data/vali/boltdb-shipper-cache
-      cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
-      shared_store: filesystem
+    boltdb:
+      directory: /data/vali/index
     filesystem:
       directory: /data/vali/chunks
   chunk_store_config:
     max_look_back_period: 0s
   table_manager:
-    retention_deletes_enabled: false
-    retention_period: 0s
-  compactor:
-    working_directory: /data/vali/boltdb-shipper-compactor
-    shared_store: filesystem
+    retention_deletes_enabled: true
+    retention_period: 336h
 
 ## Additional Vali container arguments, e.g. log level (debug, info, warn, error)
 extraArgs: {}

@@ -40,22 +40,22 @@ func GetArgoHost(ctx context.Context, tmClient client.Client) (string, error) {
 
 // GetGrafanaURLFromHostForWorkflow returns the path to the logs in grafana for a whole workflow
 func GetGrafanaURLFromHostForWorkflow(host string, workflowName string) string {
-	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, workflowName)
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Vali",{"expr":"{container%%3D\"main\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, workflowName)
 }
 
 // GetGrafanaURLFromHostForStep returns the path to the logs in grafana for a specific step
 func GetGrafanaURLFromHostForStep(host string, workflowName, testdefName string) string {
-	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, testdefName, workflowName)
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Vali",{"expr":"{container%%3D\"main\",tm_testdef%%3D\"%s\",argo_workflow%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, testdefName, workflowName)
 }
 
 // GetGrafanaURLFromHostForPod returns the path to the logs in grafana for a specific pod
 func GetGrafanaURLFromHostForPod(host string, podname string) string {
-	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Loki",{"expr":"{container%%3D\"main\",instance%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, podname)
+	return fmt.Sprintf(`%s/explore?left=["now-3d","now","Vali",{"expr":"{container%%3D\"main\",instance%%3D\"%s\"}"},{"mode":"Logs"},{"ui":[true,true,true,"exact"]}]`, host, podname)
 }
 
 // GetGrafanaHost returns the host of the grafana instance in the monitoring namespace
 func GetGrafanaHost(ctx context.Context, tmClient client.Client) (string, error) {
-	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Namespace: "monitoring", Name: "grafana"})
+	return GetHostURLFromIngress(ctx, tmClient, client.ObjectKey{Namespace: "monitoring", Name: "plutono"})
 }
 
 // GetTmDashboardURLForTestrun returns the dashboard URL to a testrun
