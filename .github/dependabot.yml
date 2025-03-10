@@ -20,15 +20,11 @@ updates:
         patterns:
         - "*"
         exclude-patterns:
-        - "github.com/gardener*"
+        - "github.com/gardener/gardener*"
         - "github.com/argoproj/argo-workflows*"
+        - "ocm.software/ocm*"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
-    allow:
-      - dependency-name: "quay.io/argoproj/*"
-      - dependency-name: "golang*"
-      - dependency-name: "alpine*"
-      - dependency-name: "ghcr.io/open-component-model/ocm*"
