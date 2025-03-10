@@ -86,6 +86,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
           env:
             {{- if .Values.env }}
               {{- toYaml .Values.env | nindent 12 }}

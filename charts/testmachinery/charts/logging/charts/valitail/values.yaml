@@ -84,6 +84,7 @@ extraScrapeConfigs: []
 
 securityContext:
   readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
   runAsGroup: 0
   runAsUser: 0
 
