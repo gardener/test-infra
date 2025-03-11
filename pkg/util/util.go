@@ -481,15 +481,15 @@ type ESHits struct {
 	} `json:"hits"`
 }
 
-// GetClusterDomainURL tries to derive the cluster domain url from a grafana ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
+// GetClusterDomainURL tries to derive the cluster domain url from a plutono ingress if possible. Returns an error if the ingress cannot be found or is in unexpected form.
 func GetClusterDomainURL(tmClient client.Client) (string, error) {
-	// try to derive the cluster domain url from grafana ingress if possible
+	// try to derive the cluster domain url from plutono ingress if possible
 	// return err if the ingress cannot be found
 	if tmClient == nil {
 		return "", nil
 	}
 	ingress := &netv1.Ingress{}
-	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "grafana"}, ingress)
+	err := tmClient.Get(context.TODO(), client.ObjectKey{Namespace: "monitoring", Name: "plutono"}, ingress)
 	if err != nil {
 		return "", fmt.Errorf("cannot get grafana ingress: %v", err)
 	}
