@@ -26,8 +26,8 @@ var _ = Describe("util test", func() {
 			_, _, err := ParseRepoURLFromString(ghUrl)
 			Expect(err).To(HaveOccurred())
 		})
-		It("domain should parse from grafana url", func() {
-			hostname := "grafana.ingress.tm.core.shoot.live.k8s-hana.ondemand.com"
+		It("domain should parse from plutono url", func() {
+			hostname := "plutono.ingress.tm.core.shoot.live.k8s-hana.ondemand.com"
 			domain, err := parseDomain(hostname)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(domain).To(Equal("tm.core.shoot.live.k8s-hana.ondemand.com"))
