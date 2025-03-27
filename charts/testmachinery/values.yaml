@@ -163,6 +163,13 @@ argo:
     secret:
       name: "s3-secret"
 
+  workflowDefaults: {}
+    # metadata:
+    #   labels:
+    #     foo: bar
+    # spec:
+    #   ...
+
 logging:
   global:
     loggingNamespace: logging

@@ -58,3 +58,10 @@ objectStorage:
   keyPrefix: "testmachinery"
   secret:
     name: "s3-secret"
+
+workflowDefaults: {}
+  # metadata:
+  #   labels:
+  #     foo: bar
+  # spec:
+  #   ...
