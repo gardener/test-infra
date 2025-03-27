@@ -9,6 +9,10 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
   config: |
+    {{- if .Values.workflowDefaults }}
+    workflowDefaults: |
+    {{- toYaml .Values.workflowDefaults | nindent 6 }}
+    {{- end }}
     mainContainer:
       securityContext: {{- toYaml .Values.argo.mainContainer.securityContext | nindent 8 }}
     executor:
