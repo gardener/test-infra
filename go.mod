@@ -2,6 +2,8 @@ module github.com/gardener/test-infra
 
 go 1.24.0
 
+toolchain go1.24.1
+
 require (
 	cloud.google.com/go/storage v1.51.0
 	github.com/Masterminds/semver/v3 v3.3.1
@@ -10,7 +12,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gardener/gardener v1.114.0
-	github.com/gardener/gardener-extension-provider-aws v1.61.0
+	github.com/gardener/gardener-extension-provider-aws v1.61.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
