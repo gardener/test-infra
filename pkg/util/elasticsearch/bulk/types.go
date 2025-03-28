@@ -21,5 +21,4 @@ type ESMetadata struct {
 // ESIndex is the elastic search index where the bulk data is stored.
 type ESIndex struct {
 	Index string `json:"_index,omitempty"`
-	Type  string `json:"_type,omitempty"`
 }

@@ -133,11 +133,11 @@ It then automatically uploads these documents to an index named like the TestDef
 3. ElasticSearch bulk format with a specific index (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html).
     The documents are then uploaded to the specified index prefixed by `tm-`.
     ```
-      { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
+      { "index": { "_index": "mySpecificIndex" } }
       { "key": "value" }
-      { "index": { "_index": "mySpecificIndex", "_type": "_doc" } }
+      { "index": { "_index": "mySpecificIndex" } }
       { "key2": true }
-      { "index": { "_index": "mySecondSpecificIndex", "_type": "_doc" } }
+      { "index": { "_index": "mySecondSpecificIndex" } }
       { "key3": 5 }
     ```
 
