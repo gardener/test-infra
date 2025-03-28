@@ -36,7 +36,6 @@ func (c *collector) collectSummaryAndExports(path string, tr *tmv1beta1.Testrun,
 	summaryMetadata := bulk.ESMetadata{
 		Index: bulk.ESIndex{
 			Index: "testmachinery",
-			Type:  "_doc",
 		},
 	}
 	summaryBulk := bulk.NewList(summaryMetadata, trStatusSummaries)

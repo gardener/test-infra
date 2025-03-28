@@ -82,7 +82,6 @@ func ParseExportedFiles(log logr.Logger, name string, stepMeta interface{}, docs
 			Metadata: ESMetadata{
 				Index: ESIndex{
 					Index: fmt.Sprintf("tm-%s", name),
-					Type:  "_doc",
 				},
 			},
 		}
@@ -127,7 +126,6 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 			bulk.Metadata = ESMetadata{
 				Index: ESIndex{
 					Index: fmt.Sprintf("tm-%s", name),
-					Type:  "_doc",
 				},
 			}
 		}

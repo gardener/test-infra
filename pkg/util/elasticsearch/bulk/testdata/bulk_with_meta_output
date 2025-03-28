@@ -1,4 +1,4 @@
-{"index":{"_index":"tm-test-index1","_type":"_doc"}}
+{"index":{"_index":"tm-test-index1"}}
 {"tm":{"tm_id":"testId"},"test": "bulk_no_1"}
-{"index":{"_index":"tm-test-index2","_type":"_doc"}}
+{"index":{"_index":"tm-test-index2"}}
 {"tm":{"tm_id":"testId"},"test": 2}
