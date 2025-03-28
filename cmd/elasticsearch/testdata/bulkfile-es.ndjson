@@ -1,0 +1,8 @@
+{"index":{"_index":"testmachinery","_type":"_doc"}}
+{"tm":{"tr":{"id":"test","startTime":"2025-03-27T08:43:31Z"},"annotations":{"testmachinery.garden.cloud/collect":"true"}},"type":"testrun","startTime":"2025-03-27T08:43:31Z","testsRun":2}
+{"index":{"_index":"testmachinery","_type":"_doc"}}
+{"tm":{"tr":{"id":"test","startTime":"2025-03-27T08:43:31Z"},"annotations":{"testmachinery.garden.cloud/collect":"true"},"stepName":"create-shoot-create-testflow","testdefinition":"ccreate-shoot"},"type":"teststep","name":"ccreate-shoot","stepName":"create","phase":"Succeeded","startTime":"2020-02-25T09:00:54Z","duration":643,"pre":{"phaseNum":100}}
+{"index":{"_index":"testmachinery","_type":"_doc"}}
+{"tm":{"tr":{"id":"test","startTime":"2025-03-27T08:43:31Z"},"annotations":{"testmachinery.garden.cloud/collect":"true"},"stepName":"delete-shoot-delete-testflow","testdefinition":"delete-shoot"},"type":"teststep","name":"delete-shoot","stepName":"delete","phase":"Succeeded","startTime":"2020-02-25T09:05:54Z","duration":643,"pre":{"phaseNum":100}}
+{"index":{"_index":"tm-delete-shoot","_type":"_doc"}}
+{"name":"test-export","tm":{"tr":{"id":"test","startTime":"2025-03-27T08:43:31Z"},"annotations":{"testmachinery.garden.cloud/collect":"true"},"stepName":"delete-shoot-delete-testflow","testdefinition":"delete-shoot","phase":"Succeeded","startTime":"2020-02-25T09:05:54Z","duration":643,"podName":"test-zl5wr-wf-4048348902"}}

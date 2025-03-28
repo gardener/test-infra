@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/gardener/test-infra/cmd/elasticsearch/cmd/ingest"
 	"github.com/gardener/test-infra/cmd/elasticsearch/cmd/precompute"
 	"github.com/gardener/test-infra/pkg/logger"
 )
@@ -54,4 +55,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&RootFlags.Password, "password", "", "Elasticsearch basic auth password")
 
 	precompute.AddCommand(rootCmd)
+	ingest.AddCommand(rootCmd)
 }
