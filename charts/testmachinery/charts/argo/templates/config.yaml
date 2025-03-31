@@ -10,7 +10,7 @@ metadata:
 data:
   config: |
     {{- if .Values.workflowDefaults }}
-    workflowDefaults: |
+    workflowDefaults:
     {{- toYaml .Values.workflowDefaults | nindent 6 }}
     {{- end }}
     mainContainer:
