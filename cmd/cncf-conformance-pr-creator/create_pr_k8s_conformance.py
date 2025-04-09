@@ -9,6 +9,7 @@ import string
 import subprocess
 import sys
 
+import ccc.github
 import google.cloud.storage
 from google.cloud.exceptions import NotFound
 import semver.version
@@ -26,10 +27,11 @@ repo_path = os.environ['FORK_OWNER'] + '/' + repo_name
 upstream_repo = 'https://github.com/cncf/k8s-conformance'
 cfg_factory = ctx.cfg_factory()
 github_cfg = cfg_factory.github('github_com')
+github_api = ccc.github.github_api(github_cfg)
 gh = github.util.GitHubRepositoryHelper(
     owner='cncf',
     name=repo_name,
-    github_cfg=github_cfg,
+    github_api=github_api,
 )
 repo = gh.repository
 
