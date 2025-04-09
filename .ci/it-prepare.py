@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+
+import ccc.github
 import ctx
 from gitutil import (
     GitHelper
@@ -34,7 +36,7 @@ pull_request_number=git_helper.repo.git.config("--get", "pullrequest.id")
 github_helper = GitHubRepositoryHelper(
     owner=github_repository_owner,
     name=github_repository_name,
-    github_cfg=github_cfg,
+    github_api=ccc.github.github_api(github_cfg),
 )
 
 pull_request = github_helper.repository.pull_request(pull_request_number)
