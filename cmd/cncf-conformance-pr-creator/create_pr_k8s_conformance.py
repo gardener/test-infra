@@ -36,7 +36,7 @@ gh = github.util.GitHubRepositoryHelper(
 repo = gh.repository
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-temlate_dir = script_dir + '/'
+template_dir = script_dir + '/'
 gs_bucket_name = 'k8s-conformance-gardener'
 conformance_tests_passed_string = "0 Failed | 0 Pending"
 
@@ -201,7 +201,7 @@ def modify_files_for_product(gardener_version, product_name, provider, k8s_versi
         print("Was not able to open " + f)
 
     # create readme
-    shutil.copyfile(temlate_dir + '/gardener_readme.txt', 'README.md')
+    shutil.copyfile(template_dir + '/gardener_readme.txt', 'README.md')
 
     # download e2e.log and junit_01.xml
     downloadingE2eLogFileSuccessful = download_files_from_gcloud_storage(provider, k8s_version)
