@@ -27,11 +27,11 @@ repo_path = os.environ['FORK_OWNER'] + '/' + repo_name
 upstream_repo = 'https://github.com/cncf/k8s-conformance'
 cfg_factory = ctx.cfg_factory()
 github_cfg = cfg_factory.github('github_com')
-github_api = ccc.github.github_api(github_cfg)
+github_cfg.repo_url = f'cncf/{repo_name}'
 gh = github.util.GitHubRepositoryHelper(
     owner='cncf',
     name=repo_name,
-    github_api=github_api,
+    github_api=(ccc.github.github_api(github_cfg)),
 )
 repo = gh.repository
 
