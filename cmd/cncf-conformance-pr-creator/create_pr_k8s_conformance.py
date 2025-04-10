@@ -27,7 +27,6 @@ repo_path = os.environ['FORK_OWNER'] + '/' + repo_name
 upstream_repo = 'https://github.com/cncf/k8s-conformance'
 cfg_factory = ctx.cfg_factory()
 github_cfg = cfg_factory.github('github_com')
-github_cfg.repo_url = f'cncf/{repo_name}'
 gh = github.util.GitHubRepositoryHelper(
     owner='cncf',
     name=repo_name,
@@ -94,7 +93,13 @@ def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
 
 
 def cloneForkedRepo():
-    gitHelper = gitutil.GitHelper.clone_into(repo_name, github_cfg, repo_path)
+    github_cfg = ccc.github.github_cfg_for_repo_url(upstream_repo)
+    gitHelper = gitutil.GitHelper.clone_into(
+        target_directory=repo_name,
+        git_cfg=github_cfg.git_cfg(
+            repo_path=repo_path
+        ),
+    )
     print('INFO: Cloned ' + repo_path + ' repository into ' + repo_name + ' directory')
     return gitHelper
 
