@@ -15,7 +15,7 @@
 ## How to use
 Invoke the script as shown below. This will create a new branch on your k8s-conformance fork, which contains files for not yet k8s certified gardener provider versions.
 
-    export FORK_ONWER=yourForkName
+    export FORK_OWNER=yourForkName
     python3 create_pr_k8s_conformance.py
 
-Afterwards check the changes in your branch manually. If the changes are fine, create a pull request to the upstream repository https://github.com/cncf/k8s-conformance .
+Afterward, check the changes in your branch manually. If the changes are fine, create a pull request to the upstream repository https://github.com/cncf/k8s-conformance .
