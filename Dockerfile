@@ -55,6 +55,7 @@ RUN  \
     git-crypt \
     grep \
     jq \
+    yq \
     libc-dev \
     openssl \
     python3 \
