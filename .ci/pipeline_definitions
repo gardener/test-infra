@@ -70,6 +70,12 @@ test-infra:
           preprocess: 'finalize'
         component_descriptor:
           ocm_repository: europe-docker.pkg.dev/gardener-project/releases
+          component_labels:
+          - name: 'cloud.gardener.cnudie/responsibles'
+            value:
+            - type: 'githubTeam'
+              teamname: 'gardener/test-infra-maintainers'
+              github_hostname: 'github.com'
         release:
           nextversion: 'bump_minor'
           assets:
