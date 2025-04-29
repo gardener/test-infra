@@ -1,6 +1,7 @@
 module github.com/gardener/test-infra
 
-go 1.24.0
+go 1.24.2
+
 require (
 	cloud.google.com/go/storage v1.52.0
 	github.com/Masterminds/semver/v3 v3.3.1
