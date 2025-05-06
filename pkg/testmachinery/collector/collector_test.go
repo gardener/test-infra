@@ -7,6 +7,7 @@ package collector
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -79,7 +80,12 @@ var _ = Describe("collector summary", func() {
 
 		file, err := os.Open(filepath.Join(tmpDir, files[0].Name()))
 		Expect(err).ToNot(HaveOccurred())
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				fmt.Printf("Error closing file: %v", err)
+			}
+		}(file)
 
 		scanner := bufio.NewScanner(file)
 		line := 1
@@ -120,7 +126,12 @@ var _ = Describe("collector summary", func() {
 
 		file, err := os.Open(filepath.Join(tmpDir, files[0].Name()))
 		Expect(err).ToNot(HaveOccurred())
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				fmt.Printf("Error closing file: %v", err)
+			}
+		}(file)
 
 		documents := []map[string]interface{}{}
 		scanner := bufio.NewScanner(file)

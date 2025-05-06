@@ -9,7 +9,7 @@ import (
 )
 
 // preprocessTestflow takes a Tesflow and creates a map which maps the unique step name to the step pointer.
-func preprocessTestflow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc locations.Locations, globalConfig []*config.Element) (map[string]*Step, map[*testdefinition.TestDefinition]interface{}, map[testdefinition.Location]interface{}, error) {
+func preprocessTestflow(flowID FlowIdentifier, tf tmv1beta1.TestFlow, loc locations.Locations, globalConfig []*config.Element) (map[string]*Step, map[*testdefinition.TestDefinition]interface{}, map[testdefinition.Location]interface{}, error) {
 	stepMap := make(map[string]*Step)
 	testdefinitions := make(map[*testdefinition.TestDefinition]interface{})
 	usedLocations := make(map[testdefinition.Location]interface{})
@@ -74,7 +74,6 @@ func ReorderChildrenOfNodes(list *node.Set) *node.Set {
 // reorderSerialNodes reorders all children of a node so that serial steps run in serial after parallel nodes.
 // The functions returns the new Children
 func reorderChildrenOfNode(root *node.Node) *node.Set {
-
 	// directly return if there are no nodes or only one node in the pool
 	if root.Children.Len() <= 1 {
 		// todo: write test for special case
@@ -117,7 +116,7 @@ func reorderChildrenOfNode(root *node.Node) *node.Set {
 			serialNode.RemoveParent(root).AddParents(parallelNodes.List()...)
 		} else {
 			prevNode := serialNodes.List()[i-1]
-			//prevNode.ClearChildren()
+			// prevNode.ClearChildren()
 			prevNode.AddChildren(serialNode)
 
 			// only remove the root parent as otherwise other parent information will get lost
@@ -193,7 +192,6 @@ func ApplyConfigScope(steps map[string]*Step) {
 // SetSerialNodes evaluates real serial steps and marks them as serial.
 // A node is considered serial if all children of the root node point to one child.
 func SetSerialNodes(root *node.Node) {
-
 	child := root
 
 	for child != nil {

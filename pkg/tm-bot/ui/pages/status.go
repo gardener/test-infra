@@ -133,7 +133,6 @@ type runDetailedItem struct {
 
 func NewPRStatusPage(p *Page) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		isAuthenticated := true
 		_, err := p.auth.GetAuthContext(r)
 		if err != nil {
@@ -159,7 +158,6 @@ func NewPRStatusPage(p *Page) http.HandlerFunc {
 			if isAuthenticated {
 				rawList[i].ArgoURL, _ = testrunner.GetArgoURL(context.TODO(), p.runs.GetClient(), run.Testrun)
 			}
-
 		}
 		params := map[string]interface{}{
 			"tests": rawList,

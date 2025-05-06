@@ -72,7 +72,7 @@ type ElasticSearch struct {
 
 // HealthCheckTarget specifies a deployment whose health should be checked.
 type HealthCheckTarget struct {
-	//Namespace specifies the namespace where resources relevant for a health check exist in.
+	// Namespace specifies the namespace where resources relevant for a health check exist in.
 	Namespace string `json:"namespace,omitempty"`
 	// DeploymentName is the name of a deployment whose health will be checked.
 	DeploymentName string `json:"deploymentName,omitempty"`

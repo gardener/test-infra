@@ -111,14 +111,11 @@ func (r *templateRenderer) Render(parameters *internalParameters, chartPath stri
 				Rerenderer: state,
 			})
 		}
-
 	}
-
 	return runs, nil
 }
 
 func (r *templateRenderer) RenderChart(chart *chart.Chart, namespace string, values map[string]interface{}) (map[string]string, error) {
-
 	revision := 1
 	options := chartutil.ReleaseOptions{
 		Name:      util.RandomString(5),

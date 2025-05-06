@@ -45,7 +45,7 @@ func (a *dummyAuth) DisplayLogin() bool {
 	return true
 }
 
-func (_ *dummyAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
+func (a *dummyAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
 
 func (a *dummyAuth) Login(w http.ResponseWriter, r *http.Request) {
 	a.loggedIn = true

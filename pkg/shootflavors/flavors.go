@@ -160,7 +160,6 @@ func (f *Flavors) GetUsedMachineImages() map[common.CloudProvider][]gardencorev1
 func addKubernetesVersionFunc(versions map[common.CloudProvider]gardencorev1beta1.KubernetesSettings) func(common.CloudProvider, gardencorev1beta1.ExpirableVersion) {
 	used := make(map[common.CloudProvider]map[string]interface{})
 	return func(provider common.CloudProvider, version gardencorev1beta1.ExpirableVersion) {
-
 		if _, ok := used[provider]; !ok {
 			used[provider] = map[string]interface{}{version.Version: new(interface{})}
 			versions[provider] = gardencorev1beta1.KubernetesSettings{Versions: []gardencorev1beta1.ExpirableVersion{version}}

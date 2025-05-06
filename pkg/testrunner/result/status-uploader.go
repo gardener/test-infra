@@ -54,10 +54,7 @@ func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components [
 		if err := writeOverviewToFile(assetOverview, overviewFilepath); err != nil {
 			return err
 		}
-		testrunsToUpload, err := identifyTestrunsToUpload(runs, assetOverview, prefix)
-		if err != nil {
-			return err
-		}
+		testrunsToUpload := identifyTestrunsToUpload(runs, assetOverview, prefix)
 		if len(testrunsToUpload) == 0 {
 			log.Info("no testrun updates, therefore not assets to upload")
 			continue
@@ -135,7 +132,12 @@ func uploadFiles(log logr.Logger, c ComponentExtended, files []string) error {
 			log.Error(err, fmt.Sprintf("Can't open file %s", filepathToUpload))
 			return err
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				log.Error(err, "failed to close file")
+			}
+		}(file)
 		filename := filepath.Base(filepathToUpload)
 		uploadOptions := github.UploadOptions{Name: filename}
 
@@ -240,11 +242,10 @@ func generateTestrunAssetName(testrun testrunner.Run, prefix string) string {
 }
 
 // compares overview file items with given testrun list to identify whether any testrun is missing or needs to be updated
-func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOverview, prefix string) (testrunner.RunList, error) {
+func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOverview, prefix string) testrunner.RunList {
 	var testrunsToUpload testrunner.RunList
 	for _, run := range runs {
-
-		// do not consider testruns with a error that are not a timeout error
+		// do not consider testruns with an error that are not a timeout error
 		if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 			continue
 		}
@@ -255,7 +256,7 @@ func identifyTestrunsToUpload(runs testrunner.RunList, assetOverview AssetOvervi
 			testrunsToUpload = append(testrunsToUpload, run)
 		}
 	}
-	return testrunsToUpload, nil
+	return testrunsToUpload
 }
 
 // DownloadAssetOverview downloads and parses the asset overview from a component from github
@@ -329,7 +330,12 @@ func downloadReleaseAssetByName(log logr.Logger, component ComponentExtended, fi
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", targetPath)
 	}
-	defer assetFile.Close()
+	defer func(assetFile *os.File) {
+		err := assetFile.Close()
+		if err != nil {
+			log.Error(err, "failed to close asset file")
+		}
+	}(assetFile)
 	// filesize is limited to a maximum of 100 MB
 	maxSize := int64(100 << (10 * 2))
 	if redirectURL != "" {
@@ -346,13 +352,11 @@ func downloadReleaseAssetByName(log logr.Logger, component ComponentExtended, fi
 		if err != nil {
 			return err
 		}
-
 	} else {
 		if _, err = io.CopyN(assetFile, assetReader, maxSize); err != nil && err != io.EOF {
 			return errors.Wrapf(err, "failed to write data to file %s", assetFile.Name())
 		}
 	}
-
 	return nil
 }
 

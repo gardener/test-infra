@@ -59,7 +59,7 @@ func (r *TestmachineryReconciler) deleteTestrun(ctx context.Context, rCtx *recon
 		}
 	}
 
-	//remove finalizers
+	// remove finalizers
 	if removeFinalizer(rCtx.tr, tmv1beta1.SchemeGroupVersion.Group) {
 		err := r.Update(ctx, rCtx.tr)
 		if err != nil {

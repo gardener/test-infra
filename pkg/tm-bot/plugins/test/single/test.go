@@ -50,7 +50,7 @@ func (t *test) Command() string {
 	return "test-single"
 }
 
-func (_ *test) Authorization() github.AuthorizationType {
+func (t *test) Authorization() github.AuthorizationType {
 	return github.AuthorizationTeam
 }
 

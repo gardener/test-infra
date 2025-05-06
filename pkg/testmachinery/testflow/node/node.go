@@ -212,7 +212,6 @@ func (n *Node) GetOrDetermineArtifacts(trustedTokenMounts, untrustedTokenMounts 
 				From: fmt.Sprintf("{{tasks.%s.outputs.artifacts.%s}}", n.inputSource.Name(), testmachinery.ArtifactUntrustedKubeconfigs),
 			}
 			n.addProjectedToken(untrustedTokenMounts)
-
 		} else {
 			artifactsMap[testmachinery.ArtifactKubeconfigs] = argov1.Artifact{
 				Name: testmachinery.ArtifactKubeconfigs,
@@ -256,13 +255,11 @@ func (n *Node) GetOrDetermineArtifacts(trustedTokenMounts, untrustedTokenMounts 
 }
 
 func (n *Node) addProjectedToken(projectedTokenMounts []ProjectedTokenMount) {
-
 	if len(projectedTokenMounts) == 0 {
 		return
 	}
 
 	for i, projectedTokenMount := range projectedTokenMounts {
-
 		volumeProjection := apiv1.VolumeProjection{
 			ServiceAccountToken: &apiv1.ServiceAccountTokenProjection{
 				Audience:          projectedTokenMount.Audience,
@@ -270,7 +267,6 @@ func (n *Node) addProjectedToken(projectedTokenMounts []ProjectedTokenMount) {
 				Path:              projectedTokenMount.Name,
 			},
 		}
-
 		volumeName := ""
 		if n.TestDefinition.Template != nil && n.TestDefinition.Template.Container != nil {
 			for _, vol := range n.TestDefinition.Template.Container.VolumeMounts {
@@ -279,18 +275,15 @@ func (n *Node) addProjectedToken(projectedTokenMounts []ProjectedTokenMount) {
 				}
 			}
 		}
-
 		if volumeName != "" {
 			for _, vol := range n.TestDefinition.Template.Volumes {
 				if vol.Name == volumeName {
-					if vol.VolumeSource.Projected != nil && vol.VolumeSource.Projected.Sources != nil {
-						vol.VolumeSource.Projected.Sources = append(vol.VolumeSource.Projected.Sources, volumeProjection)
+					if vol.Projected != nil && vol.Projected.Sources != nil {
+						vol.Projected.Sources = append(vol.Projected.Sources, volumeProjection)
 					}
 				}
 			}
-
 		} else {
-
 			name := fmt.Sprintf("token-%d", i)
 
 			n.TestDefinition.AddVolumeMount(name, projectedTokenMount.MountPath, "", true)
@@ -304,7 +297,6 @@ func (n *Node) addProjectedToken(projectedTokenMounts []ProjectedTokenMount) {
 				},
 			})
 		}
-
 	}
 }
 

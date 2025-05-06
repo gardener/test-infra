@@ -27,27 +27,27 @@ func (e *echo) New(runID string) plugins.Plugin {
 	return &echo{runID: runID}
 }
 
-func (_ *echo) Command() string {
+func (e *echo) Command() string {
 	return "echo"
 }
 
-func (_ *echo) Authorization() github.AuthorizationType {
+func (e *echo) Authorization() github.AuthorizationType {
 	return github.AuthorizationTeam
 }
 
-func (_ *echo) Description() string {
+func (e *echo) Description() string {
 	return "Prints the provided value"
 }
 
-func (_ *echo) Example() string {
+func (e *echo) Example() string {
 	return "/echo \"text to echo\""
 }
 
-func (_ *echo) Config() string {
+func (e *echo) Config() string {
 	return ""
 }
 
-func (_ *echo) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
+func (e *echo) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
 	return nil
 }
 

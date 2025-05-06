@@ -32,12 +32,12 @@ var _ = Describe("TestDefinition Validation", func() {
 		})
 
 		It("should succeed when a name and a command is defined", func() {
-			Expect(validation.ValidateTestDefinition(stdPath, testdef)).To(HaveLen(0))
+			Expect(validation.ValidateTestDefinition(stdPath, testdef)).To(BeEmpty())
 		})
 
 		It("should succeed when a name contains '-'", func() {
 			testdef.Name = "test-name"
-			Expect(validation.ValidateTestDefinition(stdPath, testdef)).To(HaveLen(0))
+			Expect(validation.ValidateTestDefinition(stdPath, testdef)).To(BeEmpty())
 		})
 
 		It("should fail when no name is defined", func() {
@@ -88,13 +88,13 @@ var _ = Describe("TestDefinition Validation", func() {
 		It("should succeed when valid recipient is defined", func() {
 			testdef.Spec.RecipientsOnFailure = []string{"test@corp.com"}
 			errList := validation.ValidateTestDefinition(stdPath, testdef)
-			Expect(errList).To(HaveLen(0))
+			Expect(errList).To(BeEmpty())
 		})
 
 		It("should succeed when valid recipient list is defined", func() {
 			testdef.Spec.RecipientsOnFailure = []string{"test@corp.com", "test2@corp.com"}
 			errList := validation.ValidateTestDefinition(stdPath, testdef)
-			Expect(errList).To(HaveLen(0))
+			Expect(errList).To(BeEmpty())
 		})
 
 		It("should fail if any of recipient emails is invalid email", func() {

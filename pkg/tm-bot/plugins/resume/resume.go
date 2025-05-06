@@ -52,7 +52,7 @@ func (r *resume) Example() string {
 	return "/resume"
 }
 
-func (_ *resume) Config() string {
+func (r *resume) Config() string {
 	return ""
 }
 

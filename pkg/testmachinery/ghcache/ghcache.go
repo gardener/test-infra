@@ -29,7 +29,6 @@ var (
 // WithRateLimitControlCache adds the central GitHub cache to a http client.
 // Call InitGitHubCache in advance for bootstrapping the cache
 func WithRateLimitControlCache(log logr.Logger, delegate http.RoundTripper) (http.RoundTripper, error) {
-
 	if ghCache == nil {
 		return nil, errors.New("cache has not been initialized yet")
 	}
@@ -45,7 +44,6 @@ func WithRateLimitControlCache(log logr.Logger, delegate http.RoundTripper) (htt
 		delegate: cachedTransport,
 		cache:    ghCache,
 	}, nil
-
 }
 
 // InitGitHubCache initializes a central cache exactly once

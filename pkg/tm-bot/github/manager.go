@@ -37,7 +37,6 @@ func NewManager(log logr.Logger, cfg config.GitHubBot) (Manager, error) {
 }
 
 func (m *manager) GetClient(event *GenericRequestEvent) (Client, error) {
-
 	intClient, err := m.getGitHubClient(event.InstallationID)
 	if err != nil {
 		return nil, err

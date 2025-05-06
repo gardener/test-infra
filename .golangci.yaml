@@ -1,7 +1,32 @@
+version: "2"
 run:
   concurrency: 4
-  deadline: 10m
-
+linters:
+    enable:
+    - govet
+    - nilerr
+    - unconvert
+    - unparam
+    - whitespace
+    - misspell
+    - revive
+    settings:
+      loggercheck:
+        require-string-key: true
+        no-printf-like: true
+      misspell:
+        mode: restricted # only check comments
+      revive:
+        severity: error
+        rules:
+          - name: duplicated-imports
+          - name: unreachable-code
+          - name: context-as-argument
+          - name: early-return
+      exclusions:
+        generated: lax
+        paths:
+        - zz_generated\\..*\\.go$
 issues:
-  exclude-files:
-  - "zz_generated.*\\.go$"
+  max-issues-per-linter: 0 # A value of 0 means no limit
+  max-same-issues: 0 # A value of 0 means no limit

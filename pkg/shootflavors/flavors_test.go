@@ -34,7 +34,7 @@ var _ = Describe("flavor test", func() {
 		rawFlavors := []*common.ShootFlavor{}
 		flavors, err := New(rawFlavors)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(flavors.GetShoots()).To(HaveLen(0))
+		Expect(flavors.GetShoots()).To(BeEmpty())
 	})
 
 	It("should error if a kubernetes pattern is defined", func() {

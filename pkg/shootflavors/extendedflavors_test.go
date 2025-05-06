@@ -73,7 +73,7 @@ var _ = Describe("extended flavor test", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{}
 		flavors, err := NewExtended(c, rawFlavors, "", false)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(flavors.GetShoots()).To(HaveLen(0))
+		Expect(flavors.GetShoots()).To(BeEmpty())
 	})
 
 	It("should return 1 shoot", func() {

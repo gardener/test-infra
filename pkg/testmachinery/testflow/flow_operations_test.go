@@ -192,7 +192,7 @@ var _ = Describe("flow operations", func() {
 			Expect(A.Children.List()).To(HaveLen(1))
 			Expect(A.Children.List()).To(ContainElement(Bs))
 
-			Expect(Bs.Children.List()).To(HaveLen(0))
+			Expect(Bs.Children.List()).To(BeEmpty())
 
 		})
 	})

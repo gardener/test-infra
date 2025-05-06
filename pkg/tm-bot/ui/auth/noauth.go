@@ -33,7 +33,7 @@ func (a *noAuth) DisplayLogin() bool {
 }
 
 // Redirect is a noop redirect implementation
-func (_ *noAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
+func (a *noAuth) Redirect(w http.ResponseWriter, r *http.Request) {}
 
 // Login is a the noop Login implementation
 func (a *noAuth) Login(w http.ResponseWriter, r *http.Request) {}

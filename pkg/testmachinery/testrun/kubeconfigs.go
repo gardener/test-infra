@@ -33,7 +33,6 @@ const (
 
 // ParseKubeconfigs parses the kubeconfigs defined in the testrun and returns respective configs and k8s secrets.
 func ParseKubeconfigs(ctx context.Context, reader client.Reader, tr *tmv1beta1.Testrun) ([]*config.Element, []client.Object, map[string]*node.ProjectedTokenMount, error) {
-
 	parsedKubeconfigs := make(map[string]*clientcmdv1.Config)
 	configs := make([]*config.Element, 0)
 	secrets := make([]client.Object, 0)
@@ -58,7 +57,7 @@ func ParseKubeconfigs(ctx context.Context, reader client.Reader, tr *tmv1beta1.T
 		}
 	}
 
-	projectedTokenMounts, err := processTokenFileConfigs(parsedKubeconfigs, tr.Name, tr.Namespace)
+	projectedTokenMounts, err := processTokenFileConfigs(parsedKubeconfigs, tr.Namespace)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -71,7 +70,6 @@ func addKubeconfig(ctx context.Context, reader client.Reader, configs *[]*config
 	kubeconfigPath := fmt.Sprintf("%s/%s.config", testmachinery.TM_KUBECONFIG_PATH, name)
 
 	if kubeconfig.Type == strconf.String {
-
 		rawKubeconfig, err := base64.StdEncoding.DecodeString(kubeconfig.String())
 		if err != nil {
 			return fmt.Errorf("unable to decode %s kubeconfig: %s", name, err.Error())
@@ -152,7 +150,7 @@ func addKubeconfig(ctx context.Context, reader client.Reader, configs *[]*config
 }
 
 // processTokenFileConfigs checks all given kubeconfig for tokenFiles, determines the allowed audience and check for conflicts in mountPaths
-func processTokenFileConfigs(kubeconfigs map[string]*clientcmdv1.Config, testrunName, namespace string) (map[string]*node.ProjectedTokenMount, error) {
+func processTokenFileConfigs(kubeconfigs map[string]*clientcmdv1.Config, namespace string) (map[string]*node.ProjectedTokenMount, error) {
 	landscapeMappings := testmachinery.GetLandscapeMappings()
 	tokenMounts := make(map[string]*node.ProjectedTokenMount)
 
@@ -161,7 +159,6 @@ func processTokenFileConfigs(kubeconfigs map[string]*clientcmdv1.Config, testrun
 	}
 
 	for name, kubeconfig := range kubeconfigs {
-
 		if kubeconfig == nil {
 			return nil, fmt.Errorf("kubeconfig Key for %s set but no actual kubeconfig was supplied in testrun", name)
 		}
@@ -220,7 +217,6 @@ func processTokenFileConfigs(kubeconfigs map[string]*clientcmdv1.Config, testrun
 		}
 
 		tokenMounts[name] = &tokenMount
-
 	}
 	return tokenMounts, nil
 }

@@ -53,31 +53,31 @@ var _ = Describe("extended flavor validation test", func() {
 		Expect(err).To(HaveOccurred())
 	},
 		Entry("no workers", func() []*common.ExtendedShootFlavor {
-			flavors[0].ShootFlavor.Workers = nil
+			flavors[0].Workers = nil
 			return flavors
 		}),
 		Entry("no kubernetes version", func() []*common.ExtendedShootFlavor {
-			flavors[0].ShootFlavor.KubernetesVersions = common.ShootKubernetesVersionFlavor{}
+			flavors[0].KubernetesVersions = common.ShootKubernetesVersionFlavor{}
 			return flavors
 		}),
 		Entry("no cloudprofile", func() []*common.ExtendedShootFlavor {
-			flavors[0].ExtendedConfiguration.CloudprofileName = ""
+			flavors[0].CloudprofileName = ""
 			return flavors
 		}),
 		Entry("no provider", func() []*common.ExtendedShootFlavor {
-			flavors[0].ShootFlavor.Provider = ""
+			flavors[0].Provider = ""
 			return flavors
 		}),
 		Entry("no project name", func() []*common.ExtendedShootFlavor {
-			flavors[0].ExtendedConfiguration.ProjectName = ""
+			flavors[0].ProjectName = ""
 			return flavors
 		}),
 		Entry("no secret binding", func() []*common.ExtendedShootFlavor {
-			flavors[0].ExtendedConfiguration.SecretBinding = ""
+			flavors[0].SecretBinding = ""
 			return flavors
 		}),
 		Entry("no region", func() []*common.ExtendedShootFlavor {
-			flavors[0].ExtendedConfiguration.Region = ""
+			flavors[0].Region = ""
 			return flavors
 		}))
 })

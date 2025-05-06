@@ -25,7 +25,7 @@ func (r *TestmachineryReconciler) resumeAction(ctx context.Context, rCtx *reconc
 	if b, ok := rCtx.tr.Annotations[common.AnnotationResumeTestrun]; ok && b == "true" {
 		// resume workflow
 		argo.ResumeWorkflow(rCtx.wf)
-		if err := r.Client.Update(ctx, rCtx.wf); err != nil {
+		if err := r.Update(ctx, rCtx.wf); err != nil {
 			return err
 		}
 
@@ -60,12 +60,12 @@ func (r *TestmachineryReconciler) checkResume(rCtx *reconcileContext, step *v1be
 		err := retry.UntilTimeout(ctx, 20*time.Second, 5*time.Minute, func(ctx context.Context) (bool, error) {
 			r.Logger.V(5).Info("resuming workflow", "name", rCtx.tr.Status.Workflow, "namespace", rCtx.tr.GetNamespace())
 			wf := &v1alpha1.Workflow{}
-			if err := r.Client.Get(ctx, client.ObjectKey{Name: rCtx.tr.Status.Workflow, Namespace: rCtx.tr.GetNamespace()}, wf); err != nil {
+			if err := r.Get(ctx, client.ObjectKey{Name: rCtx.tr.Status.Workflow, Namespace: rCtx.tr.GetNamespace()}, wf); err != nil {
 				r.Logger.V(5).Info(err.Error())
 				return retry.MinorError(err)
 			}
 			if ok := argo.ResumeWorkflowStep(wf, argoNodeStatus.Name); ok {
-				if err := r.Client.Update(ctx, wf); err != nil {
+				if err := r.Update(ctx, wf); err != nil {
 					r.Logger.V(5).Info(err.Error())
 					return retry.MinorError(err)
 				}

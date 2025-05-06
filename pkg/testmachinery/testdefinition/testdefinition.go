@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	argov1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	apiv1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -32,7 +31,6 @@ var (
 
 // New takes a CRD TestDefinition and its locations, and creates a TestDefinition object.
 func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDefinition, error) {
-
 	if err := validation.ValidateTestDefinition(field.NewPath(fmt.Sprintf("Location: \"%s\"; File: \"%s\"", loc.Name(), fileName)), def); len(err) != 0 {
 		return nil, err.ToAggregate()
 	}
@@ -55,13 +53,13 @@ func New(def *tmv1beta1.TestDefinition, loc Location, fileName string) (*TestDef
 			ArchiveLogs: &archiveLogs,
 		},
 		ActiveDeadlineSeconds: def.Spec.ActiveDeadlineSeconds,
-		Container: &apiv1.Container{
+		Container: &corev1.Container{
 			Image:      def.Spec.Image,
 			Command:    def.Spec.Command,
 			Args:       def.Spec.Args,
 			Resources:  def.Spec.Resources,
 			WorkingDir: testmachinery.TM_REPO_PATH,
-			Env: []apiv1.EnvVar{
+			Env: []corev1.EnvVar{
 				{
 					Name:  testmachinery.TM_REPO_PATH_NAME,
 					Value: testmachinery.TM_REPO_PATH,
@@ -200,7 +198,7 @@ func (td *TestDefinition) HasLabel(label string) bool {
 }
 
 // AddEnvVars adds environment variables to the container of the TestDefinition's template.
-func (td *TestDefinition) AddEnvVars(envs ...apiv1.EnvVar) {
+func (td *TestDefinition) AddEnvVars(envs ...corev1.EnvVar) {
 	td.Template.Container.Env = append(td.Template.Container.Env, envs...)
 }
 
@@ -240,7 +238,7 @@ func (td *TestDefinition) AddInputParameter(name, value string) {
 
 // AddVolumeMount adds a mount to the container of the TestDefinitions's template.
 func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bool) {
-	td.Template.Container.VolumeMounts = append(td.Template.Container.VolumeMounts, apiv1.VolumeMount{
+	td.Template.Container.VolumeMounts = append(td.Template.Container.VolumeMounts, corev1.VolumeMount{
 		Name:      name,
 		MountPath: path,
 		SubPath:   subpath,
@@ -249,7 +247,7 @@ func (td *TestDefinition) AddVolumeMount(name, path, subpath string, readOnly bo
 }
 
 // AddVolume adds a volume to a TestDefinitions's template.
-func (td *TestDefinition) AddVolume(volume apiv1.Volume) {
+func (td *TestDefinition) AddVolume(volume corev1.Volume) {
 	td.Template.Volumes = append(td.Template.Volumes, volume)
 }
 
@@ -273,11 +271,11 @@ func (td *TestDefinition) addConfigAsEnv(element *config.Element) {
 	if element.Info.Value != "" {
 		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Value))
-		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Value})
+		td.AddEnvVars(corev1.EnvVar{Name: element.Info.Name, Value: element.Info.Value})
 	} else {
 		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, "from secret or configmap"))
-		td.AddEnvVars(apiv1.EnvVar{
+		td.AddEnvVars(corev1.EnvVar{
 			Name: element.Info.Name,
 			ValueFrom: &corev1.EnvVarSource{
 				ConfigMapKeyRef: element.Info.ValueFrom.ConfigMapKeyRef,
@@ -297,7 +295,7 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
 		// Add the file path as env var with the config name to the pod
-		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
+		td.AddEnvVars(corev1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
 		td.AddInputArtifacts(argov1alpha1.Artifact{
 			Name: element.Name(),
 			Path: element.Info.Path,
@@ -313,7 +311,7 @@ func (td *TestDefinition) addConfigAsFile(element *config.Element) error {
 		// add as input parameter to see parameters in argo ui
 		td.AddInputParameter(element.Name(), fmt.Sprintf("%s: %s", element.Info.Name, element.Info.Path))
 		// Add the file path as env var with the config name to the pod
-		td.AddEnvVars(apiv1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
+		td.AddEnvVars(corev1.EnvVar{Name: element.Info.Name, Value: element.Info.Path})
 		td.AddVolumeMount(element.Name(), element.Info.Path, path.Base(element.Info.Path), true)
 		return td.AddVolumeFromConfig(element)
 	}

@@ -55,7 +55,6 @@ func (rl RunList) Errors() error {
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
-
 	var executiongroupID string
 	var tmDashboardURL string
 	if !config.NoExecutionGroup {

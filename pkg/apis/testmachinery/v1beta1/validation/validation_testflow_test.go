@@ -78,7 +78,7 @@ var _ = Describe("testflow", func() {
 			},
 		}
 		errList := validation.ValidateTestFlow(stdPath, tf)
-		Expect(errList).To(HaveLen(0))
+		Expect(errList).To(BeEmpty())
 	})
 
 	It("should fail when dependencies have a cycle", func() {

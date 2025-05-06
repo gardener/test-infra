@@ -70,7 +70,7 @@ var _ = Describe("Config", func() {
 				},
 			}
 			errList := validation.ValidateConfig(stdPath, elem)
-			Expect(errList).To(HaveLen(0))
+			Expect(errList).To(BeEmpty())
 		})
 
 		It("should fail with unknown config type", func() {
@@ -92,7 +92,7 @@ var _ = Describe("Config", func() {
 				Value: "this is a value",
 			}
 			errList := validation.ValidateConfig(stdPath, elem)
-			Expect(errList).To(HaveLen(0))
+			Expect(errList).To(BeEmpty())
 		})
 	})
 })

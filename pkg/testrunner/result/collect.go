@@ -42,7 +42,7 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 			runLogger.Info("Testrun finished successfully")
 		} else {
 			testrunsFailed = append(testrunsFailed, run.Testrun.Name)
-			runLogger.Error(fmt.Errorf("Testrun failed with phase %s", run.Testrun.Status.Phase), "")
+			runLogger.Error(fmt.Errorf("testrun failed with phase %s", run.Testrun.Status.Phase), "")
 		}
 		fmt.Print(util.PrettyPrintStruct(run.Testrun.Status))
 		output.RenderStatusTable(os.Stdout, run.Testrun.Status.Steps)
@@ -65,7 +65,6 @@ func getComponentsForUpload(
 	assetComponents []string,
 	repository string,
 	ocmConfigPath string) ([]*componentdescriptor.Component, error) {
-
 	components, err := componentdescriptor.GetComponents(ctx, runLogger, componentdescriptorPath, repository, func(opts *componentdescriptor.Options) {
 		opts.CfgPath = ocmConfigPath
 	})

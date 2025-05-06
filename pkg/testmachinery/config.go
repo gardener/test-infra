@@ -183,7 +183,7 @@ func (c *TmConfiguration) Copy() *TmConfiguration {
 		return nil
 	}
 	return &TmConfiguration{
-		Configuration: c.Configuration.DeepCopy(),
+		Configuration: c.DeepCopy(),
 		GitHubSecrets: append(make([]GitHubInstanceConfig, 0, len(c.GitHubSecrets)), c.GitHubSecrets...),
 	}
 }
