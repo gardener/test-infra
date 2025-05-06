@@ -70,6 +70,9 @@ test-infra:
           preprocess: 'finalize'
         component_descriptor:
           ocm_repository: europe-docker.pkg.dev/gardener-project/releases
+          ocm_repository_mappings:
+          - repository: europe-docker.pkg.dev/gardener-project/releases
+            prefix: ''
           component_labels:
           - name: 'cloud.gardener.cnudie/responsibles'
             value:
@@ -97,6 +100,26 @@ test-infra:
         scheduling:
           suppress_parallel_execution: true
         publish:
+          helmcharts:
+          - name: testmachinery
+            dir: charts/testmachinery
+            registry: europe-docker.pkg.dev/gardener-project/releases/testmachinery/charts
+            mappings:
+            - ref: ocm-resource:argo-workflow-controller.repository
+              attribute: argo.images.argoWorkflowController.repository
+            - ref: ocm-resource:argo-workflow-controller.tag
+              attribute: argo.images.argoWorkflowController.tag
+            - ref: ocm-resource:argo-executor.repository
+              attribute: argo.images.argoExecutor.repository
+            - ref: ocm-resource:argo-executor.tag
+              attribute: argo.images.argoExecutor.tag
+            - ref: ocm-resource:argo-server.repository
+              attribute: argo.images.argoServer.repository
+            - ref: ocm-resource:argo-server.tag
+              attribute: argo.images.argoServer.tag
+          - name: testmachinery-bot
+            dir: charts/tm-bot
+            registry: europe-docker.pkg.dev/gardener-project/releases/testmachinery/charts
           dockerimages:
             <<: *default_images
             tm-base-image:
