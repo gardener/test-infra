@@ -27,7 +27,6 @@ func init() {
 
 // CreateWorkflow takes a name, templates and volumes to generate an argo workflow object.
 func CreateWorkflow(name, namespace, entrypoint, onExitName string, templates []argov1.Template, volumes []corev1.Volume, ttl *int32, pullImageSecretNames []string) (*argov1.Workflow, error) {
-
 	wf := &argov1.Workflow{
 		Spec: argov1.WorkflowSpec{
 			Affinity:         getWorkflowAffinity(),

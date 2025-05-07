@@ -45,5 +45,4 @@ func marshalAndAppendSummaries(summary metadata.TestrunSummary, stepSummaries []
 		s = append(s, b)
 	}
 	return s, nil
-
 }

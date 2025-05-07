@@ -19,8 +19,7 @@ import (
 // NewFlow takes a testflow and the global config, and generates the DAG.
 // It generates an internal DAG representation and creates the corresponding argo DAG and templates.
 func NewFlow(flowID FlowIdentifier, root *node.Node, tf tmv1beta1.TestFlow, loc locations.Locations, globalConfig []*config.Element) (*Flow, error) {
-
-	steps, testdefinitions, usedLocations, err := preprocessTestflow(flowID, root, tf, loc, globalConfig)
+	steps, testdefinitions, usedLocations, err := preprocessTestflow(flowID, tf, loc, globalConfig)
 	if err != nil {
 		return nil, err
 	}

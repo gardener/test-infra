@@ -23,7 +23,7 @@ import (
 func GetArgoURL(ctx context.Context, k8sClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
 	argoBaseURL, err := GetArgoHost(ctx, k8sClient)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return GetArgoURLFromHost(argoBaseURL, tr), nil
 }
@@ -62,7 +62,7 @@ func GetGrafanaHost(ctx context.Context, tmClient client.Client) (string, error)
 func GetTmDashboardURLForTestrun(tmClient client.Client, tr *tmv1beta1.Testrun) (string, error) {
 	host, err := GetTMDashboardHost(tmClient)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return GetTmDashboardURLFromHostForTestrun(host, tr), nil
 }

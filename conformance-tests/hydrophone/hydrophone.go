@@ -78,7 +78,6 @@ func Run(log logr.Logger) error {
 		}
 	}
 	return err
-
 }
 
 // runCommand constructs a command, logs it with all arguments and executes it.

@@ -11,9 +11,9 @@ import (
 func GenerateKubeconfigFromRestConfig(cfg *rest.Config, name string) ([]byte, error) {
 	values := map[string]interface{}{
 		"APIServerURL":      cfg.Host,
-		"CACertificate":     utils.EncodeBase64(cfg.TLSClientConfig.CAData),
-		"ClientCertificate": utils.EncodeBase64(cfg.TLSClientConfig.CertData),
-		"ClientKey":         utils.EncodeBase64(cfg.TLSClientConfig.KeyData),
+		"CACertificate":     utils.EncodeBase64(cfg.CAData),
+		"ClientCertificate": utils.EncodeBase64(cfg.CertData),
+		"ClientKey":         utils.EncodeBase64(cfg.KeyData),
 		"ClusterName":       name,
 	}
 

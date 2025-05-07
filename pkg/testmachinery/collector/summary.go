@@ -20,14 +20,10 @@ import (
 
 // collectSummaryAndExports takes a completed testrun status and writes the results to elastic search bulk json files.
 func (c *collector) collectSummaryAndExports(path string, tr *tmv1beta1.Testrun, meta *metadata.Metadata) error {
-
 	meta.Testrun.StartTime = tr.Status.StartTime
 	meta.Annotations = tr.Annotations
 
-	trSummary, summaries, err := c.generateSummary(tr, meta)
-	if err != nil {
-		return err
-	}
+	trSummary, summaries := c.generateSummary(tr, meta)
 	trStatusSummaries, err := marshalAndAppendSummaries(trSummary, summaries)
 	if err != nil {
 		return err
@@ -70,13 +66,12 @@ func (c *collector) collectSummaryAndExports(path string, tr *tmv1beta1.Testrun,
 }
 
 // generateSummary parses a testruns status and returns
-func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metadata) (metadata.TestrunSummary, []metadata.StepSummary, error) {
+func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metadata) (metadata.TestrunSummary, []metadata.StepSummary) {
 	status := tr.Status
 	testsRun := 0
 	summaries := make([]metadata.StepSummary, 0)
 
 	for _, step := range status.Steps {
-
 		stepMetadata := &metadata.StepSummaryMetadata{
 			Metadata:    *meta,
 			StepName:    step.Name,
@@ -122,7 +117,7 @@ func (c *collector) generateSummary(tr *tmv1beta1.Testrun, meta *metadata.Metada
 		TelemetryData: meta.TelemetryData,
 	}
 
-	return trSummary, summaries, nil
+	return trSummary, summaries
 }
 
 // preComputeTeststepFields precomputes fields for elasticsearch that are otherwise hard to add at runtime (i.e. as grafana does not support scripted fields)

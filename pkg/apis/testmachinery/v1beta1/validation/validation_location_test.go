@@ -44,7 +44,7 @@ var _ = Describe("Locations Validation", func() {
 		Context("when location type is git", func() {
 			It("should succeed when repo and revision are defined", func() {
 				errList := validation.ValidateTestLocation(stdPath, location)
-				Expect(errList).To(HaveLen(0))
+				Expect(errList).To(BeEmpty())
 			})
 		})
 
@@ -53,7 +53,7 @@ var _ = Describe("Locations Validation", func() {
 				location.Type = "local"
 				testmachinery.GetConfig().TestMachinery.Insecure = true
 				errList := validation.ValidateTestLocation(stdPath, location)
-				Expect(errList).To(HaveLen(0))
+				Expect(errList).To(BeEmpty())
 			})
 
 			It("should fail when hostPath is not specified", func() {

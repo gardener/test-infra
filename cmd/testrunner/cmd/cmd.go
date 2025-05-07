@@ -44,7 +44,6 @@ func Execute() {
 }
 
 func init() {
-
 	logger.InitFlags(rootCmd.PersistentFlags())
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Dry run will print the rendered template")
 

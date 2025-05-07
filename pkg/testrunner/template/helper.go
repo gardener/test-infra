@@ -77,7 +77,7 @@ func encodeRawObject(obj interface{}) (string, error) {
 	}
 	raw, err := json.Marshal(obj)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(raw), nil
 }

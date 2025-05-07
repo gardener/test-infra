@@ -111,7 +111,12 @@ func upload(client *storage.Client, bucket, sourcePath, targetPath string) error
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("Failed to close file %s: %v\n", f.Name(), err)
+		}
+	}(f)
 
 	wc := client.Bucket(bucket).Object(targetPath).NewWriter(ctx)
 	if _, err = io.Copy(wc, f); err != nil {

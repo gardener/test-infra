@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-//TODO remove
+// TODO remove
 
 package main
 
@@ -129,8 +129,12 @@ func getPodLogs(ctx context.Context, client kubernetesclientset.Interface, pod c
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to get logs from pod %s in namespace %s", pod.Name, pod.Namespace)
 	}
-	defer logs.Close()
-
+	defer func(logs io.ReadCloser) {
+		err := logs.Close()
+		if err != nil {
+			fmt.Printf("Error closing logs stream: %s", err.Error())
+		}
+	}(logs)
 	buf := bytes.NewBuffer([]byte{})
 	_, err = io.Copy(buf, logs)
 	if err != nil {

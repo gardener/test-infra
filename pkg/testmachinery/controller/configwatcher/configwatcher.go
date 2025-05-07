@@ -100,7 +100,7 @@ func (cw *ConfigWatcher) Watch() {
 
 func (cw *ConfigWatcher) handleEvent(event fsnotify.Event) {
 	// Only care about events which may modify the contents of the file.
-	if !(isWrite(event) || isRemove(event) || isCreate(event)) {
+	if !isWrite(event) && !isRemove(event) && !isCreate(event) {
 		return
 	}
 	ctx := context.Background()

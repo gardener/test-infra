@@ -109,7 +109,7 @@ func FilterPatchVersions(cloudProfileVersions []gardencorev1beta1.ExpirableVersi
 func FilterExpiredVersions(versions []gardencorev1beta1.ExpirableVersion) []gardencorev1beta1.ExpirableVersion {
 	filtered := make([]gardencorev1beta1.ExpirableVersion, 0)
 	for _, v := range versions {
-		if v.ExpirationDate == nil || v.ExpirationDate.Time.After(time.Now()) {
+		if v.ExpirationDate == nil || v.ExpirationDate.After(time.Now()) {
 			filtered = append(filtered, v)
 		}
 	}

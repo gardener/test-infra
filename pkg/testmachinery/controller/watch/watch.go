@@ -108,7 +108,6 @@ func NewFromFile(log logr.Logger, kubeconfig string, options *Options) (Watch, e
 
 // New creates a new watch client
 func New(log logr.Logger, config *rest.Config, options *Options) (Watch, error) {
-
 	options = applyDefaultOptions(options)
 
 	var inf Informer
@@ -187,7 +186,6 @@ func (w *watch) Watch(namespace, name string, f WatchFunc) error {
 }
 
 func (w *watch) Start(ctx context.Context) error {
-
 	go func() {
 		if err := w.eventbus.Start(ctx.Done()); err != nil {
 			w.log.Error(err, "unable to start the event bus")

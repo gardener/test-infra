@@ -44,7 +44,7 @@ type TestMachinery struct {
 	// CleanWorkflowPods indicates if workflow pods should be directly cleaned up by the testmachinery.
 	CleanWorkflowPods bool `json:"cleanWorkflowPods,omitempty"`
 
-	//LandscapeMappings defines how to connect to landscapes using the respective OpenIDConnect IDP
+	// LandscapeMappings defines how to connect to landscapes using the respective OpenIDConnect IDP
 	LandscapeMappings []LandscapeMapping `json:"landscapeMappings,omitempty"`
 }
 
@@ -81,9 +81,9 @@ type LandscapeMapping struct {
 	// Audience is the audience/client ID, which has to be used for requests to this landscape
 	Audience string `json:"audience"`
 
-	//ExpirationSeconds specifies the lifetime of issued tokens
+	// ExpirationSeconds specifies the lifetime of issued tokens
 	ExpirationSeconds int64 `json:"expirationSeconds"`
 
-	//AllowUntrustedUsage defines, if a token is allowed to be used in untrusted steps
+	// AllowUntrustedUsage defines, if a token is allowed to be used in untrusted steps
 	AllowUntrustedUsage bool `json:"allowUntrustedUsage"`
 }

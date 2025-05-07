@@ -67,7 +67,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(projectedTokenMounts)).To(BeZero())
@@ -78,7 +78,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("cannot process kubeconfig for %s due to missing currentContext field", gardenerKubeconfig)))
@@ -90,7 +90,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("testrun wants to use a tokenFile for kubeconfig %s, but no matching landsacpeMapping was found", gardenerKubeconfig)))
@@ -118,7 +118,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("testrun wants to use a tokenFile for kubeconfig %s, but no matching landsacpeMapping was found", gardenerKubeconfig)))
@@ -146,7 +146,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("testrun wants to use a tokenFile for kubeconfig %s, but no matching landsacpeMapping was found", gardenerKubeconfig)))
@@ -178,10 +178,10 @@ var _ = Describe("kubeconfig tests", func() {
 			addConfig.AuthInfos[0].AuthInfo.TokenFile = "/path/to/token"
 			configs[seedKubeconfig] = addConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
-			//Expect(err.Error()).To(Equal(fmt.Sprintf("kubeconfigs for %s and %s both point to the exact same tokenFile location. Use a unique location per kubeconfig", gardenerKubeconfig, seedKubeconfig)))
+			// Expect(err.Error()).To(Equal(fmt.Sprintf("kubeconfigs for %s and %s both point to the exact same tokenFile location. Use a unique location per kubeconfig", gardenerKubeconfig, seedKubeconfig)))
 			Expect(len(projectedTokenMounts)).To(BeZero())
 		})
 
@@ -205,7 +205,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[shootKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("untrusted usage of tokenFile for kubeconfig %s is not allowed in landscapeMapping", shootKubeconfig)))
@@ -232,7 +232,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[gardenerKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(projectedTokenMounts)).To(Equal(1))
@@ -262,7 +262,7 @@ var _ = Describe("kubeconfig tests", func() {
 			addConfig.AuthInfos[0].AuthInfo.TokenFile = "/path/to/seed-token"
 			configs[seedKubeconfig] = addConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(projectedTokenMounts)).To(Equal(2))
@@ -288,7 +288,7 @@ var _ = Describe("kubeconfig tests", func() {
 			configs := make(map[string]*clientcmdv1.Config)
 			configs[shootKubeconfig] = defaultConfig
 
-			projectedTokenMounts, err := processTokenFileConfigs(configs, testrunName, namespace)
+			projectedTokenMounts, err := processTokenFileConfigs(configs, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(projectedTokenMounts)).To(Equal(1))

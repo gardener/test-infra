@@ -15,7 +15,6 @@ import (
 
 // GetMachineImageVersion returns a version identified by a pattern or defaults to the version string handed over
 func GetMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, version, imageName, arch string) (gardencorev1beta1.MachineImageVersion, error) {
-
 	var (
 		machineImageVersion gardencorev1beta1.MachineImageVersion
 		err                 error
@@ -101,12 +100,10 @@ func getXMajorsBeforeLatestMachineImageVersion(rawVersions []gardencorev1beta1.M
 		}
 	}
 	return gardencorev1beta1.MachineImageVersion{}, errors.New(fmt.Sprintf("no machine image version matching the pattern latest-%d found", x))
-
 }
 
 // GetLatestMachineImageVersion returns the latest available machine image version from the cloudprofile
 func GetLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string) (gardencorev1beta1.MachineImageVersion, error) {
-
 	return GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0)
 }
 
@@ -125,7 +122,7 @@ func FilterArchSpecificMachineImage(versions []gardencorev1beta1.MachineImageVer
 func FilterExpiredMachineImageVersions(versions []gardencorev1beta1.MachineImageVersion) []gardencorev1beta1.MachineImageVersion {
 	filtered := make([]gardencorev1beta1.MachineImageVersion, 0)
 	for _, v := range versions {
-		if v.ExpirationDate == nil || v.ExpirationDate.Time.After(time.Now()) {
+		if v.ExpirationDate == nil || v.ExpirationDate.After(time.Now()) {
 			filtered = append(filtered, v)
 		}
 	}

@@ -83,7 +83,12 @@ func (c *client) RequestWithCtx(ctx context.Context, httpMethod, rawPath string,
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to do request to %s", esURL)
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("Error closing response body: %v", err)
+		}
+	}(res.Body)
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		errorResponse, _ := io.ReadAll(res.Body)
 		return nil, errors.Errorf("request %s returned status code %d with body %s", esURL, res.StatusCode, errorResponse)

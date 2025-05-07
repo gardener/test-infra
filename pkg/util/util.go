@@ -88,17 +88,22 @@ func DownloadFile(client *http.Client, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("error closing response body: %v", err)
+		}
+	}(resp.Body)
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot downdload file from %s: \n %v", url, err.Error())
+		return nil, fmt.Errorf("cannot downdload file from %s: \n %v", url, err.Error())
 	}
 	return data, nil
 }
 
 // Getenv returns the string value of the environment variable with the provided key if the env var exists.
-// Otherwise the default value is returned
+// Otherwise, the default value is returned
 func Getenv(key, defaultValue string) string {
 	if os.Getenv(key) != "" {
 		return os.Getenv(key)
@@ -107,7 +112,7 @@ func Getenv(key, defaultValue string) string {
 }
 
 // GetenvBool returns the boolean value of the environment variable with the provided key if the env var exists and can be parsed.
-// Otherwise the default value is returned
+// Otherwise, the default value is returned
 func GetenvBool(key string, defaultValue bool) bool {
 	env := os.Getenv(key)
 	if env != "" {
@@ -175,7 +180,7 @@ func StringArrayContains(ar []string, elem string) bool {
 }
 
 // StringDefault checks if a string is defined.
-// If the value is emtpy the default string is returned
+// If the value is empty the default string is returned
 func StringDefault(value, def string) string {
 	if value == "" {
 		return def
@@ -345,13 +350,23 @@ func Unzip(archive, target string) error {
 		if err != nil {
 			return err
 		}
-		defer fileReader.Close()
+		defer func(fileReader io.ReadCloser) {
+			err := fileReader.Close()
+			if err != nil {
+				fmt.Printf("error closing file reader: %v", err)
+			}
+		}(fileReader)
 
 		targetFile, err := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
 			return err
 		}
-		defer targetFile.Close()
+		defer func(targetFile *os.File) {
+			err := targetFile.Close()
+			if err != nil {
+				fmt.Printf("error closing target file: %v", err)
+			}
+		}(targetFile)
 
 		// max filesize is limited to 100 MB
 		maxSize := int64(100 << (10 * 2))
@@ -384,10 +399,20 @@ func Zipit(source, target string) error {
 	if err != nil {
 		return err
 	}
-	defer zipfile.Close()
+	defer func(zipfile *os.File) {
+		err := zipfile.Close()
+		if err != nil {
+			fmt.Printf("error closing zipfile: %v", err)
+		}
+	}(zipfile)
 
 	archive := zip.NewWriter(zipfile)
-	defer archive.Close()
+	defer func(archive *zip.Writer) {
+		err := archive.Close()
+		if err != nil {
+			fmt.Printf("error closing archive: %v", err)
+		}
+	}(archive)
 
 	info, err := os.Stat(source)
 	if err != nil {
@@ -432,7 +457,12 @@ func Zipit(source, target string) error {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				fmt.Printf("error closing file: %v", err)
+			}
+		}(file)
 		_, err = io.Copy(writer, file)
 		return err
 	}); err != nil {

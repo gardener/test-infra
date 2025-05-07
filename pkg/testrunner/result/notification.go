@@ -35,7 +35,6 @@ func GenerateNotificationConfigForAlerting(tr []*tmv1beta1.Testrun, concourseOnE
 }
 
 func createNotificationString(testruns []*tmv1beta1.Testrun) []byte {
-
 	cfg := notificationCfg{
 		Email: email{
 			Subject:  "Test Machinery - some steps failed",

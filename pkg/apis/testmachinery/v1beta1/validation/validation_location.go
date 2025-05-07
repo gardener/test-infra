@@ -73,14 +73,15 @@ func ValidateTestLocation(fldPath *field.Path, l tmv1beta1.TestLocation) field.E
 			fmt.Sprintf("Unknown TestDefinition location type. Supported types: %q, %q", tmv1beta1.LocationTypeGit, tmv1beta1.LocationTypeLocal)))
 		return allErrs
 	}
-	if l.Type == tmv1beta1.LocationTypeGit {
+	switch l.Type {
+	case tmv1beta1.LocationTypeGit:
 		if l.Repo == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("repo"), "repo has to be defined for git TestDefinition locations"))
 		}
 		if l.Revision == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("revision"), "revision has to be defined for git TestDefinition locations"))
 		}
-	} else if l.Type == tmv1beta1.LocationTypeLocal {
+	case tmv1beta1.LocationTypeLocal:
 		if !testmachinery.IsRunInsecure() {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), l.Type, "Local testDefinition locations are only available in insecure mode"))
 			return allErrs

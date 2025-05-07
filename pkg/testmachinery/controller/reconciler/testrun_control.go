@@ -114,7 +114,6 @@ func (r *TestmachineryReconciler) Reconcile(ctx context.Context, request reconci
 	}
 
 	return r.updateStatus(ctx, rCtx)
-
 }
 
 func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reconcileContext, log logr.Logger) (reconcile.Result, error) {
@@ -168,7 +167,7 @@ func (r *TestmachineryReconciler) createWorkflow(ctx context.Context, rCtx *reco
 	rCtx.tr.Finalizers = trFinalizers.UnsortedList()
 
 	if err := r.Patch(ctx, rCtx.tr, patch); err != nil {
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, err
 	}
 
 	rCtx.updated = true
@@ -181,7 +180,7 @@ func (r *TestmachineryReconciler) generateWorkflow(ctx context.Context, testrunD
 		return nil, nil, fmt.Errorf("error parsing testrun: %s", err.Error())
 	}
 
-	wf, err := tr.GetWorkflow(testmachinery.GetWorkflowName(testrunDef), testrunDef.Namespace, r.getImagePullSecrets(ctx))
+	wf, err := tr.GetWorkflow(testmachinery.GetWorkflowName(testrunDef), testrunDef.Namespace, r.getImagePullSecrets())
 	if err != nil {
 		return nil, nil, err
 	}

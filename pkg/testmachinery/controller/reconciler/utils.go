@@ -5,14 +5,13 @@
 package reconciler
 
 import (
-	"context"
 	"time"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery"
 )
 
-func (r *TestmachineryReconciler) getImagePullSecrets(ctx context.Context) []string {
+func (r *TestmachineryReconciler) getImagePullSecrets() []string {
 	imagePullSecrets := testmachinery.GetConfig().ImagePullSecretNames
 	return imagePullSecrets
 }

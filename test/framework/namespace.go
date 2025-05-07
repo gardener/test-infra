@@ -25,7 +25,6 @@ import (
 // if o.config.TestNamespace is empty a random generated namespace will be created.
 // Additionally necessary resources were created and added to the operation state.
 func (o *Operation) EnsureTestNamespace(ctx context.Context) error {
-
 	if err := o.createNewTestNamespace(ctx); err != nil {
 		return errors.Wrapf(err, "unable to create new test namespace")
 	}

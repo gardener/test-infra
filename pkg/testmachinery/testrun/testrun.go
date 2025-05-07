@@ -24,7 +24,6 @@ import (
 // New takes a testrun crd and creates a new Testrun representation.
 // It fetches testruns from specified testdeflocations and generates a testflow object.
 func New(ctx context.Context, log logr.Logger, tr *tmv1beta1.Testrun, reader client.Reader) (*Testrun, error) {
-
 	kubeconfigs, secrets, projectedTokenMounts, err := ParseKubeconfigs(ctx, reader, tr)
 	if err != nil {
 		return nil, err

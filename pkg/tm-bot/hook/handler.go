@@ -31,7 +31,6 @@ type Handler struct {
 }
 
 func New(log logr.Logger, ghMgr ghutils.Manager, webhookSecretToken string, runs *testsmanager.Runs) (*Handler, error) {
-
 	persistence, err := plugins.NewKubernetesPersistence(runs.GetClient(), "state", "tm-bot")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to setup plugin persistence")

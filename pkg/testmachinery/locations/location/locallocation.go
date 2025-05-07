@@ -30,7 +30,6 @@ type LocalLocation struct {
 
 // NewLocalLocation creates a TestDefLocation of type git.
 func NewLocalLocation(log logr.Logger, testDefLocation *tmv1beta1.TestLocation) testdefinition.Location {
-
 	hash := fnv.New32().Sum([]byte(testDefLocation.HostPath))
 	b32 := base32.StdEncoding.EncodeToString(hash)
 

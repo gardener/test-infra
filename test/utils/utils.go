@@ -18,7 +18,7 @@ import (
 	argov1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -151,7 +151,7 @@ func DeleteTestrun(tmClient client.Client, tr *tmv1beta1.Testrun) {
 	time.Sleep(3 * time.Second)
 	err := tmClient.Delete(context.TODO(), tr)
 	if !apierrors.IsNotFound(err) {
-		Expect(err).To(BeNil(), "Error deleting Testrun: %s", tr.Name)
+		gomega.Expect(err).To(gomega.BeNil(), "Error deleting Testrun: %s", tr.Name)
 	}
 }
 
@@ -201,7 +201,7 @@ func deploymentIsReady(ctx context.Context, log logr.Logger, clusterClient clien
 // HTTPGet performs an HTTP get with a default timeout of 60 seconds
 func HTTPGet(url string) (*http.Response, error) {
 	httpClient := http.Client{
-		Timeout: time.Duration(60 * time.Second),
+		Timeout: 60 * time.Second,
 	}
 
 	httpRequest, err := http.NewRequest("GET", url, nil)

@@ -95,7 +95,6 @@ func ParseExportedFiles(log logr.Logger, name string, stepMeta interface{}, docs
 func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{}, docs []byte) BulkList {
 	bulks := make(BulkList, 0)
 	var meta map[string]interface{}
-
 	for doc := range util.ReadLines(docs) {
 		var jsonBody map[string]interface{}
 		err := json.Unmarshal(doc, &jsonBody)
@@ -103,14 +102,12 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 			log.V(5).Info(fmt.Sprintf("cannot unmarshal document %s", err.Error()))
 			continue
 		}
-
 		// if a bulk is defined we preifx the index with tm- to ensure it does not collide with any other index
 		if jsonBody["index"] != nil {
 			meta = jsonBody
 			meta["index"].(map[string]interface{})["_index"] = fmt.Sprintf("tm-%s", meta["index"].(map[string]interface{})["_index"])
 			continue
 		}
-
 		// construct own bulk with index = tm-<testdef name>
 		jsonBody["tm"] = stepMeta
 		patchedDoc, err := util.MarshalNoHTMLEscape(jsonBody) // json.Marshal(jsonBody)
@@ -133,6 +130,5 @@ func parseExportedBulkFormat(log logr.Logger, name string, stepMeta interface{},
 		bulks = append(bulks, bulk)
 		meta = nil
 	}
-
 	return bulks
 }

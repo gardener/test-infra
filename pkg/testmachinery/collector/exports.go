@@ -54,7 +54,6 @@ func (c *collector) getExportedDocuments(status tmv1beta1.TestrunStatus, meta *m
 			}
 
 			if info.Size > 20 {
-
 				files, err := getFilesFromTar(reader)
 				if err != nil {
 					c.log.Info(fmt.Sprintf("cannot untar artifact: %s", err.Error()), "artifact", step.ExportArtifactKey)
@@ -101,8 +100,6 @@ func getFilesFromTar(r io.Reader) ([][]byte, error) {
 			}
 			files = append(files, file)
 		}
-
 	}
-
 	return files, nil
 }

@@ -24,49 +24,49 @@ func New(log logr.Logger) plugins.Plugin {
 	return &skip{log: log}
 }
 
-func (e *skip) New(runID string) plugins.Plugin {
+func (s *skip) New(runID string) plugins.Plugin {
 	return &skip{
-		log:   e.log,
+		log:   s.log,
 		runID: runID,
 	}
 }
 
-func (_ *skip) Command() string {
+func (s *skip) Command() string {
 	return "skip"
 }
 
-func (_ *skip) Authorization() github.AuthorizationType {
+func (s *skip) Authorization() github.AuthorizationType {
 	return github.AuthorizationCodeOwners
 }
 
-func (_ *skip) Description() string {
+func (s *skip) Description() string {
 	return "Clears the testmachinery github status to skip a failed or pending test"
 }
 
-func (_ *skip) Example() string {
+func (s *skip) Example() string {
 	return "/skip"
 }
 
-func (_ *skip) Config() string {
+func (s *skip) Config() string {
 	return ""
 }
 
-func (_ *skip) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
+func (s *skip) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
 	return nil
 }
 
-func (e *skip) Flags() *pflag.FlagSet {
-	flagset := pflag.NewFlagSet(e.Command(), pflag.ContinueOnError)
+func (s *skip) Flags() *pflag.FlagSet {
+	flagset := pflag.NewFlagSet(s.Command(), pflag.ContinueOnError)
 	return flagset
 }
 
-func (e *skip) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
+func (s *skip) Run(flagset *pflag.FlagSet, client github.Client, event *github.GenericRequestEvent) error {
 	ctx := context.Background()
 	defer ctx.Done()
 
-	updater := tests.NewStatusUpdater(e.log, client, event)
+	updater := tests.NewStatusUpdater(s.log, client, event)
 	if err := updater.UpdateStatus(context.TODO(), github.StateSuccess, "skipped"); err != nil {
-		e.log.Error(err, "unable to update github status to skipped")
+		s.log.Error(err, "unable to update github status to skipped")
 		_, err = client.Comment(ctx, event, plugins.FormatErrorResponse(event.GetAuthorName(), "I was unable to skip the tests. Please try again", ""))
 		return err
 	}

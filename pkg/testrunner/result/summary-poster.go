@@ -122,7 +122,6 @@ func parseTestrunsToTableItems(runs testrunner.RunList) (tableItems util.TableIt
 			// skip gardener tests
 			continue
 		} else {
-
 			var status util.StatusSymbol
 			if run.Error != nil && !trerrors.IsTimeout(run.Error) {
 				status = util.StatusSymbolError

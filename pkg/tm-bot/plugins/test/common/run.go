@@ -100,7 +100,7 @@ func (t *test) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 		log.Error(err, "unable to persist state")
 	}
 
-	_, err = t.runs.Watch(log, ctx, statusUpdater, event, tr, t.interval, t.timeout)
+	_, err = t.runs.Watch(ctx, log, statusUpdater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (t *test) ResumeFromState(client github.Client, event *github.GenericReques
 	}
 	updater := tests.NewStatusUpdaterFromCommentID(logger, client, event, state.CommentID)
 
-	_, err := t.runs.Watch(logger, ctx, updater, event, tr, t.interval, t.timeout)
+	_, err := t.runs.Watch(ctx, logger, updater, event, tr, t.interval, t.timeout)
 	if err != nil {
 		return err
 	}

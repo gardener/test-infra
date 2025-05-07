@@ -100,8 +100,8 @@ func (strsec *StringOrConfig) MarshalJSON() ([]byte, error) {
 // the OpenAPI spec of this type.
 //
 // See: https://github.com/kubernetes/kube-openapi/tree/master/pkg/generators
-func (_ StringOrConfig) OpenAPISchemaType() []string { return []string{"string"} }
+func (strsec StringOrConfig) OpenAPISchemaType() []string { return []string{"string"} }
 
 // OpenAPISchemaFormat is used by the kube-openapi generator when constructing
 // the OpenAPI spec of this type.
-func (_ StringOrConfig) OpenAPISchemaFormat() string { return "string-or-secretref" }
+func (strsec StringOrConfig) OpenAPISchemaFormat() string { return "string-or-secretref" }

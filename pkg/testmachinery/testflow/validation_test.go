@@ -77,7 +77,7 @@ var _ = Describe("Testflow", func() {
 					},
 				},
 			}
-			Expect(testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, true)).To(HaveLen(0))
+			Expect(testflow.Validate(stdPath, tf, testutils.EmptyMockLocation, true)).To(BeEmpty())
 		})
 
 		It("should succeed when a testdef can be found", func() {
@@ -104,7 +104,7 @@ var _ = Describe("Testflow", func() {
 					return testdefs, nil
 				},
 			}
-			Expect(testflow.Validate(stdPath, tf, locations, true)).To(HaveLen(0))
+			Expect(testflow.Validate(stdPath, tf, locations, true)).To(BeEmpty())
 		})
 	})
 })

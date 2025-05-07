@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"net/http"
 	"net/url"
@@ -46,27 +47,27 @@ func (x *xkcd) New(_ string) plugins.Plugin {
 	return &p
 }
 
-func (_ *xkcd) Command() string {
+func (x *xkcd) Command() string {
 	return "xkcd"
 }
 
-func (_ *xkcd) Authorization() github.AuthorizationType {
+func (x *xkcd) Authorization() github.AuthorizationType {
 	return github.AuthorizationOrg
 }
 
-func (_ *xkcd) Description() string {
+func (x *xkcd) Description() string {
 	return "Adds an random image from xkcd"
 }
 
-func (_ *xkcd) Example() string {
+func (x *xkcd) Example() string {
 	return "/xkcd --num 2"
 }
 
-func (_ *xkcd) Config() string {
+func (x *xkcd) Config() string {
 	return ""
 }
 
-func (_ *xkcd) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
+func (x *xkcd) ResumeFromState(_ github.Client, _ *github.GenericRequestEvent, _ string) error {
 	return nil
 }
 
@@ -91,7 +92,7 @@ func (x *xkcd) Run(flagset *pflag.FlagSet, client github.Client, event *github.G
 
 	info, err := x.GetImage(x.num)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	_, err = client.Comment(context.TODO(), event, formatResponse(info))
@@ -106,7 +107,12 @@ func (x *xkcd) GetImage(num int) (*xkcdInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("Error closing response body: %v", err)
+		}
+	}(res.Body)
 
 	info := xkcdInfo{}
 	decoder := json.NewDecoder(res.Body)
@@ -128,7 +134,12 @@ func (x *xkcd) getCurrentMax() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("Error closing response body: %v", err)
+		}
+	}(res.Body)
 
 	info := xkcdInfo{}
 	decoder := json.NewDecoder(res.Body)

@@ -6,7 +6,6 @@ package collector
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -20,7 +19,7 @@ var _ = Describe("output generation tests", func() {
 		c *collector
 	)
 
-	ginkgo.BeforeEach(func() {
+	BeforeEach(func() {
 		c = &collector{
 			log: logr.Discard(),
 		}
@@ -47,9 +46,7 @@ var _ = Describe("output generation tests", func() {
 				},
 			}
 
-			_, summaries, err := c.generateSummary(tr, &metadata.Metadata{})
-			Expect(err).ToNot(HaveOccurred())
-
+			_, summaries := c.generateSummary(tr, &metadata.Metadata{})
 			Expect(summaries).To(HaveLen(1))
 			Expect(summaries[0].Metadata.Configuration).To(HaveLen(1))
 			Expect(summaries[0].Metadata.Configuration).To(HaveKey(configElement.Name))
@@ -76,10 +73,8 @@ var _ = Describe("output generation tests", func() {
 				},
 			},
 		}
-		_, summaries, err := c.generateSummary(tr, &metadata.Metadata{})
-		Expect(err).ToNot(HaveOccurred())
-
+		_, summaries := c.generateSummary(tr, &metadata.Metadata{})
 		Expect(summaries).To(HaveLen(1))
-		Expect(summaries[0].Metadata.Configuration).To(HaveLen(0))
+		Expect(summaries[0].Metadata.Configuration).To(BeEmpty())
 	})
 })

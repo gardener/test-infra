@@ -36,7 +36,7 @@ func (r *Runs) CreateTestrun(ctx context.Context, log logr.Logger, statusUpdater
 	return nil
 }
 
-func (r *Runs) Watch(log logr.Logger, ctx context.Context, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
+func (r *Runs) Watch(ctx context.Context, log logr.Logger, statusUpdater *StatusUpdater, event *github.GenericRequestEvent, tr *tmv1beta1.Testrun, pollInterval, maxWaitTime time.Duration) (*tmv1beta1.Testrun, error) {
 	if err := runs.Add(event, tr); err != nil {
 		return nil, err
 	}

@@ -66,9 +66,9 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.BoolVar(&o.testrunnerConfig.NoExecutionGroup, "no-execution-group", false, "do not inject a execution group id into testruns")
 
 	fs.StringVarP(&o.testrunPath, "file", "f", "", "Path to the testrun yaml")
-	fs.BoolVar(&o.testrunnerConfig.ExecutorConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
-	fs.IntVar(&o.testrunnerConfig.ExecutorConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
-	fs.DurationVar(&o.testrunnerConfig.ExecutorConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
+	fs.BoolVar(&o.testrunnerConfig.Serial, "serial", false, "executes all testruns of a bucket only after the previous bucket has finished")
+	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
+	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
 
 	// DEPRECATED FLAGS

@@ -48,7 +48,7 @@ func (r *TestmachineryReconciler) updateStatus(ctx context.Context, rCtx *reconc
 	} else {
 		err := r.completeTestrun(rCtx)
 		if err != nil {
-			return reconcile.Result{}, nil
+			return reconcile.Result{}, err
 		}
 		rCtx.updated = true
 		log.Info("testrun completed")
@@ -187,8 +187,8 @@ func getNodeExportKey(outputs *argov1.Outputs) string {
 		return ""
 	}
 	for _, artifact := range outputs.Artifacts {
-		if artifact.Name == testmachinery.ExportArtifact && artifact.ArtifactLocation.S3 != nil {
-			return artifact.ArtifactLocation.S3.Key
+		if artifact.Name == testmachinery.ExportArtifact && artifact.S3 != nil {
+			return artifact.S3.Key
 		}
 	}
 	return ""

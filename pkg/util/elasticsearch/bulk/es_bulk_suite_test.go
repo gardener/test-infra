@@ -96,7 +96,6 @@ var _ = Describe("elasticsearch test", func() {
 })
 
 func areEqualDocuments(input, output []byte) (bool, error) {
-
 	inputScanner := bufio.NewScanner(bytes.NewReader(input))
 	outputScanner := bufio.NewScanner(bytes.NewReader(output))
 	for outputScanner.Scan() {
