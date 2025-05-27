@@ -123,6 +123,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 			"cloudprovider":                shoot.Provider,
 			"cloudprofile":                 shoot.CloudprofileName,
 			"secretBinding":                shoot.SecretBinding,
+			"credentialsBinding":           shoot.CredentialsBinding,
 			"region":                       shoot.Region,
 			"zone":                         shoot.Zone,
 			"workers":                      workers,

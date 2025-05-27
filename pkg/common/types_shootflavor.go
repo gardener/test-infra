@@ -100,11 +100,12 @@ type ShootWorkerFlavor struct {
 
 // ExtendedConfiguration specifies extended configuration for shoot flavors that are deployed into a preexisting landscape
 type ExtendedConfiguration struct {
-	ProjectName      string `json:"projectName"`
-	CloudprofileName string `json:"cloudprofile"`
-	SecretBinding    string `json:"secretBinding"`
-	Region           string `json:"region"`
-	Zone             string `json:"zone"`
+	ProjectName        string `json:"projectName"`
+	CloudprofileName   string `json:"cloudprofile"`
+	SecretBinding      string `json:"secretBinding"`
+	CredentialsBinding string `json:"credentialsBinding"`
+	Region             string `json:"region"`
+	Zone               string `json:"zone"`
 
 	FloatingPoolName     string `json:"floatingPoolName"`
 	LoadbalancerProvider string `json:"loadbalancerProvider"`
