@@ -9,7 +9,11 @@ metadata:
         shoot.projectNamespace: {{ required "projectNamespace is required" .Values.shoot.projectNamespace }}
         shoot.cloudprovider: {{ required "cloudprovider is required" .Values.shoot.cloudprovider }}
         shoot.cloudprofile: {{ required "cloudprofile is required" .Values.shoot.cloudprofile }}
+        {{- if .Values.shoot.credentialsBinding }}
+        shoot.credentialsBinding: {{ .Values.shoot.credentialsBinding }}
+        {{- else }}
         shoot.secretBinding: {{ required "secretBinding is required" .Values.shoot.secretBinding }}
+        {{- end }}
         shoot.region: {{ required "region is required" .Values.shoot.region }}
         shoot.zone: {{ required "zone is required" .Values.shoot.zone }}
         {{- if  hasKey .Values.shoot "shootAnnotations" }}

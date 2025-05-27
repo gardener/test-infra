@@ -114,6 +114,73 @@ var _ = Describe("extended flavor test", func() {
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
+	It("should return 1 shoot with credentialsBinding", func() {
+		defaultExtendedCfg.SecretBinding = ""
+		defaultExtendedCfg.CredentialsBinding = "test-credentials-binding"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				AdditionalAnnotations: map[string]string{"a": "b"},
+				AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+				Provider:              common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
+		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+
+		shoot := flavors.GetShoots()[0]
+		Expect(shoot.Get().Shoot).To(Equal(common.Shoot{
+			Provider:              common.CloudProviderGCP,
+			AdditionalAnnotations: map[string]string{"a": "b"},
+			AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+			KubernetesVersion:     gardencorev1beta1.ExpirableVersion{Version: "1.15"},
+			Workers:               []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("amd64")}}},
+		}))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+	})
+
+	It("should return and error when both secretBinding and credentialsBinding are used", func() {
+		defaultExtendedCfg.CredentialsBinding = "test-credentials-binding"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				AdditionalAnnotations: map[string]string{"a": "b"},
+				AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+				Provider:              common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		_, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("should return 1 shoot with worker pool having machine of CPU architecture arm64", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,

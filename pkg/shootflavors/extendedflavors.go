@@ -31,8 +31,11 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 	if flavor.ProjectName == "" {
 		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.projectName: value has to be defined", identifier))
 	}
-	if flavor.SecretBinding == "" {
-		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.secretBinding: value has to be defined", identifier))
+	if flavor.SecretBinding == "" && flavor.CredentialsBinding == "" {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.secretBinding/credentialsBinding: value for one of these has to be defined", identifier))
+	}
+	if flavor.SecretBinding != "" && flavor.CredentialsBinding != "" {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.secretBinding/credentialsBinding: use either/or but not both at the same time", identifier))
 	}
 	if flavor.Region == "" {
 		allErrs = multierror.Append(allErrs, fmt.Errorf("%s.region: value has to be defined", identifier))

@@ -84,6 +84,42 @@ var _ = Describe("shoot templates", func() {
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprovider", "gcp"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprofile", "test"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.secretBinding", "test-sb"))
+			Expect(tr.Annotations).ToNot(HaveKey("shoot.credentialsBinding"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.shootAnnotations", "a=b"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sVersion", "1.15.2"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPrePatchVersion", "1.15.2"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.k8sPrevPatchVersion", "1.15.2"))
+
+			Expect(tr.Spec.LocationSets[0].Locations).To(ContainElement(v1beta1.TestLocation{
+				Type:     "git",
+				Repo:     "https://github.com/gardener/gardener",
+				Revision: "1.2.3",
+			}))
+		})
+
+		It("should render the basic shoot chart with credentialsBinding instead of secretBinding", func() {
+			shoots[0].Get().SecretBinding = ""
+			shoots[0].Get().CredentialsBinding = "test-cred-binding"
+
+			params := &Parameters{
+				GardenKubeconfigPath:     GARDENER_KUBECONFIG,
+				FlavoredTestrunChartPath: filepath.Join(SHOOT_TESTDATA_DIR, "basic"),
+				ComponentDescriptorPath:  filepath.Join(COMPONENT_TESTDATA_PATH, ROOT_COMPONENT),
+				Repository:               filepath.Join(COMPONENT_TESTDATA_PATH, REPOSITORY),
+			}
+
+			runs, err := RenderTestruns(ctx, logr.Discard(), params, shoots)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(runs.GetTestruns()).To(HaveLen(1))
+			tr := runs[0].Testrun
+
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.projectNamespace", "garden-it"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprovider", "gcp"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.cloudprofile", "test"))
+			Expect(tr.Annotations).ToNot(HaveKey("shoot.secretBinding"))
+			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.credentialsBinding", "test-cred-binding"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.region", "region-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.zone", "region-1-1"))
 			Expect(tr.Annotations).To(HaveKeyWithValue("shoot.shootAnnotations", "a=b"))
