@@ -173,8 +173,8 @@ github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOL
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be h1:9AeTilPcZAjCFIImctFaOjnTIavg87rW78vTPkQqLI8=
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be/go.mod h1:ySMOLuWl6zY27l47sB3qLNK6tF2fkHG55UZxx8oIVo4=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
-github.com/argoproj/argo-workflows/v3 v3.6.7 h1:3vT0ygPVtZxSSUaZsCeI+Th/Bm9Cfc2J1FQOGe2iKoM=
-github.com/argoproj/argo-workflows/v3 v3.6.7/go.mod h1:mQbGM8aGyFJwtm9bfmOxLu2SxJDsPosMPHiztR7YmOE=
+github.com/argoproj/argo-workflows/v3 v3.6.10 h1:MFFGzeTXwNKSdDZ5jwQQb26AMGng4bSML38hjxB3Wt0=
+github.com/argoproj/argo-workflows/v3 v3.6.10/go.mod h1:b2VwUsoHP3weB1fHe6XNIj+f8EN+uDow76bTJ3aPQJ0=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
