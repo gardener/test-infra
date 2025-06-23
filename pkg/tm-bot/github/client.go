@@ -12,7 +12,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v68/github"
+	"github.com/google/go-github/v72/github"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
