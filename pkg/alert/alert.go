@@ -380,7 +380,7 @@ func (alerter *Alert) elasticRequest(urlAttributes, httpMethod, payloadFormated 
 // filePostedAlerts posts test contexts to elasticsearch
 func (alerter *Alert) filePostedAlerts(tests map[string]TestDetails) error {
 	payload := alerter.generatePostedAlertsPayload(tests)
-	if err := alerter.elasticRequest("/tm-alerter/_doc/_bulk", http.MethodPost, payload, nil); err != nil {
+	if err := alerter.elasticRequest("/tm-alerter/_bulk", http.MethodPost, payload, nil); err != nil {
 		return errors.Wrap(err, "failed to store alerted tests in elasticsearch")
 	}
 	alerter.log.V(3).Info(fmt.Sprintf("filed %d tests as alerted in elasticsearch", len(tests)))

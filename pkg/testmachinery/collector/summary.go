@@ -19,6 +19,7 @@ import (
 )
 
 // collectSummaryAndExports takes a completed testrun status and writes the results to elastic search bulk json files.
+// it also adds bulk json files that were potentially written/exported by other teststeps.
 func (c *collector) collectSummaryAndExports(path string, tr *tmv1beta1.Testrun, meta *metadata.Metadata) error {
 	meta.Testrun.StartTime = tr.Status.StartTime
 	meta.Annotations = tr.Annotations
