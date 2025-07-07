@@ -9,7 +9,7 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.6.10
 	github.com/bradleyfalzon/ghinstallation/v2 v2.16.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/gardener/gardener v1.121.1
+	github.com/gardener/gardener v1.122.1
 	github.com/gardener/gardener-extension-provider-aws v1.62.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.3
@@ -153,7 +153,7 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/cli v28.2.2+incompatible // indirect
+	github.com/docker/cli v28.3.0+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v28.2.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
@@ -380,7 +380,7 @@ require (
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.33.1 // indirect
+	k8s.io/cli-runtime v0.33.2 // indirect
 	k8s.io/code-generator v0.33.2 // indirect
 	k8s.io/component-base v0.33.2 // indirect
 	k8s.io/gengo v0.0.0-20250207200755-1244d31929d7 // indirect
@@ -389,7 +389,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kubectl v0.33.1 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
-	sigs.k8s.io/controller-tools v0.17.3 // indirect
+	sigs.k8s.io/controller-tools v0.18.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/kustomize/api v0.19.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.19.0 // indirect
