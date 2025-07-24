@@ -42,6 +42,12 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 				Name:    "example.com/repo3",
 				Version: "v1.2.3",
 			},
+			{
+				Name:           "example.com/repo4",
+				Version:        "v1.2.3",
+				SourceRevision: "v1.2.3",
+				SourceRepoURL:  "example.com/repo4",
+			},
 		}
 
 		baseTestrun = &tmv1beta1.Testrun{
@@ -57,7 +63,7 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 		err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-		Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(3))
+		Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
 	})
 
 	It("Should only have duplicates when additionalLocations are specified", func() {
@@ -69,10 +75,29 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 		err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-		Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
+		Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(5))
 	})
 
-	Describe("A repository appears with two different version in the component descriptor", func() {
+	It("Should use the source information", func() {
+		sourceRepo := "example.com/different/repo5"
+		sourceVersion := "v1.2.3"
+		baseComponentDescriptor = append(baseComponentDescriptor, &componentdescriptor.Component{
+			Name:           "example.com/repo5",
+			Version:        "v1.2.2",
+			SourceRevision: sourceVersion,
+			SourceRepoURL:  sourceRepo,
+		})
+
+		err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
+		Expect(err).ToNot(HaveOccurred())
+		for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
+			if location.Repo == sourceRepo {
+				Expect(location.Revision).To(Equal(sourceVersion))
+			}
+		}
+	})
+
+	Describe("A repository identified by a component name appears with two different version in the component descriptor", func() {
 		It("Should pick the initial version, if it is higher", func() {
 			repo := "example.com/repo1"
 			baseComponentDescriptor = append(baseComponentDescriptor, &componentdescriptor.Component{
@@ -82,7 +107,7 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 			err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(3))
+			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
 			for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
 				if location.Repo == repo {
 					Expect(location.Revision).To(Equal("v1.2.3"))
@@ -100,7 +125,7 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 			err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(3))
+			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
 			for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
 				if location.Repo == repo {
 					Expect(location.Revision).To(Equal(version))
@@ -125,7 +150,7 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 			err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(3))
+			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
 			for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
 				if location.Repo == repo1 {
 					Expect(location.Revision).To(Equal(version))
@@ -153,7 +178,7 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 			err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
-			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(3))
+			Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
 			for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
 				if location.Repo == repo1 {
 					Expect(location.Revision).To(Equal(version))
@@ -194,6 +219,48 @@ var _ = Describe("AddLocationsToTestrun Test", func() {
 				}
 			}
 		})
-	})
 
+		Describe("A repository identified by a source appears with two different version in the component descriptor", func() {
+			It("Should pick the initial version, if it is higher", func() {
+				repo := "example.com/repo4"
+				baseComponentDescriptor = append(baseComponentDescriptor, &componentdescriptor.Component{
+					Name:           repo,
+					Version:        "v1.1.2",
+					SourceRevision: "v1.2.2",
+					SourceRepoURL:  repo,
+				})
+				err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
+				Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
+				for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
+					if location.Repo == repo {
+						Expect(location.Revision).To(Equal("v1.2.3"))
+					}
+				}
+			})
+
+			It("Should pick the incoming version, if it is higher", func() {
+				repo := "example.com/repo4"
+				version := "v1.3.3"
+				sourceVersion := version
+				sourceRepoURL := repo
+				baseComponentDescriptor = append(baseComponentDescriptor, &componentdescriptor.Component{
+					Name:           repo,
+					Version:        version,
+					SourceRepoURL:  sourceRepoURL,
+					SourceRevision: sourceVersion,
+				})
+				err := AddLocationsToTestrun(baseTestrun, locationSetName, baseComponentDescriptor, true, additionalLocations)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(baseTestrun.Spec.LocationSets)).To(Equal(1))
+				Expect(len(baseTestrun.Spec.LocationSets[0].Locations)).To(Equal(4))
+				for _, location := range baseTestrun.Spec.LocationSets[0].Locations {
+					if location.Repo == sourceRepoURL {
+						Expect(location.Revision).To(Equal(sourceVersion))
+					}
+				}
+			})
+		})
+	})
 })

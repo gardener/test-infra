@@ -38,6 +38,12 @@ var _ = Describe("componentdescriptor test", func() {
 		components, err := GetComponents(ctx, logr.Discard(), cdPath, repoRef, opts)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(components)).To(Equal(7))
+		for _, comp := range components {
+			if comp.Name == "github.com/component-1-1" {
+				Expect(comp.SourceRepoURL).To(Equal("github.com/does-not-exist/does-not-exist"))
+				Expect(comp.SourceRevision).To(Equal("v1.0.0"))
+			}
+		}
 	},
 		Entry("repository from argument", "./testdata/root-component.yaml", "./testdata/repositories/ocm-repo-ctf", ""),
 		Entry("repository from ocm config file", "./testdata/root-component.yaml", "", "./testdata/ocmconfigs/.ocmconfig-single-repo"),

@@ -5,7 +5,21 @@ component:
   provider: internal
   repositoryContexts: []
   resources: []
-  sources: []
+  sources:
+    - name: source-1
+      type: git
+      access:
+        type: github
+        repoUrl: github.com/does-not-exist/does-not-exist
+        ref: v1.0.0
+        commit: 1234567890abcdef1234567890abcdef12345678
+      version: v1.0.0
+      labels:
+        - name: cloud.gardener/cicd/source
+          value:
+            repository-classification: main
+          version: null
+          signing: false
   version: v1.0.0
 meta:
   schemaVersion: v2
