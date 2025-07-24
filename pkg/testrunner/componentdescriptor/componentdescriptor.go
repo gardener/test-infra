@@ -48,6 +48,12 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 		opt(&options)
 	}
 
+	octx := ocm.New(datacontext.MODE_EXTENDED)
+	err := configutils.ConfigureContext(octx, options.CfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("error configuring ocm context: %w", err)
+	}
+
 	if cdPath == "" {
 		return make([]*Component, 0), nil
 	}
@@ -62,13 +68,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 	}
 
 	if len(cd.References) == 0 {
-		return []*Component{NewFromVersionedElement(cd)}, nil
-	}
-
-	octx := ocm.New(datacontext.MODE_EXTENDED)
-	err = configutils.ConfigureContext(octx, options.CfgPath)
-	if err != nil {
-		return nil, fmt.Errorf("error configuring ocm context: %w", err)
+		return []*Component{NewFromVersionedElement(octx, *cd)}, nil
 	}
 
 	var resolver ocm.ComponentVersionResolver
@@ -94,7 +94,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 			"repository argument or one or multiple repositories in the .ocmconfig file")
 	}
 
-	return resolveReferences(cd, resolver)
+	return resolveReferences(octx, cd, resolver)
 }
 
 // The resolveReferences function is an auxiliary function for GetComponents. It implements a typical Breadth First
@@ -103,20 +103,20 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 // transitive closure) of the root component c.
 // resolver can either a specific ocm repository (if all components are in the same repository) or a compound resolver
 // covering multiple repositories
-func resolveReferences(c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver) ([]*Component, error) {
+func resolveReferences(octx ocm.Context, c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver) ([]*Component, error) {
 	components := make([]*Component, 0)
 	// Set size to 0, as we cannot know the number of component version beforehand
 	visited := make(map[Component]struct{}, 0)
 	queue := make([]*compdesc.ComponentDescriptor, 0)
 
-	visited[*NewFromVersionedElement(c)] = struct{}{}
+	visited[*NewFromVersionedElement(octx, *c)] = struct{}{}
 	queue = append(queue, c)
 
 	for len(queue) > 0 {
 		c = queue[0]
 		queue = queue[1:]
 
-		components = append(components, NewFromVersionedElement(c))
+		components = append(components, NewFromVersionedElement(octx, *c))
 
 		for _, ref := range c.References {
 			ac, err := resolver.LookupComponentVersion(ref.GetComponentName(), ref.GetVersion())
@@ -124,9 +124,10 @@ func resolveReferences(c *compdesc.ComponentDescriptor, resolver ocm.ComponentVe
 				return nil, fmt.Errorf("error resolving component references: %w", err)
 			}
 
-			if _, ok := visited[*NewFromVersionedElement(ac)]; !ok {
-				visited[*NewFromVersionedElement(ac)] = struct{}{}
-				queue = append(queue, ac.GetDescriptor())
+			cd := ac.GetDescriptor()
+			if _, ok := visited[*NewFromVersionedElement(octx, *cd)]; !ok {
+				visited[*NewFromVersionedElement(octx, *cd)] = struct{}{}
+				queue = append(queue, cd)
 			}
 		}
 	}

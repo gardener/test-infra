@@ -25,8 +25,14 @@ func AddLocationsToTestrun(tr *tmv1beta1.Testrun, locationSetName string, compon
 	locations := make([]tmv1beta1.TestLocation, 0)
 	for _, component := range components {
 		var found bool
-		repo := fmt.Sprintf("https://%s", component.Name)
-		revision := GetRevisionFromVersion(component.Version)
+		var repo, revision string
+		if component.SourceRepoURL != "" && component.SourceRevision != "" {
+			repo = fmt.Sprintf("https://%s", component.SourceRepoURL)
+			revision = component.SourceRevision
+		} else {
+			repo = fmt.Sprintf("https://%s", component.Name)
+			revision = GetRevisionFromVersion(component.Version)
+		}
 
 		for i, l := range locations {
 			if l.Repo == repo {

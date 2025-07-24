@@ -22,3 +22,14 @@ dependency graph, multiple repositories have to be accessed.
 
 Generally, in both cases, the same set of components should be returned.
 
+#### Updating components
+
+After changing a component descriptor, it needs to be updated in the ocm-repo-ctf / partial-1 / partial-2 locations. 
+Assuming the change was done to `component-1-1`, this can be done by running:
+
+```bash
+# Update the component descriptor in the ocm-repo-ctf
+ocm transfer componentarchive ./components/component-1-1 ./repositories/ocm-repo-ctf --enforce
+# Update the component descriptor in the ocm-repo-ctf-partial-1
+ocm transfer componentarchive ./components/component-1-1 ./repositories/ocm-repo-ctf-partial-1 --enforce
+```
