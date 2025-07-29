@@ -8,15 +8,21 @@ import (
 	"github.com/Masterminds/semver/v3"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/gardener/test-infra/pkg/common"
 )
 
 // GetMachineImageVersion returns a version identified by a pattern or defaults to the version string handed over
-func GetMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, version, imageName, arch string) (gardencorev1beta1.MachineImageVersion, error) {
+func GetMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, worker *gardencorev1beta1.Worker) (gardencorev1beta1.MachineImageVersion, error) {
 	var (
 		machineImageVersion gardencorev1beta1.MachineImageVersion
+		version             = *worker.Machine.Image.Version
+		arch                = *worker.Machine.Architecture
+		imageName           = worker.Machine.Image.Name
+		updateStrategy      = ptr.Deref(worker.UpdateStrategy, "")
+		inPlace             = updateStrategy == gardencorev1beta1.AutoInPlaceUpdate || updateStrategy == gardencorev1beta1.ManualInPlaceUpdate
 		err                 error
 	)
 
@@ -28,22 +34,22 @@ func GetMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, version
 			},
 		}
 	case common.PatternLatest:
-		machineImageVersion, err = GetLatestMachineImageVersion(cloudprofile, imageName, arch)
+		machineImageVersion, err = GetLatestMachineImageVersion(cloudprofile, imageName, arch, inPlace)
 	case common.PatternOneMajorBeforeLatest:
-		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 1)
+		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 1, inPlace)
 	case common.PatternTwoMajorBeforeLatest:
-		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 2)
+		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 2, inPlace)
 	case common.PatternThreeMajorBeforeLatest:
-		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 3)
+		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 3, inPlace)
 	case common.PatternFourMajorBeforeLatest:
-		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 4)
+		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 4, inPlace)
 	}
 
 	return machineImageVersion, err
 }
 
 // GetXMajorsBeforeLatestMachineImageVersion extracts the latest-x major version from a list of relevant versions found in a cloudprofile
-func GetXMajorsBeforeLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string, x uint64) (gardencorev1beta1.MachineImageVersion, error) {
+func GetXMajorsBeforeLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string, x uint64, inPlace bool) (gardencorev1beta1.MachineImageVersion, error) {
 	machineImage, err := GetMachineImage(cloudprofile, imageName)
 	if err != nil {
 		return gardencorev1beta1.MachineImageVersion{}, err
@@ -54,6 +60,9 @@ func GetXMajorsBeforeLatestMachineImageVersion(cloudprofile gardencorev1beta1.Cl
 	}
 
 	machineVersions = FilterExpiredMachineImageVersions(FilterArchSpecificMachineImage(machineVersions, arch))
+	if inPlace {
+		machineVersions = FilterInPlaceMachineImageVersions(machineVersions)
+	}
 
 	return getXMajorsBeforeLatestMachineImageVersion(machineVersions, x)
 }
@@ -103,8 +112,8 @@ func getXMajorsBeforeLatestMachineImageVersion(rawVersions []gardencorev1beta1.M
 }
 
 // GetLatestMachineImageVersion returns the latest available machine image version from the cloudprofile
-func GetLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string) (gardencorev1beta1.MachineImageVersion, error) {
-	return GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0)
+func GetLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string, inPlace bool) (gardencorev1beta1.MachineImageVersion, error) {
+	return GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0, inPlace)
 }
 
 // FilterArchSpecificMachineImage removes all version which doesn't support given architecture.
@@ -112,6 +121,17 @@ func FilterArchSpecificMachineImage(versions []gardencorev1beta1.MachineImageVer
 	filtered := make([]gardencorev1beta1.MachineImageVersion, 0)
 	for _, v := range versions {
 		if slices.Contains(v.Architectures, architecture) {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered
+}
+
+// FilterInPlaceMachineImageVersions filters the machine image versions to only include those that support in-place updates.
+func FilterInPlaceMachineImageVersions(versions []gardencorev1beta1.MachineImageVersion) []gardencorev1beta1.MachineImageVersion {
+	filtered := make([]gardencorev1beta1.MachineImageVersion, 0)
+	for _, v := range versions {
+		if v.InPlaceUpdates != nil && v.InPlaceUpdates.Supported {
 			filtered = append(filtered, v)
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/gardener/test-infra/pkg/common"
 )
@@ -20,6 +21,7 @@ const (
 var _ = Describe("get machine images from a cloudprofile", func() {
 	var (
 		cloudprofile gardencorev1beta1.CloudProfile
+		worker       *gardencorev1beta1.Worker
 		expiredTime  metav1.Time
 		futureTime   metav1.Time
 	)
@@ -36,7 +38,7 @@ var _ = Describe("get machine images from a cloudprofile", func() {
 							{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 								Version:        "3.4.5",
 								ExpirationDate: &futureTime,
-							}, Architectures: []string{arch_amd64, arch_arm64}},
+							}, Architectures: []string{arch_amd64, arch_arm64}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
 							{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 								Version:        "2.3.3",
 								ExpirationDate: &futureTime,
@@ -54,24 +56,43 @@ var _ = Describe("get machine images from a cloudprofile", func() {
 				},
 			},
 		}
+
+		worker = &gardencorev1beta1.Worker{
+			Machine: gardencorev1beta1.Machine{
+				Image: &gardencorev1beta1.ShootMachineImage{
+					Name:    imageName,
+					Version: ptr.To(common.PatternLatest),
+				},
+				Architecture: ptr.To(arch_amd64),
+			},
+		}
 	})
 
 	It("should return the latest, not-expired machine image version from a cloudprofile", func() {
-		version, err := GetMachineImageVersion(cloudprofile, common.PatternLatest, imageName, arch_amd64)
+		version, err := GetMachineImageVersion(cloudprofile, worker)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(version.Version).To(Equal("3.4.5"))
+	})
+
+	It("should return the latest, not-expired, inplace supported machine image version from a cloudprofile", func() {
+		worker.UpdateStrategy = ptr.To(gardencorev1beta1.AutoInPlaceUpdate)
+		version, err := GetMachineImageVersion(cloudprofile, worker)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(version.Version).To(Equal("3.4.5"))
 	})
 
 	It("should return the latest-1, not-expired machine image version from a cloudprofile", func() {
-		version, err := GetMachineImageVersion(cloudprofile, common.PatternOneMajorBeforeLatest, imageName, arch_amd64)
+		worker.Machine.Image.Version = ptr.To(common.PatternOneMajorBeforeLatest)
+		version, err := GetMachineImageVersion(cloudprofile, worker)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(version.Version).To(Equal("2.3.4"))
 	})
+
 	It("should return the version string parsed from the flavor", func() {
-		versionInput := "1.2.3"
-		version, err := GetMachineImageVersion(cloudprofile, versionInput, imageName, arch_amd64)
+		worker.Machine.Image.Version = ptr.To("1.2.3")
+		version, err := GetMachineImageVersion(cloudprofile, worker)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(version.Version).To(Equal(versionInput))
+		Expect(version.Version).To(Equal("1.2.3"))
 	})
 
 })
@@ -84,27 +105,27 @@ var _ = Describe("machine image version test", func() {
 
 	BeforeEach(func() {
 		rawVersions = []gardencorev1beta1.MachineImageVersion{
-			gardencorev1beta1.MachineImageVersion{
+			{
 				ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 					Version: "1.3.4",
 				},
 			},
-			gardencorev1beta1.MachineImageVersion{
+			{
 				ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 					Version: "3.2.4",
 				},
 			},
-			gardencorev1beta1.MachineImageVersion{
+			{
 				ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 					Version: "2.3.4",
 				},
 			},
-			gardencorev1beta1.MachineImageVersion{
+			{
 				ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 					Version: "3.2.3",
 				},
 			},
-			gardencorev1beta1.MachineImageVersion{
+			{
 				ExpirableVersion: gardencorev1beta1.ExpirableVersion{
 					Version: "3.2.4-pre-release",
 				},
