@@ -21,7 +21,7 @@ func SetupWorker(cloudprofile gardencorev1beta1.CloudProfile, workers []gardenco
 			if worker.Machine.Image.Version == nil {
 				*worker.Machine.Image.Version = common.PatternLatest
 			}
-			version, err := util.GetMachineImageVersion(cloudprofile, *worker.Machine.Image.Version, worker.Machine.Image.Name, *worker.Machine.Architecture)
+			version, err := util.GetMachineImageVersion(cloudprofile, worker)
 			if err != nil {
 				return nil, err
 			}
