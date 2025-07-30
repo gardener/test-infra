@@ -7,6 +7,8 @@ package template
 import (
 	"fmt"
 
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -116,6 +118,28 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 		r.log.Info("unable to get previous versions", "error", err.Error())
 	}
 
+	var (
+		hasInPlaceWorker                                  bool
+		currentMachineImage                               gardencorev1beta1.ShootMachineImage
+		prevVersionThatCanBeInPlaceUpdatedToCurrent, arch string
+	)
+
+	for _, worker := range shoot.Workers {
+		if v1beta1helper.IsUpdateStrategyInPlace(worker.UpdateStrategy) {
+			hasInPlaceWorker = true
+			arch = *worker.Machine.Architecture
+			currentMachineImage = *worker.Machine.Image
+			break
+		}
+	}
+
+	if hasInPlaceWorker {
+		prevVersionThatCanBeInPlaceUpdatedToCurrent, err = util.GetLatestPreviousVersionForInPlaceUpdate(shoot.Cloudprofile, currentMachineImage, arch)
+		if err != nil {
+			r.log.Info("unable to get previous version", "error", err.Error())
+		}
+	}
+
 	values := map[string]interface{}{
 		"shoot": map[string]interface{}{
 			"name":                         shoot.Name,
@@ -148,6 +172,12 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 	}
 	if shoot.AdditionalAnnotations != nil {
 		values["shoot"].(map[string]interface{})["shootAnnotations"] = util.MarshalMap(shoot.AdditionalAnnotations)
+	}
+	if hasInPlaceWorker {
+		values["shoot"].(map[string]any)["machineImagePrevVersion"] = prevVersionThatCanBeInPlaceUpdatedToCurrent
+		values["shoot"].(map[string]any)["machine"] = map[string]any{
+			"imageversion": *currentMachineImage.Version,
+		}
 	}
 	return utils.MergeMaps(defaultValues, values), nil
 }

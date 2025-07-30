@@ -10,6 +10,7 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/hashicorp/go-multierror"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -56,6 +57,10 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 		for j, worker := range pool.WorkerPools {
 			if worker.Machine.Architecture != nil && !slices.Contains(v1beta1constants.ValidArchitectures, *worker.Machine.Architecture) {
 				allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].machine.architecture: value is invalid", identifier, j))
+			}
+			if worker.UpdateStrategy != nil &&
+				!sets.New(gardencorev1beta1.AutoRollingUpdate, gardencorev1beta1.AutoInPlaceUpdate, gardencorev1beta1.ManualInPlaceUpdate).Has(*worker.UpdateStrategy) {
+				allErrs = multierror.Append(allErrs, fmt.Errorf("%s[%d].updateStrategy: value is invalid", identifier, j))
 			}
 		}
 	}

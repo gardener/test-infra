@@ -7,6 +7,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	versionutils "github.com/gardener/gardener/pkg/utils/version"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
@@ -156,4 +157,71 @@ func GetMachineImage(cloudprofile gardencorev1beta1.CloudProfile, imageName stri
 		}
 	}
 	return gardencorev1beta1.MachineImage{}, fmt.Errorf("no image %s defined in the cloudprofile %s", imageName, cloudprofile.GetName())
+}
+
+// GetLatestPreviousVersionForInPlaceUpdate determines the latest previous machine image version
+// that supports in-place updates to the current version. It filters the machine image versions
+// based on architecture, expiration, and in-place update compatibility, and ensures the version
+// satisfies the minimum version requirement for in-place updates.
+func GetLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.CloudProfile, currentMachineImage gardencorev1beta1.ShootMachineImage, arch string) (string, error) {
+	machineImage, err := GetMachineImage(cloudprofile, currentMachineImage.Name)
+	if err != nil {
+		return "", err
+	}
+	machineVersions := machineImage.Versions
+	if len(machineVersions) == 0 {
+		return "", fmt.Errorf("no machine image versions found in cloudprofile %s", cloudprofile.GetName())
+	}
+
+	machineVersions = FilterExpiredMachineImageVersions(
+		FilterInPlaceMachineImageVersions(
+			FilterArchSpecificMachineImage(machineVersions, arch),
+		),
+	)
+	if len(machineVersions) == 0 {
+		return "", errors.New("no machine image versions found")
+	}
+
+	var currentMachineImageVersion *gardencorev1beta1.MachineImageVersion
+	for _, version := range machineVersions {
+		if validVersion, _ := versionutils.CompareVersions(version.Version, "=", *currentMachineImage.Version); validVersion &&
+			version.InPlaceUpdates != nil && version.InPlaceUpdates.Supported {
+			currentMachineImageVersion = &version
+			break
+		}
+	}
+
+	if currentMachineImageVersion == nil || currentMachineImageVersion.InPlaceUpdates == nil || !currentMachineImageVersion.InPlaceUpdates.Supported {
+		return "", errors.New("specified machine image version is not found in the cloudprofile or does not support in-place updates")
+	}
+	if currentMachineImageVersion.InPlaceUpdates.MinVersionForUpdate == nil {
+		return "", errors.New("current machine image version does not have a minimum version for in-place updates")
+	}
+
+	parsedVersions := make([]*semver.Version, 0)
+	for _, machineVersion := range machineVersions {
+		v, err := semver.NewVersion(machineVersion.Version)
+		if err != nil {
+			return "", err
+		}
+		if v.Metadata() != "" {
+			continue
+		}
+
+		if machineVersion.InPlaceUpdates != nil && machineVersion.InPlaceUpdates.Supported {
+			if validVersion, _ := versionutils.CompareVersions(machineVersion.Version, ">=", *currentMachineImage.Version); validVersion {
+				continue
+			}
+			if validVersion, _ := versionutils.CompareVersions(machineVersion.Version, ">=", *currentMachineImageVersion.InPlaceUpdates.MinVersionForUpdate); validVersion {
+				parsedVersions = append(parsedVersions, v)
+			}
+		}
+	}
+	sort.Sort(sort.Reverse(semver.Collection(parsedVersions)))
+
+	if len(parsedVersions) == 0 {
+		return "", errors.New("no machine image versions found that can be in-place updated to the current version")
+	}
+
+	return parsedVersions[0].Original(), nil
 }
