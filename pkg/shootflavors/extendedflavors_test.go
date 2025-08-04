@@ -245,6 +245,33 @@ var _ = Describe("extended flavor test", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
+	It("should fail with invalid update strategy of worker pool", func() {
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				AdditionalAnnotations: map[string]string{"a": "b"},
+				AdditionalLocations:   []common.AdditionalLocation{{Type: "git", Repo: "https:// github.com/gardener/gardener", Revision: "master"}},
+				Provider:              common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Versions: &[]gardencorev1beta1.ExpirableVersion{
+						{
+							Version: "1.15",
+						},
+					},
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1", Machine: gardencorev1beta1.Machine{Architecture: ptr.To("arm64")}, UpdateStrategy: ptr.To[gardencorev1beta1.MachineUpdateStrategy]("foo")}},
+					},
+				},
+			},
+		}}
+
+		_, err := NewExtended(c, rawFlavors, "test-pref", false)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("Flavors.0[0].updateStrategy: value is invalid"))
+	})
+
 	It("should select the correct 3 versions", func() {
 		versionPattern := ">=1.14 <= 1.15"
 		rawFlavors := []*common.ExtendedShootFlavor{{
