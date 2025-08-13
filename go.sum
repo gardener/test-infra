@@ -1068,8 +1068,8 @@ github.com/gardener/etcd-druid/api v0.31.0 h1:iH800fQOTeTAwQzaUQ8jxKFlSI8shZtpNf
 github.com/gardener/etcd-druid/api v0.31.0/go.mod h1:usOvhSOpqlrlnr/DTugq8VDoZRCU2YmwyDfiy6hRVO8=
 github.com/gardener/gardener v1.125.0 h1:15IscxGunlpcLX8j8Yl0vFqL1vso2X3ComwckgxcdbI=
 github.com/gardener/gardener v1.125.0/go.mod h1:ZbpUSrtIABiPqjiT6S/S0zA4mkCNaeMX/spOHaO5inU=
-github.com/gardener/gardener-extension-provider-aws v1.62.3 h1:Q5AgnQwfqdiYS9jifI529OO69+FvcTXFoNjQ2Q2PzpE=
-github.com/gardener/gardener-extension-provider-aws v1.62.3/go.mod h1:GJK5pOps1Wm+tBpRsMv04VV3qq7eBKWdO+eU4DLqp7c=
+github.com/gardener/gardener-extension-provider-aws v1.63.0 h1:4v/yjE87Tc/kq0T47Y24//qrcRSpf9pS3EuaP5ihEKg=
+github.com/gardener/gardener-extension-provider-aws v1.63.0/go.mod h1:wzGSEbyqpHVWqlfNUSSbl/7x4vinsLI44Xy/VRyAzfw=
 github.com/gardener/machine-controller-manager v0.59.2 h1:CSDKoNFzn8MdG+gJDp7ntsiuc7c57u82YYHLEbVdyOA=
 github.com/gardener/machine-controller-manager v0.59.2/go.mod h1:TCU/KoudCMt2eV0Jnrq2D1TwgsrBCuhIVgV3j1el6Og=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
