@@ -3,6 +3,9 @@ test-infra:
     traits:
       component_descriptor:
         ocm_repository: europe-docker.pkg.dev/gardener-project/snapshots
+        ocm_repository_mappings:
+        - repository: europe-docker.pkg.dev/gardener-project/releases
+          prefix: ''
       scheduling:
         suppress_parallel_execution: true
       version:
@@ -70,9 +73,6 @@ test-infra:
           preprocess: 'finalize'
         component_descriptor:
           ocm_repository: europe-docker.pkg.dev/gardener-project/releases
-          ocm_repository_mappings:
-          - repository: europe-docker.pkg.dev/gardener-project/releases
-            prefix: ''
           component_labels:
           - name: 'cloud.gardener.cnudie/responsibles'
             value:
