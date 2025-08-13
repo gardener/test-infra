@@ -177,6 +177,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 		values["shoot"].(map[string]any)["machineImagePrevVersion"] = prevVersionThatCanBeInPlaceUpdatedToCurrent
 		values["shoot"].(map[string]any)["machine"] = map[string]any{
 			"imageversion": *currentMachineImage.Version,
+			"image":        currentMachineImage.Name,
 		}
 	}
 	return utils.MergeMaps(defaultValues, values), nil
