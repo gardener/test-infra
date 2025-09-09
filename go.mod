@@ -1,6 +1,6 @@
 module github.com/gardener/test-infra
 
-go 1.25.0
+go 1.25.1
 
 require (
 	cloud.google.com/go/storage v1.56.1
@@ -43,7 +43,7 @@ require (
 	k8s.io/client-go v0.33.4
 	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
-	ocm.software/ocm v0.29.0
+	ocm.software/ocm v0.29.1
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/yaml v1.6.0
 )
