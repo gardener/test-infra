@@ -7,22 +7,32 @@ package output
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
-// RenderTestflowTable creates a human readable table of a testflow.
+// RenderTestflowTable creates a human-readable table of a testflow.
 func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
-	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Step", "Definition", "Dependencies"})
-	table.SetAutoWrapText(true)
-	table.SetRowSeparator("-")
-	table.SetRowLine(true)
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader([]string{"Step", "Definition", "Dependencies"}),
+		tablewriter.WithHeaderAutoWrap(tw.WrapNormal),
+		tablewriter.WithRowAutoWrap(tw.WrapNormal),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbolCustom("custom").WithRow("-"),
+			Settings: tw.Settings{
+				Separators: tw.Separators{
+					BetweenRows: tw.On,
+				},
+			},
+		}),
+	)
 
 	for _, s := range flow {
 		definition := ""
@@ -33,21 +43,29 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 			definition = fmt.Sprintf("Label: %s", s.Definition.Label)
 		}
 
-		table.Append([]string{s.Name, definition, strings.Join(s.DependsOn, "\n")})
+		if err := table.Append([]string{s.Name, definition, strings.Join(s.DependsOn, "\n")}); err != nil {
+			fmt.Fprintf(os.Stderr, "Could not append row to testflow table: %v", err)
+		}
 	}
-	table.Render()
+	if err := table.Render(); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not render testflow table: %v", err)
+	}
 }
 
-// RenderStatusTable creates a human readable table for testrun status steps.
-// The steps are ordered by starttime and step name.
+// RenderStatusTable creates a human-readable table for testrun status steps.
+// The steps are ordered by start time and step name.
 func RenderStatusTable(writer io.Writer, steps []*tmv1beta1.StepStatus) {
 	orderSteps(steps)
 
-	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Name", "Step", "Phase", "Duration"})
-
-	table.AppendBulk(GetStatusTableRows(steps))
-	table.Render()
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader([]string{"Name", "Step", "Phase", "Duration"}),
+	)
+	if err := table.Bulk(GetStatusTableRows(steps)); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not append rows to status table: %v", err)
+	}
+	if err := table.Render(); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not render status table: %v", err)
+	}
 }
 
 func GetStatusTableRows(steps []*tmv1beta1.StepStatus) [][]string {
@@ -68,7 +86,7 @@ func orderSteps(steps []*tmv1beta1.StepStatus) {
 type StepStatusList []*tmv1beta1.StepStatus
 
 func (s StepStatusList) Less(a, b int) bool {
-	// order by step name if startdate is not set
+	// order by step name if start date is not set
 	if s[a].StartTime.IsZero() && s[b].StartTime.IsZero() {
 		return s[a].Position.Step < s[b].Position.Step
 	}

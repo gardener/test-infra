@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/pkg/errors"
 
 	"github.com/gardener/test-infra/pkg/util"
@@ -238,10 +239,6 @@ func createAlertMessage(failedTests map[string]TestDetails, alert *Alert) string
 	}
 	sort.Strings(sortedKeys)
 
-	writer := &strings.Builder{}
-	table := tablewriter.NewWriter(writer)
-	header := []string{"Test", "Landscape", "Provider", "K8s Ver", "OS", "Success", "Alert Reason", "Last failure"}
-
 	content := make([][]string, 0)
 	row := 0
 	for _, mapKey := range sortedKeys {
@@ -265,10 +262,18 @@ func createAlertMessage(failedTests map[string]TestDetails, alert *Alert) string
 		row++
 	}
 
-	table.SetHeader(header)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.AppendBulk(content)
-	table.Render()
+	writer := &strings.Builder{}
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader([]string{"Test", "Landscape", "Provider", "K8s Ver", "OS", "Success", "Alert Reason", "Last failure"}),
+		tablewriter.WithHeaderAlignment(tw.AlignCenter),
+		tablewriter.WithRowAlignment(tw.AlignCenter),
+	)
+	if err := table.Bulk(content); err != nil {
+		return fmt.Errorf("unable to add table content: %w", err).Error()
+	}
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("unable to render table: %w", err).Error()
+	}
 	return writer.String()
 }
 
@@ -310,10 +315,6 @@ func createRecoverMessage(recoveredTests map[string]TestDetails) string {
 	}
 	sort.Strings(sortedKeys)
 
-	writer := &strings.Builder{}
-	table := tablewriter.NewWriter(writer)
-	header := []string{"Test", "Landscape", "Provider", "K8s Ver", "OS"}
-
 	content := make([][]string, 0)
 	row := 0
 	for _, mapKey := range sortedKeys {
@@ -328,10 +329,19 @@ func createRecoverMessage(recoveredTests map[string]TestDetails) string {
 		row++
 	}
 
-	table.SetHeader(header)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.AppendBulk(content)
-	table.Render()
+	writer := &strings.Builder{}
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader([]string{"Test", "Landscape", "Provider", "K8s Ver", "OS"}),
+		tablewriter.WithHeaderAlignment(tw.AlignCenter),
+		tablewriter.WithRowAlignment(tw.AlignCenter),
+	)
+
+	if err := table.Bulk(content); err != nil {
+		return fmt.Errorf("unable to add table content: %w", err).Error()
+	}
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("unable to render table: %w", err).Error()
+	}
 	return writer.String()
 }
 

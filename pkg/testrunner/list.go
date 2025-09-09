@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
@@ -135,9 +136,11 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 // RenderStatusTableForTestruns renders a status table for multiple testruns.
 func (rl RunList) RenderTable() string {
 	writer := &strings.Builder{}
-	table := tablewriter.NewWriter(writer)
-	table.SetAutoWrapText(false)
-	table.SetHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"})
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"}),
+		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+	)
 
 	dimensions := make(map[string][][]string)
 	for _, run := range rl {
@@ -166,11 +169,17 @@ func (rl RunList) RenderTable() string {
 	}
 
 	for dim, value := range dimensions {
-		table.Append([]string{dim})
-		table.AppendBulk(value)
+		if err := table.Append([]string{dim}); err != nil {
+			return fmt.Errorf("unable to add table content: %w", err).Error()
+		}
+		if err := table.Bulk(value); err != nil {
+			return fmt.Errorf("unable to add table content: %w", err).Error()
+		}
 	}
 
-	table.Render()
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("unable to render table: %w", err).Error()
+	}
 	return writer.String()
 }
 
