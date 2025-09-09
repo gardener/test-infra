@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/pkg/errors"
 
@@ -267,6 +268,11 @@ func createAlertMessage(failedTests map[string]TestDetails, alert *Alert) string
 		tablewriter.WithHeader([]string{"Test", "Landscape", "Provider", "K8s Ver", "OS", "Success", "Alert Reason", "Last failure"}),
 		tablewriter.WithHeaderAlignment(tw.AlignCenter),
 		tablewriter.WithRowAlignment(tw.AlignCenter),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
+		}),
 	)
 	if err := table.Bulk(content); err != nil {
 		return fmt.Errorf("unable to add table content: %w", err).Error()
@@ -334,6 +340,11 @@ func createRecoverMessage(recoveredTests map[string]TestDetails) string {
 		tablewriter.WithHeader([]string{"Test", "Landscape", "Provider", "K8s Ver", "OS"}),
 		tablewriter.WithHeaderAlignment(tw.AlignCenter),
 		tablewriter.WithRowAlignment(tw.AlignCenter),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
+		}),
 	)
 
 	if err := table.Bulk(content); err != nil {
