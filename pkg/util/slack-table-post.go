@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 // SymbolOffset is the offset that the symbol is prefixed for better readability
@@ -56,8 +57,6 @@ type results struct {
 
 // RenderTableForSlack renders a string table of given table items
 func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
-	writer := &strings.Builder{}
-	table := tablewriter.NewWriter(writer)
 	headerKeys := make(map[string]int) // maps the header values to their index
 	header := []string{""}
 
@@ -85,12 +84,20 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 		return "", nil
 	}
 
-	table.SetAutoWrapText(false)
-	table.SetHeader(header)
-	table.AppendBulk(res.GetContent())
-	table.SetHeaderAlignment(tablewriter.ALIGN_CENTER)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.Render()
+	writer := &strings.Builder{}
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader(header),
+		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+		tablewriter.WithHeaderAlignment(tw.AlignCenter),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+	)
+	if err := table.Bulk(res.GetContent()); err != nil {
+		return "", fmt.Errorf("unable to add table content: %w", err)
+	}
+	if err := table.Render(); err != nil {
+		return "", fmt.Errorf("unable to render table: %w", err)
+	}
 	return writer.String(), nil
 }
 
