@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -24,8 +25,10 @@ func RenderTestflowTable(writer io.Writer, flow tmv1beta1.TestFlow) {
 		tablewriter.WithHeader([]string{"Step", "Definition", "Dependencies"}),
 		tablewriter.WithHeaderAutoWrap(tw.WrapNormal),
 		tablewriter.WithRowAutoWrap(tw.WrapNormal),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
-			Symbols: tw.NewSymbolCustom("custom").WithRow("-"),
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
 			Settings: tw.Settings{
 				Separators: tw.Separators{
 					BetweenRows: tw.On,
@@ -59,6 +62,11 @@ func RenderStatusTable(writer io.Writer, steps []*tmv1beta1.StepStatus) {
 
 	table := tablewriter.NewTable(writer,
 		tablewriter.WithHeader([]string{"Name", "Step", "Phase", "Duration"}),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
+		}),
 	)
 	if err := table.Bulk(GetStatusTableRows(steps)); err != nil {
 		fmt.Fprintf(os.Stderr, "Could not append rows to status table: %v", err)

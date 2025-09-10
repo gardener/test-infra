@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 )
 
@@ -91,6 +92,11 @@ func RenderTableForSlack(log logr.Logger, items TableItems) (string, error) {
 		tablewriter.WithHeaderAlignment(tw.AlignCenter),
 		tablewriter.WithRowAutoWrap(tw.WrapNone),
 		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
+		}),
 	)
 	if err := table.Bulk(res.GetContent()); err != nil {
 		return "", fmt.Errorf("unable to add table content: %w", err)
