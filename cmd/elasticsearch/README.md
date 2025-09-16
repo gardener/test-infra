@@ -9,6 +9,7 @@ Usage:
 Available Commands:
   help        Help about any command
   precompute  Reads existing teststep metadata, re-computes the current precomputed values and optionally updates the respective elasticsearch document.
+  ingest      Verifies that ingestion of testrun metadata into elasticsearch/opensearch works.
 
 Flags:
       --cli                  logger runs as cli logger. enables cli logging
