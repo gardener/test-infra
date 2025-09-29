@@ -63,6 +63,8 @@ func NewRunTemplateCommand() (*cobra.Command, error) {
 func (o *options) run(ctx context.Context) error {
 	logger.Log.Info("Start testmachinery testrunner")
 
+	logger.SetupGitHubStepSummary(o.postToGitHubStepSummary)
+
 	runs, err := testrunnerTemplate.RenderTestruns(ctx, logger.Log.WithName("Render"), &o.shootParameters, o.shootFlavors)
 	if err != nil {
 		return errors.Wrap(err, "unable to render testrun")

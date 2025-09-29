@@ -26,6 +26,8 @@ type options struct {
 	testrunFlakeAttempts int
 
 	timeout time.Duration
+
+	postToGitHubStepSummary string
 }
 
 // NewOptions creates a new options struct.
@@ -70,6 +72,8 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
+
+	fs.StringVar(&o.postToGitHubStepSummary, "post-to-github-step-summary", "", "Path to the GitHub Actions Step Summary file. If set, the testrun summary will be appended to this file.")
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery

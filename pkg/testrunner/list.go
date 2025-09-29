@@ -19,6 +19,7 @@ import (
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testmachinery/metadata"
 	"github.com/gardener/test-infra/pkg/util"
 )
@@ -57,8 +58,10 @@ func (rl RunList) Errors() error {
 
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
-	var executiongroupID string
-	var tmDashboardURL string
+	var (
+		executiongroupID string
+		tmDashboardURL   string
+	)
 	if !config.NoExecutionGroup {
 		executiongroupID = uuid.New().String()
 		// Print dashboard url if possible and if a execution group is defined
@@ -69,6 +72,9 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		} else {
 			tmDashboardURL = GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)
 			log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
+			if err := logger.PostToGitHubStepSummary(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), true); err != nil {
+				log.Error(err, "unable to post TestMachinery Dashboard URL to GitHub Step Summary")
+			}
 		}
 	}
 
@@ -131,11 +137,17 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 	executor.Run()
 
 	log.Info("All testruns completed.")
+
+	if tmDashboardURL != "" && executiongroupID != "" {
+		if err := logger.PostToGitHubStepSummary(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), false); err != nil {
+			log.Error(err, "unable to post TestMachinery Dashboard URL to GitHub Step Summary")
+		}
+	}
+
 	return nil
 }
 
-// RenderStatusTableForTestruns renders a status table for multiple testruns.
-func (rl RunList) RenderTable() string {
+func (rl RunList) RenderTableWithSymbols(style tw.BorderStyle) string {
 	writer := &strings.Builder{}
 	table := tablewriter.NewTable(writer,
 		tablewriter.WithHeader([]string{"Dimension", "Testrun", "Test Name", "Step", "Phase", "Duration"}),
@@ -143,7 +155,7 @@ func (rl RunList) RenderTable() string {
 		tablewriter.WithRowAutoWrap(tw.WrapNone),
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
-			Symbols: tw.NewSymbols(tw.StyleASCII),
+			Symbols: tw.NewSymbols(style),
 			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
 		}),
 	)
@@ -187,6 +199,11 @@ func (rl RunList) RenderTable() string {
 		return fmt.Errorf("unable to render table: %w", err).Error()
 	}
 	return writer.String()
+}
+
+// RenderStatusTableForTestruns renders a status table for multiple testruns.
+func (rl RunList) RenderTable() string {
+	return rl.RenderTableWithSymbols(tw.StyleASCII)
 }
 
 func triggerRunEvent(notifyChannels []chan *Run, run *Run) {
