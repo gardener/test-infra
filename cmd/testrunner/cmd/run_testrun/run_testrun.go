@@ -54,6 +54,8 @@ func NewRunTestrunCommand() (*cobra.Command, error) {
 func (o *options) run(ctx context.Context) error {
 	logger.Log.Info("start testmachinery testrunner")
 
+	logger.SetupGitHubStepSummary(o.postToGitHubStepSummary)
+
 	watcher, err := watch.NewFromFile(logger.Log, o.tmKubeconfigPath, &o.watchOptions)
 	if err != nil {
 		logger.Log.Error(err, "unable to start testrun watch controller")

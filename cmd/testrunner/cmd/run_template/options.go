@@ -43,6 +43,7 @@ type options struct {
 	filterPatchVersions      bool
 	failOnError              bool
 	timeout                  int64
+	postToGitHubStepSummary  string
 }
 
 // NewOptions creates a new options struct.
@@ -174,6 +175,8 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 
 	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
+
+	fs.StringVar(&o.postToGitHubStepSummary, "post-to-github-step-summary", "", "Path to the GitHub Actions Step Summary file. If set, the testrun summary will be appended to this file.")
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery

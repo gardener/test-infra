@@ -11,11 +11,13 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/testrunner"
 	"github.com/gardener/test-infra/pkg/testrunner/componentdescriptor"
 	"github.com/gardener/test-infra/pkg/util"
@@ -54,6 +56,9 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 		log.Error(err, "error while posting notification on slack")
 	}
 	fmt.Println(runs.RenderTable())
+	if err := logger.PostToGitHubStepSummary(runs.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
+		log.Error(err, "unable to post summary to github step summary")
+	}
 
 	return testrunsFailed, util.ReturnMultiError(result)
 }

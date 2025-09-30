@@ -11,10 +11,12 @@ import (
 
 	"github.com/gardener/gardener/pkg/utils/retry"
 	"github.com/go-logr/logr"
+	"github.com/olekukonko/tablewriter/tw"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/common"
 	trerrors "github.com/gardener/test-infra/pkg/common/error"
+	"github.com/gardener/test-infra/pkg/logger"
 	"github.com/gardener/test-infra/pkg/util"
 )
 
@@ -72,6 +74,9 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 
 	if TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client()); err == nil {
 		log.Info(fmt.Sprintf("TestMachinery Dashboard for Testrun %s: %s", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)))
+		if err := logger.PostToGitHubStepSummary(fmt.Sprintf("[TestMachinery Dashboard for Testrun %s](%s)", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)), true); err != nil {
+			log.Error(err, "unable to post TestMachinery Dashboard URL to GitHub Step Summary")
+		}
 	}
 	if argoUrl, err := GetArgoURL(ctx, config.Watch.Client(), r.Testrun); err == nil {
 		log.WithValues("testrun", r.Testrun.GetName()).Info(fmt.Sprintf("Argo workflow: %s", argoUrl))
@@ -94,4 +99,7 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	}
 
 	fmt.Println(RunList{r}.RenderTable())
+	if err := logger.PostToGitHubStepSummary(RunList{r}.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
+		log.Error(err, "unable to post testrun result to GitHub Step Summary")
+	}
 }
