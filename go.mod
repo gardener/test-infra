@@ -43,8 +43,8 @@ require (
 	k8s.io/client-go v0.34.1
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
-	ocm.software/ocm v0.29.1
-	sigs.k8s.io/controller-runtime v0.21.0
+	ocm.software/ocm v0.30.0
+	sigs.k8s.io/controller-runtime v0.22.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
