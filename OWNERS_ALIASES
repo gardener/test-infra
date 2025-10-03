@@ -1,0 +1,9 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+aliases:
+  test-infra-reviewers:
+  - dguendisch
+  - hendrikKahl
+  test-infra-approvers:
+  - dguendisch
+  - hendrikKahl
