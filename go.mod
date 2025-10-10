@@ -9,7 +9,7 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.6.11
 	github.com/bradleyfalzon/ghinstallation/v2 v2.16.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/gardener/gardener v1.128.3
+	github.com/gardener/gardener v1.129.1
 	github.com/gardener/gardener-extension-provider-aws v1.64.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.3
@@ -369,7 +369,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.37.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.38.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.38.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
