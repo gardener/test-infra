@@ -1,6 +1,6 @@
 module github.com/gardener/test-infra
 
-go 1.25.1
+go 1.25.3
 
 require (
 	cloud.google.com/go/storage v1.57.0
