@@ -34,7 +34,7 @@ spec:
     value: "false"
   - type: env
     name: HYDROPHONE_VERSION
-    value: "744488b9591753043014aa92c6452ad5b3883d85"
+    value: "787b0cfa5cfe503d247f88595ff95b8f50eba1b7"
 
   command: [bash, -c]
   args:
