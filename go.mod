@@ -9,7 +9,7 @@ require (
 	github.com/argoproj/argo-workflows/v3 v3.6.12
 	github.com/bradleyfalzon/ghinstallation/v2 v2.17.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/gardener/gardener v1.129.1
+	github.com/gardener/gardener v1.129.2
 	github.com/gardener/gardener-extension-provider-aws v1.64.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.3
