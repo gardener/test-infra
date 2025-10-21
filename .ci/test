@@ -19,17 +19,20 @@ cd "${SOURCE_PATH}"
 K8S_VERSION=1.33.4
 ETCD_VER=v3.4.34
 
-mkdir -p /usr/local/kubebuilder/bin
-curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl
-chmod +x kubectl
-mv kubectl /usr/local/kubebuilder/bin/kubectl
+if ! which kubectl &>/dev/null; then
+  echo "Error: kubectl must be available from PATH"
+  exit 1
+fi
+
+mkdir -p /home/runner/.local/bin
+export KUBEBUILDER_ASSETS=/home/runner/.local/bin
 
 curl -LO https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kube-apiserver
 chmod +x kube-apiserver
-mv kube-apiserver /usr/local/kubebuilder/bin/kube-apiserver
+mv kube-apiserver /home/runner/.local/bin/kube-apiserver
 
 curl -L https://storage.googleapis.com/etcd/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz -o /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
 tar xzvf /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz  etcd-${ETCD_VER}-linux-amd64/etcd
-mv etcd-${ETCD_VER}-linux-amd64/etcd /usr/local/kubebuilder/bin/etcd
+mv etcd-${ETCD_VER}-linux-amd64/etcd /home/runner/.local/bin/etcd
 
 go test ./cmd/... ./pkg/...

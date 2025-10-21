@@ -1,0 +1,130 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        required: true
+        type: string
+        default: snapshot
+        description: |
+          the mode to use. either `snapshot` or `release`. Will affect effective version, as well
+          as target-oci-registry.
+
+jobs:
+  prepare:
+    uses: gardener/cc-utils/.github/workflows/prepare.yaml@master
+    with:
+      mode: ${{ inputs.mode }}
+      version-commit-callback-action-path:
+      post-process: callback
+    permissions:
+      contents: read
+
+  oci-images:
+    name: Build OCI-Images
+    needs:
+      - prepare
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit
+    uses: gardener/cc-utils/.github/workflows/oci-ocm.yaml@master
+    strategy:
+      matrix:
+        args:
+          - name: tm-base-image
+            target: base-step
+            oci-repository: testmachinery/base-step
+          - name: tm-controller
+            target: tm-controller
+            oci-repository: testmachinery/testmachinery-controller
+          - name: tm-run
+            target: tm-run
+            oci-repository: testmachinery/testmachinery-run
+          - name: tm-bot
+            target: tm-bot
+            oci-repository: testmachinery/bot
+          - name: tm-prepare-image
+            target: tm-prepare
+            oci-repository: testmachinery/prepare-step
+    with:
+      name: ${{ matrix.args.name }}
+      version: ${{ needs.prepare.outputs.version }}
+      target: ${{ matrix.args.target }}
+      oci-registry: ${{ needs.prepare.outputs.oci-registry }}
+      oci-repository: ${{ matrix.args.oci-repository }}
+      oci-platforms: linux/amd64
+      extra-tags: latest
+
+  helmcharts:
+    name: Build Helmcharts
+    needs:
+      - prepare
+      - oci-images
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: gardener/cc-utils/.github/workflows/helmchart-ocm.yaml@master
+    strategy:
+      matrix:
+        args:
+          - name: testmachinery
+            dir: charts/testmachinery
+            oci-repository: testmachinery/charts
+            ocm-mappings:
+            - ref: ocm-resource:argo-workflow-controller.repository
+              attribute: argo.images.argoWorkflowController.repository
+            - ref: ocm-resource:argo-workflow-controller.tag
+              attribute: argo.images.argoWorkflowController.tag
+            - ref: ocm-resource:argo-executor.repository
+              attribute: argo.images.argoExecutor.repository
+            - ref: ocm-resource:argo-executor.tag
+              attribute: argo.images.argoExecutor.tag
+            - ref: ocm-resource:argo-server.repository
+              attribute: argo.images.argoServer.repository
+            - ref: ocm-resource:argo-server.tag
+              attribute: argo.images.argoServer.tag
+          - name: testmachinery-bot
+            dir: charts/tm-bot
+            oci-repository: testmachinery/charts
+            ocm-mappings: []
+
+    with:
+      name: ${{ matrix.args.name }}
+      dir: ${{ matrix.args.dir }}
+      oci-registry: ${{ needs.prepare.outputs.oci-registry }}
+      oci-repository: ${{ matrix.args.oci-repository }}
+      ocm-mappings: ${{ toJSON(matrix.args.ocm-mappings) }}
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        args:
+          - run: .ci/test
+          - run: .ci/test-definitions
+    steps:
+      - uses: azure/setup-kubectl@v4
+      - uses: gardener/cc-utils/.github/actions/trusted-checkout@master
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: run-test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ${{ matrix.args.run }}
+
+  sast-lint:
+    uses: gardener/cc-utils/.github/workflows/sastlint-ocm.yaml@master
+    permissions:
+      contents: read
+    with:
+      linter: gosec
+      run: .ci/check
+      go-version-file: go.mod
