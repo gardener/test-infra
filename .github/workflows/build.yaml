@@ -87,6 +87,19 @@ jobs:
               attribute: argo.images.argoServer.repository
             - ref: ocm-resource:argo-server.tag
               attribute: argo.images.argoServer.tag
+            - ref: ocm-resource:tm-controller.repository
+              attribute: tm.images.controller.repository
+            - ref: ocm-resource:tm-controller.tag
+              attribute: tm.images.controller.tag
+            - ref: ocm-resource:tm-base-image.repository
+              attribute: tm.images.base.repository
+            - ref: ocm-resource:tm-base-image.tag
+              attribute: tm.images.base.tag
+            - ref: ocm-resource:tm-prepare-image.repository
+              attribute: tm.images.prepare.repository
+            - ref: ocm-resource:tm-prepare-image.tag
+              attribute: tm.images.prepare.tag
+
           - name: testmachinery-bot
             dir: charts/tm-bot
             oci-repository: testmachinery/charts
