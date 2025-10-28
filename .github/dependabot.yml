@@ -20,9 +20,10 @@ updates:
         patterns:
         - "*"
         exclude-patterns:
-        - "github.com/gardener/gardener*"
+        - "github.com/gardener/gardener/gardener*"
         - "github.com/argoproj/argo-workflows*"
         - "ocm.software/ocm*"
+        - "sigs.k8s.io/controller-runtime*"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
