@@ -56,7 +56,7 @@ func (c *Collector) Collect(ctx context.Context, log logr.Logger, tmClient clien
 		log.Error(err, "error while posting notification on slack")
 	}
 	fmt.Println(runs.RenderTable())
-	if err := logger.PostToGitHubStepSummary(runs.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
+	if err := logger.PostToSummaryFile(runs.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
 		log.Error(err, "unable to post summary to github step summary")
 	}
 

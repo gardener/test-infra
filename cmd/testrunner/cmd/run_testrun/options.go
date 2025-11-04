@@ -24,10 +24,8 @@ type options struct {
 	tmKubeconfigPath     string
 	testrunPath          string
 	testrunFlakeAttempts int
-
-	timeout time.Duration
-
-	postToGitHubStepSummary string
+	timeout              time.Duration
+	summaryFilePath      string
 }
 
 // NewOptions creates a new options struct.
@@ -62,7 +60,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 
 	fs.StringVar(&o.tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	fs.StringVar(&o.testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
-	fs.StringVarP(&o.testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
+	fs.StringVarP(&o.testrunnerConfig.Namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 	fs.DurationVar(&o.timeout, "timeout", 1*time.Hour, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	fs.IntVar(&o.testrunFlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 	fs.BoolVar(&o.testrunnerConfig.NoExecutionGroup, "no-execution-group", false, "do not inject a execution group id into testruns")
@@ -73,7 +71,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
 
-	fs.StringVar(&o.postToGitHubStepSummary, "post-to-github-step-summary", "", "Path to the GitHub Actions Step Summary file. If set, the testrun summary will be appended to this file.")
+	fs.StringVar(&o.summaryFilePath, "summary-file-path", "", "Path to a summary file. If set, the testrun summary will be appended to this file.")
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery

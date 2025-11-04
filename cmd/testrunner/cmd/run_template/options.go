@@ -43,7 +43,7 @@ type options struct {
 	filterPatchVersions      bool
 	failOnError              bool
 	timeout                  int64
-	postToGitHubStepSummary  string
+	summaryFilePath          string
 }
 
 // NewOptions creates a new options struct.
@@ -131,7 +131,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 
 	fs.StringVar(&o.tmKubeconfigPath, "tm-kubeconfig-path", "", "Path to the testmachinery cluster kubeconfig")
 	fs.StringVar(&o.testrunNamePrefix, "testrun-prefix", "default-", "Testrun name prefix which is used to generate a unique testrun name.")
-	fs.StringVarP(&o.testrunnerConfig.Namespace, "namespace", "n", "default", "Namesapce where the testrun should be deployed.")
+	fs.StringVarP(&o.testrunnerConfig.Namespace, "namespace", "n", "default", "Namespace where the testrun should be deployed.")
 	fs.Int64Var(&o.timeout, "timeout", 3600, "Timout in seconds of the testrunner to wait for the complete testrun to finish.")
 	fs.IntVar(&o.testrunnerConfig.FlakeAttempts, "testrun-flake-attempts", 0, "Max number of testruns until testrun is successful")
 	fs.BoolVar(&o.failOnError, "fail-on-error", true, "Testrunners exits with 1 if one testruns failed.")
@@ -176,7 +176,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
 
-	fs.StringVar(&o.postToGitHubStepSummary, "post-to-github-step-summary", "", "Path to the GitHub Actions Step Summary file. If set, the testrun summary will be appended to this file.")
+	fs.StringVar(&o.summaryFilePath, "summary-file-path", "", "Path to a summary file. If set, the testrun summary will be appended to this file.")
 
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery

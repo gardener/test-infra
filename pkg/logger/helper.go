@@ -17,24 +17,24 @@ func Logf(logFunc func(msg string, keysAndValues ...interface{}), format string,
 }
 
 var (
-	ghaSummaryFileName   string
-	ghaSummaryFileExists bool
-	fileWriterMutex      sync.Mutex
-	setupOnce            sync.Once
+	summaryFileName   string
+	summaryFileExists bool
+	fileWriterMutex   sync.Mutex
+	setupOnce         sync.Once
 )
 
-func SetupGitHubStepSummary(file string) {
+func InitializeSummarySetup(file string) {
 	onceFunc := func() {
 		if file != "" {
-			ghaSummaryFileExists = true
-			ghaSummaryFileName = filepath.Clean(file)
+			summaryFileExists = true
+			summaryFileName = filepath.Clean(file)
 		}
 	}
 	setupOnce.Do(onceFunc)
 }
 
-func PostToGitHubStepSummary(message string, append bool) error {
-	if ghaSummaryFileExists {
+func PostToSummaryFile(message string, append bool) error {
+	if summaryFileExists {
 		fileWriterMutex.Lock()
 		defer fileWriterMutex.Unlock()
 
@@ -44,11 +44,11 @@ func PostToGitHubStepSummary(message string, append bool) error {
 		} else {
 			flags = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 		}
-		file, err := os.OpenFile(ghaSummaryFileName, flags, 0600) // #nosec G304 -- input is derived form a user's input
+		file, err := os.OpenFile(summaryFileName, flags, 0600) // #nosec G304 -- input is derived form a user's input
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				fmt.Printf("Could not close file %s: %v\n", ghaSummaryFileName, err)
+				fmt.Printf("Could not close file %s: %v\n", summaryFileName, err)
 			}
 		}(file)
 		if err != nil {
