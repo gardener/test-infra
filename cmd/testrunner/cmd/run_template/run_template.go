@@ -63,7 +63,7 @@ func NewRunTemplateCommand() (*cobra.Command, error) {
 func (o *options) run(ctx context.Context) error {
 	logger.Log.Info("Start testmachinery testrunner")
 
-	logger.SetupGitHubStepSummary(o.postToGitHubStepSummary)
+	logger.InitializeSummarySetup(o.summaryFilePath)
 
 	runs, err := testrunnerTemplate.RenderTestruns(ctx, logger.Log.WithName("Render"), &o.shootParameters, o.shootFlavors)
 	if err != nil {

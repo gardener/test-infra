@@ -74,8 +74,8 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 
 	if TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client()); err == nil {
 		log.Info(fmt.Sprintf("TestMachinery Dashboard for Testrun %s: %s", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)))
-		if err := logger.PostToGitHubStepSummary(fmt.Sprintf("[TestMachinery Dashboard for Testrun %s](%s)", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)), true); err != nil {
-			log.Error(err, "unable to post TestMachinery Dashboard URL to GitHub Step Summary")
+		if err := logger.PostToSummaryFile(fmt.Sprintf("[TestMachinery Dashboard for Testrun %s](%s)", r.Testrun.Name, GetTmDashboardURLFromHostForTestrun(TMDashboardHost, r.Testrun)), true); err != nil {
+			log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary file")
 		}
 	}
 	if argoUrl, err := GetArgoURL(ctx, config.Watch.Client(), r.Testrun); err == nil {
@@ -99,7 +99,7 @@ func (r *Run) Exec(log logr.Logger, config *Config, prefix string) {
 	}
 
 	fmt.Println(RunList{r}.RenderTable())
-	if err := logger.PostToGitHubStepSummary(RunList{r}.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
-		log.Error(err, "unable to post testrun result to GitHub Step Summary")
+	if err := logger.PostToSummaryFile(RunList{r}.RenderTableWithSymbols(tw.StyleMarkdown), true); err != nil {
+		log.Error(err, "unable to post testrun result to the Summary file")
 	}
 }
