@@ -99,11 +99,23 @@ jobs:
               attribute: tm.images.prepare.repository
             - ref: ocm-resource:tm-prepare-image.tag
               attribute: tm.images.prepare.tag
+            - ref: ocm-resource:valitail.repository
+              attribute: logging.valitail.image.repository
+            - ref: ocm-resource:valitail.tag
+              attribute: logging.valitail.image.tag
+            - ref: ocm-resource:vali.repository
+              attribute: logging.vali.image.repository
+            - ref: ocm-resource:vali.tag
+              attribute: logging.vali.image.tag
 
           - name: testmachinery-bot
             dir: charts/tm-bot
             oci-repository: testmachinery/charts
-            ocm-mappings: []
+            ocm-mappings:
+            - ref: ocm-resource:tm-bot.repository
+              attribute: bot.image
+            - ref: ocm-resource:tm-bot.tag
+              attribute: bot.tag
 
     with:
       name: ${{ matrix.args.name }}
