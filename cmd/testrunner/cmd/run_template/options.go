@@ -104,6 +104,12 @@ func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string
 
 // Validate validates the options
 func (o *options) Validate() error {
+	if o.testrunnerConfig.NoExecutionGroup {
+		if len(o.testrunnerConfig.ExecutionGroupID) != 0 {
+			return errors.New("'execution-group-id' cannot be set when 'no-execution-group' is true")
+		}
+	}
+
 	if len(o.tmKubeconfigPath) == 0 {
 		return errors.New("tm-kubeconfig-path is required")
 	}
@@ -139,7 +145,9 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.IntVar(&o.testrunnerConfig.BackoffBucket, "backoff-bucket", 0, "Number of parallel created testruns per backoff period")
 	fs.DurationVar(&o.testrunnerConfig.BackoffPeriod, "backoff-period", 0, "Time to wait between the creation of testrun buckets")
 	fs.DurationVar(o.watchOptions.PollInterval, "poll-interval", time.Minute, "poll interval of the underlaying watch")
+
 	fs.BoolVar(&o.testrunnerConfig.NoExecutionGroup, "no-execution-group", false, "do not inject a execution group id into testruns")
+	fs.StringVar(&o.testrunnerConfig.ExecutionGroupID, "execution-group-id", "", "ExecutionGroupID to be injected into every testrun")
 
 	fs.StringVar(&o.collectConfig.ConcourseOnErrorDir, "concourse-onError-dir", os.Getenv("ON_ERROR_DIR"), "On error dir which is used by Concourse.")
 

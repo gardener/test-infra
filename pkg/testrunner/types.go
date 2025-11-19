@@ -30,6 +30,9 @@ type Config struct {
 	// NoExecutionGroup configures if a execution group id should be injected into every testrun.
 	NoExecutionGroup bool
 
+	// ExecutionGroupID is injected into every testrun if explicitly given, else ExecutionGroupID gets generated on runtime
+	ExecutionGroupID string
+
 	ExecutorConfig
 }
 

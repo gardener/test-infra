@@ -56,6 +56,27 @@ func (rl RunList) Errors() error {
 	return util.ReturnMultiError(res)
 }
 
+func getExecutionGroupIDAndTmDashboardURL(log logr.Logger, config *Config) (string, string) {
+	var (
+		executiongroupID string
+		tmDashboardURL   string
+	)
+
+	if config.ExecutionGroupID != "" {
+		executiongroupID = config.ExecutionGroupID
+	} else {
+		executiongroupID = uuid.New().String()
+	}
+
+	TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
+	if err != nil {
+		log.V(3).Info("unable to get TestMachinery Dashboard Host URL", "error", err.Error())
+	} else {
+		tmDashboardURL = GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)
+	}
+	return executiongroupID, tmDashboardURL
+}
+
 // runChart deploys the testruns in parallel into the testmachinery and watches them for their completion
 func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string, notify ...chan *Run) error {
 	var (
@@ -63,18 +84,12 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		tmDashboardURL   string
 	)
 	if !config.NoExecutionGroup {
-		executiongroupID = uuid.New().String()
+		executiongroupID, tmDashboardURL = getExecutionGroupIDAndTmDashboardURL(log, config)
 		// Print dashboard url if possible and if a execution group is defined
 		log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
-		TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
-		if err != nil {
-			log.V(3).Info("unable to get TestMachinery Dashboard URL", "error", err.Error())
-		} else {
-			tmDashboardURL = GetTmDashboardURLFromHostForExecutionGroup(TMDashboardHost, executiongroupID)
-			log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
-			if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), true); err != nil {
-				log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
-			}
+		log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
+		if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), true); err != nil {
+			log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
 		}
 	}
 
@@ -138,7 +153,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 
 	log.Info("All testruns completed.")
 
-	if tmDashboardURL != "" && executiongroupID != "" {
+	if executiongroupID != "" && tmDashboardURL != "" {
 		if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), false); err != nil {
 			log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
 		}
