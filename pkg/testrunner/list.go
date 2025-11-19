@@ -62,7 +62,11 @@ func getExecutionGroupIDAndTmDashboardURL(log logr.Logger, config *Config) (stri
 		tmDashboardURL   string
 	)
 
-	executiongroupID = uuid.New().String()
+	if config.ExecutionGroupID != "" {
+		executiongroupID = config.ExecutionGroupID
+	} else {
+		executiongroupID = uuid.New().String()
+	}
 
 	TMDashboardHost, err := GetTMDashboardHost(config.Watch.Client())
 	if err != nil {
@@ -81,13 +85,16 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 	)
 	if !config.NoExecutionGroup {
 		executiongroupID, tmDashboardURL = getExecutionGroupIDAndTmDashboardURL(log, config)
+		// Print dashboard url if possible and if a execution group is defined
+		log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
+		log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
+		if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), true); err != nil {
+			log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
+		}
 	}
 
-	// Print dashboard url if possible and if a execution group is defined
-	log.Info(fmt.Sprintf("Starting testruns execution group %s", executiongroupID))
-	log.Info(fmt.Sprintf("TestMachinery Dashboard: %s", tmDashboardURL))
-	if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), true); err != nil {
-		log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
+	if len(rl) != 0 {
+		return nil
 	}
 
 	executor, err := NewExecutor(log, config.ExecutorConfig)
@@ -150,7 +157,7 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 
 	log.Info("All testruns completed.")
 
-	if tmDashboardURL != "" && executiongroupID != "" {
+	if executiongroupID != "" && tmDashboardURL != "" {
 		if err := logger.PostToSummaryFile(fmt.Sprintf("## [TestMachinery dashboard for execution group %s](%s)", executiongroupID, tmDashboardURL), false); err != nil {
 			log.Error(err, "unable to post TestMachinery Dashboard URL to the Summary File")
 		}
