@@ -93,10 +93,6 @@ func (rl RunList) Run(log logr.Logger, config *Config, testrunNamePrefix string,
 		}
 	}
 
-	if len(rl) != 0 {
-		return nil
-	}
-
 	executor, err := NewExecutor(log, config.ExecutorConfig)
 	if err != nil {
 		return err
