@@ -1,0 +1,39 @@
+{
+  "extends": ["config:base"],
+
+  "prConcurrentLimit": 5,
+
+  "packageRules": [
+    {
+      "matchManagers": ["gomod"],
+      "matchPaths": ["/"],
+      "schedule": ["every day"]
+    },
+    {
+      "matchManagers": ["docker"],
+      "matchPaths": ["/"],
+      "schedule": ["every day"]
+    },
+
+    /* Ignore minor & major updates for Argo Workflows */
+    {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/argoproj/argo-workflows"],
+      "allowedVersions": "/^0\\./" 
+    },
+
+    /* Group all version updates except Gardener, Argo, OCM, controller-runtime */
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "major"],
+      "groupName": "non-gardener-dependencies",
+      "matchPackagePatterns": [".*"],
+      "excludePackagePatterns": [
+        "^github\\.com/gardener/gardener/gardener",
+        "^github\\.com/argoproj/argo-workflows",
+        "^ocm\\.software/ocm",
+        "^sigs\\.k8s\\.io/controller-runtime"
+      ]
+    }
+  ]
+}
