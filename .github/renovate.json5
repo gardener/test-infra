@@ -1,28 +1,40 @@
 {
   "extends": ["config:base"],
-
   "prConcurrentLimit": 5,
 
+  "enabledManagers": ["gomod", "dockerfile"],
+
   "packageRules": [
+    /* GO MODULES */
     {
       "matchManagers": ["gomod"],
       "matchPaths": ["/"],
       "schedule": ["every day"]
     },
+
+    /* ONLY update Alpine + the OCMCLI image */
     {
-      "matchManagers": ["docker"],
-      "matchPaths": ["/"],
+      "matchManagers": ["dockerfile"],
+      "matchPackagePatterns": [
+        "^alpine$",
+        "^ghcr\\.io/open-component-model/ocm/ocm\\.software/ocmcli/ocmcli-image$"
+      ],
       "schedule": ["every day"]
     },
 
-    /* Ignore minor & major updates for Argo Workflows */
+    /* DISABLE updates for all other Docker images */
+    {
+      "matchManagers": ["dockerfile"],
+      "excludePackagePatterns": [".*"],
+      "enabled": false
+    },
+
+    /* Existing GO grouping rules remain the same */
     {
       "matchManagers": ["gomod"],
       "matchPackageNames": ["github.com/argoproj/argo-workflows"],
-      "allowedVersions": "/^0\\./" 
+      "allowedVersions": "/^0\\./"
     },
-
-    /* Group all version updates except Gardener, Argo, OCM, controller-runtime */
     {
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch", "major"],
