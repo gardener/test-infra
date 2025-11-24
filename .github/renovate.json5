@@ -1,0 +1,102 @@
+{
+  "extends": ["config:base"],
+  "prConcurrentLimit": 5,
+
+  "enabledManagers": [
+    "gomod",
+    "dockerfile",
+    "helm-values",
+    "regex"
+  ],
+
+  /* Renovate will scan only "charts/testmachinery/values.yaml" */
+  "helm-values": {
+    "fileMatch": [
+      "charts/testmachinery/values.yaml"
+    ]
+  },
+
+  /* Regex manager config for ".ocm/resources.yaml" */ 
+  "regexManagers": [
+    {
+      "fileMatch": ["^\\.ocm/resources\\.yaml$"],
+      "matchStrings": [
+        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>.+)\\s*$"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],  
+
+  "packageRules": [
+    /* Go modules at root of repository */
+    {
+      "matchManagers": ["gomod"],
+      "matchPaths": ["/"],
+      "schedule": ["every day"]
+    },
+
+    /* Ignore minor & major updates for Argo Workflows */
+    {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/argoproj/argo-workflows"],
+      "allowedVersions": "/^0\\./"
+    },
+
+    /* Group all version updates except Gardener, Argo, OCM, controller-runtime */
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "major"],
+      "groupName": "non-gardener-dependencies",
+      "matchPackagePatterns": [".*"],
+      "excludePackagePatterns": [
+        "^github\\.com/gardener/gardener/gardener",
+        "^github\\.com/argoproj/argo-workflows",
+        "^ocm\\.software/ocm",
+        "^sigs\\.k8s\\.io/controller-runtime"
+      ]
+    },
+
+    /* ONLY update Alpine + the OCMCLI image in Dockerfile at root of repository */
+    {
+      "matchManagers": ["dockerfile"],
+      "matchPaths": ["/"],
+      "matchPackageNames": [
+        "^alpine$",
+        "^ghcr\\.io/open-component-model/ocm/ocm\\.software/ocmcli/ocmcli-image$"
+      ],
+      "schedule": ["every day"]
+    },
+
+    /* ONLY update these Helm chart image references */
+    {
+      "matchManagers": ["helm-values"],
+      "matchPackageNames": [
+        /* Argo */
+        "quay.io/argoproj/workflow-controller",
+        "quay.io/argoproj/argoexec",
+        "quay.io/argoproj/argocli",
+
+        /* Valitail & Vali */
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
+      ],
+      "schedule": ["every day"]
+    },
+
+    /* OCM regex image rules */
+    {
+      "matchManagers": ["regex"],
+      "matchPackageNames": [
+        /* Argo */
+        "quay.io/argoproj/workflow-controller",
+        "quay.io/argoproj/argoexec",
+        "quay.io/argoproj/argocli",
+
+        /* Valitail & Vali */
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
+      ],
+      "schedule": ["every day"]
+    }
+  ]
+}
