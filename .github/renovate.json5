@@ -54,7 +54,7 @@
         "^ocm\\.software/ocm",
         "^sigs\\.k8s\\.io/controller-runtime"
       ]
-    }
+    },
 
     /* ONLY update Alpine + the OCMCLI image in Dockerfile at root of repository */
     {
