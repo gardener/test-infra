@@ -48,7 +48,7 @@
       "groupName": "non-gardener-dependencies",
       "matchPackagePatterns": [".*"],
       "excludePackagePatterns": [
-        "^github\\.com/gardener/gardener/gardener",
+        "^github\\.com/gardener/.+",
         "^github\\.com/argoproj/argo-workflows",
         "^ocm\\.software/ocm",
         "^sigs\\.k8s\\.io/controller-runtime"
