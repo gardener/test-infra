@@ -1,5 +1,5 @@
 {
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
   "prConcurrentLimit": 5,
 
   "enabledManagers": [
@@ -31,8 +31,7 @@
     /* Go modules at root of repository */
     {
       "matchManagers": ["gomod"],
-      "matchPaths": ["/"],
-      "schedule": ["every day"]
+      "matchPaths": ["/"]
     },
 
     /* Ignore minor & major updates for Argo Workflows */
@@ -63,8 +62,7 @@
       "matchPackageNames": [
         "^alpine$",
         "^ghcr\\.io/open-component-model/ocm/ocm\\.software/ocmcli/ocmcli-image$"
-      ],
-      "schedule": ["every day"]
+      ]
     },
 
     /* ONLY update these Helm chart image references */
@@ -79,8 +77,7 @@
         /* Valitail & Vali */
         "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
         "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
-      ],
-      "schedule": ["every day"]
+      ]
     },
 
     /* OCM regex image rules */
@@ -95,8 +92,7 @@
         /* Valitail & Vali */
         "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
         "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
-      ],
-      "schedule": ["every day"]
+      ]
     }
   ]
 }
