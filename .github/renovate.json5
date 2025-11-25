@@ -21,9 +21,10 @@
     {
       "fileMatch": ["^\\.ocm/resources\\.yaml$"],
       "matchStrings": [
-        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>.+)\\s*$"
+        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s#]+)"
       ],
-      "datasourceTemplate": "docker"
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],  
 
@@ -83,15 +84,9 @@
     /* OCM regex image rules */
     {
       "matchManagers": ["regex"],
-      "matchPackageNames": [
-        /* Argo */
-        "quay.io/argoproj/workflow-controller",
-        "quay.io/argoproj/argoexec",
-        "quay.io/argoproj/argocli",
-
-        /* Valitail & Vali */
-        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
-        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
+      "matchPackagePatterns": [
+        "^quay\\.io/argoproj/.*$",
+        "^europe-docker\\.pkg\\.dev/gardener-project/releases/3rd/credativ/.*$"
       ]
     }
   ]
