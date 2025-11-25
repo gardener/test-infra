@@ -47,16 +47,19 @@
 
     /* Group all version updates except Gardener, Argo, OCM, controller-runtime */
     {
+      "matchPackagePatterns": [
+        "^github\\.com/gardener/gardener.*",
+        "^github\\.com/argoproj/argo-workflows.*",
+        "^ocm\\.software/ocm.*",
+        "^sigs\\.k8s\\.io/controller-runtime.*"
+      ],
+      "enabled": false
+    },
+    {
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch", "major"],
-      "groupName": "non-gardener-dependencies",
+      "groupName": "all-other-go-dependencies",
       "matchPackagePatterns": [".*"],
-      "excludePackagePatterns": [
-        "^github\\.com/gardener/.+",
-        "^github\\.com/argoproj/argo-workflows",
-        "^ocm\\.software/ocm",
-        "^sigs\\.k8s\\.io/controller-runtime"
-      ]
     },
 
     /* ONLY update Alpine + the OCMCLI image in Dockerfile at root of repository */
