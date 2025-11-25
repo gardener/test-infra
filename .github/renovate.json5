@@ -16,17 +16,15 @@
     ]
   },
 
-  /* Regex manager config for ".ocm/resources.yaml" */ 
+  /* Regex manager config for ".ocm/resources.yaml" */
   "regexManagers": [
     {
       "fileMatch": ["^\\.ocm/resources\\.yaml$"],
       "matchStrings": [
-        "- name: (?<depName>[^\\n]+)\\s+imageReference: (?<depName2>[^:]+):(?<currentValue>[^\\s#]+)\\s+version: (?<versionValue>[^\\s#]+)"
+        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s#]+)\\s*\\n\\s*version:\\s*(?<currentValue2>[^\\s#]+)"
       ],
       "datasourceTemplate": "docker",
-      "versioningTemplate": "docker",
-      "depNameTemplate": "{{depName2}}",
-      "extractVersionTemplate": "{{versionValue}}"
+      "versioningTemplate": "docker"
     }
   ],
 
