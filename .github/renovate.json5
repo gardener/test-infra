@@ -25,7 +25,7 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker",
-      "depNameTemplate": "{{depName}}",
+      "depNameTemplate": "{{depName2}}",
       "extractVersionTemplate": "{{versionValue}}"
     }
   ],
