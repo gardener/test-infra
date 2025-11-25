@@ -21,10 +21,13 @@
     {
       "fileMatch": ["^\\.ocm/resources\\.yaml$"],
       "matchStrings": [
-        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s#]+)"
+        "imageReference:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s#]+)\\s*\\n\\s*version:\\s*(?<versionValue>[^\\s#]+)"
       ],
       "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
+      "versioningTemplate": "docker",
+      "depNameTemplate": "{{depName}}",
+      "extractVersionTemplate": "{{versionValue}}",
+      "replaceStringTemplate": "imageReference: {{depName}}:{{newValue}}\n  version: {{newValue}}"
     }
   ],  
 
