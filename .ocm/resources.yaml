@@ -5,8 +5,8 @@
   imageReference: quay.io/argoproj/argoexec:v3.6.13
   version: v3.6.13
 - name: argo-server
-  imageReference: quay.io/argoproj/argocli:v3.6.13
-  version: v3.6.13
+  imageReference: quay.io/argoproj/argocli:v3.7.4
+  version: v3.7.4
 - name: vali
   imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali:v2.2.28
   version: v2.2.28
