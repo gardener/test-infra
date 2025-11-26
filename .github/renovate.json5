@@ -69,28 +69,25 @@
       ]
     },
 
-    /* ONLY update these Helm chart image references */
+    /* Group Argo-related Helm images */
     {
-      "matchManagers": ["helm-values"],
+      "matchManagers": ["helm-values", "regex"],
       "matchPackageNames": [
-        /* Argo */
         "quay.io/argoproj/workflow-controller",
         "quay.io/argoproj/argoexec",
-        "quay.io/argoproj/argocli",
-
-        /* Valitail & Vali */
-        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
-        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
-      ]
+        "quay.io/argoproj/argocli"
+      ],
+      "groupName": "argo-images"
     },
 
-    /* OCM regex image rules */
+    /* Group Valitail & Vali images */
     {
-      "matchManagers": ["regex"],
-      "matchPackagePatterns": [
-        "^quay\\.io/argoproj/.*$",
-        "^europe-docker\\.pkg\\.dev/gardener-project/releases/3rd/credativ/.*$"
-      ]
+      "matchManagers": ["helm-values", "regex"],
+      "matchPackageNames": [
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail",
+        "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
+      ],
+      "groupName": "vali-images"
     }
   ]
 }
