@@ -85,7 +85,7 @@ var notifyCmd = &cobra.Command{
 
 		concourseURLFooter := ""
 		if concourseURL != "" {
-			concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", concourseURL)
+			concourseURLFooter = fmt.Sprintf("\nCI/CD Job: %s", concourseURL)
 		}
 
 		chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages

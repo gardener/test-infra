@@ -85,7 +85,7 @@ func legend() string {
 func buildURLFooter(ccURL, tmDashboardURL, grafanaURL, executionGroup string) string {
 	ccURLFooter := ""
 	if ccURL != "" {
-		ccURLFooter = fmt.Sprintf("<%s|Concourse Job>", ccURL)
+		ccURLFooter = fmt.Sprintf("<%s|CI/CD Job>", ccURL)
 	}
 
 	tmDashboardURLFooter := ""
