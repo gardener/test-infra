@@ -34,7 +34,7 @@ var (
 
 	slackChannel string
 	slackToken   string
-	concourseURL string
+	cicdJobURL   string
 )
 
 // AddCommand adds notify to a command.
@@ -83,14 +83,14 @@ var notifyCmd = &cobra.Command{
 			return err
 		}
 
-		concourseURLFooter := ""
-		if concourseURL != "" {
-			concourseURLFooter = fmt.Sprintf("\nConcourse Job: %s", concourseURL)
+		cicdJobURLFooter := ""
+		if cicdJobURL != "" {
+			cicdJobURLFooter = fmt.Sprintf("\nCI/CD Job: %s", cicdJobURL)
 		}
 
 		chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
 		if len(chunks) == 1 {
-			return slackClient.PostMessage(slackChannel, fmt.Sprintf("%s\n```%s\n%s```%s", header(), table, legend(), concourseURLFooter))
+			return slackClient.PostMessage(slackChannel, fmt.Sprintf("%s\n```%s\n%s```%s", header(), table, legend(), cicdJobURLFooter))
 		}
 
 		for i, chunk := range chunks {
@@ -99,7 +99,7 @@ var notifyCmd = &cobra.Command{
 				message = fmt.Sprintf("%s\n%s", header(), message)
 			}
 			if i == len(chunks)-1 {
-				message = fmt.Sprintf("%s%s", message, concourseURLFooter)
+				message = fmt.Sprintf("%s%s", message, cicdJobURLFooter)
 			}
 			if err := slackClient.PostMessage(slackChannel, message); err != nil {
 				return err
@@ -118,7 +118,9 @@ func init() {
 	notifyCmd.Flags().StringVar(&overviewFileName, "overview", "", "Name of the overview asset file in the release.")
 	notifyCmd.Flags().StringVar(&slackToken, "slack-token", "", "Client token to authenticate")
 	notifyCmd.Flags().StringVar(&slackChannel, "slack-channel", "", "Client channel id to send the message to.")
-	notifyCmd.Flags().StringVar(&concourseURL, "concourse-url", "", "Concourse job URL.")
+	notifyCmd.Flags().StringVar(&cicdJobURL, "cicd-job-url", "", "CI/CD Job URL.")
+	notifyCmd.Flags().StringVar(&cicdJobURL, "concourse-url", "", "Concourse job URL.")
+	_ = notifyCmd.Flags().MarkDeprecated("concourse-url", "use --cicd-job-url instead")
 }
 
 func header() string {

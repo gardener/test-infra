@@ -161,7 +161,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	// slack notification
 	fs.StringVar(&o.collectConfig.SlackToken, "slack-token", "", "Client token to authenticate")
 	fs.StringVar(&o.collectConfig.SlackChannel, "slack-channel", "", "Client channel id to send the message to.")
-	fs.StringVar(&o.collectConfig.ConcourseURL, "concourse-url", "", "Concourse job URL.")
+	fs.StringVar(&o.collectConfig.CICDJobURL, "cicd-job-url", "", "CI/CD Job URL")
 	fs.StringVar(&o.collectConfig.GrafanaURL, "grafana-url", "", "Grafana Dashboard URL.")
 	fs.BoolVar(&o.collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
@@ -196,6 +196,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.String("es-password", "", "password to authenticate against a elasticsearch instance")
 	fs.String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	fs.Bool("s3-ssl", false, "S3 has SSL enabled.")
+	fs.StringVar(&o.collectConfig.CICDJobURL, "concourse-url", "", "Concourse job URL.")
 	if err := fs.MarkDeprecated("interval", "DEPRECATED: will not we used anymore"); err != nil {
 		return err
 	}
@@ -218,6 +219,9 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 		return err
 	}
 	if err := fs.MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore"); err != nil {
+		return err
+	}
+	if err := fs.MarkDeprecated("concourse-url", "DEPRECATED: will not we used anymore! use --cicd-job-url instead"); err != nil {
 		return err
 	}
 
