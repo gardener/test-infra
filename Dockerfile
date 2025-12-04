@@ -20,7 +20,7 @@ COPY . .
 RUN make install
 
 ############# tm-controller #############
-FROM alpine:3.22 AS tm-controller
+FROM alpine:3.23 AS tm-controller
 
 COPY charts /charts
 COPY --from=builder /go/bin/testmachinery-controller /testmachinery-controller
@@ -114,7 +114,7 @@ WORKDIR /
 ENTRYPOINT ["/testrunner"]
 
 ############# tm-bot #############
-FROM alpine:3.22 AS tm-bot
+FROM alpine:3.23 AS tm-bot
 
 RUN apk add --update --no-cache bash curl
 
