@@ -13,7 +13,7 @@ testrunner notify [flags]
 ### Options
 
 ```
-      --concourse-url string         Concourse job URL.
+      --cicd-job-url string          CI/CD job URL.
       --github-password string       Github password.
       --github-repo string           Specify the Github repository that should be used to get the test results
       --github-repo-version string   Specify the version fot the Github repository that should be used to get the test results

@@ -43,8 +43,8 @@ type Config struct {
 	// AssetPrefix defines the asset name prefix
 	AssetPrefix string
 
-	// ConcourseURL provides the concourse URL as reference for testruns summary results
-	ConcourseURL string
+	// CICDJobURL provides the CI/CD Job URL as reference for testruns summary results
+	CICDJobURL string
 
 	// GrafanaURL provides the grafana dashboard URL for test results
 	GrafanaURL string

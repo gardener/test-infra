@@ -108,7 +108,7 @@ func init() {
 	// slack notification
 	collectCmd.Flags().StringVar(&collectConfig.SlackToken, "slack-token", "", "Client token to authenticate")
 	collectCmd.Flags().StringVar(&collectConfig.SlackChannel, "slack-channel", "", "Client channel id to send the message to.")
-	collectCmd.Flags().StringVar(&collectConfig.ConcourseURL, "concourse-url", "", "Concourse job URL.")
+	collectCmd.Flags().StringVar(&collectConfig.CICDJobURL, "cicd-job-url", "", "CI/CD Job URL")
 	collectCmd.Flags().BoolVar(&collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
 	// DEPRECATED FLAGS
@@ -119,6 +119,7 @@ func init() {
 	collectCmd.Flags().String("es-password", "", "password to authenticate against a elasticsearch instance")
 	collectCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
+	collectCmd.Flags().StringVar(&collectConfig.CICDJobURL, "concourse-url", "", "Concourse job URL.")
 	_ = collectCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
@@ -126,4 +127,5 @@ func init() {
 	_ = collectCmd.Flags().MarkDeprecated("es-password", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("s3-endpoint", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("s3-ssl", "DEPRECATED: will not we used anymore")
+	_ = collectCmd.Flags().MarkDeprecated("concourse-url", "use --cicd-job-url instead")
 }

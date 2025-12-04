@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# TestRun CRDs will be created by Test-Machinery controllers, by concourse jobs or manually to run e.g. single tests.
+# TestRun CRDs will be created by Test-Machinery controllers, by CI/CD jobs or manually to run e.g. single tests.
 apiVersion: testmachinery.sapcloud.io/v1beta1
 kind: Testrun
 metadata:
