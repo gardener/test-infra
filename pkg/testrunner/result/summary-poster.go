@@ -49,7 +49,7 @@ func (c *Collector) postTestrunsSummaryInSlack(config Config, log logr.Logger, r
 	if len(runs.GetTestruns()) > 0 {
 		executionGroup = runs.GetTestruns()[0].Labels[common.LabelTestrunExecutionGroup]
 	}
-	urlFooter := buildURLFooter(config.ConcourseURL, tmDashboardURL, config.GrafanaURL, executionGroup)
+	urlFooter := buildURLFooter(config.CICDJobURL, tmDashboardURL, config.GrafanaURL, executionGroup)
 
 	chunks := util.SplitString(fmt.Sprintf("%s\n%s", table, legend()), slack.MaxMessageLimit-100) // -100 to have space for header and footer messages
 	if len(chunks) == 1 {
