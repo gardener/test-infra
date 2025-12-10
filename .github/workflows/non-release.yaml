@@ -1,4 +1,5 @@
-name: Build
+name: Build Snapshot
+
 on:
   push:
   pull_request:
