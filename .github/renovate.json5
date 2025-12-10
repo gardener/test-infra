@@ -8,6 +8,10 @@
     "helm-values",
     "regex"
   ],
+  postUpdateOptions: [
+    'gomodTidy',
+  ],
+  separateMinorPatch: true,
 
   /* Renovate will scan only "charts/testmachinery/values.yaml" */
   "helm-values": {
