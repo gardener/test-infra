@@ -124,9 +124,11 @@ func (a *githubOAuth) Protect(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 			stateCookie := http.Cookie{
-				Name:    oauthStateCookieName,
-				Value:   state,
-				Expires: time.Now().Add(3 * time.Minute),
+				Name:     oauthStateCookieName,
+				Value:    state,
+				HttpOnly: true,
+				Secure:   true,
+				Expires:  time.Now().Add(3 * time.Minute),
 			}
 			http.SetCookie(w, &stateCookie)
 			authURL := a.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
@@ -176,6 +178,12 @@ func (a *githubOAuth) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	oauthState.MaxAge = -1
+	if !oauthState.Secure {
+		oauthState.Secure = true
+	}
+	if !oauthState.HttpOnly {
+		oauthState.HttpOnly = true
+	}
 	http.SetCookie(w, oauthState)
 
 	if state != oauthState.Value {
@@ -271,9 +279,11 @@ func (a *githubOAuth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stateCookie := http.Cookie{
-		Name:    oauthStateCookieName,
-		Value:   state,
-		Expires: time.Now().Add(3 * time.Minute),
+		Name:     oauthStateCookieName,
+		Value:    state,
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Now().Add(3 * time.Minute),
 	}
 
 	http.SetCookie(w, &stateCookie)
