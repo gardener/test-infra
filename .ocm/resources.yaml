@@ -1,12 +1,12 @@
 - name: argo-workflow-controller
-  imageReference: quay.io/argoproj/workflow-controller:v3.6.15
-  version: v3.6.15
+  imageReference: quay.io/argoproj/workflow-controller:v3.7.6
+  version: v3.7.6
 - name: argo-executor
-  imageReference: quay.io/argoproj/argoexec:v3.6.15
-  version: v3.6.15
+  imageReference: quay.io/argoproj/argoexec:v3.7.6
+  version: v3.7.6
 - name: argo-server
-  imageReference: quay.io/argoproj/argocli:v3.6.15
-  version: v3.6.15
+  imageReference: quay.io/argoproj/argocli:v3.7.6
+  version: v3.7.6
 - name: vali
   imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali:v2.2.30
   version: v2.2.30
