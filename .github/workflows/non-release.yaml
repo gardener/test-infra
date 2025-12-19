@@ -7,6 +7,10 @@ on:
     types:
       - labeled
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     if: ${{ github.event_name != 'pull_request_target' || (github.event_name == 'pull_request_target' && github.event.label.name == 'reviewed/ok-to-test') }}
