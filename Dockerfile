@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.34.2 AS ocmcli
+FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.34.3 AS ocmcli
 #############      builder       #############
 FROM golang:1.25 AS builder
 
