@@ -42,7 +42,7 @@ spec:
     export E2E_EXPORT_PATH=$TM_EXPORT_PATH &&
     export E2E_KUBECONFIG_PATH=$TM_KUBECONFIG_PATH/shoot.config &&
     go run ./conformance-tests
-  image: golang:1.25.4
+  image: golang:1.25.5
   resources:
     requests:
       memory: "500Mi"
