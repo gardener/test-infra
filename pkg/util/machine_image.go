@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/gardener/test-infra/pkg/common"
 )
