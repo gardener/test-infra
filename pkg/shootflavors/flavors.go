@@ -6,6 +6,7 @@ package shootflavors
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/Masterminds/semver/v3"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -13,7 +14,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/gardener/test-infra/pkg/common"
 	"github.com/gardener/test-infra/pkg/util"
