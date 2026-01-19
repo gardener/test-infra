@@ -8,11 +8,18 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/pkg/errors"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
@@ -126,4 +133,43 @@ func GetHostURLFromIngressObject(ingress *netv1.Ingress) (string, error) {
 		return "", err
 	}
 	return hostUrl.String(), nil
+}
+
+// GetCloudProfilesFromDisk walks through the filesystem and returns all found CloudProfiles
+func GetCloudProfilesFromDisk(cloudProfileSearchPath string) (map[string]gardencorev1beta1.CloudProfile, error) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(gardencorev1beta1.AddToScheme(scheme))
+	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder()
+	cloudProfiles := make(map[string]gardencorev1beta1.CloudProfile)
+	cloudProfileSearchPath = filepath.Clean(cloudProfileSearchPath)
+
+	if _, err := os.Stat(cloudProfileSearchPath); os.IsNotExist(err) {
+		return nil, errors.Wrapf(err, "CloudProfile search path %s does not exist", cloudProfileSearchPath)
+	}
+	err := filepath.WalkDir(cloudProfileSearchPath, func(path string, d os.DirEntry, err error) error {
+		// fail fast on walk error and continue, if it's a directory
+		if err != nil || d.IsDir() {
+			return err
+		}
+		// process files only
+		path = filepath.Clean(path)
+		if !strings.HasPrefix(path, cloudProfileSearchPath) {
+			return errors.New("invalid CloudProfile path")
+		}
+		rawFile, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		cpfl := &gardencorev1beta1.CloudProfile{}
+		_, _, decodeErr := decoder.Decode(rawFile, nil, cpfl)
+		// deliberately ignore decode errors as not all files are CloudProfiles
+		// filter out partial cloudprofile files that have no .metadata.name
+		if decodeErr != nil || cpfl.Name == "" {
+			return err
+		}
+		cloudProfiles[cpfl.Name] = *cpfl
+		return err
+	})
+
+	return cloudProfiles, err
 }

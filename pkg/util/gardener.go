@@ -45,7 +45,23 @@ func ContainsCloudprovider(cloudproviders []common.CloudProvider, cloudprovider 
 }
 
 // GetCloudProfile returns the cloudprofile
-func GetCloudProfile(k8sClient client.Client, profileName string) (gardencorev1beta1.CloudProfile, error) {
+func GetCloudProfile(k8sClient client.Client, cloudProfiles map[string]gardencorev1beta1.CloudProfile, profileName string) (gardencorev1beta1.CloudProfile, error) {
+	if len(cloudProfiles) == 0 {
+		return GetCloudProfileFromCluster(k8sClient, profileName)
+	}
+	return GetCloudProfileFromMap(cloudProfiles, profileName)
+}
+
+func GetCloudProfileFromMap(cloudProfiles map[string]gardencorev1beta1.CloudProfile, profileName string) (gardencorev1beta1.CloudProfile, error) {
+	var cloudprofile gardencorev1beta1.CloudProfile
+	cloudprofile, exists := cloudProfiles[profileName]
+	if !exists {
+		return cloudprofile, errors.Errorf("cloudprofile %s not found in provided cloudprofiles", profileName)
+	}
+	return cloudprofile, nil
+}
+
+func GetCloudProfileFromCluster(k8sClient client.Client, profileName string) (gardencorev1beta1.CloudProfile, error) {
 	var cloudprofile gardencorev1beta1.CloudProfile
 	if err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: profileName}, &cloudprofile); err != nil {
 		return cloudprofile, err
