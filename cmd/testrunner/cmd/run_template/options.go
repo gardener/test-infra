@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,6 +41,7 @@ type options struct {
 	shootPrefix              string
 	tmKubeconfigPath         string
 	testrunnerKubeconfigPath string
+	cloudProfileSearchPath   string
 	filterPatchVersions      bool
 	failOnError              bool
 	timeout                  int64
@@ -68,26 +70,45 @@ func (o *options) Complete() error {
 	o.collectConfig.OCMConfigPath = o.shootParameters.OCMConfigPath
 	o.collectConfig.Repository = o.shootParameters.Repository
 
-	if len(o.shootParameters.FlavorConfigPath) != 0 {
-		gardenK8sClient, err := kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
+	if len(o.shootParameters.FlavorConfigPath) == 0 {
+		return nil
+	}
+
+	var (
+		gardenK8sClient client.Client
+		cloudProfiles   map[string]gardencorev1beta1.CloudProfile
+		err             error
+	)
+	if o.cloudProfileSearchPath != "" {
+		cloudProfiles, err = testrunner.GetCloudProfilesFromDisk(filepath.Clean(o.cloudProfileSearchPath))
+		if err != nil {
+			logger.Log.Error(err, "unable to find CloudProfiles in files", "root directory", o.cloudProfileSearchPath)
+			os.Exit(1)
+		}
+		if len(cloudProfiles) == 0 {
+			logger.Log.Error(err, "no CloudProfiles found in files", "root directory", o.cloudProfileSearchPath)
+			os.Exit(1)
+		}
+	} else {
+		gardenK8sClient, err = kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
 			Scheme: gardener.GardenScheme,
 		})
 		if err != nil {
 			logger.Log.Error(err, "unable to build garden kubernetes client", "file", o.testrunnerKubeconfigPath)
 			os.Exit(1)
 		}
-		flavors, err := GetShootFlavors(o.shootParameters.FlavorConfigPath, gardenK8sClient, o.shootPrefix, o.filterPatchVersions)
-		if err != nil {
-			logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
-			os.Exit(1)
-		}
-		o.shootFlavors = flavors.GetShoots()
 	}
 
+	flavors, err := GetShootFlavors(o.shootParameters.FlavorConfigPath, gardenK8sClient, cloudProfiles, o.shootPrefix, o.filterPatchVersions)
+	if err != nil {
+		logger.Log.Error(err, "unable to parse shoot flavors from test configuration")
+		os.Exit(1)
+	}
+	o.shootFlavors = flavors.GetShoots()
 	return nil
 }
 
-func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
+func GetShootFlavors(cfgPath string, k8sClient client.Client, cloudProfiles map[string]gardencorev1beta1.CloudProfile, shootPrefix string, filterPatchVersions bool) (*shootflavors.ExtendedFlavors, error) {
 	// read and parse test shoot configuration
 	dat, err := os.ReadFile(filepath.Clean(cfgPath))
 	if err != nil {
@@ -99,7 +120,7 @@ func GetShootFlavors(cfgPath string, k8sClient client.Client, shootPrefix string
 		return nil, err
 	}
 
-	return shootflavors.NewExtended(k8sClient, flavors.Flavors, shootPrefix, filterPatchVersions)
+	return shootflavors.NewExtended(k8sClient, cloudProfiles, flavors.Flavors, shootPrefix, filterPatchVersions)
 }
 
 // Validate validates the options
@@ -170,6 +191,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&o.shootParameters.FlavoredTestrunChartPath, "flavored-testruns-chart-path", "", "Path to the testruns chart to test shoots.")
 	fs.StringVar(&o.shootParameters.GardenKubeconfigPath, "gardener-kubeconfig-path", "", "Path to the gardener kubeconfig used by the testrun.")
 	fs.StringVar(&o.testrunnerKubeconfigPath, "testrunner-kubeconfig-path", "", "Path to the gardener kubeconfig used by testrunner.")
+	fs.StringVar(&o.cloudProfileSearchPath, "cloud-profile-search-path", "", "Start searching for CloudProfiles here. If not set, the CloudProfile will be fetched from the gardener cluster.")
 
 	fs.StringVar(&o.shootParameters.FlavorConfigPath, "flavor-config", "", "Path to shoot test configuration.")
 

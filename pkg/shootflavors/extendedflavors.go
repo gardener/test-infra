@@ -70,7 +70,7 @@ func ValidateExtendedFlavor(identifier string, flavor *common.ExtendedShootFlavo
 
 // NewExtended creates an internal representation of raw extended shoot flavors.
 // It also parses the flavors and creates the resulting extended shoots.
-func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
+func NewExtended(k8sClient client.Client, cloudProfiles map[string]gardencorev1beta1.CloudProfile, rawFlavors []*common.ExtendedShootFlavor, shootPrefix string, filterPatchVersions bool) (*ExtendedFlavors, error) {
 	versions := make(map[common.CloudProvider]gardencorev1beta1.KubernetesSettings)
 	addVersion := addKubernetesVersionFunc(versions)
 
@@ -82,7 +82,7 @@ func NewExtended(k8sClient client.Client, rawFlavors []*common.ExtendedShootFlav
 			return nil, err
 		}
 
-		cloudprofile, err := util.GetCloudProfile(k8sClient, rawFlavor.CloudprofileName)
+		cloudprofile, err := util.GetCloudProfile(k8sClient, cloudProfiles, rawFlavor.CloudprofileName)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to get cloudprofile %s", rawFlavor.CloudprofileName)
 		}

@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,11 +26,13 @@ var _ = Describe("extended flavor test", func() {
 		ctrl *gomock.Controller
 		c    *mockclient.MockClient
 
-		defaultExtendedCfg common.ExtendedConfiguration
-		cloudprofile       gardencorev1beta1.CloudProfile
+		defaultExtendedCfg    common.ExtendedConfiguration
+		cloudProfile          gardencorev1beta1.CloudProfile
+		cloudProfilesFromFile map[string]gardencorev1beta1.CloudProfile
 	)
 
 	BeforeEach(func() {
+		cloudProfilesFromFile = make(map[string]gardencorev1beta1.CloudProfile)
 		ctrl = gomock.NewController(GinkgoT())
 		c = mockclient.NewMockClient(ctrl)
 
@@ -40,7 +43,7 @@ var _ = Describe("extended flavor test", func() {
 			Region:           "test-region",
 			Zone:             "test-zone",
 		}
-		cloudprofile = gardencorev1beta1.CloudProfile{
+		cloudProfile = gardencorev1beta1.CloudProfile{
 			Spec: gardencorev1beta1.CloudProfileSpec{
 				Kubernetes: gardencorev1beta1.KubernetesSettings{
 					Versions: []gardencorev1beta1.ExpirableVersion{
@@ -71,7 +74,7 @@ var _ = Describe("extended flavor test", func() {
 
 	It("should return no shoots if no flavors are defined", func() {
 		rawFlavors := []*common.ExtendedShootFlavor{}
-		flavors, err := NewExtended(c, rawFlavors, "", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(BeEmpty())
 	})
@@ -99,7 +102,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -139,7 +142,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -177,7 +180,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		_, err := NewExtended(c, rawFlavors, "test-pref", false)
+		_, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -204,7 +207,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -241,7 +244,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		_, err := NewExtended(c, rawFlavors, "test-pref", false)
+		_, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -267,7 +270,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		_, err := NewExtended(c, rawFlavors, "test-pref", false)
+		_, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("Flavors.0[0].updateStrategy: value is invalid"))
 	})
@@ -290,10 +293,10 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
-			*obj = cloudprofile
+			*obj = cloudProfile
 			return nil
 		})
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(3))
 
@@ -324,7 +327,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -332,7 +335,7 @@ var _ = Describe("extended flavor test", func() {
 		Expect(shoot.Get().Name).To(HavePrefix("test-pref"))
 	})
 
-	It("should generate a shoot with the latest kubernetes version from the cloudprofile", func() {
+	It("should generate a shoot with the latest kubernetes version from the cloudProfile", func() {
 		versionPattern := "latest"
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
@@ -350,10 +353,10 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
-			*obj = cloudprofile
+			*obj = cloudProfile
 			return nil
 		})
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -362,7 +365,112 @@ var _ = Describe("extended flavor test", func() {
 		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
 	})
 
-	It("should generate a shoot for every kubernetes version from the cloudprofile", func() {
+	It("should generate a shoot with the latest Kubernetes version from a cloudProfile read from disk", func() {
+		versionPattern := "latest"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Pattern: &versionPattern,
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		cloudProfileFromDisk := gardencorev1beta1.CloudProfile{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-profile",
+			},
+			Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
+						{Version: "1.16.1"},
+						{Version: "1.15.2"},
+						{Version: "1.15.1"},
+						{Version: "1.14.3"},
+						{Version: "1.13.10"},
+					},
+				},
+				MachineImages: []gardencorev1beta1.MachineImage{
+					{
+						Name:     "test-os",
+						Versions: MachineImageVersions(map[string][]string{"0.0.2": {"amd64"}, "0.0.1": {"amd64"}}),
+					},
+					{
+						Name:     "test-os-2",
+						Versions: MachineImageVersions(map[string][]string{"0.0.4": {"arm64"}, "0.0.3": {"arm64"}}),
+					},
+				},
+			},
+		}
+
+		cloudProfilesFromFile["test-profile"] = cloudProfileFromDisk
+
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(flavors.GetShoots()).To(HaveLen(1))
+
+		shoot := flavors.GetShoots()[0]
+		Expect(shoot.Get().Shoot.KubernetesVersion.Version).To(Equal("1.16.1"))
+		Expect(shoot.Get().ExtendedConfiguration).To(Equal(defaultExtendedCfg))
+	})
+
+	It("should fail when the wanted cloudProfile read from disk is not found", func() {
+		versionPattern := "latest"
+		rawFlavors := []*common.ExtendedShootFlavor{{
+			ExtendedConfiguration: defaultExtendedCfg,
+			ShootFlavor: common.ShootFlavor{
+				Provider: common.CloudProviderGCP,
+				KubernetesVersions: common.ShootKubernetesVersionFlavor{
+					Pattern: &versionPattern,
+				},
+				Workers: []common.ShootWorkerFlavor{
+					{
+						WorkerPools: []gardencorev1beta1.Worker{{Name: "wp1"}},
+					},
+				},
+			},
+		}}
+
+		cloudProfileFromDisk := gardencorev1beta1.CloudProfile{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "not-to-be-found",
+			},
+			Spec: gardencorev1beta1.CloudProfileSpec{
+				Kubernetes: gardencorev1beta1.KubernetesSettings{
+					Versions: []gardencorev1beta1.ExpirableVersion{
+						{Version: "1.16.1"},
+						{Version: "1.15.2"},
+						{Version: "1.15.1"},
+						{Version: "1.14.3"},
+						{Version: "1.13.10"},
+					},
+				},
+				MachineImages: []gardencorev1beta1.MachineImage{
+					{
+						Name:     "test-os",
+						Versions: MachineImageVersions(map[string][]string{"0.0.2": {"amd64"}, "0.0.1": {"amd64"}}),
+					},
+					{
+						Name:     "test-os-2",
+						Versions: MachineImageVersions(map[string][]string{"0.0.4": {"arm64"}, "0.0.3": {"arm64"}}),
+					},
+				},
+			},
+		}
+
+		cloudProfilesFromFile["not-to-be-found"] = cloudProfileFromDisk
+
+		_, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should generate a shoot for every kubernetes version from the cloudProfile", func() {
 		versionPattern := "*"
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
@@ -380,15 +488,15 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
-			*obj = cloudprofile
+			*obj = cloudProfile
 			return nil
 		})
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(5))
 	})
 
-	It("should generate a shoot with the latest machine image version from the cloudprofile", func() {
+	It("should generate a shoot with the latest machine image version from the cloudProfile", func() {
 		versionPattern := "latest"
 		rawFlavors := []*common.ExtendedShootFlavor{{
 			ExtendedConfiguration: defaultExtendedCfg,
@@ -426,10 +534,10 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
-			*obj = cloudprofile
+			*obj = cloudProfile
 			return nil
 		})
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -474,12 +582,12 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 
-		cloudprofile.Spec.Type = "aws"
+		cloudProfile.Spec.Type = "aws"
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gardencorev1beta1.CloudProfile, _ ...client.GetOption) error {
-			*obj = cloudprofile
+			*obj = cloudProfile
 			return nil
 		})
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -518,7 +626,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -556,7 +664,7 @@ var _ = Describe("extended flavor test", func() {
 			},
 		}}
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -594,7 +702,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 
@@ -623,7 +731,7 @@ var _ = Describe("extended flavor test", func() {
 		}}
 
 		c.EXPECT().Get(gomock.Any(), client.ObjectKey{Name: "test-profile"}, gomock.Any()).Times(1)
-		flavors, err := NewExtended(c, rawFlavors, "test-pref", false)
+		flavors, err := NewExtended(c, cloudProfilesFromFile, rawFlavors, "test-pref", false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(flavors.GetShoots()).To(HaveLen(1))
 

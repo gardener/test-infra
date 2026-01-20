@@ -1,0 +1,35 @@
+apiVersion: core.gardener.cloud/v1beta1
+kind: CloudProfile
+metadata:
+  name: cloudprofile2
+spec:
+  type: test2
+  kubernetes:
+    versions:
+    - version: 1.33.2
+    - version: 1.32.4
+    - version: 1.31.6
+    - version: 1.30.8
+      expirationDate: 2025-11-30T01:02:03Z # optional
+  machineImages:
+  - name: gardenlinux
+    updateStrategy: "major"
+    versions:
+    - version: 123.45.0
+  machineTypes:
+  - name: medium
+    cpu: "2"
+    gpu: "0"
+    memory: 8Gi
+    usable: true
+  volumeTypes: # optional (not needed in every environment, may only be specified if no machineType has a `storage` field)
+  - name: abc
+    class: standard
+    usable: true
+  regions:
+  - name: europe-central-1
+    zones: # optional (not needed in every environment)
+    - name: europe-central-1a
+    - name: europe-central-1b
+    - name: europe-central-1c
+
