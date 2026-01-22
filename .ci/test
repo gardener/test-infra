@@ -16,7 +16,7 @@ fi
 cd "${SOURCE_PATH}"
 
 # Download kubernetes binaries
-K8S_VERSION=1.33.4
+K8S_VERSION=1.35.0
 ETCD_VER=v3.4.34
 
 if ! which kubectl &>/dev/null; then
