@@ -32,8 +32,8 @@ ENTRYPOINT ["/testmachinery-controller"]
 ############# tm-base-step #############
 FROM golang:1.25-alpine AS base-step
 
-ENV KUBECTL_VERSION v1.33.4
-ENV HELM_V3_VERSION v3.19.2
+ENV KUBECTL_VERSION v1.35.0
+ENV HELM_V3_VERSION v3.20.0
 
 COPY --from=ocmcli /usr/local/bin/ocm /bin/ocm
 
