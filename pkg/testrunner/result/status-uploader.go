@@ -136,7 +136,7 @@ func uploadFiles(log logr.Logger, c ComponentExtended, files []string) error {
 			err := file.Close()
 			if err != nil {
 				if errors.Is(err, os.ErrClosed) {
-					log.Info("File %s already closed by inner function", file.Name())
+					log.Info("File already closed by inner function", "filename", file.Name())
 				} else {
 					log.Error(err, "failed to close file")
 				}
