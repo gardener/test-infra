@@ -11,6 +11,11 @@
   postUpdateOptions: [
     'gomodTidy',
   ],
+
+  labels: [
+    'kind/enhancement',
+  ],
+
   separateMinorPatch: true,
 
   /* Renovate will scan only "charts/testmachinery/values.yaml" */
