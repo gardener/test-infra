@@ -4,7 +4,7 @@
 
 FROM ghcr.io/open-component-model/ocm/ocm.software/ocmcli/ocmcli-image:0.35.0 AS ocmcli
 #############      builder       #############
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 
@@ -30,7 +30,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.25-alpine AS base-step
+FROM golang:1.26-alpine AS base-step
 
 ENV KUBECTL_VERSION v1.35.0
 ENV HELM_V3_VERSION v3.20.0
