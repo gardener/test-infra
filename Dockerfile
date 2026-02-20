@@ -32,8 +32,8 @@ ENTRYPOINT ["/testmachinery-controller"]
 ############# tm-base-step #############
 FROM golang:1.26-alpine AS base-step
 
-ENV KUBECTL_VERSION v1.35.0
-ENV HELM_V3_VERSION v3.20.0
+ENV KUBECTL_VERSION=v1.35.0
+ENV HELM_V3_VERSION=v3.20.0
 
 COPY --from=ocmcli /usr/local/bin/ocm /bin/ocm
 
@@ -101,8 +101,9 @@ RUN  \
   && rm /usr/lib/python3.12/site-packages/certifi/cacert.pem \
   && ln -sf /etc/ssl/certs/ca-certificates.crt "$(python3 -m certifi)"
 # SAPNetCA_G2.crt will expire 2025-03-17 -> remove
+
 # TODO: remove after migrating scripts to gardener-ci
-ENV PATH /cc/utils:$PATH
+ENV PATH=/cc/utils:$PATH
 
 ############# tm-run #############
 FROM base-step AS tm-run
