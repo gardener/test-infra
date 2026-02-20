@@ -21,7 +21,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/mandelsoft/logging v0.0.0-20240618075559-fdca28a87b0a
+	github.com/mandelsoft/logging v0.0.0-20260220094735-62d1006ceeb4
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v1.1.3
 	github.com/onsi/ginkgo/v2 v2.28.1
