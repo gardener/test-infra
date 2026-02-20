@@ -17,7 +17,7 @@ import (
 	semver "github.com/Masterminds/semver/v3"
 	github "github.com/gardener/test-infra/pkg/tm-bot/github"
 	ghval "github.com/gardener/test-infra/pkg/tm-bot/github/ghval"
-	github0 "github.com/google/go-github/v72/github"
+	github0 "github.com/google/go-github/v83/github"
 	gomock "go.uber.org/mock/gomock"
 )
 

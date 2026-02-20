@@ -12,7 +12,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v83/github"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
@@ -138,7 +138,7 @@ func (c *client) Comment(ctx context.Context, event *GenericRequestEvent, messag
 // UpdateStatus updates the status check for a pull request
 func (c *client) UpdateStatus(ctx context.Context, event *GenericRequestEvent, state State, statusContext, description string) error {
 	stateString := string(state)
-	_, _, err := c.client.Repositories.CreateStatus(ctx, event.GetOwnerName(), event.GetRepositoryName(), event.Head, &github.RepoStatus{
+	_, _, err := c.client.Repositories.CreateStatus(ctx, event.GetOwnerName(), event.GetRepositoryName(), event.Head, github.RepoStatus{
 		State:       &stateString,
 		Description: &description,
 		Context:     &statusContext,
