@@ -45,15 +45,15 @@ tidy:
 	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: code-gen
-code-gen: $(VGOPATH) $(CONTROLLER_GEN)
-	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash ./hack/generate-code
+code-gen: $(CONTROLLER_GEN)
+	@REPO_ROOT=$(REPO_ROOT) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash ./hack/generate-code
 	$(MAKE) format
 
 .PHONY: generate
-generate: $(VGOPATH) $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM)
+generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM)
 	@go build -o $(OPENAPI_GEN) k8s.io/kube-openapi/cmd/openapi-gen
 	@go build -o $(MOCKGEN) go.uber.org/mock/mockgen
-	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./cmd/... ./pkg/... ./test/...
+	@REPO_ROOT=$(REPO_ROOT) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./cmd/... ./pkg/... ./test/...
 	$(MAKE) format
 
 .PHONY: format
