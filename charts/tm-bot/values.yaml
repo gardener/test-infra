@@ -5,6 +5,7 @@
 ingress:
   host: tm-bot.example.com
   labels: {}
+  ingressClassName: "nginx"
 
 bot:
   image: europe-docker.pkg.dev/gardener-project/releases/testmachinery/bot
