@@ -58,6 +58,7 @@ argoserver:
     host: ""
     annotations: { }
     labels: { }
+    ingressClassName: "nginx"
   serviceType: ClusterIP
 
 objectStorage:

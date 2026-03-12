@@ -17,6 +17,7 @@ metadata:
     {{ $key }}: {{ $value }}
     {{- end }}
 spec:
+  ingressClassName: {{ default "nginx" .Values.ingress.ingressClassName }}
   tls:
   - hosts:
     - {{ .Values.ingress.host }}
