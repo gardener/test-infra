@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 	"github.com/gardener/test-infra/pkg/testmachinery/controller/admission/webhooks"
@@ -46,7 +45,7 @@ var _ = Describe("Testrun validation tests", func() {
 				},
 			}
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).To(HaveOccurred())
 
@@ -63,7 +62,7 @@ var _ = Describe("Testrun validation tests", func() {
 			tr.Spec.TestLocations = []tmv1beta1.TestLocation{}
 			tr.Spec.LocationSets = nil
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).To(HaveOccurred())
 
@@ -80,7 +79,7 @@ var _ = Describe("Testrun validation tests", func() {
 				Type: tmv1beta1.LocationTypeLocal,
 			})
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).To(HaveOccurred())
 
@@ -95,7 +94,7 @@ var _ = Describe("Testrun validation tests", func() {
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 			tr.Spec.Kubeconfigs.Gardener = strconf.FromString("dGVzdGluZwo=")
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).To(HaveOccurred())
 
@@ -109,7 +108,7 @@ var _ = Describe("Testrun validation tests", func() {
 			defer ctx.Done()
 			tr := resources.GetBasicTestrun(namespace, commitSha)
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).ToNot(HaveOccurred())
 
@@ -129,7 +128,7 @@ var _ = Describe("Testrun validation tests", func() {
 			webhooks.StartHealthCheck(ctx, mockReader, namespace, "argo", duration)
 			time.Sleep(2 * time.Second)
 
-			warnings, err := testRunValidator.ValidateCreate(context.TODO(), runtime.Object(tr))
+			warnings, err := testRunValidator.ValidateCreate(context.TODO(), tr)
 			Expect(warnings).To(BeNil())
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Argo deployment not found"))

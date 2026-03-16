@@ -15,7 +15,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,7 +64,7 @@ type TestRunCustomValidator struct {
 	Log logr.Logger
 }
 
-func (v *TestRunCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
+func (v *TestRunCustomValidator) ValidateCreate(ctx context.Context, testrun *tmv1beta1.Testrun) (warnings admission.Warnings, err error) {
 	// permit new TestRuns only when the dependency health check is successful
 	healthMutex.Lock()
 	if healthErr != nil {
@@ -74,35 +73,21 @@ func (v *TestRunCustomValidator) ValidateCreate(ctx context.Context, obj runtime
 	}
 	healthMutex.Unlock()
 
-	tr, ok := obj.(*tmv1beta1.Testrun)
-	if !ok {
-		return nil, fmt.Errorf("expected a TestRun object but got type: %T", obj)
-	}
-	if err := validation.ValidateTestrun(tr); err != nil {
-		v.Log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", tr.Name, err.Error()))
+	if err := validation.ValidateTestrun(testrun); err != nil {
+		v.Log.V(5).Info(fmt.Sprintf("invalid testrun %s: %s", testrun.Name, err.Error()))
 		return nil, err
 	}
 	return nil, nil
 }
 
-func (v *TestRunCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (warnings admission.Warnings, err error) {
-	newTr, ok := newObj.(*tmv1beta1.Testrun)
-	if !ok {
-		return nil, fmt.Errorf("expected a TestRun as new object but got type: %T", newObj)
-	}
-
-	oldTr, ok := oldObj.(*tmv1beta1.Testrun)
-	if !ok {
-		return nil, fmt.Errorf("expected a TestRun old object but got type: %T", oldObj)
-	}
-
-	if !reflect.DeepEqual(oldTr.Spec, newTr.Spec) {
-		v.Log.V(5).Info(fmt.Sprintf("forbidden update of testrun spec for %s", newTr.Name))
+func (v *TestRunCustomValidator) ValidateUpdate(ctx context.Context, oldTestrun, newTestrun *tmv1beta1.Testrun) (warnings admission.Warnings, err error) {
+	if !reflect.DeepEqual(oldTestrun.Spec, newTestrun.Spec) {
+		v.Log.V(5).Info(fmt.Sprintf("forbidden update of testrun spec for %s", newTestrun.Name))
 		return nil, errors.NewInvalid(
 			schema.GroupKind{
 				Group: tmv1beta1.SchemeGroupVersion.Group,
-				Kind:  newTr.GetObjectKind().GroupVersionKind().Kind},
-			newTr.Name,
+				Kind:  newTestrun.GetObjectKind().GroupVersionKind().Kind},
+			newTestrun.Name,
 			field.ErrorList{
 				field.Forbidden(field.NewPath("spec"), "testrun spec is not allowed to be updated"),
 			},
@@ -111,10 +96,6 @@ func (v *TestRunCustomValidator) ValidateUpdate(ctx context.Context, oldObj, new
 	return nil, nil
 }
 
-func (v *TestRunCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
-	_, ok := obj.(*tmv1beta1.Testrun)
-	if !ok {
-		return admission.Warnings{}, fmt.Errorf("expected a TestRun object but got object type: %T", obj)
-	}
+func (v *TestRunCustomValidator) ValidateDelete(ctx context.Context, testrun *tmv1beta1.Testrun) (warnings admission.Warnings, err error) {
 	return nil, nil
 }
