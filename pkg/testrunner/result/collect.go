@@ -92,20 +92,27 @@ func (c *Collector) uploadStatusAssets(ctx context.Context, cfg Config, log logr
 		return
 	}
 
-	if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
-		err := errors.New("missing github password / github user / component descriptor path argument")
-		log.Error(err, fmt.Sprintf("components: %s, ghUser: %s, ghPasswordLength: %d", cfg.AssetComponents, cfg.GithubUser, len(cfg.GithubPassword)))
-		return
-	}
+	if cfg.OutputDir != "" {
+		if err := StoreResultsAsFiles(log.WithName("results-files"), runs, cfg.AssetPrefix, cfg.OutputDir); err != nil {
+			log.Error(err, "unable to store results as files")
+			return
+		}
+	} else {
+		if len(cfg.AssetComponents) == 0 || cfg.GithubPassword == "" || cfg.GithubUser == "" || cfg.ComponentDescriptorPath == "" {
+			err := errors.New("missing github password / github user / component descriptor path argument")
+			log.Error(err, fmt.Sprintf("components: %s, ghUser: %s, ghPasswordLength: %d", cfg.AssetComponents, cfg.GithubUser, len(cfg.GithubPassword)))
+			return
+		}
 
-	componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.Repository, cfg.OCMConfigPath)
-	if err != nil {
-		log.Error(err, "unable to get component for upload")
-		return
-	}
-	if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
-		log.Error(err, "unable to upload status to github")
-		return
+		componentsForUpload, err := getComponentsForUpload(ctx, log, cfg.ComponentDescriptorPath, cfg.AssetComponents, cfg.Repository, cfg.OCMConfigPath)
+		if err != nil {
+			log.Error(err, "unable to get component for upload")
+			return
+		}
+		if err := UploadStatusToGithub(log.WithName("github-upload"), runs, componentsForUpload, cfg.GithubUser, cfg.GithubPassword, cfg.AssetPrefix); err != nil {
+			log.Error(err, "unable to upload status to github")
+			return
+		}
 	}
 
 	if err := MarkTestrunsAsUploadedToGithub(log, tmClient, runs); err != nil {

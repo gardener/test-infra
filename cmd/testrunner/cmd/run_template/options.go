@@ -208,10 +208,10 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 
 	fs.StringVar(&o.summaryFilePath, "summary-file-path", "", "Path to a summary file. If set, the testrun summary will be appended to this file.")
 
+	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "", "The filepath where the summary files should be written to.")
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery
 	fs.Int64("interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	fs.String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	fs.String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	fs.String("es-username", "", "username to authenticate against a elasticsearch instance")

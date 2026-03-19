@@ -29,6 +29,41 @@ import (
 	"github.com/gardener/test-infra/pkg/util/output"
 )
 
+// StoreResultsAsFiles will assemble an overview status file and a zip archive with the detailed status of each testrun, and stores them locally as files.
+// The file names are prefixed with the given assetPrefix and the landscape name of the testruns.
+func StoreResultsAsFiles(log logr.Logger, runs testrunner.RunList, assetPrefix string, resultsDirectoryPath string) error {
+	dest, err := filepath.Abs(resultsDirectoryPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get absolute path of %s", resultsDirectoryPath)
+	}
+	log.V(3).Info(fmt.Sprintf("Storing asset files temporary to directory '%s'", dest))
+
+	testrunsToUpload := identifyTestrunsToUpload(runs, AssetOverview{}, assetPrefix)
+	if len(testrunsToUpload) == 0 {
+		log.Info("no testrun updates, therefore no assets to upload")
+		return nil
+	}
+	log.Info(fmt.Sprintf("identified %d testruns for github asset upload", len(testrunsToUpload)))
+
+	overviewFilepath := filepath.Join(dest, fmt.Sprintf("%s%s_overview.json", assetPrefix, runs[0].Metadata.Landscape))
+	err = createOrUpdateOverview(log, overviewFilepath, testrunsToUpload, assetPrefix)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create/update overview file %s", overviewFilepath)
+	}
+
+	statusDirPath := filepath.Join(dest, assetPrefix+testrunsToUpload[0].Metadata.Landscape)
+	if err := os.RemoveAll(statusDirPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.MkdirAll(statusDirPath, 0750); err != nil {
+		return errors.Wrapf(err, "failed to create dir: %s", statusDirPath)
+	}
+	if err := storeRunsStatusAsFiles(log, testrunsToUpload, assetPrefix, statusDirPath); err != nil {
+		return errors.Wrapf(err, "Failed to store testrun status as files")
+	}
+	return nil
+}
+
 // uploads status results as assets to github component releases
 func UploadStatusToGithub(log logr.Logger, runs testrunner.RunList, components []*componentdescriptor.Component, githubUser, githubPassword, assetPrefix string) error {
 	var (
