@@ -102,6 +102,7 @@ func init() {
 	collectCmd.Flags().BoolVar(&collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
 	collectCmd.Flags().StringVar(&collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "On error dir which is used by Concourse.")
 	collectCmd.Flags().StringVar(&collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	collectCmd.Flags().StringVar(&collectConfig.OutputDir, "output-dir-path", "", "The filepath where the summary files should be written to.")
 	collectCmd.Flags().StringArrayVar(&collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
 	collectCmd.Flags().StringVar(&collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 
@@ -112,7 +113,7 @@ func init() {
 	collectCmd.Flags().BoolVar(&collectConfig.PostSummaryInSlack, "post-summary-in-slack", false, "Post testruns summary in slack.")
 
 	// DEPRECATED FLAGS
-	collectCmd.Flags().StringP("output-dir-path", "o", "./testout", "The filepath where the summary should be written to.")
+
 	collectCmd.Flags().String("es-config-name", "sap_internal", "DEPRECATED: The elasticsearch secret-server config name.")
 	collectCmd.Flags().String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	collectCmd.Flags().String("es-username", "", "username to authenticate against a elasticsearch instance")
@@ -120,7 +121,6 @@ func init() {
 	collectCmd.Flags().String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint of the testmachinery cluster.")
 	collectCmd.Flags().Bool("s3-ssl", false, "S3 has SSL enabled.")
 	collectCmd.Flags().StringVar(&collectConfig.CICDJobURL, "concourse-url", "", "Concourse job URL.")
-	_ = collectCmd.Flags().MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("es-endpoint", "DEPRECATED: will not we used anymore")
 	_ = collectCmd.Flags().MarkDeprecated("es-username", "DEPRECATED: will not we used anymore")

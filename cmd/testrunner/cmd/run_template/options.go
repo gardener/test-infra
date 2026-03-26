@@ -176,6 +176,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.BoolVar(&o.collectConfig.UploadStatusAsset, "upload-status-asset", false, "Upload testrun status as a github release asset.")
 	fs.StringVar(&o.collectConfig.GithubUser, "github-user", os.Getenv("GITHUB_USER"), "GitHUb username.")
 	fs.StringVar(&o.collectConfig.GithubPassword, "github-password", os.Getenv("GITHUB_PASSWORD"), "Github password.")
+	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "", "The filepath where the summary files should be written to.")
 	fs.StringArrayVar(&o.collectConfig.AssetComponents, "asset-component", []string{}, "The github components to which the testrun status shall be attached as an asset.")
 	fs.StringVar(&o.collectConfig.AssetPrefix, "asset-prefix", "", "Prefix of the asset name.")
 
@@ -211,7 +212,6 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	// DEPRECATED FLAGS
 	// is now handled by the testmachinery
 	fs.Int64("interval", 20, "Poll interval in seconds of the testrunner to poll for the testrun status.")
-	fs.StringVar(&o.collectConfig.OutputDir, "output-dir-path", "./testout", "The filepath where the summary should be written to.")
 	fs.String("es-config-name", "sap_internal", "The elasticsearch secret-server config name.")
 	fs.String("es-endpoint", "", "endpoint of the elasticsearch instance")
 	fs.String("es-username", "", "username to authenticate against a elasticsearch instance")
@@ -220,9 +220,6 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.Bool("s3-ssl", false, "S3 has SSL enabled.")
 	fs.StringVar(&o.collectConfig.CICDJobURL, "concourse-url", "", "Concourse job URL.")
 	if err := fs.MarkDeprecated("interval", "DEPRECATED: will not we used anymore"); err != nil {
-		return err
-	}
-	if err := fs.MarkDeprecated("output-dir-path", "DEPRECATED: will not we used anymore"); err != nil {
 		return err
 	}
 	if err := fs.MarkDeprecated("es-config-name", "DEPRECATED: will not we used anymore"); err != nil {
