@@ -8,8 +8,8 @@
   imageReference: quay.io/argoproj/argocli:v3.7.13
   version: v3.7.13
 - name: vali
-  imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali:v2.2.31
-  version: v2.2.31
+  imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali:v2.2.32
+  version: v2.2.32
 - name: valitail
-  imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail:v2.2.31
-  version: v2.2.31
+  imageReference: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail:v2.2.32
+  version: v2.2.32
