@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
@@ -415,10 +416,42 @@ func getAssetIDByName(component ComponentExtended, filename string) (int64, erro
 	return 0, nil
 }
 
-// gets a GitHub release of a repo based on given version
+// retrySleepFunc and retryMaxDuration are package-level variables to allow overriding in tests.
+var retrySleepFunc = time.Sleep
+var retryMaxDuration = 10 * time.Minute
+var retryInitialInterval = 1 * time.Minute
+
+// gets a GitHub release of a repo based on given version.
+// Retries with increasing sleep intervals (1m, 2m, 3m, 4m) up to a maximum of 10 minutes
+// before giving up if no release is found.
 func getRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string) (*github.RepositoryRelease, error) {
 	log := logger.Log.WithName("GetGithubReleases")
 
+	startTime := time.Now()
+	sleepDuration := retryInitialInterval
+	attempt := 0
+
+	for {
+		attempt++
+		release, err := tryGetRelease(githubClient, repoOwner, repoName, componentVersion, log)
+		if err == nil {
+			return release, nil
+		}
+
+		elapsed := time.Since(startTime)
+		if elapsed+sleepDuration > retryMaxDuration {
+			log.Info(fmt.Sprintf("giving up after %d attempts over %s", attempt, elapsed.Round(time.Second)))
+			return nil, errors.Wrapf(err, "failed to find release after retrying for %s", elapsed.Round(time.Second))
+		}
+
+		log.Info(fmt.Sprintf("attempt %d failed to find release for %s/%s %s, retrying in %s...", attempt, repoOwner, repoName, componentVersion, sleepDuration))
+		retrySleepFunc(sleepDuration)
+		sleepDuration += retryInitialInterval
+	}
+}
+
+// tryGetRelease performs a single attempt to find a GitHub release by tag or by name.
+func tryGetRelease(githubClient *github.Client, repoOwner, repoName, componentVersion string, log logr.Logger) (*github.RepositoryRelease, error) {
 	version, err := semver.NewVersion(componentVersion)
 	if err != nil {
 		return nil, errors.Wrapf(err, "version parse failed of %s", componentVersion)
