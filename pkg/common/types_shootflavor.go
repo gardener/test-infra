@@ -110,8 +110,11 @@ type ExtendedConfiguration struct {
 	FloatingPoolName     string `json:"floatingPoolName"`
 	LoadbalancerProvider string `json:"loadbalancerProvider"`
 
-	NetworkingType string `json:"networkingType"`
-	IpFamilies     string `json:"ipFamilies"`
+	NetworkingType         string `json:"networkingType"`
+	IpFamilies             string `json:"ipFamilies"`
+	NetworkingPodsCidr     string `json:"networkingPodsCidr"`
+	NetworkingServicesCidr string `json:"networkingServicesCidr"`
+	NetworkingNodesCidr    string `json:"networkingNodesCidr"`
 
 	ControlPlaneFailureTolerance string `json:"controlPlaneFailureTolerance"`
 

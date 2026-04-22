@@ -160,6 +160,7 @@ rules:
       - ""
     resources:
       - configmaps
+      - namespaces
     verbs:
       - get
       - watch
@@ -236,13 +237,21 @@ rules:
       - create
       - patch
   - apiGroups:
-      - policy
+      - "policy"
     resources:
       - poddisruptionbudgets
     verbs:
       - create
       - get
       - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+    resourceNames:
+      - argo-workflows-agent-ca-certificates
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 # needs to be Cluster wide as UI wants to list workflows for the whole cluster

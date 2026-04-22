@@ -3,7 +3,7 @@ fullnameOverride: logging-vali
 
 image:
   repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali
-  tag: v2.2.31
+  tag: v2.2.32
   pullPolicy: IfNotPresent
 
   ## Optionally specify an array of imagePullSecrets.
@@ -25,6 +25,7 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+  ingressClassName: "nginx"
 
 ## Affinity for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity

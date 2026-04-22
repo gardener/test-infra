@@ -25,6 +25,7 @@ metadata:
   name: {{ .Values.argoserver.ingress.name }}
   namespace: {{ .Release.Namespace }}
 spec:
+  ingressClassName: {{ default "nginx" .Values.argoserver.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.argoserver.ingress.host }}
       http:
