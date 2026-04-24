@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.62.1
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/argoproj/argo-workflows/v3 v3.7.11
+	github.com/argoproj/argo-workflows/v3 v3.7.14
 	github.com/bradleyfalzon/ghinstallation/v2 v2.18.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gardener/gardener v1.136.2
@@ -183,7 +183,7 @@ require (
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.8.0 // indirect
-	github.com/go-git/go-git/v5 v5.17.1 // indirect
+	github.com/go-git/go-git/v5 v5.18.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -239,7 +239,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gowebpki/jcs v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -371,7 +371,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
@@ -404,7 +404,7 @@ require (
 	k8s.io/cli-runtime v0.35.1 // indirect
 	k8s.io/code-generator v0.35.4 // indirect
 	k8s.io/component-base v0.35.4 // indirect
-	k8s.io/gengo v0.0.0-20251215205346-5ee0d033ba5b // indirect
+	k8s.io/gengo v0.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
