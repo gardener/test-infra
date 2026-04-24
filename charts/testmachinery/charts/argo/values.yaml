@@ -59,7 +59,9 @@ argoserver:
     annotations: { }
     labels: { }
     ingressClassName: "nginx"
-  serviceType: ClusterIP
+  service:
+    type: ClusterIP
+    annotations: { }
 
 objectStorage:
   keyPrefix: "testmachinery"
