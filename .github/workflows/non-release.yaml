@@ -1,4 +1,4 @@
-name: Build Snapshot
+name: 📷 Build Snapshot
 
 on:
   push:
