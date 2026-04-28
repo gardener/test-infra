@@ -8,10 +8,16 @@ kind: Service
 metadata:
   name: argo-server
   namespace: {{.Release.Namespace}}
+  {{- if .Values.argoserver.service.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.argoserver.service.annotations }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+  {{- end }}
   labels:
       argo-version: v3
 spec:
-    type: {{.Values.argoserver.serviceType}}
+    type: {{.Values.argoserver.service.type}}
     ports:
     - port: 80
       targetPort: 2746

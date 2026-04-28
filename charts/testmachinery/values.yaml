@@ -162,7 +162,9 @@ argo:
       host: "argo.example.com"
     #    annotations: { }
     #    labels: { }
-    serviceType: ClusterIP
+    service:
+      type: ClusterIP
+      # annotations: { }
 
   objectStorage:
     keyPrefix: "testmachinery"
