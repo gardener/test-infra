@@ -75,7 +75,7 @@ func (c *client) isInRequestedTeam(ctx context.Context, event *GenericRequestEve
 			c.log.V(3).Info(err.Error(), "team", c.defaultTeam.GetName())
 			return false
 		}
-		if MembershipStatus(membership.GetState()) != MembershipStatusActive {
+		if MembershipStatus(membership.GetState()) == MembershipStatusActive {
 			return true
 		}
 		return false
