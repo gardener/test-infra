@@ -27,6 +27,7 @@ func (a *dummyAuth) Protect(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !a.loggedIn {
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
+			return
 		}
 		handler(w, r)
 	}
