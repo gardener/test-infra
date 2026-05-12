@@ -16,6 +16,12 @@ metadata:
     {{- range $key, $value := .Values.ingress.labels }}
     {{ $key }}: {{ $value }}
     {{- end }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
 spec:
   ingressClassName: {{ default "nginx" .Values.ingress.ingressClassName }}
   tls:

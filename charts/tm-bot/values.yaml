@@ -5,6 +5,7 @@
 ingress:
   host: tm-bot.example.com
   labels: {}
+  annotations: {}
   ingressClassName: "nginx"
 
 bot:
