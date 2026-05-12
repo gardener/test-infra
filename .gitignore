@@ -20,3 +20,6 @@ assets
 
 # gosec
 gosec-report.sarif
+
+# AI coding agents
+.claude/
