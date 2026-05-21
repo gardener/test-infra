@@ -3,7 +3,7 @@ module github.com/gardener/test-infra
 go 1.26.1
 
 require (
-	cloud.google.com/go/storage v1.62.1
+	cloud.google.com/go/storage v1.62.2
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/argoproj/argo-workflows/v3 v3.7.14
@@ -37,10 +37,10 @@ require (
 	golang.org/x/oauth2 v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.20.2
-	k8s.io/api v0.35.4
-	k8s.io/apiextensions-apiserver v0.35.4
-	k8s.io/apimachinery v0.35.4
-	k8s.io/client-go v0.35.4
+	k8s.io/api v0.35.5
+	k8s.io/apiextensions-apiserver v0.35.5
+	k8s.io/apimachinery v0.35.5
+	k8s.io/client-go v0.35.5
 	k8s.io/kube-openapi v0.0.0-20260505163821-33341827b392
 	k8s.io/utils v0.0.0-20260507154919-ff6756f316d2
 	ocm.software/ocm v0.37.0
@@ -401,8 +401,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	helm.sh/helm/v4 v4.1.4 // indirect
 	k8s.io/cli-runtime v0.35.1 // indirect
-	k8s.io/code-generator v0.35.4 // indirect
-	k8s.io/component-base v0.35.4 // indirect
+	k8s.io/code-generator v0.35.5 // indirect
+	k8s.io/component-base v0.35.5 // indirect
 	k8s.io/gengo v0.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
 	k8s.io/klog v1.0.0 // indirect
@@ -418,7 +418,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
 
-replace github.com/ThalesIgnite/crypto11 => github.com/ThalesGroup/crypto11 v1.6.0
+replace github.com/ThalesIgnite/crypto11 => github.com/ThalesGroup/crypto11 v1.6.1
 
 tool (
 	github.com/gardener/gardener/hack
