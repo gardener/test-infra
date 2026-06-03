@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
@@ -60,7 +61,7 @@ func GetXMajorsBeforeLatestMachineImageVersion(cloudprofile gardencorev1beta1.Cl
 		return gardencorev1beta1.MachineImageVersion{}, fmt.Errorf("no machine image versions found for cloudprofle %s", cloudprofile.GetName())
 	}
 
-	machineVersions = FilterExpiredMachineImageVersions(FilterArchSpecificMachineImage(machineVersions, arch))
+	machineVersions = FilterExpiredMachineImageVersions(FilterArchSpecificMachineImage(machineVersions, arch, cloudprofile.Spec.MachineCapabilities))
 	if inPlace {
 		machineVersions = FilterInPlaceMachineImageVersions(machineVersions)
 	}
@@ -117,8 +118,17 @@ func GetLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, i
 	return GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0, inPlace)
 }
 
-// FilterArchSpecificMachineImage removes all version which doesn't support given architecture.
-func FilterArchSpecificMachineImage(versions []gardencorev1beta1.MachineImageVersion, architecture string) []gardencorev1beta1.MachineImageVersion {
+// FilterArchSpecificMachineImage removes all versions which don't support the given architecture.
+// It first checks whether the CloudProfile declares a global architecture capability via
+// machineCapabilities. If the requested architecture is covered there, all versions are considered
+// compatible (the per-version Architectures field is not used).
+// If no matching machineCapabilities entry exists, the per-version Architectures field is used as before.
+func FilterArchSpecificMachineImage(versions []gardencorev1beta1.MachineImageVersion, architecture string, machineCapabilities []gardencorev1beta1.CapabilityDefinition) []gardencorev1beta1.MachineImageVersion {
+	for _, cap := range machineCapabilities {
+		if cap.Name == v1beta1constants.ArchitectureName && slices.Contains([]string(cap.Values), architecture) {
+			return slices.Clone(versions)
+		}
+	}
 	filtered := make([]gardencorev1beta1.MachineImageVersion, 0)
 	for _, v := range versions {
 		if slices.Contains(v.Architectures, architecture) {
@@ -175,7 +185,7 @@ func GetLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.Clo
 
 	machineVersions = FilterExpiredMachineImageVersions(
 		FilterInPlaceMachineImageVersions(
-			FilterArchSpecificMachineImage(machineVersions, arch),
+			FilterArchSpecificMachineImage(machineVersions, arch, cloudprofile.Spec.MachineCapabilities),
 		),
 	)
 	if len(machineVersions) == 0 {
