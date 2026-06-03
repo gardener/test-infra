@@ -34,8 +34,8 @@ func GetMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, worker 
 				Version: version,
 			},
 		}
-	case common.PatternLatest:
-		machineImageVersion, err = GetLatestMachineImageVersion(cloudprofile, imageName, arch, inPlace)
+	case common.PatternLatest: // get the latest available machine image version from the cloudprofile
+		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0, inPlace)
 	case common.PatternOneMajorBeforeLatest:
 		machineImageVersion, err = GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 1, inPlace)
 	case common.PatternTwoMajorBeforeLatest:
@@ -110,11 +110,6 @@ func getXMajorsBeforeLatestMachineImageVersion(rawVersions []gardencorev1beta1.M
 		}
 	}
 	return gardencorev1beta1.MachineImageVersion{}, errors.New(fmt.Sprintf("no machine image version matching the pattern latest-%d found", x))
-}
-
-// GetLatestMachineImageVersion returns the latest available machine image version from the cloudprofile
-func GetLatestMachineImageVersion(cloudprofile gardencorev1beta1.CloudProfile, imageName, arch string, inPlace bool) (gardencorev1beta1.MachineImageVersion, error) {
-	return GetXMajorsBeforeLatestMachineImageVersion(cloudprofile, imageName, arch, 0, inPlace)
 }
 
 // FilterArchSpecificMachineImage removes all version which doesn't support given architecture.
