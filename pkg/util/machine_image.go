@@ -127,9 +127,15 @@ func archsFromCapabilityFlavors(v providerConfigMachineImageVersion) []string {
 // archsFromLegacyFormats extracts architectures from the legacy region and
 // flat formats on a single providerConfig version entry. Remove this function
 // (and its call site) once all providers have migrated to capability flavors.
+//
+// Region entries without an explicit architecture default to amd64.
 func archsFromLegacyFormats(v providerConfigMachineImageVersion) []string {
 	archs := make([]string, 0)
 	for _, region := range v.Regions {
+		if region.Architecture == "" {
+			archs = append(archs, "amd64")
+			continue
+		}
 		archs = append(archs, region.Architecture)
 	}
 	if v.Architecture != "" {

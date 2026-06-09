@@ -394,6 +394,13 @@ var _ = Describe("machine image version", func() {
 					"3.0.0": {arch_amd64, arch_arm64},
 				}),
 				[]string{"1.0.0", "3.0.0"}, []string{"2.0.0", "3.0.0"}),
+			Entry("region format defaults missing region.architecture to amd64",
+				regionFormatProviderConfig(imageName, map[string][]string{
+					"1.0.0": {""}, // single region, no architecture set
+					"2.0.0": {arch_arm64},
+					"3.0.0": {"", arch_arm64}, // mixed: empty + explicit arm64
+				}),
+				[]string{"1.0.0", "3.0.0"}, []string{"2.0.0", "3.0.0"}),
 			Entry("flat format with duplicate version entries",
 				flatFormatProviderConfig(imageName, map[string][]string{
 					"1.0.0": {arch_amd64},
