@@ -7,7 +7,7 @@ package util
 import (
 	"encoding/json"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -41,6 +41,6 @@ func BuildCapabilityProviderConfig(imagesByName ArchsByImage) *runtime.RawExtens
 		images = append(images, providerConfigMachineImage{Name: imageName, Versions: versions})
 	}
 	raw, err := json.Marshal(providerConfigMachineImages{MachineImages: images})
-	Expect(err).ToNot(HaveOccurred())
+	gomega.Expect(err).ToNot(gomega.HaveOccurred())
 	return &runtime.RawExtension{Raw: raw}
 }
