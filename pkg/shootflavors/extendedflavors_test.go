@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/test-infra/pkg/common"
+	"github.com/gardener/test-infra/pkg/util"
 )
 
 var _ = Describe("extended flavor test", func() {
@@ -64,6 +65,10 @@ var _ = Describe("extended flavor test", func() {
 						Versions: MachineImageVersions(map[string][]string{"0.0.4": {"arm64"}, "0.0.3": {"arm64"}}),
 					},
 				},
+				ProviderConfig: util.BuildCapabilityProviderConfig(util.ArchsByImage{
+					"test-os":   {"0.0.2": {"amd64"}, "0.0.1": {"amd64"}},
+					"test-os-2": {"0.0.4": {"arm64"}, "0.0.3": {"arm64"}},
+				}),
 			},
 		}
 	})
