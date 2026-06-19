@@ -185,10 +185,10 @@ logging:
   valitail:
     image:
       repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/valitail
-      tag: v2.2.32
+      tag: v2.2.34
   vali:
     image:
       repository: europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali
-      tag: v2.2.32
+      tag: v2.2.34
     persistence:
       storageClassName: default
