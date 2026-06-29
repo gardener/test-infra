@@ -3,12 +3,12 @@ module github.com/gardener/test-infra
 go 1.26.1
 
 require (
-	cloud.google.com/go/storage v1.62.3
-	github.com/Masterminds/semver/v3 v3.4.0
+	cloud.google.com/go/storage v1.63.0
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/argoproj/argo-workflows/v3 v3.7.14
-	github.com/bradleyfalzon/ghinstallation/v2 v2.18.0
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gardener/gardener v1.136.2
 	github.com/gardener/gardener-extension-provider-aws v1.67.4
 	github.com/ghodss/yaml v1.0.0
@@ -24,8 +24,8 @@ require (
 	github.com/mandelsoft/logging v0.0.0-20260220094735-62d1006ceeb4
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v1.1.4
-	github.com/onsi/ginkgo/v2 v2.28.3
-	github.com/onsi/gomega v1.40.0
+	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/gomega v1.42.1
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.4
@@ -33,14 +33,14 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	go.uber.org/mock v0.6.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	golang.org/x/oauth2 v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.20.2
-	k8s.io/api v0.35.6
-	k8s.io/apiextensions-apiserver v0.35.6
-	k8s.io/apimachinery v0.35.6
-	k8s.io/client-go v0.35.6
+	helm.sh/helm/v3 v3.21.2
+	k8s.io/api v0.36.2
+	k8s.io/apiextensions-apiserver v0.36.2
+	k8s.io/apimachinery v0.36.2
+	k8s.io/client-go v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260624041617-8f3fa4921821
 	k8s.io/utils v0.0.0-20260617174310-a95e086a2553
 	ocm.software/ocm v0.37.0
@@ -401,7 +401,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	helm.sh/helm/v4 v4.1.4 // indirect
 	k8s.io/cli-runtime v0.35.1 // indirect
-	k8s.io/code-generator v0.35.6 // indirect
+	k8s.io/code-generator v0.36.2 // indirect
 	k8s.io/component-base v0.35.6 // indirect
 	k8s.io/gengo v0.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
