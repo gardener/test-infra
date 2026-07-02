@@ -142,7 +142,7 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			if grafanaHostURL != "" {
 				item.Steps[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForStep(grafanaHostURL, tr.Status.Workflow, step.TestDefinition.Name)
 			}
-			if gardenerDashboardURL != "" && shootName != "" && shootProjectNamespace != "" {
+			if gardenerDashboardURL != "" && shootName != "" && shootProjectNamespace != "" && step.TestDefinition.Name == "create-shoot" {
 				item.Steps[i].ShootURL = testrunner.GetGardenerDashboardShootURL(gardenerDashboardURL, shootProjectNamespace, shootName)
 			}
 		}
