@@ -76,7 +76,7 @@
                                 <div class="mdl-tooltip" for="grafana-url-{{$step.Name}}">Show logs</div>
                             {{ end }}
                         </td>
-                        <td class="mdl-data-table__cell--numeric actions">
+                        <td class="mdl-data-table__cell--numeric actions" style="padding-left: 0">
                             {{ if $step.ShootURL }}
                                 <a id="shoot-url-{{$step.Name}}" href="{{ $step.ShootURL }}" target="_blank" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab"><i class="material-icons" style="color:#4caf50">grass</i></a>
                                 <div class="mdl-tooltip" for="shoot-url-{{$step.Name}}">Open shoot in Gardener</div>
