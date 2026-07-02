@@ -48,6 +48,12 @@ type Dashboard struct {
 
 	// Authentication to restrict access to specific parts in the dashboard
 	Authentication DashboardAuthentication `json:"authentication"`
+
+	// GardenerDashboardURLTemplate is the base URL template for the Gardener dashboard.
+	// Use {landscape} as a placeholder for the landscape name.
+	// When set, shoot-related test steps display a link to the shoot in the Gardener dashboard.
+	// +optional
+	GardenerDashboardURLTemplate string `json:"gardenerDashboardURLTemplate,omitempty"`
 }
 
 // DashboardAuthenticationProvider is a enum to specify a dashboard authentication method
