@@ -65,6 +65,12 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 		grafanaHostURL, _ := testrunner.GetGrafanaHost(ctx, p.runs.GetClient())
 		shootName := tr.Annotations["shoot.name"]
 		shootProjectNamespace := tr.Annotations["shoot.projectNamespace"]
+		if shootName == "" {
+			shootName = getSpecConfigValue(tr.Spec.Config, "SHOOT_NAME")
+		}
+		if shootProjectNamespace == "" {
+			shootProjectNamespace = getSpecConfigValue(tr.Spec.Config, "PROJECT_NAMESPACE")
+		}
 		landscape := tr.Annotations[common.AnnotationLandscape]
 		gardenerDashboardURL := strings.ReplaceAll(p.gardenerDashboardURLTemplate, "{landscape}", landscape)
 		metadata := metadata2.FromTestrun(tr)
@@ -204,4 +210,13 @@ func (l testrunStepStatusItemList) Less(a, b int) bool {
 		return true
 	}
 	return l[a].step.StartTime.Before(l[b].step.StartTime)
+}
+
+func getSpecConfigValue(config []v1beta1.ConfigElement, name string) string {
+	for _, c := range config {
+		if c.Name == name {
+			return c.Value
+		}
+	}
+	return ""
 }
