@@ -112,8 +112,8 @@ github.com/PaesslerAG/jsonpath v0.1.2-0.20240726212847-3a740cf7976f h1:TxDCeKRCg
 github.com/PaesslerAG/jsonpath v0.1.2-0.20240726212847-3a740cf7976f/go.mod h1:zTyVtYhYjcHpfCtqnCMxejgp0pEEwb/xJzhn05NrkJk=
 github.com/ProtonMail/go-crypto v1.3.0 h1:ILq8+Sf5If5DCpHQp4PbZdS1J7HDFRXz/+xKBiRGFrw=
 github.com/ProtonMail/go-crypto v1.3.0/go.mod h1:9whxjD8Rbs29b4XWbB8irEcE8KHMqaR2e7GWU1R+/PE=
-github.com/ThalesGroup/crypto11 v1.6.1 h1:8A8dZPAJPkQnuE55rRkaFWKuLvZ0fklrtJuOd1r92yU=
-github.com/ThalesGroup/crypto11 v1.6.1/go.mod h1:JcRp7axGx5fDqzAcco/jC1BYMHCvd+hKPwpdoaMNHMQ=
+github.com/ThalesGroup/crypto11 v1.6.2 h1:X+JsrOlKanaIlHgwV/3MJ/cFivbEaQ8kpXRPoiC2T+c=
+github.com/ThalesGroup/crypto11 v1.6.2/go.mod h1:fQ61t02lJdXD2HrG7upt/VRlDECsipwtqpPcZJEjBKg=
 github.com/VictoriaMetrics/VictoriaLogs v1.36.2-0.20251008164716-21c0fb3de84d h1:fV15mhBCGpCCBbuOAbOflO8Air+tLklMt8bG35FimzQ=
 github.com/VictoriaMetrics/VictoriaLogs v1.36.2-0.20251008164716-21c0fb3de84d/go.mod h1:JKZK8LZ9O38pW3+CbBSqL64nswBg6nJ0GE788b0Ps/8=
 github.com/VictoriaMetrics/VictoriaMetrics v1.131.0 h1:OHO0EnZ8zEm0cOtxzMFiQWJV6sn0+gnd0WbdBy00eUE=
