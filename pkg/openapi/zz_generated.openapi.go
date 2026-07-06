@@ -375,6 +375,13 @@ func schema_test_infra_pkg_apis_config_Dashboard(ref common.ReferenceCallback) c
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config.DashboardAuthentication"),
 						},
 					},
+					"gardenerDashboardURLTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GardenerDashboardURLTemplate is the base URL template for the Gardener dashboard. Use {landscape} as a placeholder for the landscape name. When set, shoot-related test steps display a link to the shoot in the Gardener dashboard.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"UIBasePath", "authentication"},
 			},
@@ -1271,6 +1278,13 @@ func schema_pkg_apis_config_v1beta1_Dashboard(ref common.ReferenceCallback) comm
 							Description: "Authentication to restrict access to specific parts in the dashboard",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/gardener/test-infra/pkg/apis/config/v1beta1.DashboardAuthentication"),
+						},
+					},
+					"gardenerDashboardURLTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GardenerDashboardURLTemplate is the base URL template for the Gardener dashboard. Use {landscape} as a placeholder for the landscape name. When set, shoot-related test steps display a link to the shoot in the Gardener dashboard.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

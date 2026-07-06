@@ -135,6 +135,11 @@ func GetHostURLFromIngressObject(ingress *netv1.Ingress) (string, error) {
 	return hostUrl.String(), nil
 }
 
+// GetGardenerDashboardShootURL returns the Gardener dashboard URL for a specific shoot
+func GetGardenerDashboardShootURL(dashboardBaseURL, projectNamespace, shootName string) string {
+	return fmt.Sprintf("%s/namespace/%s/shoots/%s", dashboardBaseURL, projectNamespace, shootName)
+}
+
 // GetCloudProfilesFromDisk walks through the filesystem and returns all found CloudProfiles
 func GetCloudProfilesFromDisk(cloudProfileSearchPath string) (map[string]gardencorev1beta1.CloudProfile, error) {
 	scheme := runtime.NewScheme()

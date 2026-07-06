@@ -42,6 +42,7 @@ type testrunStepStatusItem struct {
 	IsSystem bool
 
 	GrafanaURL string
+	ShootURL   string
 }
 
 func NewTestrunPage(p *Page) http.HandlerFunc {
@@ -62,6 +63,16 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 
 		argoHostURL, _ := testrunner.GetArgoHost(ctx, p.runs.GetClient())
 		grafanaHostURL, _ := testrunner.GetGrafanaHost(ctx, p.runs.GetClient())
+		shootName := tr.Annotations["shoot.name"]
+		shootProjectNamespace := tr.Annotations["shoot.projectNamespace"]
+		if shootName == "" {
+			shootName = getSpecConfigValue(tr.Spec.Config, "SHOOT_NAME")
+		}
+		if shootProjectNamespace == "" {
+			shootProjectNamespace = getSpecConfigValue(tr.Spec.Config, "PROJECT_NAMESPACE")
+		}
+		landscape := tr.Annotations[common.AnnotationLandscape]
+		gardenerDashboardURL := strings.ReplaceAll(p.gardenerDashboardURLTemplate, "{landscape}", landscape)
 		metadata := metadata2.FromTestrun(tr)
 		startTime := ""
 		if tr.Status.StartTime != nil {
@@ -131,6 +142,9 @@ func NewTestrunPage(p *Page) http.HandlerFunc {
 			if grafanaHostURL != "" {
 				item.Steps[i].GrafanaURL = testrunner.GetGrafanaURLFromHostForStep(grafanaHostURL, tr.Status.Workflow, step.TestDefinition.Name)
 			}
+			if gardenerDashboardURL != "" && shootName != "" && shootProjectNamespace != "" && step.TestDefinition.Name == "create-shoot" {
+				item.Steps[i].ShootURL = testrunner.GetGardenerDashboardShootURL(gardenerDashboardURL, shootProjectNamespace, shootName)
+			}
 		}
 
 		sort.Sort(item.Steps)
@@ -196,4 +210,13 @@ func (l testrunStepStatusItemList) Less(a, b int) bool {
 		return true
 	}
 	return l[a].step.StartTime.Before(l[b].step.StartTime)
+}
+
+func getSpecConfigValue(config []v1beta1.ConfigElement, name string) string {
+	for _, c := range config {
+		if c.Name == name {
+			return c.Value
+		}
+	}
+	return ""
 }

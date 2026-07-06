@@ -16,7 +16,7 @@ import (
 	"github.com/gardener/test-infra/pkg/tm-bot/ui/pages"
 )
 
-func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Provider, r *mux.Router) {
+func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Provider, r *mux.Router, gardenerDashboardURLTemplate string) {
 	fs := http.FileServer(http.Dir(filepath.Join(basePath, "static")))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
@@ -24,7 +24,7 @@ func Serve(log logr.Logger, runs *tests.Runs, basePath string, a auth.Provider, 
 	r.HandleFunc("/login", a.Login)
 	r.HandleFunc("/logout", a.Logout)
 
-	page := pages.New(log, runs, a, basePath)
+	page := pages.New(log, runs, a, basePath, gardenerDashboardURLTemplate)
 
 	r.HandleFunc("/command-help", pages.NewCommandHelpPage(log, a, basePath))
 	r.HandleFunc("/command-help/{plugin}", pages.NewCommandDetailedHelpPage(log, a, basePath))

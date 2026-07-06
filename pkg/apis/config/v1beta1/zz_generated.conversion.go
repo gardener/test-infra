@@ -387,6 +387,7 @@ func autoConvert_v1beta1_Dashboard_To_config_Dashboard(in *Dashboard, out *confi
 	if err := Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
 		return err
 	}
+	out.GardenerDashboardURLTemplate = in.GardenerDashboardURLTemplate
 	return nil
 }
 
@@ -400,6 +401,7 @@ func autoConvert_config_Dashboard_To_v1beta1_Dashboard(in *config.Dashboard, out
 	if err := Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
 		return err
 	}
+	out.GardenerDashboardURLTemplate = in.GardenerDashboardURLTemplate
 	return nil
 }
 

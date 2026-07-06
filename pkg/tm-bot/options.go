@@ -58,7 +58,7 @@ func (o *options) setupDashboard(router *mux.Router, runs *tests.Runs) error {
 		return fmt.Errorf("no authentication provider with name %s", authCfg.Provider)
 	}
 
-	ui.Serve(o.log, runs, o.cfg.Dashboard.UIBasePath, authProvider, router)
+	ui.Serve(o.log, runs, o.cfg.Dashboard.UIBasePath, authProvider, router, o.cfg.Dashboard.GardenerDashboardURLTemplate)
 	return nil
 }
 

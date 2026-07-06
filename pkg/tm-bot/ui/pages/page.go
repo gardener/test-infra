@@ -18,10 +18,11 @@ import (
 )
 
 type Page struct {
-	basePath string
-	log      logr.Logger
-	auth     auth.Provider
-	runs     *tests.Runs
+	basePath                     string
+	log                          logr.Logger
+	auth                         auth.Provider
+	runs                         *tests.Runs
+	gardenerDashboardURLTemplate string
 }
 
 type globalSettings struct {
@@ -41,12 +42,13 @@ type user struct {
 	Name string
 }
 
-func New(logger logr.Logger, runs *tests.Runs, auth auth.Provider, basePath string) *Page {
+func New(logger logr.Logger, runs *tests.Runs, auth auth.Provider, basePath string, gardenerDashboardURLTemplate string) *Page {
 	return &Page{
-		basePath: basePath,
-		log:      logger,
-		auth:     auth,
-		runs:     runs,
+		basePath:                     basePath,
+		log:                          logger,
+		auth:                         auth,
+		runs:                         runs,
+		gardenerDashboardURLTemplate: gardenerDashboardURLTemplate,
 	}
 }
 
