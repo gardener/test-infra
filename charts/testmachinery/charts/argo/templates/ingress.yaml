@@ -14,13 +14,13 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     {{- range $key, $value := .Values.argoserver.ingress.annotations }}
-    {{ $key }}: {{ $value }}
+    {{ $key }}: {{ $value | quote }}
   {{- end }}
   labels:
     garden.sapcloud.io/purpose: managed-cert
     argo-version: v3
     {{- range $key, $value := .Values.argoserver.ingress.labels }}
-    {{ $key }}: {{ $value }}
+    {{ $key }}: {{ $value | quote }}
   {{- end }}
   name: {{ .Values.argoserver.ingress.name }}
   namespace: {{ .Release.Namespace }}

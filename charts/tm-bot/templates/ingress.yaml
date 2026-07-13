@@ -14,7 +14,7 @@ metadata:
   labels:
     garden.sapcloud.io/purpose: managed-cert
     {{- range $key, $value := .Values.ingress.labels }}
-    {{ $key }}: {{ $value }}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
   {{- with .Values.ingress.annotations }}
   annotations:
