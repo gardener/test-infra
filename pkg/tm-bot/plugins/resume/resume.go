@@ -45,7 +45,7 @@ func (r *resume) Authorization() github.AuthorizationType {
 }
 
 func (r *resume) Description() string {
-	return "Prints the provided value"
+	return "Resumes a paused testrun for the current PR"
 }
 
 func (r *resume) Example() string {

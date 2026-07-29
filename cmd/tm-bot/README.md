@@ -2,13 +2,45 @@
 
 The Testmachinery GitHub bot is a [GitHub app](https://developer.github.com/apps/about-apps/) that listens on Pull Request events/webhooks and reacts on them.
 
-It also checks if a user is authorized (currently is member of the organization) to perform teh command.
+It also checks if a user is authorized (currently is member of the organization) to perform the command.
 
 The bot is mainly build to run integration tests in PR's and report back the correct status.
 
 ## Plugins
 
-[Command help](https://tm.gardener.cloud/command-help)
+### Available Commands
+
+| Command | Description | Authorization | Example |
+|---------|-------------|---------------|---------|
+| `/test` | Runs a testrun specified by flags or default config. The current repository is injected as a default location. | team | `/test [sub-command] [--flags]` |
+| `/test-single` | Runs a single testrun specified by a path or default config. | team | `/test-single [path to the testrun]` |
+| `/skip` | Clears the TestMachinery GitHub status to skip a failed or pending test. | codeowners | `/skip` |
+| `/resume` | Resumes a paused testrun for the current PR. | team | `/resume` |
+| `/echo` | Prints the provided value as a PR comment. Useful for testing bot connectivity. | team | `/echo "text to echo"` |
+| `/xkcd` | Posts a random (or numbered) xkcd comic as a PR comment. | org | `/xkcd --num 2` |
+
+#### `/test` flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--testrunPath` | `""` | Path to the testrun file to execute |
+| `--set` | `[]` | Additional Helm values (`key=value`) |
+| `--template` | `false` | Run Go templating on the file before execution |
+| `--dry-run` | `false` | Print the rendered testrun without executing |
+
+#### `/test-single` flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Print the rendered testrun without executing |
+
+#### `/xkcd` flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--num` | `0` (random) | Specific xkcd comic number to post |
+
+### Plugin configuration
 
 Plugins and their default values can be configured by creating a values file in `.ci/tm-bot` in the default branch of the repository.
 This file will be parsed by the bot and the plugins will automatically be able to access the config for a certain call.
