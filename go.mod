@@ -42,7 +42,7 @@ require (
 	k8s.io/apimachinery v0.35.6
 	k8s.io/client-go v0.35.6
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad
-	k8s.io/utils v0.0.0-20260626114624-be93311217bd
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	ocm.software/ocm v0.37.0
 	sigs.k8s.io/controller-runtime v0.23.1
 	sigs.k8s.io/yaml v1.6.0
