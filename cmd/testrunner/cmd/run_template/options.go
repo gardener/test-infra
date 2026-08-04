@@ -6,6 +6,7 @@ package run_template
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -82,12 +83,10 @@ func (o *options) Complete() error {
 	if o.cloudProfileSearchPath != "" {
 		cloudProfiles, err = testrunner.GetCloudProfilesFromDisk(filepath.Clean(o.cloudProfileSearchPath))
 		if err != nil {
-			logger.Log.Error(err, "unable to find CloudProfiles in files", "root directory", o.cloudProfileSearchPath)
-			os.Exit(1)
+			return fmt.Errorf("unable to find CloudProfiles in files at %s: %w", o.cloudProfileSearchPath, err)
 		}
 		if len(cloudProfiles) == 0 {
-			logger.Log.Error(err, "no CloudProfiles found in files", "root directory", o.cloudProfileSearchPath)
-			os.Exit(1)
+			return fmt.Errorf("no CloudProfiles found in files at %s", o.cloudProfileSearchPath)
 		}
 	} else {
 		gardenK8sClient, err = kutil.NewClientFromFile(o.testrunnerKubeconfigPath, client.Options{
