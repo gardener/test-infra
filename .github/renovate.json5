@@ -56,7 +56,6 @@
       "matchPackagePatterns": [
         "^github\\.com/gardener/gardener.*",
         "^github\\.com/argoproj/argo-workflows.*",
-        "^ocm\\.software/ocm.*",
         "^sigs\\.k8s\\.io/controller-runtime.*"
       ],
       "enabled": false
@@ -74,7 +73,6 @@
       "matchPaths": ["/"],
       "matchPackageNames": [
         "^alpine$",
-        "^ghcr\\.io/open-component-model/ocm/ocm\\.software/ocmcli/ocmcli-image$"
       ]
     },
 
