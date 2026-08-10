@@ -56,7 +56,6 @@
       "matchPackagePatterns": [
         "^github\\.com/gardener/gardener.*",
         "^github\\.com/argoproj/argo-workflows.*",
-        "^ocm\\.software/ocm.*",
         "^sigs\\.k8s\\.io/controller-runtime.*"
       ],
       "enabled": false
@@ -68,13 +67,12 @@
       "matchPackagePatterns": [".*"],
     },
 
-    /* ONLY update Alpine + the OCMCLI image in Dockerfile at root of repository */
+    /* ONLY update Alpine in Dockerfile at root of repository */
     {
       "matchManagers": ["dockerfile"],
       "matchPaths": ["/"],
       "matchPackageNames": [
         "^alpine$",
-        "^ghcr\\.io/open-component-model/ocm/ocm\\.software/ocmcli/ocmcli-image$"
       ]
     },
 
