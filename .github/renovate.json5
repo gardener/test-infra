@@ -67,7 +67,7 @@
       "matchPackagePatterns": [".*"],
     },
 
-    /* ONLY update Alpine + the OCMCLI image in Dockerfile at root of repository */
+    /* ONLY update Alpine in Dockerfile at root of repository */
     {
       "matchManagers": ["dockerfile"],
       "matchPaths": ["/"],
