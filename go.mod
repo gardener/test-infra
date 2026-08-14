@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.62.3
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/argoproj/argo-workflows/v3 v3.7.14
+	github.com/argoproj/argo-workflows/v3 v3.7.15
 	github.com/bradleyfalzon/ghinstallation/v2 v2.18.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gardener/gardener v1.136.2
