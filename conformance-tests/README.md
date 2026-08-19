@@ -76,6 +76,7 @@ kind delete cluster
 | -                              | conformanceLogLevel | 2               | Log level passed to hydrophone                                                                                      |
 | GINKGO_PARALLEL                |  | true            | Runs the tests in parallel with 8 ginkgo nodes.                                                                     |
 | -                              | flakeAttempts | 1               | Flake attempts define how many times a failed test should be rerun                                                  |
+| -                              | deleteNamespaceOnFailure | true   | If false, the test namespaces of failed tests are not deleted, which is helpful for debugging                       |
 | SKIP_INDIVIDUAL_TEST_CASES     | skipIndividualTestCases |                 | A list of ginkgo.skip patterns (regex based) to skip individual test cases. Use "\|" as delimiter.                  |
 | E2E_EXPORT_PATH                |  | /tmp/e2e/export | Location to store test results                                                                                      |
 | E2E_KUBECONFIG_PATH            | kubeconfig | $KUBECONFIG     | File path of kubeconfig file. Reverts to $KUBECONFIG and fails if nothing is to be found there.                     |

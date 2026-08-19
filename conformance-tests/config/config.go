@@ -23,6 +23,7 @@ var (
 	SkipIndividualTestCases  string
 	GinkgoParallel           bool
 	FlakeAttempts            int
+	DeleteNamespaceOnFailure bool
 	ExportPath               string
 	PublishResultsToTestgrid bool
 	ShootKubeconfigPath      string
@@ -39,6 +40,7 @@ func init() {
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&SkipIndividualTestCases, "skipIndividualTestCases", "", "A list of ginkgo.skip patterns (regex based) to skip individual test cases, use \"|\" as delimiter.")
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
+	flag.BoolVar(&DeleteNamespaceOnFailure, "deleteNamespaceOnFailure", true, "If false, the test namespaces of failed tests are not deleted, which is helpful for debugging")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
 	flag.StringVar(&CloudProvider, "cloudprovider", "", "Cluster cloud provider (aws, gcp, azure, alicloud, openstack)")
 	flag.BoolVar(&DryRun, "dryRun", false, "use in combination with --conformanceLogLevel to output testcases")
@@ -109,6 +111,7 @@ func LogConfig(log logr.Logger) {
 		"HydrophoneVersion", HydrophoneVersion,
 		"GinkgoParallel", GinkgoParallel,
 		"FlakeAttempts", FlakeAttempts,
+		"DeleteNamespaceOnFailure", DeleteNamespaceOnFailure,
 		"PublishResultsToTestgrid", PublishResultsToTestgrid,
 		"SkipIndividualTestCases", SkipIndividualTestCases,
 	)
