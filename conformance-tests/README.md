@@ -7,9 +7,11 @@ Run K8s conformance tests using [Hydrophone](https://github.com/kubernetes-sigs/
 ### Run conformance tests via Gardener's test automation
 `cd` into your local `gardener/test-infra` folder and target some cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
 
+This requires a "vanilla" `$KUBECONFIG` (i.e. one that doesn't require special credential plugins). If you already have cluster-admin access with some credential plugins and need a kubeconfig without, you can create the resp. service accounts and tokens or use [this helper script](./create-token-kubeconfig.sh).
+
 ```bash
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.23 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.26.1 bash
 
 # run the command below within the container to invoke tests in a parallel way and allow tests to flake
 go run ./conformance-tests --k8sVersion=1.30.4 --flakeAttempts=5
@@ -19,6 +21,12 @@ GINKGO_PARALLEL=false go run ./conformance-tests --k8sVersion=1.30.4
 
 # use the dry-run flag in combination with the hydrophone log level to see what tests to execute
 go run ./conformance-tests --k8sVersion=1.30.4 --dryRun --conformanceLogLevel 4
+
+# run only a single test by name (regex)
+go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" 
+
+# run only a single test by name (regex) but multiple times
+go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" --extraGinkgoArgs="--repeat=5"
 ```
 
 ### Run conformance tests (or single tests) directly (without Gardener's test automation)
@@ -74,7 +82,10 @@ kind delete cluster
 | -                              | conformanceLogLevel | 2               | Log level passed to hydrophone                                                                                      |
 | GINKGO_PARALLEL                |  | true            | Runs the tests in parallel with 8 ginkgo nodes.                                                                     |
 | -                              | flakeAttempts | 1               | Flake attempts define how many times a failed test should be rerun                                                  |
+| -                              | deleteNamespaceOnFailure | true   | If false, the test namespaces of failed tests are not deleted, which is helpful for debugging                       |
 | SKIP_INDIVIDUAL_TEST_CASES     | skipIndividualTestCases |                 | A list of ginkgo.skip patterns (regex based) to skip individual test cases. Use "\|" as delimiter.                  |
+| FOCUS_TEST_CASES               | focusTestCases |                 | A ginkgo focus pattern (regex) to run only matching test cases.                                                     |
+| -                              | extraGinkgoArgs |                | Additional arguments passed directly to ginkgo (e.g. `--repeat=3` to stress-test a passing test).                  |
 | E2E_EXPORT_PATH                |  | /tmp/e2e/export | Location to store test results                                                                                      |
 | E2E_KUBECONFIG_PATH            | kubeconfig | $KUBECONFIG     | File path of kubeconfig file. Reverts to $KUBECONFIG and fails if nothing is to be found there.                     |
 | PUBLISH_RESULTS_TO_TESTGRID    |  | false           | Publish test results to google cloud storage for testgrid                                                           |
