@@ -22,6 +22,7 @@ var (
 	K8sRelease               string
 	SkipIndividualTestCases  string
 	FocusTestCases           string
+	ExtraGinkgoArgs          string
 	GinkgoParallel           bool
 	FlakeAttempts            int
 	DeleteNamespaceOnFailure bool
@@ -41,6 +42,7 @@ func init() {
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&SkipIndividualTestCases, "skipIndividualTestCases", "", "A list of ginkgo.skip patterns (regex based) to skip individual test cases, use \"|\" as delimiter.")
 	flag.StringVar(&FocusTestCases, "focusTestCases", "", "A ginkgo focus pattern (regex) to run only matching test cases.")
+	flag.StringVar(&ExtraGinkgoArgs, "extraGinkgoArgs", "", "Additional arguments passed to ginkgo via hydrophone's --extra-ginkgo-args (e.g. \"--repeat=3\").")
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.BoolVar(&DeleteNamespaceOnFailure, "deleteNamespaceOnFailure", true, "If false, the test namespaces of failed tests are not deleted, which is helpful for debugging")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
@@ -121,6 +123,7 @@ func LogConfig(log logr.Logger) {
 		"PublishResultsToTestgrid", PublishResultsToTestgrid,
 		"SkipIndividualTestCases", SkipIndividualTestCases,
 		"FocusTestCases", FocusTestCases,
+		"ExtraGinkgoArgs", ExtraGinkgoArgs,
 	)
 	if PublishResultsToTestgrid {
 		log.Info("Test results will be uploaded to:", "Project", GcsProjectID, "Bucket", GcsBucket)

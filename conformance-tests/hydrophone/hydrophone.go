@@ -64,6 +64,9 @@ func Run(log logr.Logger) error {
 	if config.FlakeAttempts != 1 {
 		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-ginkgo-args", fmt.Sprintf("--flake-attempts=%d", config.FlakeAttempts))
 	}
+	if config.ExtraGinkgoArgs != "" {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-ginkgo-args", config.ExtraGinkgoArgs)
+	}
 	if !config.DeleteNamespaceOnFailure {
 		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-args", "--delete-namespace-on-failure=false")
 	}

@@ -23,7 +23,10 @@ GINKGO_PARALLEL=false go run ./conformance-tests --k8sVersion=1.30.4
 go run ./conformance-tests --k8sVersion=1.30.4 --dryRun --conformanceLogLevel 4
 
 # run only a single test by name (regex)
-go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields"
+go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" 
+
+# run only a single test by name (regex) but multiple times
+go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" --extraGinkgoArgs="--repeat=5"
 ```
 
 ### Run conformance tests (or single tests) directly (without Gardener's test automation)
@@ -82,6 +85,7 @@ kind delete cluster
 | -                              | deleteNamespaceOnFailure | true   | If false, the test namespaces of failed tests are not deleted, which is helpful for debugging                       |
 | SKIP_INDIVIDUAL_TEST_CASES     | skipIndividualTestCases |                 | A list of ginkgo.skip patterns (regex based) to skip individual test cases. Use "\|" as delimiter.                  |
 | FOCUS_TEST_CASES               | focusTestCases |                 | A ginkgo focus pattern (regex) to run only matching test cases.                                                     |
+| -                              | extraGinkgoArgs |                | Additional arguments passed directly to ginkgo (e.g. `--repeat=3` to stress-test a passing test).                  |
 | E2E_EXPORT_PATH                |  | /tmp/e2e/export | Location to store test results                                                                                      |
 | E2E_KUBECONFIG_PATH            | kubeconfig | $KUBECONFIG     | File path of kubeconfig file. Reverts to $KUBECONFIG and fails if nothing is to be found there.                     |
 | PUBLISH_RESULTS_TO_TESTGRID    |  | false           | Publish test results to google cloud storage for testgrid                                                           |
