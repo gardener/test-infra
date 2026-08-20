@@ -21,6 +21,7 @@ var (
 	HydrophoneVersion        string
 	K8sRelease               string
 	SkipIndividualTestCases  string
+	FocusTestCases           string
 	GinkgoParallel           bool
 	FlakeAttempts            int
 	DeleteNamespaceOnFailure bool
@@ -39,6 +40,7 @@ func init() {
 	flag.StringVar(&HydrophoneVersion, "hydrophoneVersion", "", "Hydrophone version to be used")
 	flag.StringVar(&K8sRelease, "k8sVersion", "", "Kubernetes release version e.g. 1.14.0")
 	flag.StringVar(&SkipIndividualTestCases, "skipIndividualTestCases", "", "A list of ginkgo.skip patterns (regex based) to skip individual test cases, use \"|\" as delimiter.")
+	flag.StringVar(&FocusTestCases, "focusTestCases", "", "A ginkgo focus pattern (regex) to run only matching test cases.")
 	flag.IntVar(&FlakeAttempts, "flakeAttempts", 1, "Testcase flake attempts. Will run testcase n times, until it is successful")
 	flag.BoolVar(&DeleteNamespaceOnFailure, "deleteNamespaceOnFailure", true, "If false, the test namespaces of failed tests are not deleted, which is helpful for debugging")
 	flag.StringVar(&ShootKubeconfigPath, "kubeconfig", "", "Kubeconfig file path of cluster to test")
@@ -63,6 +65,10 @@ func init() {
 
 	if SkipIndividualTestCases == "" {
 		SkipIndividualTestCases = os.Getenv("SKIP_INDIVIDUAL_TEST_CASES")
+	}
+
+	if FocusTestCases == "" {
+		FocusTestCases = os.Getenv("FOCUS_TEST_CASES")
 	}
 
 	GinkgoParallel = tiutil.GetenvBool("GINKGO_PARALLEL", true)
@@ -114,6 +120,7 @@ func LogConfig(log logr.Logger) {
 		"DeleteNamespaceOnFailure", DeleteNamespaceOnFailure,
 		"PublishResultsToTestgrid", PublishResultsToTestgrid,
 		"SkipIndividualTestCases", SkipIndividualTestCases,
+		"FocusTestCases", FocusTestCases,
 	)
 	if PublishResultsToTestgrid {
 		log.Info("Test results will be uploaded to:", "Project", GcsProjectID, "Bucket", GcsBucket)

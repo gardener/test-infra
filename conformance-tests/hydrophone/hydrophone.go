@@ -40,8 +40,13 @@ func Run(log logr.Logger) error {
 	}
 
 	hydrophoneRunArgs := []string{
-		"--conformance",
 		"--conformance-image", fmt.Sprintf("registry.k8s.io/conformance:v%s", config.K8sRelease),
+	}
+
+	if config.FocusTestCases != "" {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--focus", config.FocusTestCases)
+	} else {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--conformance")
 	}
 
 	if config.SkipIndividualTestCases != "" {
