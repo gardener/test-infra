@@ -40,8 +40,13 @@ func Run(log logr.Logger) error {
 	}
 
 	hydrophoneRunArgs := []string{
-		"--conformance",
 		"--conformance-image", fmt.Sprintf("registry.k8s.io/conformance:v%s", config.K8sRelease),
+	}
+
+	if config.FocusTestCases != "" {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--focus", config.FocusTestCases)
+	} else {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--conformance")
 	}
 
 	if config.SkipIndividualTestCases != "" {
@@ -58,6 +63,12 @@ func Run(log logr.Logger) error {
 	}
 	if config.FlakeAttempts != 1 {
 		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-ginkgo-args", fmt.Sprintf("--flake-attempts=%d", config.FlakeAttempts))
+	}
+	if config.ExtraGinkgoArgs != "" {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-ginkgo-args", config.ExtraGinkgoArgs)
+	}
+	if !config.DeleteNamespaceOnFailure {
+		hydrophoneRunArgs = append(hydrophoneRunArgs, "--extra-args", "--delete-namespace-on-failure=false")
 	}
 
 	controllerruntime.SetLogger(log)
