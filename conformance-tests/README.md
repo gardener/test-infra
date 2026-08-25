@@ -7,9 +7,11 @@ Run K8s conformance tests using [Hydrophone](https://github.com/kubernetes-sigs/
 ### Run conformance tests via Gardener's test automation
 `cd` into your local `gardener/test-infra` folder and target some cluster.  Adjust values for argument `k8sVersion` to match your new cluster's version.
 
+This requires a "vanilla" `$KUBECONFIG` (i.e. one that doesn't require special credential plugins). If you already have cluster-admin access with some credential plugins and need a kubeconfig without, you can create the resp. service accounts and tokens or use [this helper script](./create-token-kubeconfig.sh).
+
 ```bash
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.23 bash
+docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.26.1 bash
 
 # run the command below within the container to invoke tests in a parallel way and allow tests to flake
 go run ./conformance-tests --k8sVersion=1.30.4 --flakeAttempts=5
