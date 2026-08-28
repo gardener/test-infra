@@ -3,7 +3,7 @@ module github.com/gardener/test-infra
 go 1.26.4
 
 require (
-	cloud.google.com/go/storage v1.65.1
+	cloud.google.com/go/storage v1.66.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/argoproj/argo-workflows/v3 v3.7.15
@@ -25,7 +25,7 @@ require (
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/gomega v1.43.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.10.2
