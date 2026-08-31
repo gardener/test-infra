@@ -55,6 +55,7 @@ func RenderTestruns(ctx context.Context, log logr.Logger, parameters *Parameters
 func getInternalParametersFunc(ctx context.Context, log logr.Logger, parameters *Parameters) (func(string) *internalParameters, error) {
 	components, err := componentdescriptor.GetComponents(ctx, log, parameters.ComponentDescriptorPath, parameters.Repository, func(opts *componentdescriptor.Options) {
 		opts.CfgPath = parameters.OCMConfigPath
+		opts.SkipValidationOnComponents = parameters.SkipValidationOnOCMComponents
 	})
 	if err != nil {
 		return nil, err

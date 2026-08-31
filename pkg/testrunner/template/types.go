@@ -27,6 +27,9 @@ type Parameters struct {
 
 	SetValues  []string
 	FileValues []string
+
+	// SkipValidationOnOCMComponents is a list of OCM component names to skip during component descriptor resolution.
+	SkipValidationOnOCMComponents []string
 }
 
 type internalParameters struct {

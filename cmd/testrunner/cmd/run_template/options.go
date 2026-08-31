@@ -202,6 +202,7 @@ func (o *options) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&o.shootParameters.ComponentDescriptorPath, "component-descriptor-path", "", "Path to the component descriptor (BOM) of the current landscape.")
 	fs.StringVar(&o.shootParameters.Repository, "repo", "", "Repository to resolve the component reference of the component described in the file at the component descriptor path")
 	fs.StringVar(&o.shootParameters.OCMConfigPath, "ocm-config-path", "", "Path to the ocm config")
+	fs.StringArrayVar(&o.shootParameters.SkipValidationOnOCMComponents, "skip-validation-on-ocm-component", []string{}, "OCM component name(s) to skip validation during component descriptor resolution")
 
 	fs.StringArrayVar(&o.shootParameters.SetValues, "set", make([]string, 0), "sets additional helm values")
 	fs.StringArrayVarP(&o.shootParameters.FileValues, "values", "f", make([]string, 0), "yaml value files to override template values")
