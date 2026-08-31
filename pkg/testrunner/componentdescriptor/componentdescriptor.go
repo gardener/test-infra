@@ -98,7 +98,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 			"repository argument or one or multiple repositories in the .ocmconfig file")
 	}
 
-	return resolveReferences(octx, cd, resolver, options.SkipValidationOnComponents)
+	return resolveReferences(log, octx, cd, resolver, options.SkipValidationOnComponents)
 }
 
 // The resolveReferences function is an auxiliary function for GetComponents. It implements a typical Breadth First
@@ -107,7 +107,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 // transitive closure) of the root component c.
 // resolver can either a specific ocm repository (if all components are in the same repository) or a compound resolver
 // covering multiple repositories
-func resolveReferences(octx ocm.Context, c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver, skipValidationOnComponents []string) ([]*Component, error) {
+func resolveReferences(log logr.Logger, octx ocm.Context, c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver, skipValidationOnComponents []string) ([]*Component, error) {
 	components := make([]*Component, 0)
 	// Set size to 0, as we cannot know the number of component version beforehand
 	visited := make(map[Component]struct{}, 0)
@@ -126,6 +126,7 @@ func resolveReferences(octx ocm.Context, c *compdesc.ComponentDescriptor, resolv
 			if slices.Contains(skipValidationOnComponents, ref.GetComponentName()) {
 				key := Component{Name: ref.GetComponentName(), Version: ref.GetVersion()}
 				if _, ok := visited[key]; !ok {
+					log.Info("skipping OCM validation for component", "component", ref.GetComponentName(), "version", ref.GetVersion())
 					visited[key] = struct{}{}
 					components = append(components, &key)
 				}
