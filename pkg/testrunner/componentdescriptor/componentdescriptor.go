@@ -21,6 +21,14 @@ import (
 	tmv1beta1 "github.com/gardener/test-infra/pkg/apis/testmachinery/v1beta1"
 )
 
+// isOCMValidationError reports whether err is an OCM component descriptor
+// validation error (e.g. duplicate resources). These errors arise from bugs in
+// upstream component pipelines and are safe to skip because the testrunner only
+// extracts name+version from each component — it never reads resources or SBOMs.
+func isOCMValidationError(err error) bool {
+	return strings.Contains(err.Error(), "Duplicate value")
+}
+
 type Options struct {
 	// CfgPath is the path to the .ocmconfig file. Per default, the library checks for the config file at
 	// $HOME/.ocmconfig.
@@ -94,7 +102,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 			"repository argument or one or multiple repositories in the .ocmconfig file")
 	}
 
-	return resolveReferences(octx, cd, resolver)
+	return resolveReferences(log, octx, cd, resolver)
 }
 
 // The resolveReferences function is an auxiliary function for GetComponents. It implements a typical Breadth First
@@ -103,7 +111,7 @@ func GetComponents(ctx context.Context, log logr.Logger, cdPath string, repoRef 
 // transitive closure) of the root component c.
 // resolver can either a specific ocm repository (if all components are in the same repository) or a compound resolver
 // covering multiple repositories
-func resolveReferences(octx ocm.Context, c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver) ([]*Component, error) {
+func resolveReferences(log logr.Logger, octx ocm.Context, c *compdesc.ComponentDescriptor, resolver ocm.ComponentVersionResolver) ([]*Component, error) {
 	components := make([]*Component, 0)
 	// Set size to 0, as we cannot know the number of component version beforehand
 	visited := make(map[Component]struct{}, 0)
@@ -121,6 +129,19 @@ func resolveReferences(octx ocm.Context, c *compdesc.ComponentDescriptor, resolv
 		for _, ref := range c.References {
 			ac, err := resolver.LookupComponentVersion(ref.GetComponentName(), ref.GetVersion())
 			if err != nil {
+				if isOCMValidationError(err) {
+					// The component descriptor has invalid resources (e.g. duplicate SBOM entries
+					// from a broken upstream release pipeline). Since the testrunner only uses
+					// name+version metadata, we record the component with what we know and skip
+					// traversing its references rather than failing the entire run.
+					log.Info("skipping component with invalid descriptor", "component", ref.GetComponentName(), "version", ref.GetVersion(), "error", err.Error())
+					key := Component{Name: ref.GetComponentName(), Version: ref.GetVersion()}
+					if _, ok := visited[key]; !ok {
+						visited[key] = struct{}{}
+						components = append(components, &key)
+					}
+					continue
+				}
 				return nil, fmt.Errorf("error resolving component references: %w", err)
 			}
 
