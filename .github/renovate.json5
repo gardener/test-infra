@@ -34,6 +34,13 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
+    },
+    /* Keep golang image in conformance TestDefinitions in sync with go.mod */
+    {
+      "fileMatch": ["^\\.test-defs/conformanceTestgrid(Parallel)?\\.yaml$"],
+      "matchStrings": ["image:\\s*(?<depName>golang):(?<currentValue>[^\\s]+)"],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],
 
@@ -95,6 +102,13 @@
         "europe-docker.pkg.dev/gardener-project/releases/3rd/credativ/vali"
       ],
       "groupName": "vali-images"
+    },
+
+    /* Group golang image updates in conformance TestDefinitions */
+    {
+      "matchManagers": ["regex"],
+      "matchPackageNames": ["golang"],
+      "groupName": "golang-testdef-image"
     }
   ]
 }
