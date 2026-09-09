@@ -45,6 +45,7 @@ type Config struct {
 	ESClient                    elasticsearch.Client
 	TestsSkip                   []string
 	TestsFocus                  []string
+	DashboardURL                string // DashboardURL URL to a dashboard listing all active alerts and links to logs
 }
 
 // New creates a new instance of alert
@@ -217,8 +218,8 @@ func (alerter *Alert) PostAlertMessageToSlack(client slack.Client, channel strin
 		if i != 0 {
 			messagePrefix = ""
 		}
-		if i == (len(splitedMessage) - 1) {
-			messageSuffix = "\nCheckout list of all active alerts and links to logs at https://kibana.ingress.cicdes.core.shoot.live.k8s-hana.ondemand.com/app/kibana#/dashboard/0468bda0-5300-11ea-a210-195a29182e38"
+		if i == (len(splitedMessage)-1) && alerter.cfg.DashboardURL != "" {
+			messageSuffix = "\nCheckout list of all active alerts and links to logs at " + alerter.cfg.DashboardURL
 		}
 		if err := client.PostMessage(channel, fmt.Sprintf("%s```%s```%s", messagePrefix, messageSplitItem, messageSuffix)); err != nil {
 			return err

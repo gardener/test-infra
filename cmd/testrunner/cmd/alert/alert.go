@@ -28,6 +28,7 @@ var (
 	minSuccessRate             int
 	testsSkip                  []string
 	testsFocus                 []string
+	dashboardURL               string
 )
 
 // AddCommand adds alert to a command.
@@ -70,6 +71,7 @@ var alertCmd = &cobra.Command{
 			SuccessRateThresholdPercent: minSuccessRate,
 			TestsSkip:                   testsSkip,
 			TestsFocus:                  testsFocus,
+			DashboardURL:                dashboardURL,
 		}
 		alertClient := alert.New(logger.Log.WithName("alert"), alertConfig)
 		newFailedTests, recoveredTests, err := alertClient.FindFailedAndRecoveredTests()
@@ -131,4 +133,5 @@ func init() {
 	alertCmd.Flags().IntVar(&minSuccessRate, "min-success-rate", 50, "if test success rate % falls below threshold, then post an alert")
 	alertCmd.Flags().StringArrayVar(&testsSkip, "skip", make([]string, 0), "regexp to filter context test names e.g. 'e2e-untracked.*aws'")
 	alertCmd.Flags().StringArrayVar(&testsFocus, "focus", make([]string, 0), "regexp to keep context test names e.g. 'e2e-untracked.*aws. Is executed after skip filter.'")
+	alertCmd.Flags().StringVar(&dashboardURL, "dashboard-url", "", "URL to a dashboard listing all active alerts and links to logs")
 }
