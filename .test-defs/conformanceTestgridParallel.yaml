@@ -18,7 +18,7 @@ spec:
   config:
   - type: env
     name: HYDROPHONE_VERSION
-    value: "787b0cfa5cfe503d247f88595ff95b8f50eba1b7"
+    value: "v0.8.0"
 
   command: [bash, -c]
   args:
