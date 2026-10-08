@@ -10,23 +10,25 @@ Run K8s conformance tests using [Hydrophone](https://github.com/kubernetes-sigs/
 This requires a "vanilla" `$KUBECONFIG` (i.e. one that doesn't require special credential plugins). If you already have cluster-admin access with some credential plugins and need a kubeconfig without, you can create the resp. service accounts and tokens or use [this helper script](./create-token-kubeconfig.sh).
 
 ```bash
+# generate a kubeconfig for your cluster (if you don't have one already)
+./conformance-tests/create-token-kubeconfig.sh conformance-kubeconfig.yaml
 # first set KUBECONFIG to your cluster
-docker run -ti -e --rm -v $KUBECONFIG:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.26.1 bash
+docker run -ti -e --rm -v $PWD/conformance-kubeconfig.yaml:/mye2e/shoot.config -v $PWD:/go/src/github.com/gardener/test-infra -e E2E_EXPORT_PATH=/tmp/export -e KUBECONFIG=/mye2e/shoot.config --network=host --workdir /go/src/github.com/gardener/test-infra  --platform linux/amd64 golang:1.26.8 bash
 
 # run the command below within the container to invoke tests in a parallel way and allow tests to flake
-go run ./conformance-tests --k8sVersion=1.30.4 --flakeAttempts=5
+go run ./conformance-tests --k8sVersion=1.36.4 --flakeAttempts=5
 
 # run the command below to invoke tests in a serial way and without any flakes
-GINKGO_PARALLEL=false go run ./conformance-tests --k8sVersion=1.30.4
+GINKGO_PARALLEL=false go run ./conformance-tests --k8sVersion=1.36.4
 
 # use the dry-run flag in combination with the hydrophone log level to see what tests to execute
-go run ./conformance-tests --k8sVersion=1.30.4 --dryRun --conformanceLogLevel 4
+go run ./conformance-tests --k8sVersion=1.36.4 --dryRun --conformanceLogLevel 4
 
 # run only a single test by name (regex)
-go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" 
+go run ./conformance-tests --k8sVersion=1.36.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" 
 
 # run only a single test by name (regex) but multiple times
-go run ./conformance-tests --k8sVersion=1.30.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" --extraGinkgoArgs="--repeat=5"
+go run ./conformance-tests --k8sVersion=1.36.4 --focusTestCases="should detect duplicates in a CR when preserving unknown fields" --extraGinkgoArgs="--repeat=5"
 ```
 
 ### Run conformance tests (or single tests) directly (without Gardener's test automation)

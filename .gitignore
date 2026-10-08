@@ -23,3 +23,6 @@ gosec-report.sarif
 
 # AI coding agents
 .claude/
+
+# Conformance test generated kubeconfig
+conformance-kubeconfig.yaml
