@@ -21,8 +21,9 @@ assets
 # gosec
 gosec-report.sarif
 
-# AI coding agents
+# AI coding
 .claude/
+graphify-out/
 
 # Conformance test generated kubeconfig
 conformance-kubeconfig.yaml
