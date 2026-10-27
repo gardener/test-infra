@@ -10,7 +10,6 @@
 package v1beta1
 
 import (
-	time "time"
 	unsafe "unsafe"
 
 	config "github.com/gardener/test-infra/pkg/apis/config"
@@ -275,8 +274,7 @@ func Convert_config_BotConfiguration_To_v1beta1_BotConfiguration(in *config.BotC
 }
 
 func autoConvert_v1beta1_Certificate_To_config_Certificate(in *Certificate, out *config.Certificate, s conversion.Scope) error {
-	out.Cert = in.Cert
-	out.PrivateKey = in.PrivateKey
+	*out = *(*config.Certificate)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -286,8 +284,7 @@ func Convert_v1beta1_Certificate_To_config_Certificate(in *Certificate, out *con
 }
 
 func autoConvert_config_Certificate_To_v1beta1_Certificate(in *config.Certificate, out *Certificate, s conversion.Scope) error {
-	out.Cert = in.Cert
-	out.PrivateKey = in.PrivateKey
+	*out = *(*Certificate)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -339,19 +336,7 @@ func Convert_config_Configuration_To_v1beta1_Configuration(in *config.Configurat
 }
 
 func autoConvert_v1beta1_Controller_To_config_Controller(in *Controller, out *config.Controller, s conversion.Scope) error {
-	out.HealthAddr = in.HealthAddr
-	out.MetricsAddr = in.MetricsAddr
-	out.EnableLeaderElection = in.EnableLeaderElection
-	out.MaxConcurrentSyncs = in.MaxConcurrentSyncs
-	if err := Convert_v1beta1_TTLController_To_config_TTLController(&in.TTLController, &out.TTLController, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta1_WebhookConfig_To_config_WebhookConfig(&in.WebhookConfig, &out.WebhookConfig, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta1_HealthCheckTarget_To_config_HealthCheckTarget(&in.DependencyHealthCheck, &out.DependencyHealthCheck, s); err != nil {
-		return err
-	}
+	*out = *(*config.Controller)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -361,19 +346,7 @@ func Convert_v1beta1_Controller_To_config_Controller(in *Controller, out *config
 }
 
 func autoConvert_config_Controller_To_v1beta1_Controller(in *config.Controller, out *Controller, s conversion.Scope) error {
-	out.HealthAddr = in.HealthAddr
-	out.MetricsAddr = in.MetricsAddr
-	out.EnableLeaderElection = in.EnableLeaderElection
-	out.MaxConcurrentSyncs = in.MaxConcurrentSyncs
-	if err := Convert_config_TTLController_To_v1beta1_TTLController(&in.TTLController, &out.TTLController, s); err != nil {
-		return err
-	}
-	if err := Convert_config_WebhookConfig_To_v1beta1_WebhookConfig(&in.WebhookConfig, &out.WebhookConfig, s); err != nil {
-		return err
-	}
-	if err := Convert_config_HealthCheckTarget_To_v1beta1_HealthCheckTarget(&in.DependencyHealthCheck, &out.DependencyHealthCheck, s); err != nil {
-		return err
-	}
+	*out = *(*Controller)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -383,11 +356,7 @@ func Convert_config_Controller_To_v1beta1_Controller(in *config.Controller, out 
 }
 
 func autoConvert_v1beta1_Dashboard_To_config_Dashboard(in *Dashboard, out *config.Dashboard, s conversion.Scope) error {
-	out.UIBasePath = in.UIBasePath
-	if err := Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
-		return err
-	}
-	out.GardenerDashboardURLTemplate = in.GardenerDashboardURLTemplate
+	*out = *(*config.Dashboard)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -397,11 +366,7 @@ func Convert_v1beta1_Dashboard_To_config_Dashboard(in *Dashboard, out *config.Da
 }
 
 func autoConvert_config_Dashboard_To_v1beta1_Dashboard(in *config.Dashboard, out *Dashboard, s conversion.Scope) error {
-	out.UIBasePath = in.UIBasePath
-	if err := Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(&in.Authentication, &out.Authentication, s); err != nil {
-		return err
-	}
-	out.GardenerDashboardURLTemplate = in.GardenerDashboardURLTemplate
+	*out = *(*Dashboard)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -411,9 +376,7 @@ func Convert_config_Dashboard_To_v1beta1_Dashboard(in *config.Dashboard, out *Da
 }
 
 func autoConvert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(in *DashboardAuthentication, out *config.DashboardAuthentication, s conversion.Scope) error {
-	out.Provider = config.DashboardAuthenticationProvider(in.Provider)
-	out.CookieSecret = in.CookieSecret
-	out.GitHub = (*config.GitHubAuthentication)(unsafe.Pointer(in.GitHub))
+	*out = *(*config.DashboardAuthentication)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -423,9 +386,7 @@ func Convert_v1beta1_DashboardAuthentication_To_config_DashboardAuthentication(i
 }
 
 func autoConvert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(in *config.DashboardAuthentication, out *DashboardAuthentication, s conversion.Scope) error {
-	out.Provider = DashboardAuthenticationProvider(in.Provider)
-	out.CookieSecret = in.CookieSecret
-	out.GitHub = (*GitHubAuthentication)(unsafe.Pointer(in.GitHub))
+	*out = *(*DashboardAuthentication)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -435,9 +396,7 @@ func Convert_config_DashboardAuthentication_To_v1beta1_DashboardAuthentication(i
 }
 
 func autoConvert_v1beta1_ElasticSearch_To_config_ElasticSearch(in *ElasticSearch, out *config.ElasticSearch, s conversion.Scope) error {
-	out.Endpoint = in.Endpoint
-	out.Username = in.Username
-	out.Password = in.Password
+	*out = *(*config.ElasticSearch)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -447,9 +406,7 @@ func Convert_v1beta1_ElasticSearch_To_config_ElasticSearch(in *ElasticSearch, ou
 }
 
 func autoConvert_config_ElasticSearch_To_v1beta1_ElasticSearch(in *config.ElasticSearch, out *ElasticSearch, s conversion.Scope) error {
-	out.Endpoint = in.Endpoint
-	out.Username = in.Username
-	out.Password = in.Password
+	*out = *(*ElasticSearch)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -497,9 +454,7 @@ func Convert_config_GitHub_To_v1beta1_GitHub(in *config.GitHub, out *GitHub, s c
 }
 
 func autoConvert_v1beta1_GitHubAuthentication_To_config_GitHubAuthentication(in *GitHubAuthentication, out *config.GitHubAuthentication, s conversion.Scope) error {
-	out.OAuth = (*config.OAuth)(unsafe.Pointer(in.OAuth))
-	out.Organization = in.Organization
-	out.Hostname = in.Hostname
+	*out = *(*config.GitHubAuthentication)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -509,9 +464,7 @@ func Convert_v1beta1_GitHubAuthentication_To_config_GitHubAuthentication(in *Git
 }
 
 func autoConvert_config_GitHubAuthentication_To_v1beta1_GitHubAuthentication(in *config.GitHubAuthentication, out *GitHubAuthentication, s conversion.Scope) error {
-	out.OAuth = (*OAuth)(unsafe.Pointer(in.OAuth))
-	out.Organization = in.Organization
-	out.Hostname = in.Hostname
+	*out = *(*GitHubAuthentication)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -583,9 +536,7 @@ func Convert_config_GitHubCache_To_v1beta1_GitHubCache(in *config.GitHubCache, o
 }
 
 func autoConvert_v1beta1_HealthCheckTarget_To_config_HealthCheckTarget(in *HealthCheckTarget, out *config.HealthCheckTarget, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.DeploymentName = in.DeploymentName
-	out.Interval = in.Interval
+	*out = *(*config.HealthCheckTarget)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -595,9 +546,7 @@ func Convert_v1beta1_HealthCheckTarget_To_config_HealthCheckTarget(in *HealthChe
 }
 
 func autoConvert_config_HealthCheckTarget_To_v1beta1_HealthCheckTarget(in *config.HealthCheckTarget, out *HealthCheckTarget, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.DeploymentName = in.DeploymentName
-	out.Interval = in.Interval
+	*out = *(*HealthCheckTarget)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -607,11 +556,7 @@ func Convert_config_HealthCheckTarget_To_v1beta1_HealthCheckTarget(in *config.He
 }
 
 func autoConvert_v1beta1_LandscapeMapping_To_config_LandscapeMapping(in *LandscapeMapping, out *config.LandscapeMapping, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.ApiServerUrl = in.ApiServerUrl
-	out.Audience = in.Audience
-	out.ExpirationSeconds = in.ExpirationSeconds
-	out.AllowUntrustedUsage = in.AllowUntrustedUsage
+	*out = *(*config.LandscapeMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -621,11 +566,7 @@ func Convert_v1beta1_LandscapeMapping_To_config_LandscapeMapping(in *LandscapeMa
 }
 
 func autoConvert_config_LandscapeMapping_To_v1beta1_LandscapeMapping(in *config.LandscapeMapping, out *LandscapeMapping, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.ApiServerUrl = in.ApiServerUrl
-	out.Audience = in.Audience
-	out.ExpirationSeconds = in.ExpirationSeconds
-	out.AllowUntrustedUsage = in.AllowUntrustedUsage
+	*out = *(*LandscapeMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -635,7 +576,7 @@ func Convert_config_LandscapeMapping_To_v1beta1_LandscapeMapping(in *config.Land
 }
 
 func autoConvert_v1beta1_Locations_To_config_Locations(in *Locations, out *config.Locations, s conversion.Scope) error {
-	out.ExcludeDomains = *(*[]string)(unsafe.Pointer(&in.ExcludeDomains))
+	*out = *(*config.Locations)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -645,7 +586,7 @@ func Convert_v1beta1_Locations_To_config_Locations(in *Locations, out *config.Lo
 }
 
 func autoConvert_config_Locations_To_v1beta1_Locations(in *config.Locations, out *Locations, s conversion.Scope) error {
-	out.ExcludeDomains = *(*[]string)(unsafe.Pointer(&in.ExcludeDomains))
+	*out = *(*Locations)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -655,9 +596,7 @@ func Convert_config_Locations_To_v1beta1_Locations(in *config.Locations, out *Lo
 }
 
 func autoConvert_v1beta1_OAuth_To_config_OAuth(in *OAuth, out *config.OAuth, s conversion.Scope) error {
-	out.ClientID = in.ClientID
-	out.ClientSecret = in.ClientSecret
-	out.RedirectURL = in.RedirectURL
+	*out = *(*config.OAuth)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -667,9 +606,7 @@ func Convert_v1beta1_OAuth_To_config_OAuth(in *OAuth, out *config.OAuth, s conve
 }
 
 func autoConvert_config_OAuth_To_v1beta1_OAuth(in *config.OAuth, out *OAuth, s conversion.Scope) error {
-	out.ClientID = in.ClientID
-	out.ClientSecret = in.ClientSecret
-	out.RedirectURL = in.RedirectURL
+	*out = *(*OAuth)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -679,12 +616,7 @@ func Convert_config_OAuth_To_v1beta1_OAuth(in *config.OAuth, out *OAuth, s conve
 }
 
 func autoConvert_v1beta1_S3_To_config_S3(in *S3, out *config.S3, s conversion.Scope) error {
-	if err := Convert_v1beta1_S3Server_To_config_S3Server(&in.Server, &out.Server, s); err != nil {
-		return err
-	}
-	out.BucketName = in.BucketName
-	out.AccessKey = in.AccessKey
-	out.SecretKey = in.SecretKey
+	*out = *(*config.S3)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -694,12 +626,7 @@ func Convert_v1beta1_S3_To_config_S3(in *S3, out *config.S3, s conversion.Scope)
 }
 
 func autoConvert_config_S3_To_v1beta1_S3(in *config.S3, out *S3, s conversion.Scope) error {
-	if err := Convert_config_S3Server_To_v1beta1_S3Server(&in.Server, &out.Server, s); err != nil {
-		return err
-	}
-	out.BucketName = in.BucketName
-	out.AccessKey = in.AccessKey
-	out.SecretKey = in.SecretKey
+	*out = *(*S3)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -709,8 +636,7 @@ func Convert_config_S3_To_v1beta1_S3(in *config.S3, out *S3, s conversion.Scope)
 }
 
 func autoConvert_v1beta1_S3Server_To_config_S3Server(in *S3Server, out *config.S3Server, s conversion.Scope) error {
-	out.Endpoint = in.Endpoint
-	out.SSL = in.SSL
+	*out = *(*config.S3Server)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -720,8 +646,7 @@ func Convert_v1beta1_S3Server_To_config_S3Server(in *S3Server, out *config.S3Ser
 }
 
 func autoConvert_config_S3Server_To_v1beta1_S3Server(in *config.S3Server, out *S3Server, s conversion.Scope) error {
-	out.Endpoint = in.Endpoint
-	out.SSL = in.SSL
+	*out = *(*S3Server)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -731,8 +656,7 @@ func Convert_config_S3Server_To_v1beta1_S3Server(in *config.S3Server, out *S3Ser
 }
 
 func autoConvert_v1beta1_TTLController_To_config_TTLController(in *TTLController, out *config.TTLController, s conversion.Scope) error {
-	out.Disable = in.Disable
-	out.MaxConcurrentSyncs = in.MaxConcurrentSyncs
+	*out = *(*config.TTLController)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -742,8 +666,7 @@ func Convert_v1beta1_TTLController_To_config_TTLController(in *TTLController, ou
 }
 
 func autoConvert_config_TTLController_To_v1beta1_TTLController(in *config.TTLController, out *TTLController, s conversion.Scope) error {
-	out.Disable = in.Disable
-	out.MaxConcurrentSyncs = in.MaxConcurrentSyncs
+	*out = *(*TTLController)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -753,20 +676,7 @@ func Convert_config_TTLController_To_v1beta1_TTLController(in *config.TTLControl
 }
 
 func autoConvert_v1beta1_TestMachinery_To_config_TestMachinery(in *TestMachinery, out *config.TestMachinery, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.TestDefPath = in.TestDefPath
-	if err := Convert_v1beta1_Locations_To_config_Locations(&in.Locations, &out.Locations, s); err != nil {
-		return err
-	}
-	out.PrepareImage = in.PrepareImage
-	out.BaseImage = in.BaseImage
-	out.Local = in.Local
-	out.Insecure = in.Insecure
-	out.RetryTimeout = in.RetryTimeout
-	out.RetryTimeoutDuration = (*time.Duration)(unsafe.Pointer(in.RetryTimeoutDuration))
-	out.DisableCollector = in.DisableCollector
-	out.CleanWorkflowPods = in.CleanWorkflowPods
-	out.LandscapeMappings = *(*[]config.LandscapeMapping)(unsafe.Pointer(&in.LandscapeMappings))
+	*out = *(*config.TestMachinery)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -776,20 +686,7 @@ func Convert_v1beta1_TestMachinery_To_config_TestMachinery(in *TestMachinery, ou
 }
 
 func autoConvert_config_TestMachinery_To_v1beta1_TestMachinery(in *config.TestMachinery, out *TestMachinery, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.TestDefPath = in.TestDefPath
-	if err := Convert_config_Locations_To_v1beta1_Locations(&in.Locations, &out.Locations, s); err != nil {
-		return err
-	}
-	out.PrepareImage = in.PrepareImage
-	out.BaseImage = in.BaseImage
-	out.Local = in.Local
-	out.Insecure = in.Insecure
-	out.RetryTimeout = in.RetryTimeout
-	out.RetryTimeoutDuration = (*time.Duration)(unsafe.Pointer(in.RetryTimeoutDuration))
-	out.DisableCollector = in.DisableCollector
-	out.CleanWorkflowPods = in.CleanWorkflowPods
-	out.LandscapeMappings = *(*[]LandscapeMapping)(unsafe.Pointer(&in.LandscapeMappings))
+	*out = *(*TestMachinery)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -799,8 +696,7 @@ func Convert_config_TestMachinery_To_v1beta1_TestMachinery(in *config.TestMachin
 }
 
 func autoConvert_v1beta1_WebhookConfig_To_config_WebhookConfig(in *WebhookConfig, out *config.WebhookConfig, s conversion.Scope) error {
-	out.Port = in.Port
-	out.CertDir = in.CertDir
+	*out = *(*config.WebhookConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -810,8 +706,7 @@ func Convert_v1beta1_WebhookConfig_To_config_WebhookConfig(in *WebhookConfig, ou
 }
 
 func autoConvert_config_WebhookConfig_To_v1beta1_WebhookConfig(in *config.WebhookConfig, out *WebhookConfig, s conversion.Scope) error {
-	out.Port = in.Port
-	out.CertDir = in.CertDir
+	*out = *(*WebhookConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -821,11 +716,7 @@ func Convert_config_WebhookConfig_To_v1beta1_WebhookConfig(in *config.WebhookCon
 }
 
 func autoConvert_v1beta1_Webserver_To_config_Webserver(in *Webserver, out *config.Webserver, s conversion.Scope) error {
-	out.HTTPPort = in.HTTPPort
-	out.HTTPSPort = in.HTTPSPort
-	if err := Convert_v1beta1_Certificate_To_config_Certificate(&in.Certificate, &out.Certificate, s); err != nil {
-		return err
-	}
+	*out = *(*config.Webserver)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -835,11 +726,7 @@ func Convert_v1beta1_Webserver_To_config_Webserver(in *Webserver, out *config.We
 }
 
 func autoConvert_config_Webserver_To_v1beta1_Webserver(in *config.Webserver, out *Webserver, s conversion.Scope) error {
-	out.HTTPPort = in.HTTPPort
-	out.HTTPSPort = in.HTTPSPort
-	if err := Convert_config_Certificate_To_v1beta1_Certificate(&in.Certificate, &out.Certificate, s); err != nil {
-		return err
-	}
+	*out = *(*Webserver)(unsafe.Pointer(in))
 	return nil
 }
 
