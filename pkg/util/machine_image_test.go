@@ -358,6 +358,140 @@ var _ = Describe("machine image version", func() {
 		})
 	})
 
+	Describe("#GetLatestPreviousMajorVersionForInPlaceUpdate", func() {
+		BeforeEach(func() {
+			expiredTime = metav1.NewTime(time.Now())
+			futureTime = metav1.NewTime(time.Now().Add(time.Hour * 24))
+			cloudprofile = gardencorev1beta1.CloudProfile{
+				Spec: gardencorev1beta1.CloudProfileSpec{
+					ProviderConfig: BuildCapabilityProviderConfig(ArchsByImage{imageName: {
+						"3.4.5": {arch_amd64},
+						"3.4.0": {arch_amd64},
+						"2.5.0": {arch_amd64},
+						"2.3.3": {arch_amd64},
+						"1.9.0": {arch_amd64},
+						"4.5.6": {arch_amd64},
+					}}),
+					MachineImages: []gardencorev1beta1.MachineImage{
+						{
+							Name: imageName,
+							Versions: []gardencorev1beta1.MachineImageVersion{
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "3.4.5",
+									ExpirationDate: &futureTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true, MinVersionForUpdate: ptr.To("2.3.0")}},
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "3.4.0",
+									ExpirationDate: &futureTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "2.5.0",
+									ExpirationDate: &futureTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "2.3.3",
+									ExpirationDate: &futureTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "1.9.0",
+									ExpirationDate: &futureTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+								{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+									Version:        "4.5.6",
+									ExpirationDate: &expiredTime,
+								}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+							},
+						},
+					},
+				},
+			}
+
+			currentImage = gardencorev1beta1.ShootMachineImage{
+				Name:    imageName,
+				Version: ptr.To("3.4.5"),
+			}
+			arch = arch_amd64
+		})
+
+		It("should return the latest version from one major before current that supports in-place updates", func() {
+			version, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(version).To(Equal("2.5.0"))
+		})
+
+		It("should ignore versions from majors older than the immediately preceding major", func() {
+			// v2.x is the previous major; v1.x must be excluded even though it satisfies MinVersionForUpdate
+			version, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(version).To(Equal("2.5.0")) // not 1.9.0
+		})
+
+		It("should work when the major gap is large (e.g. 1877.x → 2150.x)", func() {
+			cloudprofile.Spec.MachineImages[0].Versions = []gardencorev1beta1.MachineImageVersion{
+				{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+					Version:        "2150.13.0",
+					ExpirationDate: &futureTime,
+				}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true, MinVersionForUpdate: ptr.To("1877.0.0")}},
+				{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+					Version:        "1877.26.0",
+					ExpirationDate: &futureTime,
+				}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+				{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+					Version:        "1877.10.0",
+					ExpirationDate: &futureTime,
+				}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+				{ExpirableVersion: gardencorev1beta1.ExpirableVersion{
+					Version:        "100.5.0",
+					ExpirationDate: &futureTime,
+				}, InPlaceUpdates: &gardencorev1beta1.InPlaceUpdates{Supported: true}},
+			}
+			cloudprofile.Spec.ProviderConfig = BuildCapabilityProviderConfig(ArchsByImage{imageName: {
+				"2150.13.0": {arch_amd64},
+				"1877.26.0": {arch_amd64},
+				"1877.10.0": {arch_amd64},
+				"100.5.0":   {arch_amd64},
+			}})
+			currentImage.Version = ptr.To("2150.13.0")
+			version, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(version).To(Equal("1877.26.0"))
+		})
+
+		It("should return an error when no version in the previous major satisfies MinVersionForUpdate", func() {
+			// raise MinVersionForUpdate so that all v2.x candidates fall below it
+			cloudprofile.Spec.MachineImages[0].Versions[0].InPlaceUpdates.MinVersionForUpdate = ptr.To("2.9.0")
+			_, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("no machine image versions found that can be in-place updated to the current version"))
+		})
+
+		It("should return an error if the current version does not support in-place updates", func() {
+			currentImage.Version = ptr.To("4.5.6")
+			_, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("specified machine image version is not found in the cloudprofile or does not support in-place updates"))
+		})
+
+		It("should return an error if the current version has no MinVersionForUpdate", func() {
+			cloudprofile.Spec.MachineImages[0].Versions[0].InPlaceUpdates.MinVersionForUpdate = nil
+			_, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("current machine image version does not have a minimum version for in-place updates"))
+		})
+
+		It("should ignore expired versions in the previous major", func() {
+			// expire all v2.x versions
+			for i, v := range cloudprofile.Spec.MachineImages[0].Versions {
+				if v.Version == "2.5.0" || v.Version == "2.3.3" {
+					cloudprofile.Spec.MachineImages[0].Versions[i].ExpirationDate = &expiredTime
+				}
+			}
+			_, err := GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile, currentImage, arch)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("no machine image versions found that can be in-place updated to the current version"))
+		})
+	})
+
 	Describe("#FilterMachineImageVersionsByArch", func() {
 		versions := []gardencorev1beta1.MachineImageVersion{
 			{ExpirableVersion: gardencorev1beta1.ExpirableVersion{Version: "1.0.0"}},

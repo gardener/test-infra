@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -298,6 +299,18 @@ func GetMachineImage(cloudprofile gardencorev1beta1.CloudProfile, imageName stri
 // based on architecture, expiration, and in-place update compatibility, and ensures the version
 // satisfies the minimum version requirement for in-place updates.
 func GetLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.CloudProfile, currentMachineImage gardencorev1beta1.ShootMachineImage, arch string) (string, error) {
+	return getLatestPreviousVersionForInPlaceUpdate(cloudprofile, currentMachineImage, arch, false)
+}
+
+// GetLatestPreviousMajorVersionForInPlaceUpdate determines the latest machine image version from
+// exactly one major version before the current version that supports in-place updates to the
+// current version. It applies the same filters as GetLatestPreviousVersionForInPlaceUpdate but
+// additionally requires the candidate to be in the immediately preceding major.
+func GetLatestPreviousMajorVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.CloudProfile, currentMachineImage gardencorev1beta1.ShootMachineImage, arch string) (string, error) {
+	return getLatestPreviousVersionForInPlaceUpdate(cloudprofile, currentMachineImage, arch, true)
+}
+
+func getLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.CloudProfile, currentMachineImage gardencorev1beta1.ShootMachineImage, arch string, onlyPreviousMajor bool) (string, error) {
 	machineImage, err := GetMachineImage(cloudprofile, currentMachineImage.Name)
 	if err != nil {
 		return "", err
@@ -332,6 +345,11 @@ func GetLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.Clo
 		return "", errors.New("current machine image version does not have a minimum version for in-place updates")
 	}
 
+	currentSemver, err := semver.NewVersion(*currentMachineImage.Version)
+	if err != nil {
+		return "", err
+	}
+
 	parsedVersions := make([]*semver.Version, 0)
 	for _, machineVersion := range machineVersions {
 		v, err := semver.NewVersion(machineVersion.Version)
@@ -357,5 +375,16 @@ func GetLatestPreviousVersionForInPlaceUpdate(cloudprofile gardencorev1beta1.Clo
 		return "", errors.New("no machine image versions found that can be in-place updated to the current version")
 	}
 
-	return parsedVersions[0].Original(), nil
+	if !onlyPreviousMajor {
+		return parsedVersions[0].Original(), nil
+	}
+
+	index := slices.IndexFunc(parsedVersions, func(v *semver.Version) bool {
+		return v.Major() < currentSemver.Major()
+	})
+
+	if index == -1 {
+		return "", errors.New("no machine image versions found that can be in-place updated to the current version")
+	}
+	return parsedVersions[index].Original(), nil
 }
