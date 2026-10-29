@@ -119,9 +119,9 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 	}
 
 	var (
-		hasInPlaceWorker                                  bool
-		currentMachineImage                               gardencorev1beta1.ShootMachineImage
-		prevVersionThatCanBeInPlaceUpdatedToCurrent, arch string
+		hasInPlaceWorker                                                                    bool
+		currentMachineImage                                                                 gardencorev1beta1.ShootMachineImage
+		prevVersionThatCanBeInPlaceUpdatedToCurrent, prevMajorVersionForInPlaceUpdate, arch string
 	)
 
 	for _, worker := range shoot.Workers {
@@ -137,6 +137,10 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 		prevVersionThatCanBeInPlaceUpdatedToCurrent, err = util.GetLatestPreviousVersionForInPlaceUpdate(shoot.Cloudprofile, currentMachineImage, arch)
 		if err != nil {
 			r.log.Info("unable to get previous version", "error", err.Error())
+		}
+		prevMajorVersionForInPlaceUpdate, err = util.GetLatestPreviousMajorVersionForInPlaceUpdate(shoot.Cloudprofile, currentMachineImage, arch)
+		if err != nil {
+			r.log.Info("unable to get previous major version", "error", err.Error())
 		}
 	}
 
@@ -178,6 +182,7 @@ func (r *shootValueRenderer) GetValues(shoot *common.ExtendedShoot, defaultValue
 	}
 	if hasInPlaceWorker {
 		values["shoot"].(map[string]any)["machineImagePrevVersion"] = prevVersionThatCanBeInPlaceUpdatedToCurrent
+		values["shoot"].(map[string]any)["machineImagePrevMajorVersion"] = prevMajorVersionForInPlaceUpdate
 		values["shoot"].(map[string]any)["machine"] = map[string]any{
 			"imageversion": *currentMachineImage.Version,
 			"image":        currentMachineImage.Name,
