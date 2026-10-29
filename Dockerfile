@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #############      builder       #############
-FROM golang:1.26 AS builder
+FROM golang:1.27 AS builder
 
 WORKDIR /go/src/github.com/gardener/test-infra
 
@@ -29,7 +29,7 @@ WORKDIR /
 ENTRYPOINT ["/testmachinery-controller"]
 
 ############# tm-base-step #############
-FROM golang:1.26-alpine AS base-step
+FROM golang:1.27-alpine AS base-step
 
 RUN  \
   apk add --update --no-cache \
