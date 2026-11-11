@@ -123,14 +123,13 @@ func getImagePullSecrets(pullSecretNames []string) []corev1.LocalObjectReference
 	return secrets
 }
 
-// getWorkflowAffinity returns the default spec to prefer workflow pods being scheduled on specially labeled nodes
+// getWorkflowAffinity returns the default spec to require workflow pods being scheduled on specially labeled nodes
 func getWorkflowAffinity() *corev1.Affinity {
 	return &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
-			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
-				{
-					Weight: 100,
-					Preference: corev1.NodeSelectorTerm{
+			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+				NodeSelectorTerms: []corev1.NodeSelectorTerm{
+					{
 						MatchExpressions: []corev1.NodeSelectorRequirement{
 							{
 								Key:      "purpose",
