@@ -30,7 +30,7 @@ spec:
       labels:
         app: reserve-excess-capacity
     spec:
-      # ensure pods are placed on "purpose: testload" labeled nodes (if present)
+      # require pods to be placed on "purpose: testload" labeled nodes (pods stay pending if no such nodes exist)
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

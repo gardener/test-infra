@@ -83,6 +83,9 @@ Furthermore, generated artifacts that are stored in the s3 storage are deleted a
 ### TestMachinery Deployment
 
 1. Setup a k8s cluster (min. Version 1.10.x, preferred Version: 1.12.x, minikube is also suitable)
+    * :warning: The cluster must have nodes labeled with `purpose=testload`. Workflow pods have a required node affinity to these nodes and remain `Pending` if none exist.
+    * It is recommended to also taint these nodes with `purpose=testload:NoSchedule` (tolerated by the workflow pods) so that no other workload is scheduled on them, and to enable autoscaling for this worker pool.
+    * For a local cluster (e.g. minikube), label the node manually: `kubectl label node <node-name> purpose=testload`
 2. Setup or create a s3 compatible object store. See for example [zenko cloudserver](https://hub.docker.com/r/zenko/cloudserver) for a free opensource alternative. 
   - configure the endpoint and credentials in the local values file [./charts/testmachinery/local-values.yaml](../../charts/testmachinery/local-values.yaml)
 3. Install the latest TestMachinery with `make deploy-controller VERSION=latest`. Then the controller alongside to a service, validation webhooks and needed rbac permissions is installed.
@@ -102,6 +105,7 @@ Have a look [here](../../charts/testmachinery).
 
 `TestRun`s and `TestDefinition`s can be developed locally in a minikube cluster so that no remote installation is needed.
 To develop a `TestRun` locally the TestMachinery has to be installed as described in [TestMachinery Deployment](#TestMachinery-Deployment).
+Make sure the minikube node is labeled with `purpose=testload` (`kubectl label node minikube purpose=testload`), otherwise workflow pods cannot be scheduled.
 
 If a local `TestDefinition` is developed, the TestMachinery has to be started in _insecure_ mode to mount hostPaths:
 
