@@ -1,8 +1,9 @@
 {
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "prConcurrentLimit": 5,
 
   "enabledManagers": [
+    "github-actions",
     "gomod",
     "dockerfile",
     "helm-values",
